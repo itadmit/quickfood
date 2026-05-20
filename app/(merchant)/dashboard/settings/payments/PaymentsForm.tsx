@@ -83,7 +83,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
   }
 
   return (
-    <div className="space-y-5 max-w-2xl">
+    <div className="space-y-5">
       {/* Section: which methods to accept */}
       <div className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-4">
         <div>

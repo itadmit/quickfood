@@ -325,3 +325,29 @@ export const IcoArrowRight = ({ c = "currentColor", s = 16, className }: IconPro
     />
   </svg>
 );
+
+export const IcoCopy = ({ c = "currentColor", s = 16, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    <rect x="9" y="9" width="11" height="11" rx="2" stroke={c} strokeWidth="1.6" />
+    <path
+      d="M5 15V6a2 2 0 012-2h9"
+      stroke={c}
+      strokeWidth="1.6"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+/** WhatsApp glyph — solid green inside a chat-bubble outline. */
+export const IcoWhatsApp = ({ s = 16, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    <path
+      d="M3 21l1.3-4A8 8 0 1112 20a8 8 0 01-3.7-.9L3 21z"
+      fill="#25D366"
+    />
+    <path
+      d="M9 8.5c.2-.5.5-.5.7-.5l.4.01c.2 0 .4 0 .6.4.2.5.7 1.7.8 1.8.1.1.1.3 0 .5l-.3.4-.3.3c-.1.1-.2.2-.1.4.1.2.6 1 1.2 1.6.8.7 1.5 1 1.7 1 .2.1.4.1.5-.1l.7-.8c.1-.2.3-.1.5 0l1.7.8c.2.1.4.2.4.3 0 .1 0 .8-.3 1.5-.3.7-1.5 1.4-2 1.5-.6.1-1.3.2-2.7-.4-2.3-1-3.8-3.4-3.9-3.5-.1-.2-.9-1.2-.9-2.3 0-1.1.6-1.6.8-1.9z"
+      fill="#fff"
+    />
+  </svg>
+);

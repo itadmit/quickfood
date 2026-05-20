@@ -6,7 +6,7 @@ import { THEMES, type ThemeId } from "@/lib/themes";
 import { type BusinessType } from "@/components/shared/MenuItemImage";
 import { BusinessTypeSelect } from "@/components/shared/BusinessTypeSelect";
 
-import { IcoCheck } from "@/components/shared/Icons";
+import { IcoCheck, IcoCopy, IcoWhatsApp } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 
 interface Tenant {
@@ -164,15 +164,78 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
           <div className="text-lg font-semibold">{name}</div>
           {cuisineType && <div className="text-sm opacity-80">{cuisineType}</div>}
         </div>
-        <a
-          href={`/${tenant.slug}`}
-          target="_blank"
-          rel="noreferrer"
-          className="text-xs text-(--qf-deep) underline"
-        >
-          /{tenant.slug} ← לחנות הלקוח
-        </a>
+        <ShopShareActions slug={tenant.slug} name={name} />
       </aside>
+    </div>
+  );
+}
+
+/**
+ * Three actions for the merchant's public storefront URL:
+ *  • view shop (opens in a new tab — primary button)
+ *  • copy URL (icon, briefly flips to a check on success)
+ *  • share on WhatsApp (icon, opens wa.me with a pre-filled message)
+ *
+ * Uses NEXT_PUBLIC_APP_URL when available so the copied/shared link works
+ * outside the dashboard preview tab; falls back to window.location.origin.
+ */
+function ShopShareActions({ slug, name }: { slug: string; name: string }) {
+  const [copied, setCopied] = useState(false);
+
+  function shopUrl(): string {
+    const base =
+      (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "") ||
+      (typeof window !== "undefined" ? window.location.origin : "");
+    return `${base}/${slug}`;
+  }
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(shopUrl());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard blocked — ignore */
+    }
+  }
+
+  function shareWhatsApp() {
+    const text = `${name} — להזמנות אונליין: ${shopUrl()}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  }
+
+  return (
+    <div className="flex items-stretch gap-2">
+      <a
+        href={`/${slug}`}
+        target="_blank"
+        rel="noreferrer"
+        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium transition"
+      >
+        צפה בחנות
+      </a>
+      <button
+        type="button"
+        onClick={copy}
+        aria-label="העתק כתובת אתר"
+        title={copied ? "הועתק" : "העתק כתובת אתר"}
+        className="w-10 h-10 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft grid place-items-center text-qf-ink2"
+      >
+        {copied ? (
+          <IcoCheck c="currentColor" s={16} />
+        ) : (
+          <IcoCopy c="currentColor" s={16} />
+        )}
+      </button>
+      <button
+        type="button"
+        onClick={shareWhatsApp}
+        aria-label="שתף בוואטסאפ"
+        title="שתף בוואטסאפ"
+        className="w-10 h-10 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft grid place-items-center"
+      >
+        <IcoWhatsApp s={18} />
+      </button>
     </div>
   );
 }
