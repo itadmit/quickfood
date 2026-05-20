@@ -41,6 +41,17 @@ interface RebuildLine {
   notes: string | null;
 }
 
+interface RebuildPricing {
+  oldSubtotal: number;
+  newSubtotal: number;
+  delta: number;
+}
+
+type ConfirmState = {
+  issues: RebuildIssue[];
+  pricing: RebuildPricing | null;
+} | null;
+
 interface Props {
   tenantSlug: string;
   businessType: BusinessType;
@@ -64,7 +75,7 @@ export function ReorderRail({
     hasCustomerSession ? "ready" : "idle",
   );
   const [busyOrderId, setBusyOrderId] = useState<string | null>(null);
-  const [issues, setIssues] = useState<RebuildIssue[] | null>(null);
+  const [confirm, setConfirm] = useState<ConfirmState>(null);
 
   // Guest path: read localStorage ids on mount, fetch the matching orders.
   useEffect(() => {
@@ -104,9 +115,11 @@ export function ReorderRail({
         const data = (await res.json()) as {
           lines?: RebuildLine[];
           issues?: RebuildIssue[];
+          pricing?: RebuildPricing;
         };
         const lines = data.lines ?? [];
         const reportedIssues = data.issues ?? [];
+        const pricing = data.pricing ?? null;
 
         if (lines.length > 0) {
           addMany(
@@ -126,17 +139,22 @@ export function ReorderRail({
           );
         }
 
-        if (reportedIssues.length > 0) {
-          // Open the warning modal — the customer can read what didn't
-          // get restored and choose to continue to the cart.
-          setIssues(reportedIssues);
+        const priceChanged = pricing && pricing.delta !== 0 && lines.length > 0;
+        if (reportedIssues.length > 0 || priceChanged) {
+          // Surface either the unavailable items, the price change, or both
+          // in one modal so the customer makes a single decision.
+          setConfirm({
+            issues: reportedIssues,
+            pricing: priceChanged ? pricing : null,
+          });
         } else if (lines.length > 0) {
-          // Everything restored cleanly → jump straight to the cart.
           router.push(`/${tenantSlug}/cart`);
         }
       } catch {
-        /* network — surface as a generic issue */
-        setIssues([{ kind: "item_missing", name: "—" }]);
+        setConfirm({
+          issues: [{ kind: "item_missing", name: "—" }],
+          pricing: null,
+        });
       } finally {
         setBusyOrderId(null);
       }
@@ -191,12 +209,13 @@ export function ReorderRail({
         </ul>
       )}
 
-      {issues && (
-        <UnavailableModal
-          issues={issues}
-          onClose={() => setIssues(null)}
+      {confirm && (
+        <ReorderConfirmModal
+          issues={confirm.issues}
+          pricing={confirm.pricing}
+          onClose={() => setConfirm(null)}
           onContinue={() => {
-            setIssues(null);
+            setConfirm(null);
             router.push(`/${tenantSlug}/cart`);
           }}
         />
@@ -270,12 +289,14 @@ function ReorderCard({
   );
 }
 
-function UnavailableModal({
+function ReorderConfirmModal({
   issues,
+  pricing,
   onClose,
   onContinue,
 }: {
   issues: RebuildIssue[];
+  pricing: RebuildPricing | null;
   onClose: () => void;
   onContinue: () => void;
 }) {
@@ -285,11 +306,15 @@ function UnavailableModal({
     size_missing: "הגודל שבחרת לא זמין",
     option_missing: "אחת התוספות שבחרת לא זמינה",
   };
+  const hasIssues = issues.length > 0;
+  const priceIncreased = !!pricing && pricing.delta > 0;
+  const priceDecreased = !!pricing && pricing.delta < 0;
+
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-labelledby="qf-reorder-issue-title"
+      aria-labelledby="qf-reorder-confirm-title"
       className="fixed inset-0 z-50 grid place-items-end sm:place-items-center bg-black/50 px-4 pb-4"
       onClick={onClose}
     >
@@ -301,24 +326,59 @@ function UnavailableModal({
           <div className="w-10 h-10 rounded-full bg-qf-yolk-soft grid place-items-center">
             <IcoCheck c="#92400e" s={20} />
           </div>
-          <h3 id="qf-reorder-issue-title" className="font-bold text-lg">
+          <h3 id="qf-reorder-confirm-title" className="font-bold text-lg">
             שים לב
           </h3>
         </div>
-        <p className="text-sm text-qf-ink2 mb-3 leading-relaxed">
-          ההזמנה לא שוחזרה במלואה. הפריטים הבאים לא נוספו לסל:
-        </p>
-        <ul className="space-y-2 mb-4 bg-qf-line-soft rounded-2xl p-3 max-h-56 overflow-y-auto">
-          {issues.map((issue, idx) => (
-            <li key={`${issue.kind}-${idx}`} className="text-sm flex items-start gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-qf-tomato mt-2 shrink-0" aria-hidden />
-              <div className="min-w-0">
-                <div className="font-medium truncate">{issue.name}</div>
-                <div className="text-xs text-qf-mute">{reasonLabel[issue.kind]}</div>
-              </div>
-            </li>
-          ))}
-        </ul>
+
+        {pricing && pricing.delta !== 0 && (
+          <div className="mb-3 rounded-2xl border border-qf-line bg-qf-line-soft px-3 py-3">
+            <div className="text-sm font-medium mb-1">
+              {priceIncreased ? "המחיר התעדכן מאז ההזמנה הקודמת" : "המחיר ירד מאז ההזמנה הקודמת"}
+            </div>
+            <div className="flex items-baseline justify-between text-sm">
+              <span className="text-qf-mute">בעבר</span>
+              <span className="tnum text-qf-ink2 line-through">
+                {formatPrice(pricing.oldSubtotal)}
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between text-sm mt-0.5">
+              <span className="font-medium">עכשיו</span>
+              <span
+                className={cn(
+                  "tnum font-bold",
+                  priceIncreased && "text-qf-tomato",
+                  priceDecreased && "text-qf-green-deep",
+                )}
+              >
+                {formatPrice(pricing.newSubtotal)}
+              </span>
+            </div>
+            <div className="text-xs text-qf-mute mt-1">
+              הפרש: <span className="tnum">{priceIncreased ? "+" : ""}{formatPrice(pricing.delta)}</span>
+            </div>
+          </div>
+        )}
+
+        {hasIssues && (
+          <>
+            <p className="text-sm text-qf-ink2 mb-3 leading-relaxed">
+              ההזמנה לא שוחזרה במלואה. הפריטים הבאים לא נוספו לסל:
+            </p>
+            <ul className="space-y-2 mb-4 bg-qf-line-soft rounded-2xl p-3 max-h-56 overflow-y-auto">
+              {issues.map((issue, idx) => (
+                <li key={`${issue.kind}-${idx}`} className="text-sm flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-qf-tomato mt-2 shrink-0" aria-hidden />
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{issue.name}</div>
+                    <div className="text-xs text-qf-mute">{reasonLabel[issue.kind]}</div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
         <div className="flex gap-2">
           <button
             type="button"

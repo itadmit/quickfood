@@ -66,9 +66,22 @@ export interface RebuildLine {
   notes: string | null;
 }
 
+/**
+ * Old / new subtotal (item-level totals only — delivery + service + tip
+ * are recomputed at checkout, so we don't compare them here). When old
+ * and new differ, the UI should ask the customer to confirm the price
+ * change before adding everything to the cart.
+ */
+export interface RebuildPricing {
+  oldSubtotal: number;
+  newSubtotal: number;
+  delta: number;
+}
+
 export interface RebuildResult {
   lines: RebuildLine[];
   issues: RebuildIssue[];
+  pricing: RebuildPricing;
 }
 
 /**
@@ -86,6 +99,7 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
           menuItemId: true,
           nameSnapshot: true,
           quantity: true,
+          totalPrice: true,
           sizeId: true,
           selectedOptions: true,
           notes: true,
@@ -93,10 +107,18 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
       },
     },
   });
-  if (!order) return { lines: [], issues: [] };
+  if (!order) {
+    return {
+      lines: [],
+      issues: [],
+      pricing: { oldSubtotal: 0, newSubtotal: 0, delta: 0 },
+    };
+  }
 
   const lines: RebuildLine[] = [];
   const issues: RebuildIssue[] = [];
+  let oldSubtotal = 0;
+  let newSubtotal = 0;
 
   for (const it of order.items) {
     if (!it.menuItemId) {
@@ -170,7 +192,23 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
       options: liveOptions,
       notes: it.notes,
     });
+
+    // Only count items that actually made it into the rebuilt cart toward
+    // the comparison subtotals — comparing snapshots of items we couldn't
+    // restore would inflate the "old" side and confuse the customer.
+    const optsDelta = liveOptions.reduce((a, o) => a + o.priceDelta, 0);
+    const newUnit = menuItem.basePrice + sizeDelta + optsDelta;
+    newSubtotal += newUnit * it.quantity;
+    oldSubtotal += it.totalPrice;
   }
 
-  return { lines, issues };
+  return {
+    lines,
+    issues,
+    pricing: {
+      oldSubtotal,
+      newSubtotal,
+      delta: newSubtotal - oldSubtotal,
+    },
+  };
 }
