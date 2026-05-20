@@ -25,6 +25,7 @@ export interface CartState {
 
 interface CartContextValue extends CartState {
   add: (line: Omit<CartLine, "lineId">) => void;
+  addMany: (lines: Array<Omit<CartLine, "lineId">>) => void;
   updateQuantity: (lineId: string, qty: number) => void;
   remove: (lineId: string) => void;
   clear: () => void;
@@ -115,6 +116,14 @@ export function CartProvider({
       add: (line) => {
         const lineId = crypto.randomUUID();
         setState((s) => ({ ...s, lines: [...s.lines, { ...line, lineId }] }));
+      },
+      addMany: (newLines) => {
+        if (newLines.length === 0) return;
+        const withIds: CartLine[] = newLines.map((l) => ({
+          ...l,
+          lineId: crypto.randomUUID(),
+        }));
+        setState((s) => ({ ...s, lines: [...s.lines, ...withIds] }));
       },
       updateQuantity: (lineId, qty) =>
         setState((s) => ({

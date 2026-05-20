@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db/client";
 import { getSession } from "@/lib/auth/session";
 import { CustomerHome } from "@/components/customer/screens/CustomerHome";
 import { IcoArrowLeft } from "@/components/shared/Icons";
+import { fingerprintOrderItems } from "@/lib/order-reorder";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,25 @@ export default async function HomePage({
 
   const session = await getSession();
 
-  const [categories, popular, lastOrder] = await Promise.all([
+  // Pull a wider window so we can dedupe to 3 distinct baskets even when a
+  // customer keeps ordering the same thing back-to-back. Guests skip the
+  // query entirely and hydrate on the client from localStorage.
+  const customerRecentOrdersPromise =
+    session?.type === "customer"
+      ? prisma.order.findMany({
+          where: { tenantId: tenant.id, customerId: session.userId },
+          orderBy: { createdAt: "desc" },
+          take: 12,
+          include: {
+            items: {
+              orderBy: { totalPrice: "desc" },
+              include: { menuItem: { select: { images: true } } },
+            },
+          },
+        })
+      : null;
+
+  const [categories, popular, customerRecentOrders] = await Promise.all([
     prisma.menuCategory.findMany({
       where: { tenantId: tenant.id, active: true },
       orderBy: { position: "asc" },
@@ -30,18 +49,7 @@ export default async function HomePage({
       orderBy: { position: "asc" },
       take: 6,
     }),
-    session?.type === "customer"
-      ? prisma.order.findFirst({
-          where: { tenantId: tenant.id, customerId: session.userId },
-          orderBy: { createdAt: "desc" },
-          include: {
-            items: {
-              orderBy: { totalPrice: "desc" },
-              include: { menuItem: { select: { images: true } } },
-            },
-          },
-        })
-      : Promise.resolve(null),
+    customerRecentOrdersPromise,
   ]);
 
   const popularSerialized = popular.map((p) => ({
@@ -55,18 +63,27 @@ export default async function HomePage({
 
   const branch = tenant.branches[0];
 
-  const lastOrderSerialized = lastOrder
-    ? {
-        id: lastOrder.id,
-        number: lastOrder.number,
-        total: lastOrder.total,
-        status: lastOrder.status,
-        createdAt: lastOrder.createdAt.toISOString(),
-        itemCount: lastOrder.items.reduce((sum, it) => sum + it.quantity, 0),
-        headlineItem: lastOrder.items[0]?.nameSnapshot ?? null,
-        headlineImage: lastOrder.items[0]?.menuItem?.images?.[0] ?? null,
-      }
-    : null;
+  // Dedupe by content fingerprint so the rail never shows the same basket
+  // twice; keep up to 3 distinct ones.
+  const seenSig = new Set<string>();
+  const distinctOrders: NonNullable<typeof customerRecentOrders> = [];
+  for (const o of customerRecentOrders ?? []) {
+    const sig = fingerprintOrderItems(o.items);
+    if (seenSig.has(sig)) continue;
+    seenSig.add(sig);
+    distinctOrders.push(o);
+    if (distinctOrders.length >= 3) break;
+  }
+  const recentOrdersSerialized = distinctOrders.map((o) => ({
+    id: o.id,
+    number: o.number,
+    total: o.total,
+    status: o.status,
+    created_at: o.createdAt.toISOString(),
+    item_count: o.items.reduce((sum, it) => sum + it.quantity, 0),
+    headline_item: o.items[0]?.nameSnapshot ?? null,
+    headline_image: o.items[0]?.menuItem?.images?.[0] ?? null,
+  }));
 
   return (
     <CustomerHome
@@ -91,7 +108,8 @@ export default async function HomePage({
       }
       categories={categories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color }))}
       popular={popularSerialized}
-      lastOrder={lastOrderSerialized}
+      recentOrders={recentOrdersSerialized}
+      hasCustomerSession={session?.type === "customer"}
     >
       <Link
         href={`/${tenant.slug}/menu`}

@@ -5,10 +5,10 @@ import { IcoPin, IcoSearch, IcoChevDown, IcoStar, IcoClock, IcoBike, IcoFlame, I
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
 import { CampaignPopup } from "@/components/customer/CampaignPopup";
+import { ReorderRail } from "@/components/customer/ReorderRail";
 import { resolveCategoryStyle } from "@/lib/category-style";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
-import { RelativeTime } from "@/components/shared/RelativeTime";
 import { SmartImg } from "@/components/shared/SmartImg";
 import { cn } from "@/lib/cn";
 
@@ -37,20 +37,29 @@ interface Props {
     artType: string | null;
     images?: string[];
   }>;
-  lastOrder?: {
+  recentOrders?: Array<{
     id: string;
     number: string;
     total: number;
     status: string;
-    createdAt: string;
-    itemCount: number;
-    headlineItem: string | null;
-    headlineImage: string | null;
-  } | null;
+    created_at: string;
+    item_count: number;
+    headline_item: string | null;
+    headline_image: string | null;
+  }>;
+  hasCustomerSession?: boolean;
   children?: React.ReactNode;
 }
 
-export function CustomerHome({ tenant, branch, categories, popular, lastOrder, children }: Props) {
+export function CustomerHome({
+  tenant,
+  branch,
+  categories,
+  popular,
+  recentOrders = [],
+  hasCustomerSession = false,
+  children,
+}: Props) {
   const { method, setMethod } = useCart();
   const open = branch?.status === "open";
 
@@ -177,45 +186,15 @@ export function CustomerHome({ tenant, branch, categories, popular, lastOrder, c
         </Link>
       </section>
 
-      {/* Last order */}
-      {lastOrder && (
-        <section className="px-5 mt-4">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-base font-semibold">ההזמנה האחרונה שלך</h2>
-            <Link href={`/${tenant.slug}/profile`} className="text-xs text-(--qf-deep) inline-flex items-center gap-1">
-              כל ההזמנות
-              <IcoArrowLeft c="currentColor" s={12} />
-            </Link>
-          </div>
-          <Link
-            href={`/${tenant.slug}/orders/${lastOrder.id}`}
-            className="rounded-2xl bg-white border border-qf-line p-3 flex items-center gap-3 shadow-sm"
-          >
-            <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
-              <MenuItemImage
-                src={lastOrder.headlineImage ?? undefined}
-                alt={lastOrder.headlineItem ?? tenant.name}
-                businessType={tenant.businessType ?? "general"}
-                size={64}
-                rounded="md"
-                className="w-full h-full"
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="font-medium text-sm leading-tight truncate">
-                {lastOrder.headlineItem ?? "הזמנה"}
-                {lastOrder.itemCount > 1 ? ` +${lastOrder.itemCount - 1}` : ""}
-              </div>
-              <div className="text-xs text-qf-mute mt-0.5">
-                <RelativeTime date={lastOrder.createdAt} /> · <span className="tnum">{formatPrice(lastOrder.total)}</span>
-              </div>
-            </div>
-            <span className="bg-(--qf-primary) text-white text-xs font-semibold px-3 py-2 rounded-full shrink-0">
-              הזמן שוב
-            </span>
-          </Link>
-        </section>
-      )}
+      {/* Previous orders rail — up to 3 distinct past orders.  For guests the
+          rail hydrates from localStorage on the client (with a skeleton while
+          it loads); for logged-in customers we server-render the initial list. */}
+      <ReorderRail
+        tenantSlug={tenant.slug}
+        businessType={tenant.businessType ?? "general"}
+        initialOrders={recentOrders}
+        hasCustomerSession={hasCustomerSession}
+      />
 
       {/* Categories scroll */}
       <section className="px-5 mt-5">

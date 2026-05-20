@@ -8,6 +8,7 @@ import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemIm
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { recordRecentOrder } from "@/lib/recent-orders-storage";
 
 type CustomerPaymentMethod = "cash" | "card" | "bit" | "apple_pay" | "google_pay";
 
@@ -112,6 +113,10 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
         return;
       }
       const orderId = data.order.id as string;
+      // Remember this order so guests can re-order it later from the
+      // home screen rail. Logged-in customers see the same rail
+      // server-rendered from the DB, but storing the id is harmless.
+      recordRecentOrder(tenantSlug, orderId);
       clear();
       router.push(`/${tenantSlug}/orders/${orderId}`);
     } catch {
