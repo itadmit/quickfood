@@ -8,6 +8,7 @@ import { CampaignPopup } from "@/components/customer/CampaignPopup";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { RelativeTime } from "@/components/shared/RelativeTime";
+import { SmartImg } from "@/components/shared/SmartImg";
 import { cn } from "@/lib/cn";
 
 interface Props {
@@ -60,11 +61,13 @@ export function CustomerHome({ tenant, branch, categories, popular, lastOrder, c
       <header className="relative text-white px-5 pt-5 pb-12 overflow-hidden isolate rounded-b-3xl">
         {hasCover ? (
           <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <SmartImg
               src={tenant.coverImage!}
               alt=""
-              className="absolute inset-0 w-full h-full object-cover -z-10"
+              fill
+              loading="eager"
+              fetchPriority="high"
+              className="absolute inset-0 -z-10"
             />
             <div className="absolute inset-0 -z-10 bg-linear-to-b from-black/55 via-black/35 to-black/65" />
           </>

@@ -10,6 +10,7 @@
  */
 
 import { cn } from "@/lib/cn";
+import { SmartImg } from "@/components/shared/SmartImg";
 
 export type BusinessType =
   | "pizza"
@@ -68,22 +69,17 @@ export function MenuItemImage({
   }[rounded];
 
   if (src) {
-    // Real image — use plain <img> so we don't need next/image domain config
-    // for R2 (the bucket may be on a custom CDN domain).
+    // Real image — SmartImg adds a skeleton-shimmer placeholder while the
+    // request is in flight and fades the picture in once it loads, so cards
+    // don't pop with raw <img> behavior.
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
+      <SmartImg
         src={src}
         alt={alt}
         width={fill ? undefined : size}
         height={fill ? undefined : size}
-        className={cn(
-          "object-cover bg-qf-line-soft",
-          fill && "w-full h-full",
-          roundedClass,
-          className,
-        )}
-        style={fill ? undefined : { width: size, height: size }}
+        fill={fill}
+        className={cn(roundedClass, className)}
       />
     );
   }
