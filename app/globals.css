@@ -104,6 +104,19 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* ─── iOS Safari: stop the zoom-on-focus dance ───────────────── */
+/* Safari on iOS auto-zooms a form field when its computed font-size
+   is below 16px. Pin everything that takes text input to 16px on
+   small screens so focusing a field never bounces the layout. Desktop
+   keeps the design-time sizes — we don't widen the rule beyond mobile. */
+@media (max-width: 768px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
 /* ─── Hide scrollbars on horizontal carousels ────────────────── */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
