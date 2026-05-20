@@ -149,6 +149,31 @@ export class GrowProvider extends BasePaymentProvider {
       .slice(0, maxLen);
   }
 
+  /**
+   * Normalize to Israeli mobile format: 10 digits starting with `05`.
+   * Grow rejects anything else. Accepts +972, 972, 00972, with or without
+   * leading 0, dashes, spaces, parentheses.
+   * Falls back to a dummy Israeli number if normalization fails.
+   */
+  private normalizeIsraeliPhone(raw: string | undefined | null): string {
+    const FALLBACK = "0500000000";
+    if (!raw) return FALLBACK;
+    let digits = String(raw).replace(/\D/g, "");
+    if (!digits) return FALLBACK;
+
+    // Strip international prefixes → leave national part
+    if (digits.startsWith("00972")) digits = digits.slice(5);
+    else if (digits.startsWith("972")) digits = digits.slice(3);
+
+    // Ensure leading 0 on the national part
+    if (!digits.startsWith("0")) digits = "0" + digits;
+
+    // Must be a 10-digit mobile starting with 05
+    if (digits.length === 10 && digits.startsWith("05")) return digits;
+
+    return FALLBACK;
+  }
+
   private toFormUrlEncoded(obj: Record<string, unknown>): string {
     const params = new URLSearchParams();
     const append = (key: string, value: unknown): void => {
@@ -215,7 +240,7 @@ export class GrowProvider extends BasePaymentProvider {
       let fullName = this.sanitize(req.customer.name, 80);
       if (!fullName.includes(" ")) fullName = `${fullName} .`;
 
-      const phone = (req.customer.phone || "").replace(/\D/g, "").slice(0, 15) || "0500000000";
+      const phone = this.normalizeIsraeliPhone(req.customer.phone);
       const description = this.sanitize(`Order ${req.orderReference}`, 100);
 
       const productData = req.items.slice(0, 10).map((item, i) => ({
