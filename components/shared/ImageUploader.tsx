@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { IcoPlus, IcoClose } from "@/components/shared/Icons";
+import { IcoPlus, IcoClose, IcoArrowLeft, IcoArrowRight } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 
 const ACCEPT = "image/jpeg,image/png,image/webp";
@@ -159,19 +159,19 @@ export function ImageUploader({
                   type="button"
                   onClick={() => move(idx, -1)}
                   disabled={idx === 0}
-                  className="px-1.5 py-0.5 rounded bg-white/20 hover:bg-white/30 disabled:opacity-40"
+                  className="w-6 h-6 rounded grid place-items-center bg-white/20 hover:bg-white/30 disabled:opacity-40"
                   aria-label="הזז ימינה"
                 >
-                  ←
+                  <IcoArrowRight c="#fff" s={12} />
                 </button>
                 <button
                   type="button"
                   onClick={() => move(idx, 1)}
                   disabled={idx === value.length - 1}
-                  className="px-1.5 py-0.5 rounded bg-white/20 hover:bg-white/30 disabled:opacity-40"
+                  className="w-6 h-6 rounded grid place-items-center bg-white/20 hover:bg-white/30 disabled:opacity-40"
                   aria-label="הזז שמאלה"
                 >
-                  →
+                  <IcoArrowLeft c="#fff" s={12} />
                 </button>
               </div>
               <div className="flex gap-0.5">

@@ -4,6 +4,7 @@ import { resolveTenantBySlug } from "@/lib/slug";
 import { prisma } from "@/lib/db/client";
 import { getSession } from "@/lib/auth/session";
 import { CustomerHome } from "@/components/customer/screens/CustomerHome";
+import { IcoArrowLeft } from "@/components/shared/Icons";
 
 export const dynamic = "force-dynamic";
 
@@ -94,9 +95,10 @@ export default async function HomePage({
     >
       <Link
         href={`/${tenant.slug}/menu`}
-        className="block text-center text-xs text-(--qf-deep) underline pb-24 pt-2"
+        className="text-xs text-(--qf-deep) underline pb-24 pt-2 inline-flex items-center justify-center gap-1 w-full"
       >
-        לתפריט המלא ←
+        לתפריט המלא
+        <IcoArrowLeft c="currentColor" s={12} />
       </Link>
     </CustomerHome>
   );

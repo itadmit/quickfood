@@ -43,7 +43,7 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
         if (cancelled) return;
         const methods = d.restaurant?.payment_methods ?? [];
         setAvailableMethods(methods);
-        // Prefer cash → card → bit → apple_pay → google_pay (first available)
+        // Prefer cash ← card ← bit ← apple_pay ← google_pay (first available)
         const preferred: CustomerPaymentMethod[] = ["cash", "card", "bit", "apple_pay", "google_pay"];
         const first = preferred.find((m) => methods.includes(m)) ?? null;
         setPaymentMethod(first);

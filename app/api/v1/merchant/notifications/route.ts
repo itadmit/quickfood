@@ -7,9 +7,9 @@ export const dynamic = "force-dynamic";
 
 /**
  * For MVP we synthesize the notification feed from existing data:
- *  - latest orders (status pending/confirmed/preparing → "הזמנה חדשה")
- *  - latest failed webhook deliveries → "webhook נכשל"
- *  - latest cancelled orders → "הזמנה בוטלה"
+ *  - latest orders (status pending/confirmed/preparing ← "הזמנה חדשה")
+ *  - latest failed webhook deliveries ← "webhook נכשל"
+ *  - latest cancelled orders ← "הזמנה בוטלה"
  *
  * A real notification engine (Notification table per recipient) can replace
  * this without touching the UI.

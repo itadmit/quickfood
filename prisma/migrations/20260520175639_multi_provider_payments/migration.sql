@@ -7,8 +7,8 @@
 ALTER TABLE "tenants" ADD COLUMN "accepts_cash" BOOLEAN NOT NULL DEFAULT true;
 
 -- 2) Backfill from the old enum:
---    - Old 'cash' tenants → acceptsCash stays true (default already set it).
---    - Old 'grow' tenants → acceptsCash = false (they were not accepting cash
+--    - Old 'cash' tenants ← acceptsCash stays true (default already set it).
+--    - Old 'grow' tenants ← acceptsCash = false (they were not accepting cash
 --      under the single-provider model). If the merchant wants both, they
 --      can toggle it on in the settings UI.
 UPDATE "tenants" SET "accepts_cash" = false WHERE "payment_provider" = 'grow';

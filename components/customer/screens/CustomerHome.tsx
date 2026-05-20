@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { IcoPin, IcoSearch, IcoChevDown, IcoStar, IcoClock, IcoBike, IcoFlame, IcoUser } from "@/components/shared/Icons";
+import { IcoPin, IcoSearch, IcoChevDown, IcoStar, IcoClock, IcoBike, IcoFlame, IcoUser, IcoArrowLeft } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
 import { useCart } from "@/components/customer/CartProvider";
@@ -175,8 +175,9 @@ export function CustomerHome({ tenant, branch, categories, popular, lastOrder, c
         <section className="px-5 mt-4">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-base font-semibold">ההזמנה האחרונה שלך</h2>
-            <Link href={`/${tenant.slug}/profile`} className="text-xs text-(--qf-deep)">
-              כל ההזמנות ←
+            <Link href={`/${tenant.slug}/profile`} className="text-xs text-(--qf-deep) inline-flex items-center gap-1">
+              כל ההזמנות
+              <IcoArrowLeft c="currentColor" s={12} />
             </Link>
           </div>
           <Link
@@ -233,8 +234,9 @@ export function CustomerHome({ tenant, branch, categories, popular, lastOrder, c
         <section className="px-5 mt-5">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-base font-semibold">פופולריים</h2>
-            <Link href={`/${tenant.slug}/menu`} className="text-xs text-(--qf-deep)">
-              לכל התפריט ←
+            <Link href={`/${tenant.slug}/menu`} className="text-xs text-(--qf-deep) inline-flex items-center gap-1">
+              לכל התפריט
+              <IcoArrowLeft c="currentColor" s={12} />
             </Link>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-5 px-5 pb-2">

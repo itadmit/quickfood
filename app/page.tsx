@@ -3,6 +3,7 @@ import { Rubik, JetBrains_Mono } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
 import LiveDashboard from "./_components/LiveDashboard";
+import { IcoArrowLeft } from "@/components/shared/Icons";
 import styles from "./page.module.css";
 
 const rubik = Rubik({
@@ -112,7 +113,7 @@ function Hero() {
               href="#product"
               className={`${styles.btn} ${styles.btnGhost} ${styles.btnGhostOutline} ${styles.btnLg}`}
             >
-              צפה בדמו ←
+              צפה בדמו <IcoArrowLeft c="currentColor" s={14} />
             </a>
           </div>
           <div className={styles.heroStats}>
@@ -239,7 +240,12 @@ function Showcase() {
                   <div className={styles.miniDashValue}>5</div>
                 </div>
               </div>
-              <div className={styles.miniDashHint}>קליק לפתיחת הדמו ←</div>
+              <div className={styles.miniDashHint}>
+                <span className="inline-flex items-center gap-1">
+                  קליק לפתיחת הדמו
+                  <IcoArrowLeft c="currentColor" s={12} />
+                </span>
+              </div>
             </div>
           </div>
 
@@ -587,7 +593,7 @@ function FinalCta() {
         </h2>
         <p>14 יום חינם. בלי כרטיס אשראי. בלי התחייבות. רק האפשרות לראות איך נראות הזמנות שמגיעות ישר אליך.</p>
         <Link href="/signup" className={`${styles.btn} ${styles.btnLg} ${styles.btnWhite}`}>
-          פתח חנות עכשיו ←
+          פתח חנות עכשיו <IcoArrowLeft c="currentColor" s={14} />
         </Link>
       </div>
     </section>

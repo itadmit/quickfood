@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { THEMES, type ThemeId } from "@/lib/themes";
 import { type BusinessType } from "@/components/shared/MenuItemImage";
 import { BusinessTypeSelect } from "@/components/shared/BusinessTypeSelect";
+import { IcoArrowRight } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 
 export function NewTenantForm() {
@@ -86,8 +87,9 @@ export function NewTenantForm() {
         <Link
           href="/admin/tenants"
           className="w-9 h-9 rounded-full border border-qf-line-dash grid place-items-center"
+          aria-label="חזרה"
         >
-          →
+          <IcoArrowRight c="currentColor" s={16} />
         </Link>
         <div>
           <h1 className="text-2xl font-bold">לקוח חדש</h1>

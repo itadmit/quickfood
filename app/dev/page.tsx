@@ -35,7 +35,7 @@ export default function DevLinksPage() {
             title="OpenAPI spec"
             sub="/api/v1/openapi.json — חוזה ה-API למובייל / אינטגרציות"
           />
-          <LinkCard href="/" title="→ חזרה לדף הבית" sub="לנדינג שיווקי" />
+          <LinkCard href="/" title="חזרה לדף הבית" sub="לנדינג שיווקי" />
         </div>
       </div>
     </main>

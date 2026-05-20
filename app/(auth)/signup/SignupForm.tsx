@@ -59,7 +59,7 @@ export function SignupForm() {
   const [ownerPassword, setOwnerPassword] = useState("");
 
   function autoSlug(v: string) {
-    // simple Hebrew → slug
+    // simple Hebrew ← slug
     const map: Record<string, string> = {};
     const ascii = v
       .toLowerCase()
@@ -190,7 +190,7 @@ export function SignupForm() {
             className="px-5 py-3 rounded-xl bg-qf-ink hover:bg-black text-white text-sm font-medium disabled:opacity-50 inline-flex items-center gap-2"
           >
             המשך
-            <span aria-hidden>→</span>
+            <IcoArrowLeft c="currentColor" s={14} />
           </button>
         ) : (
           <button
@@ -207,7 +207,7 @@ export function SignupForm() {
             ) : (
               <>
                 <span>פתיחת חנות</span>
-                <span aria-hidden>→</span>
+                <IcoArrowLeft c="currentColor" s={14} />
               </>
             )}
           </button>

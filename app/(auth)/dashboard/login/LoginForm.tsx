@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthEmailField, AuthPasswordField } from "@/components/shared/AuthFields";
+import { IcoArrowLeft } from "@/components/shared/Icons";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -84,7 +85,7 @@ export default function LoginForm() {
         ) : (
           <>
             <span>התחבר</span>
-            <span aria-hidden>→</span>
+            <IcoArrowLeft c="currentColor" s={14} />
           </>
         )}
       </button>
