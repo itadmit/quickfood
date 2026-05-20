@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoChev, IcoMinus, IcoPlus, IcoHeart, IcoCheck } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
@@ -68,8 +68,23 @@ export function ItemDetail({
 
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
+  const [flashGroupId, setFlashGroupId] = useState<string | null>(null);
 
-  const { total, sizeDelta, optionsDelta } = useMemo(() => {
+  // Sticky top bar appears when the hero scrolls out of view
+  const heroSentinelRef = useRef<HTMLDivElement | null>(null);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  useEffect(() => {
+    const target = heroSentinelRef.current;
+    if (!target) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyBar(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
+
+  const total = useMemo(() => {
     const size = item.sizes.find((s) => s.id === sizeId);
     const sDelta = size?.priceDelta ?? 0;
     let oDelta = 0;
@@ -79,9 +94,16 @@ export function ItemDetail({
         if (selected.has(o.id)) oDelta += o.priceDelta;
       }
     }
-    const unit = item.basePrice + sDelta + oDelta;
-    return { total: unit * quantity, sizeDelta: sDelta, optionsDelta: oDelta };
+    return (item.basePrice + sDelta + oDelta) * quantity;
   }, [item, sizeId, picks, quantity]);
+
+  const missingGroup = useMemo(() => {
+    for (const g of item.optionGroups) {
+      const sel = picks[g.id] ?? new Set();
+      if (g.required && sel.size < g.minSelect) return g;
+    }
+    return null;
+  }, [item.optionGroups, picks]);
 
   function toggleOption(group: OptionGroup, optionId: string) {
     setPicks((prev) => {
@@ -103,13 +125,12 @@ export function ItemDetail({
   }
 
   function addToCart() {
-    // Validate required groups
-    for (const g of item.optionGroups) {
-      const sel = picks[g.id] ?? new Set();
-      if (g.required && sel.size < g.minSelect) {
-        alert(`חובה לבחור באפשרות מתוך "${g.name}"`);
-        return;
-      }
+    if (missingGroup) {
+      const el = document.getElementById(`group-${missingGroup.id}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setFlashGroupId(missingGroup.id);
+      window.setTimeout(() => setFlashGroupId(null), 1400);
+      return;
     }
     const size = item.sizes.find((s) => s.id === sizeId);
     const selectedOpts: Array<{ groupId: string; optionId: string; name: string; priceDelta: number }> = [];
@@ -137,96 +158,116 @@ export function ItemDetail({
     router.push(`/${tenantSlug}/cart`);
   }
 
+  const ctaLabel = missingGroup ? `בחר ${missingGroup.name}` : "הוסף לסל";
+
   return (
-    <div className="pb-32">
+    <div className="pb-36">
+      {/* Sticky top bar — appears once the hero scrolls out */}
+      <div
+        className={cn(
+          "fixed top-0 inset-x-0 z-40 max-w-md mx-auto bg-white/95 backdrop-blur border-b border-qf-line transition-all duration-200",
+          showStickyBar ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none",
+        )}
+      >
+        <div className="flex items-center gap-3 px-4 py-3">
+          <Link
+            href={`/${tenantSlug}/menu`}
+            className="w-9 h-9 rounded-full bg-qf-line-soft grid place-items-center"
+            aria-label="חזרה"
+          >
+            <IcoChev s={16} />
+          </Link>
+          <div className="flex-1 min-w-0 font-semibold truncate">{item.name}</div>
+        </div>
+      </div>
+
       {/* Hero */}
-      <div className="relative h-80 overflow-hidden">
-        <MenuItemImage
-          src={item.images?.[0]}
-          alt={item.name}
-          businessType={businessType}
-          size={420}
-          rounded="md"
-          className="w-full h-full"
-        />
+      <div className="relative">
+        <div className="relative h-72 overflow-hidden bg-qf-line-soft">
+          <MenuItemImage
+            src={item.images?.[0]}
+            alt={item.name}
+            businessType={businessType}
+            size={520}
+            rounded="md"
+            className="w-full h-full"
+          />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-black/30 to-transparent pointer-events-none" />
+        </div>
         <Link
           href={`/${tenantSlug}/menu`}
-          className="absolute top-4 inset-s-4 w-10 h-10 rounded-full bg-white shadow grid place-items-center"
+          className="absolute top-4 inset-s-4 w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-md grid place-items-center"
           aria-label="חזרה"
         >
           <IcoChev s={18} />
         </Link>
         <button
           type="button"
-          className="absolute top-4 inset-e-4 w-10 h-10 rounded-full bg-white shadow grid place-items-center"
+          className="absolute top-4 inset-e-4 w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-md grid place-items-center"
           aria-label="הוסף למועדפים"
         >
           <IcoHeart s={18} />
         </button>
+        {/* Sentinel for sticky-bar toggle */}
+        <div ref={heroSentinelRef} className="absolute bottom-12 inset-x-0 h-px" />
       </div>
 
-      <div className="px-5 -mt-5 relative">
-        <div className="bg-white rounded-2xl border border-qf-line p-4 space-y-3">
-          {item.tags.length > 0 && (
-            <div className="flex gap-1.5 flex-wrap">
-              {item.tags.map((t) => (
-                <span
-                  key={t}
-                  className="text-[10px] bg-qf-green-soft text-qf-green-deep px-1.5 py-0.5 rounded-md"
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
-          )}
-          <h1 className="text-2xl font-bold">{item.name}</h1>
-          <p className="text-sm text-qf-ink2 leading-relaxed">{item.description}</p>
-          <div className="text-xs text-qf-mute tnum">
-            מחיר בסיס {formatPrice(item.basePrice)}
-            {sizeDelta !== 0 && ` · גודל ${sizeDelta > 0 ? "+" : ""}${sizeDelta}`}
-            {optionsDelta !== 0 && ` · תוספות +${optionsDelta}`}
-          </div>
-        </div>
-      </div>
-
-      {/* Sizes */}
-      {item.sizes.length > 0 && (
-        <Section title="גודל">
-          <div className="grid grid-cols-1 gap-2">
-            {item.sizes.map((s) => (
-              <Row
-                key={s.id}
-                active={sizeId === s.id}
-                onClick={() => setSizeId(s.id)}
-                label={s.name}
-                hint={
-                  s.priceDelta === 0
-                    ? "בסיס"
-                    : s.priceDelta > 0
-                      ? `+${formatPrice(s.priceDelta)}`
-                      : `-${formatPrice(-s.priceDelta)}`
-                }
-                radio
-              />
+      {/* Title + description */}
+      <section className="bg-white px-5 pt-5 pb-5">
+        {item.tags.length > 0 && (
+          <div className="flex gap-1.5 flex-wrap mb-2.5">
+            {item.tags.slice(0, 4).map((t) => (
+              <span
+                key={t}
+                className="text-[10px] bg-qf-green-soft text-qf-green-deep px-2 py-0.5 rounded-md font-medium"
+              >
+                {t}
+              </span>
             ))}
           </div>
+        )}
+        <h1 className="text-[22px] font-bold leading-tight">{item.name}</h1>
+        {item.description && (
+          <p className="text-sm text-qf-ink2 leading-relaxed mt-2">{item.description}</p>
+        )}
+        <div className="text-base font-semibold tnum mt-3">{formatPrice(item.basePrice)}</div>
+      </section>
+
+      {/* Sizes (treated as required-single group) */}
+      {item.sizes.length > 0 && (
+        <Section title="גודל" required={item.sizes.length > 1}>
+          {item.sizes.map((s) => (
+            <Row
+              key={s.id}
+              active={sizeId === s.id}
+              onClick={() => setSizeId(s.id)}
+              label={s.name}
+              priceLabel={formatPrice(item.basePrice + s.priceDelta)}
+              priceTone="absolute"
+              radio
+            />
+          ))}
         </Section>
       )}
 
       {/* Option groups */}
-      {item.optionGroups.map((g) => (
-        <Section
-          key={g.id}
-          title={g.name}
-          hint={
-            g.required
-              ? "חובה"
-              : g.type === "multi"
-                ? `עד ${g.maxSelect}`
-                : undefined
-          }
-        >
-          <div className="grid grid-cols-1 gap-2">
+      {item.optionGroups.map((g) => {
+        const subtitle = g.required
+          ? g.type === "single"
+            ? "חובה לבחור 1"
+            : `חובה ${g.minSelect}${g.minSelect === g.maxSelect ? "" : `–${g.maxSelect}`}`
+          : g.type === "multi"
+            ? `אופציונלי · עד ${g.maxSelect}`
+            : "אופציונלי";
+        return (
+          <Section
+            key={g.id}
+            id={`group-${g.id}`}
+            title={g.name}
+            required={g.required}
+            subtitle={subtitle}
+            flash={flashGroupId === g.id}
+          >
             {g.options.map((o) => {
               const checked = picks[g.id]?.has(o.id) ?? false;
               return (
@@ -235,76 +276,112 @@ export function ItemDetail({
                   active={checked}
                   onClick={() => toggleOption(g, o.id)}
                   label={o.name}
-                  hint={o.priceDelta > 0 ? `+${formatPrice(o.priceDelta)}` : undefined}
+                  priceLabel={
+                    o.priceDelta === 0
+                      ? null
+                      : o.priceDelta > 0
+                        ? `+${formatPrice(o.priceDelta)}`
+                        : `-${formatPrice(-o.priceDelta)}`
+                  }
+                  priceTone="delta"
                   radio={g.type === "single"}
                 />
               );
             })}
-          </div>
-        </Section>
-      ))}
+          </Section>
+        );
+      })}
 
       {/* Notes */}
-      <Section title="הערות לפיצרייה">
+      <Section title="הערות לפיצרייה" subtitle="אופציונלי">
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
+          maxLength={200}
           placeholder="למשל: בלי בצל, חתוך ל-8"
-          className="w-full bg-white border border-qf-line rounded-xl px-3 py-2 text-sm outline-none focus:border-(--qf-primary)"
+          className="w-full bg-qf-bg border border-qf-line rounded-xl px-3 py-2.5 text-sm outline-none focus:border-(--qf-primary) focus:bg-white resize-none"
         />
       </Section>
 
-      {/* Footer add to cart */}
-      <div className="fixed bottom-0 inset-x-0 z-30 max-w-md mx-auto bg-white border-t border-qf-line p-4 flex items-center gap-3">
-        <div className="flex items-center bg-qf-bg rounded-full border border-qf-line">
+      {/* Sticky footer CTA */}
+      <div className="fixed bottom-0 inset-x-0 z-30 max-w-md mx-auto">
+        <div className="bg-white border-t border-qf-line px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center gap-3">
+          <div className="flex items-center bg-qf-line-soft rounded-full">
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              disabled={quantity <= 1}
+              className="w-10 h-10 grid place-items-center disabled:opacity-40"
+              aria-label="הפחת"
+            >
+              <IcoMinus s={16} />
+            </button>
+            <div className="w-7 text-center font-bold tnum">{quantity}</div>
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => Math.min(20, q + 1))}
+              disabled={quantity >= 20}
+              className="w-10 h-10 grid place-items-center disabled:opacity-40"
+              aria-label="הוסף"
+            >
+              <IcoPlus c="#11231a" s={16} />
+            </button>
+          </div>
           <button
             type="button"
-            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-            className="w-9 h-9 grid place-items-center"
-            aria-label="הפחת"
+            onClick={addToCart}
+            className={cn(
+              "flex-1 rounded-full px-4 h-12 text-sm font-semibold flex items-center justify-between transition active:scale-[0.98]",
+              missingGroup
+                ? "bg-qf-ink2 text-white"
+                : "bg-(--qf-primary) hover:bg-(--qf-deep) text-white shadow-sm",
+            )}
           >
-            <IcoMinus s={16} />
-          </button>
-          <div className="w-7 text-center font-semibold tnum">{quantity}</div>
-          <button
-            type="button"
-            onClick={() => setQuantity((q) => Math.min(20, q + 1))}
-            className="w-9 h-9 grid place-items-center"
-            aria-label="הוסף"
-          >
-            <IcoPlus c="#11231a" s={16} />
+            <span>{ctaLabel}</span>
+            <span className="tnum">{formatPrice(total)}</span>
           </button>
         </div>
-        <button
-          type="button"
-          onClick={addToCart}
-          className="flex-1 bg-(--qf-primary) hover:bg-(--qf-deep) text-white rounded-full px-4 py-3 text-sm font-semibold flex items-center justify-between"
-        >
-          <span>הוסף לסל</span>
-          <span className="tnum">{formatPrice(total)}</span>
-        </button>
       </div>
     </div>
   );
 }
 
 function Section({
+  id,
   title,
-  hint,
+  subtitle,
+  required,
+  flash,
   children,
 }: {
+  id?: string;
   title: string;
-  hint?: string;
+  subtitle?: string;
+  required?: boolean;
+  flash?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <section className="px-5 mt-5">
-      <div className="flex items-baseline justify-between mb-2">
-        <h2 className="font-semibold">{title}</h2>
-        {hint && <span className="text-xs text-qf-mute">{hint}</span>}
+    <section
+      id={id}
+      className={cn(
+        "bg-white mt-2 px-5 py-4 scroll-mt-20 transition",
+        flash && "ring-2 ring-qf-tomato/60",
+      )}
+    >
+      <div className="flex items-baseline justify-between gap-3 mb-2">
+        <div className="flex items-center gap-2">
+          <h2 className="font-semibold text-base">{title}</h2>
+          {required && (
+            <span className="text-[10px] bg-qf-tomato-soft text-qf-tomato px-1.5 py-0.5 rounded-md font-semibold">
+              חובה
+            </span>
+          )}
+        </div>
+        {subtitle && <span className="text-xs text-qf-mute">{subtitle}</span>}
       </div>
-      {children}
+      <div>{children}</div>
     </section>
   );
 }
@@ -313,31 +390,28 @@ function Row({
   active,
   onClick,
   label,
-  hint,
+  priceLabel,
+  priceTone,
   radio,
 }: {
   active: boolean;
   onClick: () => void;
   label: string;
-  hint?: string;
+  priceLabel: string | null;
+  priceTone: "absolute" | "delta";
   radio?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={cn(
-        "w-full flex items-center justify-between gap-3 bg-white border rounded-xl px-3.5 py-3 text-sm transition",
-        active
-          ? "border-(--qf-primary) ring-1 ring-(--qf-primary)/30"
-          : "border-qf-line hover:border-qf-ink2/30",
-      )}
+      className="w-full flex items-center justify-between gap-3 py-3 text-sm border-b border-qf-line last:border-0 active:bg-qf-line-soft transition"
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 min-w-0">
         <span
           className={cn(
             radio ? "rounded-full" : "rounded-md",
-            "w-5 h-5 border-2 grid place-items-center transition",
+            "w-5 h-5 border-2 grid place-items-center shrink-0 transition",
             active ? "border-(--qf-primary) bg-(--qf-primary)" : "border-qf-line-dash",
           )}
         >
@@ -348,9 +422,20 @@ function Row({
               <IcoCheck c="#fff" s={12} />
             ))}
         </span>
-        <span>{label}</span>
+        <span className={cn("truncate", active ? "font-medium text-qf-ink" : "text-qf-ink")}>
+          {label}
+        </span>
       </div>
-      {hint && <span className="text-xs text-qf-mute tnum">{hint}</span>}
+      {priceLabel && (
+        <span
+          className={cn(
+            "text-xs tnum font-medium shrink-0",
+            priceTone === "absolute" ? "text-qf-ink2" : "text-qf-mute",
+          )}
+        >
+          {priceLabel}
+        </span>
+      )}
     </button>
   );
 }

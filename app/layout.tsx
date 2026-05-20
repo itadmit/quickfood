@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Sans_Hebrew, Pacifico } from "next/font/google";
 import "./globals.css";
+import { RouteProgress } from "@/components/shared/RouteProgress";
 
 const notoHebrew = Noto_Sans_Hebrew({
   subsets: ["hebrew", "latin"],
@@ -33,6 +34,7 @@ export default function RootLayout({
       className={`${notoHebrew.variable} ${pacifico.variable} h-full`}
     >
       <body className="min-h-full flex flex-col bg-qf-bg text-qf-ink">
+        <RouteProgress />
         {children}
       </body>
     </html>

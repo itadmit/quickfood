@@ -27,7 +27,7 @@ export const IcoPin = ({ c = "#11231a", s = 18, className }: IconProps) => (
 
 export const IcoChev = ({ c = "#11231a", s = 16, className }: IconProps) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
-    <path d="M9 6l-6 6 6 6" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M9 6l6 6-6 6" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 

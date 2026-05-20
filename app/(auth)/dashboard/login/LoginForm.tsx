@@ -74,10 +74,19 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={busy}
-        className="w-full py-3 rounded-xl bg-qf-ink hover:bg-black text-white font-medium transition disabled:opacity-60 inline-flex items-center justify-center gap-2"
+        className="w-full py-3 rounded-xl bg-qf-ink hover:bg-black text-white font-medium transition disabled:opacity-70 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
       >
-        {busy ? "מתחבר..." : "התחבר"}
-        {!busy && <span aria-hidden>→</span>}
+        {busy ? (
+          <>
+            <span className="qf-spinner" aria-hidden />
+            <span>מתחבר…</span>
+          </>
+        ) : (
+          <>
+            <span>התחבר</span>
+            <span aria-hidden>→</span>
+          </>
+        )}
       </button>
 
       <div className="relative flex items-center gap-3 py-1">

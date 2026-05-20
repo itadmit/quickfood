@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { IcoChev, IcoSearch, IcoStar } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
@@ -28,23 +28,20 @@ interface Props {
   items: Item[];
 }
 
+// px offset between viewport top and the line below the sticky chip bar
+const SCROLL_OFFSET = 80;
+
 export function CustomerMenu({ tenantSlug, tenantName, businessType = "general", categories, items }: Props) {
   const [query, setQuery] = useState("");
-  const [activeCat, setActiveCat] = useState<string | "all">("all");
   const { itemCount, subtotal } = useCart();
 
   const filtered = useMemo(() => {
-    let res = items;
-    if (activeCat !== "all") res = res.filter((i) => i.categoryId === activeCat);
-    if (query.trim()) {
-      const q = query.trim().toLowerCase();
-      res = res.filter(
-        (i) =>
-          i.name.toLowerCase().includes(q) || i.description.toLowerCase().includes(q),
-      );
-    }
-    return res;
-  }, [items, activeCat, query]);
+    if (!query.trim()) return items;
+    const q = query.trim().toLowerCase();
+    return items.filter(
+      (i) => i.name.toLowerCase().includes(q) || i.description.toLowerCase().includes(q),
+    );
+  }, [items, query]);
 
   const byCategory = useMemo(() => {
     const groups: Record<string, Item[]> = {};
@@ -53,6 +50,61 @@ export function CustomerMenu({ tenantSlug, tenantName, businessType = "general",
     }
     return groups;
   }, [filtered]);
+
+  const visibleCategories = useMemo(
+    () => categories.filter((c) => (byCategory[c.id]?.length ?? 0) > 0),
+    [categories, byCategory],
+  );
+
+  const [activeCat, setActiveCat] = useState<string>(categories[0]?.id ?? "");
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+  const chipRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const scrollLockRef = useRef(false);
+
+  // Scroll-spy: highlight the section currently sitting just below the sticky chip bar.
+  useEffect(() => {
+    if (visibleCategories.length === 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (scrollLockRef.current) return;
+        const intersecting = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (intersecting.length > 0) {
+          const id = (intersecting[0].target as HTMLElement).dataset.catId;
+          if (id) setActiveCat(id);
+        }
+      },
+      {
+        // Treat a band just under the chip bar as the "active" zone.
+        rootMargin: `-${SCROLL_OFFSET + 20}px 0px -65% 0px`,
+        threshold: 0,
+      },
+    );
+    for (const c of visibleCategories) {
+      const el = sectionRefs.current[c.id];
+      if (el) observer.observe(el);
+    }
+    return () => observer.disconnect();
+  }, [visibleCategories]);
+
+  // Keep the active chip horizontally in view inside the sticky pill bar.
+  useEffect(() => {
+    const el = chipRefs.current[activeCat];
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }, [activeCat]);
+
+  const handleChipClick = (catId: string) => {
+    setActiveCat(catId);
+    const el = sectionRefs.current[catId];
+    if (!el) return;
+    scrollLockRef.current = true;
+    const top = el.getBoundingClientRect().top + window.scrollY - SCROLL_OFFSET;
+    window.scrollTo({ top, behavior: "smooth" });
+    window.setTimeout(() => {
+      scrollLockRef.current = false;
+    }, 700);
+  };
 
   return (
     <div className="pb-32">
@@ -89,27 +141,43 @@ export function CustomerMenu({ tenantSlug, tenantName, businessType = "general",
       {/* Sticky category nav */}
       <div className="sticky top-0 z-20 bg-qf-bg/95 backdrop-blur border-b border-qf-line">
         <div className="flex gap-1.5 overflow-x-auto no-scrollbar px-4 py-2.5">
-          <Chip active={activeCat === "all"} onClick={() => setActiveCat("all")}>
-            הכל
-          </Chip>
-          {categories.map((c) => (
-            <Chip
-              key={c.id}
-              active={activeCat === c.id}
-              onClick={() => setActiveCat(c.id)}
-            >
-              {c.name}
-            </Chip>
-          ))}
+          {visibleCategories.map((c) => {
+            const active = activeCat === c.id;
+            return (
+              <button
+                key={c.id}
+                ref={(el) => {
+                  chipRefs.current[c.id] = el;
+                }}
+                type="button"
+                onClick={() => handleChipClick(c.id)}
+                className={cn(
+                  "px-3.5 py-1.5 rounded-full text-sm whitespace-nowrap border transition",
+                  active
+                    ? "bg-(--qf-primary) text-white border-transparent"
+                    : "bg-white text-qf-ink2 border-qf-line",
+                )}
+              >
+                {c.name}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       <div className="px-5 mt-3 space-y-6">
-        {categories.map((c) => {
+        {visibleCategories.map((c) => {
           const list = byCategory[c.id] ?? [];
-          if (list.length === 0) return null;
           return (
-            <section key={c.id} id={`cat-${c.id}`} className="space-y-2.5">
+            <section
+              key={c.id}
+              id={`cat-${c.id}`}
+              ref={(el) => {
+                sectionRefs.current[c.id] = el;
+              }}
+              data-cat-id={c.id}
+              className="space-y-2.5 scroll-mt-20"
+            >
               <h2 className="font-semibold text-base">{c.name}</h2>
               <div className="space-y-2.5">
                 {list.map((item) => (
@@ -188,30 +256,5 @@ export function CustomerMenu({ tenantSlug, tenantName, businessType = "general",
 
       <BottomTabBar tenantSlug={tenantSlug} />
     </div>
-  );
-}
-
-function Chip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "px-3.5 py-1.5 rounded-full text-sm whitespace-nowrap border transition",
-        active
-          ? "bg-(--qf-primary) text-white border-transparent"
-          : "bg-white text-qf-ink2 border-qf-line",
-      )}
-    >
-      {children}
-    </button>
   );
 }

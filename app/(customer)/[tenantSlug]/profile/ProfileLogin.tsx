@@ -56,7 +56,7 @@ export function ProfileLogin() {
       <div className="text-center space-y-1">
         <h2 className="text-xl font-bold">התחברות עם טלפון</h2>
         <p className="text-sm text-qf-mute">
-          {step === "phone" ? "נשלח לך קוד אימות באס״מ״ס" : "הזן את הקוד שקיבלת"}
+          {step === "phone" ? "נשלח לך קוד אימות ב-SMS" : "הזן את הקוד שקיבלת"}
         </p>
       </div>
 

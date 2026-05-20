@@ -122,3 +122,32 @@ a {
     display: none !important;
   }
 }
+
+/* ─── Loading / skeleton / spinner ───────────────────────────── */
+@keyframes qf-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.animate-qf-pulse {
+  animation: qf-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes qf-spin {
+  to { transform: rotate(360deg); }
+}
+.qf-spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border-radius: 9999px;
+  border: 2px solid currentColor;
+  border-inline-start-color: transparent;
+  animation: qf-spin 0.7s linear infinite;
+  vertical-align: -2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-qf-pulse,
+  .qf-spinner {
+    animation: none;
+  }
+}

@@ -24,8 +24,19 @@ export function AuthShell({
 }: Props) {
   return (
     <div className="min-h-screen bg-white text-qf-ink grid grid-cols-1 lg:grid-cols-[1.1fr_1fr]">
-      {/* ─── Left: marketing panel (distinct cream background + blur orbs) ─── */}
+      {/* ─── Left: marketing panel (diner photo + cream wash + blur orbs) ─── */}
       <aside className="hidden lg:flex relative overflow-hidden border-e border-qf-line-dash bg-[#f5f2ec]">
+        {/* faded diner backdrop */}
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-cover bg-center opacity-15"
+          style={{ backgroundImage: "url('/img/auth/diner.jpg')" }}
+        />
+        {/* cream wash on top of the photo so the preview stays readable */}
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-linear-to-br from-[#f5f2ec]/85 via-[#f5f2ec]/70 to-[#f5f2ec]/90"
+        />
         {/* decorative blur orbs */}
         <div
           aria-hidden

@@ -87,7 +87,7 @@ export function NewTenantForm() {
           href="/admin/tenants"
           className="w-9 h-9 rounded-full border border-qf-line-dash grid place-items-center"
         >
-          ←
+          →
         </Link>
         <div>
           <h1 className="text-2xl font-bold">לקוח חדש</h1>

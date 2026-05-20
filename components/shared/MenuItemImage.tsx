@@ -157,7 +157,7 @@ const PLACEHOLDER_CONFIG: Record<
 
 import {
   Pizza,
-  Beef,
+  Hamburger,
   Salad,
   Fish,
   Soup,
@@ -171,7 +171,7 @@ import {
 
 const SYMBOL: Record<BusinessType, React.ComponentType<{ size: number; color: string; strokeWidth: number }>> = {
   pizza: Pizza,
-  burger: Beef,
+  burger: Hamburger,
   falafel: Salad,
   shawarma: Sandwich,
   sushi: Fish,

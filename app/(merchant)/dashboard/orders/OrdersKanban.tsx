@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { IcoClock, IcoPhone, IcoPrinter, IcoFlame } from "@/components/shared/Icons";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -67,18 +67,14 @@ const COLUMNS: Array<{
 
 const SLA_MINUTES_BEFORE_LATE = 15;
 
-function subscribeNow(cb: () => void): () => void {
-  const id = setInterval(cb, 30_000);
-  return () => clearInterval(id);
-}
-
 export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
   const [orders, setOrders] = useState<OrderRow[]>(initial);
-  const now = useSyncExternalStore(
-    subscribeNow,
-    () => Date.now(),
-    () => 0,
-  );
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   const refresh = useCallback(async () => {
     try {

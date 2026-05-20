@@ -177,7 +177,7 @@ export function SignupForm() {
           onClick={() => (step > 1 ? setStep((step - 1) as 1 | 2 | 3) : router.push("/"))}
           className="text-sm text-qf-mute hover:text-qf-ink"
         >
-          {step > 1 ? "← חזרה" : "← לעמוד הבית"}
+          {step > 1 ? "→ חזרה" : "→ לעמוד הבית"}
         </button>
 
         {step < 3 ? (
