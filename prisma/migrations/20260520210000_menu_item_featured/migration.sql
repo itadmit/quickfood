@@ -1,0 +1,1 @@
+ALTER TABLE "menu_items" ADD COLUMN "featured" BOOLEAN NOT NULL DEFAULT false;

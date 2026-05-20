@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { IcoChev } from "@/components/shared/Icons";
+import { IcoChev, IcoArrowLeft } from "@/components/shared/Icons";
+import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -20,7 +21,7 @@ const PAYMENT_METHOD_LABELS: Record<CustomerPaymentMethod, string> = {
 
 export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
   const router = useRouter();
-  const { lines, method, subtotal, branch, clear } = useCart();
+  const { lines, method, subtotal, branch, tenant, clear } = useCart();
 
   const [address, setAddress] = useState("");
   const [floor, setFloor] = useState("");
@@ -43,14 +44,11 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
         if (cancelled) return;
         const methods = d.restaurant?.payment_methods ?? [];
         setAvailableMethods(methods);
-        // Prefer cash ← card ← bit ← apple_pay ← google_pay (first available)
         const preferred: CustomerPaymentMethod[] = ["cash", "card", "bit", "apple_pay", "google_pay"];
         const first = preferred.find((m) => methods.includes(m)) ?? null;
         setPaymentMethod(first);
       })
-      .catch(() => {
-        /* leave empty; place() will show an error */
-      });
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -59,16 +57,15 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
   const deliveryFee = method === "delivery" ? branch?.deliveryFee ?? 0 : 0;
   const serviceFee = branch?.serviceFee ?? 0;
   const total = subtotal + deliveryFee + serviceFee + tip;
+  const itemCount = lines.reduce((n, l) => n + l.quantity, 0);
+  const businessType = (tenant.businessType as BusinessType) ?? "general";
 
   if (lines.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center p-8 text-center">
         <div>
           <p className="text-qf-mute mb-4">הסל ריק</p>
-          <Link
-            href={`/${tenantSlug}/menu`}
-            className="text-(--qf-deep) underline"
-          >
+          <Link href={`/${tenantSlug}/menu`} className="text-(--qf-deep) underline">
             לתפריט
           </Link>
         </div>
@@ -124,8 +121,11 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
     }
   }
 
+  const canPlace =
+    !busy && !!paymentMethod && !!name && !!phone && (method !== "delivery" || !!address);
+
   return (
-    <div className="pb-44">
+    <div className="pb-32 bg-qf-bg/40 min-h-screen">
       <header className="px-5 pt-5 pb-3 flex items-center gap-3 bg-white border-b border-qf-line sticky top-0 z-10">
         <Link
           href={`/${tenantSlug}/cart`}
@@ -137,130 +137,235 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
         <h1 className="font-bold text-lg">סיום הזמנה</h1>
       </header>
 
-      {/* Method recap */}
-      <Section title={method === "delivery" ? "כתובת משלוח" : "פרטי איסוף"}>
-        {method === "delivery" && (
-          <div className="space-y-2.5">
-            <Input value={address} onChange={setAddress} placeholder="רחוב, מספר, עיר" />
-            <Input value={floor} onChange={setFloor} placeholder="קומה / דירה" />
-            <Input
-              value={deliveryNotes}
-              onChange={setDeliveryNotes}
-              placeholder="הוראות לשליח (למשל: השאר ליד הדלת)"
-            />
+      <div className="px-4 mt-4 space-y-3">
+        {/* 1. Contact — promoted to the top */}
+        <Card>
+          <CardTitle>פרטי קשר</CardTitle>
+          <div className="grid grid-cols-1 gap-3 mt-3">
+            <Field label="שם מלא" required>
+              <Input value={name} onChange={setName} placeholder="ישראל ישראלי" autoComplete="name" />
+            </Field>
+            <Field label="טלפון" required>
+              <Input
+                value={phone}
+                onChange={setPhone}
+                placeholder="050-1234567"
+                dir="ltr"
+                inputMode="tel"
+                autoComplete="tel"
+              />
+            </Field>
           </div>
-        )}
-        <div className="grid grid-cols-2 gap-2.5 mt-2.5">
-          <Input value={name} onChange={setName} placeholder="שם מלא" />
-          <Input value={phone} onChange={setPhone} placeholder="טלפון 050-1234567" dir="ltr" />
-        </div>
-      </Section>
+        </Card>
 
-      {/* Payment method — only the ones the restaurant accepts */}
-      <Section title="אמצעי תשלום">
-        {availableMethods.length === 0 ? (
-          <div className="text-xs text-qf-mute bg-qf-line-soft border border-qf-line-dash rounded-lg px-3 py-2">
-            המסעדה עוד לא הגדירה אמצעי תשלום. צור איתם קשר ישירות.
-          </div>
+        {/* 2. Delivery / pickup */}
+        {method === "delivery" ? (
+          <Card>
+            <CardTitle>כתובת משלוח</CardTitle>
+            <div className="grid grid-cols-1 gap-3 mt-3">
+              <Field label="כתובת" required>
+                <Input
+                  value={address}
+                  onChange={setAddress}
+                  placeholder="רחוב, מספר, עיר"
+                  autoComplete="street-address"
+                />
+              </Field>
+              <Field label="קומה / דירה">
+                <Input value={floor} onChange={setFloor} placeholder="לדוגמה: 3 · דירה 12" />
+              </Field>
+              <Field label="הוראות לשליח">
+                <Input
+                  value={deliveryNotes}
+                  onChange={setDeliveryNotes}
+                  placeholder="השאר ליד הדלת, להתקשר בהגעה"
+                />
+              </Field>
+            </div>
+          </Card>
         ) : (
-          <>
-            <div className="grid grid-cols-2 gap-2">
-              {availableMethods.map((m) => (
-                <Pill
-                  key={m}
-                  active={paymentMethod === m}
-                  onClick={() => setPaymentMethod(m)}
-                >
-                  {PAYMENT_METHOD_LABELS[m]}
+          <Card>
+            <CardTitle>פרטי איסוף</CardTitle>
+            <p className="text-sm text-qf-ink2 mt-2">
+              איסוף מהסניף: <span className="font-medium">{branch?.address ?? ""}</span>
+            </p>
+          </Card>
+        )}
+
+        {/* 3. Order summary — with thumbnails */}
+        <Card>
+          <div className="flex items-baseline justify-between">
+            <CardTitle>סיכום הזמנה</CardTitle>
+            <Link
+              href={`/${tenantSlug}/cart`}
+              className="text-xs text-(--qf-deep) font-medium hover:underline"
+            >
+              עריכת סל
+            </Link>
+          </div>
+          <ul className="mt-3 divide-y divide-qf-line-soft">
+            {lines.map((l) => {
+              const opts = l.options.reduce((a, o) => a + o.priceDelta, 0);
+              const unit = l.basePrice + l.sizeDelta + opts;
+              const lineTotal = unit * l.quantity;
+              const variant = [l.sizeName, ...l.options.map((o) => o.name)]
+                .filter(Boolean)
+                .join(" · ");
+              return (
+                <li key={l.lineId} className="py-2.5 flex gap-3 items-start">
+                  <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0">
+                    <MenuItemImage
+                      src={l.imageUrl ?? undefined}
+                      alt={l.name}
+                      businessType={businessType}
+                      size={56}
+                      rounded="xl"
+                      fill
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="font-medium text-sm leading-tight">{l.name}</div>
+                      <div className="text-sm tnum font-medium shrink-0">
+                        {formatPrice(lineTotal)}
+                      </div>
+                    </div>
+                    {variant && (
+                      <div className="text-xs text-qf-mute mt-0.5 line-clamp-1">{variant}</div>
+                    )}
+                    <div className="text-xs text-qf-ink2 mt-1 tnum">× {l.quantity}</div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="mt-3 pt-3 border-t border-qf-line-soft space-y-1.5 text-sm">
+            <SumRow label={`${itemCount} פריטים`} value={formatPrice(subtotal)} />
+            {method === "delivery" && (
+              <SumRow label="דמי משלוח" value={formatPrice(deliveryFee)} />
+            )}
+            {serviceFee > 0 && <SumRow label="דמי שירות" value={formatPrice(serviceFee)} />}
+            {tip > 0 && <SumRow label="טיפ לשליח" value={formatPrice(tip)} />}
+            <div className="pt-2 border-t border-qf-line-soft flex items-center justify-between">
+              <div className="font-semibold">סה״כ לתשלום</div>
+              <div className="font-bold tnum text-lg">{formatPrice(total)}</div>
+            </div>
+          </div>
+        </Card>
+
+        {/* 4. Payment */}
+        <Card>
+          <CardTitle>אמצעי תשלום</CardTitle>
+          {availableMethods.length === 0 ? (
+            <div className="text-xs text-qf-mute bg-qf-line-soft border border-qf-line-dash rounded-lg px-3 py-2 mt-3">
+              המסעדה עוד לא הגדירה אמצעי תשלום. צור איתם קשר ישירות.
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-2 mt-3">
+                {availableMethods.map((m) => (
+                  <Pill
+                    key={m}
+                    active={paymentMethod === m}
+                    onClick={() => setPaymentMethod(m)}
+                  >
+                    {PAYMENT_METHOD_LABELS[m]}
+                  </Pill>
+                ))}
+              </div>
+              {paymentMethod && paymentMethod !== "cash" && (
+                <div className="mt-2 text-xs text-qf-mute bg-qf-yolk-soft border border-qf-yolk/40 rounded-lg px-3 py-2">
+                  החיוב יתבצע מיד אחרי אישור ההזמנה דרך Grow.
+                </div>
+              )}
+            </>
+          )}
+        </Card>
+
+        {/* 5. Tip (delivery only — pickup has no courier) */}
+        {method === "delivery" && (
+          <Card>
+            <div className="flex items-baseline justify-between">
+              <CardTitle>טיפ לשליח</CardTitle>
+              <span className="text-xs text-qf-mute">אופציונלי</span>
+            </div>
+            <div className="grid grid-cols-4 gap-2 mt-3">
+              {[0, 5, 10, 15].map((t) => (
+                <Pill key={t} active={tip === t} onClick={() => setTip(t)}>
+                  {t === 0 ? "ללא" : `+${formatPrice(t)}`}
                 </Pill>
               ))}
             </div>
-            {paymentMethod && paymentMethod !== "cash" && (
-              <div className="mt-2 text-xs text-qf-mute bg-qf-yolk-soft border border-qf-yolk/40 rounded-lg px-3 py-2">
-                החיוב יתבצע מיד אחרי אישור ההזמנה דרך Grow.
-              </div>
-            )}
-          </>
+          </Card>
         )}
-      </Section>
 
-      {/* Tip */}
-      <Section title="טיפ לשליח" hint="אופציונלי">
-        <div className="flex gap-2 flex-wrap">
-          {[0, 5, 10, 15].map((t) => (
-            <Pill key={t} active={tip === t} onClick={() => setTip(t)}>
-              {t === 0 ? "ללא" : `+${formatPrice(t)}`}
-            </Pill>
-          ))}
-        </div>
-      </Section>
+        {/* 6. Notes */}
+        <Card>
+          <CardTitle>הערה למסעדה</CardTitle>
+          <textarea
+            value={customerNotes}
+            onChange={(e) => setCustomerNotes(e.target.value)}
+            rows={2}
+            placeholder="למשל: בלי בצל, חתוך ל-8"
+            className="w-full mt-3 bg-white border border-qf-line rounded-xl px-4 py-3 text-sm outline-none focus:border-(--qf-primary) resize-none"
+          />
+        </Card>
 
-      {/* Notes */}
-      <Section title="הערה למסעדה">
-        <textarea
-          value={customerNotes}
-          onChange={(e) => setCustomerNotes(e.target.value)}
-          rows={2}
-          placeholder="למשל: בלי בצל, חתוך ל-8"
-          className="w-full bg-white border border-qf-line rounded-xl px-3 py-2 text-sm outline-none focus:border-(--qf-primary)"
-        />
-      </Section>
-
-      {/* Summary */}
-      <section className="px-5 mt-5 space-y-1.5 text-sm">
-        <SumRow label={`${lines.length} פריטים`} value={formatPrice(subtotal)} />
-        {method === "delivery" && (
-          <SumRow label="דמי משלוח" value={formatPrice(deliveryFee)} />
+        {error && (
+          <div className="bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm rounded-xl px-3 py-2">
+            {error}
+          </div>
         )}
-        {serviceFee > 0 && <SumRow label="דמי שירות" value={formatPrice(serviceFee)} />}
-        {tip > 0 && <SumRow label="טיפ" value={formatPrice(tip)} />}
-        <SumRow bold label="סה״כ לתשלום" value={formatPrice(total)} />
-      </section>
+      </div>
 
-      {error && (
-        <div className="mx-5 mt-4 bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm rounded-xl px-3 py-2">
-          {error}
-        </div>
-      )}
-
-      <div className="fixed bottom-0 inset-x-0 z-30 max-w-md mx-auto bg-white border-t border-qf-line p-4">
+      <div className="fixed bottom-0 inset-x-0 z-30 max-w-md mx-auto bg-white border-t border-qf-line px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <button
           type="button"
           onClick={place}
-          disabled={
-            busy ||
-            !paymentMethod ||
-            (method === "delivery" && !address) ||
-            !phone ||
-            !name
-          }
-          className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute text-white rounded-2xl px-4 py-3.5 font-semibold flex items-center justify-between"
+          disabled={!canPlace}
+          className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-16 text-base font-semibold flex items-center justify-between shadow-lg shadow-(--qf-primary)/25 transition active:scale-[0.99]"
         >
-          <span>{busy ? "שולח..." : "בצע הזמנה"}</span>
-          <span className="tnum">{formatPrice(total)}</span>
+          <span className="inline-flex items-center gap-2">
+            <span>{busy ? "שולח..." : "בצע הזמנה"}</span>
+            {!busy && <IcoArrowLeft c="#fff" s={16} />}
+          </span>
+          <span className="tnum text-lg">{formatPrice(total)}</span>
         </button>
       </div>
     </div>
   );
 }
 
-function Section({
-  title,
-  hint,
+function Card({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="bg-white rounded-2xl border border-qf-line p-4 shadow-xs">
+      {children}
+    </div>
+  );
+}
+
+function CardTitle({ children }: { children: React.ReactNode }) {
+  return <h2 className="font-semibold text-base">{children}</h2>;
+}
+
+function Field({
+  label,
+  required,
   children,
 }: {
-  title: string;
-  hint?: string;
+  label: string;
+  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <section className="px-5 mt-4">
-      <div className="flex items-baseline justify-between mb-2">
-        <h2 className="font-semibold">{title}</h2>
-        {hint && <span className="text-xs text-qf-mute">{hint}</span>}
+    <label className="block">
+      <div className="text-xs font-medium text-qf-ink2 mb-1.5">
+        {label}
+        {required && <span className="text-qf-tomato"> *</span>}
       </div>
       {children}
-    </section>
+    </label>
   );
 }
 
@@ -269,11 +374,15 @@ function Input({
   onChange,
   placeholder,
   dir,
+  inputMode,
+  autoComplete,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
   dir?: "ltr" | "rtl";
+  inputMode?: "tel" | "text" | "email" | "numeric";
+  autoComplete?: string;
 }) {
   return (
     <input
@@ -281,7 +390,9 @@ function Input({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       dir={dir}
-      className="w-full bg-white border border-qf-line rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-(--qf-primary) placeholder:text-qf-mute"
+      inputMode={inputMode}
+      autoComplete={autoComplete}
+      className="w-full bg-white border border-qf-line rounded-xl px-4 h-12 text-base outline-none focus:border-(--qf-primary) focus:ring-2 focus:ring-(--qf-primary)/15 placeholder:text-qf-mute transition"
     />
   );
 }
@@ -300,10 +411,10 @@ function Pill({
       type="button"
       onClick={onClick}
       className={cn(
-        "px-3.5 py-2.5 rounded-xl text-sm transition border",
+        "px-3 h-12 rounded-xl text-sm transition border font-medium",
         active
-          ? "bg-(--qf-primary) text-white border-transparent"
-          : "bg-white text-qf-ink2 border-qf-line",
+          ? "bg-(--qf-primary) text-white border-transparent shadow-sm"
+          : "bg-white text-qf-ink2 border-qf-line hover:border-(--qf-primary)/40",
       )}
     >
       {children}

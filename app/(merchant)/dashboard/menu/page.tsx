@@ -47,6 +47,7 @@ export default async function MenuPage() {
         basePrice: i.basePrice,
         prepMinutes: i.prepMinutes,
         available: i.available,
+        featured: i.featured,
         artType: i.artType,
         sku: i.sku,
         images: i.images,

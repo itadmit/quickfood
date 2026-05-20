@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { IcoChev, IcoPlus, IcoMinus, IcoBag } from "@/components/shared/Icons";
+import { IcoChev, IcoPlus, IcoMinus, IcoBag, IcoClose, IcoArrowLeft } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
 import { useCart } from "@/components/customer/CartProvider";
@@ -91,10 +91,10 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
                   <button
                     type="button"
                     onClick={() => remove(l.lineId)}
-                    className="text-qf-mute hover:text-qf-tomato text-lg leading-none"
+                    className="w-6 h-6 rounded-full text-qf-mute hover:text-qf-tomato hover:bg-qf-tomato-soft grid place-items-center -m-1 shrink-0"
                     aria-label="הסר"
                   >
-                    ×
+                    <IcoClose s={14} c="currentColor" />
                   </button>
                 </div>
                 {variant && (
@@ -150,10 +150,13 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
           type="button"
           disabled={!meetsMin}
           onClick={() => router.push(`/${tenantSlug}/checkout`)}
-          className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute text-white rounded-2xl px-4 py-3.5 font-semibold flex items-center justify-between"
+          className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-16 text-base font-semibold flex items-center justify-between shadow-lg shadow-(--qf-primary)/25 transition active:scale-[0.99]"
         >
-          <span>המשך לתשלום</span>
-          <span className="tnum">{formatPrice(total)}</span>
+          <span className="inline-flex items-center gap-2">
+            <span>המשך לתשלום</span>
+            <IcoArrowLeft c="#fff" s={16} />
+          </span>
+          <span className="tnum text-lg">{formatPrice(total)}</span>
         </button>
       </div>
 

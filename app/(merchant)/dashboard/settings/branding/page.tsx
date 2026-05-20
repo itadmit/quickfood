@@ -13,7 +13,7 @@ export default async function BrandingPage() {
   }
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
-    select: { id: true, name: true, logoLetter: true, themeId: true, businessType: true, cuisineType: true, slug: true },
+    select: { id: true, name: true, logoLetter: true, themeId: true, businessType: true, cuisineType: true, slug: true, coverImage: true },
   });
   if (!tenant) redirect("/dashboard/login");
 

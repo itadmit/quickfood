@@ -8,6 +8,7 @@ import { BottomTabBar } from "@/components/customer/BottomTabBar";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { resolveCategoryStyle } from "@/lib/category-style";
+import { SmartImg } from "@/components/shared/SmartImg";
 import { cn } from "@/lib/cn";
 
 interface Item {
@@ -25,6 +26,7 @@ interface Props {
   tenantSlug: string;
   tenantName: string;
   businessType?: BusinessType;
+  coverImage?: string | null;
   categories: Array<{ id: string; name: string; icon: string | null; color: string | null }>;
   items: Item[];
 }
@@ -32,7 +34,8 @@ interface Props {
 // px offset between viewport top and the line below the sticky chip bar
 const SCROLL_OFFSET = 80;
 
-export function CustomerMenu({ tenantSlug, tenantName, businessType = "general", categories, items }: Props) {
+export function CustomerMenu({ tenantSlug, tenantName, businessType = "general", coverImage, categories, items }: Props) {
+  const hasCover = Boolean(coverImage);
   const [query, setQuery] = useState("");
   const { itemCount, subtotal } = useCart();
 
@@ -109,18 +112,36 @@ export function CustomerMenu({ tenantSlug, tenantName, businessType = "general",
 
   return (
     <div className="pb-32">
-      <header className="bg-gradient-to-b from-(--qf-primary) to-(--qf-deep) text-white px-5 pt-5 pb-7">
+      {/* Hero — cover image if set, fallback to the brand green gradient. Same
+          height + composition as the storefront landing hero. */}
+      <header className="relative text-white px-5 pt-5 pb-7 overflow-hidden isolate">
+        {hasCover ? (
+          <>
+            <SmartImg
+              src={coverImage!}
+              alt=""
+              fill
+              loading="eager"
+              fetchPriority="high"
+              className="absolute inset-0 -z-10"
+            />
+            <div className="absolute inset-0 -z-10 bg-linear-to-b from-black/55 via-black/35 to-black/65" />
+          </>
+        ) : (
+          <div className="absolute inset-0 -z-10 bg-linear-to-b from-(--qf-primary) to-(--qf-deep)" />
+        )}
+
         <div className="flex items-center gap-3 mb-4">
           <Link
             href={`/${tenantSlug}`}
-            className="w-9 h-9 rounded-full bg-white/15 grid place-items-center"
+            className="w-9 h-9 rounded-full bg-white/20 backdrop-blur grid place-items-center"
             aria-label="חזרה"
           >
             <IcoChev c="#fff" s={18} />
           </Link>
           <div className="flex-1 min-w-0">
-            <h1 className="font-bold text-lg truncate">{tenantName}</h1>
-            <div className="text-xs opacity-85 flex items-center gap-1.5">
+            <h1 className="font-bold text-lg truncate drop-shadow-md">{tenantName}</h1>
+            <div className="text-xs opacity-90 flex items-center gap-1.5 drop-shadow">
               <IcoStar c="#fff" s={10} fill="#fff" />
               <span className="tnum">4.8</span>
               <span>· 1,247 ביקורות</span>

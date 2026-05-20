@@ -5,7 +5,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/format";
-import { IcoEye, IcoEdit, IcoTrash, IcoClose, IcoCheck, IcoMore } from "@/components/shared/Icons";
+import { IcoEye, IcoEdit, IcoTrash, IcoClose, IcoCheck, IcoMore, IcoStar } from "@/components/shared/Icons";
+import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { cn } from "@/lib/cn";
 import { ItemPreviewModal } from "./ItemPreviewModal";
@@ -29,6 +30,7 @@ interface Item {
   basePrice: number;
   prepMinutes: number;
   available: boolean;
+  featured: boolean;
   artType: string | null;
   sku: string | null;
   images: string[];
@@ -55,6 +57,11 @@ export function MenuList({
   const [deleting, setDeleting] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [categoryEditorOpen, setCategoryEditorOpen] = useState(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
+
+  function pushToast(kind: ToastKind, message: string) {
+    setToast({ id: Date.now(), kind, message });
+  }
 
   const filtered = useMemo(
     () => (activeCat === "all" ? localItems : localItems.filter((i) => i.categoryId === activeCat)),
@@ -71,7 +78,25 @@ export function MenuList({
     });
     if (!res.ok) {
       setLocalItems((prev) => prev.map((i) => (i.id === itemId ? { ...i, available: !next } : i)));
+      pushToast("err", "השינוי נכשל");
+      return;
     }
+    pushToast("ok", next ? "הפריט הופעל" : "הפריט הושבת");
+  }
+
+  async function toggleFeatured(itemId: string, next: boolean) {
+    setLocalItems((prev) => prev.map((i) => (i.id === itemId ? { ...i, featured: next } : i)));
+    const res = await fetch(`/api/v1/merchant/menu/items/${itemId}/featured`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ featured: next }),
+    });
+    if (!res.ok) {
+      setLocalItems((prev) => prev.map((i) => (i.id === itemId ? { ...i, featured: !next } : i)));
+      pushToast("err", "השינוי נכשל");
+      return;
+    }
+    pushToast("ok", next ? "נוסף למומלצים" : "הוסר מהמומלצים");
   }
 
   async function confirmDelete() {
@@ -159,8 +184,9 @@ export function MenuList({
       </div>
 
       <div className="bg-white rounded-2xl border border-qf-line-dash overflow-hidden">
-        <div className="grid grid-cols-[60px_1fr_140px_100px_120px_100px_60px] gap-3 px-4 py-2.5 text-xs font-medium text-qf-mute border-b border-qf-line-dash bg-qf-line-soft/60">
+        <div className="grid grid-cols-[60px_44px_1fr_140px_100px_120px_100px_60px] gap-3 px-4 py-2.5 text-xs font-medium text-qf-mute border-b border-qf-line-dash bg-qf-line-soft/60">
           <div></div>
+          <div className="text-center">מומלץ</div>
           <div>שם / SKU</div>
           <div>קטגוריה</div>
           <div>מחיר</div>
@@ -171,8 +197,14 @@ export function MenuList({
         {filtered.map((item) => (
           <div
             key={item.id}
+            onClick={() => router.push(`/dashboard/menu/${item.id}`)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") router.push(`/dashboard/menu/${item.id}`);
+            }}
             className={cn(
-              "grid grid-cols-[60px_1fr_140px_100px_120px_100px_60px] gap-3 px-4 py-3 items-center border-b border-qf-line-soft last:border-b-0 hover:bg-qf-line-soft/40",
+              "grid grid-cols-[60px_44px_1fr_140px_100px_120px_100px_60px] gap-3 px-4 py-3 items-center border-b border-qf-line-soft last:border-b-0 hover:bg-qf-line-soft/40 cursor-pointer",
               !item.available && "opacity-55",
             )}
           >
@@ -186,6 +218,27 @@ export function MenuList({
                 fill
               />
             </div>
+            <div className="grid place-items-center" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                aria-pressed={item.featured}
+                aria-label={item.featured ? "הסר ממומלצים" : "הוסף למומלצים"}
+                title={item.featured ? "במומלצים" : "סמן כמומלץ"}
+                onClick={() => toggleFeatured(item.id, !item.featured)}
+                className={cn(
+                  "w-8 h-8 rounded-lg grid place-items-center transition",
+                  item.featured
+                    ? "text-qf-yolk bg-qf-yolk-soft hover:bg-qf-yolk-soft/80"
+                    : "text-qf-mute hover:bg-qf-line-soft",
+                )}
+              >
+                <IcoStar
+                  c="currentColor"
+                  fill={item.featured ? "currentColor" : "none"}
+                  s={18}
+                />
+              </button>
+            </div>
             <div className="min-w-0">
               <div className="font-medium truncate">{item.name}</div>
               {item.sku && <div className="text-xs text-qf-mute" dir="ltr">{item.sku}</div>}
@@ -193,7 +246,7 @@ export function MenuList({
             <div className="text-sm text-qf-ink2 truncate">{catMap[item.categoryId]}</div>
             <div className="text-sm tnum font-medium">{formatPrice(item.basePrice)}</div>
             <div className="text-sm text-qf-ink2 tnum">{item.prepMinutes} דק&apos;</div>
-            <div>
+            <div onClick={(e) => e.stopPropagation()}>
               <button
                 type="button"
                 role="switch"
@@ -212,11 +265,13 @@ export function MenuList({
                 />
               </button>
             </div>
-            <RowActions
-              item={item}
-              onPreview={() => setPreviewId(item.id)}
-              onDelete={() => setPendingDelete(item)}
-            />
+            <div onClick={(e) => e.stopPropagation()}>
+              <RowActions
+                item={item}
+                onPreview={() => setPreviewId(item.id)}
+                onDelete={() => setPendingDelete(item)}
+              />
+            </div>
           </div>
         ))}
         {filtered.length === 0 && (
@@ -260,6 +315,8 @@ export function MenuList({
           position: c.position,
         }))}
       />
+
+      <Toast toast={toast} onDismiss={() => setToast(null)} />
     </div>
   );
 }

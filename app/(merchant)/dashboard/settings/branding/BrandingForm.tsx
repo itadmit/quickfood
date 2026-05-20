@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { THEMES, type ThemeId } from "@/lib/themes";
 import { type BusinessType } from "@/components/shared/MenuItemImage";
 import { BusinessTypeSelect } from "@/components/shared/BusinessTypeSelect";
+import { ImageUploader } from "@/components/shared/ImageUploader";
+import { SmartImg } from "@/components/shared/SmartImg";
 
-import { IcoCheck, IcoCopy, IcoWhatsApp } from "@/components/shared/Icons";
+import { IcoCheck, IcoCopy, IcoWhatsApp, IcoTrash } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 
 interface Tenant {
@@ -17,6 +19,7 @@ interface Tenant {
   businessType: BusinessType;
   cuisineType: string | null;
   slug: string;
+  coverImage: string | null;
 }
 
 /**
@@ -37,6 +40,7 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
   const [themeId, setThemeId] = useState<ThemeId>(tenant.themeId);
   const [businessType, setBusinessType] = useState<BusinessType>(tenant.businessType);
   const [cuisineType, setCuisineType] = useState(tenant.cuisineType ?? "");
+  const [coverImage, setCoverImage] = useState<string | null>(tenant.coverImage);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -55,6 +59,7 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
           theme_id: themeId,
           business_type: businessType,
           cuisine_type: cuisineType || undefined,
+          cover_image: coverImage,
         }),
       });
       if (res.ok) {
@@ -98,6 +103,43 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
           value={businessType}
           onChange={setBusinessType}
         />
+
+        <div className="space-y-2">
+          <div className="text-sm font-medium">תמונת קאבר לחנות</div>
+          <p className="text-xs text-qf-mute">
+            התמונה מופיעה ככותרת בחנות ובדף התפריט של הלקוח. אם לא תועלה תמונה
+            — יוצג רקע ירוק בצבעי המותג.
+          </p>
+
+          {coverImage ? (
+            <div className="space-y-2">
+              <div className="relative rounded-2xl overflow-hidden border border-qf-line-dash aspect-5/2">
+                <SmartImg
+                  src={coverImage}
+                  alt=""
+                  fill
+                  className="absolute inset-0"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setCoverImage(null)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-qf-tomato/40 text-qf-tomato hover:bg-qf-tomato-soft text-sm font-medium"
+              >
+                <IcoTrash c="currentColor" s={14} />
+                מחק תמונה — להחלפה בחר תמונה חדשה לאחר המחיקה
+              </button>
+            </div>
+          ) : (
+            <ImageUploader
+              type="cover_image"
+              value={[]}
+              onChange={(urls) => setCoverImage(urls[0] ?? null)}
+              max={1}
+              multiple={false}
+            />
+          )}
+        </div>
 
         <div className="space-y-2">
           <div className="text-sm font-medium">ערכת צבע</div>
