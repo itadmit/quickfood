@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { IcoCheck } from "@/components/shared/Icons";
 
 interface Initial {
   name: string;
@@ -117,7 +118,12 @@ export function BusinessForm({ branchId, initial }: { branchId: string; initial:
 
       <div className="flex items-center justify-between pt-3 border-t border-qf-line-soft">
         <div className="text-sm">
-          {toast && <span className="text-qf-green-deep">✓ {toast}</span>}
+          {toast && (
+            <span className="inline-flex items-center gap-1.5 text-qf-green-deep">
+              <IcoCheck c="currentColor" s={14} />
+              {toast}
+            </span>
+          )}
         </div>
         <button
           type="button"

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { IcoPlus } from "@/components/shared/Icons";
+import { IcoPlus, IcoClose } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 
 const ACCEPT = "image/jpeg,image/png,image/webp";
@@ -187,10 +187,10 @@ export function ImageUploader({
                 <button
                   type="button"
                   onClick={() => remove(idx)}
-                  className="px-1.5 py-0.5 rounded bg-qf-tomato/80 hover:bg-qf-tomato"
+                  className="w-6 h-6 rounded grid place-items-center bg-qf-tomato/80 hover:bg-qf-tomato"
                   aria-label="הסר"
                 >
-                  ✕
+                  <IcoClose c="#fff" s={12} />
                 </button>
               </div>
             </div>

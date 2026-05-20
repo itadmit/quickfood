@@ -5,7 +5,7 @@ import { IcoPin, IcoSearch, IcoChevDown, IcoStar, IcoClock, IcoBike, IcoFlame } 
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
 import { useCart } from "@/components/customer/CartProvider";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatRelativeMinutes } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
 interface Props {
@@ -16,6 +16,7 @@ interface Props {
     logoLetter: string;
     cuisineType: string | null;
     businessType?: BusinessType;
+    coverImage?: string | null;
   };
   branch: {
     address: string;
@@ -32,17 +33,27 @@ interface Props {
     artType: string | null;
     images?: string[];
   }>;
+  lastOrder?: {
+    id: string;
+    number: string;
+    total: number;
+    status: string;
+    createdAt: string;
+    itemCount: number;
+    headlineItem: string | null;
+    headlineImage: string | null;
+  } | null;
   children?: React.ReactNode;
 }
 
-export function CustomerHome({ tenant, branch, categories, popular, children }: Props) {
+export function CustomerHome({ tenant, branch, categories, popular, lastOrder, children }: Props) {
   const { method, setMethod } = useCart();
   const open = branch?.status === "open";
 
   return (
     <div className="pb-24">
       {/* Header gradient */}
-      <header className="bg-gradient-to-b from-(--qf-primary) to-(--qf-deep) text-white px-5 pt-5 pb-7 rounded-b-3xl">
+      <header className="bg-linear-to-b from-(--qf-primary) to-(--qf-deep) text-white px-5 pt-5 pb-5">
         <div className="flex items-center justify-between mb-4">
           <button
             type="button"
@@ -87,11 +98,64 @@ export function CustomerHome({ tenant, branch, categories, popular, children }: 
         </Link>
       </header>
 
+      {/* Cover */}
+      <section className="relative">
+        <div className="relative h-36 overflow-hidden">
+          {tenant.coverImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={tenant.coverImage}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-linear-to-br from-(--qf-primary) to-(--qf-deep)" />
+          )}
+          <div className="absolute inset-0 bg-linear-to-t from-black/55 via-black/20 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 px-5 pb-8 text-white">
+            <h1 className="text-2xl font-bold leading-tight drop-shadow">{tenant.name}</h1>
+            {tenant.cuisineType && (
+              <div className="text-sm text-white/85 drop-shadow">{tenant.cuisineType}</div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Thin info bar */}
+      <section className="px-5 -mt-4 relative z-10">
+        <div className="bg-white border border-qf-line rounded-full shadow-sm px-3 py-2 flex items-center gap-3 text-xs">
+          <span className="inline-flex items-center gap-1 font-semibold">
+            <IcoStar c="var(--qf-primary)" s={12} fill="var(--qf-primary)" />
+            <span className="tnum">4.8</span>
+          </span>
+          <span className="text-qf-line">·</span>
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 font-medium",
+              open ? "text-qf-green-deep" : "text-qf-tomato",
+            )}
+          >
+            <span className={cn("w-1.5 h-1.5 rounded-full", open ? "bg-qf-green-deep" : "bg-qf-tomato")} />
+            {open ? "פתוח" : "סגור"}
+          </span>
+          <span className="text-qf-line">·</span>
+          <span className="inline-flex items-center gap-1 text-qf-ink2">
+            <IcoClock s={11} c="#7c8a82" />
+            <span>25–35 דק&apos;</span>
+          </span>
+          <span className="text-qf-line">·</span>
+          <span className="inline-flex items-center gap-1 text-qf-ink2">
+            <IcoBike s={12} c="#7c8a82" />
+            <span>{branch ? formatPrice(branch.deliveryFee) : "—"}</span>
+          </span>
+        </div>
+      </section>
+
       {/* Hero promo */}
-      <section className="px-5 -mt-3">
+      <section className="px-5 mt-3">
         <Link
           href={`/${tenant.slug}/menu`}
-          className="block rounded-2xl bg-qf-warm border border-qf-line p-4 flex items-center gap-3 shadow-sm"
+          className="rounded-2xl bg-qf-warm border border-qf-line p-4 flex items-center gap-3 shadow-sm"
         >
           <div className="bg-qf-tomato/10 rounded-xl p-3">
             <IcoFlame c="#c2421f" s={28} />
@@ -103,6 +167,45 @@ export function CustomerHome({ tenant, branch, categories, popular, children }: 
           </div>
         </Link>
       </section>
+
+      {/* Last order */}
+      {lastOrder && (
+        <section className="px-5 mt-4">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-base font-semibold">ההזמנה האחרונה שלך</h2>
+            <Link href={`/${tenant.slug}/profile`} className="text-xs text-(--qf-deep)">
+              כל ההזמנות ←
+            </Link>
+          </div>
+          <Link
+            href={`/${tenant.slug}/orders/${lastOrder.id}`}
+            className="rounded-2xl bg-white border border-qf-line p-3 flex items-center gap-3 shadow-sm"
+          >
+            <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
+              <MenuItemImage
+                src={lastOrder.headlineImage ?? undefined}
+                alt={lastOrder.headlineItem ?? tenant.name}
+                businessType={tenant.businessType ?? "general"}
+                size={64}
+                rounded="md"
+                className="w-full h-full"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-sm leading-tight truncate">
+                {lastOrder.headlineItem ?? "הזמנה"}
+                {lastOrder.itemCount > 1 ? ` +${lastOrder.itemCount - 1}` : ""}
+              </div>
+              <div className="text-xs text-qf-mute mt-0.5">
+                {formatRelativeMinutes(lastOrder.createdAt)} · <span className="tnum">{formatPrice(lastOrder.total)}</span>
+              </div>
+            </div>
+            <span className="bg-(--qf-primary) text-white text-xs font-semibold px-3 py-2 rounded-full shrink-0">
+              הזמן שוב
+            </span>
+          </Link>
+        </section>
+      )}
 
       {/* Categories scroll */}
       <section className="px-5 mt-5">
@@ -121,54 +224,6 @@ export function CustomerHome({ tenant, branch, categories, popular, children }: 
             </Link>
           ))}
         </div>
-      </section>
-
-      {/* Restaurant card */}
-      <section className="px-5 mt-5">
-        <Link
-          href={`/${tenant.slug}/menu`}
-          className="block rounded-3xl overflow-hidden border border-qf-line bg-white shadow-sm"
-        >
-          <div className="relative h-32 bg-gradient-to-br from-(--qf-primary) to-(--qf-deep) overflow-hidden">
-            {/* decorative ribbon */}
-            <svg className="absolute -inset-e-10 -bottom-10 opacity-15" width="200" height="200" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="30" stroke="white" strokeWidth="2" fill="none" />
-              <circle cx="50" cy="50" r="20" stroke="white" strokeWidth="1.5" fill="none" />
-            </svg>
-          </div>
-          <div className="p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h3 className="text-lg font-bold leading-tight">{tenant.name}</h3>
-                <div className="text-xs text-qf-mute mt-0.5">{tenant.cuisineType}</div>
-                <div className="text-xs text-qf-mute">{branch?.address}</div>
-              </div>
-              <div className="flex items-center gap-1 bg-qf-green-soft text-qf-green-deep px-2 py-1 rounded-md text-xs font-medium">
-                <IcoStar c="var(--qf-primary)" s={12} fill="var(--qf-primary)" />
-                <span className="tnum">4.8</span>
-              </div>
-            </div>
-            <div className="flex gap-3 mt-3 text-xs">
-              <Chip>
-                <IcoClock s={12} />
-                <span>25–35 דק&apos;</span>
-              </Chip>
-              <Chip>
-                <IcoBike s={12} />
-                <span>{branch ? formatPrice(branch.deliveryFee) : "—"}</span>
-              </Chip>
-              <Chip
-                className={cn(
-                  open
-                    ? "bg-qf-green-soft text-qf-green-deep border-qf-green-line"
-                    : "bg-qf-tomato-soft text-qf-tomato border-qf-tomato/40",
-                )}
-              >
-                {open ? "פתוח עכשיו" : "סגור"}
-              </Chip>
-            </div>
-          </div>
-        </Link>
       </section>
 
       {/* Popular items */}
@@ -212,24 +267,5 @@ export function CustomerHome({ tenant, branch, categories, popular, children }: 
 
       <BottomTabBar tenantSlug={tenant.slug} />
     </div>
-  );
-}
-
-function Chip({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 bg-qf-line-soft border border-qf-line px-2 py-1 rounded-md",
-        className,
-      )}
-    >
-      {children}
-    </span>
   );
 }

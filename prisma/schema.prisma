@@ -167,6 +167,7 @@ model Tenant {
   name            String
   logoLetter      String          @map("logo_letter") @db.VarChar(2)
   logoUrl         String?         @map("logo_url")
+  coverImage      String?         @map("cover_image")
   themeId         ThemeId         @default(fresh) @map("theme_id")
   businessType    BusinessType    @default(general) @map("business_type")
   cuisineType     String?         @map("cuisine_type")

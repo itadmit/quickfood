@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { prisma } from "@/lib/db/client";
+import { getSession } from "@/lib/auth/session";
 import { CustomerHome } from "@/components/customer/screens/CustomerHome";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,9 @@ export default async function HomePage({
   const tenant = await resolveTenantBySlug(tenantSlug);
   if (!tenant) notFound();
 
-  const [categories, popular] = await Promise.all([
+  const session = await getSession();
+
+  const [categories, popular, lastOrder] = await Promise.all([
     prisma.menuCategory.findMany({
       where: { tenantId: tenant.id, active: true },
       orderBy: { position: "asc" },
@@ -26,6 +29,18 @@ export default async function HomePage({
       orderBy: { position: "asc" },
       take: 6,
     }),
+    session?.type === "customer"
+      ? prisma.order.findFirst({
+          where: { tenantId: tenant.id, customerId: session.userId },
+          orderBy: { createdAt: "desc" },
+          include: {
+            items: {
+              orderBy: { totalPrice: "desc" },
+              include: { menuItem: { select: { images: true } } },
+            },
+          },
+        })
+      : Promise.resolve(null),
   ]);
 
   const popularSerialized = popular.map((p) => ({
@@ -39,6 +54,19 @@ export default async function HomePage({
 
   const branch = tenant.branches[0];
 
+  const lastOrderSerialized = lastOrder
+    ? {
+        id: lastOrder.id,
+        number: lastOrder.number,
+        total: lastOrder.total,
+        status: lastOrder.status,
+        createdAt: lastOrder.createdAt.toISOString(),
+        itemCount: lastOrder.items.reduce((sum, it) => sum + it.quantity, 0),
+        headlineItem: lastOrder.items[0]?.nameSnapshot ?? null,
+        headlineImage: lastOrder.items[0]?.menuItem?.images?.[0] ?? null,
+      }
+    : null;
+
   return (
     <CustomerHome
       tenant={{
@@ -48,6 +76,7 @@ export default async function HomePage({
         logoLetter: tenant.logoLetter,
         cuisineType: tenant.cuisineType,
         businessType: tenant.businessType,
+        coverImage: tenant.coverImage,
       }}
       branch={
         branch
@@ -61,6 +90,7 @@ export default async function HomePage({
       }
       categories={categories.map((c) => ({ id: c.id, name: c.name, icon: c.icon }))}
       popular={popularSerialized}
+      lastOrder={lastOrderSerialized}
     >
       <Link
         href={`/${tenant.slug}/menu`}

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { MenuItemImage } from "@/components/shared/MenuItemImage";
 import { formatPrice } from "@/lib/format";
-import { IcoClose } from "@/components/shared/Icons";
+import { IcoClose, IcoCheck } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 
 interface FullItem {
@@ -243,7 +243,7 @@ function PreviewRow({
             (radio ? (
               <span className="w-2 h-2 rounded-full bg-white" />
             ) : (
-              <span className="text-white text-[10px]">✓</span>
+              <IcoCheck c="#fff" s={10} />
             ))}
         </span>
         <span>{label}</span>

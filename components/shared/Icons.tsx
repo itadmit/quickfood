@@ -266,3 +266,33 @@ export const IcoTrash = ({ c = "#11231a", s = 16, className }: IconProps) => (
 export const Dot = ({ c }: { c: string }) => (
   <span style={{ width: 8, height: 8, borderRadius: 99, background: c, display: "inline-block" }} />
 );
+
+export const IcoCreditCard = ({ c = "#11231a", s = 20, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    <rect x="3" y="6" width="18" height="13" rx="2.5" stroke={c} strokeWidth="1.6" />
+    <path d="M3 10h18" stroke={c} strokeWidth="1.6" />
+    <path d="M7 15h4" stroke={c} strokeWidth="1.6" strokeLinecap="round" />
+  </svg>
+);
+
+export const IcoCash = ({ c = "#11231a", s = 20, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    <rect x="2.5" y="6" width="19" height="12" rx="2" stroke={c} strokeWidth="1.6" />
+    <circle cx="12" cy="12" r="2.4" stroke={c} strokeWidth="1.6" />
+    <circle cx="5.5" cy="12" r="0.9" fill={c} />
+    <circle cx="18.5" cy="12" r="0.9" fill={c} />
+  </svg>
+);
+
+export const IcoWarning = ({ c = "#c2421f", s = 18, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    <path
+      d="M10.3 3.5L2.5 17a2 2 0 001.7 3h15.6a2 2 0 001.7-3L13.7 3.5a2 2 0 00-3.4 0z"
+      stroke={c}
+      strokeWidth="1.6"
+      strokeLinejoin="round"
+    />
+    <path d="M12 9v5" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
+    <circle cx="12" cy="17" r="1" fill={c} />
+  </svg>
+);

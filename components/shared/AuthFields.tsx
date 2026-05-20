@@ -89,8 +89,8 @@ function FieldShell({
       </div>
       <div
         className={cn(
-          "flex items-center gap-2 bg-qf-bg-dash border border-qf-line-dash rounded-xl px-3 transition",
-          "focus-within:bg-white focus-within:border-qf-ink focus-within:ring-2 focus-within:ring-qf-ink/10",
+          "flex items-center gap-2 bg-white border border-qf-line-dash rounded-xl px-3 transition",
+          "focus-within:border-qf-ink focus-within:ring-2 focus-within:ring-qf-ink/10",
         )}
       >
         {children}

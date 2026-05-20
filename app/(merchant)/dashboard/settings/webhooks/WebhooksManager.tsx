@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { ALL_WEBHOOK_EVENTS, type WebhookEventType } from "@/lib/webhooks/events";
+import { IcoWarning } from "@/components/shared/Icons";
 
 interface Endpoint {
   id: string;
@@ -172,8 +173,9 @@ export function WebhooksManager({
                 </div>
                 {revealedSecret?.id === ep.id && (
                   <div className="mt-3 p-3 rounded-lg bg-qf-yolk-soft border border-qf-yolk/40 text-xs space-y-1">
-                    <div className="font-medium text-qf-ink">
-                      ⚠️ Secret מוצג פעם אחת בלבד — שמור אותו עכשיו
+                    <div className="font-medium text-qf-ink inline-flex items-center gap-1.5">
+                      <IcoWarning c="#c2421f" s={14} />
+                      Secret מוצג פעם אחת בלבד — שמור אותו עכשיו
                     </div>
                     <code className="block font-mono text-[11px] break-all" dir="ltr">
                       {revealedSecret.secret}

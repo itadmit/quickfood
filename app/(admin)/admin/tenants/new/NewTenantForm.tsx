@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { THEMES, type ThemeId } from "@/lib/themes";
-import { BUSINESS_TYPES, type BusinessType, MenuItemImage } from "@/components/shared/MenuItemImage";
+import { type BusinessType } from "@/components/shared/MenuItemImage";
+import { BusinessTypeSelect } from "@/components/shared/BusinessTypeSelect";
 import { cn } from "@/lib/cn";
 
 export function NewTenantForm() {
@@ -131,29 +132,11 @@ export function NewTenantForm() {
           </Field>
         </div>
 
-        <Field label="סוג עסק">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {BUSINESS_TYPES.map((t) => {
-              const active = businessType === t.value;
-              return (
-                <button
-                  key={t.value}
-                  type="button"
-                  onClick={() => setBusinessType(t.value)}
-                  className={cn(
-                    "flex items-center gap-2.5 px-2.5 py-2 rounded-xl border text-sm transition text-start",
-                    active
-                      ? "border-qf-ink ring-2 ring-(--qf-primary)/30 bg-qf-line-soft"
-                      : "border-qf-line-dash hover:border-qf-ink/40",
-                  )}
-                >
-                  <MenuItemImage alt={t.label} businessType={t.value} size={32} rounded="lg" />
-                  <span className="font-medium text-xs">{t.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </Field>
+        <BusinessTypeSelect
+          label="סוג עסק"
+          value={businessType}
+          onChange={setBusinessType}
+        />
 
         <Field label="ערכת צבע">
           <div className="grid grid-cols-4 gap-2">

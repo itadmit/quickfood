@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/format";
-import { IcoPizza, IcoEye, IcoEdit, IcoTrash } from "@/components/shared/Icons";
+import { IcoPizza, IcoEye, IcoEdit, IcoTrash, IcoClose, IcoCheck } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 import { ItemPreviewModal } from "./ItemPreviewModal";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -269,7 +269,7 @@ function CsvImportModal({ onClose }: { onClose: () => void }) {
             className="w-8 h-8 rounded-lg hover:bg-qf-line-soft grid place-items-center text-qf-mute"
             aria-label="סגור"
           >
-            ✕
+            <IcoClose c="currentColor" s={16} />
           </button>
         </header>
         <div className="p-5 space-y-3">
@@ -289,7 +289,10 @@ function CsvImportModal({ onClose }: { onClose: () => void }) {
           />
           {result && (
             <div className="bg-qf-green-soft border border-qf-green-line text-qf-green-deep rounded-xl px-3 py-2 text-sm">
-              ✓ יובאו {result.created} פריטים
+              <div className="inline-flex items-center gap-1.5">
+                <IcoCheck c="currentColor" s={14} />
+                יובאו {result.created} פריטים
+              </div>
               {result.errors.length > 0 && (
                 <details className="mt-2">
                   <summary className="cursor-pointer text-qf-tomato">

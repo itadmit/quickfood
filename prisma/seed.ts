@@ -28,6 +28,8 @@ async function main() {
   });
 
   // ─── Demo tenant: פיצרייה ורדה (theme: fresh) ──────────────────
+  const COVER_IMAGE =
+    "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1600&q=80";
   const tenant = await prisma.tenant.upsert({
     where: { slug: "pizzeria-verde" },
     create: {
@@ -39,8 +41,9 @@ async function main() {
       cuisineType: "פיצה נפוליטנית",
       status: "active",
       planId: "00000000-0000-0000-0000-000000000001",
+      coverImage: COVER_IMAGE,
     },
-    update: { businessType: "pizza" },
+    update: { businessType: "pizza", coverImage: COVER_IMAGE },
   });
 
   const branch = await prisma.branch.upsert({
@@ -239,11 +242,12 @@ async function main() {
   }
 
   // ─── Demo customers + delivered orders (for analytics + reviews) ──
-  const existingDeliveredCount = await prisma.order.count({
-    where: { tenantId: tenant.id, status: "delivered" },
+  // Idempotent: wipe prior DEMO-* orders so "last order" timestamps stay fresh on re-seed.
+  await prisma.order.deleteMany({
+    where: { tenantId: tenant.id, number: { startsWith: "DEMO-" } },
   });
 
-  if (existingDeliveredCount < 5) {
+  {
     const demoCustomers = [
       { phone: "+972501222001", name: "נועה ישראלי" },
       { phone: "+972501222002", name: "תמר דהן" },
@@ -252,7 +256,7 @@ async function main() {
     for (const c of demoCustomers) {
       await prisma.customer.upsert({
         where: { phone: c.phone },
-        update: {},
+        update: { name: c.name },
         create: c,
       });
     }

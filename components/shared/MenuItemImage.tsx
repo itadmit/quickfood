@@ -153,106 +153,37 @@ const PLACEHOLDER_CONFIG: Record<
 };
 
 // ─── Symbols ─────────────────────────────────────────────────────
-// Each symbol is a single elegant outline glyph (1.5–2 strokeWidth)
+// Lucide icons mapped to each business type.
+
+import {
+  Pizza,
+  Beef,
+  Salad,
+  Fish,
+  Soup,
+  Coffee,
+  Croissant,
+  IceCream,
+  Sandwich,
+  CookingPot,
+  UtensilsCrossed,
+} from "lucide-react";
+
+const SYMBOL: Record<BusinessType, React.ComponentType<{ size: number; color: string; strokeWidth: number }>> = {
+  pizza: Pizza,
+  burger: Beef,
+  falafel: Salad,
+  shawarma: Sandwich,
+  sushi: Fish,
+  asian: CookingPot,
+  bakery: Croissant,
+  cafe: Coffee,
+  icecream: IceCream,
+  mediterranean: Soup,
+  general: UtensilsCrossed,
+};
 
 function BusinessSymbol({ type, color, size }: { type: BusinessType; color: string; size: number }) {
-  const stroke = color;
-  const s = size;
-  switch (type) {
-    case "pizza":
-      return (
-        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
-          <path d="M12 3l9 16H3z" stroke={stroke} strokeWidth="1.5" strokeLinejoin="round" />
-          <circle cx="10" cy="14" r="1" fill={stroke} />
-          <circle cx="14" cy="13" r="1" fill={stroke} />
-          <circle cx="12" cy="10" r="1" fill={stroke} />
-          <path d="M9 17h6" stroke={stroke} strokeWidth="1" />
-        </svg>
-      );
-    case "burger":
-      return (
-        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
-          <path d="M4 9c0-2.5 3.6-4 8-4s8 1.5 8 4H4z" stroke={stroke} strokeWidth="1.5" strokeLinejoin="round" />
-          <path d="M3 13h18M3 16h18" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M4 19c0 1.5 1 2.5 3 2.5h10c2 0 3-1 3-2.5H4z" stroke={stroke} strokeWidth="1.5" strokeLinejoin="round" />
-        </svg>
-      );
-    case "falafel":
-      return (
-        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
-          <path d="M5 12c0-4 3-7 7-7s7 3 7 7l-2 8H7l-2-8z" stroke={stroke} strokeWidth="1.5" strokeLinejoin="round" />
-          <circle cx="10" cy="12" r="1.3" fill={stroke} />
-          <circle cx="14" cy="11" r="1.3" fill={stroke} />
-          <circle cx="12" cy="14" r="1.3" fill={stroke} />
-          <circle cx="11" cy="17" r="1.3" fill={stroke} />
-          <circle cx="14" cy="16" r="1.3" fill={stroke} />
-        </svg>
-      );
-    case "shawarma":
-      return (
-        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
-          <path d="M7 4h10v3H7zM7 7l-1 14M17 7l1 14M6 21h12" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M9 10c1 0 2-.5 3 0s2 .5 3 0M9 14c1 0 2-.5 3 0s2 .5 3 0" stroke={stroke} strokeWidth="1.2" />
-        </svg>
-      );
-    case "sushi":
-      return (
-        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
-          <ellipse cx="12" cy="12" rx="8" ry="5" stroke={stroke} strokeWidth="1.5" />
-          <ellipse cx="12" cy="12" rx="4" ry="2.5" stroke={stroke} strokeWidth="1.2" />
-          <circle cx="12" cy="12" r="1" fill={stroke} />
-          <path d="M4 12c-1 0-2-.5-2-1.5M22 12c1 0 2-.5 2-1.5" stroke={stroke} strokeWidth="1.2" strokeLinecap="round" />
-        </svg>
-      );
-    case "asian":
-      return (
-        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
-          <path d="M5 8c0-1 .5-2 7-2s7 1 7 2-.5 11-7 11S5 9 5 8z" stroke={stroke} strokeWidth="1.5" strokeLinejoin="round" />
-          <path d="M9 11l2 2 2-2 2 2" stroke={stroke} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M7 14l1.5 1.5M17 14l-1.5 1.5" stroke={stroke} strokeWidth="1.2" strokeLinecap="round" />
-        </svg>
-      );
-    case "bakery":
-      return (
-        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
-          <path d="M4 14c0-3 3-5 8-5s8 2 8 5l-1 5H5l-1-5z" stroke={stroke} strokeWidth="1.5" strokeLinejoin="round" />
-          <path d="M8 11l1-3M12 9V6M16 11l-1-3" stroke={stroke} strokeWidth="1.2" strokeLinecap="round" />
-        </svg>
-      );
-    case "cafe":
-      return (
-        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
-          <path d="M5 8h12v8c0 2-1 4-4 4H9c-3 0-4-2-4-4V8z" stroke={stroke} strokeWidth="1.5" strokeLinejoin="round" />
-          <path d="M17 10h2c1 0 2 1 2 2s-1 2-2 2h-2" stroke={stroke} strokeWidth="1.5" />
-          <path d="M9 4c0 1 1 1.5 1 2.5M12 4c0 1 1 1.5 1 2.5" stroke={stroke} strokeWidth="1.2" strokeLinecap="round" />
-        </svg>
-      );
-    case "icecream":
-      return (
-        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
-          <path d="M8 11a4 4 0 118 0v1h-8v-1z" stroke={stroke} strokeWidth="1.5" />
-          <path d="M8 12l4 9 4-9" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="11" cy="9" r="0.8" fill={stroke} />
-          <circle cx="13" cy="10" r="0.8" fill={stroke} />
-        </svg>
-      );
-    case "mediterranean":
-      return (
-        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
-          <ellipse cx="12" cy="13" rx="9" ry="3" stroke={stroke} strokeWidth="1.5" />
-          <path d="M4 13c1 3 4 5 8 5s7-2 8-5" stroke={stroke} strokeWidth="1.5" />
-          <ellipse cx="9" cy="11" rx="1.5" ry="1" fill={stroke} />
-          <ellipse cx="14" cy="11" rx="1.5" ry="1" fill={stroke} />
-          <path d="M8 8c2 0 3-1 4-1s2 1 4 1" stroke={stroke} strokeWidth="1.2" />
-        </svg>
-      );
-    case "general":
-    default:
-      return (
-        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
-          <path d="M4 7h16M5 7l1 13h12l1-13" stroke={stroke} strokeWidth="1.5" strokeLinejoin="round" />
-          <path d="M9 11v6M15 11v6M12 11v6" stroke={stroke} strokeWidth="1.2" strokeLinecap="round" />
-        </svg>
-      );
-  }
+  const Icon = SYMBOL[type] ?? UtensilsCrossed;
+  return <Icon size={size} color={color} strokeWidth={1.7} />;
 }

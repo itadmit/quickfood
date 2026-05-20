@@ -23,57 +23,77 @@ export function AuthShell({
   illustration = "kanban",
 }: Props) {
   return (
-    <div className="min-h-screen bg-qf-bg-dash text-qf-ink flex flex-col">
-      {/* Top bar */}
-      <header className="px-6 py-5 flex items-center justify-between max-w-[1400px] w-full mx-auto">
-        <Link
-          href={variant === "login" ? "/signup" : "/dashboard/login"}
-          className="text-sm text-qf-mute hover:text-qf-ink inline-flex items-center gap-1.5"
-        >
-          {variant === "login" ? (
-            <>
-              עוד אין חשבון?
-              <span className="font-semibold text-qf-ink">הירשם בחינם →</span>
-            </>
-          ) : (
-            <>
-              כבר יש לי חשבון
-              <span className="font-semibold text-qf-ink">→ התחברות</span>
-            </>
-          )}
-        </Link>
-        <QuickFoodLogo size={32} wordmarkClassName="text-lg" />
-      </header>
+    <div className="min-h-screen bg-white text-qf-ink grid grid-cols-1 lg:grid-cols-[1.1fr_1fr]">
+      {/* ─── Left: marketing panel (distinct cream background + blur orbs) ─── */}
+      <aside className="hidden lg:flex relative overflow-hidden border-e border-qf-line-dash bg-[#f5f2ec]">
+        {/* decorative blur orbs */}
+        <div
+          aria-hidden
+          className="absolute top-1/3 inset-e-1/4 w-96 h-96 rounded-full bg-violet-300/30 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="absolute bottom-1/4 inset-s-1/4 w-96 h-96 rounded-full bg-fuchsia-300/20 blur-3xl"
+        />
+        {/* logo top-corner */}
+        <div className="absolute top-6 inset-s-6 z-10">
+          <QuickFoodLogo size={32} wordmarkClassName="text-lg" />
+        </div>
 
-      {/* Main split */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] max-w-[1400px] w-full mx-auto px-6 pb-10 gap-10">
-        {/* Left: marketing + illustration */}
-        <aside className="hidden lg:flex flex-col items-center justify-center text-center gap-8 pe-4">
-          <DashboardPreview variant={illustration} />
-          <div className="max-w-md space-y-3">
-            <p className="text-xl font-semibold leading-snug">
+        <div className="relative w-full flex flex-col justify-center p-12">
+          <div className="w-full max-w-lg mx-auto">
+            <DashboardPreview variant={illustration} className="shadow-2xl" />
+          </div>
+          <div className="mt-10 text-center max-w-md mx-auto">
+            <p className="text-qf-ink2 text-sm leading-relaxed">
               ה-SaaS הישראלי שמרים מסעדה אונליין{" "}
-              <span className="text-(--qf-primary)">תוך 11 דקות</span>.
+              <span className="font-semibold text-qf-ink">תוך 11 דקות</span>, לא להפך.
             </p>
-            <div className="flex items-center justify-center gap-5 text-xs text-qf-mute">
+            <div className="mt-4 flex items-center justify-center gap-4 text-xs text-qf-mute">
               <FeatureCheck>עברית מלאה</FeatureCheck>
               <FeatureCheck>RTL</FeatureCheck>
               <FeatureCheck>0% עמלת אגרגטור</FeatureCheck>
             </div>
           </div>
-        </aside>
+        </div>
+      </aside>
 
-        {/* Right: form panel */}
-        <main className="flex items-center">
-          <div className="w-full max-w-md mx-auto lg:me-0 lg:ms-auto space-y-8">
+      {/* ─── Right: form panel (pure white) ─── */}
+      <main className="relative flex flex-col">
+        {/* top bar inside the right column */}
+        <header className="flex items-center justify-between px-6 py-5">
+          <Link
+            href={variant === "login" ? "/signup" : "/dashboard/login"}
+            className="text-sm text-qf-mute hover:text-qf-ink inline-flex items-center gap-1.5"
+          >
+            {variant === "login" ? (
+              <>
+                עוד אין חשבון?
+                <span className="font-semibold text-qf-ink">הירשם בחינם →</span>
+              </>
+            ) : (
+              <>
+                כבר יש לי חשבון
+                <span className="font-semibold text-qf-ink">→ התחברות</span>
+              </>
+            )}
+          </Link>
+          {/* mobile-only logo since the aside is hidden */}
+          <div className="lg:hidden">
+            <QuickFoodLogo size={28} wordmarkClassName="text-base" />
+          </div>
+        </header>
+
+        <div className="flex-1 flex items-center justify-center px-6 pb-12">
+          <div className="w-full max-w-md space-y-8">
             <div className="space-y-2">
               <h1 className="text-4xl font-bold tracking-tight">{title}</h1>
               <p className="text-sm text-qf-mute">{subtitle}</p>
             </div>
             {children}
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

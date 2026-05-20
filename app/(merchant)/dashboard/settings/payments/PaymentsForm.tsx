@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { IcoCash, IcoCheck, IcoClose, IcoCreditCard } from "@/components/shared/Icons";
 
 type Provider = "cash" | "grow";
 
@@ -78,14 +79,14 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
             onClick={() => set("provider", "cash")}
             title="מזומן בלבד"
             sub="הלקוח משלם לשליח / בקופה. בלי סליקה."
-            icon="₪"
+            icon={<IcoCash s={20} />}
           />
           <ProviderCard
             checked={v.provider === "grow"}
             onClick={() => set("provider", "grow")}
             title="Grow"
             sub="אשראי · Bit · Apple Pay · Google Pay"
-            icon="💳"
+            icon={<IcoCreditCard s={20} />}
           />
         </div>
       </div>
@@ -231,10 +232,16 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
           {toast && (
             <span
               className={
-                toast.kind === "ok" ? "text-qf-green-deep" : "text-qf-tomato"
+                "inline-flex items-center gap-1.5 " +
+                (toast.kind === "ok" ? "text-qf-green-deep" : "text-qf-tomato")
               }
             >
-              {toast.kind === "ok" ? "✓" : "✕"} {toast.msg}
+              {toast.kind === "ok" ? (
+                <IcoCheck c="currentColor" s={14} />
+              ) : (
+                <IcoClose c="currentColor" s={14} />
+              )}
+              {toast.msg}
             </span>
           )}
         </div>
@@ -262,7 +269,7 @@ function ProviderCard({
   onClick: () => void;
   title: string;
   sub: string;
-  icon: string;
+  icon: ReactNode;
 }) {
   return (
     <button
@@ -340,7 +347,7 @@ function Toggle({
         <span
           className={
             "absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition " +
-            (checked ? "start-[18px]" : "start-0.5")
+            (checked ? "inset-s-[18px]" : "inset-s-0.5")
           }
         />
       </span>

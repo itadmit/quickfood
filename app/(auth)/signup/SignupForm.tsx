@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Sparkles, MapPin, User, Check } from "lucide-react";
 import { THEMES, type ThemeId } from "@/lib/themes";
-import { BUSINESS_TYPES, type BusinessType, MenuItemImage } from "@/components/shared/MenuItemImage";
+import { type BusinessType } from "@/components/shared/MenuItemImage";
+import { BusinessTypeSelect } from "@/components/shared/BusinessTypeSelect";
 import { cn } from "@/lib/cn";
 
 type SlugStatus = "idle" | "checking" | "available" | "taken" | "invalid" | "reserved" | "too_short";
@@ -121,40 +123,9 @@ export function SignupForm() {
 
   return (
     <div className="space-y-6">
-      {/* Step indicator */}
-      <ol className="grid grid-cols-3 gap-1.5 text-xs">
-        {[
-          { n: 1, label: "מותג ועיצוב" },
-          { n: 2, label: "פרטי סניף" },
-          { n: 3, label: "בעלים" },
-        ].map(({ n, label }) => {
-          const active = step === n;
-          const done = step > n;
-          return (
-            <li
-              key={n}
-              className={cn(
-                "flex items-center gap-2 px-2 py-1.5 rounded-lg border",
-                active && "border-qf-ink bg-qf-line-soft/60 font-medium",
-                done && "border-qf-line-dash text-qf-mute",
-                !active && !done && "border-qf-line-dash text-qf-mute",
-              )}
-            >
-              <span
-                className={cn(
-                  "w-5 h-5 rounded-full grid place-items-center text-[10px] font-bold shrink-0",
-                  active && "bg-qf-ink text-white",
-                  done && "bg-qf-green-soft text-qf-green-deep",
-                  !active && !done && "bg-qf-line-soft text-qf-mute",
-                )}
-              >
-                {done ? "✓" : n}
-              </span>
-              <span className="truncate">{label}</span>
-            </li>
-          );
-        })}
-      </ol>
+      {/* Step indicator — dots-with-connector */}
+      <StepIndicator step={step} />
+      <div className="text-xs text-qf-mute">שלב {step} מתוך 3</div>
 
       <div className="space-y-5">
         {step === 1 && (
@@ -286,18 +257,18 @@ function Step1({
             value={businessName}
             onChange={(e) => onBusinessName(e.target.value)}
             placeholder="פיצרייה ורדה"
-            className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-qf-ink focus:ring-2 focus:ring-qf-ink/10 outline-none transition"
           />
         </Field>
-        <Field label="כתובת באתר">
+        <Field label="כתובת באתר" hint="אנגלית בלבד">
           <div
             dir="ltr"
             className={cn(
-              "flex items-center border rounded-xl bg-white transition",
+              "flex items-center border rounded-xl bg-white transition focus-within:ring-2 focus-within:ring-qf-ink/10",
               borderColor,
             )}
           >
-            <span className="ps-3 pe-1.5 text-qf-mute text-xs select-none">
+            <span className="ps-3 pe-1 text-qf-mute text-xs font-mono select-none border-e border-qf-line-dash py-2.5 me-1">
               quickfood.app/
             </span>
             <input
@@ -305,7 +276,7 @@ function Step1({
               onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
               dir="ltr"
               placeholder="my-restaurant"
-              className="flex-1 min-w-0 py-2.5 outline-none bg-transparent font-mono text-sm"
+              className="flex-1 min-w-0 py-2.5 pe-2 outline-none bg-transparent font-mono text-sm"
             />
             <SlugStatusBadge status={slugStatus} slug={slug} />
           </div>
@@ -313,41 +284,19 @@ function Step1({
         </Field>
       </div>
 
-      <Field label="סוג עסק">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {BUSINESS_TYPES.map((t) => {
-            const active = businessType === t.value;
-            return (
-              <button
-                key={t.value}
-                type="button"
-                onClick={() => setBusinessType(t.value)}
-                className={cn(
-                  "flex items-center gap-2.5 px-2.5 py-2 rounded-xl border text-sm transition text-start",
-                  active
-                    ? "border-qf-ink ring-2 ring-(--qf-primary)/30 bg-qf-line-soft"
-                    : "border-qf-line-dash hover:border-qf-ink/40",
-                )}
-              >
-                <MenuItemImage
-                  alt={t.label}
-                  businessType={t.value}
-                  size={36}
-                  rounded="lg"
-                />
-                <span className="font-medium">{t.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </Field>
+      <BusinessTypeSelect
+        label="סוג עסק"
+        hint="קובע את הפלייסהולדרים לפריטים ללא תמונה"
+        value={businessType}
+        onChange={setBusinessType}
+      />
 
       <Field label="סוג מטבח (אופציונלי)">
         <input
           value={cuisineType}
           onChange={(e) => setCuisineType(e.target.value)}
           placeholder="פיצה נפוליטנית / המבורגרים אמריקאים / סושי יפני"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-qf-ink focus:ring-2 focus:ring-qf-ink/10 outline-none transition"
         />
       </Field>
 
@@ -405,7 +354,7 @@ function Step2({
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           placeholder="אלנבי 42, תל אביב"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-qf-ink focus:ring-2 focus:ring-qf-ink/10 outline-none transition"
         />
       </Field>
       <Field label="טלפון לסניף">
@@ -414,7 +363,7 @@ function Step2({
           onChange={(e) => setPhone(e.target.value)}
           dir="ltr"
           placeholder="03-555-1234"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-qf-ink focus:ring-2 focus:ring-qf-ink/10 outline-none transition"
         />
       </Field>
     </div>
@@ -447,7 +396,7 @@ function Step3({
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-qf-ink focus:ring-2 focus:ring-qf-ink/10 outline-none transition"
         />
       </Field>
       <Field label="אימייל">
@@ -456,7 +405,7 @@ function Step3({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           dir="ltr"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-qf-ink focus:ring-2 focus:ring-qf-ink/10 outline-none transition"
         />
       </Field>
       <Field label="סיסמה" hint="לפחות 8 תווים">
@@ -464,7 +413,7 @@ function Step3({
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-qf-ink focus:ring-2 focus:ring-qf-ink/10 outline-none transition font-mono"
         />
       </Field>
     </div>
@@ -488,6 +437,69 @@ function Field({
       </div>
       {children}
     </div>
+  );
+}
+
+// ─── Step indicator (dots-with-connector) ─────────────────────────
+
+const STEP_DEFS: Array<{
+  n: 1 | 2 | 3;
+  label: string;
+  Icon: typeof Sparkles;
+}> = [
+  { n: 1, label: "מותג ועיצוב", Icon: Sparkles },
+  { n: 2, label: "פרטי סניף", Icon: MapPin },
+  { n: 3, label: "בעלים", Icon: User },
+];
+
+function StepIndicator({ step }: { step: 1 | 2 | 3 }) {
+  // RTL: visually we want step 1 at the right edge, step 3 at the left edge.
+  // CSS RTL handles this automatically when the parent is dir="rtl" (it is, via root).
+  return (
+    <ol className="relative grid grid-cols-3 gap-0">
+      {/* Background line under the dots */}
+      <div
+        aria-hidden
+        className="absolute top-5 inset-x-[16.66%] h-px bg-qf-line-dash"
+      />
+      {/* Progress line — width based on current step */}
+      <div
+        aria-hidden
+        className="absolute top-5 h-px bg-qf-ink transition-all"
+        style={{
+          insetInlineStart: "16.66%",
+          width: step === 1 ? "0%" : step === 2 ? "33.33%" : "66.66%",
+        }}
+      />
+      {STEP_DEFS.map(({ n, label, Icon }) => {
+        const active = step === n;
+        const done = step > n;
+        return (
+          <li key={n} className="flex flex-col items-center relative z-10">
+            <div
+              className={cn(
+                "w-10 h-10 rounded-full grid place-items-center transition-colors border-2",
+                done && "bg-qf-ink border-qf-ink text-white",
+                active && "bg-white border-qf-ink text-qf-ink ring-4 ring-qf-ink/10",
+                !active && !done && "bg-white border-qf-line-dash text-qf-mute",
+              )}
+            >
+              {done ? <Check size={18} strokeWidth={2.5} /> : <Icon size={18} strokeWidth={2} />}
+            </div>
+            <div
+              className={cn(
+                "mt-2 text-xs text-center",
+                active && "font-semibold text-qf-ink",
+                done && "text-qf-ink2",
+                !active && !done && "text-qf-mute",
+              )}
+            >
+              {label}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -540,14 +552,18 @@ function SlugStatusBadge({ status, slug }: { status: SlugStatus; slug: string })
 
 function SlugStatusLine({ status, slug }: { status: SlugStatus; slug: string }) {
   if (slug.length < 2 || status === "idle" || status === "too_short") {
-    return <p className="text-xs text-qf-mute mt-1">לפחות 2 תווים — אותיות לועזיות, ספרות ומקפים</p>;
+    return (
+      <p className="text-xs text-qf-mute mt-1">
+        אנגלית בלבד · אותיות קטנות, ספרות ומקפים · לפחות 2 תווים
+      </p>
+    );
   }
   const msg = {
     checking: { text: "בודק זמינות...", color: "text-qf-mute" },
-    available: { text: "מעולה — פנוי לרישום", color: "text-qf-green-deep" },
-    taken: { text: "תפוס כבר. נסה משהו אחר", color: "text-qf-tomato" },
-    reserved: { text: "שמור למערכת — בחר slug אחר", color: "text-qf-tomato" },
-    invalid: { text: "תווים לא חוקיים", color: "text-qf-tomato" },
+    available: { text: "✓ פנוי לרישום", color: "text-qf-green-deep" },
+    taken: { text: "✕ תפוס כבר. נסה משהו אחר", color: "text-qf-tomato" },
+    reserved: { text: "✕ שמור למערכת. בחר כתובת אחרת", color: "text-qf-tomato" },
+    invalid: { text: "✕ אנגלית בלבד — אותיות קטנות, ספרות ומקפים", color: "text-qf-tomato" },
   }[status as "checking" | "available" | "taken" | "reserved" | "invalid"];
   if (!msg) return null;
   return <p className={cn("text-xs mt-1", msg.color)}>{msg.text}</p>;

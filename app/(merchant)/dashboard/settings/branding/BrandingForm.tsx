@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { THEMES, type ThemeId } from "@/lib/themes";
-import { BUSINESS_TYPES, type BusinessType, MenuItemImage } from "@/components/shared/MenuItemImage";
+import { type BusinessType } from "@/components/shared/MenuItemImage";
+import { BusinessTypeSelect } from "@/components/shared/BusinessTypeSelect";
+
+import { IcoCheck } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 
 interface Tenant {
@@ -86,31 +89,12 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
           />
         </div>
 
-        <div className="space-y-2">
-          <div className="text-sm font-medium">סוג עסק</div>
-          <div className="text-xs text-qf-mute mb-1">משפיע על הפלייסהולדרים שמוצגים לפריטים ללא תמונה</div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {BUSINESS_TYPES.map((t) => {
-              const active = businessType === t.value;
-              return (
-                <button
-                  key={t.value}
-                  type="button"
-                  onClick={() => setBusinessType(t.value)}
-                  className={cn(
-                    "flex items-center gap-2.5 px-2.5 py-2 rounded-xl border text-sm transition text-start",
-                    active
-                      ? "border-qf-ink ring-2 ring-(--qf-primary)/30 bg-qf-line-soft"
-                      : "border-qf-line-dash hover:border-qf-ink/40",
-                  )}
-                >
-                  <MenuItemImage alt={t.label} businessType={t.value} size={32} rounded="lg" />
-                  <span className="font-medium text-xs">{t.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <BusinessTypeSelect
+          label="סוג עסק"
+          hint="מוצרים ללא תמונה יציגו את האייקון לפי סוג העסק"
+          value={businessType}
+          onChange={setBusinessType}
+        />
 
         <div className="space-y-2">
           <div className="text-sm font-medium">ערכת צבע</div>
@@ -143,7 +127,12 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
 
         <div className="flex items-center justify-between pt-3 border-t border-qf-line-soft">
           <div className="text-sm text-qf-mute">
-            {toast && <span className="text-qf-green-deep">✓ {toast}</span>}
+            {toast && (
+              <span className="inline-flex items-center gap-1.5 text-qf-green-deep">
+                <IcoCheck c="currentColor" s={14} />
+                {toast}
+              </span>
+            )}
           </div>
           <button
             type="button"
