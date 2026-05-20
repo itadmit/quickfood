@@ -19,7 +19,7 @@ export const POST = handler(async (req: Request) => {
   const customer = await prisma.customer.upsert({
     where: { phone },
     update: { lastSeenAt: new Date() },
-    create: { phone, name: "" },
+    create: { phone, firstName: "", lastName: "", name: "" },
   });
 
   const { accessToken, refreshToken } = await issueTokensForCustomer(customer.id);

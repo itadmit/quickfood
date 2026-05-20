@@ -27,7 +27,8 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
   const [address, setAddress] = useState("");
   const [floor, setFloor] = useState("");
   const [phone, setPhone] = useState("");
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [deliveryNotes, setDeliveryNotes] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
   const [availableMethods, setAvailableMethods] = useState<CustomerPaymentMethod[]>([]);
@@ -97,7 +98,8 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
               ? `${address} ${floor ? `· קומה ${floor}` : ""}${deliveryNotes ? ` · ${deliveryNotes}` : ""}`.trim()
               : undefined,
           guest_phone: phone || undefined,
-          guest_name: name || undefined,
+          guest_first_name: firstName || undefined,
+          guest_last_name: lastName || undefined,
           lines: lines.map((l) => ({
             item_id: l.itemId,
             quantity: l.quantity,
@@ -127,7 +129,11 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
   }
 
   const canPlace =
-    !busy && !!paymentMethod && !!name && !!phone && (method !== "delivery" || !!address);
+    !busy &&
+    !!paymentMethod &&
+    !!firstName &&
+    !!phone &&
+    (method !== "delivery" || !!address);
 
   return (
     <div className="pb-32 bg-qf-bg/40 min-h-screen">
@@ -146,20 +152,35 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
         {/* 1. Contact — promoted to the top */}
         <Card>
           <CardTitle>פרטי קשר</CardTitle>
-          <div className="grid grid-cols-1 gap-3 mt-3">
-            <Field label="שם מלא" required>
-              <Input value={name} onChange={setName} placeholder="ישראל ישראלי" autoComplete="name" />
-            </Field>
-            <Field label="טלפון" required>
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <Field label="שם פרטי" required>
               <Input
-                value={phone}
-                onChange={setPhone}
-                placeholder="050-1234567"
-                dir="ltr"
-                inputMode="tel"
-                autoComplete="tel"
+                value={firstName}
+                onChange={setFirstName}
+                placeholder="ישראל"
+                autoComplete="given-name"
               />
             </Field>
+            <Field label="שם משפחה">
+              <Input
+                value={lastName}
+                onChange={setLastName}
+                placeholder="ישראלי"
+                autoComplete="family-name"
+              />
+            </Field>
+            <div className="col-span-2">
+              <Field label="טלפון" required>
+                <Input
+                  value={phone}
+                  onChange={setPhone}
+                  placeholder="050-1234567"
+                  dir="ltr"
+                  inputMode="tel"
+                  autoComplete="tel"
+                />
+              </Field>
+            </div>
           </div>
         </Card>
 

@@ -21,7 +21,8 @@ export interface CreateOrderInput {
   tenantSlug: string;
   customerId?: string;
   guestPhone?: string;
-  guestName?: string;
+  guestFirstName?: string;
+  guestLastName?: string;
   method: "delivery" | "pickup";
   addressId?: string | null;
   deliveryNotes?: string | null;
@@ -180,7 +181,17 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       deliveryNotes: input.deliveryNotes ?? null,
       customerNotes: input.customerNotes ?? null,
       customerPhoneSnap: input.guestPhone ?? null,
-      customerNameSnap: input.guestName ?? null,
+      customerFirstNameSnap: input.guestFirstName ?? null,
+      customerLastNameSnap: input.guestLastName ?? null,
+      // Legacy joined snapshot — written so notifications / payment
+      // providers that still read this column keep working.
+      customerNameSnap:
+        input.guestFirstName || input.guestLastName
+          ? [input.guestFirstName ?? "", input.guestLastName ?? ""]
+              .filter(Boolean)
+              .join(" ")
+              .trim() || null
+          : null,
       subtotal,
       deliveryFee,
       serviceFee,

@@ -83,7 +83,8 @@ export const OrderCreateSchema = z.object({
   customer_notes: z.string().max(500).optional(),
   delivery_notes: z.string().max(200).optional(),
   guest_phone: PhoneSchema.optional(),
-  guest_name: z.string().min(1).max(80).optional(),
+  guest_first_name: z.string().min(1).max(40).optional(),
+  guest_last_name: z.string().max(40).optional(),
 });
 
 export const OrderStatusPatchSchema = z.object({

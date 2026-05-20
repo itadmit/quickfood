@@ -42,10 +42,21 @@ export const POST = handler(async (req: Request) => {
   if (!tenant) return apiError("not_found", "tenant not found", 404);
 
   try {
+    // Merchant manual entry still takes one "customer name" field;
+    // split on the first space to match the new firstName/lastName
+    // schema. Trailing tokens collapse into lastName.
+    const trimmed = body.customer_name.trim();
+    const spaceAt = trimmed.indexOf(" ");
+    const customerFirstName =
+      spaceAt > 0 ? trimmed.slice(0, spaceAt) : trimmed;
+    const customerLastName =
+      spaceAt > 0 ? trimmed.slice(spaceAt + 1).trim() : "";
+
     const result = await createOrder({
       tenantSlug: tenant.slug,
       guestPhone: phone,
-      guestName: body.customer_name,
+      guestFirstName: customerFirstName || undefined,
+      guestLastName: customerLastName || undefined,
       method: body.method,
       addressId: null,
       deliveryNotes: body.address ?? null,

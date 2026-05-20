@@ -18,7 +18,8 @@ const CreateOrderSchema = z.object({
   tip: z.number().int().min(0).default(0),
   scheduled_for: z.string().datetime().optional(),
   guest_phone: z.string().optional(),
-  guest_name: z.string().min(1).max(80).optional(),
+  guest_first_name: z.string().min(1).max(40).optional(),
+  guest_last_name: z.string().max(40).optional(),
   lines: z
     .array(
       z.object({
@@ -36,11 +37,14 @@ export const POST = handler(async (req: Request) => {
   const body = CreateOrderSchema.parse(await req.json());
   const session = await getSession();
 
-  if (!session && !body.guest_phone) {
+  // Anyone may place an order: a logged-in customer attaches their
+  // userId; everyone else (guests, merchants browsing their own store
+  // for QA, admins testing) places as a guest and must hand over a
+  // phone number. The previous "customer-only" gate was over-strict
+  // and blocked merchants who navigated into their storefront.
+  const isCustomerSession = session?.type === "customer";
+  if (!isCustomerSession && !body.guest_phone) {
     return apiError("auth_required", "נדרשת התחברות או טלפון אורח", 401);
-  }
-  if (session && session.type !== "customer") {
-    return apiError("forbidden", "רק לקוח יכול ליצור הזמנה", 403);
   }
 
   const guestPhone = body.guest_phone ? (toE164(body.guest_phone) ?? undefined) : undefined;
@@ -48,9 +52,10 @@ export const POST = handler(async (req: Request) => {
   try {
     const result = await createOrder({
       tenantSlug: body.tenant_slug,
-      customerId: session?.userId,
+      customerId: isCustomerSession ? session.userId : undefined,
       guestPhone,
-      guestName: body.guest_name,
+      guestFirstName: body.guest_first_name,
+      guestLastName: body.guest_last_name,
       method: body.method,
       addressId: body.address_id ?? null,
       deliveryNotes: body.delivery_notes ?? null,
