@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, MapPin, User, Check } from "lucide-react";
+import { Sparkles, MapPin, User, Check, X } from "lucide-react";
 import { THEMES, type ThemeId } from "@/lib/themes";
 import { type BusinessType } from "@/components/shared/MenuItemImage";
 import { BusinessTypeSelect } from "@/components/shared/BusinessTypeSelect";
@@ -195,10 +195,19 @@ export function SignupForm() {
             type="button"
             disabled={!canSubmit || busy}
             onClick={submit}
-            className="px-5 py-3 rounded-xl bg-qf-ink hover:bg-black text-white text-sm font-medium disabled:opacity-50 inline-flex items-center gap-2"
+            className="px-5 py-3 rounded-xl bg-qf-ink hover:bg-black text-white text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
           >
-            {busy ? "פותח חנות..." : "פתיחת חנות"}
-            {!busy && <span aria-hidden>→</span>}
+            {busy ? (
+              <>
+                <span className="qf-spinner" aria-hidden />
+                <span>פותח חנות…</span>
+              </>
+            ) : (
+              <>
+                <span>פתיחת חנות</span>
+                <span aria-hidden>→</span>
+              </>
+            )}
           </button>
         )}
       </div>
@@ -528,22 +537,22 @@ function SlugStatusBadge({ status, slug }: { status: SlugStatus; slug: string })
   if (status === "available") {
     return (
       <span
-        className="pe-3 text-qf-green-deep text-base inline-flex items-center"
+        className="pe-3 text-qf-green-deep inline-flex items-center"
         aria-live="polite"
         aria-label="פנוי"
       >
-        ✓
+        <Check size={18} strokeWidth={2.6} />
       </span>
     );
   }
   if (status === "taken" || status === "reserved" || status === "invalid") {
     return (
       <span
-        className="pe-3 text-qf-tomato text-base inline-flex items-center"
+        className="pe-3 text-qf-tomato inline-flex items-center"
         aria-live="polite"
         aria-label="לא זמין"
       >
-        ✕
+        <X size={18} strokeWidth={2.6} />
       </span>
     );
   }
@@ -559,12 +568,33 @@ function SlugStatusLine({ status, slug }: { status: SlugStatus; slug: string }) 
     );
   }
   const msg = {
-    checking: { text: "בודק זמינות...", color: "text-qf-mute" },
-    available: { text: "✓ פנוי לרישום", color: "text-qf-green-deep" },
-    taken: { text: "✕ תפוס כבר. נסה משהו אחר", color: "text-qf-tomato" },
-    reserved: { text: "✕ שמור למערכת. בחר כתובת אחרת", color: "text-qf-tomato" },
-    invalid: { text: "✕ אנגלית בלבד — אותיות קטנות, ספרות ומקפים", color: "text-qf-tomato" },
+    checking: { text: "בודק זמינות...", color: "text-qf-mute", icon: null },
+    available: {
+      text: "פנוי לרישום",
+      color: "text-qf-green-deep",
+      icon: <Check size={12} strokeWidth={2.6} />,
+    },
+    taken: {
+      text: "תפוס כבר. נסה משהו אחר",
+      color: "text-qf-tomato",
+      icon: <X size={12} strokeWidth={2.6} />,
+    },
+    reserved: {
+      text: "שמור למערכת. בחר כתובת אחרת",
+      color: "text-qf-tomato",
+      icon: <X size={12} strokeWidth={2.6} />,
+    },
+    invalid: {
+      text: "אנגלית בלבד — אותיות קטנות, ספרות ומקפים",
+      color: "text-qf-tomato",
+      icon: <X size={12} strokeWidth={2.6} />,
+    },
   }[status as "checking" | "available" | "taken" | "reserved" | "invalid"];
   if (!msg) return null;
-  return <p className={cn("text-xs mt-1", msg.color)}>{msg.text}</p>;
+  return (
+    <p className={cn("text-xs mt-1 inline-flex items-center gap-1", msg.color)}>
+      {msg.icon}
+      {msg.text}
+    </p>
+  );
 }

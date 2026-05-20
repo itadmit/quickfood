@@ -88,8 +88,8 @@ export function OrderTracking({ tenantSlug, order: initialOrder }: { tenantSlug:
           <div className="font-mono text-sm">#{order.number}</div>
         </div>
         <div className="text-center">
-          <div className="text-5xl font-bold tnum">
-            {isDelivered ? "✓" : "25–35"}
+          <div className="text-5xl font-bold tnum grid place-items-center">
+            {isDelivered ? <IcoCheck c="currentColor" s={48} /> : "25–35"}
           </div>
           <div className="text-sm mt-1 opacity-85">
             {isDelivered ? "נמסר בהצלחה" : "דקות עד להגעה משוערת"}

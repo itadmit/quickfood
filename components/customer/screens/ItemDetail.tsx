@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { IcoChev, IcoMinus, IcoPlus, IcoHeart } from "@/components/shared/Icons";
+import { IcoChev, IcoMinus, IcoPlus, IcoHeart, IcoCheck } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
@@ -341,11 +341,12 @@ function Row({
             active ? "border-(--qf-primary) bg-(--qf-primary)" : "border-qf-line-dash",
           )}
         >
-          {active && (
-            <span className={radio ? "w-2 h-2 rounded-full bg-white" : "text-white text-[10px]"}>
-              {radio ? "" : "✓"}
-            </span>
-          )}
+          {active &&
+            (radio ? (
+              <span className="w-2 h-2 rounded-full bg-white" />
+            ) : (
+              <IcoCheck c="#fff" s={12} />
+            ))}
         </span>
         <span>{label}</span>
       </div>
