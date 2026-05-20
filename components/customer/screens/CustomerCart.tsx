@@ -73,28 +73,28 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
           return (
             <div
               key={l.lineId}
-              className="bg-white rounded-2xl border border-qf-line p-3 flex gap-3"
+              className="bg-white rounded-2xl border border-qf-line p-3.5 flex gap-3.5 shadow-xs"
             >
-              <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
+              <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0">
                 <MenuItemImage
                   src={l.imageUrl}
                   alt={l.name}
                   businessType={(tenant.businessType as BusinessType) ?? "general"}
-                  size={64}
+                  size={80}
                   rounded="xl"
                   className="w-full h-full"
                 />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="font-medium leading-tight">{l.name}</div>
+                  <div className="font-semibold leading-tight">{l.name}</div>
                   <button
                     type="button"
                     onClick={() => remove(l.lineId)}
-                    className="w-6 h-6 rounded-full text-qf-mute hover:text-qf-tomato hover:bg-qf-tomato-soft grid place-items-center -m-1 shrink-0"
+                    className="w-8 h-8 rounded-full text-qf-mute hover:text-qf-tomato hover:bg-qf-tomato-soft grid place-items-center -m-1 shrink-0 transition"
                     aria-label="הסר"
                   >
-                    <IcoClose s={14} c="currentColor" />
+                    <IcoClose s={16} c="currentColor" />
                   </button>
                 </div>
                 {variant && (
@@ -103,27 +103,27 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
                 {l.notes && (
                   <div className="text-xs text-qf-ink2 mt-0.5">הערה: {l.notes}</div>
                 )}
-                <div className="flex items-center justify-between mt-2">
+                <div className="flex items-center justify-between mt-2.5">
                   <div className="flex items-center bg-qf-bg rounded-full border border-qf-line">
                     <button
                       type="button"
                       onClick={() => updateQuantity(l.lineId, l.quantity - 1)}
-                      className="w-7 h-7 grid place-items-center"
+                      className="w-9 h-9 grid place-items-center active:bg-qf-line-soft rounded-full transition"
                       aria-label="הפחת"
                     >
-                      <IcoMinus s={14} />
+                      <IcoMinus s={16} />
                     </button>
-                    <div className="w-6 text-center text-sm font-semibold tnum">{l.quantity}</div>
+                    <div className="w-7 text-center text-base font-bold tnum">{l.quantity}</div>
                     <button
                       type="button"
                       onClick={() => updateQuantity(l.lineId, l.quantity + 1)}
-                      className="w-7 h-7 grid place-items-center"
+                      className="w-9 h-9 grid place-items-center active:bg-qf-line-soft rounded-full transition"
                       aria-label="הוסף"
                     >
-                      <IcoPlus c="#11231a" s={14} />
+                      <IcoPlus c="#11231a" s={16} />
                     </button>
                   </div>
-                  <div className="font-semibold tnum">{formatPrice(lineTotal)}</div>
+                  <div className="font-bold tnum text-base">{formatPrice(lineTotal)}</div>
                 </div>
               </div>
             </div>
@@ -132,11 +132,15 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
       </div>
 
       {/* Summary */}
-      <section className="px-5 mt-5 space-y-2 text-sm">
-        <Row label="סכום ביניים" value={formatPrice(subtotal)} />
-        {method === "delivery" && <Row label="דמי משלוח" value={formatPrice(deliveryFee)} />}
-        {serviceFee > 0 && <Row label="דמי שירות" value={formatPrice(serviceFee)} />}
-        <Row bold label="סה״כ" value={formatPrice(total)} />
+      <section className="px-5 mt-5">
+        <div className="bg-white border border-qf-line rounded-2xl p-4 space-y-2 text-sm shadow-xs">
+          <Row label="סכום ביניים" value={formatPrice(subtotal)} />
+          {method === "delivery" && <Row label="דמי משלוח" value={formatPrice(deliveryFee)} />}
+          {serviceFee > 0 && <Row label="דמי שירות" value={formatPrice(serviceFee)} />}
+          <div className="border-t border-qf-line-soft pt-2 mt-2">
+            <Row bold label="סה״כ" value={formatPrice(total)} />
+          </div>
+        </div>
       </section>
 
       {/* Footer CTA */}

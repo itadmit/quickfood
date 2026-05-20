@@ -304,7 +304,9 @@ export function ItemDetail({
         />
       </Section>
 
-      {/* Sticky footer CTA */}
+      {/* Sticky footer CTA — Wolt-style: chunky pill with quantity stepper on
+          one side and the bold add-to-cart CTA on the other. Bigger touch
+          targets all around. */}
       <div className="fixed bottom-0 inset-x-0 z-30 max-w-md mx-auto">
         <div className="bg-white border-t border-qf-line px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center gap-3">
           <div className="flex items-center bg-qf-line-soft rounded-full">
@@ -312,30 +314,30 @@ export function ItemDetail({
               type="button"
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
               disabled={quantity <= 1}
-              className="w-10 h-10 grid place-items-center disabled:opacity-40"
+              className="w-12 h-14 grid place-items-center disabled:opacity-40 active:bg-qf-line-dash rounded-full transition"
               aria-label="הפחת"
             >
-              <IcoMinus s={16} />
+              <IcoMinus s={18} />
             </button>
-            <div className="w-7 text-center font-bold tnum">{quantity}</div>
+            <div className="w-8 text-center font-bold tnum text-base">{quantity}</div>
             <button
               type="button"
               onClick={() => setQuantity((q) => Math.min(20, q + 1))}
               disabled={quantity >= 20}
-              className="w-10 h-10 grid place-items-center disabled:opacity-40"
+              className="w-12 h-14 grid place-items-center disabled:opacity-40 active:bg-qf-line-dash rounded-full transition"
               aria-label="הוסף"
             >
-              <IcoPlus c="#11231a" s={16} />
+              <IcoPlus c="#11231a" s={18} />
             </button>
           </div>
           <button
             type="button"
             onClick={addToCart}
             className={cn(
-              "flex-1 rounded-full px-4 h-12 text-sm font-semibold flex items-center justify-between transition active:scale-[0.98]",
+              "flex-1 rounded-2xl px-5 h-14 text-base font-bold flex items-center justify-between transition active:scale-[0.98]",
               missingGroup
                 ? "bg-qf-ink2 text-white"
-                : "bg-(--qf-primary) hover:bg-(--qf-deep) text-white shadow-sm",
+                : "bg-(--qf-primary) hover:bg-(--qf-deep) text-white shadow-lg shadow-(--qf-primary)/25",
             )}
           >
             <span>{ctaLabel}</span>

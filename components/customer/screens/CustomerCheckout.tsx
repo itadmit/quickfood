@@ -334,7 +334,7 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
             onChange={(e) => setCustomerNotes(e.target.value)}
             rows={2}
             placeholder="למשל: בלי בצל, חתוך ל-8"
-            className="w-full mt-3 bg-white border border-qf-line rounded-xl px-4 py-3 text-sm outline-none focus:border-(--qf-primary) resize-none"
+            className="w-full mt-3 bg-qf-bg border border-qf-line rounded-2xl px-4 py-3 text-base outline-none focus:border-(--qf-primary) focus:bg-white resize-none transition"
           />
         </Card>
 
@@ -418,7 +418,7 @@ function Input({
       dir={dir}
       inputMode={inputMode}
       autoComplete={autoComplete}
-      className="w-full bg-white border border-qf-line rounded-xl px-4 h-12 text-base outline-none focus:border-(--qf-primary) focus:ring-2 focus:ring-(--qf-primary)/15 placeholder:text-qf-mute transition"
+      className="w-full bg-white border border-qf-line rounded-2xl px-4 h-14 text-base outline-none focus:border-(--qf-primary) focus:ring-2 focus:ring-(--qf-primary)/15 placeholder:text-qf-mute transition"
     />
   );
 }
@@ -437,9 +437,9 @@ function Pill({
       type="button"
       onClick={onClick}
       className={cn(
-        "px-3 h-12 rounded-xl text-sm transition border font-medium",
+        "px-3 h-14 rounded-2xl text-sm transition border font-semibold active:scale-[0.98]",
         active
-          ? "bg-(--qf-primary) text-white border-transparent shadow-sm"
+          ? "bg-(--qf-primary) text-white border-transparent shadow-sm shadow-(--qf-primary)/25"
           : "bg-white text-qf-ink2 border-qf-line hover:border-(--qf-primary)/40",
       )}
     >

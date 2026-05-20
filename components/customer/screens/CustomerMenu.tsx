@@ -215,9 +215,9 @@ export function CustomerMenu({ tenantSlug, tenantName, businessType = "general",
                   <Link
                     key={item.id}
                     href={`/${tenantSlug}/menu/${item.id}`}
-                    className="block bg-white rounded-2xl border border-qf-line p-3 flex gap-3"
+                    className="relative block bg-white rounded-2xl border border-qf-line p-3 pe-3.5 flex gap-3 transition active:scale-[0.99] active:bg-qf-line-soft"
                   >
-                    <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0">
+                    <div className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0">
                       <MenuItemImage
                         src={item.images?.[0]}
                         alt={item.name}
@@ -226,10 +226,18 @@ export function CustomerMenu({ tenantSlug, tenantName, businessType = "general",
                         rounded="xl"
                         className="w-full h-full"
                       />
+                      {/* Floating add affordance — half-tucked into the image corner so it reads
+                          as a clear Wolt-style CTA without taking the whole price row. */}
+                      <span
+                        aria-hidden
+                        className="absolute -bottom-2 -end-2 w-9 h-9 rounded-full bg-white shadow-md border border-qf-line grid place-items-center text-(--qf-primary) text-2xl leading-none font-light pointer-events-none"
+                      >
+                        +
+                      </span>
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col justify-between">
                       <div>
-                        <div className="font-medium leading-tight">{item.name}</div>
+                        <div className="font-semibold leading-tight">{item.name}</div>
                         <div className="text-xs text-qf-mute line-clamp-2 mt-0.5">
                           {item.description}
                         </div>
@@ -238,7 +246,7 @@ export function CustomerMenu({ tenantSlug, tenantName, businessType = "general",
                             {item.tags.slice(0, 3).map((t) => (
                               <span
                                 key={t}
-                                className="text-[10px] bg-qf-green-soft text-qf-green-deep px-1.5 py-0.5 rounded-md"
+                                className="text-[10px] bg-qf-green-soft text-qf-green-deep px-1.5 py-0.5 rounded-md font-medium"
                               >
                                 {t}
                               </span>
@@ -246,11 +254,8 @@ export function CustomerMenu({ tenantSlug, tenantName, businessType = "general",
                           </div>
                         )}
                       </div>
-                      <div className="flex items-center justify-between mt-1">
-                        <div className="font-semibold tnum">{formatPrice(item.basePrice)}</div>
-                        <div className="w-8 h-8 rounded-full bg-(--qf-primary) text-white grid place-items-center text-lg leading-none">
-                          +
-                        </div>
+                      <div className="flex items-center justify-between mt-1.5">
+                        <div className="font-bold tnum text-base">{formatPrice(item.basePrice)}</div>
                       </div>
                     </div>
                   </Link>
@@ -267,20 +272,21 @@ export function CustomerMenu({ tenantSlug, tenantName, businessType = "general",
         )}
       </div>
 
-      {/* Floating cart bar */}
+      {/* Floating cart bar — Wolt-style: slides up from the bottom whenever the
+          first item lands in the cart and pulses lightly to draw the eye. */}
       {itemCount > 0 && (
         <Link
           href={`/${tenantSlug}/cart`}
-          className="fixed bottom-20 inset-x-0 z-30 max-w-md mx-auto px-4"
+          className="fixed bottom-20 inset-x-0 z-30 max-w-md mx-auto px-4 animate-qf-slide-up"
         >
-          <div className="bg-(--qf-primary) text-white rounded-2xl shadow-lg flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-2">
-              <span className="bg-white/20 rounded-full w-7 h-7 grid place-items-center text-sm font-bold tnum">
+          <div className="bg-(--qf-primary) text-white rounded-2xl shadow-lg shadow-(--qf-primary)/30 flex items-center justify-between px-4 py-3.5 active:scale-[0.99] transition">
+            <div className="flex items-center gap-2.5">
+              <span className="bg-white/22 rounded-full w-8 h-8 grid place-items-center text-sm font-bold tnum">
                 {itemCount}
               </span>
-              <span className="font-medium">הצג סל</span>
+              <span className="font-semibold">הצג סל</span>
             </div>
-            <div className="font-semibold tnum">{formatPrice(subtotal)}</div>
+            <div className="font-bold tnum text-base">{formatPrice(subtotal)}</div>
           </div>
         </Link>
       )}

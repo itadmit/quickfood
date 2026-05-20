@@ -169,10 +169,30 @@ a {
 .animate-qf-check-in {
   animation: qf-check-in 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
+
+/* Floating cart bar — slides up from the bottom when the first item lands. */
+@keyframes qf-slide-up {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+.animate-qf-slide-up {
+  animation: qf-slide-up 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Toast that pops in from the bottom edge. */
+@keyframes qf-toast-in {
+  from { transform: translate(0, 24px) scale(0.95); opacity: 0; }
+  to   { transform: translate(0, 0)    scale(1);    opacity: 1; }
+}
+.animate-qf-toast-in {
+  animation: qf-toast-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
 @media (prefers-reduced-motion: reduce) {
   .animate-qf-pulse,
   .qf-spinner,
-  .animate-qf-check-in {
+  .animate-qf-check-in,
+  .animate-qf-slide-up,
+  .animate-qf-toast-in {
     animation: none;
   }
 }

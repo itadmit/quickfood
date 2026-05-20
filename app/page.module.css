@@ -54,11 +54,18 @@
   display: flex; align-items: center; justify-content: space-between;
   height: 64px;
 }
-.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 17px; letter-spacing: -0.01em; }
+.brand {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-pacifico), "Pacifico", cursive;
+  font-weight: 400; font-size: 22px; letter-spacing: 0.01em;
+  line-height: 1.1;
+}
+.brand > div { line-height: 1.15; }
 .brandMark {
   width: 30px; height: 30px; border-radius: 10px;
   background: var(--ink); color: var(--cream);
   display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-rubik), "Rubik", sans-serif;
   font-weight: 900; font-size: 16px;
   position: relative;
 }
@@ -66,7 +73,7 @@
   content: ''; position: absolute; inset: 3px; border-radius: 7px;
   border: 1.5px dashed var(--cheese);
 }
-.brandSub { font-size: 11px; font-weight: 600; color: var(--mute); letter-spacing: 0.04em; }
+.brandSub { font-family: var(--font-noto-hebrew), "Noto Sans Hebrew", "Heebo", sans-serif; font-size: 10px; font-weight: 700; color: var(--mute); letter-spacing: 0.12em; text-transform: uppercase; }
 .navLinks { display: flex; gap: 28px; font-size: 14px; font-weight: 500; }
 .navLinks a { color: var(--ink-2); transition: color 0.15s; }
 .navLinks a:hover { color: var(--tomato); }
@@ -717,7 +724,7 @@
   display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 32px;
   padding-bottom: 32px; border-bottom: 1px solid rgba(241,233,216,0.15);
 }
-.footBrand { font-family: var(--font-rubik), "Rubik", sans-serif; font-weight: 900; font-size: 28px; letter-spacing: -0.03em; }
+.footBrand { font-family: var(--font-pacifico), "Pacifico", cursive; font-weight: 400; font-size: 38px; letter-spacing: 0.01em; line-height: 1; }
 .footBrand small { display: block; font-family: var(--font-noto-hebrew), "Noto Sans Hebrew", "Heebo"; font-size: 12px; font-weight: 600; color: rgba(241,233,216,0.6); margin-top: 6px; letter-spacing: 0.04em; }
 .footTag { margin-top: 14px; font-size: 13px; color: rgba(241,233,216,0.6); max-width: 30ch; line-height: 1.55; }
 .footCol h5 { font-size: 12px; font-weight: 800; color: var(--cheese); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 14px; }
