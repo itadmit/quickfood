@@ -129,7 +129,7 @@ function Placeholder({
           backgroundSize: `${Math.max(8, size / 8)}px ${Math.max(8, size / 8)}px`,
         }}
       />
-      <Symbol type={businessType} color={config.symbol} size={size * 0.42} />
+      <BusinessSymbol type={businessType} color={config.symbol} size={size * 0.42} />
       {initials && size >= 80 && (
         <div
           className="absolute bottom-1.5 inset-e-2 font-bold tracking-tight"
@@ -177,7 +177,7 @@ const PLACEHOLDER_CONFIG: Record<
 // ─── Symbols ─────────────────────────────────────────────────────
 // Each symbol is a single elegant outline glyph (1.5–2 strokeWidth)
 
-function Symbol({ type, color, size }: { type: BusinessType; color: string; size: number }) {
+function BusinessSymbol({ type, color, size }: { type: BusinessType; color: string; size: number }) {
   const stroke = color;
   const s = size;
   switch (type) {
