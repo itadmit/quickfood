@@ -19,15 +19,28 @@ interface Tenant {
   slug: string;
 }
 
+/**
+ * Always-2-char logo mark derived from the tenant name. Strips whitespace,
+ * takes the first 2 graphemes, falls back to "QF" if the name is empty.
+ * Works for both Hebrew ("פיצרייה ורדה" → "פי") and Latin ("Pizza Verde" → "Pi").
+ */
+function deriveLogoLetter(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) return "QF";
+  // Use Array.from so surrogate-pair emojis count as one grapheme.
+  return Array.from(trimmed).slice(0, 2).join("");
+}
+
 export function BrandingForm({ tenant }: { tenant: Tenant }) {
   const router = useRouter();
   const [name, setName] = useState(tenant.name);
-  const [logoLetter, setLogoLetter] = useState(tenant.logoLetter);
   const [themeId, setThemeId] = useState<ThemeId>(tenant.themeId);
   const [businessType, setBusinessType] = useState<BusinessType>(tenant.businessType);
   const [cuisineType, setCuisineType] = useState(tenant.cuisineType ?? "");
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+
+  const logoLetter = deriveLogoLetter(name);
 
   async function save() {
     setSaving(true);
@@ -66,16 +79,6 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium" htmlFor="logo">אות לוגו (1–2 תווים)</label>
-          <input
-            id="logo"
-            value={logoLetter}
-            maxLength={2}
-            onChange={(e) => setLogoLetter(e.target.value)}
-            className="w-24 px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-center font-bold"
           />
         </div>
         <div className="space-y-1.5">

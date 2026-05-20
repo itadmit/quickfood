@@ -7,6 +7,7 @@ import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemIm
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
+import { resolveCategoryStyle } from "@/lib/category-style";
 import { cn } from "@/lib/cn";
 
 interface Item {
@@ -24,7 +25,7 @@ interface Props {
   tenantSlug: string;
   tenantName: string;
   businessType?: BusinessType;
-  categories: Array<{ id: string; name: string }>;
+  categories: Array<{ id: string; name: string; icon: string | null; color: string | null }>;
   items: Item[];
 }
 
@@ -143,6 +144,8 @@ export function CustomerMenu({ tenantSlug, tenantName, businessType = "general",
         <div className="flex gap-1.5 overflow-x-auto no-scrollbar px-4 py-2.5">
           {visibleCategories.map((c) => {
             const active = activeCat === c.id;
+            const style = resolveCategoryStyle(c.icon, c.color);
+            const Icon = style.Icon;
             return (
               <button
                 key={c.id}
@@ -152,13 +155,20 @@ export function CustomerMenu({ tenantSlug, tenantName, businessType = "general",
                 type="button"
                 onClick={() => handleChipClick(c.id)}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-full text-sm whitespace-nowrap border transition",
+                  "px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition inline-flex items-center gap-1.5",
                   active
                     ? "bg-(--qf-primary) text-white border-transparent"
                     : "bg-white text-qf-ink2 border-qf-line",
                 )}
               >
-                {c.name}
+                <span
+                  className="w-5 h-5 rounded-full grid place-items-center shrink-0"
+                  style={{ backgroundColor: active ? "rgba(255,255,255,0.18)" : style.bg }}
+                  aria-hidden
+                >
+                  <Icon size={11} color={active ? "#fff" : style.fg} strokeWidth={2} />
+                </span>
+                <span>{c.name}</span>
               </button>
             );
           })}

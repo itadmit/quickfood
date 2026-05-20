@@ -30,7 +30,7 @@ export default async function MenuPage({
       tenantSlug={tenant.slug}
       tenantName={tenant.name}
       businessType={tenant.businessType}
-      categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+      categories={categories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color }))}
       items={items.map((i) => ({
         id: i.id,
         categoryId: i.categoryId,

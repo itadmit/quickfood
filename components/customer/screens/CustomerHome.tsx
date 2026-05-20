@@ -5,6 +5,7 @@ import { IcoPin, IcoSearch, IcoChevDown, IcoStar, IcoClock, IcoBike, IcoFlame, I
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
 import { CampaignPopup } from "@/components/customer/CampaignPopup";
+import { resolveCategoryStyle } from "@/lib/category-style";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { RelativeTime } from "@/components/shared/RelativeTime";
@@ -27,7 +28,7 @@ interface Props {
     deliveryFee: number;
     minOrder: number;
   } | null;
-  categories: Array<{ id: string; name: string; icon: string | null }>;
+  categories: Array<{ id: string; name: string; icon: string | null; color: string | null }>;
   popular: Array<{
     id: string;
     name: string;
@@ -56,7 +57,7 @@ export function CustomerHome({ tenant, branch, categories, popular, lastOrder, c
   const hasCover = Boolean(tenant.coverImage);
 
   return (
-    <div className="pb-24">
+    <div className="pb-20">
       {/* Unified hero: cover image (if any) replaces the green background. */}
       <header className="relative text-white px-5 pt-5 pb-12 overflow-hidden isolate rounded-b-3xl">
         {hasCover ? (
@@ -220,18 +221,25 @@ export function CustomerHome({ tenant, branch, categories, popular, lastOrder, c
       <section className="px-5 mt-5">
         <h2 className="text-base font-semibold mb-2">קטגוריות</h2>
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-5 px-5">
-          {categories.map((c) => (
-            <Link
-              key={c.id}
-              href={`/${tenant.slug}/menu#cat-${c.id}`}
-              className="shrink-0 bg-white rounded-2xl border border-qf-line px-4 py-3 min-w-[88px] text-center"
-            >
-              <div className="w-10 h-10 rounded-full bg-qf-green-soft grid place-items-center mx-auto mb-1">
-                <IcoFlame c="var(--qf-primary)" s={20} />
-              </div>
-              <div className="text-xs font-medium">{c.name}</div>
-            </Link>
-          ))}
+          {categories.map((c) => {
+            const style = resolveCategoryStyle(c.icon, c.color);
+            const Icon = style.Icon;
+            return (
+              <Link
+                key={c.id}
+                href={`/${tenant.slug}/menu#cat-${c.id}`}
+                className="shrink-0 bg-white rounded-2xl border border-qf-line px-4 py-3 min-w-[88px] text-center"
+              >
+                <div
+                  className="w-10 h-10 rounded-full grid place-items-center mx-auto mb-1"
+                  style={{ backgroundColor: style.bg }}
+                >
+                  <Icon size={20} color={style.fg} strokeWidth={1.8} />
+                </div>
+                <div className="text-xs font-medium">{c.name}</div>
+              </Link>
+            );
+          })}
         </div>
       </section>
 

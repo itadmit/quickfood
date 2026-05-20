@@ -10,10 +10,16 @@ import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemIm
 import { cn } from "@/lib/cn";
 import { ItemPreviewModal } from "./ItemPreviewModal";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { CategoryEditorModal, type EditableCategory } from "./CategoryEditorModal";
+import { resolveCategoryStyle } from "@/lib/category-style";
+import { IcoGear } from "@/components/shared/Icons";
 
 interface Category {
   id: string;
   name: string;
+  icon: string | null;
+  color: string | null;
+  position: number;
 }
 interface Item {
   id: string;
@@ -48,6 +54,7 @@ export function MenuList({
   const [pendingDelete, setPendingDelete] = useState<Item | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [categoryEditorOpen, setCategoryEditorOpen] = useState(false);
 
   const filtered = useMemo(
     () => (activeCat === "all" ? localItems : localItems.filter((i) => i.categoryId === activeCat)),
@@ -112,22 +119,43 @@ export function MenuList({
         </div>
       </header>
 
-      <div className="flex gap-2 overflow-x-auto no-scrollbar">
-        <CategoryChip active={activeCat === "all"} onClick={() => setActiveCat("all")}>
-          הכל ({localItems.length})
-        </CategoryChip>
-        {categories.map((c) => {
-          const count = localItems.filter((i) => i.categoryId === c.id).length;
-          return (
-            <CategoryChip
-              key={c.id}
-              active={activeCat === c.id}
-              onClick={() => setActiveCat(c.id)}
-            >
-              {c.name} ({count})
-            </CategoryChip>
-          );
-        })}
+      <div className="flex items-center gap-2">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar flex-1 min-w-0">
+          <CategoryChip active={activeCat === "all"} onClick={() => setActiveCat("all")}>
+            הכל ({localItems.length})
+          </CategoryChip>
+          {categories.map((c) => {
+            const count = localItems.filter((i) => i.categoryId === c.id).length;
+            const style = resolveCategoryStyle(c.icon, c.color);
+            const Icon = style.Icon;
+            return (
+              <CategoryChip
+                key={c.id}
+                active={activeCat === c.id}
+                onClick={() => setActiveCat(c.id)}
+              >
+                <span
+                  className="w-5 h-5 rounded-full grid place-items-center shrink-0"
+                  style={{ backgroundColor: style.bg }}
+                  aria-hidden
+                >
+                  <Icon size={11} color={style.fg} strokeWidth={2} />
+                </span>
+                <span>
+                  {c.name} ({count})
+                </span>
+              </CategoryChip>
+            );
+          })}
+        </div>
+        <button
+          type="button"
+          onClick={() => setCategoryEditorOpen(true)}
+          className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-qf-line-dash text-sm text-qf-ink2 hover:bg-qf-line-soft"
+        >
+          <IcoGear s={14} c="#3a4a40" />
+          <span>ערוך קטגוריות</span>
+        </button>
       </div>
 
       <div className="bg-white rounded-2xl border border-qf-line-dash overflow-hidden">
@@ -220,6 +248,18 @@ export function MenuList({
       />
 
       {importOpen && <CsvImportModal onClose={() => setImportOpen(false)} />}
+
+      <CategoryEditorModal
+        open={categoryEditorOpen}
+        onClose={() => setCategoryEditorOpen(false)}
+        categories={categories.map<EditableCategory>((c) => ({
+          id: c.id,
+          name: c.name,
+          icon: c.icon,
+          color: c.color,
+          position: c.position,
+        }))}
+      />
     </div>
   );
 }
@@ -480,7 +520,7 @@ function CategoryChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "px-3.5 py-1.5 rounded-full border whitespace-nowrap text-sm transition",
+        "px-3.5 py-1.5 rounded-full border whitespace-nowrap text-sm transition inline-flex items-center gap-1.5",
         active
           ? "bg-(--qf-primary) text-white border-transparent"
           : "bg-white border-qf-line-dash text-qf-ink2 hover:border-(--qf-primary)",

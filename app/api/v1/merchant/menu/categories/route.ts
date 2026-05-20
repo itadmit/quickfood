@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 const CategoryInput = z.object({
   name: z.string().min(1).max(60),
   icon: z.string().max(20).optional(),
+  color: z.string().max(20).optional(),
   position: z.number().int().min(0).default(0),
   active: z.boolean().default(true),
 });
@@ -25,6 +26,7 @@ export const GET = handler(async () => {
       id: c.id,
       name: c.name,
       icon: c.icon,
+      color: c.color,
       position: c.position,
       active: c.active,
     })),
@@ -40,6 +42,7 @@ export const POST = handler(async (req: Request) => {
       tenantId: session.tenantId,
       name: body.name,
       icon: body.icon,
+      color: body.color,
       position: body.position,
       active: body.active,
     },

@@ -89,13 +89,13 @@ export default async function HomePage({
             }
           : null
       }
-      categories={categories.map((c) => ({ id: c.id, name: c.name, icon: c.icon }))}
+      categories={categories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color }))}
       popular={popularSerialized}
       lastOrder={lastOrderSerialized}
     >
       <Link
         href={`/${tenant.slug}/menu`}
-        className="text-xs text-(--qf-deep) underline pb-24 pt-2 inline-flex items-center justify-center gap-1 w-full"
+        className="text-xs text-(--qf-deep) underline pt-2 inline-flex items-center justify-center gap-1 w-full"
       >
         לתפריט המלא
         <IcoArrowLeft c="currentColor" s={12} />

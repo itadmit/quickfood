@@ -31,7 +31,13 @@ export default async function MenuPage() {
 
   return (
     <MenuList
-      categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+      categories={categories.map((c) => ({
+        id: c.id,
+        name: c.name,
+        icon: c.icon,
+        color: c.color,
+        position: c.position,
+      }))}
       businessType={tenant?.businessType ?? "general"}
       items={items.map((i) => ({
         id: i.id,
