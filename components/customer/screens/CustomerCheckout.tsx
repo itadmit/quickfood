@@ -1,12 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoChev } from "@/components/shared/Icons";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
+
+type CustomerPaymentMethod = "cash" | "card" | "bit" | "apple_pay" | "google_pay";
+
+const PAYMENT_METHOD_LABELS: Record<CustomerPaymentMethod, string> = {
+  cash: "מזומן בעת המסירה",
+  card: "כרטיס אשראי",
+  bit: "Bit",
+  apple_pay: "Apple Pay",
+  google_pay: "Google Pay",
+};
 
 export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
   const router = useRouter();
@@ -18,10 +28,33 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
   const [name, setName] = useState("");
   const [deliveryNotes, setDeliveryNotes] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card">("cash");
+  const [availableMethods, setAvailableMethods] = useState<CustomerPaymentMethod[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState<CustomerPaymentMethod | null>(null);
   const [tip, setTip] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Load the restaurant's accepted payment methods.
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/v1/restaurants/${encodeURIComponent(tenantSlug)}`)
+      .then((r) => r.json())
+      .then((d: { restaurant?: { payment_methods?: CustomerPaymentMethod[] } }) => {
+        if (cancelled) return;
+        const methods = d.restaurant?.payment_methods ?? [];
+        setAvailableMethods(methods);
+        // Prefer cash → card → bit → apple_pay → google_pay (first available)
+        const preferred: CustomerPaymentMethod[] = ["cash", "card", "bit", "apple_pay", "google_pay"];
+        const first = preferred.find((m) => methods.includes(m)) ?? null;
+        setPaymentMethod(first);
+      })
+      .catch(() => {
+        /* leave empty; place() will show an error */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantSlug]);
 
   const deliveryFee = method === "delivery" ? branch?.deliveryFee ?? 0 : 0;
   const serviceFee = branch?.serviceFee ?? 0;
@@ -44,6 +77,10 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
   }
 
   async function place() {
+    if (!paymentMethod) {
+      setError("בחר אמצעי תשלום");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -119,26 +156,31 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
         </div>
       </Section>
 
-      {/* Payment method */}
+      {/* Payment method — only the ones the restaurant accepts */}
       <Section title="אמצעי תשלום">
-        <div className="grid grid-cols-2 gap-2">
-          <Pill
-            active={paymentMethod === "cash"}
-            onClick={() => setPaymentMethod("cash")}
-          >
-            מזומן בעת המסירה
-          </Pill>
-          <Pill
-            active={paymentMethod === "card"}
-            onClick={() => setPaymentMethod("card")}
-          >
-            כרטיס אשראי
-          </Pill>
-        </div>
-        {paymentMethod === "card" && (
-          <div className="mt-2 text-xs text-qf-mute bg-qf-yolk-soft border border-qf-yolk/40 rounded-lg px-3 py-2">
-            תשלום אשראי יוצג לאחר אישור ההזמנה (Grow Payments).
+        {availableMethods.length === 0 ? (
+          <div className="text-xs text-qf-mute bg-qf-line-soft border border-qf-line-dash rounded-lg px-3 py-2">
+            המסעדה עוד לא הגדירה אמצעי תשלום. צור איתם קשר ישירות.
           </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-2">
+              {availableMethods.map((m) => (
+                <Pill
+                  key={m}
+                  active={paymentMethod === m}
+                  onClick={() => setPaymentMethod(m)}
+                >
+                  {PAYMENT_METHOD_LABELS[m]}
+                </Pill>
+              ))}
+            </div>
+            {paymentMethod && paymentMethod !== "cash" && (
+              <div className="mt-2 text-xs text-qf-mute bg-qf-yolk-soft border border-qf-yolk/40 rounded-lg px-3 py-2">
+                החיוב יתבצע מיד אחרי אישור ההזמנה דרך Grow.
+              </div>
+            )}
+          </>
         )}
       </Section>
 
@@ -185,7 +227,13 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
         <button
           type="button"
           onClick={place}
-          disabled={busy || (method === "delivery" && !address) || !phone || !name}
+          disabled={
+            busy ||
+            !paymentMethod ||
+            (method === "delivery" && !address) ||
+            !phone ||
+            !name
+          }
           className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute text-white rounded-2xl px-4 py-3.5 font-semibold flex items-center justify-between"
         >
           <span>{busy ? "שולח..." : "בצע הזמנה"}</span>

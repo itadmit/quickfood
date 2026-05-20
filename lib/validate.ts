@@ -274,20 +274,35 @@ export const TenantCreateSchema = z.object({
 
 // ─── Payments (merchant settings) ──────────────────────────────
 
-export const MerchantPaymentsPatchSchema = z.object({
-  /** Tenant.paymentProvider — what this tenant uses by default */
-  provider: z.enum(["cash", "grow"]),
-  /** Toggle the provider config row on/off (only relevant for non-cash) */
-  is_active: z.boolean().optional(),
-  /** Sandbox vs production for the provider call */
-  test_mode: z.boolean().optional(),
-  /** Grow per-merchant userId */
-  user_id: z.string().min(1).max(64).optional(),
-  /** Grow per-tenant pageCode override (rarely used; usually env default wins) */
-  page_code: z.string().min(1).max(64).optional(),
-  /** Max installments (Grow maxPaymentNum). 1 = no installments. */
-  max_installments: z.number().int().min(1).max(12).optional(),
-  /** Apple Pay domain-association file content. Only relevant when the tenant
-   *  has a custom domain. Empty string clears it. */
-  apple_pay_domain_association: z.string().max(8000).optional().nullable(),
-});
+/**
+ * Multi-provider payments: a tenant can accept any combination of cash and
+ * provider-routed payments (currently just Grow, which covers card/Bit/Apple
+ * Pay/Google Pay through one SDK).
+ */
+export const MerchantPaymentsPatchSchema = z
+  .object({
+    /** Tenant.acceptsCash — show "cash on delivery" at checkout */
+    accepts_cash: z.boolean(),
+    grow: z
+      .object({
+        is_active: z.boolean(),
+        test_mode: z.boolean().optional(),
+        user_id: z.string().min(1).max(64).optional(),
+        page_code: z.string().max(64).optional(),
+        max_installments: z.number().int().min(1).max(12).optional(),
+        /** Apple Pay domain-association file content. Empty string clears it. */
+        apple_pay_domain_association: z
+          .string()
+          .max(8000)
+          .optional()
+          .nullable(),
+      })
+      .optional(),
+  })
+  .refine(
+    (v) => v.accepts_cash || (v.grow?.is_active ?? false),
+    {
+      message: "חייב להפעיל לפחות אמצעי תשלום אחד (מזומן או Grow)",
+      path: ["accepts_cash"],
+    },
+  );

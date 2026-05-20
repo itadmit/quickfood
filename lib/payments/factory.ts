@@ -3,6 +3,10 @@
  *
  * Loads a tenant's PaymentProviderConfig row, instantiates the matching
  * provider class, and configures it for use.
+ *
+ * In the multi-provider model, callers must specify which provider they want
+ * (no more "default" on the tenant). For cash there's no provider — order
+ * code handles it inline.
  */
 
 import { prisma } from "@/lib/db/client";
@@ -32,28 +36,17 @@ export function createProviderInstance(type: ProviderType): IPaymentProvider {
 }
 
 /**
- * Get the active provider for a tenant. If providerType isn't specified, uses
- * the tenant's default (Tenant.paymentProvider).
+ * Get a configured provider for a tenant. Returns null if the tenant doesn't
+ * have an active config for that provider, or for `cash` (no SDK).
  */
 export async function getConfiguredProvider(
   tenantId: string,
-  providerType?: ProviderType,
+  providerType: ProviderType,
 ): Promise<IPaymentProvider | null> {
-  let resolvedType = providerType;
-
-  if (!resolvedType) {
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { paymentProvider: true },
-    });
-    if (!tenant) return null;
-    resolvedType = tenant.paymentProvider;
-  }
-
-  if (resolvedType === PaymentProvider.cash) return null; // cash has no SDK
+  if (providerType === PaymentProvider.cash) return null; // cash has no SDK
 
   const row = await prisma.paymentProviderConfig.findUnique({
-    where: { tenantId_provider: { tenantId, provider: resolvedType } },
+    where: { tenantId_provider: { tenantId, provider: providerType } },
   });
 
   if (!row || !row.isActive) return null;

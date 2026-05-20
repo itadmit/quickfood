@@ -176,7 +176,7 @@ model Tenant {
   planId          String?         @map("plan_id") @db.Uuid
   plan            Plan?           @relation(fields: [planId], references: [id])
   customDomain    String?         @unique @map("custom_domain")
-  paymentProvider PaymentProvider @default(cash) @map("payment_provider")
+  acceptsCash     Boolean         @default(true) @map("accepts_cash")
   allowedOrigins  String[]        @default([]) @map("allowed_origins")
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @updatedAt @map("updated_at")

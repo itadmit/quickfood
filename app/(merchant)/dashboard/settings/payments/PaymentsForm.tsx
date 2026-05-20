@@ -1,19 +1,21 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoCash, IcoCheck, IcoClose, IcoCreditCard } from "@/components/shared/Icons";
 
-type Provider = "cash" | "grow";
-
-interface Initial {
-  provider: Provider;
+interface GrowState {
   is_active: boolean;
   test_mode: boolean;
   user_id: string;
   page_code: string;
   max_installments: number;
   apple_pay_domain_association: string;
+}
+
+interface Initial {
+  accepts_cash: boolean;
+  grow: GrowState;
 }
 
 interface Props {
@@ -28,11 +30,23 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
 
-  function set<K extends keyof Initial>(k: K, val: Initial[K]) {
-    setV((x) => ({ ...x, [k]: val }));
+  function setCash(b: boolean) {
+    setV((x) => ({ ...x, accepts_cash: b }));
+  }
+  function setGrow<K extends keyof GrowState>(k: K, val: GrowState[K]) {
+    setV((x) => ({ ...x, grow: { ...x.grow, [k]: val } }));
   }
 
+  const hasAnyActive = v.accepts_cash || v.grow.is_active;
+
   async function save() {
+    if (!hasAnyActive) {
+      setToast({
+        kind: "err",
+        msg: "חייב להפעיל לפחות אמצעי תשלום אחד",
+      });
+      return;
+    }
     setSaving(true);
     setToast(null);
     try {
@@ -40,15 +54,17 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          provider: v.provider,
-          is_active: v.provider === "grow" ? v.is_active : false,
-          test_mode: v.test_mode,
-          user_id: v.user_id || undefined,
-          page_code: v.page_code || undefined,
-          max_installments: v.max_installments,
-          apple_pay_domain_association: canEditApplePay
-            ? v.apple_pay_domain_association
-            : undefined,
+          accepts_cash: v.accepts_cash,
+          grow: {
+            is_active: v.grow.is_active,
+            test_mode: v.grow.test_mode,
+            user_id: v.grow.user_id || undefined,
+            page_code: v.grow.page_code || undefined,
+            max_installments: v.grow.max_installments,
+            apple_pay_domain_association: canEditApplePay
+              ? v.grow.apple_pay_domain_association
+              : undefined,
+          },
         }),
       });
       const data = (await res.json()) as { error?: { message?: string } };
@@ -66,54 +82,55 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
     }
   }
 
-  const showGrow = v.provider === "grow";
-
   return (
     <div className="space-y-5 max-w-2xl">
-      {/* Provider picker */}
+      {/* Section: which methods to accept */}
       <div className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-4">
-        <h2 className="font-semibold text-lg">ספק תשלום</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <ProviderCard
-            checked={v.provider === "cash"}
-            onClick={() => set("provider", "cash")}
-            title="מזומן בלבד"
-            sub="הלקוח משלם לשליח / בקופה. בלי סליקה."
-            icon={<IcoCash s={20} />}
-          />
-          <ProviderCard
-            checked={v.provider === "grow"}
-            onClick={() => set("provider", "grow")}
-            title="Grow"
-            sub="אשראי · Bit · Apple Pay · Google Pay"
-            icon={<IcoCreditCard s={20} />}
-          />
+        <div>
+          <h2 className="font-semibold text-lg">אמצעי תשלום שהמסעדה מקבלת</h2>
+          <p className="text-sm text-qf-mute mt-0.5">
+            סמן את כל מה שאתה רוצה לקבל. הלקוח יבחר בקופה.
+          </p>
         </div>
+
+        <MethodRow
+          icon={<IcoCash s={20} />}
+          title="מזומן"
+          sub="הלקוח משלם לשליח או בקופה. אין סליקה."
+          checked={v.accepts_cash}
+          onChange={setCash}
+        />
+        <MethodRow
+          icon={<IcoCreditCard s={20} />}
+          title="Grow — אשראי · Bit · Apple Pay · Google Pay"
+          sub="מצריך חשבון Grow פעיל. ההגדרות בהמשך."
+          checked={v.grow.is_active}
+          onChange={(b) => setGrow("is_active", b)}
+        />
+
+        {!hasAnyActive && (
+          <div className="rounded-xl bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm px-3.5 py-2.5">
+            חייב להפעיל לפחות אמצעי תשלום אחד.
+          </div>
+        )}
       </div>
 
-      {/* Grow config */}
-      {showGrow && (
+      {/* Grow config — only when Grow is enabled */}
+      {v.grow.is_active && (
         <div className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="font-semibold text-lg">הגדרות חשבון Grow</h2>
-              <p className="text-sm text-qf-mute mt-0.5">
-                מקבלים את הפרטים אחרי שמשלימים onboarding מול{" "}
-                <a
-                  href="https://grow-il.readme.io"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline text-(--qf-deep)"
-                >
-                  Grow
-                </a>
-              </p>
-            </div>
-            <Toggle
-              checked={v.is_active}
-              onChange={(b) => set("is_active", b)}
-              label={v.is_active ? "פעיל" : "כבוי"}
-            />
+          <div>
+            <h2 className="font-semibold text-lg">הגדרות חשבון Grow</h2>
+            <p className="text-sm text-qf-mute mt-0.5">
+              מקבלים את הפרטים אחרי שמשלימים onboarding מול{" "}
+              <a
+                href="https://grow-il.readme.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline text-(--qf-deep)"
+              >
+                Grow
+              </a>
+            </p>
           </div>
 
           <Field
@@ -121,8 +138,8 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
             hint="מזהה הסוחר שלך אצל Grow (לדוגמה: 814d52344861c4a3)"
           >
             <input
-              value={v.user_id}
-              onChange={(e) => set("user_id", e.target.value.trim())}
+              value={v.grow.user_id}
+              onChange={(e) => setGrow("user_id", e.target.value.trim())}
               dir="ltr"
               autoComplete="off"
               spellCheck={false}
@@ -136,9 +153,9 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
               hint="כל עוד פעיל — Grow לא יחייב כרטיסים אמיתיים"
             >
               <Toggle
-                checked={v.test_mode}
-                onChange={(b) => set("test_mode", b)}
-                label={v.test_mode ? "Sandbox" : "Production"}
+                checked={v.grow.test_mode}
+                onChange={(b) => setGrow("test_mode", b)}
+                label={v.grow.test_mode ? "Sandbox" : "Production"}
               />
             </Field>
             <Field
@@ -146,8 +163,10 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
               hint="1 = ללא תשלומים. עד 12 חודשי תשלומים."
             >
               <select
-                value={v.max_installments}
-                onChange={(e) => set("max_installments", parseInt(e.target.value, 10))}
+                value={v.grow.max_installments}
+                onChange={(e) =>
+                  setGrow("max_installments", parseInt(e.target.value, 10))
+                }
                 className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none bg-white tnum"
               >
                 {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
@@ -169,8 +188,8 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
                 hint="השאר ריק כדי להשתמש ב-pageCode הפלטפורמתי. הגדר רק אם Grow הקצה לך pageCode ייעודי."
               >
                 <input
-                  value={v.page_code}
-                  onChange={(e) => set("page_code", e.target.value.trim())}
+                  value={v.grow.page_code}
+                  onChange={(e) => setGrow("page_code", e.target.value.trim())}
                   dir="ltr"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
                 />
@@ -180,8 +199,8 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
         </div>
       )}
 
-      {/* Apple Pay verification — only with custom domain */}
-      {showGrow && (
+      {/* Apple Pay verification — only when Grow is on AND tenant has custom domain */}
+      {v.grow.is_active && (
         <div className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-3">
           <div>
             <h2 className="font-semibold text-lg">Apple Pay — אישור דומיין</h2>
@@ -211,9 +230,9 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
                 hint="הדבק כאן את התוכן של הקובץ apple-developer-merchantid-domain-association ש-Grow הנפיק עבור הדומיין הזה. אנחנו נגיש אותו ב-URL הנכון אוטומטית."
               >
                 <textarea
-                  value={v.apple_pay_domain_association}
+                  value={v.grow.apple_pay_domain_association}
                   onChange={(e) =>
-                    set("apple_pay_domain_association", e.target.value)
+                    setGrow("apple_pay_domain_association", e.target.value)
                   }
                   dir="ltr"
                   rows={6}
@@ -248,8 +267,8 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
         <button
           type="button"
           onClick={save}
-          disabled={saving}
-          className="px-5 py-2.5 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
+          disabled={saving || !hasAnyActive}
+          className="px-5 py-2.5 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {saving ? "שומר..." : "שמירת שינויים"}
         </button>
@@ -258,48 +277,56 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
   );
 }
 
-function ProviderCard({
-  checked,
-  onClick,
+function MethodRow({
+  icon,
   title,
   sub,
-  icon,
+  checked,
+  onChange,
 }: {
-  checked: boolean;
-  onClick: () => void;
+  icon: React.ReactNode;
   title: string;
   sub: string;
-  icon: ReactNode;
+  checked: boolean;
+  onChange: (b: boolean) => void;
 }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={() => onChange(!checked)}
+      aria-pressed={checked}
       className={
-        "flex items-start gap-3 p-3.5 rounded-xl border-2 text-start transition " +
+        "w-full flex items-start gap-3 p-3.5 rounded-xl border-2 text-start transition " +
         (checked
           ? "border-(--qf-primary) bg-qf-green-soft"
           : "border-qf-line-dash bg-white hover:bg-qf-line-soft")
       }
-      aria-pressed={checked}
     >
-      <div className="w-10 h-10 rounded-lg bg-white border border-qf-line-dash grid place-items-center text-lg shrink-0">
+      <div className="w-10 h-10 rounded-lg bg-white border border-qf-line-dash grid place-items-center shrink-0">
         {icon}
       </div>
       <div className="flex-1 min-w-0">
         <div className="font-medium">{title}</div>
         <div className="text-xs text-qf-mute mt-0.5">{sub}</div>
       </div>
-      <div
-        className={
-          "w-5 h-5 rounded-full border-2 shrink-0 mt-1 " +
-          (checked
-            ? "border-(--qf-primary) bg-(--qf-primary)"
-            : "border-qf-line-dash")
-        }
-        aria-hidden
-      />
+      <CheckBox checked={checked} />
     </button>
+  );
+}
+
+function CheckBox({ checked }: { checked: boolean }) {
+  return (
+    <div
+      className={
+        "w-5 h-5 rounded-md border-2 shrink-0 mt-0.5 grid place-items-center transition " +
+        (checked
+          ? "border-(--qf-primary) bg-(--qf-primary)"
+          : "border-qf-line-dash")
+      }
+      aria-hidden
+    >
+      {checked && <IcoCheck c="#fff" s={12} />}
+    </div>
   );
 }
 

@@ -12,7 +12,12 @@ import { requireCustomer } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { getConfiguredProvider } from "@/lib/payments/factory";
 import type { InitiatePaymentRequest } from "@/lib/payments/types";
-import { PaymentProvider, PaymentStatus, PendingPaymentStatus } from "@prisma/client";
+import {
+  PaymentMethod,
+  PaymentProvider,
+  PaymentStatus,
+  PendingPaymentStatus,
+} from "@prisma/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,7 +30,7 @@ export const POST = handler(
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
-        tenant: { select: { id: true, slug: true, paymentProvider: true } },
+        tenant: { select: { id: true, slug: true } },
         items: true,
       },
     });
@@ -41,14 +46,21 @@ export const POST = handler(
       return apiError("refunded", "לא ניתן לשלם על הזמנה שזוכתה", 409);
     }
 
-    const providerType = order.tenant.paymentProvider;
-    if (providerType === PaymentProvider.cash) {
-      return apiError("provider_unavailable", "המסעדה לא מקבלת תשלום באשראי", 400);
+    // Cash orders don't go through a provider — they're settled on delivery.
+    if (order.paymentMethod === PaymentMethod.cash) {
+      return apiError(
+        "cash_payment",
+        "הזמנת מזומן לא דורשת אתחול תשלום",
+        400,
+      );
     }
 
+    // All non-cash methods (card/bit/apple_pay/google_pay) currently route
+    // through Grow's wallet — the SDK shows the right button per method.
+    const providerType = PaymentProvider.grow;
     const provider = await getConfiguredProvider(order.tenantId, providerType);
     if (!provider) {
-      return apiError("provider_unavailable", "ספק התשלום לא מוגדר", 503);
+      return apiError("provider_unavailable", "ספק התשלום לא מוגדר במסעדה", 503);
     }
 
     const customer = order.customerId

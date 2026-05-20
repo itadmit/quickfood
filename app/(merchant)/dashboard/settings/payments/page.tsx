@@ -24,7 +24,7 @@ export default async function PaymentsSettingsPage() {
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
-    select: { paymentProvider: true, customDomain: true },
+    select: { acceptsCash: true, customDomain: true },
   });
   if (!tenant) redirect("/dashboard/login");
 
@@ -44,7 +44,7 @@ export default async function PaymentsSettingsPage() {
       <header>
         <h1 className="text-2xl font-bold">הגדרות</h1>
         <p className="text-sm text-qf-mute">
-          ספק תשלום ופרטי חשבון Grow לקבלת אשראי, Bit, Apple Pay
+          איזה אמצעי תשלום המסעדה מקבלת. הלקוח יבחר מתוכם בקופה.
         </p>
       </header>
       <SettingsTabs />
@@ -52,13 +52,16 @@ export default async function PaymentsSettingsPage() {
         canEditApplePay={Boolean(tenant.customDomain)}
         customDomain={tenant.customDomain}
         initial={{
-          provider: tenant.paymentProvider,
-          is_active: config?.isActive ?? false,
-          test_mode: config?.testMode ?? true,
-          user_id: creds.userId ?? "",
-          page_code: creds.pageCode ?? "",
-          max_installments: settings.maxInstallments ?? 1,
-          apple_pay_domain_association: config?.applePayDomainAssociation ?? "",
+          accepts_cash: tenant.acceptsCash,
+          grow: {
+            is_active: config?.isActive ?? false,
+            test_mode: config?.testMode ?? true,
+            user_id: creds.userId ?? "",
+            page_code: creds.pageCode ?? "",
+            max_installments: settings.maxInstallments ?? 1,
+            apple_pay_domain_association:
+              config?.applePayDomainAssociation ?? "",
+          },
         }}
       />
     </div>
