@@ -125,8 +125,9 @@ export function CustomerHome({ tenant, branch, categories, popular, lastOrder, c
         </div>
       </header>
 
-      {/* Thin info bar */}
-      <section className="px-5 -mt-4 relative z-10">
+      {/* Thin info bar — pulled up so it sits visibly on top of the hero,
+          straddling the cover image and the body. */}
+      <section className="px-5 -mt-10 relative z-10">
         <div className="bg-white border border-qf-line rounded-full shadow-sm px-3 py-2 flex items-center justify-center gap-3 text-xs">
           <span className="inline-flex items-center gap-1 font-semibold">
             <IcoStar c="var(--qf-primary)" s={12} fill="var(--qf-primary)" />
