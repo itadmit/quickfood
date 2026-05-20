@@ -42,6 +42,10 @@ export function OrderTracking({ tenantSlug, order: initialOrder }: { tenantSlug:
   const [order, setOrder] = useState(initialOrder);
   const stage = stageOf(order.status);
   const isDelivered = order.status === "delivered";
+  // "Just placed" — the customer just landed on this page. Render the
+  // celebratory green-check confirmation instead of the ETA so they
+  // know the order went through.
+  const isJustPlaced = ["pending", "confirmed"].includes(order.status);
 
   // SSE updates
   useEffect(() => {
@@ -76,7 +80,7 @@ export function OrderTracking({ tenantSlug, order: initialOrder }: { tenantSlug:
 
   return (
     <div className="pb-20">
-      <header className="bg-gradient-to-b from-(--qf-primary) to-(--qf-deep) text-white px-5 pt-5 pb-7 rounded-b-3xl">
+      <header className="bg-gradient-to-b from-(--qf-primary) to-(--qf-deep) text-white px-5 pt-5 pb-8 rounded-b-3xl">
         <div className="flex items-center gap-3 mb-4">
           <Link
             href={`/${tenantSlug}`}
@@ -88,12 +92,32 @@ export function OrderTracking({ tenantSlug, order: initialOrder }: { tenantSlug:
           <div className="font-mono text-sm">#{order.number}</div>
         </div>
         <div className="text-center">
-          <div className="text-5xl font-bold tnum grid place-items-center">
-            {isDelivered ? <IcoCheck c="currentColor" s={48} /> : "25–35"}
-          </div>
-          <div className="text-sm mt-1 opacity-85">
-            {isDelivered ? "נמסר בהצלחה" : "דקות עד להגעה משוערת"}
-          </div>
+          {isJustPlaced ? (
+            <>
+              <div
+                className="mx-auto w-20 h-20 rounded-full bg-white grid place-items-center shadow-lg animate-qf-check-in"
+                aria-hidden
+              >
+                <IcoCheck c="#16a34a" s={44} />
+              </div>
+              <div className="text-2xl font-bold mt-4">ההזמנה התקבלה!</div>
+              <div className="text-sm mt-1 opacity-90">
+                שלחנו אותה למסעדה — תקבל עדכון ברגע שהיא תאושר
+              </div>
+            </>
+          ) : isDelivered ? (
+            <>
+              <div className="text-5xl font-bold tnum grid place-items-center">
+                <IcoCheck c="currentColor" s={48} />
+              </div>
+              <div className="text-sm mt-1 opacity-85">נמסר בהצלחה</div>
+            </>
+          ) : (
+            <>
+              <div className="text-5xl font-bold tnum">25–35</div>
+              <div className="text-sm mt-1 opacity-85">דקות עד להגעה משוערת</div>
+            </>
+          )}
         </div>
       </header>
 
