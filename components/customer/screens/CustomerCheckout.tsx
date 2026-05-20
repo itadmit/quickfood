@@ -187,7 +187,7 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
           <Card>
             <CardTitle>פרטי איסוף</CardTitle>
             <p className="text-sm text-qf-ink2 mt-2">
-              איסוף מהסניף: <span className="font-medium">{branch?.address ?? ""}</span>
+              ההזמנה תהיה מוכנה לאיסוף מהסניף ברגע שתאושר על ידי המסעדה.
             </p>
           </Card>
         )}
