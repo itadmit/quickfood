@@ -213,7 +213,6 @@ async function main() {
   });
 
   // ─── Webhook endpoint for testing ──────────────────────────────
-  // Uncomment + provide URL via WEBHOOK_TEST_URL to wire to webhook.site
   if (process.env.WEBHOOK_TEST_URL) {
     await prisma.webhookEndpoint.create({
       data: {
@@ -226,7 +225,121 @@ async function main() {
     });
   }
 
-  console.log(`✓ Seeded tenant '${tenant.slug}' with ${items.length} items.`);
+  // ─── Demo couriers ─────────────────────────────────────────────
+  const existingCouriers = await prisma.courier.count({ where: { tenantId: tenant.id } });
+  if (existingCouriers === 0) {
+    await prisma.courier.createMany({
+      data: [
+        { tenantId: tenant.id, branchId: branch.id, name: "אבי לוי", phone: "+972501111001", vehicle: "scooter", status: "available", ratingAvg: 4.9, deliveriesToday: 3 },
+        { tenantId: tenant.id, branchId: branch.id, name: "דנה כהן", phone: "+972501111002", vehicle: "bike", status: "on_delivery", ratingAvg: 4.7, deliveriesToday: 5 },
+        { tenantId: tenant.id, branchId: branch.id, name: "יוסי ברק", phone: "+972501111003", vehicle: "scooter", status: "offline", ratingAvg: 4.8, deliveriesToday: 0 },
+      ],
+    });
+  }
+
+  // ─── Demo customers + delivered orders (for analytics + reviews) ──
+  const existingDeliveredCount = await prisma.order.count({
+    where: { tenantId: tenant.id, status: "delivered" },
+  });
+
+  if (existingDeliveredCount < 5) {
+    const demoCustomers = [
+      { phone: "+972501222001", name: "נועה ישראלי" },
+      { phone: "+972501222002", name: "תמר דהן" },
+      { phone: "+972501222003", name: "אורי מימון" },
+    ];
+    for (const c of demoCustomers) {
+      await prisma.customer.upsert({
+        where: { phone: c.phone },
+        update: {},
+        create: c,
+      });
+    }
+    const customerIds = await prisma.customer.findMany({
+      where: { phone: { in: demoCustomers.map((c) => c.phone) } },
+      select: { id: true },
+    });
+
+    const itemRows = await prisma.menuItem.findMany({
+      where: { tenantId: tenant.id },
+      include: { sizes: { take: 1, where: { isDefault: true } } },
+      take: 5,
+    });
+
+    const now = Date.now();
+    const HOUR = 60 * 60 * 1000;
+    const DAY = 24 * HOUR;
+
+    for (let i = 0; i < 12; i++) {
+      const cust = customerIds[i % customerIds.length];
+      const offset = i * 3 * HOUR;
+      const createdAt = new Date(now - offset);
+      const confirmedAt = new Date(createdAt.getTime() + 60_000);
+      const readyAt = new Date(confirmedAt.getTime() + (10 + (i % 8)) * 60_000);
+      const deliveredAt = new Date(readyAt.getTime() + 22 * 60_000);
+      const picks = itemRows.slice(0, 1 + (i % 3));
+      const subtotal = picks.reduce((acc, it, idx) => acc + it.basePrice * (1 + (idx % 2)), 0);
+      const total = subtotal + 14 + 3;
+
+      await prisma.order.create({
+        data: {
+          number: `DEMO-${1000 + i}`,
+          tenantId: tenant.id,
+          branchId: branch.id,
+          customerId: cust.id,
+          status: "delivered",
+          method: i % 4 === 0 ? "pickup" : "delivery",
+          subtotal,
+          deliveryFee: 14,
+          serviceFee: 3,
+          total,
+          paymentMethod: "cash",
+          paymentStatus: "paid",
+          createdAt,
+          confirmedAt,
+          readyAt,
+          deliveredAt,
+          items: {
+            createMany: {
+              data: picks.map((it, idx) => ({
+                menuItemId: it.id,
+                nameSnapshot: it.name,
+                quantity: 1 + (idx % 2),
+                unitPrice: it.basePrice,
+                totalPrice: it.basePrice * (1 + (idx % 2)),
+                sizeId: it.sizes[0]?.id ?? null,
+                sizeSnapshot: it.sizes[0]?.name ?? null,
+                selectedOptions: [],
+              })),
+            },
+          },
+        },
+      });
+
+      // Add a review for half of the orders
+      if (i % 2 === 0) {
+        const orderRow = await prisma.order.findFirst({
+          where: { number: `DEMO-${1000 + i}` },
+          select: { id: true },
+        });
+        if (orderRow) {
+          await prisma.review.create({
+            data: {
+              tenantId: tenant.id,
+              orderId: orderRow.id,
+              customerId: cust.id,
+              rating: 3 + (i % 3),
+              text: i % 4 === 0 ? "אוכל מעולה, הגיע חם!" : "שירות סבבה, ימשיכו ככה",
+              status: "visible",
+              createdAt: new Date(deliveredAt.getTime() + DAY),
+            },
+          });
+        }
+      }
+    }
+  }
+
+  console.log(`✓ Seeded tenant '${tenant.slug}' with ${items.length} items, demo orders + reviews + couriers.`);
   console.log("  Merchant login: owner@pizzeria-verde.local / verde1234");
   console.log("  Admin login:    admin@quickfood.local       / admin1234");
 }

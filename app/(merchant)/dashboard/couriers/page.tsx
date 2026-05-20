@@ -1,7 +1,32 @@
-import { ComingSoon } from "@/components/merchant/ComingSoon";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth/session";
+import { prisma } from "@/lib/db/client";
+import { CouriersView } from "./CouriersView";
 
-export default function CouriersPage() {
+export const dynamic = "force-dynamic";
+
+export default async function CouriersPage() {
+  const session = await getSession();
+  if (!session || session.type !== "merchant" || !session.tenantId) {
+    redirect("/dashboard/login");
+  }
+
+  const couriers = await prisma.courier.findMany({
+    where: { tenantId: session.tenantId },
+    orderBy: { createdAt: "desc" },
+  });
+
   return (
-    <ComingSoon title="שליחים" subtitle="ניהול שליחים, הקצאת משלוחים — בקרוב ב-v1.0" />
+    <CouriersView
+      initial={couriers.map((c) => ({
+        id: c.id,
+        name: c.name,
+        phone: c.phone,
+        vehicle: c.vehicle,
+        status: c.status,
+        ratingAvg: Number(c.ratingAvg),
+        deliveriesToday: c.deliveriesToday,
+      }))}
+    />
   );
 }

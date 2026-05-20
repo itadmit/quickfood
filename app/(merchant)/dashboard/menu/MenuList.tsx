@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { formatPrice } from "@/lib/format";
 import { IcoPizza } from "@/components/shared/Icons";
@@ -68,9 +69,12 @@ export function MenuList({
           <button className="px-3.5 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm">
             ייבוא מ-CSV
           </button>
-          <button className="px-3.5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm">
+          <Link
+            href="/dashboard/menu/new"
+            className="px-3.5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm"
+          >
             + פריט חדש
-          </button>
+          </Link>
         </div>
       </header>
 
@@ -139,13 +143,13 @@ export function MenuList({
                 />
               </button>
             </div>
-            <button
-              type="button"
-              aria-label="עוד אפשרויות"
+            <Link
+              href={`/dashboard/menu/${item.id}`}
+              aria-label="ערוך פריט"
               className="w-8 h-8 rounded-lg hover:bg-qf-line-soft grid place-items-center text-qf-mute"
             >
               ⋯
-            </button>
+            </Link>
           </div>
         ))}
         {filtered.length === 0 && (

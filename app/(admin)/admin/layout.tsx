@@ -1,0 +1,52 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth/session";
+import { prisma } from "@/lib/db/client";
+
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const session = await getSession();
+  if (!session || session.type !== "merchant" || session.role !== "platform_admin") {
+    redirect("/dashboard/login");
+  }
+
+  const user = await prisma.merchantUser.findUnique({
+    where: { id: session.userId },
+    select: { name: true, email: true },
+  });
+
+  return (
+    <div className="min-h-screen bg-qf-bg-dash text-qf-ink">
+      <header className="bg-white border-b border-qf-line-dash">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center gap-4">
+          <Link href="/admin/tenants" className="flex items-center gap-2 font-bold">
+            <div className="w-9 h-9 rounded-xl bg-qf-ink text-white grid place-items-center text-sm">
+              QF
+            </div>
+            <div>
+              <div>QuickFood Platform</div>
+              <div className="text-[10px] text-qf-mute font-normal">ניהול לקוחות</div>
+            </div>
+          </Link>
+          <nav className="flex gap-2 ms-6 text-sm">
+            <Link
+              href="/admin/tenants"
+              className="px-3 py-1.5 rounded-lg hover:bg-qf-line-soft"
+            >
+              לקוחות
+            </Link>
+            <Link
+              href="/admin/tenants/new"
+              className="px-3 py-1.5 rounded-lg hover:bg-qf-line-soft"
+            >
+              + לקוח חדש
+            </Link>
+          </nav>
+          <div className="ms-auto text-xs text-qf-mute">
+            {user?.name} · <span dir="ltr">{user?.email}</span>
+          </div>
+        </div>
+      </header>
+      <main className="max-w-6xl mx-auto p-6">{children}</main>
+    </div>
+  );
+}
