@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* ─── Heebo font (self-host or via @next/font is handled in layout.tsx) ─── */
+/* ─── Noto Sans Hebrew font (loaded via next/font in layout.tsx) ─── */
 
 /* ─── Design tokens — verbatim from prototypes/app.jsx (T) + dashboard.jsx (D) ─── */
 @theme {
@@ -27,7 +27,7 @@
   --color-qf-blue: #2666c4;
   --color-qf-blue-soft: #e1ebf7;
 
-  --font-sans: var(--font-heebo), "Heebo", "Assistant", system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-noto-hebrew), "Noto Sans Hebrew", "Heebo", "Assistant", system-ui, -apple-system, sans-serif;
   --font-pacifico: var(--font-pacifico-src), "Pacifico", "Brush Script MT", cursive;
 
   /* Per SPEC §D — spacing scale */

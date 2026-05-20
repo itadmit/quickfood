@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 
 import { IcoClock, IcoPhone, IcoPrinter, IcoFlame } from "@/components/shared/Icons";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { OrderDrawer } from "@/components/merchant/OrderDrawer";
+import { ManualOrderModal } from "@/components/merchant/ManualOrderModal";
 
 type Status =
   | "pending"
@@ -151,6 +153,15 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
     }));
   }, [orders]);
 
+  const [drawerOrderId, setDrawerOrderId] = useState<string | null>(null);
+  const [manualOpen, setManualOpen] = useState(false);
+
+  function nextStatusFor(o: OrderRow): Status | "delivered" {
+    const col = COLUMNS.find((c) => c.status.includes(o.status));
+    if (!col) return o.status;
+    if (o.status === "out_for_delivery") return "delivered";
+    return col.next;
+  }
 
   const totalActive = orders.length;
 
@@ -173,6 +184,7 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
           </button>
           <button
             type="button"
+            onClick={() => setManualOpen(true)}
             className="px-3.5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm"
           >
             + הזמנה ידנית
@@ -182,9 +194,31 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {byColumn.map((col) => (
-          <Column key={col.title} {...col} now={now} onAdvance={advance} />
+          <Column
+            key={col.title}
+            {...col}
+            now={now}
+            onAdvance={advance}
+            onSelect={(id) => setDrawerOrderId(id)}
+          />
         ))}
       </div>
+
+      {drawerOrderId && (
+        <OrderDrawer
+          orderId={drawerOrderId}
+          onClose={() => setDrawerOrderId(null)}
+          onAdvance={(id) => {
+            const o = orders.find((x) => x.id === id);
+            if (o) {
+              advance(id, nextStatusFor(o));
+              setDrawerOrderId(null);
+            }
+          }}
+        />
+      )}
+
+      {manualOpen && <ManualOrderModal onClose={() => setManualOpen(false)} />}
     </div>
   );
 }
@@ -197,6 +231,7 @@ function Column({
   actionLabel,
   now,
   onAdvance,
+  onSelect,
 }: {
   title: string;
   subtitle: string;
@@ -206,6 +241,7 @@ function Column({
   actionLabel: string;
   now: number;
   onAdvance: (id: string, to: Status | "delivered") => void;
+  onSelect: (id: string) => void;
 }) {
   return (
     <section className="bg-white rounded-2xl border border-qf-line-dash p-3 min-h-[60vh] flex flex-col">
@@ -234,6 +270,7 @@ function Column({
               actionLabel={actionLabel}
               now={now}
               onAdvance={onAdvance}
+              onSelect={onSelect}
             />
           ))
         )}
@@ -248,12 +285,14 @@ function Card({
   actionLabel,
   now,
   onAdvance,
+  onSelect,
 }: {
   order: OrderRow;
   next: Status;
   actionLabel: string;
   now: number;
   onAdvance: (id: string, to: Status | "delivered") => void;
+  onSelect: (id: string) => void;
 }) {
   const elapsedMin = now ? Math.floor((now - new Date(order.createdAt).getTime()) / 60_000) : 0;
   const isLate = elapsedMin > SLA_MINUTES_BEFORE_LATE && order.status !== "out_for_delivery";
@@ -262,8 +301,9 @@ function Card({
 
   return (
     <article
+      onClick={() => onSelect(order.id)}
       className={cn(
-        "rounded-xl border bg-white p-3 space-y-2.5 transition",
+        "rounded-xl border bg-white p-3 space-y-2.5 transition cursor-pointer hover:border-(--qf-primary)",
         isLate ? "border-qf-tomato/60 ring-1 ring-qf-tomato/30" : "border-qf-line-dash",
       )}
     >
@@ -303,7 +343,10 @@ function Card({
         <div className="text-sm font-semibold tnum">{formatPrice(order.total)}</div>
         <button
           type="button"
-          onClick={() => onAdvance(order.id, target)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAdvance(order.id, target);
+          }}
           className="px-3 py-1.5 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xs font-medium"
         >
           {actionLabel}
@@ -313,6 +356,7 @@ function Card({
       {order.customerPhone && (
         <a
           href={`tel:${order.customerPhone}`}
+          onClick={(e) => e.stopPropagation()}
           className="flex items-center gap-1.5 text-xs text-qf-mute hover:text-qf-ink"
           dir="ltr"
         >

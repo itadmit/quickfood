@@ -167,6 +167,7 @@ export function WebhooksManager({
                     >
                       {ep.active ? "פעיל" : "מושבת"}
                     </span>
+                    <TestEndpointButton id={ep.id} />
                   </div>
                 </div>
                 {revealedSecret?.id === ep.id && (
@@ -204,7 +205,7 @@ export function WebhooksManager({
         ) : (
           <div className="divide-y divide-qf-line-soft">
             {deliveries.map((d) => (
-              <div key={d.id} className="px-5 py-3 grid grid-cols-[1fr_120px_80px_120px] gap-2 text-sm items-center">
+              <div key={d.id} className="px-5 py-3 grid grid-cols-[1fr_120px_80px_120px_80px] gap-2 text-sm items-center">
                 <div className="font-mono text-xs">{d.eventType}</div>
                 <div>
                   <span
@@ -226,11 +227,64 @@ export function WebhooksManager({
                   {d.attempts} ניסיונות{d.responseCode ? ` · ${d.responseCode}` : ""}
                 </div>
                 <div className="text-xs text-qf-mute">{formatDateTime(d.createdAt)}</div>
+                <RetryDeliveryButton id={d.id} disabled={d.status === "success"} />
               </div>
             ))}
           </div>
         )}
       </section>
     </div>
+  );
+}
+
+function TestEndpointButton({ id }: { id: string }) {
+  const [busy, setBusy] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  async function test() {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/v1/merchant/webhooks/endpoints/${id}/test`, { method: "POST" });
+      setToast(res.ok ? "נשלח" : "שגיאה");
+    } finally {
+      setBusy(false);
+      setTimeout(() => setToast(null), 2000);
+    }
+  }
+  return (
+    <button
+      type="button"
+      onClick={test}
+      disabled={busy}
+      className="px-2.5 py-0.5 rounded-md border border-qf-line-dash hover:bg-qf-line-soft text-[10px] disabled:opacity-60"
+      title="שולח אירוע order.created לדוגמה"
+    >
+      {busy ? "..." : toast ?? "Test"}
+    </button>
+  );
+}
+
+function RetryDeliveryButton({ id, disabled }: { id: string; disabled?: boolean }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  async function retry() {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/v1/merchant/webhooks/deliveries/${id}/retry`, { method: "POST" });
+      if (res.ok) {
+        setTimeout(() => router.refresh(), 500);
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <button
+      type="button"
+      onClick={retry}
+      disabled={busy || disabled}
+      className="px-2 py-0.5 rounded-md border border-qf-line-dash hover:bg-qf-line-soft text-[10px] disabled:opacity-40"
+    >
+      {busy ? "..." : "Retry"}
+    </button>
   );
 }

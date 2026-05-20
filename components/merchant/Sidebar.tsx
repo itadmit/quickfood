@@ -17,7 +17,7 @@ const NAV = [
 export function Sidebar({ tenant }: { tenant: { name: string; logoLetter: string; branchName: string } }) {
   const pathname = usePathname() || "";
   return (
-    <aside className="w-64 shrink-0 border-s border-qf-line-dash bg-white p-5 flex flex-col gap-6">
+    <aside className="w-64 shrink-0 border-e border-qf-line-dash bg-white p-5 flex flex-col gap-6">
       <div className="flex items-center gap-3">
         <div
           className="w-11 h-11 rounded-2xl bg-(--qf-primary) text-white flex items-center justify-center text-lg font-bold"

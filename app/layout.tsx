@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Heebo, Pacifico } from "next/font/google";
+import { Noto_Sans_Hebrew, Pacifico } from "next/font/google";
 import "./globals.css";
 
-const heebo = Heebo({
+const notoHebrew = Noto_Sans_Hebrew({
   subsets: ["hebrew", "latin"],
   weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-heebo",
+  variable: "--font-noto-hebrew",
   display: "swap",
 });
 
@@ -30,7 +30,7 @@ export default function RootLayout({
     <html
       lang="he"
       dir="rtl"
-      className={`${heebo.variable} ${pacifico.variable} h-full`}
+      className={`${notoHebrew.variable} ${pacifico.variable} h-full`}
     >
       <body className="min-h-full flex flex-col bg-qf-bg text-qf-ink">
         {children}

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useRouter } from "next/navigation";
 import { IcoChev, IcoPlus, IcoClose } from "@/components/shared/Icons";
 import { PizzaArt } from "@/components/customer/PizzaArt";
@@ -92,6 +93,8 @@ export function ItemEditor({
   const [data, setData] = useState<ItemData>(item ?? { ...EMPTY_ITEM, categoryId: categories[0]?.id ?? "" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDel, setConfirmDel] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   function update<K extends keyof ItemData>(k: K, v: ItemData[K]) {
     setData((d) => ({ ...d, [k]: v }));
@@ -188,11 +191,13 @@ export function ItemEditor({
     }
   }
 
-  async function remove() {
+  async function performDelete() {
     if (mode !== "edit" || !item?.id) return;
-    if (!confirm("למחוק את הפריט?")) return;
+    setDeleting(true);
     const res = await fetch(`/api/v1/merchant/menu/items/${item.id}`, { method: "DELETE" });
+    setDeleting(false);
     if (res.ok) {
+      setConfirmDel(false);
       router.push("/dashboard/menu");
       router.refresh();
     }
@@ -218,7 +223,7 @@ export function ItemEditor({
           {mode === "edit" && (
             <button
               type="button"
-              onClick={remove}
+              onClick={() => setConfirmDel(true)}
               className="px-3.5 py-2 rounded-xl border border-qf-tomato/40 text-qf-tomato hover:bg-qf-tomato-soft text-sm"
             >
               מחק
@@ -484,6 +489,23 @@ export function ItemEditor({
           </div>
         </aside>
       </div>
+
+      <ConfirmDialog
+        open={confirmDel}
+        title="מחיקת פריט"
+        message={
+          <>
+            הפריט <span className="font-semibold">&quot;{data.name || "ללא שם"}&quot;</span> יימחק לצמיתות.
+            פעולה זו אינה ניתנת לביטול.
+          </>
+        }
+        confirmLabel="מחק"
+        cancelLabel="ביטול"
+        variant="danger"
+        busy={deleting}
+        onConfirm={performDelete}
+        onCancel={() => setConfirmDel(false)}
+      />
     </div>
   );
 }

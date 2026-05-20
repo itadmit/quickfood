@@ -220,6 +220,49 @@ export const IcoPizza = ({ c = "#c2421f", s = 18, className }: IconProps) => (
   </svg>
 );
 
+export const IcoEye = ({ c = "#11231a", s = 16, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    <path
+      d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7S2.5 12 2.5 12z"
+      stroke={c}
+      strokeWidth="1.6"
+      strokeLinejoin="round"
+    />
+    <circle cx="12" cy="12" r="2.8" stroke={c} strokeWidth="1.6" />
+  </svg>
+);
+
+export const IcoEdit = ({ c = "#11231a", s = 16, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    <path
+      d="M4 20h4l10.5-10.5a2.121 2.121 0 00-3-3L5 17v3z"
+      stroke={c}
+      strokeWidth="1.6"
+      strokeLinejoin="round"
+    />
+    <path d="M14 6l4 4" stroke={c} strokeWidth="1.6" strokeLinecap="round" />
+  </svg>
+);
+
+export const IcoTrash = ({ c = "#11231a", s = 16, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    <path d="M4 7h16" stroke={c} strokeWidth="1.6" strokeLinecap="round" />
+    <path
+      d="M9 7V5a1.5 1.5 0 011.5-1.5h3A1.5 1.5 0 0115 5v2"
+      stroke={c}
+      strokeWidth="1.6"
+      strokeLinecap="round"
+    />
+    <path
+      d="M6 7l1 12.5A1.5 1.5 0 008.5 21h7a1.5 1.5 0 001.5-1.5L18 7"
+      stroke={c}
+      strokeWidth="1.6"
+      strokeLinejoin="round"
+    />
+    <path d="M10 11v6M14 11v6" stroke={c} strokeWidth="1.6" strokeLinecap="round" />
+  </svg>
+);
+
 export const Dot = ({ c }: { c: string }) => (
   <span style={{ width: 8, height: 8, borderRadius: 99, background: c, display: "inline-block" }} />
 );

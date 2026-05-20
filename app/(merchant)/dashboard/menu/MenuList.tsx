@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/format";
-import { IcoPizza } from "@/components/shared/Icons";
+import { IcoPizza, IcoEye, IcoEdit, IcoTrash } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
+import { ItemPreviewModal } from "./ItemPreviewModal";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
 interface Category {
   id: string;
@@ -33,8 +36,13 @@ export function MenuList({
   visibleCount: number;
   hiddenCount: number;
 }) {
+  const router = useRouter();
   const [activeCat, setActiveCat] = useState<string | "all">("all");
   const [localItems, setLocalItems] = useState(items);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Item | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const filtered = useMemo(
     () => (activeCat === "all" ? localItems : localItems.filter((i) => i.categoryId === activeCat)),
@@ -54,6 +62,23 @@ export function MenuList({
     }
   }
 
+  async function confirmDelete() {
+    const item = pendingDelete;
+    if (!item) return;
+    setDeleting(true);
+    const prev = localItems;
+    setLocalItems((p) => p.filter((i) => i.id !== item.id));
+    const res = await fetch(`/api/v1/merchant/menu/items/${item.id}`, { method: "DELETE" });
+    setDeleting(false);
+    setPendingDelete(null);
+    if (!res.ok) {
+      setLocalItems(prev);
+      alert("מחיקה נכשלה");
+      return;
+    }
+    router.refresh();
+  }
+
   const catMap = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c.name])), [categories]);
 
   return (
@@ -66,7 +91,11 @@ export function MenuList({
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="px-3.5 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm">
+          <button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            className="px-3.5 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm"
+          >
             ייבוא מ-CSV
           </button>
           <Link
@@ -143,13 +172,11 @@ export function MenuList({
                 />
               </button>
             </div>
-            <Link
-              href={`/dashboard/menu/${item.id}`}
-              aria-label="ערוך פריט"
-              className="w-8 h-8 rounded-lg hover:bg-qf-line-soft grid place-items-center text-qf-mute"
-            >
-              ⋯
-            </Link>
+            <RowActions
+              item={item}
+              onPreview={() => setPreviewId(item.id)}
+              onDelete={() => setPendingDelete(item)}
+            />
           </div>
         ))}
         {filtered.length === 0 && (
@@ -158,6 +185,230 @@ export function MenuList({
           </div>
         )}
       </div>
+
+      {previewId && (
+        <ItemPreviewModal itemId={previewId} onClose={() => setPreviewId(null)} />
+      )}
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title="מחיקת פריט"
+        message={
+          <>
+            הפריט <span className="font-semibold">&quot;{pendingDelete?.name}&quot;</span> יימחק לצמיתות.
+            פעולה זו אינה ניתנת לביטול.
+          </>
+        }
+        confirmLabel="מחק"
+        cancelLabel="ביטול"
+        variant="danger"
+        busy={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+
+      {importOpen && <CsvImportModal onClose={() => setImportOpen(false)} />}
+    </div>
+  );
+}
+
+function CsvImportModal({ onClose }: { onClose: () => void }) {
+  const router = useRouter();
+  const [csv, setCsv] = useState(`name,description,category,base_price,prep_minutes,available,tags
+פיצה מרגריטה,רוטב עגבניות + מוצרלה,קלאסיות,58,10,true,פופולרי;צמחוני
+קולה,משקה קר,שתייה,12,0,true,`);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<{ created: number; errors: Array<{ row: number; message: string }> } | null>(null);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  async function onFile(file: File) {
+    const text = await file.text();
+    setCsv(text);
+  }
+
+  async function importNow() {
+    setBusy(true);
+    setResult(null);
+    try {
+      const res = await fetch("/api/v1/merchant/menu/import", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ csv }),
+      });
+      const data = await res.json();
+      setResult({ created: data.created ?? 0, errors: data.errors ?? [] });
+      if (data.created > 0) router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="px-5 py-4 border-b border-qf-line-soft flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold">ייבוא תפריט מ-CSV</h2>
+            <p className="text-xs text-qf-mute">
+              עמודות נדרשות: name, category, base_price · אופציונליות: description, prep_minutes, available, tags
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg hover:bg-qf-line-soft grid place-items-center text-qf-mute"
+            aria-label="סגור"
+          >
+            ✕
+          </button>
+        </header>
+        <div className="p-5 space-y-3">
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
+            className="block text-sm"
+          />
+          <textarea
+            value={csv}
+            onChange={(e) => setCsv(e.target.value)}
+            rows={10}
+            dir="ltr"
+            className="w-full font-mono text-xs bg-qf-line-soft/40 border border-qf-line-dash rounded-xl p-3 outline-none focus:border-(--qf-primary)"
+            placeholder="הדבק כאן את ה-CSV או בחר קובץ למעלה"
+          />
+          {result && (
+            <div className="bg-qf-green-soft border border-qf-green-line text-qf-green-deep rounded-xl px-3 py-2 text-sm">
+              ✓ יובאו {result.created} פריטים
+              {result.errors.length > 0 && (
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-qf-tomato">
+                    {result.errors.length} שגיאות
+                  </summary>
+                  <ul className="text-xs mt-1 list-disc ps-5 space-y-0.5 text-qf-ink2">
+                    {result.errors.slice(0, 10).map((e, i) => (
+                      <li key={i}>
+                        שורה {e.row}: {e.message}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </div>
+          )}
+        </div>
+        <footer className="px-5 py-3 border-t border-qf-line-soft flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-3 py-2 rounded-xl border border-qf-line-dash text-sm"
+          >
+            סגור
+          </button>
+          <button
+            type="button"
+            onClick={importNow}
+            disabled={!csv.trim() || busy}
+            className="px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
+          >
+            {busy ? "מייבא..." : "ייבא"}
+          </button>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+function RowActions({
+  item,
+  onPreview,
+  onDelete,
+}: {
+  item: Item;
+  onPreview: () => void;
+  onDelete: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDoc(e: MouseEvent) {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label="פעולות"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="w-8 h-8 rounded-lg hover:bg-qf-line-soft grid place-items-center text-qf-mute"
+      >
+        ⋯
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute inset-e-0 top-full mt-1 w-40 bg-white border border-qf-line-dash rounded-xl shadow-lg z-20 py-1 text-sm overflow-hidden"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              onPreview();
+            }}
+            className="w-full text-start px-3 py-2 hover:bg-qf-line-soft inline-flex items-center gap-2"
+          >
+            <IcoEye s={16} c="#3a4a40" />
+            <span>צפה במוצר</span>
+          </button>
+          <Link
+            href={`/dashboard/menu/${item.id}`}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="px-3 py-2 hover:bg-qf-line-soft flex items-center gap-2"
+          >
+            <IcoEdit s={16} c="#3a4a40" />
+            <span>ערוך</span>
+          </Link>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              onDelete();
+            }}
+            className="w-full text-start px-3 py-2 text-qf-tomato hover:bg-qf-tomato-soft inline-flex items-center gap-2"
+          >
+            <IcoTrash s={16} c="#c2421f" />
+            <span>מחק</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

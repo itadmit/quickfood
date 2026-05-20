@@ -30,10 +30,22 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <ThemeProvider themeId={tenant.themeId}>
       <div className="min-h-screen bg-qf-bg-dash text-qf-ink flex flex-col">
-        <Topbar user={user} />
+        <Topbar
+          user={user}
+          branch={
+            tenant.branches[0]
+              ? {
+                  id: tenant.branches[0].id,
+                  status: tenant.branches[0].status,
+                }
+              : null
+          }
+        />
         <div className="flex-1 flex">
-          <main className="flex-1 min-w-0 p-6">{children}</main>
           <Sidebar tenant={{ name: tenant.name, logoLetter: tenant.logoLetter, branchName: tenant.branches[0]?.name ?? "" }} />
+          <main className="flex-1 min-w-0 p-6">
+            <div className="mx-auto w-full max-w-7xl">{children}</div>
+          </main>
         </div>
       </div>
     </ThemeProvider>

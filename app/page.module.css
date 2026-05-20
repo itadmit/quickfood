@@ -15,7 +15,7 @@
   --line: #d8cfba;
   --line-soft: #e6dec9;
 
-  font-family: var(--font-heebo), "Heebo", "Rubik", -apple-system, system-ui, sans-serif;
+  font-family: var(--font-noto-hebrew), "Noto Sans Hebrew", "Heebo", "Rubik", -apple-system, system-ui, sans-serif;
   background: var(--cream);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
@@ -132,7 +132,7 @@
 }
 .stack { display: block; }
 .headlineSmall {
-  font-family: var(--font-heebo), "Heebo", sans-serif;
+  font-family: var(--font-noto-hebrew), "Noto Sans Hebrew", "Heebo", sans-serif;
   font-weight: 500;
   font-style: normal;
   font-size: 0.18em;
@@ -641,7 +641,7 @@
   font-family: var(--font-rubik), "Rubik", sans-serif;
   font-weight: 900; font-size: 56px; letter-spacing: -0.04em; line-height: 1;
 }
-.priceAmount small { font-size: 0.26em; font-weight: 500; color: var(--mute); font-family: var(--font-heebo), "Heebo"; letter-spacing: 0; }
+.priceAmount small { font-size: 0.26em; font-weight: 500; color: var(--mute); font-family: var(--font-noto-hebrew), "Noto Sans Hebrew", "Heebo"; letter-spacing: 0; }
 .priceCardFeatured .priceAmount small { color: rgba(241,233,216,0.6); }
 .priceFeatures { list-style: none; padding: 18px 0 0; margin: 18px 0 0; border-top: 1px solid var(--line-soft); flex: 1; }
 .priceCardFeatured .priceFeatures { border-color: rgba(241,233,216,0.2); }
@@ -718,7 +718,7 @@
   padding-bottom: 32px; border-bottom: 1px solid rgba(241,233,216,0.15);
 }
 .footBrand { font-family: var(--font-rubik), "Rubik", sans-serif; font-weight: 900; font-size: 28px; letter-spacing: -0.03em; }
-.footBrand small { display: block; font-family: var(--font-heebo), "Heebo"; font-size: 12px; font-weight: 600; color: rgba(241,233,216,0.6); margin-top: 6px; letter-spacing: 0.04em; }
+.footBrand small { display: block; font-family: var(--font-noto-hebrew), "Noto Sans Hebrew", "Heebo"; font-size: 12px; font-weight: 600; color: rgba(241,233,216,0.6); margin-top: 6px; letter-spacing: 0.04em; }
 .footTag { margin-top: 14px; font-size: 13px; color: rgba(241,233,216,0.6); max-width: 30ch; line-height: 1.55; }
 .footCol h5 { font-size: 12px; font-weight: 800; color: var(--cheese); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 14px; }
 .footCol a { display: block; padding: 5px 0; font-size: 14px; color: rgba(241,233,216,0.7); }
