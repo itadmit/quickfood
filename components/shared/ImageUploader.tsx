@@ -8,7 +8,7 @@ const ACCEPT = "image/jpeg,image/png,image/webp";
 const MAX_BYTES = 5_000_000; // 5MB
 
 interface Props {
-  type: "menu_item_image" | "logo" | "review_photo";
+  type: "menu_item_image" | "logo" | "cover_image" | "review_photo" | "campaign_image";
   value: string[]; // ordered list of public URLs; first is the primary
   onChange: (next: string[]) => void;
   multiple?: boolean;
@@ -22,6 +22,13 @@ interface UploadInitResponse {
   upload: { url: string; method: "PUT"; headers: Record<string, string> };
 }
 
+/** Per-file upload-in-progress state. */
+interface PendingUpload {
+  id: string;
+  name: string;
+  progress: number; // 0-100
+}
+
 export function ImageUploader({
   type,
   value,
@@ -31,10 +38,53 @@ export function ImageUploader({
   className,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState<string[]>([]); // local previews while uploading
+  const [uploading, setUploading] = useState<PendingUpload[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  async function uploadOne(file: File): Promise<string | null> {
+  function updateProgress(id: string, progress: number) {
+    setUploading((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, progress } : p)),
+    );
+  }
+
+  function removePending(id: string) {
+    setUploading((prev) => prev.filter((p) => p.id !== id));
+  }
+
+  /**
+   * PUT to R2 via XHR so we can surface real upload progress. fetch() doesn't
+   * expose `upload.onprogress`; XHR does.
+   */
+  function putWithProgress(
+    init: UploadInitResponse,
+    file: File,
+    onProgress: (pct: number) => void,
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open(init.upload.method, init.upload.url, true);
+      for (const [k, v] of Object.entries(init.upload.headers)) {
+        xhr.setRequestHeader(k, v);
+      }
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error(`R2 status ${xhr.status}`));
+      };
+      xhr.onerror = () => reject(new Error("R2 network error"));
+      xhr.onabort = () => reject(new Error("upload aborted"));
+      xhr.send(file);
+    });
+  }
+
+  async function uploadOne(
+    file: File,
+    id: string,
+  ): Promise<string | null> {
     if (file.size > MAX_BYTES) {
       setError(`קובץ ${file.name} גדול מ-5MB`);
       return null;
@@ -44,7 +94,7 @@ export function ImageUploader({
       return null;
     }
 
-    // 1. init
+    // 1) init — get a presigned URL
     const initRes = await fetch("/api/v1/upload/init", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -62,18 +112,15 @@ export function ImageUploader({
     }
     const init = (await initRes.json()) as UploadInitResponse;
 
-    // 2. PUT to R2
-    const putRes = await fetch(init.upload.url, {
-      method: init.upload.method,
-      headers: init.upload.headers,
-      body: file,
-    });
-    if (!putRes.ok) {
-      setError("העלאה ל-R2 נכשלה");
+    // 2) PUT to R2 with progress
+    try {
+      await putWithProgress(init, file, (pct) => updateProgress(id, pct));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "העלאה ל-R2 נכשלה");
       return null;
     }
 
-    // 3. finalize
+    // 3) finalize — confirm + get public URL
     const finRes = await fetch(
       `/api/v1/upload/finalize/${init.file_id}?key=${encodeURIComponent(init.key)}`,
       { method: "POST" },
@@ -91,15 +138,23 @@ export function ImageUploader({
     if (!files || files.length === 0) return;
     setError(null);
     const arr = Array.from(files).slice(0, max - value.length);
-    const tempIds = arr.map(() => `pending:${crypto.randomUUID()}`);
-    setUploading((prev) => [...prev, ...tempIds]);
+
+    // Create pending entries up-front so the placeholders appear immediately.
+    const pendings: PendingUpload[] = arr.map((f) => ({
+      id: `pending:${crypto.randomUUID()}`,
+      name: f.name,
+      progress: 0,
+    }));
+    setUploading((prev) => [...prev, ...pendings]);
 
     const results: string[] = [];
     for (let i = 0; i < arr.length; i++) {
-      const url = await uploadOne(arr[i]);
+      const id = pendings[i].id;
+      const url = await uploadOne(arr[i], id);
       if (url) results.push(url);
-      setUploading((prev) => prev.filter((id) => id !== tempIds[i]));
+      removePending(id);
     }
+
     if (results.length > 0) {
       onChange([...value, ...results]);
     }
@@ -196,14 +251,11 @@ export function ImageUploader({
             </div>
           </div>
         ))}
-        {uploading.map((id) => (
-          <div
-            key={id}
-            className="aspect-square rounded-xl border border-qf-line-dash bg-qf-line-soft animate-pulse grid place-items-center text-xs text-qf-mute"
-          >
-            מעלה...
-          </div>
+
+        {uploading.map((p) => (
+          <UploadingTile key={p.id} progress={p.progress} name={p.name} />
         ))}
+
         {canAdd && (
           <button
             type="button"
@@ -227,6 +279,66 @@ export function ImageUploader({
           {error}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Placeholder tile shown while an upload is in flight. Renders a circular
+ * progress ring sweeping from 0→100% with the live percentage in the middle.
+ * The very last bit (post-upload "finalize" call) is shown as 100% even though
+ * the row hasn't been removed yet — keeps the UI calm.
+ */
+function UploadingTile({ progress, name }: { progress: number; name: string }) {
+  // SVG ring math
+  const SIZE = 56;
+  const STROKE = 5;
+  const radius = (SIZE - STROKE) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const pct = Math.max(0, Math.min(100, progress));
+  const dashOffset = circumference * (1 - pct / 100);
+
+  return (
+    <div
+      className="aspect-square rounded-xl border border-qf-line-dash bg-qf-line-soft/60 grid place-items-center"
+      role="status"
+      aria-label={`מעלה ${name}, ${pct} אחוזים`}
+    >
+      <div className="flex flex-col items-center gap-2">
+        <div className="relative" style={{ width: SIZE, height: SIZE }}>
+          <svg width={SIZE} height={SIZE} className="-rotate-90">
+            <circle
+              cx={SIZE / 2}
+              cy={SIZE / 2}
+              r={radius}
+              stroke="rgba(0,0,0,0.08)"
+              strokeWidth={STROKE}
+              fill="none"
+            />
+            <circle
+              cx={SIZE / 2}
+              cy={SIZE / 2}
+              r={radius}
+              stroke="var(--qf-primary)"
+              strokeWidth={STROKE}
+              fill="none"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={dashOffset}
+              style={{ transition: "stroke-dashoffset 120ms linear" }}
+            />
+          </svg>
+          <div
+            className="absolute inset-0 grid place-items-center text-[11px] font-semibold text-qf-ink2 tnum"
+            aria-hidden
+          >
+            {pct}%
+          </div>
+        </div>
+        <div className="text-[10px] text-qf-mute max-w-[80%] truncate" title={name}>
+          {name}
+        </div>
+      </div>
     </div>
   );
 }
