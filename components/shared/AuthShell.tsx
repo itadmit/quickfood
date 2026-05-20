@@ -1,6 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
 import { QuickFoodLogo } from "@/components/shared/QuickFoodLogo";
-import { DashboardPreview } from "@/components/shared/DashboardPreview";
 
 interface Props {
   /** "login" or "signup" — controls the top-bar cross-link */
@@ -11,7 +11,10 @@ interface Props {
   title: string;
   /** Subtitle below the headline */
   subtitle: string;
-  /** Optional decoration variant key passed to the dashboard preview tilt */
+  /**
+   * Kept for backwards compatibility; ignored now that the marketing panel is
+   * a single hero photo instead of a tilted dashboard preview.
+   */
   illustration?: "kanban" | "menu";
 }
 
@@ -20,51 +23,43 @@ export function AuthShell({
   children,
   title,
   subtitle,
-  illustration = "kanban",
 }: Props) {
   return (
     <div className="min-h-screen bg-white text-qf-ink grid grid-cols-1 lg:grid-cols-[1.1fr_1fr]">
-      {/* ─── Left: marketing panel (diner photo + cream wash + blur orbs) ─── */}
-      <aside className="hidden lg:flex relative overflow-hidden border-e border-qf-line-dash bg-[#f5f2ec]">
-        {/* faded diner backdrop */}
+      {/* ─── Left: full-bleed diner photo with text overlay ─── */}
+      <aside className="hidden lg:block relative overflow-hidden border-e border-qf-line-dash">
+        <Image
+          src="/img/auth/diner.jpg"
+          alt=""
+          fill
+          priority
+          sizes="(max-width: 1024px) 0px, 55vw"
+          className="object-cover"
+        />
+        {/* Top→bottom dark gradient so the white logo + copy at the corners
+            stay legible regardless of where the diner's bright neon falls. */}
         <div
           aria-hidden
-          className="absolute inset-0 bg-cover bg-center opacity-15"
-          style={{ backgroundImage: "url('/img/auth/diner.jpg')" }}
+          className="absolute inset-0 bg-linear-to-b from-black/55 via-black/15 to-black/75"
         />
-        {/* cream wash on top of the photo so the preview stays readable */}
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-linear-to-br from-[#f5f2ec]/85 via-[#f5f2ec]/70 to-[#f5f2ec]/90"
-        />
-        {/* decorative blur orbs */}
-        <div
-          aria-hidden
-          className="absolute top-1/3 inset-e-1/4 w-96 h-96 rounded-full bg-violet-300/30 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="absolute bottom-1/4 inset-s-1/4 w-96 h-96 rounded-full bg-fuchsia-300/20 blur-3xl"
-        />
-        {/* logo top-corner */}
-        <div className="absolute top-6 inset-s-6 z-10">
+
+        {/* Logo top-corner, in white */}
+        <div className="absolute top-6 inset-s-6 z-10 text-white">
           <QuickFoodLogo size={32} wordmarkClassName="text-lg" />
         </div>
 
-        <div className="relative w-full flex flex-col justify-center p-12">
-          <div className="w-full max-w-lg mx-auto">
-            <DashboardPreview variant={illustration} className="shadow-2xl" />
-          </div>
-          <div className="mt-10 text-center max-w-md mx-auto">
-            <p className="text-qf-ink2 text-sm leading-relaxed">
-              ה-SaaS הישראלי שמרים מסעדה אונליין{" "}
-              <span className="font-semibold text-qf-ink">תוך 11 דקות</span>, לא להפך.
-            </p>
-            <div className="mt-4 flex items-center justify-center gap-4 text-xs text-qf-mute">
-              <FeatureCheck>עברית מלאה</FeatureCheck>
-              <FeatureCheck>RTL</FeatureCheck>
-              <FeatureCheck>0% עמלת אגרגטור</FeatureCheck>
-            </div>
+        {/* Tagline at the bottom */}
+        <div className="absolute inset-x-0 bottom-0 p-10 text-white">
+          <p className="text-2xl font-semibold leading-snug max-w-md drop-shadow-md">
+            המסעדה שלך אונליין{" "}
+            <span className="text-qf-yolk">תוך 11 דקות</span>.
+            <br />
+            לא להפך.
+          </p>
+          <div className="mt-5 flex items-center gap-5 text-xs text-white/85">
+            <FeatureCheck>עברית מלאה</FeatureCheck>
+            <FeatureCheck>RTL</FeatureCheck>
+            <FeatureCheck>0% עמלת אגרגטור</FeatureCheck>
           </div>
         </div>
       </aside>
@@ -115,7 +110,7 @@ function FeatureCheck({ children }: { children: React.ReactNode }) {
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
         <path
           d="M5 12l4 4 10-10"
-          stroke="var(--qf-primary)"
+          stroke="currentColor"
           strokeWidth="2.4"
           strokeLinecap="round"
           strokeLinejoin="round"
