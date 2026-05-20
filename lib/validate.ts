@@ -271,3 +271,23 @@ export const TenantCreateSchema = z.object({
     password: z.string().min(8).max(128),
   }),
 });
+
+// ─── Payments (merchant settings) ──────────────────────────────
+
+export const MerchantPaymentsPatchSchema = z.object({
+  /** Tenant.paymentProvider — what this tenant uses by default */
+  provider: z.enum(["cash", "grow"]),
+  /** Toggle the provider config row on/off (only relevant for non-cash) */
+  is_active: z.boolean().optional(),
+  /** Sandbox vs production for the provider call */
+  test_mode: z.boolean().optional(),
+  /** Grow per-merchant userId */
+  user_id: z.string().min(1).max(64).optional(),
+  /** Grow per-tenant pageCode override (rarely used; usually env default wins) */
+  page_code: z.string().min(1).max(64).optional(),
+  /** Max installments (Grow maxPaymentNum). 1 = no installments. */
+  max_installments: z.number().int().min(1).max(12).optional(),
+  /** Apple Pay domain-association file content. Only relevant when the tenant
+   *  has a custom domain. Empty string clears it. */
+  apple_pay_domain_association: z.string().max(8000).optional().nullable(),
+});

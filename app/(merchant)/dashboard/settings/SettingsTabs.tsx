@@ -9,6 +9,7 @@ const TABS = [
   { href: "/dashboard/settings/business", label: "פרטי עסק" },
   { href: "/dashboard/settings/hours", label: "שעות פעילות" },
   { href: "/dashboard/settings/zones", label: "אזורי משלוח" },
+  { href: "/dashboard/settings/payments", label: "תשלומים" },
   { href: "/dashboard/settings/webhooks", label: "Webhooks (POS / מדפסות)" },
 ];
 
