@@ -28,6 +28,7 @@
   --color-qf-blue-soft: #e1ebf7;
 
   --font-sans: var(--font-heebo), "Heebo", "Assistant", system-ui, -apple-system, sans-serif;
+  --font-pacifico: var(--font-pacifico-src), "Pacifico", "Brush Script MT", cursive;
 
   /* Per SPEC §D — spacing scale */
   --spacing-1: 4px;
