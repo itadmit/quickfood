@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { IcoPin, IcoSearch, IcoChevDown, IcoStar, IcoClock, IcoBike, IcoFlame } from "@/components/shared/Icons";
+import { IcoPin, IcoSearch, IcoChevDown, IcoStar, IcoClock, IcoBike, IcoFlame, IcoUser } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
 import { useCart } from "@/components/customer/CartProvider";
@@ -50,14 +50,30 @@ export function CustomerHome({ tenant, branch, categories, popular, lastOrder, c
   const { method, setMethod } = useCart();
   const open = branch?.status === "open";
 
+  const hasCover = Boolean(tenant.coverImage);
+
   return (
     <div className="pb-24">
-      {/* Header gradient */}
-      <header className="bg-linear-to-b from-(--qf-primary) to-(--qf-deep) text-white px-5 pt-5 pb-5">
+      {/* Unified hero: cover image (if any) replaces the green background. */}
+      <header className="relative text-white px-5 pt-5 pb-12 overflow-hidden isolate rounded-b-3xl">
+        {hasCover ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={tenant.coverImage!}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover -z-10"
+            />
+            <div className="absolute inset-0 -z-10 bg-linear-to-b from-black/55 via-black/35 to-black/65" />
+          </>
+        ) : (
+          <div className="absolute inset-0 -z-10 bg-linear-to-b from-(--qf-primary) to-(--qf-deep)" />
+        )}
+
         <div className="flex items-center justify-between mb-4">
           <button
             type="button"
-            className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-full text-sm transition"
+            className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 backdrop-blur px-3 py-1.5 rounded-full text-sm transition"
           >
             <IcoPin c="#fff" s={14} />
             <span className="truncate max-w-[180px]">{branch?.address ?? "בחר כתובת"}</span>
@@ -65,14 +81,15 @@ export function CustomerHome({ tenant, branch, categories, popular, lastOrder, c
           </button>
           <Link
             href={`/${tenant.slug}/profile`}
-            className="w-9 h-9 rounded-full bg-white text-(--qf-deep) grid place-items-center font-bold text-sm"
+            aria-label="אזור אישי"
+            className="w-9 h-9 rounded-full bg-white grid place-items-center"
           >
-            ?
+            <IcoUser c="var(--qf-deep)" s={18} />
           </Link>
         </div>
 
         {/* Delivery / Pickup tabs */}
-        <div className="bg-white/15 rounded-2xl p-1 grid grid-cols-2 mb-4">
+        <div className="bg-white/20 backdrop-blur rounded-2xl p-1 grid grid-cols-2 mb-4">
           {(["delivery", "pickup"] as const).map((m) => (
             <button
               key={m}
@@ -96,34 +113,19 @@ export function CustomerHome({ tenant, branch, categories, popular, lastOrder, c
           <IcoSearch c="#7c8a82" s={16} />
           <span>חיפוש בתפריט</span>
         </Link>
-      </header>
 
-      {/* Cover */}
-      <section className="relative">
-        <div className="relative h-36 overflow-hidden">
-          {tenant.coverImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={tenant.coverImage}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          ) : (
-            <div className="absolute inset-0 bg-linear-to-br from-(--qf-primary) to-(--qf-deep)" />
+        {/* Tenant name (merged from former cover section) */}
+        <div className="mt-6">
+          <h1 className="text-2xl font-bold leading-tight drop-shadow-md">{tenant.name}</h1>
+          {tenant.cuisineType && (
+            <div className="text-sm text-white/90 drop-shadow">{tenant.cuisineType}</div>
           )}
-          <div className="absolute inset-0 bg-linear-to-t from-black/55 via-black/20 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 px-5 pb-8 text-white">
-            <h1 className="text-2xl font-bold leading-tight drop-shadow">{tenant.name}</h1>
-            {tenant.cuisineType && (
-              <div className="text-sm text-white/85 drop-shadow">{tenant.cuisineType}</div>
-            )}
-          </div>
         </div>
-      </section>
+      </header>
 
       {/* Thin info bar */}
       <section className="px-5 -mt-4 relative z-10">
-        <div className="bg-white border border-qf-line rounded-full shadow-sm px-3 py-2 flex items-center gap-3 text-xs">
+        <div className="bg-white border border-qf-line rounded-full shadow-sm px-3 py-2 flex items-center justify-center gap-3 text-xs">
           <span className="inline-flex items-center gap-1 font-semibold">
             <IcoStar c="var(--qf-primary)" s={12} fill="var(--qf-primary)" />
             <span className="tnum">4.8</span>
