@@ -16,7 +16,7 @@ export const POST = handler(async (req: Request) => {
 
   // MVP: log the code to the server console so we can test without SMS provider.
   if (process.env.SMS_PROVIDER === "console" || !process.env.SMS_PROVIDER) {
-    console.log(`[otp] ${phone} → ${code}`);
+    console.log(`[otp] ${phone} ← ${code}`);
   }
   // TODO: integrate SMS provider (sms4free / twilio) — read SMS_PROVIDER
 

@@ -135,7 +135,7 @@ POST {NEXT_PUBLIC_APP_URL}/api/payments/callback?provider=grow&tenant=<slug>
    Grow retries the callback up to 6 more times. Our handler is idempotent,
    so retries are safe but wasteful.
 
-### Status codes (Grow → us)
+### Status codes (Grow ← us)
 
 | Grow `statusCode` | Meaning                          | Our status   |
 |-------------------|----------------------------------|--------------|

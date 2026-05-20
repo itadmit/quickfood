@@ -161,7 +161,7 @@ export class GrowProvider extends BasePaymentProvider {
     let digits = String(raw).replace(/\D/g, "");
     if (!digits) return FALLBACK;
 
-    // Strip international prefixes → leave national part
+    // Strip international prefixes ← leave national part
     if (digits.startsWith("00972")) digits = digits.slice(5);
     else if (digits.startsWith("972")) digits = digits.slice(3);
 

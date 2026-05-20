@@ -29,7 +29,7 @@ export const PATCH = handler(
       if (err instanceof OrderTransitionError) {
         return apiError(
           "invalid_transition",
-          `מעבר לא חוקי: ${err.from} → ${err.to}`,
+          `מעבר לא חוקי: ${err.from} ← ${err.to}`,
           409,
         );
       }

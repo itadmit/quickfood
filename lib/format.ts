@@ -67,7 +67,7 @@ export function toE164(phone: string): string | null {
 }
 
 export function formatPhone(e164: string): string {
-  // +972501234567 → 050-1234567
+  // +972501234567 ← 050-1234567
   const m = e164.match(/^\+972(\d{1,2})(\d{7})$/);
   if (!m) return e164;
   return `0${m[1]}-${m[2]}`;

@@ -8,7 +8,7 @@
  * the right file content based on the request's Host header:
  *
  *  - If a tenant has Tenant.customDomain == host AND has a non-null
- *    PaymentProviderConfig.applePayDomainAssociation for grow → return that.
+ *    PaymentProviderConfig.applePayDomainAssociation for grow ← return that.
  *    (Used when a restaurant runs on its own domain and registered it with
  *    Grow independently.)
  *

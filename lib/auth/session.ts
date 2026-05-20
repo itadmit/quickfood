@@ -124,7 +124,7 @@ export async function issueTokensForMerchant(
 export { verifyRefresh };
 
 // ─── API Key lookup ────────────────────────────────────────────
-// qfk_<prefix>_<secret>  → hash(secret) matches stored hash.
+// qfk_<prefix>_<secret>  ← hash(secret) matches stored hash.
 async function findApiKey(raw: string) {
   if (!raw.startsWith("qfk_")) return null;
   const rest = raw.slice(4);

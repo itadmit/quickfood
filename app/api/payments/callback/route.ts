@@ -93,7 +93,7 @@ export const POST = handler(async (req: Request) => {
   const parsed = provider.parseCallback(body);
 
   // Locate the pending payment. Match by providerRequestId (Grow processId)
-  // first; fall back to orderReference (Grow cField1 → our Order.number).
+  // first; fall back to orderReference (Grow cField1 ← our Order.number).
   let pending = parsed.providerRequestId
     ? await prisma.pendingPayment.findFirst({
         where: { tenantId: tenant.id, providerRequestId: parsed.providerRequestId },
@@ -185,7 +185,7 @@ export const POST = handler(async (req: Request) => {
         });
       });
 
-      // Advance the order: pending → confirmed (fires webhooks). Only if legal.
+      // Advance the order: pending ← confirmed (fires webhooks). Only if legal.
       const order = await prisma.order.findUnique({
         where: { id: pending.orderId },
         select: { status: true },

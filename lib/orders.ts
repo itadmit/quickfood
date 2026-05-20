@@ -23,7 +23,7 @@ export function canTransition(from: OrderStatus, to: OrderStatus): boolean {
 
 export class OrderTransitionError extends Error {
   constructor(public from: OrderStatus, public to: OrderStatus) {
-    super(`Illegal order transition: ${from} → ${to}`);
+    super(`Illegal order transition: ${from} ← ${to}`);
     this.name = "OrderTransitionError";
   }
 }

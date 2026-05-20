@@ -66,7 +66,7 @@ export const POST = handler(
       tenantSlug: order.tenant.slug,
       orderId: order.id,
       orderReference: orderRef,
-      amount: order.total / 100, // אגורות → shekels
+      amount: order.total / 100, // אגורות ← shekels
       currency: "ILS",
       customer: {
         name: customer?.name || order.customerNameSnap || "Customer",
