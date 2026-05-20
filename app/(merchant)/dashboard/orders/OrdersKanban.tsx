@@ -69,9 +69,14 @@ const SLA_MINUTES_BEFORE_LATE = 15;
 
 export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
   const [orders, setOrders] = useState<OrderRow[]>(initial);
-  const [now, setNow] = useState(() => Date.now());
+  // `now` stays null until after mount so SSR and the first client paint
+  // agree on the "elapsed minutes" text (React #418 protection). The card
+  // hides the elapsed counter when now=null and reveals it on the first
+  // post-mount effect tick.
+  const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
+    setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), 30_000);
     return () => clearInterval(id);
   }, []);
@@ -235,7 +240,7 @@ function Column({
   status: Status[];
   next: Status;
   actionLabel: string;
-  now: number;
+  now: number | null;
   onAdvance: (id: string, to: Status | "delivered") => void;
   onSelect: (id: string) => void;
 }) {
@@ -286,12 +291,15 @@ function Card({
   order: OrderRow;
   next: Status;
   actionLabel: string;
-  now: number;
+  /** `null` until the client-side timer has ticked at least once — keeps SSR and first paint identical. */
+  now: number | null;
   onAdvance: (id: string, to: Status | "delivered") => void;
   onSelect: (id: string) => void;
 }) {
-  const elapsedMin = now ? Math.floor((now - new Date(order.createdAt).getTime()) / 60_000) : 0;
-  const isLate = elapsedMin > SLA_MINUTES_BEFORE_LATE && order.status !== "out_for_delivery";
+  const elapsedMin =
+    now != null ? Math.floor((now - new Date(order.createdAt).getTime()) / 60_000) : null;
+  const isLate =
+    elapsedMin != null && elapsedMin > SLA_MINUTES_BEFORE_LATE && order.status !== "out_for_delivery";
 
   const target: Status | "delivered" = order.status === "out_for_delivery" ? "delivered" : next;
 
@@ -311,7 +319,8 @@ function Card({
       <div className="text-sm font-medium">{order.customerName}</div>
       <div className="text-xs text-qf-mute flex items-center gap-1.5">
         <IcoClock c="#7c8a82" s={12} />
-        לפני {elapsedMin} דק&apos; · {order.method === "delivery" ? "משלוח" : "איסוף"}
+        {elapsedMin != null && <>לפני {elapsedMin} דק&apos; · </>}
+        {order.method === "delivery" ? "משלוח" : "איסוף"}
       </div>
 
       <ul className="text-xs space-y-0.5">

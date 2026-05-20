@@ -5,7 +5,8 @@ import { IcoPin, IcoSearch, IcoChevDown, IcoStar, IcoClock, IcoBike, IcoFlame, I
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
 import { useCart } from "@/components/customer/CartProvider";
-import { formatPrice, formatRelativeMinutes } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
+import { RelativeTime } from "@/components/shared/RelativeTime";
 import { cn } from "@/lib/cn";
 
 interface Props {
@@ -200,7 +201,7 @@ export function CustomerHome({ tenant, branch, categories, popular, lastOrder, c
                 {lastOrder.itemCount > 1 ? ` +${lastOrder.itemCount - 1}` : ""}
               </div>
               <div className="text-xs text-qf-mute mt-0.5">
-                {formatRelativeMinutes(lastOrder.createdAt)} · <span className="tnum">{formatPrice(lastOrder.total)}</span>
+                <RelativeTime date={lastOrder.createdAt} /> · <span className="tnum">{formatPrice(lastOrder.total)}</span>
               </div>
             </div>
             <span className="bg-(--qf-primary) text-white text-xs font-semibold px-3 py-2 rounded-full shrink-0">

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { IcoStar } from "@/components/shared/Icons";
-import { formatRelativeMinutes } from "@/lib/format";
+import { RelativeTime } from "@/components/shared/RelativeTime";
 
 interface Summary {
   count: number;
@@ -120,7 +120,7 @@ function ReviewCard({
           <div>
             <div className="font-medium text-sm">{review.customerName}</div>
             <div className="text-xs text-qf-mute">
-              {formatRelativeMinutes(review.createdAt)}
+              <RelativeTime date={review.createdAt} />
               {review.orderNumber && ` · #${review.orderNumber}`}
             </div>
           </div>

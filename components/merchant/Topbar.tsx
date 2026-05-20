@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { IcoSearch, IcoBell, IcoChevDown, Dot, IcoClose } from "@/components/shared/Icons";
-import { formatPrice, formatRelativeMinutes } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
+import { RelativeTime } from "@/components/shared/RelativeTime";
 import { cn } from "@/lib/cn";
 
 interface Props {
@@ -237,7 +238,7 @@ export function Topbar({ user, branch }: Props) {
                           <div className="font-medium text-sm">{n.title}</div>
                           <div className="text-xs text-qf-mute truncate">{n.body}</div>
                           <div className="text-[10px] text-qf-mute mt-0.5">
-                            {formatRelativeMinutes(n.created_at)}
+                            <RelativeTime date={n.created_at} />
                           </div>
                         </div>
                       </div>
