@@ -12,6 +12,7 @@ import { requireCustomer } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { getConfiguredProvider } from "@/lib/payments/factory";
 import type { InitiatePaymentRequest } from "@/lib/payments/types";
+import { fullName } from "@/lib/format";
 import {
   PaymentMethod,
   PaymentProvider,
@@ -66,12 +67,17 @@ export const POST = handler(
     const customer = order.customerId
       ? await prisma.customer.findUnique({
           where: { id: order.customerId },
-          select: { name: true, email: true, phone: true },
+          select: { firstName: true, lastName: true, email: true, phone: true },
         })
       : null;
 
     const baseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
     const orderRef = order.number; // already unique, human readable
+
+    const composedName =
+      fullName(customer?.firstName, customer?.lastName) ||
+      fullName(order.customerFirstNameSnap, order.customerLastNameSnap) ||
+      "Customer";
 
     const initiateReq: InitiatePaymentRequest = {
       tenantId: order.tenantId,
@@ -81,7 +87,7 @@ export const POST = handler(
       amount: order.total / 100, // אגורות ← shekels
       currency: "ILS",
       customer: {
-        name: customer?.name || order.customerNameSnap || "Customer",
+        name: composedName,
         email: customer?.email ?? undefined,
         phone: customer?.phone ?? order.customerPhoneSnap ?? undefined,
       },

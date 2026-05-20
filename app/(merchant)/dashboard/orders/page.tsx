@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db/client";
 import { getSession } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
+import { fullName } from "@/lib/format";
 import { OrdersKanban } from "./OrdersKanban";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ export default async function OrdersPage() {
     },
     include: {
       items: { select: { id: true, nameSnapshot: true, quantity: true, sizeSnapshot: true } },
-      customer: { select: { id: true, name: true, phone: true } },
+      customer: { select: { id: true, firstName: true, lastName: true, phone: true } },
     },
     orderBy: { createdAt: "asc" },
     take: 200,
@@ -31,7 +32,10 @@ export default async function OrdersPage() {
     number: o.number,
     status: o.status as KanbanStatus,
     method: o.method,
-    customerName: o.customer?.name || o.customerNameSnap || "אורח",
+    customerName:
+      fullName(o.customer?.firstName, o.customer?.lastName) ||
+      fullName(o.customerFirstNameSnap, o.customerLastNameSnap) ||
+      "אורח",
     customerPhone: o.customer?.phone || o.customerPhoneSnap || "",
     customerNotes: o.customerNotes,
     total: o.total,

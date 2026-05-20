@@ -344,10 +344,6 @@ model Customer {
   email      String?
   firstName  String   @default("") @map("first_name")
   lastName   String   @default("") @map("last_name")
-  /// Legacy "full name" field. Kept for older code paths (notifications,
-  /// payment provider snapshots) — written as `${firstName} ${lastName}`
-  /// on every customer write. Read paths should prefer firstName/lastName.
-  name       String   @default("")
   anonymized Boolean  @default(false)
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
@@ -421,10 +417,6 @@ model Order {
   customerPhoneSnap      String? @map("customer_phone_snap")
   customerFirstNameSnap  String? @map("customer_first_name_snap")
   customerLastNameSnap   String? @map("customer_last_name_snap")
-  /// Legacy "full name" snapshot. Kept so older notifications and
-  /// payment providers keep working — written as
-  /// `${firstName} ${lastName}` whenever first/last are set.
-  customerNameSnap       String? @map("customer_name_snap")
 
   estimatedReadyAt    DateTime? @map("estimated_ready_at")
   estimatedDeliveryAt DateTime? @map("estimated_delivery_at")

@@ -1,6 +1,7 @@
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
+import { fullName } from "@/lib/format";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,15 +24,26 @@ export const GET = handler(async (req: Request) => {
         tenantId: session.tenantId,
         OR: [
           { number: { contains: q, mode: "insensitive" } },
-          { customerNameSnap: { contains: q, mode: "insensitive" } },
+          { customerFirstNameSnap: { contains: q, mode: "insensitive" } },
+          { customerLastNameSnap: { contains: q, mode: "insensitive" } },
           { customerPhoneSnap: { contains: q } },
-          { customer: { name: { contains: q, mode: "insensitive" } } },
+          { customer: { firstName: { contains: q, mode: "insensitive" } } },
+          { customer: { lastName: { contains: q, mode: "insensitive" } } },
           { customer: { phone: { contains: q } } },
         ],
       },
       orderBy: { createdAt: "desc" },
       take: 5,
-      select: { id: true, number: true, total: true, status: true, customerNameSnap: true, customer: { select: { name: true } }, createdAt: true },
+      select: {
+        id: true,
+        number: true,
+        total: true,
+        status: true,
+        customerFirstNameSnap: true,
+        customerLastNameSnap: true,
+        customer: { select: { firstName: true, lastName: true } },
+        createdAt: true,
+      },
     }),
     prisma.menuItem.findMany({
       where: {
@@ -49,13 +61,20 @@ export const GET = handler(async (req: Request) => {
     prisma.customer.findMany({
       where: {
         OR: [
-          { name: { contains: q, mode: "insensitive" } },
+          { firstName: { contains: q, mode: "insensitive" } },
+          { lastName: { contains: q, mode: "insensitive" } },
           { phone: { contains: q } },
         ],
         orders: { some: { tenantId: session.tenantId } },
       },
       take: 5,
-      select: { id: true, name: true, phone: true, _count: { select: { orders: { where: { tenantId: session.tenantId } } } } },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        _count: { select: { orders: { where: { tenantId: session.tenantId } } } },
+      },
     }),
   ]);
 
@@ -65,7 +84,10 @@ export const GET = handler(async (req: Request) => {
       number: o.number,
       total: o.total,
       status: o.status,
-      customer: o.customer?.name || o.customerNameSnap || "אורח",
+      customer:
+        fullName(o.customer?.firstName, o.customer?.lastName) ||
+        fullName(o.customerFirstNameSnap, o.customerLastNameSnap) ||
+        "אורח",
       created_at: o.createdAt.toISOString(),
     })),
     items: items.map((i) => ({
@@ -77,7 +99,9 @@ export const GET = handler(async (req: Request) => {
     })),
     customers: customers.map((c) => ({
       id: c.id,
-      name: c.name,
+      name: fullName(c.firstName, c.lastName),
+      first_name: c.firstName,
+      last_name: c.lastName,
       phone: c.phone,
       orders_count: c._count.orders,
     })),

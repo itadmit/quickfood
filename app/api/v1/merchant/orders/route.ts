@@ -2,6 +2,7 @@ import { handler, apiJson } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { OrderStatus, Prisma } from "@prisma/client";
+import { fullName } from "@/lib/format";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,7 +37,10 @@ export const GET = handler(async (req: Request) => {
   const [orders, total] = await Promise.all([
     prisma.order.findMany({
       where,
-      include: { items: true, customer: { select: { id: true, name: true, phone: true } } },
+      include: {
+        items: true,
+        customer: { select: { id: true, firstName: true, lastName: true, phone: true } },
+      },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * perPage,
       take: perPage,
@@ -51,7 +55,10 @@ export const GET = handler(async (req: Request) => {
 });
 
 type OrderWithIncludes = Prisma.OrderGetPayload<{
-  include: { items: true; customer: { select: { id: true; name: true; phone: true } } };
+  include: {
+    items: true;
+    customer: { select: { id: true; firstName: true; lastName: true; phone: true } };
+  };
 }>;
 
 function serializeOrder(o: OrderWithIncludes) {
@@ -60,8 +67,18 @@ function serializeOrder(o: OrderWithIncludes) {
     number: o.number,
     status: o.status,
     method: o.method,
-    customer: o.customer,
-    customer_name: o.customerNameSnap,
+    customer: o.customer
+      ? {
+          id: o.customer.id,
+          first_name: o.customer.firstName,
+          last_name: o.customer.lastName,
+          name: fullName(o.customer.firstName, o.customer.lastName),
+          phone: o.customer.phone,
+        }
+      : null,
+    customer_first_name: o.customerFirstNameSnap,
+    customer_last_name: o.customerLastNameSnap,
+    customer_name: fullName(o.customerFirstNameSnap, o.customerLastNameSnap) || null,
     customer_phone: o.customerPhoneSnap,
     subtotal: o.subtotal,
     delivery_fee: o.deliveryFee,

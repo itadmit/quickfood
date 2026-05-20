@@ -249,14 +249,14 @@ async function main() {
 
   {
     const demoCustomers = [
-      { phone: "+972501222001", name: "נועה ישראלי" },
-      { phone: "+972501222002", name: "תמר דהן" },
-      { phone: "+972501222003", name: "אורי מימון" },
+      { phone: "+972501222001", firstName: "נועה", lastName: "ישראלי" },
+      { phone: "+972501222002", firstName: "תמר", lastName: "דהן" },
+      { phone: "+972501222003", firstName: "אורי", lastName: "מימון" },
     ];
     for (const c of demoCustomers) {
       await prisma.customer.upsert({
         where: { phone: c.phone },
-        update: { name: c.name },
+        update: { firstName: c.firstName, lastName: c.lastName },
         create: c,
       });
     }

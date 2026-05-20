@@ -183,15 +183,6 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       customerPhoneSnap: input.guestPhone ?? null,
       customerFirstNameSnap: input.guestFirstName ?? null,
       customerLastNameSnap: input.guestLastName ?? null,
-      // Legacy joined snapshot — written so notifications / payment
-      // providers that still read this column keep working.
-      customerNameSnap:
-        input.guestFirstName || input.guestLastName
-          ? [input.guestFirstName ?? "", input.guestLastName ?? ""]
-              .filter(Boolean)
-              .join(" ")
-              .trim() || null
-          : null,
       subtotal,
       deliveryFee,
       serviceFee,

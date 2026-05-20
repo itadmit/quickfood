@@ -7,6 +7,19 @@ export function formatPrice(amount: number): string {
   return `₪${amount.toLocaleString("he-IL")}`;
 }
 
+/**
+ * Compose a display "full name" from first/last parts.  Used everywhere
+ * UI needs a one-line label (dashboard order rows, notifications,
+ * payment provider snapshots).  Returns the empty string when both are
+ * empty so callers can fall back to "אורח" cleanly.
+ */
+export function fullName(
+  first?: string | null,
+  last?: string | null,
+): string {
+  return [first ?? "", last ?? ""].map((s) => s.trim()).filter(Boolean).join(" ");
+}
+
 export function formatDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   return d.toLocaleDateString("he-IL", {

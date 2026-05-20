@@ -2,6 +2,7 @@ import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { Prisma } from "@prisma/client";
+import { fullName } from "@/lib/format";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,7 +22,7 @@ export const GET = handler(async (req: Request) => {
   const reviews = await prisma.review.findMany({
     where,
     include: {
-      customer: { select: { id: true, name: true, phone: true } },
+      customer: { select: { id: true, firstName: true, lastName: true, phone: true } },
       order: { select: { number: true, total: true, createdAt: true } },
     },
     orderBy: { createdAt: "desc" },
@@ -45,7 +46,13 @@ export const GET = handler(async (req: Request) => {
       reply_text: r.replyText,
       reply_at: r.replyAt?.toISOString() ?? null,
       created_at: r.createdAt.toISOString(),
-      customer: r.customer,
+      customer: {
+        id: r.customer.id,
+        first_name: r.customer.firstName,
+        last_name: r.customer.lastName,
+        name: fullName(r.customer.firstName, r.customer.lastName),
+        phone: r.customer.phone,
+      },
       order: r.order ? {
         number: r.order.number,
         total: r.order.total,

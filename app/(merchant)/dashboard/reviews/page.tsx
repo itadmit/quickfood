@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
+import { fullName } from "@/lib/format";
 import { ReviewsView } from "./ReviewsView";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,7 @@ export default async function ReviewsPage() {
     prisma.review.findMany({
       where: { tenantId: session.tenantId, status: "visible" },
       include: {
-        customer: { select: { name: true, phone: true } },
+        customer: { select: { firstName: true, lastName: true, phone: true } },
         order: { select: { number: true, total: true, createdAt: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -41,7 +42,7 @@ export default async function ReviewsPage() {
         replyText: r.replyText,
         replyAt: r.replyAt?.toISOString() ?? null,
         createdAt: r.createdAt.toISOString(),
-        customerName: r.customer.name || "אורח",
+        customerName: fullName(r.customer.firstName, r.customer.lastName) || "אורח",
         orderNumber: r.order?.number ?? null,
       }))}
     />

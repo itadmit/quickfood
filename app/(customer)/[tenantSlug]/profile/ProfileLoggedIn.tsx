@@ -4,12 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { IcoChev, IcoReceipt, IcoUser } from "@/components/shared/Icons";
-import { formatPrice, formatDate, formatPhone } from "@/lib/format";
+import { formatPrice, formatDate, formatPhone, fullName } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
 interface Customer {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   phone: string;
   email: string | null;
   createdAt: string;
@@ -45,8 +46,12 @@ export function ProfileLoggedIn({
   orders: Order[];
 }) {
   const router = useRouter();
-  const [name, setName] = useState(customer.name || "");
+  const [firstName, setFirstName] = useState(customer.firstName || "");
+  const [lastName, setLastName] = useState(customer.lastName || "");
   const [savingName, setSavingName] = useState(false);
+
+  const display = fullName(customer.firstName, customer.lastName);
+  const dirty = firstName !== customer.firstName || lastName !== customer.lastName;
 
   async function logout() {
     await fetch("/api/v1/auth/logout", { method: "POST" });
@@ -54,13 +59,13 @@ export function ProfileLoggedIn({
   }
 
   async function saveName() {
-    if (!name || name === customer.name) return;
+    if (!firstName || !dirty) return;
     setSavingName(true);
     try {
       await fetch("/api/v1/customer/me", {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ first_name: firstName, last_name: lastName }),
       });
       router.refresh();
     } finally {
@@ -83,10 +88,10 @@ export function ProfileLoggedIn({
         </div>
         <div className="flex items-center gap-3">
           <div className="w-16 h-16 rounded-full bg-white/15 grid place-items-center text-2xl font-bold">
-            {(customer.name || "Q").slice(0, 1)}
+            {(display || "Q").slice(0, 1)}
           </div>
           <div>
-            <div className="text-lg font-semibold">{customer.name || "אורח"}</div>
+            <div className="text-lg font-semibold">{display || "אורח"}</div>
             <div className="text-xs opacity-85" dir="ltr">
               {formatPhone(customer.phone)}
             </div>
@@ -98,22 +103,30 @@ export function ProfileLoggedIn({
       <section className="px-5 mt-4">
         <div className="bg-white rounded-2xl border border-qf-line p-4 space-y-3">
           <div className="text-sm font-semibold">פרטים אישיים</div>
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="שם מלא"
-              className="flex-1 px-3 py-2 rounded-xl border border-qf-line text-sm outline-none focus:border-(--qf-primary)"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="שם פרטי"
+              autoComplete="given-name"
+              className="px-3 py-2 rounded-xl border border-qf-line text-sm outline-none focus:border-(--qf-primary)"
             />
-            <button
-              type="button"
-              onClick={saveName}
-              disabled={savingName || name === customer.name || !name}
-              className="px-3 py-2 rounded-xl bg-(--qf-primary) text-white text-sm disabled:opacity-50"
-            >
-              שמור
-            </button>
+            <input
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="שם משפחה"
+              autoComplete="family-name"
+              className="px-3 py-2 rounded-xl border border-qf-line text-sm outline-none focus:border-(--qf-primary)"
+            />
           </div>
+          <button
+            type="button"
+            onClick={saveName}
+            disabled={savingName || !dirty || !firstName}
+            className="w-full px-3 py-2 rounded-xl bg-(--qf-primary) text-white text-sm font-semibold disabled:opacity-50"
+          >
+            שמור שינויים
+          </button>
         </div>
       </section>
 

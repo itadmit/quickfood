@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { summary, hourly, topItems, type Range } from "@/lib/analytics";
+import { fullName } from "@/lib/format";
 import { DashboardView } from "./DashboardView";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,7 @@ export default async function DashboardPage({
     topItems(session.tenantId, apiRange, 5),
     prisma.order.findMany({
       where: { tenantId: session.tenantId },
-      include: { customer: { select: { name: true } } },
+      include: { customer: { select: { firstName: true, lastName: true } } },
       orderBy: { createdAt: "desc" },
       take: 6,
     }),
@@ -40,7 +41,10 @@ export default async function DashboardPage({
     status: o.status,
     method: o.method,
     total: o.total,
-    customerName: o.customer?.name || o.customerNameSnap || "אורח",
+    customerName:
+      fullName(o.customer?.firstName, o.customer?.lastName) ||
+      fullName(o.customerFirstNameSnap, o.customerLastNameSnap) ||
+      "אורח",
     createdAt: o.createdAt.toISOString(),
   }));
 

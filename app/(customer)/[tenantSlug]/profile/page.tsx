@@ -42,7 +42,7 @@ export default async function ProfilePage({
   const [customer, orders] = await Promise.all([
     prisma.customer.findUnique({
       where: { id: session.userId },
-      select: { id: true, name: true, phone: true, email: true, createdAt: true },
+      select: { id: true, firstName: true, lastName: true, phone: true, email: true, createdAt: true },
     }),
     prisma.order.findMany({
       where: { customerId: session.userId, tenantId: tenant.id },
@@ -67,7 +67,8 @@ export default async function ProfilePage({
         tenantSlug={tenantSlug}
         customer={{
           id: customer.id,
-          name: customer.name,
+          firstName: customer.firstName,
+          lastName: customer.lastName,
           phone: customer.phone,
           email: customer.email,
           createdAt: customer.createdAt.toISOString(),

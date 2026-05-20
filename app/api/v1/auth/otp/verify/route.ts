@@ -19,20 +19,24 @@ export const POST = handler(async (req: Request) => {
   const customer = await prisma.customer.upsert({
     where: { phone },
     update: { lastSeenAt: new Date() },
-    create: { phone, firstName: "", lastName: "", name: "" },
+    create: { phone, firstName: "", lastName: "" },
   });
 
   const { accessToken, refreshToken } = await issueTokensForCustomer(customer.id);
+  const customerPayload = {
+    id: customer.id,
+    phone: customer.phone,
+    first_name: customer.firstName,
+    last_name: customer.lastName,
+  };
 
   if (body.client_type === "web") {
     await setSessionCookies(accessToken, refreshToken);
-    return apiJson({
-      customer: { id: customer.id, phone: customer.phone, name: customer.name },
-    });
+    return apiJson({ customer: customerPayload });
   }
   return apiJson({
     access_token: accessToken,
     refresh_token: refreshToken,
-    customer: { id: customer.id, phone: customer.phone, name: customer.name },
+    customer: customerPayload,
   });
 });
