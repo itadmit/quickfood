@@ -11,7 +11,11 @@ export default async function MenuPage() {
     redirect("/dashboard/login");
   }
 
-  const [categories, items] = await Promise.all([
+  const [tenant, categories, items] = await Promise.all([
+    prisma.tenant.findUnique({
+      where: { id: session.tenantId },
+      select: { businessType: true },
+    }),
     prisma.menuCategory.findMany({
       where: { tenantId: session.tenantId },
       orderBy: { position: "asc" },
@@ -28,6 +32,7 @@ export default async function MenuPage() {
   return (
     <MenuList
       categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+      businessType={tenant?.businessType ?? "general"}
       items={items.map((i) => ({
         id: i.id,
         name: i.name,
@@ -38,6 +43,7 @@ export default async function MenuPage() {
         available: i.available,
         artType: i.artType,
         sku: i.sku,
+        images: i.images,
       }))}
       visibleCount={visibleCount}
       hiddenCount={hiddenCount}

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { IcoSearch, IcoBell, IcoChevDown, Dot, IcoClose } from "@/components/shared/Icons";
+import { IcoSearch, IcoBell, IcoChevDown, Dot, IcoClose, IcoEye, IcoGear, IcoLogout } from "@/components/shared/Icons";
 import { formatPrice } from "@/lib/format";
 import { RelativeTime } from "@/components/shared/RelativeTime";
 import { cn } from "@/lib/cn";
@@ -11,6 +11,7 @@ import { cn } from "@/lib/cn";
 interface Props {
   user: { id: string; name: string; email: string; role: string };
   branch: { id: string; status: "open" | "busy" | "closed" } | null;
+  tenantSlug: string;
 }
 
 type Status = "open" | "busy" | "closed";
@@ -27,7 +28,7 @@ const STATUS_COLOR: Record<Status, { bg: string; text: string; dot: string }> = 
   closed: { bg: "bg-qf-tomato-soft border-qf-tomato/40", text: "text-qf-tomato", dot: "bg-qf-tomato" },
 };
 
-export function Topbar({ user, branch }: Props) {
+export function Topbar({ user, branch, tenantSlug }: Props) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
@@ -272,19 +273,34 @@ export function Topbar({ user, branch }: Props) {
                 {user.email}
               </div>
               <hr className="border-qf-line-soft" />
+              <Link
+                href={`/${tenantSlug}`}
+                target="_blank"
+                rel="noopener"
+                onClick={() => setMenuOpen(false)}
+                className="w-full text-start px-3 py-2 rounded-lg hover:bg-qf-line-soft flex items-center gap-2.5"
+              >
+                <IcoEye s={16} />
+                <span>צפה בחנות</span>
+              </Link>
               <button
                 type="button"
-                onClick={() => router.push("/dashboard/settings/branding")}
-                className="w-full text-start px-3 py-2 rounded-lg hover:bg-qf-line-soft"
+                onClick={() => {
+                  setMenuOpen(false);
+                  router.push("/dashboard/settings/branding");
+                }}
+                className="w-full text-start px-3 py-2 rounded-lg hover:bg-qf-line-soft flex items-center gap-2.5"
               >
-                הגדרות
+                <IcoGear s={16} />
+                <span>הגדרות</span>
               </button>
               <button
                 type="button"
                 onClick={logout}
-                className="w-full text-start px-3 py-2 rounded-lg hover:bg-qf-tomato-soft text-qf-tomato"
+                className="w-full text-start px-3 py-2 rounded-lg hover:bg-qf-tomato-soft text-qf-tomato flex items-center gap-2.5"
               >
-                התנתקות
+                <IcoLogout c="currentColor" s={16} />
+                <span>התנתקות</span>
               </button>
             </div>
           )}

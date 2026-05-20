@@ -150,9 +150,15 @@ export function ImageUploader({
     const results: string[] = [];
     for (let i = 0; i < arr.length; i++) {
       const id = pendings[i].id;
-      const url = await uploadOne(arr[i], id);
-      if (url) results.push(url);
-      removePending(id);
+      try {
+        const url = await uploadOne(arr[i], id);
+        if (url) results.push(url);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "העלאה נכשלה");
+      } finally {
+        // Always clear the pending tile so the UI never gets stuck at 100%.
+        removePending(id);
+      }
     }
 
     if (results.length > 0) {

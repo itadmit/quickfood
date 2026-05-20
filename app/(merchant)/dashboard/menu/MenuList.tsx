@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/format";
-import { IcoPizza, IcoEye, IcoEdit, IcoTrash, IcoClose, IcoCheck } from "@/components/shared/Icons";
+import { IcoEye, IcoEdit, IcoTrash, IcoClose, IcoCheck, IcoMore } from "@/components/shared/Icons";
+import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { cn } from "@/lib/cn";
 import { ItemPreviewModal } from "./ItemPreviewModal";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -23,16 +25,19 @@ interface Item {
   available: boolean;
   artType: string | null;
   sku: string | null;
+  images: string[];
 }
 
 export function MenuList({
   categories,
   items,
+  businessType,
   visibleCount,
   hiddenCount,
 }: {
   categories: Category[];
   items: Item[];
+  businessType: BusinessType;
   visibleCount: number;
   hiddenCount: number;
 }) {
@@ -143,8 +148,15 @@ export function MenuList({
               !item.available && "opacity-55",
             )}
           >
-            <div className="w-10 h-10 rounded-xl bg-qf-warm-dash grid place-items-center">
-              <IcoPizza c="#c2421f" s={20} />
+            <div className="w-10 h-10 rounded-xl overflow-hidden">
+              <MenuItemImage
+                src={item.images?.[0]}
+                alt={item.name}
+                businessType={businessType}
+                size={40}
+                rounded="xl"
+                fill
+              />
             </div>
             <div className="min-w-0">
               <div className="font-medium truncate">{item.name}</div>
@@ -342,12 +354,41 @@ function RowActions({
   onDelete: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const MENU_W = 160; // matches w-40
+
+  // Recompute menu position whenever it opens or on viewport changes.
+  useEffect(() => {
+    if (!open) return;
+    function place() {
+      const btn = btnRef.current;
+      if (!btn) return;
+      const r = btn.getBoundingClientRect();
+      setCoords({
+        top: r.bottom + 4,
+        // Anchor the menu's RIGHT edge to the button's RIGHT edge so it
+        // unfolds to the left — the natural direction in RTL.
+        left: Math.max(8, r.right - MENU_W),
+      });
+    }
+    place();
+    window.addEventListener("scroll", place, true);
+    window.addEventListener("resize", place);
+    return () => {
+      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("resize", place);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
     function onDoc(e: MouseEvent) {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (btnRef.current?.contains(t) || menuRef.current?.contains(t)) return;
+      setOpen(false);
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
@@ -360,9 +401,57 @@ function RowActions({
     };
   }, [open]);
 
+  const menu =
+    open && coords && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            ref={menuRef}
+            role="menu"
+            style={{ position: "fixed", top: coords.top, left: coords.left, width: MENU_W }}
+            className="bg-white border border-qf-line-dash rounded-xl shadow-lg z-50 py-1 text-sm overflow-hidden"
+          >
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onPreview();
+              }}
+              className="w-full text-start px-3 py-2 hover:bg-qf-line-soft inline-flex items-center gap-2"
+            >
+              <IcoEye s={16} c="#3a4a40" />
+              <span>צפה במוצר</span>
+            </button>
+            <Link
+              href={`/dashboard/menu/${item.id}`}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="px-3 py-2 hover:bg-qf-line-soft flex items-center gap-2"
+            >
+              <IcoEdit s={16} c="#3a4a40" />
+              <span>ערוך</span>
+            </Link>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onDelete();
+              }}
+              className="w-full text-start px-3 py-2 text-qf-tomato hover:bg-qf-tomato-soft inline-flex items-center gap-2"
+            >
+              <IcoTrash s={16} c="#c2421f" />
+              <span>מחק</span>
+            </button>
+          </div>,
+          document.body,
+        )
+      : null;
+
   return (
-    <div ref={ref} className="relative">
+    <>
       <button
+        ref={btnRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="פעולות"
@@ -370,49 +459,10 @@ function RowActions({
         aria-expanded={open}
         className="w-8 h-8 rounded-lg hover:bg-qf-line-soft grid place-items-center text-qf-mute"
       >
-        ⋯
+        <IcoMore c="#7c8a82" s={18} />
       </button>
-      {open && (
-        <div
-          role="menu"
-          className="absolute inset-e-0 top-full mt-1 w-40 bg-white border border-qf-line-dash rounded-xl shadow-lg z-20 py-1 text-sm overflow-hidden"
-        >
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              setOpen(false);
-              onPreview();
-            }}
-            className="w-full text-start px-3 py-2 hover:bg-qf-line-soft inline-flex items-center gap-2"
-          >
-            <IcoEye s={16} c="#3a4a40" />
-            <span>צפה במוצר</span>
-          </button>
-          <Link
-            href={`/dashboard/menu/${item.id}`}
-            role="menuitem"
-            onClick={() => setOpen(false)}
-            className="px-3 py-2 hover:bg-qf-line-soft flex items-center gap-2"
-          >
-            <IcoEdit s={16} c="#3a4a40" />
-            <span>ערוך</span>
-          </Link>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              setOpen(false);
-              onDelete();
-            }}
-            className="w-full text-start px-3 py-2 text-qf-tomato hover:bg-qf-tomato-soft inline-flex items-center gap-2"
-          >
-            <IcoTrash s={16} c="#c2421f" />
-            <span>מחק</span>
-          </button>
-        </div>
-      )}
-    </div>
+      {menu}
+    </>
   );
 }
 

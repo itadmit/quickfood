@@ -32,6 +32,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <div className="min-h-screen bg-qf-bg-dash text-qf-ink flex flex-col">
         <Topbar
           user={user}
+          tenantSlug={tenant.slug}
           branch={
             tenant.branches[0]
               ? {

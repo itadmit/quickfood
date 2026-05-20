@@ -166,6 +166,26 @@ export const IcoMegaphone = ({ c = "#11231a", s = 20, className }: IconProps) =>
   </svg>
 );
 
+export const IcoLogout = ({ c = "#11231a", s = 16, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    <path
+      d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3M10 17l-5-5 5-5M5 12h12"
+      stroke={c}
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+export const IcoMore = ({ c = "#11231a", s = 18, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill={c} className={className}>
+    <circle cx="5" cy="12" r="1.6" />
+    <circle cx="12" cy="12" r="1.6" />
+    <circle cx="19" cy="12" r="1.6" />
+  </svg>
+);
+
 export const IcoOrders = ({ c = "#11231a", s = 20, className }: IconProps) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
     <path d="M5 4h14l-1 16H6L5 4z" stroke={c} strokeWidth="1.6" strokeLinejoin="round" />
