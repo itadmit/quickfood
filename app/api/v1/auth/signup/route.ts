@@ -152,7 +152,7 @@ export const POST = handler(async (req: Request) => {
 
   if (body.client_type === "web") {
     await setSessionCookies(accessToken, refreshToken);
-    return apiJson({ user: userPayload, redirect: "/dashboard/orders" }, 201);
+    return apiJson({ user: userPayload, redirect: "/dashboard" }, 201);
   }
   return apiJson(
     { access_token: accessToken, refresh_token: refreshToken, user: userPayload },

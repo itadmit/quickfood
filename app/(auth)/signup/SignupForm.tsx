@@ -113,7 +113,7 @@ export function SignupForm() {
         if (field === "owner_email") setStep(3);
         return;
       }
-      router.push(data.redirect ?? "/dashboard/orders");
+      router.push(data.redirect ?? "/dashboard");
       router.refresh();
     } catch {
       setError("שגיאת רשת");

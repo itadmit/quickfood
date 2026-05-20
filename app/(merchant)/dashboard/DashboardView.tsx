@@ -29,6 +29,26 @@ interface TopItem {
   revenue: number;
 }
 
+type RecentStatus =
+  | "pending"
+  | "confirmed"
+  | "preparing"
+  | "in_oven"
+  | "ready"
+  | "out_for_delivery"
+  | "delivered"
+  | "canceled";
+
+interface RecentOrder {
+  id: string;
+  number: string;
+  status: string;
+  method: string;
+  total: number;
+  customerName: string;
+  createdAt: string;
+}
+
 const RANGES: Array<{ key: "today" | "yesterday" | "7d" | "30d"; label: string }> = [
   { key: "today", label: "היום" },
   { key: "yesterday", label: "אתמול" },
@@ -36,35 +56,38 @@ const RANGES: Array<{ key: "today" | "yesterday" | "7d" | "30d"; label: string }
   { key: "30d", label: "30 ימים" },
 ];
 
-export function AnalyticsView({
+export function DashboardView({
   range,
   summary,
   hourly,
   topItems,
+  recentOrders,
 }: {
   range: "today" | "yesterday" | "7d" | "30d";
   summary: Summary;
   hourly: { current: number[]; previous: number[] };
   topItems: TopItem[];
+  recentOrders: RecentOrder[];
 }) {
   const router = useRouter();
 
   const maxBar = Math.max(1, ...hourly.current, ...hourly.previous);
-  const hours = Array.from({ length: 13 }, (_, i) => 11 + i); // 11:00–23:00
+  const hours = Array.from({ length: 13 }, (_, i) => 11 + i);
+  const hasHourly = hourly.current.some((v) => v > 0) || hourly.previous.some((v) => v > 0);
 
   return (
     <div className="space-y-5">
       <header className="flex items-end justify-between">
         <div>
-          <h1 className="text-2xl font-bold">אנליטיקה</h1>
-          <p className="text-sm text-qf-mute">סטטיסטיקות מסעדה ומגמות</p>
+          <h1 className="text-2xl font-bold">דשבורד</h1>
+          <p className="text-sm text-qf-mute">מבט-על על המסעדה</p>
         </div>
         <div className="flex gap-1 bg-white rounded-xl border border-qf-line-dash p-1">
           {RANGES.map((r) => (
             <button
               key={r.key}
               type="button"
-              onClick={() => router.push(`/dashboard/analytics?range=${r.key}`)}
+              onClick={() => router.push(`/dashboard?range=${r.key}`)}
               className={cn(
                 "px-3.5 py-1.5 rounded-lg text-sm transition",
                 range === r.key
@@ -115,29 +138,38 @@ export function AnalyticsView({
             </div>
             <IcoChart c="#7c8a82" s={20} />
           </header>
-          <div className="flex items-end gap-1.5 h-48 overflow-x-auto no-scrollbar">
-            {hours.map((h) => {
-              const c = hourly.current[h] ?? 0;
-              const p = hourly.previous[h] ?? 0;
-              return (
-                <div key={h} className="flex-1 flex flex-col items-center min-w-[28px]">
-                  <div className="flex-1 flex items-end gap-0.5 w-full justify-center">
-                    <div
-                      className="w-2.5 bg-(--qf-primary)/30 rounded-t"
-                      style={{ height: `${(p / maxBar) * 100}%` }}
-                      title={`${h}:00 prev: ${p}`}
-                    />
-                    <div
-                      className="w-2.5 bg-(--qf-primary) rounded-t"
-                      style={{ height: `${(c / maxBar) * 100}%` }}
-                      title={`${h}:00 cur: ${c}`}
-                    />
+          {hasHourly ? (
+            <div className="flex items-end gap-1.5 h-48 overflow-x-auto no-scrollbar">
+              {hours.map((h) => {
+                const c = hourly.current[h] ?? 0;
+                const p = hourly.previous[h] ?? 0;
+                return (
+                  <div key={h} className="flex-1 flex flex-col items-center min-w-7">
+                    <div className="flex-1 flex items-end gap-0.5 w-full justify-center">
+                      <div
+                        className="w-2.5 bg-(--qf-primary)/30 rounded-t"
+                        style={{ height: `${(p / maxBar) * 100}%` }}
+                        title={`${h}:00 prev: ${p}`}
+                      />
+                      <div
+                        className="w-2.5 bg-(--qf-primary) rounded-t"
+                        style={{ height: `${(c / maxBar) * 100}%` }}
+                        title={`${h}:00 cur: ${c}`}
+                      />
+                    </div>
+                    <div className="text-[10px] text-qf-mute tnum mt-1">{h}</div>
                   </div>
-                  <div className="text-[10px] text-qf-mute tnum mt-1">{h}</div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="h-48 flex flex-col items-center justify-center gap-2 text-qf-mute">
+              <div className="w-12 h-12 rounded-full bg-qf-line-soft flex items-center justify-center">
+                <IcoChart c="#7c8a82" s={22} />
+              </div>
+              <div className="text-sm">אין עדיין נתונים</div>
+            </div>
+          )}
         </section>
 
         <section className="bg-white rounded-2xl border border-qf-line-dash p-5">
@@ -189,12 +221,48 @@ export function AnalyticsView({
         </section>
       </div>
 
-      <p className="text-xs text-qf-mute text-center">
-        <Link href="/api/v1/openapi" target="_blank" className="underline">
-          API
-        </Link>
-        : /api/v1/merchant/analytics/summary?range={range}
-      </p>
+      <section className="bg-white rounded-2xl border border-qf-line-dash p-5">
+        <header className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="font-semibold">הזמנות אחרונות</h2>
+            <p className="text-xs text-qf-mute">
+              {recentOrders.length === 0 ? "אין הזמנות עדיין" : "6 ההזמנות האחרונות"}
+            </p>
+          </div>
+          <Link
+            href="/dashboard/orders"
+            className="text-sm text-qf-ink2 hover:text-(--qf-deep) transition"
+          >
+            לכל ההזמנות
+          </Link>
+        </header>
+        {recentOrders.length === 0 ? (
+          <div className="text-center text-sm text-qf-mute py-8">עדיין לא התקבלו הזמנות</div>
+        ) : (
+          <ul className="divide-y divide-qf-line-soft -mx-1">
+            {recentOrders.map((o) => (
+              <li
+                key={o.id}
+                className="flex items-center gap-3 px-1 py-2.5"
+              >
+                <div className="w-12 text-center">
+                  <div className="text-sm font-semibold tnum">#{o.number}</div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">{o.customerName}</div>
+                  <div className="text-[11px] text-qf-mute">
+                    {o.method === "delivery" ? "משלוח" : "איסוף"} · {formatRelative(o.createdAt)}
+                  </div>
+                </div>
+                <RecentStatusChip status={o.status} />
+                <div className="text-sm font-semibold tnum w-20 text-end">
+                  {formatPrice(o.total)}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }
@@ -237,4 +305,44 @@ function KpiCard({
       </div>
     </div>
   );
+}
+
+const STATUS_LABELS: Record<RecentStatus, string> = {
+  pending: "ממתינה",
+  confirmed: "אושרה",
+  preparing: "בהכנה",
+  in_oven: "בתנור",
+  ready: "מוכנה",
+  out_for_delivery: "בדרך",
+  delivered: "נמסרה",
+  canceled: "בוטלה",
+};
+
+function RecentStatusChip({ status }: { status: string }) {
+  const label = STATUS_LABELS[status as RecentStatus] ?? status;
+  const tone =
+    status === "delivered"
+      ? "bg-qf-green-soft text-qf-green-deep"
+      : status === "canceled"
+        ? "bg-qf-tomato-soft text-qf-tomato"
+        : status === "pending"
+          ? "bg-qf-warm-dash text-qf-tomato"
+          : "bg-qf-line-soft text-qf-ink2";
+  return (
+    <span className={cn("hidden sm:inline-block text-[10px] font-medium px-2 py-1 rounded-md", tone)}>
+      {label}
+    </span>
+  );
+}
+
+function formatRelative(iso: string): string {
+  const now = Date.now();
+  const then = new Date(iso).getTime();
+  const mins = Math.max(0, Math.round((now - then) / 60000));
+  if (mins < 1) return "עכשיו";
+  if (mins < 60) return `לפני ${mins} דק׳`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `לפני ${hrs} שע׳`;
+  const days = Math.round(hrs / 24);
+  return `לפני ${days} ימים`;
 }

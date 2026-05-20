@@ -75,7 +75,7 @@ export function AuthShell({
           </div>
           <Link
             href={variant === "login" ? "/signup" : "/dashboard/login"}
-            className="inline-flex items-center gap-3 rounded-full border border-qf-line-dash hover:border-qf-ink/30 bg-white px-4 py-2 text-sm text-qf-mute hover:text-qf-ink transition lg:ms-auto"
+            className="inline-flex items-center gap-3 rounded-full border border-qf-line-dash hover:border-qf-ink/30 bg-white px-4 py-2 text-sm text-qf-mute hover:text-qf-ink transition lg:me-auto"
           >
             <span>
               {variant === "login" ? "עוד אין חשבון?" : "כבר יש לי חשבון?"}
