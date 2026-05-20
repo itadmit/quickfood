@@ -1,0 +1,674 @@
+// QuickFood — Prisma schema
+// מקור האמת: /Users/tadmitinteractive/Downloads/pizza/DATA_MODEL.md
+// תוספות מהתכנית: WebhookEndpoint, WebhookDelivery, ApiKey, OrderEvent, OtpCode
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────────────
+
+enum TenantStatus {
+  active
+  suspended
+  trial
+}
+
+enum ThemeId {
+  fresh
+  basil
+  forest
+  olive
+  tomato
+  charcoal
+  cobalt
+}
+
+enum RestaurantStatus {
+  open
+  busy
+  closed
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  preparing
+  in_oven
+  ready
+  out_for_delivery
+  delivered
+  cancelled
+  refunded
+}
+
+enum OrderMethod {
+  delivery
+  pickup
+}
+
+enum PaymentMethod {
+  card
+  cash
+  apple_pay
+  google_pay
+  bit
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+}
+
+enum CourierStatus {
+  available
+  on_delivery
+  break_time
+  offline
+}
+
+enum CourierVehicle {
+  scooter
+  bike
+  car
+  walking
+}
+
+enum UserRole {
+  owner
+  manager
+  kitchen
+  courier_dispatch
+  platform_admin
+}
+
+enum SubscriptionStatus {
+  trial
+  active
+  past_due
+  cancelled
+}
+
+enum OptionGroupType {
+  single
+  multi
+}
+
+enum CouponType {
+  percent
+  fixed
+}
+
+enum ReviewStatus {
+  visible
+  hidden
+  flagged
+}
+
+enum RecipientType {
+  customer
+  merchant_user
+}
+
+enum WebhookDeliveryStatus {
+  pending
+  success
+  failed
+  abandoned
+}
+
+enum PaymentProvider {
+  cash
+  grow
+}
+
+// ─── Tenant & Branches ──────────────────────────────────────────
+
+model Tenant {
+  id              String          @id @default(uuid()) @db.Uuid
+  slug            String          @unique
+  name            String
+  logoLetter      String          @map("logo_letter") @db.VarChar(2)
+  logoUrl         String?         @map("logo_url")
+  themeId         ThemeId         @default(fresh) @map("theme_id")
+  cuisineType     String?         @map("cuisine_type")
+  vatNumber       String?         @map("vat_number")
+  status          TenantStatus    @default(active)
+  planId          String?         @map("plan_id") @db.Uuid
+  plan            Plan?           @relation(fields: [planId], references: [id])
+  customDomain    String?         @unique @map("custom_domain")
+  paymentProvider PaymentProvider @default(cash) @map("payment_provider")
+  allowedOrigins  String[]        @default([]) @map("allowed_origins")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  branches         Branch[]
+  menuCategories   MenuCategory[]
+  menuItems        MenuItem[]
+  coupons          Coupon[]
+  merchantUsers    MerchantUser[]
+  subscription     Subscription?
+  orders           Order[]
+  couriers         Courier[]
+  reviews          Review[]
+  webhookEndpoints WebhookEndpoint[]
+  apiKeys          ApiKey[]
+
+  @@index([slug])
+  @@map("tenants")
+}
+
+model Branch {
+  id          String           @id @default(uuid()) @db.Uuid
+  tenantId    String           @map("tenant_id") @db.Uuid
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  address     String
+  lat         Decimal?         @db.Decimal(10, 7)
+  lng         Decimal?         @db.Decimal(10, 7)
+  phone       String
+  email       String?
+  isPrimary   Boolean          @default(false) @map("is_primary")
+  status      RestaurantStatus @default(open)
+  hours       Json             @default("{}")
+  minOrder    Int              @default(0) @map("min_order")
+  deliveryFee Int              @default(0) @map("delivery_fee")
+  serviceFee  Int              @default(0) @map("service_fee")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  zones    DeliveryZone[]
+  couriers Courier[]
+  orders   Order[]
+
+  @@index([tenantId])
+  @@map("branches")
+}
+
+model DeliveryZone {
+  id          String   @id @default(uuid()) @db.Uuid
+  branchId    String   @map("branch_id") @db.Uuid
+  branch      Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  name        String
+  radiusKm    Decimal? @map("radius_km") @db.Decimal(6, 2)
+  geometry    Json?
+  deliveryFee Int      @map("delivery_fee")
+  minEta      Int      @map("min_eta")
+  maxEta      Int      @map("max_eta")
+  active      Boolean  @default(true)
+
+  @@index([branchId])
+  @@map("delivery_zones")
+}
+
+// ─── Menu ───────────────────────────────────────────────────────
+
+model MenuCategory {
+  id       String  @id @default(uuid()) @db.Uuid
+  tenantId String  @map("tenant_id") @db.Uuid
+  tenant   Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name     String
+  icon     String?
+  position Int     @default(0)
+  active   Boolean @default(true)
+
+  items MenuItem[]
+
+  @@index([tenantId, position])
+  @@map("menu_categories")
+}
+
+model MenuItem {
+  id          String       @id @default(uuid()) @db.Uuid
+  tenantId    String       @map("tenant_id") @db.Uuid
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoryId  String       @map("category_id") @db.Uuid
+  category    MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  name        String
+  description String       @default("")
+  imageUrl    String?      @map("image_url")
+  artType     String?      @map("art_type")
+  basePrice   Int          @map("base_price")
+  prepMinutes Int          @default(10) @map("prep_minutes")
+  available   Boolean      @default(true)
+  position    Int          @default(0)
+  tags        String[]     @default([])
+  sku         String?
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  sizes        ItemSize[]
+  optionGroups ItemOptionGroup[]
+  orderItems   OrderItem[]
+
+  @@index([tenantId, categoryId, position])
+  @@index([tenantId, available])
+  @@map("menu_items")
+}
+
+model ItemSize {
+  id         String   @id @default(uuid()) @db.Uuid
+  itemId     String   @map("item_id") @db.Uuid
+  item       MenuItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  code       String   @db.VarChar(4)
+  name       String
+  priceDelta Int      @default(0) @map("price_delta")
+  isDefault  Boolean  @default(false) @map("is_default")
+  position   Int      @default(0)
+
+  @@index([itemId, position])
+  @@map("item_sizes")
+}
+
+model ItemOptionGroup {
+  id        String          @id @default(uuid()) @db.Uuid
+  itemId    String          @map("item_id") @db.Uuid
+  item      MenuItem        @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  name      String
+  type      OptionGroupType @default(single)
+  required  Boolean         @default(false)
+  minSelect Int             @default(0) @map("min_select")
+  maxSelect Int             @default(1) @map("max_select")
+  position  Int             @default(0)
+
+  options ItemOption[]
+
+  @@index([itemId])
+  @@map("item_option_groups")
+}
+
+model ItemOption {
+  id         String          @id @default(uuid()) @db.Uuid
+  groupId    String          @map("group_id") @db.Uuid
+  group      ItemOptionGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name       String
+  priceDelta Int             @default(0) @map("price_delta")
+  isDefault  Boolean         @default(false) @map("is_default")
+  position   Int             @default(0)
+
+  @@index([groupId, position])
+  @@map("item_options")
+}
+
+// ─── Customer & Address ─────────────────────────────────────────
+
+model Customer {
+  id         String   @id @default(uuid()) @db.Uuid
+  phone      String   @unique
+  email      String?
+  name       String   @default("")
+  anonymized Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+
+  addresses Address[]
+  orders    Order[]
+  reviews   Review[]
+  apiKeys   ApiKey[]
+
+  @@map("customers")
+}
+
+model Address {
+  id         String   @id @default(uuid()) @db.Uuid
+  customerId String   @map("customer_id") @db.Uuid
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  label      String?
+  street     String
+  city       String
+  apartment  String?
+  floor      String?
+  entrance   String?
+  lat        Decimal? @db.Decimal(10, 7)
+  lng        Decimal? @db.Decimal(10, 7)
+  notes      String?
+  isDefault  Boolean  @default(false) @map("is_default")
+
+  orders Order[]
+
+  @@index([customerId])
+  @@map("addresses")
+}
+
+// ─── Orders ─────────────────────────────────────────────────────
+
+model Order {
+  id         String    @id @default(uuid()) @db.Uuid
+  number     String    @unique
+  tenantId   String    @map("tenant_id") @db.Uuid
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  branchId   String    @map("branch_id") @db.Uuid
+  branch     Branch    @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  customerId String?   @map("customer_id") @db.Uuid
+  customer   Customer? @relation(fields: [customerId], references: [id])
+
+  status OrderStatus @default(pending)
+  method OrderMethod @default(delivery)
+
+  deliveryAddressId String?  @map("delivery_address_id") @db.Uuid
+  deliveryAddress   Address? @relation(fields: [deliveryAddressId], references: [id])
+  deliveryNotes     String?  @map("delivery_notes")
+
+  scheduledFor DateTime? @map("scheduled_for")
+
+  subtotal    Int @default(0)
+  deliveryFee Int @default(0) @map("delivery_fee")
+  serviceFee  Int @default(0) @map("service_fee")
+  tip         Int @default(0)
+  discount    Int @default(0)
+  total       Int @default(0)
+
+  paymentMethod   PaymentMethod @default(cash) @map("payment_method")
+  paymentStatus   PaymentStatus @default(pending) @map("payment_status")
+  paymentIntentId String?       @map("payment_intent_id")
+
+  courierId String?  @map("courier_id") @db.Uuid
+  courier   Courier? @relation(fields: [courierId], references: [id])
+
+  customerNotes     String? @map("customer_notes")
+  customerPhoneSnap String? @map("customer_phone_snap")
+  customerNameSnap  String? @map("customer_name_snap")
+
+  estimatedReadyAt    DateTime? @map("estimated_ready_at")
+  estimatedDeliveryAt DateTime? @map("estimated_delivery_at")
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  confirmedAt DateTime? @map("confirmed_at")
+  readyAt     DateTime? @map("ready_at")
+  deliveredAt DateTime? @map("delivered_at")
+  cancelledAt DateTime? @map("cancelled_at")
+
+  rating     Int?
+  reviewText String? @map("review_text")
+
+  items  OrderItem[]
+  events OrderEvent[]
+  review Review?
+
+  @@index([tenantId, status, createdAt(sort: Desc)])
+  @@index([customerId, createdAt(sort: Desc)])
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String    @id @default(uuid()) @db.Uuid
+  orderId    String    @map("order_id") @db.Uuid
+  order      Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId String?   @map("menu_item_id") @db.Uuid
+  menuItem   MenuItem? @relation(fields: [menuItemId], references: [id])
+
+  nameSnapshot String @map("name_snapshot")
+  quantity     Int    @default(1)
+  unitPrice    Int    @map("unit_price")
+  totalPrice   Int    @map("total_price")
+
+  sizeId       String? @map("size_id") @db.Uuid
+  sizeSnapshot String? @map("size_snapshot")
+
+  selectedOptions Json @default("[]") @map("selected_options")
+
+  notes String?
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model OrderEvent {
+  id        String   @id @default(uuid()) @db.Uuid
+  orderId   String   @map("order_id") @db.Uuid
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  type      String
+  payload   Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([orderId, createdAt])
+  @@index([createdAt])
+  @@map("order_events")
+}
+
+// ─── Cart (server-side, per customer/tenant) ────────────────────
+
+model Cart {
+  id         String   @id @default(uuid()) @db.Uuid
+  customerId String?  @map("customer_id") @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  sessionId  String?  @unique @map("session_id")
+  couponCode String?  @map("coupon_code")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  items CartItem[]
+
+  @@index([customerId, tenantId])
+  @@map("carts")
+}
+
+model CartItem {
+  id              String  @id @default(uuid()) @db.Uuid
+  cartId          String  @map("cart_id") @db.Uuid
+  cart            Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  menuItemId      String  @map("menu_item_id") @db.Uuid
+  quantity        Int     @default(1)
+  sizeId          String? @map("size_id") @db.Uuid
+  selectedOptions Json    @default("[]") @map("selected_options")
+  notes           String?
+
+  @@index([cartId])
+  @@map("cart_items")
+}
+
+// ─── Couriers & Reviews ─────────────────────────────────────────
+
+model Courier {
+  id              String         @id @default(uuid()) @db.Uuid
+  tenantId        String         @map("tenant_id") @db.Uuid
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId        String?        @map("branch_id") @db.Uuid
+  branch          Branch?        @relation(fields: [branchId], references: [id])
+  name            String
+  phone           String
+  vehicle         CourierVehicle @default(scooter)
+  status          CourierStatus  @default(offline)
+  currentLat      Decimal?       @map("current_lat") @db.Decimal(10, 7)
+  currentLng      Decimal?       @map("current_lng") @db.Decimal(10, 7)
+  currentOrderId  String?        @map("current_order_id") @db.Uuid
+  ratingAvg       Decimal        @default(0) @map("rating_avg") @db.Decimal(3, 2)
+  deliveriesToday Int            @default(0) @map("deliveries_today")
+  createdAt       DateTime       @default(now()) @map("created_at")
+
+  orders Order[]
+
+  @@index([branchId, status])
+  @@map("couriers")
+}
+
+model Review {
+  id         String       @id @default(uuid()) @db.Uuid
+  tenantId   String       @map("tenant_id") @db.Uuid
+  tenant     Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orderId    String       @unique @map("order_id") @db.Uuid
+  order      Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerId String       @map("customer_id") @db.Uuid
+  customer   Customer     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  rating     Int
+  text       String?
+  replyText  String?      @map("reply_text")
+  replyAt    DateTime?    @map("reply_at")
+  status     ReviewStatus @default(visible)
+  createdAt  DateTime     @default(now()) @map("created_at")
+
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@map("reviews")
+}
+
+// ─── Auth ───────────────────────────────────────────────────────
+
+model MerchantUser {
+  id           String    @id @default(uuid()) @db.Uuid
+  tenantId     String?   @map("tenant_id") @db.Uuid
+  tenant       Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  name         String
+  role         UserRole  @default(owner)
+  branches     String[]  @default([])
+  tfaEnabled   Boolean   @default(false) @map("tfa_enabled")
+  tfaSecret    String?   @map("tfa_secret")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@map("merchant_users")
+}
+
+model OtpCode {
+  id        String    @id @default(uuid()) @db.Uuid
+  phone     String
+  codeHash  String    @map("code_hash")
+  attempts  Int       @default(0)
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([phone, createdAt(sort: Desc)])
+  @@map("otp_codes")
+}
+
+model ApiKey {
+  id         String    @id @default(uuid()) @db.Uuid
+  tenantId   String?   @map("tenant_id") @db.Uuid
+  tenant     Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customerId String?   @map("customer_id") @db.Uuid
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name       String
+  hash       String    @unique
+  prefix     String
+  scopes     String[]  @default([])
+  lastUsedAt DateTime? @map("last_used_at")
+  expiresAt  DateTime? @map("expires_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@map("api_keys")
+}
+
+// ─── Plans & Billing ────────────────────────────────────────────
+
+model Plan {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  priceMonthly Int      @map("price_monthly")
+  features     Json     @default("{}")
+  orderLimit   Int?     @map("order_limit")
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  tenants       Tenant[]
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id                 String             @id @default(uuid()) @db.Uuid
+  tenantId           String             @unique @map("tenant_id") @db.Uuid
+  tenant             Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  planId             String             @map("plan_id") @db.Uuid
+  plan               Plan               @relation(fields: [planId], references: [id], onDelete: Restrict)
+  status             SubscriptionStatus @default(trial)
+  currentPeriodStart DateTime           @map("current_period_start")
+  currentPeriodEnd   DateTime           @map("current_period_end")
+  paymentMethodId    String?            @map("payment_method_id")
+  cancelAtPeriodEnd  Boolean            @default(false) @map("cancel_at_period_end")
+  createdAt          DateTime           @default(now()) @map("created_at")
+
+  @@map("subscriptions")
+}
+
+// ─── Coupons & Notifications ────────────────────────────────────
+
+model Coupon {
+  id               String     @id @default(uuid()) @db.Uuid
+  tenantId         String     @map("tenant_id") @db.Uuid
+  tenant           Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  code             String
+  description      String     @default("")
+  type             CouponType @default(percent)
+  value            Int
+  minOrder         Int?       @map("min_order")
+  maxDiscount      Int?       @map("max_discount")
+  usageLimit       Int?       @map("usage_limit")
+  usageCount       Int        @default(0) @map("usage_count")
+  perCustomerLimit Int?       @map("per_customer_limit")
+  validFrom        DateTime   @default(now()) @map("valid_from")
+  validUntil       DateTime?  @map("valid_until")
+  active           Boolean    @default(true)
+
+  @@unique([tenantId, code])
+  @@index([tenantId, active])
+  @@map("coupons")
+}
+
+model Notification {
+  id            String        @id @default(uuid()) @db.Uuid
+  recipientType RecipientType @map("recipient_type")
+  recipientId   String        @map("recipient_id") @db.Uuid
+  type          String
+  title         String
+  body          String
+  data          Json          @default("{}")
+  readAt        DateTime?     @map("read_at")
+  channels      String[]      @default([])
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  @@index([recipientType, recipientId, createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+// ─── Webhooks (outbound) ────────────────────────────────────────
+
+model WebhookEndpoint {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  url       String
+  secret    String
+  events    String[] @default([])
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  deliveries WebhookDelivery[]
+
+  @@index([tenantId, active])
+  @@map("webhook_endpoints")
+}
+
+model WebhookDelivery {
+  id              String                @id @default(uuid()) @db.Uuid
+  endpointId      String                @map("endpoint_id") @db.Uuid
+  endpoint        WebhookEndpoint       @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+  eventType       String                @map("event_type")
+  payload         Json                  @default("{}")
+  status          WebhookDeliveryStatus @default(pending)
+  attempts        Int                   @default(0)
+  lastAttemptAt   DateTime?             @map("last_attempt_at")
+  nextRetryAt     DateTime?             @map("next_retry_at")
+  responseCode    Int?                  @map("response_code")
+  responseBody    String?               @map("response_body")
+  responseHeaders Json?                 @map("response_headers")
+  createdAt       DateTime              @default(now()) @map("created_at")
+
+  @@index([status, nextRetryAt])
+  @@index([endpointId, createdAt(sort: Desc)])
+  @@map("webhook_deliveries")
+}
