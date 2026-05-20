@@ -44,7 +44,9 @@ interface Props {
   businessType?: BusinessType;
   size?: number;
   className?: string;
-  rounded?: "md" | "lg" | "xl" | "2xl" | "full";
+  rounded?: "md" | "lg" | "xl" | "2xl" | "full" | "none";
+  /** When true, the image/placeholder fills its parent container instead of using `size` as fixed dimensions. */
+  fill?: boolean;
 }
 
 export function MenuItemImage({
@@ -54,6 +56,7 @@ export function MenuItemImage({
   size = 96,
   className,
   rounded = "xl",
+  fill = false,
 }: Props) {
   const roundedClass = {
     md: "rounded-md",
@@ -61,6 +64,7 @@ export function MenuItemImage({
     xl: "rounded-xl",
     "2xl": "rounded-2xl",
     full: "rounded-full",
+    none: "",
   }[rounded];
 
   if (src) {
@@ -71,14 +75,15 @@ export function MenuItemImage({
       <img
         src={src}
         alt={alt}
-        width={size}
-        height={size}
+        width={fill ? undefined : size}
+        height={fill ? undefined : size}
         className={cn(
           "object-cover bg-qf-line-soft",
+          fill && "w-full h-full",
           roundedClass,
           className,
         )}
-        style={{ width: size, height: size }}
+        style={fill ? undefined : { width: size, height: size }}
       />
     );
   }
@@ -88,6 +93,7 @@ export function MenuItemImage({
       alt={alt}
       businessType={businessType}
       size={size}
+      fill={fill}
       className={cn(roundedClass, className)}
     />
   );
@@ -97,11 +103,13 @@ function Placeholder({
   alt,
   businessType,
   size,
+  fill,
   className,
 }: {
   alt: string;
   businessType: BusinessType;
   size: number;
+  fill?: boolean;
   className?: string;
 }) {
   const config = PLACEHOLDER_CONFIG[businessType];
@@ -109,12 +117,12 @@ function Placeholder({
   return (
     <div
       style={{
-        width: size,
-        height: size,
+        ...(fill ? {} : { width: size, height: size }),
         background: `linear-gradient(135deg, ${config.from} 0%, ${config.to} 100%)`,
       }}
       className={cn(
         "relative flex items-center justify-center overflow-hidden",
+        fill && "w-full h-full",
         className,
       )}
       role="img"

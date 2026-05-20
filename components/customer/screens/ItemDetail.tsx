@@ -183,14 +183,14 @@ export function ItemDetail({
 
       {/* Hero */}
       <div className="relative">
-        <div className="relative h-72 overflow-hidden bg-qf-line-soft">
+        <div className="relative h-72 overflow-hidden bg-qf-line-soft rounded-b-3xl">
           <MenuItemImage
             src={item.images?.[0]}
             alt={item.name}
             businessType={businessType}
             size={520}
-            rounded="md"
-            className="w-full h-full"
+            rounded="none"
+            fill
           />
           <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-black/30 to-transparent pointer-events-none" />
         </div>
