@@ -207,7 +207,7 @@ export function Topbar({ user, branch }: Props) {
           >
             <IcoBell s={18} />
             {unread > 0 && (
-              <span className="absolute top-1.5 inset-e-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-qf-tomato text-white text-[10px] font-bold grid place-items-center tnum">
+              <span className="absolute -top-1.5 -inset-e-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-qf-tomato text-white text-[10px] font-bold grid place-items-center tnum ring-2 ring-white pointer-events-none">
                 {unread > 99 ? "99+" : unread}
               </span>
             )}

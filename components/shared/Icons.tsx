@@ -296,3 +296,32 @@ export const IcoWarning = ({ c = "#c2421f", s = 18, className }: IconProps) => (
     <circle cx="12" cy="17" r="1" fill={c} />
   </svg>
 );
+
+/**
+ * Simple flat-arrow icons for buttons / links.
+ * In a Hebrew RTL UI, "forward / next" actions visually go LEFT, "back"
+ * actions go RIGHT — match the direction of the action, not the reading order.
+ */
+export const IcoArrowLeft = ({ c = "currentColor", s = 16, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    <path
+      d="M5 12h14M10 7l-5 5 5 5"
+      stroke={c}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+export const IcoArrowRight = ({ c = "currentColor", s = 16, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    <path
+      d="M5 12h14M14 7l5 5-5 5"
+      stroke={c}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);

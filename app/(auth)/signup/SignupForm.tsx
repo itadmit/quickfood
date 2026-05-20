@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, MapPin, User, Check, X } from "lucide-react";
+import { IcoArrowLeft, IcoArrowRight } from "@/components/shared/Icons";
 import { THEMES, type ThemeId } from "@/lib/themes";
 import { type BusinessType } from "@/components/shared/MenuItemImage";
 import { BusinessTypeSelect } from "@/components/shared/BusinessTypeSelect";
@@ -175,9 +176,10 @@ export function SignupForm() {
         <button
           type="button"
           onClick={() => (step > 1 ? setStep((step - 1) as 1 | 2 | 3) : router.push("/"))}
-          className="text-sm text-qf-mute hover:text-qf-ink"
+          className="text-sm text-qf-mute hover:text-qf-ink inline-flex items-center gap-1.5"
         >
-          {step > 1 ? "→ חזרה" : "→ לעמוד הבית"}
+          <IcoArrowRight c="currentColor" s={14} />
+          {step > 1 ? "חזרה" : "לעמוד הבית"}
         </button>
 
         {step < 3 ? (

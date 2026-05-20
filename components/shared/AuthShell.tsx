@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { QuickFoodLogo } from "@/components/shared/QuickFoodLogo";
+import { IcoArrowLeft } from "@/components/shared/Icons";
 
 interface Props {
   /** "login" or "signup" — controls the top-bar cross-link */
@@ -36,11 +37,11 @@ export function AuthShell({
           sizes="(max-width: 1024px) 0px, 55vw"
           className="object-cover"
         />
-        {/* Top→bottom dark gradient so the white logo + copy at the corners
-            stay legible regardless of where the diner's bright neon falls. */}
+        {/* Heavy dark overlay — gives the photo a moody mute and keeps the
+            white logo + copy at the corners legible everywhere. */}
         <div
           aria-hidden
-          className="absolute inset-0 bg-linear-to-b from-black/55 via-black/15 to-black/75"
+          className="absolute inset-0 bg-linear-to-b from-black/75 via-black/55 to-black/85"
         />
 
         {/* Logo top-corner, in white */}
@@ -68,26 +69,22 @@ export function AuthShell({
       <main className="relative flex flex-col">
         {/* top bar inside the right column */}
         <header className="flex items-center justify-between px-6 py-5">
-          <Link
-            href={variant === "login" ? "/signup" : "/dashboard/login"}
-            className="text-sm text-qf-mute hover:text-qf-ink inline-flex items-center gap-1.5"
-          >
-            {variant === "login" ? (
-              <>
-                עוד אין חשבון?
-                <span className="font-semibold text-qf-ink">הירשם בחינם →</span>
-              </>
-            ) : (
-              <>
-                כבר יש לי חשבון
-                <span className="font-semibold text-qf-ink">→ התחברות</span>
-              </>
-            )}
-          </Link>
           {/* mobile-only logo since the aside is hidden */}
           <div className="lg:hidden">
             <QuickFoodLogo size={28} wordmarkClassName="text-base" />
           </div>
+          <Link
+            href={variant === "login" ? "/signup" : "/dashboard/login"}
+            className="inline-flex items-center gap-3 rounded-full border border-qf-line-dash hover:border-qf-ink/30 bg-white px-4 py-2 text-sm text-qf-mute hover:text-qf-ink transition lg:ms-auto"
+          >
+            <span>
+              {variant === "login" ? "עוד אין חשבון?" : "כבר יש לי חשבון?"}
+            </span>
+            <span className="inline-flex items-center gap-1.5 font-semibold text-qf-ink">
+              <IcoArrowLeft c="currentColor" s={14} />
+              {variant === "login" ? "הירשם בחינם" : "התחברות"}
+            </span>
+          </Link>
         </header>
 
         <div className="flex-1 flex items-center justify-center px-6 pb-12">

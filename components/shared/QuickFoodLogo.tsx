@@ -6,7 +6,7 @@ interface QuickFoodLogoProps {
   className?: string;
   /** Visual size of the icon in px. Default 32. */
   size?: number;
-  /** Show the "Quick food" wordmark next to the icon. Default true. */
+  /** Show the "Quick Food" wordmark next to the icon. Default true. */
   showWordmark?: boolean;
   /** Tailwind utility for the wordmark text size. Default text-xl. */
   wordmarkClassName?: string;
@@ -14,7 +14,7 @@ interface QuickFoodLogoProps {
 
 /**
  * QuickFood brand lockup — purple gradient icon with a script "F" + the
- * "Quick food" wordmark, both in Pacifico.
+ * "Quick Food" wordmark, both in Pacifico.
  *
  * The icon is rendered as inline SVG (not <img>) so the <text> inside picks
  * up the Pacifico font from next/font on the page. A static fallback file
@@ -70,7 +70,7 @@ export function QuickFoodLogo({
           className={cn("font-pacifico leading-none", wordmarkClassName)}
           style={{ letterSpacing: "0.5px" }}
         >
-          Quick food
+          Quick Food
         </span>
       )}
     </>
