@@ -707,8 +707,13 @@ model PaymentProviderConfig {
   settings    Json            @default("{}")
   testMode    Boolean         @default(true) @map("test_mode")
   isActive    Boolean         @default(false) @map("is_active")
-  createdAt   DateTime        @default(now()) @map("created_at")
-  updatedAt   DateTime        @updatedAt @map("updated_at")
+  /// Per-tenant Apple Pay domain-association file content. Only used when the
+  /// tenant serves checkout from a custom domain (Tenant.customDomain). Issued
+  /// by Grow per domain. For tenants on the platform domain, leave NULL — the
+  /// /.well-known/ route falls back to APPLE_PAY_DOMAIN_ASSOCIATION_(DEV|PROD).
+  applePayDomainAssociation String?    @map("apple_pay_domain_association") @db.Text
+  createdAt                 DateTime   @default(now()) @map("created_at")
+  updatedAt                 DateTime   @updatedAt @map("updated_at")
 
   @@unique([tenantId, provider])
   @@map("payment_provider_configs")
