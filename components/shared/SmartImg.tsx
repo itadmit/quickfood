@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 
 interface Props {
@@ -40,6 +40,27 @@ export function SmartImg({
 }: Props) {
   const [loaded, setLoaded] = useState(false);
   const [errored, setErrored] = useState(false);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+
+  // Cached images can resolve before React attaches the onLoad handler,
+  // leaving the image stuck at opacity-0 (the well-known img-in-cache
+  // race). On mount and whenever the src changes, sync state with the
+  // browser's view of img.complete.
+  useEffect(() => {
+    setLoaded(false);
+    setErrored(false);
+    const el = imgRef.current;
+    if (!el) return;
+    // Synchronously promote to "loaded" if the browser already has it.
+    if (el.complete) {
+      if (el.naturalWidth > 0) {
+        setLoaded(true);
+      } else {
+        // complete + naturalWidth 0 → load failed (e.g. 404 from cache).
+        setErrored(true);
+      }
+    }
+  }, [src]);
 
   return (
     <span
@@ -58,6 +79,7 @@ export function SmartImg({
       )}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
+        ref={imgRef}
         src={src}
         alt={alt}
         loading={loading}
