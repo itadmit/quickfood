@@ -145,6 +145,7 @@ export const MenuItemInputSchema = z.object({
   prep_minutes: z.number().int().min(0).default(10),
   art_type: z.string().max(40).optional(),
   image_url: z.string().url().optional(),
+  images: z.array(z.string().url()).max(10).default([]),
   available: z.boolean().default(true),
   tags: z.array(z.string()).default([]),
   position: z.number().int().default(0),
@@ -160,6 +161,21 @@ export const TenantPatchSchema = z.object({
   logo_letter: z.string().min(1).max(2).optional(),
   logo_url: z.string().url().optional(),
   theme_id: z.enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt"]).optional(),
+  business_type: z
+    .enum([
+      "pizza",
+      "burger",
+      "falafel",
+      "shawarma",
+      "sushi",
+      "asian",
+      "bakery",
+      "cafe",
+      "icecream",
+      "mediterranean",
+      "general",
+    ])
+    .optional(),
   cuisine_type: z.string().max(60).optional(),
   vat_number: z.string().max(20).optional(),
 });
@@ -228,6 +244,21 @@ export const TenantCreateSchema = z.object({
   theme_id: z
     .enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt"])
     .default("fresh"),
+  business_type: z
+    .enum([
+      "pizza",
+      "burger",
+      "falafel",
+      "shawarma",
+      "sushi",
+      "asian",
+      "bakery",
+      "cafe",
+      "icecream",
+      "mediterranean",
+      "general",
+    ])
+    .default("general"),
   cuisine_type: z.string().max(60).optional(),
   branch: z.object({
     name: z.string().min(1).max(80).default("ראשי"),

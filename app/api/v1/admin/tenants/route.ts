@@ -50,6 +50,7 @@ export const POST = handler(async (req: Request) => {
       name: body.name,
       logoLetter: body.logo_letter,
       themeId: body.theme_id,
+      businessType: body.business_type,
       cuisineType: body.cuisine_type,
       status: "active",
       branches: {

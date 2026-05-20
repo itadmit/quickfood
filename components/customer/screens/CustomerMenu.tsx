@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { IcoChev, IcoSearch, IcoStar } from "@/components/shared/Icons";
-import { PizzaArt } from "@/components/customer/PizzaArt";
+import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
@@ -16,17 +16,19 @@ interface Item {
   description: string;
   basePrice: number;
   artType: string | null;
+  images?: string[];
   tags: string[];
 }
 
 interface Props {
   tenantSlug: string;
   tenantName: string;
+  businessType?: BusinessType;
   categories: Array<{ id: string; name: string }>;
   items: Item[];
 }
 
-export function CustomerMenu({ tenantSlug, tenantName, categories, items }: Props) {
+export function CustomerMenu({ tenantSlug, tenantName, businessType = "general", categories, items }: Props) {
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState<string | "all">("all");
   const { itemCount, subtotal } = useCart();
@@ -116,8 +118,15 @@ export function CustomerMenu({ tenantSlug, tenantName, categories, items }: Prop
                     href={`/${tenantSlug}/menu/${item.id}`}
                     className="block bg-white rounded-2xl border border-qf-line p-3 flex gap-3"
                   >
-                    <div className="w-24 h-24 rounded-xl bg-qf-warm grid place-items-center shrink-0">
-                      <PizzaArt size={88} type={item.artType ?? "margherita"} />
+                    <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0">
+                      <MenuItemImage
+                        src={item.images?.[0]}
+                        alt={item.name}
+                        businessType={businessType}
+                        size={96}
+                        rounded="xl"
+                        className="w-full h-full"
+                      />
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col justify-between">
                       <div>

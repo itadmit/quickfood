@@ -34,6 +34,7 @@ export default async function HomePage({
     description: p.description,
     basePrice: p.basePrice,
     artType: p.artType,
+    images: p.images,
   }));
 
   const branch = tenant.branches[0];
@@ -46,6 +47,7 @@ export default async function HomePage({
         name: tenant.name,
         logoLetter: tenant.logoLetter,
         cuisineType: tenant.cuisineType,
+        businessType: tenant.businessType,
       }}
       branch={
         branch

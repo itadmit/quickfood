@@ -130,6 +130,20 @@ enum PaymentProvider {
   grow
 }
 
+enum BusinessType {
+  pizza
+  burger
+  falafel
+  shawarma
+  sushi
+  asian
+  bakery
+  cafe
+  icecream
+  mediterranean
+  general
+}
+
 enum PendingPaymentStatus {
   pending
   confirmed
@@ -154,6 +168,7 @@ model Tenant {
   logoLetter      String          @map("logo_letter") @db.VarChar(2)
   logoUrl         String?         @map("logo_url")
   themeId         ThemeId         @default(fresh) @map("theme_id")
+  businessType    BusinessType    @default(general) @map("business_type")
   cuisineType     String?         @map("cuisine_type")
   vatNumber       String?         @map("vat_number")
   status          TenantStatus    @default(active)
@@ -253,6 +268,7 @@ model MenuItem {
   name        String
   description String       @default("")
   imageUrl    String?      @map("image_url")
+  images      String[]     @default([])
   artType     String?      @map("art_type")
   basePrice   Int          @map("base_price")
   prepMinutes Int          @default(10) @map("prep_minutes")

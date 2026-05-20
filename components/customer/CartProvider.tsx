@@ -9,6 +9,7 @@ export interface CartLine {
   name: string;
   basePrice: number;
   artType: string | null;
+  imageUrl: string | null;
   quantity: number;
   sizeId: string | null;
   sizeName: string | null;
@@ -40,6 +41,7 @@ interface TenantInfo {
   name: string;
   logoLetter: string;
   themeId: string;
+  businessType?: string;
 }
 
 interface BranchInfo {

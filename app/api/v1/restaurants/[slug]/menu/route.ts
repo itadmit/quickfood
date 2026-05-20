@@ -53,6 +53,7 @@ function serializeItem(i: ItemWithExtras) {
     name: i.name,
     description: i.description,
     image_url: i.imageUrl,
+    images: i.images,
     art_type: i.artType,
     base_price: i.basePrice,
     prep_minutes: i.prepMinutes,

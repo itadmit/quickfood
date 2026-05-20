@@ -16,6 +16,7 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ slug: st
       logo_letter: tenant.logoLetter,
       logo_url: tenant.logoUrl,
       theme_id: tenant.themeId,
+      business_type: tenant.businessType,
       cuisine_type: tenant.cuisineType,
       branch: branch
         ? {

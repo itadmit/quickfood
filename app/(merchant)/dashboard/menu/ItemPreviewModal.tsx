@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PizzaArt } from "@/components/customer/PizzaArt";
+import { MenuItemImage } from "@/components/shared/MenuItemImage";
 import { formatPrice } from "@/lib/format";
 import { IcoClose } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
@@ -13,6 +13,7 @@ interface FullItem {
   base_price: number;
   art_type: string | null;
   tags: string[];
+  images?: string[];
   sizes: Array<{ id: string; code: string; name: string; price_delta: number; is_default: boolean }>;
   option_groups: Array<{
     id: string;
@@ -89,8 +90,15 @@ export function ItemPreviewModal({ itemId, onClose }: { itemId: string; onClose:
           <div className="p-10 text-center text-sm text-qf-mute">טוען…</div>
         ) : (
           <>
-            <div className="relative h-56 bg-qf-warm grid place-items-center">
-              <PizzaArt size={200} type={item.art_type ?? "margherita"} />
+            <div className="relative h-56 overflow-hidden">
+              <MenuItemImage
+                src={item.images?.[0]}
+                alt={item.name}
+                businessType="general"
+                size={500}
+                rounded="md"
+                className="w-full h-full"
+              />
               <button
                 type="button"
                 onClick={onClose}

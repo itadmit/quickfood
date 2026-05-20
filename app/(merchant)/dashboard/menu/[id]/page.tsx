@@ -18,16 +18,23 @@ export default async function ItemEditPage({
   const { id } = await params;
   const isNew = id === "new";
 
-  const categories = await prisma.menuCategory.findMany({
-    where: { tenantId: session.tenantId, active: true },
-    orderBy: { position: "asc" },
-  });
+  const [categories, tenant] = await Promise.all([
+    prisma.menuCategory.findMany({
+      where: { tenantId: session.tenantId, active: true },
+      orderBy: { position: "asc" },
+    }),
+    prisma.tenant.findUnique({
+      where: { id: session.tenantId },
+      select: { businessType: true },
+    }),
+  ]);
 
   if (isNew) {
     return (
       <ItemEditor
         mode="new"
         categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+        businessType={tenant?.businessType ?? "general"}
       />
     );
   }
@@ -48,6 +55,7 @@ export default async function ItemEditPage({
     <ItemEditor
       mode="edit"
       categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+      businessType={tenant?.businessType ?? "general"}
       item={{
         id: item.id,
         name: item.name,
@@ -57,6 +65,7 @@ export default async function ItemEditPage({
         prepMinutes: item.prepMinutes,
         artType: item.artType,
         imageUrl: item.imageUrl,
+        images: item.images,
         available: item.available,
         tags: item.tags,
         sku: item.sku,

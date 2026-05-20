@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { IcoTrend, IcoChart } from "@/components/shared/Icons";
-import { PizzaArt } from "@/components/customer/PizzaArt";
+import { MenuItemImage } from "@/components/shared/MenuItemImage";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
@@ -156,8 +156,15 @@ export function AnalyticsView({
                 const pct = max > 0 ? (it.count / max) * 100 : 0;
                 return (
                   <li key={it.item_id ?? i} className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-qf-warm grid place-items-center shrink-0">
-                      <PizzaArt size={36} type={it.art_type ?? "margherita"} />
+                    <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0">
+                      <MenuItemImage
+                        src={null}
+                        alt={it.name}
+                        businessType="general"
+                        size={36}
+                        rounded="lg"
+                        className="w-full h-full"
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline justify-between gap-2">

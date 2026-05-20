@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { THEMES, type ThemeId } from "@/lib/themes";
+import { BUSINESS_TYPES, type BusinessType, MenuItemImage } from "@/components/shared/MenuItemImage";
 import { cn } from "@/lib/cn";
 
 interface Tenant {
@@ -10,6 +11,7 @@ interface Tenant {
   name: string;
   logoLetter: string;
   themeId: ThemeId;
+  businessType: BusinessType;
   cuisineType: string | null;
   slug: string;
 }
@@ -19,6 +21,7 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
   const [name, setName] = useState(tenant.name);
   const [logoLetter, setLogoLetter] = useState(tenant.logoLetter);
   const [themeId, setThemeId] = useState<ThemeId>(tenant.themeId);
+  const [businessType, setBusinessType] = useState<BusinessType>(tenant.businessType);
   const [cuisineType, setCuisineType] = useState(tenant.cuisineType ?? "");
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -34,6 +37,7 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
           name,
           logo_letter: logoLetter,
           theme_id: themeId,
+          business_type: businessType,
           cuisine_type: cuisineType || undefined,
         }),
       });
@@ -80,6 +84,32 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
             placeholder="לדוגמה: פיצה נפוליטנית"
             className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
           />
+        </div>
+
+        <div className="space-y-2">
+          <div className="text-sm font-medium">סוג עסק</div>
+          <div className="text-xs text-qf-mute mb-1">משפיע על הפלייסהולדרים שמוצגים לפריטים ללא תמונה</div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {BUSINESS_TYPES.map((t) => {
+              const active = businessType === t.value;
+              return (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => setBusinessType(t.value)}
+                  className={cn(
+                    "flex items-center gap-2.5 px-2.5 py-2 rounded-xl border text-sm transition text-start",
+                    active
+                      ? "border-qf-ink ring-2 ring-(--qf-primary)/30 bg-qf-line-soft"
+                      : "border-qf-line-dash hover:border-qf-ink/40",
+                  )}
+                >
+                  <MenuItemImage alt={t.label} businessType={t.value} size={32} rounded="lg" />
+                  <span className="font-medium text-xs">{t.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="space-y-2">

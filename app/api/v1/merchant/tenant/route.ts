@@ -26,6 +26,7 @@ export const PATCH = handler(async (req: Request) => {
       logoLetter: body.logo_letter,
       logoUrl: body.logo_url,
       themeId: body.theme_id,
+      businessType: body.business_type,
       cuisineType: body.cuisine_type,
       vatNumber: body.vat_number,
     },

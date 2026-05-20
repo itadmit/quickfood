@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { THEMES, type ThemeId } from "@/lib/themes";
+import { BUSINESS_TYPES, type BusinessType, MenuItemImage } from "@/components/shared/MenuItemImage";
 import { cn } from "@/lib/cn";
 
 export function NewTenantForm() {
@@ -12,6 +13,7 @@ export function NewTenantForm() {
   const [slug, setSlug] = useState("");
   const [logoLetter, setLogoLetter] = useState("");
   const [themeId, setThemeId] = useState<ThemeId>("fresh");
+  const [businessType, setBusinessType] = useState<BusinessType>("general");
   const [cuisineType, setCuisineType] = useState("");
   const [branchAddress, setBranchAddress] = useState("");
   const [branchPhone, setBranchPhone] = useState("");
@@ -51,6 +53,7 @@ export function NewTenantForm() {
           name,
           logo_letter: logoLetter || name.slice(0, 1),
           theme_id: themeId,
+          business_type: businessType,
           cuisine_type: cuisineType || undefined,
           branch: {
             name: "ראשי",
@@ -127,6 +130,30 @@ export function NewTenantForm() {
             />
           </Field>
         </div>
+
+        <Field label="סוג עסק">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {BUSINESS_TYPES.map((t) => {
+              const active = businessType === t.value;
+              return (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => setBusinessType(t.value)}
+                  className={cn(
+                    "flex items-center gap-2.5 px-2.5 py-2 rounded-xl border text-sm transition text-start",
+                    active
+                      ? "border-qf-ink ring-2 ring-(--qf-primary)/30 bg-qf-line-soft"
+                      : "border-qf-line-dash hover:border-qf-ink/40",
+                  )}
+                >
+                  <MenuItemImage alt={t.label} businessType={t.value} size={32} rounded="lg" />
+                  <span className="font-medium text-xs">{t.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </Field>
 
         <Field label="ערכת צבע">
           <div className="grid grid-cols-4 gap-2">

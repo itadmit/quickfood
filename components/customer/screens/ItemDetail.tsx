@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoChev, IcoMinus, IcoPlus, IcoHeart } from "@/components/shared/Icons";
-import { PizzaArt } from "@/components/customer/PizzaArt";
+import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -37,12 +37,21 @@ interface ItemData {
   description: string;
   basePrice: number;
   artType: string | null;
+  images?: string[];
   tags: string[];
   sizes: Size[];
   optionGroups: OptionGroup[];
 }
 
-export function ItemDetail({ tenantSlug, item }: { tenantSlug: string; item: ItemData }) {
+export function ItemDetail({
+  tenantSlug,
+  item,
+  businessType = "general",
+}: {
+  tenantSlug: string;
+  item: ItemData;
+  businessType?: BusinessType;
+}) {
   const router = useRouter();
   const { add } = useCart();
 
@@ -117,6 +126,7 @@ export function ItemDetail({ tenantSlug, item }: { tenantSlug: string; item: Ite
       name: item.name,
       basePrice: item.basePrice,
       artType: item.artType,
+      imageUrl: item.images?.[0] ?? null,
       quantity,
       sizeId: size?.id ?? null,
       sizeName: size?.name ?? null,
@@ -130,18 +140,25 @@ export function ItemDetail({ tenantSlug, item }: { tenantSlug: string; item: Ite
   return (
     <div className="pb-32">
       {/* Hero */}
-      <div className="relative h-80 bg-qf-warm grid place-items-center">
-        <PizzaArt size={240} type={item.artType ?? "margherita"} />
+      <div className="relative h-80 overflow-hidden">
+        <MenuItemImage
+          src={item.images?.[0]}
+          alt={item.name}
+          businessType={businessType}
+          size={420}
+          rounded="md"
+          className="w-full h-full"
+        />
         <Link
           href={`/${tenantSlug}/menu`}
-          className="absolute top-4 start-4 w-10 h-10 rounded-full bg-white shadow grid place-items-center"
+          className="absolute top-4 inset-s-4 w-10 h-10 rounded-full bg-white shadow grid place-items-center"
           aria-label="חזרה"
         >
           <IcoChev s={18} />
         </Link>
         <button
           type="button"
-          className="absolute top-4 end-4 w-10 h-10 rounded-full bg-white shadow grid place-items-center"
+          className="absolute top-4 inset-e-4 w-10 h-10 rounded-full bg-white shadow grid place-items-center"
           aria-label="הוסף למועדפים"
         >
           <IcoHeart s={18} />

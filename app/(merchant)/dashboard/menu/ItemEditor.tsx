@@ -5,7 +5,8 @@ import { useState } from "react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useRouter } from "next/navigation";
 import { IcoChev, IcoPlus, IcoClose } from "@/components/shared/Icons";
-import { PizzaArt } from "@/components/customer/PizzaArt";
+import { ImageUploader } from "@/components/shared/ImageUploader";
+import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
@@ -45,23 +46,13 @@ interface ItemData {
   prepMinutes: number;
   artType: string | null;
   imageUrl: string | null;
+  images: string[];
   available: boolean;
   tags: string[];
   sku: string | null;
   sizes: Size[];
   optionGroups: OptionGroup[];
 }
-
-const ART_PRESETS = [
-  "margherita",
-  "pepperoni",
-  "funghi",
-  "olives",
-  "bianca",
-  "truffle",
-  "rucola",
-  "diavola",
-];
 
 const TAGS = ["פופולרי", "צמחוני", "טבעוני", "חריפה", "חדש", "מבצע"];
 
@@ -71,8 +62,9 @@ const EMPTY_ITEM: ItemData = {
   categoryId: "",
   basePrice: 50,
   prepMinutes: 10,
-  artType: "margherita",
+  artType: null,
   imageUrl: null,
+  images: [],
   available: true,
   tags: [],
   sku: null,
@@ -84,10 +76,12 @@ export function ItemEditor({
   mode,
   categories,
   item,
+  businessType = "general",
 }: {
   mode: "new" | "edit";
   categories: Category[];
   item?: ItemData;
+  businessType?: BusinessType;
 }) {
   const router = useRouter();
   const [data, setData] = useState<ItemData>(item ?? { ...EMPTY_ITEM, categoryId: categories[0]?.id ?? "" });
@@ -146,8 +140,9 @@ export function ItemEditor({
         category_id: data.categoryId,
         base_price: data.basePrice,
         prep_minutes: data.prepMinutes,
-        art_type: data.artType,
+        art_type: data.artType ?? undefined,
         image_url: data.imageUrl ?? undefined,
+        images: data.images,
         available: data.available,
         tags: data.tags,
         position: 0,
@@ -324,24 +319,19 @@ export function ItemEditor({
             </Field>
           </section>
 
-          {/* Art picker */}
+          {/* Images */}
           <section className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-3">
-            <h2 className="font-semibold">תמונה (איור)</h2>
-            <div className="grid grid-cols-4 gap-2">
-              {ART_PRESETS.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => update("artType", p)}
-                  className={cn(
-                    "p-2 rounded-xl border transition aspect-square grid place-items-center",
-                    data.artType === p ? "border-(--qf-primary) ring-2 ring-(--qf-primary)/30" : "border-qf-line-dash",
-                  )}
-                >
-                  <PizzaArt size={60} type={p} />
-                </button>
-              ))}
-            </div>
+            <h2 className="font-semibold">תמונות המוצר</h2>
+            <p className="text-xs text-qf-mute">
+              העלה תמונה אחת או יותר. אם לא תעלה — יוצג פלייסהולדר מותאם לסוג העסק שלך.
+            </p>
+            <ImageUploader
+              type="menu_item_image"
+              value={data.images}
+              onChange={(next) => update("images", next)}
+              multiple
+              max={5}
+            />
           </section>
 
           {/* Sizes */}
@@ -479,8 +469,15 @@ export function ItemEditor({
         {/* Preview */}
         <aside className="bg-white rounded-2xl border border-qf-line-dash p-4 h-fit sticky top-20">
           <div className="text-xs text-qf-mute mb-2">תצוגה מקדימה</div>
-          <div className="aspect-square bg-qf-warm rounded-xl grid place-items-center">
-            <PizzaArt size={140} type={data.artType ?? "margherita"} />
+          <div className="aspect-square rounded-xl overflow-hidden">
+            <MenuItemImage
+              src={data.images[0]}
+              alt={data.name || "פריט"}
+              businessType={businessType}
+              size={280}
+              rounded="xl"
+              className="w-full h-full"
+            />
           </div>
           <div className="mt-3 space-y-1">
             <div className="font-medium">{data.name || "ללא שם"}</div>

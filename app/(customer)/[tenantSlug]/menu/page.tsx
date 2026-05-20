@@ -29,6 +29,7 @@ export default async function MenuPage({
     <CustomerMenu
       tenantSlug={tenant.slug}
       tenantName={tenant.name}
+      businessType={tenant.businessType}
       categories={categories.map((c) => ({ id: c.id, name: c.name }))}
       items={items.map((i) => ({
         id: i.id,
@@ -37,6 +38,7 @@ export default async function MenuPage({
         description: i.description,
         basePrice: i.basePrice,
         artType: i.artType,
+        images: i.images,
         tags: i.tags,
       }))}
     />

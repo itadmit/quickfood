@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { IcoChev, IcoPlus, IcoMinus, IcoBag } from "@/components/shared/Icons";
-import { PizzaArt } from "@/components/customer/PizzaArt";
+import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
@@ -75,8 +75,15 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
               key={l.lineId}
               className="bg-white rounded-2xl border border-qf-line p-3 flex gap-3"
             >
-              <div className="w-16 h-16 rounded-xl bg-qf-warm grid place-items-center shrink-0">
-                <PizzaArt size={60} type={l.artType ?? "margherita"} />
+              <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
+                <MenuItemImage
+                  src={l.imageUrl}
+                  alt={l.name}
+                  businessType={(tenant.businessType as BusinessType) ?? "general"}
+                  size={64}
+                  rounded="xl"
+                  className="w-full h-full"
+                />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">

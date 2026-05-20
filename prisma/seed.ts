@@ -35,11 +35,12 @@ async function main() {
       name: "פיצרייה ורדה",
       logoLetter: "ו",
       themeId: "fresh",
+      businessType: "pizza",
       cuisineType: "פיצה נפוליטנית",
       status: "active",
       planId: "00000000-0000-0000-0000-000000000001",
     },
-    update: {},
+    update: { businessType: "pizza" },
   });
 
   const branch = await prisma.branch.upsert({

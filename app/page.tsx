@@ -64,8 +64,8 @@ function Nav() {
           <a href="#faq">שאלות נפוצות</a>
         </div>
         <div className={styles.navCta}>
-          <Link href="/dashboard" className={`${styles.btn} ${styles.btnGhost}`}>התחברות</Link>
-          <a href="#pricing" className={`${styles.btn} ${styles.btnInk}`}>התחל חינם</a>
+          <Link href="/dashboard/login" className={`${styles.btn} ${styles.btnGhost}`}>התחברות</Link>
+          <Link href="/signup" className={`${styles.btn} ${styles.btnInk}`}>התחל חינם</Link>
         </div>
       </div>
     </nav>
@@ -105,9 +105,9 @@ function Hero() {
 
         <div className={styles.heroMeta}>
           <div className={styles.heroCta}>
-            <a href="#pricing" className={`${styles.btn} ${styles.btnTomato} ${styles.btnLg}`}>
+            <Link href="/signup" className={`${styles.btn} ${styles.btnTomato} ${styles.btnLg}`}>
               התחל ניסיון של 14 יום
-            </a>
+            </Link>
             <a
               href="#product"
               className={`${styles.btn} ${styles.btnGhost} ${styles.btnGhostOutline} ${styles.btnLg}`}
@@ -586,9 +586,9 @@ function FinalCta() {
           <em>זה כל מה שצריך.</em>
         </h2>
         <p>14 יום חינם. בלי כרטיס אשראי. בלי התחייבות. רק האפשרות לראות איך נראות הזמנות שמגיעות ישר אליך.</p>
-        <a href="#pricing" className={`${styles.btn} ${styles.btnLg} ${styles.btnWhite}`}>
+        <Link href="/signup" className={`${styles.btn} ${styles.btnLg} ${styles.btnWhite}`}>
           פתח חנות עכשיו ←
-        </a>
+        </Link>
       </div>
     </section>
   );

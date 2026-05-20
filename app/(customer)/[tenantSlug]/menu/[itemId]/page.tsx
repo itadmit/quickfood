@@ -29,12 +29,14 @@ export default async function ItemPage({
   return (
     <ItemDetail
       tenantSlug={tenant.slug}
+      businessType={tenant.businessType}
       item={{
         id: item.id,
         name: item.name,
         description: item.description,
         basePrice: item.basePrice,
         artType: item.artType,
+        images: item.images,
         tags: item.tags,
         sizes: item.sizes.map((s) => ({
           id: s.id,

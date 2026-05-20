@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { IcoPin, IcoSearch, IcoChevDown, IcoStar, IcoClock, IcoBike, IcoFlame } from "@/components/shared/Icons";
-import { PizzaArt } from "@/components/customer/PizzaArt";
+import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
@@ -15,6 +15,7 @@ interface Props {
     name: string;
     logoLetter: string;
     cuisineType: string | null;
+    businessType?: BusinessType;
   };
   branch: {
     address: string;
@@ -29,6 +30,7 @@ interface Props {
     description: string;
     basePrice: number;
     artType: string | null;
+    images?: string[];
   }>;
   children?: React.ReactNode;
 }
@@ -127,10 +129,12 @@ export function CustomerHome({ tenant, branch, categories, popular, children }: 
           href={`/${tenant.slug}/menu`}
           className="block rounded-3xl overflow-hidden border border-qf-line bg-white shadow-sm"
         >
-          <div className="relative h-32 bg-gradient-to-br from-(--qf-primary) to-(--qf-deep)">
-            <div className="absolute -bottom-5 end-5 opacity-90">
-              <PizzaArt size={90} type="margherita" />
-            </div>
+          <div className="relative h-32 bg-gradient-to-br from-(--qf-primary) to-(--qf-deep) overflow-hidden">
+            {/* decorative ribbon */}
+            <svg className="absolute -inset-e-10 -bottom-10 opacity-15" width="200" height="200" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="30" stroke="white" strokeWidth="2" fill="none" />
+              <circle cx="50" cy="50" r="20" stroke="white" strokeWidth="1.5" fill="none" />
+            </svg>
           </div>
           <div className="p-4">
             <div className="flex items-start justify-between gap-3">
@@ -183,8 +187,15 @@ export function CustomerHome({ tenant, branch, categories, popular, children }: 
                 href={`/${tenant.slug}/menu/${item.id}`}
                 className="shrink-0 w-44 bg-white rounded-2xl border border-qf-line overflow-hidden"
               >
-                <div className="aspect-square bg-qf-warm grid place-items-center">
-                  <PizzaArt size={120} type={item.artType ?? "margherita"} />
+                <div className="aspect-square overflow-hidden">
+                  <MenuItemImage
+                    src={item.images?.[0]}
+                    alt={item.name}
+                    businessType={tenant.businessType ?? "general"}
+                    size={176}
+                    rounded="md"
+                    className="w-full h-full"
+                  />
                 </div>
                 <div className="p-3">
                   <div className="font-medium text-sm leading-tight line-clamp-1">{item.name}</div>
