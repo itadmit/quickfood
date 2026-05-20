@@ -1,0 +1,13 @@
+[
+  {
+    "AllowedOrigins": [
+      "https://quickfoodil.vercel.app",
+      "https://*.vercel.app",
+      "http://localhost:3000"
+    ],
+    "AllowedMethods": ["GET", "PUT", "POST", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]
