@@ -1,11 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { THEMES, type ThemeId } from "@/lib/themes";
 import { BUSINESS_TYPES, type BusinessType, MenuItemImage } from "@/components/shared/MenuItemImage";
 import { cn } from "@/lib/cn";
+
+type SlugStatus = "idle" | "checking" | "available" | "taken" | "invalid" | "reserved" | "too_short";
 
 export function SignupForm() {
   const router = useRouter();
@@ -19,6 +20,31 @@ export function SignupForm() {
   const [cuisineType, setCuisineType] = useState("");
   const [themeId, setThemeId] = useState<ThemeId>("fresh");
   const [slug, setSlug] = useState("");
+  const [slugStatus, setSlugStatus] = useState<SlugStatus>("idle");
+
+  // Live slug availability check (debounced 350ms)
+  useEffect(() => {
+    if (!slug || slug.length < 2) {
+      const id = setTimeout(() => setSlugStatus("idle"), 0);
+      return () => clearTimeout(id);
+    }
+    const tStart = setTimeout(() => setSlugStatus("checking"), 0);
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/v1/auth/check-slug?slug=${encodeURIComponent(slug)}`);
+        if (!res.ok) return;
+        const d = (await res.json()) as { status: SlugStatus; slug: string };
+        // Guard against race conditions (another change happened mid-flight)
+        if (d.slug === slug.toLowerCase().trim()) setSlugStatus(d.status);
+      } catch {
+        /* ignore */
+      }
+    }, 350);
+    return () => {
+      clearTimeout(tStart);
+      clearTimeout(t);
+    };
+  }, [slug]);
 
   // Step 2
   const [branchAddress, setBranchAddress] = useState("");
@@ -47,7 +73,8 @@ export function SignupForm() {
     if (!slug || slug === autoSlug(businessName)) setSlug(autoSlug(v));
   }
 
-  const canNext1 = businessName.length >= 2 && slug.length >= 2;
+  const canNext1 =
+    businessName.length >= 2 && slug.length >= 2 && slugStatus === "available";
   const canNext2 = branchAddress.length >= 3 && branchPhone.length >= 7;
   const canSubmit =
     ownerName.length >= 1 &&
@@ -93,57 +120,43 @@ export function SignupForm() {
   }
 
   return (
-    <div className="w-full max-w-3xl bg-white rounded-3xl border border-qf-line-dash shadow-sm overflow-hidden">
-      <header className="px-7 py-5 border-b border-qf-line-soft bg-gradient-to-l from-qf-line-soft/40 to-white">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">פתיחת חנות אונליין</h1>
-            <p className="text-sm text-qf-mute">11 דקות מהרגע הזה ועד שיש לך הזמנות אמיתיות.</p>
-          </div>
-          <Link
-            href="/dashboard/login"
-            className="text-sm text-qf-mute hover:text-qf-ink"
-          >
-            כבר יש לי חשבון ←
-          </Link>
-        </div>
-
-        {/* Step indicator */}
-        <ol className="mt-4 grid grid-cols-3 gap-2 text-xs">
-          {[
-            { n: 1, label: "מותג ועיצוב" },
-            { n: 2, label: "פרטי סניף" },
-            { n: 3, label: "משתמש בעלים" },
-          ].map(({ n, label }) => {
-            const active = step === n;
-            const done = step > n;
-            return (
-              <li
-                key={n}
+    <div className="space-y-6">
+      {/* Step indicator */}
+      <ol className="grid grid-cols-3 gap-1.5 text-xs">
+        {[
+          { n: 1, label: "מותג ועיצוב" },
+          { n: 2, label: "פרטי סניף" },
+          { n: 3, label: "בעלים" },
+        ].map(({ n, label }) => {
+          const active = step === n;
+          const done = step > n;
+          return (
+            <li
+              key={n}
+              className={cn(
+                "flex items-center gap-2 px-2 py-1.5 rounded-lg border",
+                active && "border-qf-ink bg-qf-line-soft/60 font-medium",
+                done && "border-qf-line-dash text-qf-mute",
+                !active && !done && "border-qf-line-dash text-qf-mute",
+              )}
+            >
+              <span
                 className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 rounded-lg",
-                  active && "bg-qf-green-soft text-qf-green-deep font-medium",
-                  done && "text-qf-mute",
+                  "w-5 h-5 rounded-full grid place-items-center text-[10px] font-bold shrink-0",
+                  active && "bg-qf-ink text-white",
+                  done && "bg-qf-green-soft text-qf-green-deep",
+                  !active && !done && "bg-qf-line-soft text-qf-mute",
                 )}
               >
-                <span
-                  className={cn(
-                    "w-5 h-5 rounded-full grid place-items-center text-[10px] font-bold",
-                    active && "bg-(--qf-primary) text-white",
-                    done && "bg-qf-green-soft text-qf-green-deep",
-                    !active && !done && "bg-qf-line-soft text-qf-mute",
-                  )}
-                >
-                  {done ? "✓" : n}
-                </span>
-                {label}
-              </li>
-            );
-          })}
-        </ol>
-      </header>
+                {done ? "✓" : n}
+              </span>
+              <span className="truncate">{label}</span>
+            </li>
+          );
+        })}
+      </ol>
 
-      <div className="p-7 space-y-5">
+      <div className="space-y-5">
         {step === 1 && (
           <Step1
             businessName={businessName}
@@ -156,6 +169,7 @@ export function SignupForm() {
             setThemeId={setThemeId}
             slug={slug}
             setSlug={setSlug}
+            slugStatus={slugStatus}
           />
         )}
 
@@ -186,11 +200,11 @@ export function SignupForm() {
         )}
       </div>
 
-      <footer className="px-7 py-4 border-t border-qf-line-soft flex items-center justify-between">
+      <div className="pt-1 flex items-center justify-between gap-3">
         <button
           type="button"
           onClick={() => (step > 1 ? setStep((step - 1) as 1 | 2 | 3) : router.push("/"))}
-          className="px-3 py-2 rounded-xl text-sm text-qf-mute hover:text-qf-ink"
+          className="text-sm text-qf-mute hover:text-qf-ink"
         >
           {step > 1 ? "← חזרה" : "← לעמוד הבית"}
         </button>
@@ -200,21 +214,30 @@ export function SignupForm() {
             type="button"
             disabled={step === 1 ? !canNext1 : !canNext2}
             onClick={() => setStep(((step as number) + 1) as 1 | 2 | 3)}
-            className="px-5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-50"
+            className="px-5 py-3 rounded-xl bg-qf-ink hover:bg-black text-white text-sm font-medium disabled:opacity-50 inline-flex items-center gap-2"
           >
             המשך
+            <span aria-hidden>→</span>
           </button>
         ) : (
           <button
             type="button"
             disabled={!canSubmit || busy}
             onClick={submit}
-            className="px-5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-50"
+            className="px-5 py-3 rounded-xl bg-qf-ink hover:bg-black text-white text-sm font-medium disabled:opacity-50 inline-flex items-center gap-2"
           >
             {busy ? "פותח חנות..." : "פתיחת חנות"}
+            {!busy && <span aria-hidden>→</span>}
           </button>
         )}
-      </footer>
+      </div>
+
+      <p className="text-[10px] text-qf-mute/80 text-center pt-1">
+        בהמשך אתה מסכים ל-
+        <a href="#" className="underline">תנאי השימוש</a>
+        {" "}ו-{" "}
+        <a href="#" className="underline">מדיניות הפרטיות</a>
+      </p>
     </div>
   );
 }
@@ -232,6 +255,7 @@ function Step1({
   setThemeId,
   slug,
   setSlug,
+  slugStatus,
 }: {
   businessName: string;
   onBusinessName: (v: string) => void;
@@ -243,7 +267,17 @@ function Step1({
   setThemeId: (v: ThemeId) => void;
   slug: string;
   setSlug: (v: string) => void;
+  slugStatus: SlugStatus;
 }) {
+  const borderColor =
+    slug.length < 2
+      ? "border-qf-line-dash"
+      : slugStatus === "available"
+        ? "border-qf-green focus-within:border-qf-green"
+        : slugStatus === "checking"
+          ? "border-qf-line-dash"
+          : "border-qf-tomato focus-within:border-qf-tomato";
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -255,19 +289,27 @@ function Step1({
             className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
           />
         </Field>
-        <Field label="כתובת באתר (slug)" hint="quickfood.app/...">
-          <div className="flex items-center border border-qf-line-dash rounded-xl focus-within:border-(--qf-primary)">
-            <span className="px-3 text-qf-mute text-xs" dir="ltr">
-              /
+        <Field label="כתובת באתר">
+          <div
+            dir="ltr"
+            className={cn(
+              "flex items-center border rounded-xl bg-white transition",
+              borderColor,
+            )}
+          >
+            <span className="ps-3 pe-1.5 text-qf-mute text-xs select-none">
+              quickfood.app/
             </span>
             <input
               value={slug}
               onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
               dir="ltr"
               placeholder="my-restaurant"
-              className="flex-1 py-2.5 outline-none bg-transparent font-mono text-sm"
+              className="flex-1 min-w-0 py-2.5 outline-none bg-transparent font-mono text-sm"
             />
+            <SlugStatusBadge status={slugStatus} slug={slug} />
           </div>
+          <SlugStatusLine status={slugStatus} slug={slug} />
         </Field>
       </div>
 
@@ -447,4 +489,66 @@ function Field({
       {children}
     </div>
   );
+}
+
+function SlugStatusBadge({ status, slug }: { status: SlugStatus; slug: string }) {
+  if (slug.length < 2) return null;
+  if (status === "checking") {
+    return (
+      <span
+        className="pe-3 text-qf-mute text-xs inline-flex items-center gap-1"
+        aria-live="polite"
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" className="animate-spin">
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeDasharray="40 60"
+            fill="none"
+          />
+        </svg>
+      </span>
+    );
+  }
+  if (status === "available") {
+    return (
+      <span
+        className="pe-3 text-qf-green-deep text-base inline-flex items-center"
+        aria-live="polite"
+        aria-label="פנוי"
+      >
+        ✓
+      </span>
+    );
+  }
+  if (status === "taken" || status === "reserved" || status === "invalid") {
+    return (
+      <span
+        className="pe-3 text-qf-tomato text-base inline-flex items-center"
+        aria-live="polite"
+        aria-label="לא זמין"
+      >
+        ✕
+      </span>
+    );
+  }
+  return null;
+}
+
+function SlugStatusLine({ status, slug }: { status: SlugStatus; slug: string }) {
+  if (slug.length < 2 || status === "idle" || status === "too_short") {
+    return <p className="text-xs text-qf-mute mt-1">לפחות 2 תווים — אותיות לועזיות, ספרות ומקפים</p>;
+  }
+  const msg = {
+    checking: { text: "בודק זמינות...", color: "text-qf-mute" },
+    available: { text: "מעולה — פנוי לרישום", color: "text-qf-green-deep" },
+    taken: { text: "תפוס כבר. נסה משהו אחר", color: "text-qf-tomato" },
+    reserved: { text: "שמור למערכת — בחר slug אחר", color: "text-qf-tomato" },
+    invalid: { text: "תווים לא חוקיים", color: "text-qf-tomato" },
+  }[status as "checking" | "available" | "taken" | "reserved" | "invalid"];
+  if (!msg) return null;
+  return <p className={cn("text-xs mt-1", msg.color)}>{msg.text}</p>;
 }

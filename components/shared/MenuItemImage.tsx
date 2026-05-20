@@ -105,7 +105,6 @@ function Placeholder({
   className?: string;
 }) {
   const config = PLACEHOLDER_CONFIG[businessType];
-  const initials = getInitials(alt);
 
   return (
     <div
@@ -130,29 +129,8 @@ function Placeholder({
         }}
       />
       <BusinessSymbol type={businessType} color={config.symbol} size={size * 0.42} />
-      {initials && size >= 80 && (
-        <div
-          className="absolute bottom-1.5 inset-e-2 font-bold tracking-tight"
-          style={{
-            color: config.symbol,
-            fontSize: Math.max(10, size / 9),
-            opacity: 0.85,
-          }}
-        >
-          {initials}
-        </div>
-      )}
     </div>
   );
-}
-
-function getInitials(s: string): string {
-  return s
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0] ?? "")
-    .join("");
 }
 
 // ─── Color palettes ──────────────────────────────────────────────

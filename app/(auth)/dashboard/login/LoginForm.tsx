@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { AuthEmailField, AuthPasswordField } from "@/components/shared/AuthFields";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -38,51 +40,69 @@ export default function LoginForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="space-y-1.5">
-        <label className="block text-sm font-medium" htmlFor="email">
-          אימייל
-        </label>
-        <input
-          id="email"
-          type="email"
-          required
-          autoComplete="email"
-          dir="ltr"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) focus:outline-none transition"
-        />
-      </div>
-      <div className="space-y-1.5">
-        <label className="block text-sm font-medium" htmlFor="password">
-          סיסמה
-        </label>
-        <input
-          id="password"
-          type="password"
-          required
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) focus:outline-none transition"
-        />
-      </div>
+    <form onSubmit={onSubmit} className="space-y-5">
+      <AuthEmailField
+        id="email"
+        label="אימייל"
+        value={email}
+        onChange={setEmail}
+        placeholder="you@example.com"
+        autoComplete="email"
+        required
+      />
+
+      <AuthPasswordField
+        id="password"
+        label="סיסמה"
+        value={password}
+        onChange={setPassword}
+        autoComplete="current-password"
+        required
+        actionRight={
+          <Link href="#" className="text-xs text-qf-mute hover:text-qf-ink">
+            שכחת סיסמה?
+          </Link>
+        }
+      />
+
       {error && (
         <div className="bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm rounded-xl px-3 py-2">
           {error}
         </div>
       )}
+
       <button
         type="submit"
         disabled={busy}
-        className="w-full py-3 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white font-medium transition disabled:opacity-60"
+        className="w-full py-3 rounded-xl bg-qf-ink hover:bg-black text-white font-medium transition disabled:opacity-60 inline-flex items-center justify-center gap-2"
       >
-        {busy ? "מתחבר..." : "התחברות"}
+        {busy ? "מתחבר..." : "התחבר"}
+        {!busy && <span aria-hidden>→</span>}
       </button>
-      <div className="text-xs text-qf-mute text-center">
-        Seed demo: owner@pizzeria-verde.local · verde1234
+
+      <div className="relative flex items-center gap-3 py-1">
+        <div className="flex-1 h-px bg-qf-line-dash" />
+        <span className="text-xs text-qf-mute">או</span>
+        <div className="flex-1 h-px bg-qf-line-dash" />
       </div>
+
+      <Link
+        href="/signup"
+        className="block w-full text-center py-3 rounded-xl bg-white border border-qf-line-dash hover:border-qf-ink text-sm font-medium transition"
+      >
+        צור חשבון חדש
+      </Link>
+
+      <p className="text-[10px] text-qf-mute text-center">
+        בהמשך אתה מסכים ל-
+        <a href="#" className="underline">תנאי השימוש</a>
+        {" "}ו-{" "}
+        <a href="#" className="underline">מדיניות הפרטיות</a>
+      </p>
+
+      <p className="text-[10px] text-qf-mute/70 text-center">
+        Seed demo: owner@pizzeria-verde.local · verde1234
+      </p>
     </form>
   );
 }
