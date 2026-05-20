@@ -160,6 +160,7 @@ export const TenantPatchSchema = z.object({
   name: z.string().min(1).max(120).optional(),
   logo_letter: z.string().min(1).max(2).optional(),
   logo_url: z.string().url().optional(),
+  cover_image: z.string().url().nullable().optional(),
   theme_id: z.enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt"]).optional(),
   business_type: z
     .enum([
@@ -222,10 +223,21 @@ export const WebhookEndpointInputSchema = z.object({
 
 export const WebhookEndpointPatchSchema = WebhookEndpointInputSchema.partial();
 
+// ─── Campaigns ─────────────────────────────────────────────────
+
+export const CampaignCreateSchema = z.object({
+  title: z.string().min(1).max(120),
+  image_url: z.string().url(),
+  is_active: z.boolean().optional().default(true),
+  link_url: z.string().url().or(z.string().regex(/^\/[^\s]*$/, "must be absolute URL or path starting with /")).nullable().optional(),
+});
+
+export const CampaignPatchSchema = CampaignCreateSchema.partial();
+
 // ─── Uploads ───────────────────────────────────────────────────
 
 export const UploadInitSchema = z.object({
-  type: z.enum(["menu_item_image", "logo", "review_photo"]),
+  type: z.enum(["menu_item_image", "logo", "cover_image", "review_photo", "campaign_image"]),
   filename: z.string().min(1).max(200),
   mime_type: z.enum(["image/jpeg", "image/png", "image/webp"]),
   size_bytes: z.number().int().min(1).max(5_000_000).optional(),

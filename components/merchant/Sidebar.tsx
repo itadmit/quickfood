@@ -2,13 +2,22 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IcoOrders, IcoMenu, IcoChart, IcoStar, IcoBike, IcoGear, IcoFlame } from "@/components/shared/Icons";
+import { IcoOrders, IcoMenu, IcoHome, IcoStar, IcoBike, IcoGear, IcoFlame, IcoMegaphone } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 
-const NAV = [
+type NavItem = {
+  href: string;
+  label: string;
+  Icon: typeof IcoHome;
+  match?: string;
+  exact?: boolean;
+};
+
+const NAV: NavItem[] = [
+  { href: "/dashboard", label: "דשבורד", Icon: IcoHome, exact: true },
   { href: "/dashboard/orders", label: "הזמנות", Icon: IcoOrders },
   { href: "/dashboard/menu", label: "תפריט", Icon: IcoMenu },
-  { href: "/dashboard/analytics", label: "אנליטיקה", Icon: IcoChart },
+  { href: "/dashboard/campaigns", label: "קמפיינים", Icon: IcoMegaphone },
   { href: "/dashboard/reviews", label: "ביקורות", Icon: IcoStar },
   { href: "/dashboard/couriers", label: "שליחים", Icon: IcoBike },
   { href: "/dashboard/settings/branding", label: "הגדרות", Icon: IcoGear, match: "/dashboard/settings" },
@@ -17,7 +26,7 @@ const NAV = [
 export function Sidebar({ tenant }: { tenant: { name: string; logoLetter: string; branchName: string } }) {
   const pathname = usePathname() || "";
   return (
-    <aside className="w-64 shrink-0 border-e border-qf-line-dash bg-white p-5 flex flex-col gap-6">
+    <aside className="w-64 shrink-0 border-e border-qf-line-dash bg-white p-5 flex flex-col gap-6 sticky top-16 h-[calc(100vh-4rem)] self-start">
       <div className="flex items-center gap-3">
         <div
           className="w-11 h-11 rounded-2xl bg-(--qf-primary) text-white flex items-center justify-center text-lg font-bold"
@@ -31,9 +40,9 @@ export function Sidebar({ tenant }: { tenant: { name: string; logoLetter: string
         </div>
       </div>
 
-      <nav className="flex-1 -mx-1 space-y-0.5">
-        {NAV.map(({ href, label, Icon, match }) => {
-          const active = pathname.startsWith(match ?? href);
+      <nav className="flex-1 -mx-1 space-y-0.5 overflow-y-auto">
+        {NAV.map(({ href, label, Icon, match, exact }) => {
+          const active = exact ? pathname === href : pathname.startsWith(match ?? href);
           return (
             <Link
               key={href}

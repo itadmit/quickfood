@@ -4,6 +4,7 @@ import Link from "next/link";
 import { IcoPin, IcoSearch, IcoChevDown, IcoStar, IcoClock, IcoBike, IcoFlame, IcoUser, IcoArrowLeft } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
+import { CampaignPopup } from "@/components/customer/CampaignPopup";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { RelativeTime } from "@/components/shared/RelativeTime";
@@ -271,6 +272,7 @@ export function CustomerHome({ tenant, branch, categories, popular, lastOrder, c
       {children}
 
       <BottomTabBar tenantSlug={tenant.slug} />
+      <CampaignPopup tenantSlug={tenant.slug} />
     </div>
   );
 }

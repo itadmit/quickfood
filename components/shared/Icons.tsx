@@ -154,6 +154,18 @@ export const IcoBell = ({ c = "#11231a", s = 18, className }: IconProps) => (
   </svg>
 );
 
+export const IcoMegaphone = ({ c = "#11231a", s = 20, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    <path
+      d="M3 10v4a1 1 0 001 1h2l8 4V5L6 9H4a1 1 0 00-1 1zm14-3v10c2-1 3-3 3-5s-1-4-3-5zM8 15v3a2 2 0 004 0"
+      stroke={c}
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 export const IcoOrders = ({ c = "#11231a", s = 20, className }: IconProps) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
     <path d="M5 4h14l-1 16H6L5 4z" stroke={c} strokeWidth="1.6" strokeLinejoin="round" />
