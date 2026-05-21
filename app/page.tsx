@@ -302,29 +302,49 @@ function Bento() {
       <div className={styles.container}>
         <div className={styles.sectionEyebrow}>פיצ&apos;רים</div>
         <h2 className={styles.sectionTitle}>
-          כל מה שהיית רוצה. <em>גם דברים שלא חשבת.</em>
+          כל מה שצריך כדי לקבל הזמנות. <em>וכל מה שלא חשבת שצריך.</em>
         </h2>
 
         <div className={styles.bento}>
+          {/* 1. Inline checkout — hero feature */}
           <div className={`${styles.bentoCell} ${styles.bentoTomato} ${styles.bWide}`}>
-            <span className={styles.bentoTag}>תשלום</span>
-            <h4>תשלום ב-bit, אשראי, Apple Pay</h4>
-            <p>אינטגרציה מובנית עם Grow Payments. הלקוח משלם בקליק, הכסף בחשבון העסק תוך 24 שעות.</p>
+            <span className={styles.bentoTag}>תשלום מובנה</span>
+            <h4>Bit, אשראי, Apple Pay, Google Pay — הכל באותו מסך.</h4>
+            <p>
+              ארנק התשלום של Grow רץ inline בתוך החנות שלך — אין הפניה החוצה, אין עמוד תשלום נפרד.
+              הלקוח רואה את הסל, את הכפתור, ומסיים תוך שניות. הכסף בחשבון העסק תוך 24 שעות.
+            </p>
           </div>
+
+          {/* 2. Live order tracking */}
           <div className={styles.bentoCell}>
-            <span className={styles.bentoTag}>מעקב</span>
-            <h4>סטטוס חי</h4>
-            <p>הלקוח רואה מתי הפיצה בתנור.</p>
+            <span className={styles.bentoTag}>מעקב חי</span>
+            <h4>סטטוס בזמן אמת</h4>
+            <p>SSE בלייב: התקבלה ← בהכנה ← מוכנה ← בדרך. בלי refresh.</p>
           </div>
+
+          {/* 3. Reviews — phase 1 launched */}
           <div className={`${styles.bentoCell} ${styles.bentoCheese}`}>
-            <span className={styles.bentoTag}>SMS</span>
-            <h4>הודעות מובנות</h4>
-            <p>אישור, יצא לדרך, הגיע. ללא תשלום נוסף.</p>
+            <span className={styles.bentoTag}>ביקורות</span>
+            <h4>תזכורת אוטומטית לדירוג</h4>
+            <p>שעה אחרי המסירה, תזכורת ב-SMS / WhatsApp / Email — לבחירתך. דירוגים פומביים בעמוד נפרד.</p>
           </div>
+
+          {/* 4. WhatsApp — built-in via iBot */}
+          <div className={`${styles.bentoCell} ${styles.bentoBasil}`}>
+            <span className={styles.bentoTag}>WhatsApp</span>
+            <h4>הודעות וואטסאפ מובנות</h4>
+            <p>חיבור ל-iBot Chat. אישור הזמנה, יצא לדרך, ביקורת — בלי לעבור לטלפון פעמיים.</p>
+          </div>
+
+          {/* 5. Branding — tall column */}
           <div className={`${styles.bentoCell} ${styles.bentoInk} ${styles.bTall}`}>
             <span className={styles.bentoTag}>מיתוג</span>
             <h4>ה-DNA שלך, לא שלנו.</h4>
-            <p>בחר ערכת צבע, העלה לוגו, החלף שם. האפליקציה מרגישה כמו פיתוח מותאם, גם אם זה תוך 11 דקות.</p>
+            <p>
+              בחר ערכת צבע, העלה לוגו, הוסף תמונת כריכה, החלף את שם החנות והסלוגן. דומיין מותאם
+              (order.your-name.co.il) כלול גם בתוכניות הבסיסיות.
+            </p>
             <div className={styles.swatchRow}>
               <span className={styles.swatch} style={{ background: "#1f6b3c" }} />
               <span className={styles.swatch} style={{ background: "#d63f1a" }} />
@@ -335,22 +355,30 @@ function Bento() {
               <span className={styles.swatch} style={{ background: "#15543a" }} />
             </div>
           </div>
+
+          {/* 6. Analytics */}
           <div className={styles.bentoCell}>
             <span className={styles.bentoTag}>אנליטיקה</span>
             <h4>נתונים אמיתיים</h4>
-            <p>שעות שיא, פריטים מובילים, לקוחות חוזרים.</p>
+            <p>שעות שיא, פריטים מובילים, ערך הזמנה ממוצע, אחוז לקוחות חוזרים.</p>
           </div>
-          <div className={`${styles.bentoCell} ${styles.bentoBasil}`}>
-            <span className={styles.bentoTag}>משלוחים</span>
-            <h4>ניהול שליחים</h4>
-            <p>הקצאה אוטומטית או ידנית, מעקב, דירוגים.</p>
+
+          {/* 7. Couriers + delivery zones */}
+          <div className={styles.bentoCell}>
+            <span className={styles.bentoTag}>שליחים</span>
+            <h4>שליחים + אזורי משלוח</h4>
+            <p>הגדר אזורים על מפה, ETA לכל אזור, הקצה שליחים אוטומטית או ידנית.</p>
           </div>
+
+          {/* 8. Menu editor — wide with photo */}
           <div className={`${styles.bentoCell} ${styles.bWide}`}>
             <div className={styles.bentoMenuLayout}>
               <div>
                 <span className={styles.bentoTag}>תפריט</span>
                 <h4>עורך תפריט גמיש לחלוטין</h4>
-                <p>גדלים, תוספות, הערות, מבצעים. הוסף פריט עם תמונה ב-30 שניות.</p>
+                <p>
+                  גדלים, תוספות (single/multi), הערות, מבצעים, סטוקים. גרור-זרוק לסידור. הוסף פריט עם תמונה ב-30 שניות.
+                </p>
               </div>
               <div className={styles.bentoMenuImg}>
                 <Image
@@ -362,15 +390,47 @@ function Bento() {
               </div>
             </div>
           </div>
+
+          {/* 9. Campaigns — popup + banner */}
+          <div className={styles.bentoCell}>
+            <span className={styles.bentoTag}>קמפיינים</span>
+            <h4>פופאפים ובאנרים</h4>
+            <p>הצג קמפיין בכניסה לחנות או באנר תמידי. תזמן, נטרל, נסה גרסאות.</p>
+          </div>
+
+          {/* 10. SMS credits */}
+          <div className={`${styles.bentoCell} ${styles.bentoCheese}`}>
+            <span className={styles.bentoTag}>SMS</span>
+            <h4>בלוקים גמישים</h4>
+            <p>קנה בלוק קרדיטים פעם אחת, נשלף מאותו pool ל-SMS וגם ל-WhatsApp. בלי הפתעות.</p>
+          </div>
+
+          {/* 11. Multi-branch */}
+          <div className={styles.bentoCell}>
+            <span className={styles.bentoTag}>סניפים</span>
+            <h4>מולטי-סניף</h4>
+            <p>סניפים מרובים עם שעות פעילות, דמי משלוח ושירות נפרדים לכל אחד.</p>
+          </div>
+
+          {/* 12. Smart checkout polish */}
+          <div className={styles.bentoCell}>
+            <span className={styles.bentoTag}>חוויית רכישה</span>
+            <h4>חוויה של וולט</h4>
+            <p>הזמן שוב בקליק, prefill לכתובת+תשלום, אזהרה כשהמחיר עלה, סקלטונים בכל מסך.</p>
+          </div>
+
+          {/* 13. Reviews-driven trust */}
           <div className={styles.bentoCell}>
             <span className={styles.bentoTag}>RTL</span>
             <h4>עברית מנצחת</h4>
-            <p>תוכנן לעברית מהשנייה הראשונה.</p>
+            <p>תוכנן לעברית מהשנייה הראשונה — RTL מלא, ניקוד, חודשים בעברית, מספרים tabular.</p>
           </div>
+
+          {/* 14. Webhooks + API */}
           <div className={styles.bentoCell}>
-            <span className={styles.bentoTag}>דומיין</span>
-            <h4>הכתובת שלך</h4>
-            <p>order.your-name.co.il. גם זה כלול.</p>
+            <span className={styles.bentoTag}>אינטגרציות</span>
+            <h4>Webhooks + REST API</h4>
+            <p>חבר את ההזמנות לקופה, iCount, מערכת CRM. אירועים יוצאים בכל סטטוס שמשתנה.</p>
           </div>
         </div>
       </div>
@@ -457,13 +517,14 @@ function Pricing() {
             sub="לעסקים קטנים שמתחילים"
             amount="₪199"
             features={[
-              "אפליקציית לקוח עם המיתוג שלך",
+              "אפליקציית לקוח ממותגת",
               "דשבורד ניהול הזמנות",
-              "עד 50 הזמנות בחודש",
-              "תשלום באשראי וב-bit",
-              "תמיכה במייל ובוואטסאפ",
+              "תשלום inline: Bit / אשראי / Apple Pay / Google Pay",
+              "מעקב הזמנה חי + סטטוס SSE",
+              "תפריט עם תמונות, גדלים ותוספות",
+              "תמיכה במייל",
             ]}
-            cta="התחל חינם 14 יום"
+            cta="התחל ניסיון של 7 יום"
           />
           <PriceCard
             featured
@@ -473,12 +534,14 @@ function Pricing() {
             features={[
               "הכל מ-Starter",
               "הזמנות ללא הגבלה",
+              "ביקורות + תזכורת אוטומטית (SMS/WhatsApp/Email)",
+              "WhatsApp דרך iBot Chat",
+              "קמפיינים: פופאפים ובאנרים",
+              "ניהול שליחים + אזורי משלוח",
               "אנליטיקה מתקדמת",
-              "ניהול ביקורות + תגובות",
-              "קופונים ומבצעים",
               "תמיכת וואטסאפ בעדיפות",
             ]}
-            cta="התחל חינם 14 יום"
+            cta="התחל ניסיון של 7 יום"
           />
           <PriceCard
             name="Pro"
@@ -486,11 +549,12 @@ function Pricing() {
             amount="₪999"
             features={[
               "הכל מ-Growth",
-              "ניהול שליחים מובנה",
               "סניפים מרובים",
-              "גישת API מלאה",
-              "דומיין מותאם",
+              "REST API מלא + Webhooks",
+              "דומיין מותאם משלך",
+              "אינטגרציות לקופה (iCount, idani — בקרוב)",
               "Account Manager אישי",
+              "SLA 99.9% + עדיפות יציאה לאוויר",
             ]}
             cta="דבר איתנו"
           />
@@ -557,23 +621,57 @@ function Faq() {
           <div>
             <details className={styles.faqItem} open>
               <summary>תוך כמה זמן אני באוויר?</summary>
-              <p>בממוצע 11 דקות מהרגע שאתה נרשם ועד שיש לך אפליקציה ודשבורד עובדים, עם תפריט בסיסי וכתובת לשתף. אם אתה רוצה ליווי אישי בהקמה — זה בחינם בכל התוכניות.</p>
+              <p>
+                בממוצע 11 דקות מהרגע שאתה נרשם ועד שיש לך אפליקציה ודשבורד עובדים, עם תפריט בסיסי, חיבור Grow לתשלום וכתובת לשתף. ניסיון של 7 ימים בלי כרטיס אשראי. אם אתה רוצה ליווי אישי בהקמה — זה בחינם בכל התוכניות.
+              </p>
             </details>
             <details className={styles.faqItem}>
               <summary>איך זה שאין עמלה פר הזמנה?</summary>
-              <p>אנחנו לא אגרגטור. אתה משלם תוכנית חודשית קבועה, ובמקום זה אתה שומר 100% מהמכירות. כן יש עמלת סליקה רגילה של חברת האשראי (כ-1.5%-2%) שזה תקני בכל המערכות.</p>
+              <p>
+                אנחנו לא אגרגטור. אתה משלם תוכנית חודשית קבועה, ובמקום זה אתה שומר 100% מהמכירות. כן יש עמלת סליקה רגילה של חברת האשראי (כ-1.5%-2%) שזה תקני בכל המערכות, ויורדת ישירות ב-Grow.
+              </p>
+            </details>
+            <details className={styles.faqItem}>
+              <summary>איזה אמצעי תשלום נתמכים בחנות?</summary>
+              <p>
+                Bit, כרטיס אשראי, Apple Pay, Google Pay — כולם רצים inline בתוך המסך של החנות שלך דרך ה-SDK של Grow. אין הפניה לעמוד תשלום חיצוני, אין שובר שמופיע ב-iframe. הלקוח רואה את הסל ואת כפתור התשלום באותו עמוד.
+              </p>
+            </details>
+            <details className={styles.faqItem}>
+              <summary>איך אני שולח SMS / WhatsApp ללקוחות?</summary>
+              <p>
+                SMS מובנה — קונים בלוק קרדיטים, נשלף לאישור הזמנה, יצא לדרך, ובקשות ביקורת. WhatsApp דרך חיבור ל-iBot Chat (מספר שלך, לא משותף). שני הערוצים נשלפים מאותו pool של קרדיטים.
+              </p>
+            </details>
+            <details className={styles.faqItem}>
+              <summary>אספים ביקורות מהלקוחות?</summary>
+              <p>
+                כן. שעה אחרי שהזמנה מסומנת "נמסרה" אנחנו שולחים תזכורת אוטומטית בערוץ שתבחר (SMS / WhatsApp / Email) עם לינק להשארת דירוג. הביקורות נשארות אצלך — דירוג ממוצע, כוכבים, ותגובות שאתה כותב.
+              </p>
             </details>
             <details className={styles.faqItem}>
               <summary>אני יכול לחבר את זה לקופה הקיימת שלי?</summary>
-              <p>בתוכנית Pro יש REST API מלא + webhooks יוצאים, אז אתה יכול לחבר את QuickFood ל-iCount, Wix Restaurants או לכל קופה אחרת. אינטגרציות מוכנות-מראש ל-iCount ו-idani בתכנון לרבעון הקרוב.</p>
+              <p>
+                בכל התוכניות יש REST API מלא + webhooks יוצאים על כל אירוע (order.created, order.status_changed, וכו׳). אתה יכול לחבר את QuickFood ל-iCount, Wix Restaurants או לכל קופה אחרת. אינטגרציות מוכנות-מראש ל-iCount ול-idani בתכנון לרבעון הקרוב.
+              </p>
             </details>
             <details className={styles.faqItem}>
               <summary>מה עם משלוחים?</summary>
-              <p>יש לך שתי אפשרויות: לנהל שליחים שלך דרך מודול השליחים שלנו (כלול ב-Pro), או להתחבר לשירותי משלוחים חיצוניים כמו Wolt Drive או דליבר.</p>
+              <p>
+                יש לך שתי אפשרויות: לנהל שליחים שלך דרך מודול השליחים שלנו (כלול ב-Growth + Pro), או להתחבר לשירותי משלוחים חיצוניים כמו Wolt Drive או דליבר. אזורי משלוח, ETA לכל אזור ודמי משלוח שונים — הכל מוגדר בדשבורד.
+              </p>
+            </details>
+            <details className={styles.faqItem}>
+              <summary>הלקוח רואה דף תודה גנרי או מעקב מלא?</summary>
+              <p>
+                בחירה שלך. בדשבורד יש toggle בין &quot;קבלה פשוטה&quot; (כמו אי-קומרס רגיל) לבין &quot;מעקב חי&quot; (timeline בזמן אמת + ETA + פרטי המסעדה). אם לא תרצה לחשוף ETA — תכבה.
+              </p>
             </details>
             <details className={styles.faqItem}>
               <summary>אני יכול לקבל את הקוד?</summary>
-              <p>בתוכנית Enterprise אנחנו מציעים אפשרות הוצאה מלאה של הקוד והנתונים, וגם אפשרות לאפליקציה מותאמת ב-App Store בשם שלך.</p>
+              <p>
+                בתוכנית Enterprise אנחנו מציעים אפשרות הוצאה מלאה של הקוד והנתונים, וגם אפשרות לאפליקציה מותאמת ב-App Store בשם שלך.
+              </p>
             </details>
           </div>
         </div>
