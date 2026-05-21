@@ -149,24 +149,25 @@
 .hero .container { position: relative; z-index: 2; }
 .eyebrow {
   display: inline-flex; align-items: center; gap: 10px;
-  background: rgba(255,255,255,0.6);
-  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.55);
+  border: none;
   padding: 6px 14px 6px 6px; border-radius: 999px;
-  font-size: 12px; font-weight: 700; color: var(--ink);
-  margin-bottom: 32px;
+  font-size: 13px; font-weight: 500; color: var(--ink);
+  margin-bottom: 40px;
 }
 .eyebrowDot {
-  background: var(--ink); color: var(--tomato);
+  background: var(--paper);
+  color: var(--ink);
   padding: 4px 11px; border-radius: 999px;
-  font-size: 11px; font-weight: 800; letter-spacing: 0.06em;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 .headline {
   font-family: var(--font-rubik), "Rubik", sans-serif;
   font-weight: 900;
   letter-spacing: -0.05em;
-  line-height: 0.92;
-  font-size: clamp(64px, 11vw, 156px);
+  line-height: 0.95;
+  font-size: clamp(56px, 9vw, 132px);
   margin: 0;
   color: var(--ink);
 }
@@ -175,38 +176,92 @@
   font-weight: 900;
   color: var(--ink);
   background: var(--paper);
-  padding: 0 12px;
-  border-radius: 16px;
+  padding: 0 16px;
+  border-radius: 18px;
   display: inline-block;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
 .headline em::before { content: none; }
+/* Typewriter inherits the yellow-pill em treatment so the rotating
+   word reads as one of a set of options. */
+.typewriter {
+  font-style: normal;
+  font-weight: 900;
+  color: var(--ink);
+  background: var(--paper);
+  padding: 0 16px;
+  border-radius: 18px;
+  display: inline-block;
+  min-width: 5ch;
+}
+.typewriterCursor {
+  display: inline-block;
+  margin-inline-start: 4px;
+  font-weight: 400;
+  animation: typewriterBlink 1s steps(2) infinite;
+}
+@keyframes typewriterBlink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .typewriterCursor { animation: none; }
+}
 .stack { display: block; }
+/* Subtitle — proper body-sized paragraph beneath the headline. The
+   previous `em`-relative size was scaling with the giant headline. */
 .headlineSmall {
   font-family: var(--font-noto-hebrew), "Noto Sans Hebrew", "Heebo", sans-serif;
   font-weight: 500;
   font-style: normal;
-  font-size: 0.165em;
+  font-size: clamp(15px, 1.4vw, 18px);
   color: var(--ink);
   letter-spacing: -0.005em;
-  margin-top: 32px;
-  line-height: 1.55;
-  max-width: 26em;
+  margin: 28px 0 0;
+  line-height: 1.65;
+  max-width: 42em;
   display: block;
+  opacity: 0.85;
 }
-.heroMeta {
-  display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px;
-  margin-top: 32px; align-items: flex-end;
+/* Hero CTAs row */
+.heroCta {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  margin-top: 48px;
 }
-.heroCta { display: flex; gap: 10px; flex-wrap: wrap; }
+/* Stats — 3 equal columns. Always shown as a tight row regardless of
+   viewport, just shrinks the numerals on small screens. */
 .heroStats {
-  display: flex; gap: 32px;
-  padding: 24px 0; border-top: 1px solid rgba(0,0,0,0.12);
-  border-bottom: 1px solid rgba(0,0,0,0.12);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  padding: 28px 0;
+  margin-top: 56px;
+  border-top: 1px solid rgba(0,0,0,0.16);
+  border-bottom: 1px solid rgba(0,0,0,0.16);
 }
-.heroStatN { font-family: var(--font-rubik), "Rubik", sans-serif; font-weight: 900; font-size: 40px; letter-spacing: -0.04em; line-height: 1; color: var(--ink); }
-.heroStatL { font-size: 11px; color: var(--ink); opacity: 0.7; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 6px; }
+@media (max-width: 600px) {
+  .heroStats { gap: 12px; padding: 20px 0; }
+}
+.heroStat { min-width: 0; }
+.heroStatN {
+  font-family: var(--font-rubik), "Rubik", sans-serif;
+  font-weight: 900;
+  font-size: clamp(28px, 4.5vw, 44px);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--ink);
+}
+.heroStatL {
+  font-size: clamp(11px, 1.1vw, 13px);
+  color: var(--ink);
+  opacity: 0.72;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  margin-top: 8px;
+  line-height: 1.4;
+}
 
 .heroDecoPizza {
   position: absolute; top: -80px; left: -100px; z-index: 1;
@@ -404,10 +459,13 @@
 }
 .problemCard {
   border-radius: 20px;
-  padding: 36px 32px;
+  padding: 40px 44px;
   background: var(--paper);
   border: 1px solid var(--line);
   color: var(--ink-2);
+}
+@media (max-width: 900px) {
+  .problemCard { padding: 32px 28px; }
 }
 .problemCardPeach,
 .problemCardLilac { background: var(--paper); }

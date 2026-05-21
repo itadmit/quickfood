@@ -3,6 +3,7 @@ import { Rubik, JetBrains_Mono } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
 import { IcoArrowLeft } from "@/components/shared/Icons";
+import Typewriter from "./_components/Typewriter";
 import styles from "./page.module.css";
 
 const rubik = Rubik({
@@ -72,37 +73,38 @@ function Hero() {
         <h1 className={styles.headline}>
           <span className={styles.stack}>הלקוחות שלך.</span>
           <span className={styles.stack}>ההזמנות שלך.</span>
-          <span className={styles.stack}><em>הכסף שלך.</em></span>
-          <span className={styles.headlineSmall}>
-            חנות אונליין משלך, בעיצוב שלך, על דומיין משלך. בלי לחלוק עם החברות הגדולות את השליש שאתה מרוויח על כל פיצה.
+          <span className={styles.stack}>
+            <Typewriter words={["הכסף שלך.", "הזמן שלך.", "הצמיחה שלך.", "העתיד שלך."]} />
           </span>
         </h1>
+        <p className={styles.headlineSmall}>
+          חנות אונליין משלך, בעיצוב שלך, על דומיין משלך. בלי לחלוק עם החברות הגדולות את השליש שאתה מרוויח על כל פיצה.
+        </p>
 
-        <div className={styles.heroMeta}>
-          <div className={styles.heroCta}>
-            <Link href="/signup" className={`${styles.btn} ${styles.btnTomato} ${styles.btnLg}`}>
-              QuickFood, פתח לי חנות
-            </Link>
-            <a
-              href="#pricing"
-              className={`${styles.btn} ${styles.btnGhost} ${styles.btnGhostOutline} ${styles.btnLg}`}
-            >
-              כמה זה עולה <IcoArrowLeft c="currentColor" s={14} />
-            </a>
+        <div className={styles.heroCta}>
+          <Link href="/signup" className={`${styles.btn} ${styles.btnTomato} ${styles.btnLg}`}>
+            QuickFood, פתח לי חנות
+          </Link>
+          <a
+            href="#pricing"
+            className={`${styles.btn} ${styles.btnGhost} ${styles.btnGhostOutline} ${styles.btnLg}`}
+          >
+            כמה זה עולה <IcoArrowLeft c="currentColor" s={14} />
+          </a>
+        </div>
+
+        <div className={styles.heroStats}>
+          <div className={styles.heroStat}>
+            <div className={styles.heroStatN}>₪299</div>
+            <div className={styles.heroStatL}>לחודש. נעול לכל החיים.</div>
           </div>
-          <div className={styles.heroStats}>
-            <div>
-              <div className={styles.heroStatN}>₪299</div>
-              <div className={styles.heroStatL}>לחודש. נעול לכל החיים</div>
-            </div>
-            <div>
-              <div className={styles.heroStatN}>0.5%</div>
-              <div className={styles.heroStatL}>פר הזמנה. לא שלושים</div>
-            </div>
-            <div>
-              <div className={styles.heroStatN}>11 דק׳</div>
-              <div className={styles.heroStatL}>מהרישום ועד חנות חיה</div>
-            </div>
+          <div className={styles.heroStat}>
+            <div className={styles.heroStatN}>0.5%</div>
+            <div className={styles.heroStatL}>פר הזמנה. לא שלושים.</div>
+          </div>
+          <div className={styles.heroStat}>
+            <div className={styles.heroStatN}>11 דק׳</div>
+            <div className={styles.heroStatL}>מהרישום ועד חנות חיה.</div>
           </div>
         </div>
       </div>
