@@ -39,8 +39,16 @@ export abstract class BasePaymentProvider implements IPaymentProvider {
   abstract acknowledgeCallback(parsed: ParsedCallback): Promise<{ success: boolean; error?: string }>;
   abstract refund(req: RefundRequest): Promise<RefundResponse>;
 
-  protected formatAmount(shekels: number): string {
-    return (Math.round(shekels * 100) / 100).toFixed(2);
+  /**
+   * Normalize an amount (in shekels) to at-most 2 decimals. Returns a *number*,
+   * not a string — Grow's server-side validation rejects price/sum values
+   * formatted as "28.00" with the misleading "סכום הכללי…אינו זהה" error,
+   * even when the arithmetic reconciles. Sending the bare number (which
+   * URLSearchParams stringifies as "28") matches the working QuickShop10
+   * integration exactly.
+   */
+  protected formatAmount(shekels: number): number {
+    return Math.round(shekels * 100) / 100;
   }
 
   protected log(message: string, data?: unknown): void {
