@@ -66,11 +66,6 @@ function Hero() {
   return (
     <header className={styles.hero}>
       <div className={styles.container}>
-        <div className={styles.eyebrow}>
-          <span className={styles.eyebrowDot}>חדש</span>
-          לפיצרייה, שווארמייה, המבורגרייה, סושייה — ולכל מי שמכין אוכל ומוסר אותו
-        </div>
-
         <h1 className={styles.headline}>
           <span className={styles.stack}>הלקוחות שלך.</span>
           <span className={styles.stack}>ההזמנות שלך.</span>
