@@ -364,11 +364,20 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
                 : "bg-qf-line-soft text-qf-mute",
             )}
           >
-            {whatsappConnected ? "מחובר" : "לא מחובר"}
+            {whatsappConnected ? "מחובר" : "ברירת מחדל"}
           </span>
         }
       >
         <div className="space-y-3">
+          {!whatsappConnected && (
+            <div className="bg-qf-yolk-soft border border-qf-yolk/40 rounded-xl px-3 py-2 text-xs text-qf-ink2">
+              שדות ריקים = נשלח דרך חשבון iBot המרכזי של QuickFood (
+              <Link href="/admin/settings" className="underline">
+                הגדרות פלטפורמה
+              </Link>
+              ). כדי שהמסעדה תשלח מהמספר שלה — הזן Token + Instance ID משלה.
+            </div>
+          )}
           <Field
             label="Token (API key / Instance JWT)"
             hint="ה-Instance ID ב-iBot משמש כ-Token לקריאות API."
@@ -599,7 +608,7 @@ function Toggle({
       <span
         className={cn(
           "inline-block h-5 w-5 transform rounded-full bg-white shadow transition",
-          value ? "translate-x-[-1.25rem]" : "translate-x-[-0.125rem]",
+          value ? "-translate-x-5" : "-translate-x-0.5",
         )}
       />
     </button>
