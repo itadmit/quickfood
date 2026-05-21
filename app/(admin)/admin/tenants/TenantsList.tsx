@@ -71,7 +71,10 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
               key={t.id}
               className="grid grid-cols-[1fr_120px_120px_100px_120px_140px] gap-3 px-5 py-3 items-center border-b border-qf-line-soft last:border-b-0 hover:bg-qf-line-soft/40"
             >
-              <div className="flex items-center gap-3 min-w-0">
+              <Link
+                href={`/admin/tenants/${t.id}`}
+                className="flex items-center gap-3 min-w-0 group"
+              >
                 <div
                   className="w-10 h-10 rounded-xl grid place-items-center text-white font-bold"
                   style={{ background: theme.primary }}
@@ -79,12 +82,14 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
                   {t.name.slice(0, 2)}
                 </div>
                 <div className="min-w-0">
-                  <div className="font-medium truncate">{t.name}</div>
+                  <div className="font-medium truncate group-hover:text-(--qf-deep)">
+                    {t.name}
+                  </div>
                   <div className="text-xs text-qf-mute" dir="ltr">
                     /{t.slug}
                   </div>
                 </div>
-              </div>
+              </Link>
               <div className="text-sm">{t.plan ?? "—"}</div>
               <div>
                 <span
@@ -104,11 +109,10 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
               <div className="text-xs text-qf-mute">{formatDate(t.createdAt)}</div>
               <div className="flex gap-1 justify-end">
                 <Link
-                  href={`/${t.slug}`}
-                  target="_blank"
+                  href={`/admin/tenants/${t.id}`}
                   className="px-2.5 py-1 rounded-lg border border-qf-line-dash text-xs hover:bg-qf-line-soft"
                 >
-                  צפה
+                  פתח
                 </Link>
                 {t.status === "active" ? (
                   <button

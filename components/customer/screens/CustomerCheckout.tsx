@@ -125,30 +125,10 @@ export function CustomerCheckout({
     return <ProcessingScreen />;
   }
 
-  // Order created, waiting for the Grow wallet to take over. The SDK
-  // overlay is mounted via the GrowPaymentSdk component below — we just
-  // need a calm "processing" backdrop here.
-  if (pendingPayment) {
-    return (
-      <>
-        <PaymentWaitingScreen
-          walletOpen={walletOpen}
-          error={error}
-          onRetry={() => {
-            setError(null);
-            renderGrowWallet(pendingPayment.authCode);
-          }}
-        />
-        <GrowPaymentSdk
-          testMode={isDevGrow}
-          thankYouUrl={pendingPayment.thankYouUrl}
-          onReady={() => setSdkReady(true)}
-          onWalletChange={(state) => setWalletOpen(state === "open")}
-          onError={(message) => setError(message)}
-        />
-      </>
-    );
-  }
+  // NOTE: when there's an active pendingPayment, we keep the checkout form
+  // visible underneath. Grow's wallet appears as its own overlay on top —
+  // replacing the page used to break the SDK's z-index. The SDK component
+  // is mounted at the end of the render tree below.
 
   // Suppress the empty-state during the brief window between the client
   // mounting and the cart finishing localStorage hydration. Otherwise a
@@ -244,7 +224,8 @@ export function CustomerCheckout({
 
       // For non-cash payments we need to render the Grow wallet inline
       // before navigating away. Initiate the payment and stash the
-      // authCode — the SDK mount + effect will render the wallet on top.
+      // authCode — the SDK mount (rendered at the bottom of the form) will
+      // overlay the wallet on top of the existing checkout view.
       if (data.needs_payment) {
         try {
           const initRes = await fetch(
@@ -258,18 +239,13 @@ export function CustomerCheckout({
             );
             return;
           }
-          // Mark "submitted" + clear cart so we don't bounce back to the
-          // empty-cart UI while the wallet is open.
-          setSubmitted(true);
-          clear();
+          // Keep the form intact + cart full so the user can retry if the
+          // wallet errors. Cart is cleared by the SDK's onSuccess handler.
           setPendingPayment({
             orderId,
             authCode: initData.sdk_auth_code,
             thankYouUrl: `/${tenantSlug}/orders/${orderId}`,
           });
-          // Don't navigate — the wallet runs as an overlay. On success the
-          // SDK redirects to thankYouUrl; on cancel the merchant can close
-          // the wallet and we stay on this page.
           return;
         } catch {
           setError("שגיאה ביצירת תשלום");
@@ -294,8 +270,13 @@ export function CustomerCheckout({
 
   const emailLooksValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
+  // Treat any in-flight payment (SDK wallet open or about to open) as
+  // "busy" so the CTA can't fire a second order while the user is still
+  // settling the first.
+  const paymentInFlight = !!pendingPayment;
   const canPlace =
     !busy &&
+    !paymentInFlight &&
     !!paymentMethod &&
     !!firstName &&
     !!phone &&
@@ -612,15 +593,21 @@ export function CustomerCheckout({
               className="w-full mt-4 bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-14 text-base font-semibold flex items-center justify-between shadow-sm shadow-(--qf-primary)/25 transition"
             >
               <span className="inline-flex items-center gap-2">
-                {busy && <span className="qf-spinner text-white text-base" aria-hidden />}
+                {(busy || paymentInFlight) && (
+                  <span className="qf-spinner text-white text-base" aria-hidden />
+                )}
                 <span>
                   {busy
                     ? "שולח..."
-                    : paymentMethod === "cash"
-                      ? "בצע הזמנה"
-                      : "לשלם כעת"}
+                    : paymentInFlight
+                      ? walletOpen
+                        ? "ממתין לתשלום..."
+                        : "פותח תשלום..."
+                      : paymentMethod === "cash"
+                        ? "בצע הזמנה"
+                        : "לשלם כעת"}
                 </span>
-                {!busy && <IcoArrowLeft c="#fff" s={16} />}
+                {!busy && !paymentInFlight && <IcoArrowLeft c="#fff" s={16} />}
               </span>
               <span className="tnum text-lg">{formatPrice(total)}</span>
             </button>
@@ -637,19 +624,44 @@ export function CustomerCheckout({
           className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-16 text-base font-semibold flex items-center justify-between shadow-lg shadow-(--qf-primary)/25 transition active:scale-[0.99]"
         >
           <span className="inline-flex items-center gap-2">
-            {busy && <span className="qf-spinner text-white text-base" aria-hidden />}
+            {(busy || paymentInFlight) && (
+              <span className="qf-spinner text-white text-base" aria-hidden />
+            )}
             <span>
               {busy
                 ? "שולח..."
-                : paymentMethod === "cash"
-                  ? "בצע הזמנה"
-                  : "לשלם כעת"}
+                : paymentInFlight
+                  ? walletOpen
+                    ? "ממתין לתשלום..."
+                    : "פותח תשלום..."
+                  : paymentMethod === "cash"
+                    ? "בצע הזמנה"
+                    : "לשלם כעת"}
             </span>
-            {!busy && <IcoArrowLeft c="#fff" s={16} />}
+            {!busy && !paymentInFlight && <IcoArrowLeft c="#fff" s={16} />}
           </span>
           <span className="tnum text-lg">{formatPrice(total)}</span>
         </button>
       </div>
+
+      {/* Grow wallet — mounted once we have an authCode. The SDK overlays
+          its own wallet on top of this page; we don't render any UI of our
+          own here. On success the SDK navigates to the thank-you URL.
+          On failure/cancel we clear the pendingPayment so the user can
+          retry from the same form. */}
+      {pendingPayment && (
+        <GrowPaymentSdk
+          testMode={isDevGrow}
+          thankYouUrl={pendingPayment.thankYouUrl}
+          onReady={() => setSdkReady(true)}
+          onWalletChange={(state) => setWalletOpen(state === "open")}
+          onError={(message) => {
+            setError(message || "התשלום נכשל. אפשר לנסות שוב.");
+            setPendingPayment(null);
+            setSdkReady(false);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -775,51 +787,3 @@ function ProcessingScreen() {
   );
 }
 
-/**
- * Static backdrop while the Grow wallet overlay is open. The wallet itself
- * is owned by Grow's SDK and renders on top of this; we just keep the user
- * from staring at a blank page if the SDK is slow to appear.
- */
-function PaymentWaitingScreen({
-  walletOpen,
-  error,
-  onRetry,
-}: {
-  walletOpen: boolean;
-  error: string | null;
-  onRetry: () => void;
-}) {
-  return (
-    <div className="min-h-screen flex items-center justify-center p-8 text-center bg-qf-bg/60">
-      <div className="flex flex-col items-center gap-4 max-w-sm">
-        <div
-          className="w-16 h-16 rounded-full bg-white shadow-lg grid place-items-center"
-          aria-hidden
-        >
-          <span className="qf-spinner text-(--qf-primary) text-2xl" />
-        </div>
-        <div>
-          <div className="font-bold text-lg">
-            {error ? "אירעה תקלה בתשלום" : walletOpen ? "השלמת תשלום" : "פותח שדה תשלום..."}
-          </div>
-          <div className="text-sm text-qf-mute mt-1">
-            {error
-              ? error
-              : walletOpen
-                ? "מלא/י את פרטי האשראי בחלון שנפתח כדי לסיים את ההזמנה"
-                : "השדה לתשלום ייפתח כאן בעוד רגע"}
-          </div>
-        </div>
-        {error && (
-          <button
-            type="button"
-            onClick={onRetry}
-            className="px-5 py-2.5 rounded-full bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium"
-          >
-            נסה שוב
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}

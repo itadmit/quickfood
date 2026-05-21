@@ -195,6 +195,11 @@ model Tenant {
   acceptsCash     Boolean         @default(true) @map("accepts_cash")
   allowedOrigins  String[]        @default([]) @map("allowed_origins")
 
+  // Checkout configuration. When false (default) the post-order screen is a
+  // simple e-commerce "thank you" receipt. When true it also renders the live
+  // order tracking (ETA, status timeline, SSE updates, branch contact).
+  checkoutShowTracking Boolean       @default(false) @map("checkout_show_tracking")
+
   // Reviews configuration
   reviewsEnabled       Boolean       @default(true) @map("reviews_enabled")
   reviewsPublic        Boolean       @default(true) @map("reviews_public")
