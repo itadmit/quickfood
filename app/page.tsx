@@ -306,52 +306,65 @@ function Bento() {
         </h2>
 
         <div className={styles.woltStack}>
+          {/* Card 1 — wide hero with the illustration peeking from the
+              bottom-end. Sets the rhythm. */}
           <WoltCard
-            tone="sky"
+            tone="mist"
+            layout="wide"
             tag="ההזמנות שלך"
             heading="ישירות מהלקוח אליך."
             body="בלי אגרגטור באמצע. הלקוח נוחת באפליקציה שלך עם הלוגו, השם והצבעים שלך, מזמין, ואתה רואה את ההזמנה בדשבורד תוך שניות. הקשר הוא בינך לבינו."
             decor="📦"
           />
 
+          {/* Card 2 — decor on the START side, payment story */}
           <WoltCard
-            tone="cream"
+            tone="sand"
+            layout="decor-start"
             tag="תשלום מובנה"
             heading="Bit, אשראי, Apple Pay, Google Pay."
             body="ארנק התשלום של Grow רץ inline בתוך החנות שלך — אין הפניה לעמוד תשלום חיצוני, אין iframe מוזר. הלקוח רואה את הסל ואת כפתור התשלום באותו עמוד. הכסף בחשבון העסק תוך 24 שעות."
             decor="💳"
           />
 
+          {/* Card 3 — decor on the END side, reviews */}
           <WoltCard
-            tone="blush"
+            tone="peach"
+            layout="decor-end"
             tag="ביקורות"
             heading="תזכורת אוטומטית בערוץ שלך."
-            body="שעה אחרי שההזמנה מסומנת 'נמסרה' — תזכורת אוטומטית ב-SMS, WhatsApp או Email (לבחירתך) עם לינק לדירוג. הכוכבים מצטברים אצלך, אתה מגיב לתגובות מהדשבורד."
+            body="שעה אחרי שההזמנה מסומנת ׳נמסרה׳ — תזכורת אוטומטית ב-SMS, WhatsApp או Email (לבחירתך) עם לינק לדירוג. הכוכבים מצטברים אצלך, אתה מגיב מהדשבורד."
             decor="⭐"
           />
 
+          {/* Card 4 — wide hero again, live tracking */}
           <WoltCard
-            tone="sky"
+            tone="lilac"
+            layout="wide"
             tag="מעקב חי"
-            heading="הלקוח רואה איפה ההזמנה."
-            body="התקבלה ← בהכנה ← מוכנה ← בדרך. עדכון בלייב בלי refresh. בוחר אם להציג ETA או רק 'תודה' — toggle בדשבורד."
-            decor="🚴"
+            heading="הלקוח רואה איפה ההזמנה — בזמן אמת."
+            body="התקבלה ← בהכנה ← מוכנה ← בדרך. עדכון בלייב בלי refresh. אפשר לבחור אם להציג ETA או רק ׳תודה רבה׳ — toggle בדשבורד."
+            decor="🛵"
           />
 
+          {/* Card 5 — decor on the START side, WhatsApp */}
           <WoltCard
-            tone="cream"
+            tone="sand"
+            layout="decor-start"
             tag="WhatsApp"
             heading="הודעות וואטסאפ מהמספר שלך."
             body="חיבור ל-iBot Chat — מספר משלך, לא משותף עם מסעדות אחרות. אישור הזמנה, יצא לדרך, ביקורת — הכל אוטומטי מאותה שיחה."
             decor="💬"
           />
 
+          {/* Card 6 — midnight anchor, decor wide */}
           <WoltCard
-            tone="indigo"
-            tag="0 עמלה"
-            heading="תשלום חודשי קבוע. בלי אחוזים מכל הזמנה."
-            body="האגרגטורים גובים 25%–30% מכל הזמנה. ב-QuickFood אתה משלם תוכנית חודשית קבועה ושומר 100% מהמכירות. רק עמלת סליקת אשראי רגילה (~1.5%-2%) — תקני בכל המערכות."
-            decor="💎"
+            tone="midnight"
+            layout="wide"
+            tag="0% עמלה פר הזמנה"
+            heading="תוכנית חודשית קבועה. כל השאר — שלך."
+            body="האגרגטורים גובים 25%–30% מכל הזמנה. ב-QuickFood משלמים תוכנית חודשית קבועה ושומרים 100% מהמכירות. רק עמלת סליקת אשראי רגילה (~1.5%-2%) — תקני בכל המערכות."
+            decor="✦"
           />
         </div>
 
@@ -499,29 +512,38 @@ function Bento() {
   );
 }
 
-type WoltTone = "sky" | "cream" | "blush" | "indigo";
+type WoltTone = "mist" | "sand" | "peach" | "lilac" | "midnight";
+type WoltLayout = "decor-end" | "decor-start" | "wide";
 
 function WoltCard({
   tone,
+  layout = "decor-end",
   tag,
   heading,
   body,
   decor,
 }: {
   tone: WoltTone;
+  layout?: WoltLayout;
   tag: string;
   heading: string;
   body: string;
   decor: string;
 }) {
   const toneClass = {
-    sky: styles.woltCardSky,
-    cream: styles.woltCardCream,
-    blush: styles.woltCardBlush,
-    indigo: styles.woltCardIndigo,
+    mist: styles.woltCardMist,
+    sand: styles.woltCardSand,
+    peach: styles.woltCardPeach,
+    lilac: styles.woltCardLilac,
+    midnight: styles.woltCardMidnight,
   }[tone];
+  const layoutClass = {
+    "decor-end": styles.woltCardDecorEnd,
+    "decor-start": styles.woltCardDecorStart,
+    wide: styles.woltCardWide,
+  }[layout];
   return (
-    <article className={`${styles.woltCard} ${toneClass}`}>
+    <article className={`${styles.woltCard} ${toneClass} ${layoutClass}`}>
       <div className={styles.woltCardDecor} aria-hidden>
         {decor}
       </div>

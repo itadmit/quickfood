@@ -495,87 +495,145 @@
 .phoneItemDesc { font-size: 8px; color: var(--mute); margin-top: 1px; }
 .phoneItemPrice { font-size: 11px; font-weight: 800; }
 
-/* ─── WOLT-STYLE STACKED FEATURE CARDS ───────────────────── */
-/* Big single-column cards with pastel backgrounds, large illustration
-   slot on the right, and a colored headline keyed to the card tone. */
+/* ─── EDITORIAL FEATURE STACK ────────────────────────────── */
+/* Pastel storytelling cards. Softer / more muted than the first pass —
+   palette intentionally adjacent to but distinct from common food-tech
+   pages. Each card lays out differently so the section reads like a
+   spread, not a feature checklist. */
 .woltStack {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 16px;
+  gap: 18px;
   margin-top: 56px;
 }
 .woltCard {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 160px;
+  grid-template-columns: minmax(0,1fr) 180px;
   align-items: center;
-  gap: 24px;
-  padding: 36px 40px;
-  border-radius: 28px;
+  gap: 28px;
+  padding: 44px 48px;
+  border-radius: 32px;
   overflow: hidden;
 }
+/* Layout variants — each card picks one so the stack feels designed,
+   not stamped. */
+.woltCardDecorEnd  { grid-template-columns: minmax(0,1fr) 180px; }
+.woltCardDecorStart {
+  grid-template-columns: 180px minmax(0,1fr);
+}
+.woltCardWide {
+  grid-template-columns: minmax(0,1fr);
+  padding: 52px 56px 56px;
+}
+.woltCardWide .woltCardDecor {
+  position: absolute;
+  inset-block-end: -28px;
+  inset-inline-end: -16px;
+  font-size: clamp(140px, 18vw, 220px);
+  opacity: 0.85;
+  pointer-events: none;
+}
 @media (max-width: 900px) {
-  .woltCard {
-    grid-template-columns: 1fr 100px;
-    padding: 28px 24px;
-    gap: 16px;
+  /* Mobile: stack vertically, decor on top, generous padding. */
+  .woltCard,
+  .woltCardDecorEnd,
+  .woltCardDecorStart,
+  .woltCardWide {
+    grid-template-columns: 1fr;
+    padding: 28px 26px 32px;
+    gap: 12px;
   }
+  .woltCardWide .woltCardDecor {
+    position: static;
+    text-align: center;
+    font-size: clamp(80px, 22vw, 120px);
+    opacity: 1;
+    margin-bottom: 4px;
+  }
+  /* When decor came BEFORE on desktop, keep it first on mobile too.
+     When it came AFTER, move it back up to the top to match the Wolt
+     "illustration then story" rhythm on phones. */
+  .woltCardDecorStart .woltCardDecor { order: 0; }
+  .woltCardDecorEnd .woltCardDecor   { order: -1; }
 }
 .woltCardBody { min-width: 0; }
 .woltCardTag {
   font-size: 11px; font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  margin-bottom: 10px;
-  opacity: 0.7;
+  margin-bottom: 12px;
+  opacity: 0.65;
 }
 .woltCardHeading {
   font-family: var(--font-rubik), "Rubik", sans-serif;
   font-weight: 900;
-  font-size: clamp(26px, 3.4vw, 40px);
-  letter-spacing: -0.035em;
-  line-height: 1.1;
-  margin: 0 0 14px;
+  font-size: clamp(26px, 3.6vw, 42px);
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  margin: 0 0 16px;
 }
 .woltCardCopy {
   margin: 0;
-  font-size: 16px;
-  line-height: 1.6;
-  max-width: 56ch;
+  font-size: 16.5px;
+  line-height: 1.65;
+  max-width: 58ch;
+  opacity: 0.78;
 }
 .woltCardDecor {
-  font-size: clamp(72px, 9vw, 110px);
+  font-size: clamp(72px, 9vw, 120px);
   line-height: 1;
   text-align: center;
   user-select: none;
-  filter: drop-shadow(0 12px 24px rgba(15,20,16,0.12));
+  filter: drop-shadow(0 14px 22px rgba(15,20,16,0.1));
+}
+@media (max-width: 900px) {
+  .woltCardDecor {
+    text-align: center;
+    font-size: clamp(72px, 22vw, 112px);
+  }
 }
 
-/* Tones — sky / cream / blush / indigo */
-.woltCardSky {
-  background: #DBEEF8;
-  color: #102B3D;
+/* Tones — chosen adjacent to Wolt's palette but shifted half a step
+   so we're not literally copying their hues. Headlines use a richer
+   variation of the same hue family so they read on the pastel without
+   becoming black. */
+.woltCardMist {
+  /* Pale slate-mint */
+  background: #E4ECEC;
+  color: #1F3137;
 }
-.woltCardSky .woltCardHeading { color: #0F5A85; }
+.woltCardMist .woltCardHeading { color: #1F5C66; }
 
-.woltCardCream {
-  background: #F6EBD5;
-  color: #3E2F12;
+.woltCardSand {
+  /* Warm putty / sand */
+  background: #F1E8D5;
+  color: #3A2C16;
 }
-.woltCardCream .woltCardHeading { color: #7A521C; }
+.woltCardSand .woltCardHeading { color: #6E4A1B; }
 
-.woltCardBlush {
-  background: #FBE2E5;
-  color: #4A1424;
+.woltCardPeach {
+  /* Dusty peach */
+  background: #F7DECC;
+  color: #4B2310;
 }
-.woltCardBlush .woltCardHeading { color: #B72E50; }
+.woltCardPeach .woltCardHeading { color: #B0511E; }
 
-.woltCardIndigo {
-  background: #2A1F60;
-  color: rgba(255,255,255,0.85);
+.woltCardLilac {
+  /* Soft lilac */
+  background: #ECE5F2;
+  color: #2A1C44;
 }
-.woltCardIndigo .woltCardHeading { color: white; }
-.woltCardIndigo .woltCardTag { color: rgba(255,255,255,0.6); }
+.woltCardLilac .woltCardHeading { color: #5A3B8A; }
+
+.woltCardMidnight {
+  /* Deep plum-navy — anchor card */
+  background: #161B3D;
+  color: rgba(255,255,255,0.84);
+}
+.woltCardMidnight .woltCardHeading { color: white; }
+.woltCardMidnight .woltCardTag { color: rgba(255,255,255,0.55); }
+
 
 /* Secondary feature grid — quieter cells for the "everything else" line */
 .miniGrid {
