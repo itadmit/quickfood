@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { IcoArrowLeft } from "@/components/shared/Icons";
 import Typewriter from "./_components/Typewriter";
+import FeatureIcon, { type IconName } from "./_components/FeatureIcon";
 import styles from "./page.module.css";
 
 const rubik = Rubik({
@@ -211,17 +212,31 @@ function Showcase() {
             <h3>חוויה שמרגישה כמו הגדולים. רק שלך.</h3>
             <p>אפליקציה מהירה, צבעים שלך, לוגו שלך. לא עוד שורה ברשימה של פורטל. הלקוח חוזר ישר לכתובת שלך, לא דרך אף אחד אחר.</p>
 
+            {/* Phone mock — mirrors the real Verde storefront 1:1: green
+                full-bleed hero with brand name, location chip, delivery/
+                pickup pill toggle, search bar, info pill, then a vertical
+                list of items with a right-side circular plus button. */}
             <div className={styles.phoneMock}>
               <div className={styles.phoneScreen}>
                 <div className={styles.phoneStatus}><span>9:41</span><span>●●●</span></div>
                 <div className={styles.phoneHeaderCard}>
-                  <div className={styles.phoneLoc}>משלוח אל</div>
-                  <div className={styles.phoneAddr}>אלנבי 42, ת״א</div>
-                  <div className={styles.phoneSearch}>חיפוש פיצה, תוספת...</div>
+                  <div className={styles.phoneHeaderTop}>
+                    <span className={styles.phoneLocChip}>אלנבי 42, תל אביב</span>
+                    <span className={styles.phoneProfile}>U</span>
+                  </div>
+                  <div className={styles.phoneTabs}>
+                    <span className={styles.phoneTabActive}>משלוח</span>
+                    <span className={styles.phoneTab}>איסוף</span>
+                  </div>
+                  <div className={styles.phoneSearch}>חיפוש בתפריט</div>
+                  <div className={styles.phoneBrand}>פיצרייה ורדה</div>
                 </div>
-                <div className={styles.phonePromo}>
-                  <b>שעת הבצק</b>
-                  <span>1+1 על קלאסיות עד 19:00</span>
+                <div className={styles.phoneInfoPill}>
+                  <span><b>4.8</b> ★</span>
+                  <span className={styles.phoneInfoSep}>·</span>
+                  <span className={styles.phoneInfoOpen}>פתוח</span>
+                  <span className={styles.phoneInfoSep}>·</span>
+                  <span>25-35 דק׳</span>
                 </div>
                 <div className={styles.phoneItem}>
                   <div className={styles.phoneItemImg}>
@@ -230,8 +245,9 @@ function Showcase() {
                   <div className={styles.phoneItemInfo}>
                     <div className={styles.phoneItemName}>מרגריטה</div>
                     <div className={styles.phoneItemDesc}>מוצרלה, בזיליקום</div>
+                    <div className={styles.phoneItemPrice}>₪58</div>
                   </div>
-                  <div className={styles.phoneItemPrice}>₪58</div>
+                  <span className={styles.phoneItemAdd}>+</span>
                 </div>
                 <div className={styles.phoneItem}>
                   <div className={styles.phoneItemImg}>
@@ -240,8 +256,9 @@ function Showcase() {
                   <div className={styles.phoneItemInfo}>
                     <div className={styles.phoneItemName}>4 גבינות</div>
                     <div className={styles.phoneItemDesc}>גורגונזולה, פרמז&apos;ן</div>
+                    <div className={styles.phoneItemPrice}>₪72</div>
                   </div>
-                  <div className={styles.phoneItemPrice}>₪72</div>
+                  <span className={styles.phoneItemAdd}>+</span>
                 </div>
               </div>
             </div>
@@ -269,7 +286,7 @@ function Features() {
             tag="חנות"
             heading="האפליקציה שלך, לא הרשימה של מישהו אחר."
             body="לוגו שלך, צבעים שלך, שם שלך, דומיין משלך (order.השם.co.il). הלקוח לא רואה אותנו ולא רואה אף אחד אחר. רק אותך."
-            decor="◐"
+            icon="store"
           />
 
           <WoltCard
@@ -278,7 +295,7 @@ function Features() {
             tag="תשלום"
             heading="Bit, אשראי, Apple Pay, Google Pay — באותו מסך."
             body="הלקוח לוחץ ׳שלם׳ בתוך החנות, ארנק התשלום נפתח לידו, מקיש PIN ב-Bit או טבעת אצבע ב-Apple Pay — והכסף בחשבון תוך 24 שעות. בלי הפניות, בלי iframe מוזר."
-            decor="◑"
+            icon="wallet"
           />
 
           <WoltCard
@@ -287,7 +304,7 @@ function Features() {
             tag="ביקורות"
             heading="הוא יקבל וואטסאפ. אתה תקבל את הכוכב החמישי."
             body="שעה אחרי המסירה, אנחנו שולחים לו לבד תזכורת לדרג. SMS, וואטסאפ או מייל — אתה בוחר. הכוכבים מצטברים בדשבורד שלך, ואתה עונה מאותו מסך."
-            decor="◒"
+            icon="star"
           />
 
           <WoltCard
@@ -296,7 +313,7 @@ function Features() {
             tag="מעקב"
             heading="הוא רואה איפה ההזמנה. אתה רואה איפה הוא."
             body="התקבלה ← בהכנה ← מוכנה ← בדרך, עדכון חי בלי לרענן. אפשר להציג ETA לדקה או רק לכתוב ׳תודה׳ — לבחירתך. עוזר להפחית טלפונים של ׳עוד כמה זמן?׳."
-            decor="◓"
+            icon="pin"
           />
 
           <WoltCard
@@ -304,8 +321,8 @@ function Features() {
             layout="decor-end"
             tag="וואטסאפ"
             heading="ההודעות מהמספר שלך. לא מאיזה +1."
-            body="חיבור אישי ל-iBot Chat. אישור הזמנה, יצא לדרך, בקשת ביקורת — אוטומטית מהמספר של החנות. חבילות מ-₪39 לאלפי הודעות. מייל ללא הגבלה, חינם."
-            decor="◔"
+            body="הודעות יוצאות מהמספר של החנות שלך. אישור הזמנה, יצא לדרך, בקשת ביקורת — אוטומטית. חבילות מ-₪39 לאלפי הודעות. מייל ללא הגבלה, חינם."
+            icon="chat"
           />
 
           <WoltCard
@@ -314,7 +331,7 @@ function Features() {
             tag="העלות האמיתית"
             heading="₪299 לחודש. נעול. לכל החיים."
             body="לא מעלים. לא הופכים אותך ל-tier-2 בעוד שנה. לא גובים אחוז שונה לפי חודש. רק חצי אחוז להזמנה (זה עמלת סליקה רגילה) ומייל חינם. וזהו."
-            decor="◕"
+            icon="coin"
           />
         </div>
 
@@ -323,7 +340,7 @@ function Features() {
           <MiniCell tag="שליחים" title="ניהול שליחים שלך" body="אזורי משלוח, ETA לכל אזור, הקצאה אוטומטית או ידנית." />
           <MiniCell tag="קמפיינים" title="פופאפים ובאנרים" body="מבצע בכניסה לחנות, באנר תמידי, או טריגר על שעות שיא." />
           <MiniCell tag="אנליטיקה" title="נתונים אמיתיים" body="שעות שיא, פריטים מובילים, AOV, אחוז חזרה של לקוחות." />
-          <MiniCell tag="API" title="Webhooks + REST" body="חיבור ל-iCount, לקופה, ל-Wix Restaurants, או לפיתוח שלך." />
+          <MiniCell tag="חיבורים" title="Webhooks + REST" body="זפייר, Make, קופות רושמות וכל מערכת חיצונית שמדברת HTTP — מתחברות בלי כאב ראש." />
           <MiniCell tag="עברית" title="RTL בלידה" body="תוכנן לעברית מהיום הראשון. חודשים, סטטוסים, מספרים — הכל." />
         </div>
       </div>
@@ -340,14 +357,14 @@ function WoltCard({
   tag,
   heading,
   body,
-  decor,
+  icon,
 }: {
   tone: WoltTone;
   layout?: WoltLayout;
   tag: string;
   heading: string;
   body: string;
-  decor: string;
+  icon: IconName;
 }) {
   const toneClass = {
     mist: styles.woltCardMist,
@@ -364,7 +381,7 @@ function WoltCard({
   return (
     <article className={`${styles.woltCard} ${toneClass} ${layoutClass}`}>
       <div className={styles.woltCardDecor} aria-hidden>
-        {decor}
+        <FeatureIcon name={icon} />
       </div>
       <div className={styles.woltCardBody}>
         <div className={styles.woltCardTag}>{tag}</div>
