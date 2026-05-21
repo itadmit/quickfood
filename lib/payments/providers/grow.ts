@@ -62,7 +62,9 @@ const CARD_BRAND_MAP: Record<string, string> = {
 
 interface GrowResponse<T = unknown> {
   err?: string;
-  status: string; // "1" = success, anything else = error
+  // Grow's API returns this as a NUMBER in some endpoints/responses and as a
+  // STRING in others — accept both. Truthy `1` (number or string) = success.
+  status: string | number;
   data?: T;
   message?: string;
 }
@@ -289,7 +291,7 @@ export class GrowProvider extends BasePaymentProvider {
         data: response.data,
       });
 
-      if (response.status === "1" && response.data) {
+      if (String(response.status) === "1" && response.data) {
         // SDK Wallet mode
         if (response.data.authCode) {
           return {
@@ -457,7 +459,7 @@ export class GrowProvider extends BasePaymentProvider {
 
       const response = await this.post<GrowResponse>("/approveTransaction", body);
 
-      if (response.status === "1") return { success: true };
+      if (String(response.status) === "1") return { success: true };
       return { success: false, error: response.message || response.err || "Approve failed" };
     } catch (error) {
       this.logError("acknowledgeCallback failed", error);
@@ -478,7 +480,7 @@ export class GrowProvider extends BasePaymentProvider {
 
       const response = await this.post<GrowResponse<RefundData>>("/refundTransaction", body);
 
-      if (response.status === "1") {
+      if (String(response.status) === "1") {
         return {
           success: true,
           providerRefundId: response.data?.refundTransactionId || req.providerTransactionId,
