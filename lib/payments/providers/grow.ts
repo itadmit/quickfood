@@ -287,8 +287,13 @@ export class GrowProvider extends BasePaymentProvider {
       // We compute the lines, verify they reconcile against `amount`, and
       // collapse to a single all-encompassing row when they don't — so the
       // wallet always opens even when itemization is imperfect.
+      // Per-row `catalogNumber` must NOT collide with the merchant's stored
+      // Grow catalog — when it does, Grow validates `price` against THEIR
+      // stored value (not what we send) and rejects with err 617. We seed
+      // with the order reference so each row's id is unique to this order
+      // and can't match a pre-existing SKU.
       const detailedItems = req.items.slice(0, 10).map((item, i) => ({
-        catalogNumber: item.sku || String(i + 1),
+        catalogNumber: item.sku || `qf-${req.orderReference}-${i + 1}`,
         quantity: item.quantity,
         price: this.formatAmount(item.price),
         itemDescription: this.sanitize(item.name, 80),
@@ -334,14 +339,7 @@ export class GrowProvider extends BasePaymentProvider {
         "pageField[email]": this.sanitize(req.customer.email, 80),
         cField1: this.sanitize(req.orderReference, 50),
         cField2: this.sanitize(req.tenantId, 50),
-        // productData is optional and Grow's server-side validator has been
-        // flaky about it — even when Σ(price × quantity) === sum exactly,
-        // we see err 617 ("סכום הכללי של העסקה אינו זהה…"). Suspected
-        // root cause: catalogNumber "1"/"2" collide with a stored merchant
-        // catalog whose price differs from ours. Skipping productData for
-        // now — Grow trusts the top-level `sum`. Receipts still show the
-        // amount; only the per-line breakdown is lost.
-        // productData,
+        productData,
       };
 
       if (maxInstallments > 1) body.maxPaymentNum = Math.min(maxInstallments, 12);
