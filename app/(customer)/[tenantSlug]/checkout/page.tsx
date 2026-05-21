@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { PaymentProvider } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { CustomerCheckout } from "@/components/customer/screens/CustomerCheckout";
@@ -14,18 +15,32 @@ export default async function CheckoutPage({
   const tenant = await resolveTenantBySlug(tenantSlug);
   if (!tenant) notFound();
 
-  const [settings, growConfig] = await Promise.all([
-    prisma.tenant.findUnique({
+  // Each query wrapped in its own try so one bad lookup doesn't kill the
+  // whole checkout page render. (Both are non-critical — checkout still
+  // works without them, just with sane defaults.)
+  let settings: { reviewsChannel: string; reviewsEnabled: boolean } | null = null;
+  let growConfig: { testMode: boolean; isActive: boolean } | null = null;
+  try {
+    settings = await prisma.tenant.findUnique({
       where: { id: tenant.id },
       select: { reviewsChannel: true, reviewsEnabled: true },
-    }),
-    prisma.paymentProviderConfig.findUnique({
+    });
+  } catch (err) {
+    console.error("[checkout/page] tenant settings lookup failed", err);
+  }
+  try {
+    growConfig = await prisma.paymentProviderConfig.findUnique({
       where: {
-        tenantId_provider: { tenantId: tenant.id, provider: "grow" },
+        tenantId_provider: {
+          tenantId: tenant.id,
+          provider: PaymentProvider.grow,
+        },
       },
       select: { testMode: true, isActive: true },
-    }),
-  ]);
+    });
+  } catch (err) {
+    console.error("[checkout/page] grow config lookup failed", err);
+  }
 
   const requireEmail =
     !!settings?.reviewsEnabled && settings.reviewsChannel === "email";
