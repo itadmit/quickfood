@@ -1075,6 +1075,38 @@
   margin-bottom: 18px;
 }
 
+/* Optional add-on block at the bottom of the pricing card body — for
+   WhatsApp/SMS packs and other things that aren't part of the base
+   plan but matter for the buying decision. */
+.priceSingleAddon {
+  margin-top: 28px;
+  padding: 20px 22px;
+  border-radius: 16px;
+  background: var(--cream);
+  border: 1px solid var(--line);
+}
+.priceSingleAddonTag {
+  display: inline-block;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-bottom: 8px;
+}
+.priceSingleAddonBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.priceSingleAddonBody strong {
+  font-family: var(--font-rubik), "Rubik", sans-serif;
+  font-weight: 800; font-size: 16px;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+.priceSingleAddonBody span {
+  font-size: 14px; line-height: 1.6; color: var(--ink-2);
+}
+
 /* ─── FAQ ───────────────────────────────────────────────── */
 .faq { background: var(--cream-2); }
 .faqGrid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 64px; }

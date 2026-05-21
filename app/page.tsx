@@ -22,9 +22,9 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "QuickFood — מסעדה אונליין בשתי לחיצות",
+  title: "QuickFood — אפליקציית הזמנות עצמאית למסעדות",
   description:
-    "פלטפורמת SaaS שמרימה למסעדה אפליקציית הזמנות + דשבורד ניהול תוך פחות משעה. בלי עמלות פר הזמנה, בלי אגרגטור, רק הלקוחות שלך.",
+    "פיצרייה, שווארמייה, המבורגרייה או סושייה — חנות אונליין משלך, בעיצוב שלך, בלי לחלוק עם החברות הגדולות. ₪299 לחודש + 0.5% להזמנה. 7 ימים על חשבוננו.",
 };
 
 export default function LandingPage() {
@@ -32,12 +32,9 @@ export default function LandingPage() {
     <div className={`${styles.root} ${rubik.variable} ${mono.variable}`}>
       <Nav />
       <Hero />
-      <Marquee />
-      <Problem />
+      <Math />
+      <Features />
       <Showcase />
-      <Bento />
-      <FoodGallery />
-      <Rotator />
       <Pricing />
       <Faq />
       <FinalCta />
@@ -67,57 +64,45 @@ function Nav() {
 function Hero() {
   return (
     <header className={styles.hero}>
-      <div className={styles.heroDecoPhoto} aria-hidden="true">
-        <div className={styles.heroDecoPhotoInner}>
-          <Image
-            src="/img/landing/pizza-margherita.jpg"
-            alt=""
-            fill
-            sizes="(max-width: 1100px) 360px, 520px"
-            priority
-          />
-        </div>
-      </div>
-
       <div className={styles.container}>
         <div className={styles.eyebrow}>
           <span className={styles.eyebrowDot}>חדש</span>
-          פלטפורמה לעסקי אוכל ישראלים
+          לפיצרייה, שווארמייה, המבורגרייה, סושייה — ולכל מי שמכין אוכל ומוסר אותו
         </div>
 
         <h1 className={styles.headline}>
-          <span className={styles.stack}>המסעדה שלך</span>
-          <span className={styles.stack}>אונליין</span>
-          <span className={styles.stack}><em>תוך 11 דקות.</em></span>
+          <span className={styles.stack}>הלקוחות שלך.</span>
+          <span className={styles.stack}>ההזמנות שלך.</span>
+          <span className={styles.stack}><em>הכסף שלך.</em></span>
           <span className={styles.headlineSmall}>
-            אפליקציית הזמנות, דשבורד ניהול ותפריט עם תמונות — מוכנים לפני שהפיצה הראשונה יוצאת מהתנור. בלי אגרגטור, בלי עמלה פר הזמנה.
+            חנות אונליין משלך, בעיצוב שלך, על דומיין משלך. בלי לחלוק עם החברות הגדולות את השליש שאתה מרוויח על כל פיצה.
           </span>
         </h1>
 
         <div className={styles.heroMeta}>
           <div className={styles.heroCta}>
             <Link href="/signup" className={`${styles.btn} ${styles.btnTomato} ${styles.btnLg}`}>
-              התחל ניסיון של 14 יום
+              QuickFood, פתח לי חנות
             </Link>
             <a
-              href="#product"
+              href="#pricing"
               className={`${styles.btn} ${styles.btnGhost} ${styles.btnGhostOutline} ${styles.btnLg}`}
             >
-              צפה בדמו <IcoArrowLeft c="currentColor" s={14} />
+              כמה זה עולה <IcoArrowLeft c="currentColor" s={14} />
             </a>
           </div>
           <div className={styles.heroStats}>
             <div>
+              <div className={styles.heroStatN}>₪299</div>
+              <div className={styles.heroStatL}>לחודש. נעול לכל החיים</div>
+            </div>
+            <div>
+              <div className={styles.heroStatN}>0.5%</div>
+              <div className={styles.heroStatL}>פר הזמנה. לא שלושים</div>
+            </div>
+            <div>
               <div className={styles.heroStatN}>11 דק׳</div>
-              <div className={styles.heroStatL}>מאפס לאוויר</div>
-            </div>
-            <div>
-              <div className={styles.heroStatN}>0%</div>
-              <div className={styles.heroStatL}>עמלת אגרגטור</div>
-            </div>
-            <div>
-              <div className={styles.heroStatN}>24/7</div>
-              <div className={styles.heroStatL}>תמיכה בעברית</div>
+              <div className={styles.heroStatL}>מהרישום ועד חנות חיה</div>
             </div>
           </div>
         </div>
@@ -128,54 +113,37 @@ function Hero() {
   );
 }
 
-/* ─── MARQUEE ────────────────────────────────────────────── */
-function Marquee() {
-  return (
-    <div className={styles.marquee}>
-      <div className={styles.marqueeTrack}>
-        <span>
-          <em>פיצריות.</em> <span className={styles.marqueeDot}>●</span> פלאפליות.{" "}
-          <span className={styles.marqueeDot}>●</span> <em>המבורגריות.</em>{" "}
-          <span className={styles.marqueeDot}>●</span> סושיה.{" "}
-          <span className={styles.marqueeDot}>●</span> <em>גלידריות.</em>{" "}
-          <span className={styles.marqueeDot}>●</span> בייקריס.{" "}
-          <span className={styles.marqueeDot}>●</span> <em>פיצריות.</em>{" "}
-          <span className={styles.marqueeDot}>●</span> פלאפליות.{" "}
-          <span className={styles.marqueeDot}>●</span> <em>המבורגריות.</em>{" "}
-          <span className={styles.marqueeDot}>●</span> סושיה.{" "}
-          <span className={styles.marqueeDot}>●</span> <em>גלידריות.</em>{" "}
-          <span className={styles.marqueeDot}>●</span> בייקריס.
-        </span>
-      </div>
-    </div>
-  );
-}
-
-/* ─── PROBLEM ────────────────────────────────────────────── */
-function Problem() {
+/* ─── MATH (the comparison) ──────────────────────────────── */
+function Math() {
   return (
     <section className={styles.section}>
       <div className={styles.container}>
-        <div className={styles.sectionEyebrow}>למה QuickFood</div>
+        <div className={styles.sectionEyebrow}>המתמטיקה</div>
         <h2 className={styles.sectionTitle}>
-          תוויות משלוח, גוגל שיטס וקבלות. <em>הגיע הזמן להפסיק.</em>
+          הלקוח שילם 100 שקל. <em>למי הולך השליש?</em>
         </h2>
 
         <div className={styles.problemGrid}>
           <div className={`${styles.problemCard} ${styles.problemCardPeach}`}>
-            <div className={styles.problemNum}>01</div>
-            <h3>עמלות שאוכלות שליש.</h3>
-            <p>אגרגטורים גדולים גובים 25%–30% מכל הזמנה. ב-QuickFood אתה מקבל הזמנות ישירות מהלקוחות שלך, בלי מתווך — ומשלם תוכנית חודשית קבועה.</p>
+            <div className={styles.problemNum}>הפורטלים</div>
+            <h3>30 שקל הולכים להם.</h3>
+            <p>
+              החברות הגדולות שמרכזות מסעדות גובות שליש מכל הזמנה. בנוסף תשלם להן בשביל להופיע ראשון, ולקבל לוגו רגיל, ולקבל פוש להזמנה הבאה. הלקוחות, אגב, שלהן.
+            </p>
           </div>
           <div className={`${styles.problemCard} ${styles.problemCardMist}`}>
-            <div className={styles.problemNum}>02</div>
-            <h3>שורה ברשימה — או חנות משלך.</h3>
-            <p>באגרגטור אתה עוד אחד מ-מאה. עם QuickFood הלקוח נוחת באפליקציה עם הלוגו שלך, בצבעים שלך, בשם שלך. הקשר הוא בינך לבינו.</p>
+            <div className={styles.problemNum}>QuickFood</div>
+            <h3>חצי שקל. ואפס שטויות.</h3>
+            <p>
+              ₪299 לחודש על הפלטפורמה (נעול לכל החיים), פלוס חצי אחוז עמלת סליקה לכל הזמנה. כל השאר נשאר אצלך. הלקוחות, ההיסטוריה, הצבעים, הלוגו — שלך.
+            </p>
           </div>
           <div className={`${styles.problemCard} ${styles.problemCardLilac}`}>
-            <div className={styles.problemNum}>03</div>
-            <h3>הנתונים אצלך, לא אצל מישהו אחר.</h3>
-            <p>הפלטפורמות שומרות לעצמן את הלקוחות. אצלנו הנתונים שלך — ההיסטוריה, הטלפונים, ההעדפות — נשארים אצלך, ולך יש מה לעשות איתם.</p>
+            <div className={styles.problemNum}>בסוף חודש</div>
+            <h3>1,000 הזמנות = ₪5,000 בכיס.</h3>
+            <p>
+              אצלם 1,000 הזמנות של ₪100 = ₪30,000 ירדו לך. אצלנו אותן אלף הזמנות = ₪500 עמלת סליקה. ההפרש קונה לך חודש שלם של תוכנית עם תוספת של חמש כפול חמש.
+            </p>
           </div>
         </div>
       </div>
@@ -191,18 +159,18 @@ function Showcase() {
         <div className={styles.showcaseHead}>
           <div>
             <div className={`${styles.sectionEyebrow} ${styles.sectionEyebrowBasil}`}>המוצר</div>
-            <h2 className={styles.sectionTitle}>שני מוצרים. <em>סיפור אחד.</em></h2>
+            <h2 className={styles.sectionTitle}>שני צדדים. <em>אותו סיפור.</em></h2>
           </div>
           <p className={styles.sectionLede}>
-            אפליקציית לקוח שמרגישה כמו של הגדולים, ודשבורד ניהול שכל אחד יכול לתפעל — מהמנהל ועד עובד המשמרת. הכל מובנה לרוץ מהיום הראשון.
+            אפליקציה שהלקוח מרגיש בה כמו בגדולות, ודשבורד שגם עובד המשמרת מצליח לתפעל. הכל מוכן מהיום הראשון — בלי טכנאי, בלי הגדרות, בלי כאב ראש.
           </p>
         </div>
 
         <div className={styles.showcaseGrid}>
           <div className={`${styles.showcaseCard} ${styles.showcaseCardDark}`}>
-            <div className={styles.showcaseTag}>למסעדה</div>
-            <h3>דשבורד שמרגיש כמו קוקפיט.</h3>
-            <p>קבלת הזמנות בלחיצה, מעקב חי, ניהול תפריט, סטטיסטיקות אמת ושליחים. הכל ממקום אחד, מותאם לטאבלט שעומד ליד הקופה.</p>
+            <div className={styles.showcaseTag}>הדשבורד שלך</div>
+            <h3>קופיט אחד. כל מה שקורה במסעדה.</h3>
+            <p>הזמנות חדשות מקפיצות לקנבן, אתה לוחץ ׳מתחילים׳, הלקוח כבר מקבל וואטסאפ. סטטוסים, שליחים, תפריט, ניתוחי מכירות — הכל כאן. עובד גם על טאבלט שעומד ליד הקופה.</p>
             <div className={styles.showcaseFeatures}>
               <span className={styles.featChip}>קנבן הזמנות</span>
               <span className={styles.featChip}>תפריט drag-n-drop</span>
@@ -240,9 +208,9 @@ function Showcase() {
           </div>
 
           <div className={styles.showcaseCard}>
-            <div className={styles.showcaseTag}>ללקוח</div>
-            <h3>חוויה בטעם של עוד.</h3>
-            <p>אפליקציה מהירה, יפה, ושלך — לא עוד פיצרייה ברשימה של אגרגטור.</p>
+            <div className={styles.showcaseTag}>הלקוח שלך</div>
+            <h3>חוויה שמרגישה כמו הגדולים. רק שלך.</h3>
+            <p>אפליקציה מהירה, צבעים שלך, לוגו שלך. לא עוד שורה ברשימה של פורטל. הלקוח חוזר ישר לכתובת שלך, לא דרך אף אחד אחר.</p>
 
             <div className={styles.phoneMock}>
               <div className={styles.phoneScreen}>
@@ -285,88 +253,79 @@ function Showcase() {
   );
 }
 
-/* ─── FEATURES — WOLT-STYLE STACKED CARDS ────────────────── */
-function Bento() {
+/* ─── FEATURES ────────────────────────────────────────── */
+function Features() {
   return (
     <section id="features" className={styles.section}>
       <div className={styles.container}>
-        <div className={styles.sectionEyebrow}>פיצ&apos;רים</div>
+        <div className={styles.sectionEyebrow}>מה מקבלים</div>
         <h2 className={styles.sectionTitle}>
-          כל מה שצריך כדי לקבל הזמנות. <em>וכל מה שלא חשבת שצריך.</em>
+          כל מה שצריך כדי למכור. <em>בלי שום דבר שלא.</em>
         </h2>
 
         <div className={styles.woltStack}>
-          {/* Card 1 — wide hero with the illustration peeking from the
-              bottom-end. Sets the rhythm. */}
           <WoltCard
             tone="mist"
-            layout="wide"
-            tag="ההזמנות שלך"
-            heading="ישירות מהלקוח אליך."
-            body="בלי אגרגטור באמצע. הלקוח נוחת באפליקציה שלך עם הלוגו, השם והצבעים שלך, מזמין, ואתה רואה את ההזמנה בדשבורד תוך שניות. הקשר הוא בינך לבינו."
-            decor="📦"
+            layout="decor-end"
+            tag="חנות"
+            heading="האפליקציה שלך, לא הרשימה של מישהו אחר."
+            body="לוגו שלך, צבעים שלך, שם שלך, דומיין משלך (order.השם.co.il). הלקוח לא רואה אותנו ולא רואה אף אחד אחר. רק אותך."
+            decor="◐"
           />
 
-          {/* Card 2 — decor on the START side, payment story */}
           <WoltCard
             tone="sand"
             layout="decor-start"
-            tag="תשלום מובנה"
-            heading="Bit, אשראי, Apple Pay, Google Pay."
-            body="ארנק התשלום של Grow רץ inline בתוך החנות שלך — אין הפניה לעמוד תשלום חיצוני, אין iframe מוזר. הלקוח רואה את הסל ואת כפתור התשלום באותו עמוד. הכסף בחשבון העסק תוך 24 שעות."
-            decor="💳"
+            tag="תשלום"
+            heading="Bit, אשראי, Apple Pay, Google Pay — באותו מסך."
+            body="הלקוח לוחץ ׳שלם׳ בתוך החנות, ארנק התשלום נפתח לידו, מקיש PIN ב-Bit או טבעת אצבע ב-Apple Pay — והכסף בחשבון תוך 24 שעות. בלי הפניות, בלי iframe מוזר."
+            decor="◑"
           />
 
-          {/* Card 3 — decor on the END side, reviews */}
           <WoltCard
             tone="peach"
             layout="decor-end"
             tag="ביקורות"
-            heading="תזכורת אוטומטית בערוץ שלך."
-            body="שעה אחרי שההזמנה מסומנת ׳נמסרה׳ — תזכורת אוטומטית ב-SMS, WhatsApp או Email (לבחירתך) עם לינק לדירוג. הכוכבים מצטברים אצלך, אתה מגיב מהדשבורד."
-            decor="⭐"
+            heading="הוא יקבל וואטסאפ. אתה תקבל את הכוכב החמישי."
+            body="שעה אחרי המסירה, אנחנו שולחים לו לבד תזכורת לדרג. SMS, וואטסאפ או מייל — אתה בוחר. הכוכבים מצטברים בדשבורד שלך, ואתה עונה מאותו מסך."
+            decor="◒"
           />
 
-          {/* Card 4 — wide hero again, live tracking */}
           <WoltCard
             tone="lilac"
-            layout="wide"
-            tag="מעקב חי"
-            heading="הלקוח רואה איפה ההזמנה — בזמן אמת."
-            body="התקבלה ← בהכנה ← מוכנה ← בדרך. עדכון בלייב בלי refresh. אפשר לבחור אם להציג ETA או רק ׳תודה רבה׳ — toggle בדשבורד."
-            decor="🛵"
+            layout="decor-start"
+            tag="מעקב"
+            heading="הוא רואה איפה ההזמנה. אתה רואה איפה הוא."
+            body="התקבלה ← בהכנה ← מוכנה ← בדרך, עדכון חי בלי לרענן. אפשר להציג ETA לדקה או רק לכתוב ׳תודה׳ — לבחירתך. עוזר להפחית טלפונים של ׳עוד כמה זמן?׳."
+            decor="◓"
           />
 
-          {/* Card 5 — decor on the START side, WhatsApp */}
           <WoltCard
             tone="sand"
-            layout="decor-start"
-            tag="WhatsApp"
-            heading="הודעות וואטסאפ מהמספר שלך."
-            body="חיבור ל-iBot Chat — מספר משלך, לא משותף עם מסעדות אחרות. אישור הזמנה, יצא לדרך, ביקורת — הכל אוטומטי מאותה שיחה."
-            decor="💬"
+            layout="decor-end"
+            tag="וואטסאפ"
+            heading="ההודעות מהמספר שלך. לא מאיזה +1."
+            body="חיבור אישי ל-iBot Chat. אישור הזמנה, יצא לדרך, בקשת ביקורת — אוטומטית מהמספר של החנות. חבילות מ-₪39 לאלפי הודעות. מייל ללא הגבלה, חינם."
+            decor="◔"
           />
 
-          {/* Card 6 — midnight anchor, decor wide */}
           <WoltCard
             tone="midnight"
-            layout="wide"
-            tag="0% עמלה פר הזמנה"
-            heading="תוכנית חודשית קבועה. כל השאר — שלך."
-            body="האגרגטורים גובים 25%–30% מכל הזמנה. ב-QuickFood משלמים תוכנית חודשית קבועה ושומרים 100% מהמכירות. רק עמלת סליקת אשראי רגילה (~1.5%-2%) — תקני בכל המערכות."
-            decor="✦"
+            layout="decor-end"
+            tag="העלות האמיתית"
+            heading="₪299 לחודש. נעול. לכל החיים."
+            body="לא מעלים. לא הופכים אותך ל-tier-2 בעוד שנה. לא גובים אחוז שונה לפי חודש. רק חצי אחוז להזמנה (זה עמלת סליקה רגילה) ומייל חינם. וזהו."
+            decor="◕"
           />
         </div>
 
-        {/* Secondary feature grid — quieter, for everything the stacked
-            cards don't deserve full attention for. */}
         <div className={styles.miniGrid}>
-          <MiniCell tag="מולטי-סניף" title="סניפים מרובים" body="שעות, דמי משלוח וטיפים נפרדים לכל סניף." />
-          <MiniCell tag="שליחים" title="ניהול שליחים" body="אזורי משלוח על מפה, ETA לכל אזור, הקצאה אוטו׳." />
-          <MiniCell tag="קמפיינים" title="פופאפים ובאנרים" body="הצג מבצע בכניסה לחנות, או באנר תמידי במסך הבית." />
-          <MiniCell tag="אנליטיקה" title="נתונים אמיתיים" body="שעות שיא, פריטים מובילים, ערך הזמנה ממוצע." />
-          <MiniCell tag="API" title="Webhooks + REST" body="חבר לקופה, ל-iCount או לכל מערכת חיצונית." />
-          <MiniCell tag="RTL" title="עברית מנצחת" body="RTL מלא, ניקוד, חודשים בעברית, מספרים tabular." />
+          <MiniCell tag="סניפים" title="מולטי-סניף" body="שעות, דמי משלוח ועמלת שירות נפרדים לכל סניף." />
+          <MiniCell tag="שליחים" title="ניהול שליחים שלך" body="אזורי משלוח, ETA לכל אזור, הקצאה אוטומטית או ידנית." />
+          <MiniCell tag="קמפיינים" title="פופאפים ובאנרים" body="מבצע בכניסה לחנות, באנר תמידי, או טריגר על שעות שיא." />
+          <MiniCell tag="אנליטיקה" title="נתונים אמיתיים" body="שעות שיא, פריטים מובילים, AOV, אחוז חזרה של לקוחות." />
+          <MiniCell tag="API" title="Webhooks + REST" body="חיבור ל-iCount, לקופה, ל-Wix Restaurants, או לפיתוח שלך." />
+          <MiniCell tag="עברית" title="RTL בלידה" body="תוכנן לעברית מהיום הראשון. חודשים, סטטוסים, מספרים — הכל." />
         </div>
       </div>
     </section>
@@ -435,128 +394,79 @@ function MiniCell({
   );
 }
 
-/* ─── FOOD GALLERY ───────────────────────────────────────── */
-const GALLERY: { src: string; label: string; alt: string }[] = [
-  { src: "/img/landing/pizza-margherita.jpg", label: "פיצה",   alt: "פיצה מרגריטה" },
-  { src: "/img/landing/burger.jpg",           label: "בורגר",  alt: "המבורגר כפול" },
-  { src: "/img/landing/pasta.jpg",            label: "פסטה",   alt: "פטוצ׳יני" },
-  { src: "/img/landing/sushi.jpg",            label: "סושי",   alt: "סושי סלמון" },
-  { src: "/img/landing/hummus.jpg",           label: "מזרחי",  alt: "מנה מזרחית" },
-  { src: "/img/landing/pizza-cheese.jpg",     label: "מאפים", alt: "פיצה גבינות חמה" },
-  { src: "/img/landing/icecream.jpg",         label: "קינוח",  alt: "קינוח קר" },
-  { src: "/img/landing/kitchen.jpg",          label: "מטבח",   alt: "מטבח" },
-];
-
-function FoodGallery() {
-  return (
-    <section className={styles.foodGallery}>
-      <div className={styles.container}>
-        <div className={styles.foodGalleryHead}>
-          <h3>
-            ממרגריטה ועד שווארמה. <em>תפריט אחד.</em>
-          </h3>
-          <p>
-            QuickFood לא יודע מה אתה מבשל — הוא יודע איך למכור את זה.
-            הנה מי כבר משתמש (או בקרוב יהיה).
-          </p>
-        </div>
-
-        <div className={styles.foodGalleryRow}>
-          {GALLERY.map((g) => (
-            <div key={g.src} className={styles.foodChip}>
-              <Image src={g.src} alt={g.alt} fill sizes="(max-width: 900px) 25vw, 12vw" />
-              <div className={styles.foodChipLabel}>{g.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─── ROTATING WORDS ─────────────────────────────────────── */
-function Rotator() {
-  return (
-    <section className={styles.rotatorSection}>
-      <div className={styles.container}>
-        <span className={styles.rotatorPre}>בנוי עבור </span>
-        <div className={styles.rotatorStage}>
-          <span>פיצריות.</span>
-          <span>פלאפליות.</span>
-          <span>סושיה.</span>
-          <span>בייקריס.</span>
-          <span>גלידריות.</span>
-        </div>
-        <div className={styles.rotatorPost}>
-          בשורה התחתונה, אם אתה מכין אוכל ורוצה למכור אותו אונליין — QuickFood כנראה הכלי שלך.
-        </div>
-      </div>
-    </section>
-  );
-}
-
 /* ─── PRICING ───────────────────────────────────────────── */
 function Pricing() {
   const features = [
-    "אפליקציית לקוח ממותגת",
-    "דשבורד ניהול הזמנות מלא",
-    "תשלום inline: Bit / אשראי / Apple Pay / Google Pay",
-    "מעקב הזמנה חי + סטטוס SSE",
-    "ביקורות + תזכורת אוטומטית (SMS / WhatsApp / Email)",
-    "WhatsApp דרך iBot Chat (מספר משלך)",
+    "אפליקציית לקוח ממותגת על דומיין שלך",
+    "דשבורד ניהול הזמנות, תפריט ושליחים",
+    "תשלום inline — Bit, אשראי, Apple Pay, Google Pay",
+    "מעקב הזמנה חי + סטטוס בלייב",
+    "ביקורות אוטומטיות עם תזכורת",
+    "וואטסאפ מהמספר שלך (דרך iBot Chat)",
+    "מייל ללא הגבלה. חינם",
     "קמפיינים — פופאפים ובאנרים",
-    "ניהול שליחים + אזורי משלוח",
-    "אנליטיקה מתקדמת",
-    "סניפים מרובים",
-    "REST API + Webhooks",
-    "תמיכה בוואטסאפ",
+    "אזורי משלוח עם ETA לכל אזור",
+    "אנליטיקה — שעות שיא, פריטים מובילים, חוזרים",
+    "מולטי-סניף עם הגדרות נפרדות",
+    "REST API + Webhooks לחיבור לקופה",
   ];
   return (
     <section id="pricing" className={styles.section}>
       <div className={styles.container}>
         <div className={styles.pricingHead}>
-          <div className={styles.sectionEyebrow}>תמחור</div>
-          <h2 className={styles.sectionTitle}>פשוט. שקוף. <em>בלי הפתעות.</em></h2>
+          <div className={styles.sectionEyebrow}>כמה זה עולה</div>
+          <h2 className={styles.sectionTitle}>
+            תוכנית אחת. <em>נעולה לכל החיים.</em>
+          </h2>
           <p className={styles.sectionLede}>
-            תוכנית אחת לכולם, ועמלת סליקה נמוכה במקום אחוזים של אגרגטור. כל מה שיש לנו — כלול.
+            בלי טיירים, בלי הפתעות בעוד שנה, בלי שדרוגי קומה כפויים. אותו מחיר היום, אותו מחיר בעוד עשר שנים.
           </p>
         </div>
 
         <div className={styles.priceSingleWrap}>
           <article className={styles.priceSingle}>
             <div className={styles.priceSingleHead}>
-              <div className={styles.priceSingleTag}>תוכנית יחידה</div>
+              <div className={styles.priceSingleTag}>תוכנית יחידה · נעולה</div>
               <div className={styles.priceSingleAmounts}>
                 <div className={styles.priceSingleAmount}>
                   <span className={styles.priceSingleNum}>₪299</span>
                   <span className={styles.priceSingleUnit}>/ חודש</span>
                 </div>
-                <div className={styles.priceSingleSub}>+ מע״מ</div>
+                <div className={styles.priceSingleSub}>+ מע״מ. נעול לכל החיים.</div>
               </div>
               <div className={styles.priceSingleFee}>
                 <span className={styles.priceSingleFeeNum}>0.5%</span>
                 <span className={styles.priceSingleFeeLabel}>
                   עמלת סליקה לכל הזמנה
-                  <small> + מע״מ</small>
+                  <small> + מע״מ. בערך כמו עמלת כרטיס אשראי רגילה.</small>
                 </span>
               </div>
               <Link
                 href="/signup"
                 className={`${styles.btn} ${styles.btnLg} ${styles.btnInk} ${styles.btnFull}`}
               >
-                התחל ניסיון של 7 ימים <IcoArrowLeft c="currentColor" s={14} />
+                QuickFood, פתח לי חנות <IcoArrowLeft c="currentColor" s={14} />
               </Link>
               <div className={styles.priceSingleNote}>
-                7 ימים חינם · בלי כרטיס אשראי · בטל מתי שתרצה
+                7 ימים על חשבוננו · בלי כרטיס אשראי · בלי שיחת מכירה
               </div>
             </div>
             <div className={styles.priceSingleBody}>
-              <div className={styles.priceSingleIncluded}>כלול בתוכנית:</div>
+              <div className={styles.priceSingleIncluded}>כלול במחיר:</div>
               <ul className={styles.priceFeatures}>
                 {features.map((f) => (
                   <li key={f}>{f}</li>
                 ))}
               </ul>
+              <div className={styles.priceSingleAddon}>
+                <div className={styles.priceSingleAddonTag}>אופציונלי</div>
+                <div className={styles.priceSingleAddonBody}>
+                  <strong>חבילות וואטסאפ + SMS מ-₪39.</strong>
+                  <span>
+                    קונים פעם אחת, נשלף אוטומטית לאישור הזמנה, יצא לדרך, ובקשות ביקורת. מייל כבר חינם בלי הגבלה.
+                  </span>
+                </div>
+              </div>
             </div>
           </article>
         </div>
@@ -588,55 +498,61 @@ function Faq() {
             <details className={styles.faqItem} open>
               <summary>תוך כמה זמן אני באוויר?</summary>
               <p>
-                בממוצע 11 דקות מהרגע שאתה נרשם ועד שיש לך אפליקציה ודשבורד עובדים, עם תפריט בסיסי, חיבור Grow לתשלום וכתובת לשתף. ניסיון של 7 ימים בלי כרטיס אשראי. אם אתה רוצה ליווי אישי בהקמה — זה בחינם בכל התוכניות.
+                בערך 11 דקות. נרשמים, בוחרים צבעים ולוגו, מקלידים תפריט בסיסי, מחברים את חשבון התשלום — ויש לך כתובת לשתף בוואטסאפ. ליווי אישי בהקמה — חינם, פשוט תפנה אלינו.
               </p>
             </details>
             <details className={styles.faqItem}>
-              <summary>איך זה שאין עמלה פר הזמנה?</summary>
+              <summary>אז מה זה ה-0.5%?</summary>
               <p>
-                אנחנו לא אגרגטור. אתה משלם תוכנית חודשית קבועה, ובמקום זה אתה שומר 100% מהמכירות. כן יש עמלת סליקה רגילה של חברת האשראי (כ-1.5%-2%) שזה תקני בכל המערכות, ויורדת ישירות ב-Grow.
+                זו עמלת הסליקה שאנחנו גובים על כל הזמנה — מה ששלמה לחברת האשראי שלך פלוס המעט שלנו על הפעולה. ביחס לשליש שגובים אצל הגדולים, זה בשורה התחתונה גרושים על כל הזמנה. הלקוח שלם 100 ש״ח? אצלנו חמישים אגורות יורדו לך.
               </p>
             </details>
             <details className={styles.faqItem}>
-              <summary>איזה אמצעי תשלום נתמכים בחנות?</summary>
+              <summary>איזה אמצעי תשלום הלקוח רואה?</summary>
               <p>
-                Bit, כרטיס אשראי, Apple Pay, Google Pay — כולם רצים inline בתוך המסך של החנות שלך דרך ה-SDK של Grow. אין הפניה לעמוד תשלום חיצוני, אין שובר שמופיע ב-iframe. הלקוח רואה את הסל ואת כפתור התשלום באותו עמוד.
+                Bit, כרטיס אשראי, Apple Pay, Google Pay. כולם נפתחים בתוך המסך של החנות שלך — בלי דפים חיצוניים, בלי iframe-ים שמרגישים פושרים. אתה גם בוחר בדשבורד איזה אמצעי יהיה ברירת מחדל ראשונה.
               </p>
             </details>
             <details className={styles.faqItem}>
-              <summary>איך אני שולח SMS / WhatsApp ללקוחות?</summary>
+              <summary>מה עם וואטסאפ וSMS?</summary>
               <p>
-                SMS מובנה — קונים בלוק קרדיטים, נשלף לאישור הזמנה, יצא לדרך, ובקשות ביקורת. WhatsApp דרך חיבור ל-iBot Chat (מספר שלך, לא משותף). שני הערוצים נשלפים מאותו pool של קרדיטים.
+                מייל אנחנו שולחים בלי הגבלה, חינם. וואטסאפ ו-SMS — חבילות שמתחילות מ-₪39, ונשלפות אוטומטית לאישור הזמנה, יצאה לדרך, וביקורת. הוואטסאפ עובד מהמספר שלך (דרך iBot Chat), לא ממספר משותף.
               </p>
             </details>
             <details className={styles.faqItem}>
-              <summary>אספים ביקורות מהלקוחות?</summary>
+              <summary>אוספים ביקורות אוטומטית?</summary>
               <p>
-                כן. שעה אחרי שהזמנה מסומנת "נמסרה" אנחנו שולחים תזכורת אוטומטית בערוץ שתבחר (SMS / WhatsApp / Email) עם לינק להשארת דירוג. הביקורות נשארות אצלך — דירוג ממוצע, כוכבים, ותגובות שאתה כותב.
+                כן. שעה אחרי שהזמנה סומנה ׳נמסרה׳, הלקוח מקבל הודעה (וואטסאפ / SMS / מייל — אתה בוחר) עם לינק להשארת דירוג. הכוכבים מצטברים בדשבורד שלך, ואתה עונה על תגובות מאותו מסך.
               </p>
             </details>
             <details className={styles.faqItem}>
-              <summary>אני יכול לחבר את זה לקופה הקיימת שלי?</summary>
+              <summary>אפשר לחבר לקופה הקיימת?</summary>
               <p>
-                בכל התוכניות יש REST API מלא + webhooks יוצאים על כל אירוע (order.created, order.status_changed, וכו׳). אתה יכול לחבר את QuickFood ל-iCount, Wix Restaurants או לכל קופה אחרת. אינטגרציות מוכנות-מראש ל-iCount ול-idani בתכנון לרבעון הקרוב.
+                כן. REST API מלא + Webhooks יוצאים על כל אירוע (הזמנה חדשה, שינוי סטטוס, וכו׳). מתחבר ל-iCount, Wix Restaurants, או לכל מערכת אחרת. אינטגרציות built-in ל-iCount ו-idani בתכנון לרבעון הקרוב.
               </p>
             </details>
             <details className={styles.faqItem}>
-              <summary>מה עם משלוחים?</summary>
+              <summary>ואיך זה עובד עם משלוחים?</summary>
               <p>
-                יש לך שתי אפשרויות: לנהל שליחים שלך דרך מודול השליחים שלנו (כלול ב-Growth + Pro), או להתחבר לספקי משלוחים חיצוניים. אזורי משלוח, ETA לכל אזור ודמי משלוח שונים — הכל מוגדר בדשבורד.
+                שתי אפשרויות. אחת — מנהלים שליחים שלך דרך המודול שלנו (כלול בתוכנית). שתיים — מתחברים לספק חיצוני. אזורי משלוח, ETA לאזור, דמי משלוח שונים — הכל בדשבורד.
               </p>
             </details>
             <details className={styles.faqItem}>
-              <summary>הלקוח רואה דף תודה גנרי או מעקב מלא?</summary>
+              <summary>הלקוח רואה דף תודה גנרי או מסך מעקב?</summary>
               <p>
-                בחירה שלך. בדשבורד יש toggle בין &quot;קבלה פשוטה&quot; (כמו אי-קומרס רגיל) לבין &quot;מעקב חי&quot; (timeline בזמן אמת + ETA + פרטי המסעדה). אם לא תרצה לחשוף ETA — תכבה.
+                לבחירתך. יש toggle בדשבורד — קבלה פשוטה כמו אתר אי-קומרס רגיל, או מסך מעקב חי עם ETA, סטטוס, ופרטי המסעדה. אם לא רוצה לחשוף זמני הכנה — מכבים.
               </p>
             </details>
             <details className={styles.faqItem}>
-              <summary>אני יכול לקבל את הקוד?</summary>
+              <summary>מה אם בעוד שנה תעלו לי את המחיר?</summary>
               <p>
-                בתוכנית Enterprise אנחנו מציעים אפשרות הוצאה מלאה של הקוד והנתונים, וגם אפשרות לאפליקציה מותאמת ב-App Store בשם שלך.
+                לא נעלה. המחיר נעול לכל החיים — ₪299 + מע״מ, וחצי אחוז על הזמנה. אם אנחנו נשנה את התמחור בעתיד, זה יחול רק על מי שייכנס אחרי השינוי. אתה תישאר במחיר ההצטרפות שלך.
+              </p>
+            </details>
+            <details className={styles.faqItem}>
+              <summary>אני יכול לקבל את הקוד או אפליקציה משלי באפסטור?</summary>
+              <p>
+                לארגונים גדולים יותר יש אפשרות הוצאת קוד וגם אפליקציה ייעודית באפסטור בשם שלך. תפנה אלינו, נדבר ישירות.
               </p>
             </details>
           </div>
@@ -653,18 +569,17 @@ function FinalCta() {
       <div className={styles.container}>
         <div className={styles.finalCtaCard}>
           <div className={styles.finalCtaBody}>
-            <span className={styles.finalCtaTag}>7 ימים חינם</span>
+            <span className={styles.finalCtaTag}>7 ימים על חשבוננו</span>
             <h2>
-              11 דקות. <em>זה כל מה שצריך.</em>
+              11 דקות. <em>וזה הולך לעצמך.</em>
             </h2>
             <p>
-              7 ימי ניסיון בלי כרטיס אשראי. בלי התחייבות. רק האפשרות לראות איך נראות הזמנות שמגיעות ישר אליך — ולהוציא אם זה לא מתאים.
+              בלי כרטיס אשראי, בלי התחייבות, בלי שיחת מכירה. תיפתח חנות, תקבל הזמנה אחת, ותראה איך זה מרגיש כשאף אחד לא לוקח לך שליש באמצע.
             </p>
-            <Link href="/signup" className={`${styles.btn} ${styles.btnLg} ${styles.btnWhite}`}>
-              פתח חנות עכשיו <IcoArrowLeft c="currentColor" s={14} />
+            <Link href="/signup" className={`${styles.btn} ${styles.btnLg} ${styles.btnInk}`}>
+              QuickFood, פתח לי חנות <IcoArrowLeft c="currentColor" s={14} />
             </Link>
           </div>
-          <div className={styles.finalCtaArt} aria-hidden>🍕</div>
         </div>
       </div>
     </section>
@@ -683,7 +598,7 @@ function Footer() {
               <small>BY QUICKSHOP — TEL AVIV / 2026</small>
             </div>
             <p className={styles.footTag}>
-              פלטפורמת SaaS שעוזרת למסעדות וקטנים לקבל הזמנות ישירות, בלי מתווכים ובלי כאב ראש.
+              חנות אונליין למסעדות שמכינות אוכל בעצמן ומוסרות אותו ללקוח. בלי לחלוק את הרווח עם החברות הגדולות.
             </p>
           </div>
           <div className={styles.footCol}>
