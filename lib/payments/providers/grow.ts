@@ -244,8 +244,9 @@ export class GrowProvider extends BasePaymentProvider {
 
     const res = await fetch(url, { method: "POST", headers, body: formBody });
     const text = await res.text();
+    let parsed: T;
     try {
-      return JSON.parse(text) as T;
+      parsed = JSON.parse(text) as T;
     } catch {
       this.logError(`Non-JSON response from ${endpoint}`, {
         status: res.status,
@@ -253,6 +254,15 @@ export class GrowProvider extends BasePaymentProvider {
       });
       throw new Error(`Grow API non-JSON response (HTTP ${res.status})`);
     }
+    // Diagnostic: if Grow logically rejects the call (status != 1), dump the
+    // *exact wire form-body* (with apiKey redacted) so we can compare against
+    // the working QuickShop10 baseline byte-for-byte.
+    const status = (parsed as { status?: unknown })?.status;
+    if (status !== undefined && String(status) !== "1") {
+      const redacted = formBody.replace(/apiKey=[^&]*/g, "apiKey=***");
+      this.logError(`${endpoint} wire body (redacted)`, { body: redacted });
+    }
+    return parsed;
   }
 
   // ─── Public API ─────────────────────────────────────────────
