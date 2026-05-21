@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Rubik, JetBrains_Mono } from "next/font/google";
-import Image from "next/image";
 import Link from "next/link";
 import { IcoArrowLeft } from "@/components/shared/Icons";
 import Typewriter from "./_components/Typewriter";
@@ -207,55 +206,26 @@ function Showcase() {
             <h3>חוויה שמרגישה כמו הגדולים. רק שלך.</h3>
             <p>אפליקציה מהירה, צבעים שלך, לוגו שלך. לא עוד שורה ברשימה של פורטל. הלקוח חוזר ישר לכתובת שלך, לא דרך אף אחד אחר.</p>
 
-            {/* Phone mock — mirrors the real Verde storefront 1:1: green
-                full-bleed hero with brand name, location chip, delivery/
-                pickup pill toggle, search bar, info pill, then a vertical
-                list of items with a right-side circular plus button. */}
-            <div className={styles.phoneMock}>
-              <div className={styles.phoneScreen}>
-                <div className={styles.phoneStatus}><span>9:41</span><span>●●●</span></div>
-                <div className={styles.phoneHeaderCard}>
-                  <div className={styles.phoneHeaderTop}>
-                    <span className={styles.phoneLocChip}>אלנבי 42, תל אביב</span>
-                    <span className={styles.phoneProfile}>U</span>
-                  </div>
-                  <div className={styles.phoneTabs}>
-                    <span className={styles.phoneTabActive}>משלוח</span>
-                    <span className={styles.phoneTab}>איסוף</span>
-                  </div>
-                  <div className={styles.phoneSearch}>חיפוש בתפריט</div>
-                  <div className={styles.phoneBrand}>פיצרייה ורדה</div>
-                </div>
-                <div className={styles.phoneInfoPill}>
-                  <span><b>4.8</b> ★</span>
-                  <span className={styles.phoneInfoSep}>·</span>
-                  <span className={styles.phoneInfoOpen}>פתוח</span>
-                  <span className={styles.phoneInfoSep}>·</span>
-                  <span>25-35 דק׳</span>
-                </div>
-                <div className={styles.phoneItem}>
-                  <div className={styles.phoneItemImg}>
-                    <Image src="/img/landing/pizza-margherita.jpg" alt="" fill sizes="44px" />
-                  </div>
-                  <div className={styles.phoneItemInfo}>
-                    <div className={styles.phoneItemName}>מרגריטה</div>
-                    <div className={styles.phoneItemDesc}>מוצרלה, בזיליקום</div>
-                    <div className={styles.phoneItemPrice}>₪58</div>
-                  </div>
-                  <span className={styles.phoneItemAdd}>+</span>
-                </div>
-                <div className={styles.phoneItem}>
-                  <div className={styles.phoneItemImg}>
-                    <Image src="/img/landing/pizza-cheese.jpg" alt="" fill sizes="44px" />
-                  </div>
-                  <div className={styles.phoneItemInfo}>
-                    <div className={styles.phoneItemName}>4 גבינות</div>
-                    <div className={styles.phoneItemDesc}>גורגונזולה, פרמז&apos;ן</div>
-                    <div className={styles.phoneItemPrice}>₪72</div>
-                  </div>
-                  <span className={styles.phoneItemAdd}>+</span>
-                </div>
+            {/* Live demo — embed the actual Verde storefront in a phone
+                bezel so the showcase reflects real production output. */}
+            <div className={styles.phoneLive}>
+              <div className={styles.phoneLiveScreen}>
+                <iframe
+                  src="https://quickfood.co.il/pizzeria-verde"
+                  title="הדגמה חיה — פיצרייה ורדה"
+                  loading="lazy"
+                  className={styles.phoneLiveFrame}
+                />
               </div>
+              <a
+                href="https://quickfood.co.il/pizzeria-verde"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.phoneLiveLink}
+              >
+                לחץ לפתיחת ההדגמה
+                <IcoArrowLeft c="currentColor" s={12} />
+              </a>
             </div>
           </div>
         </div>
