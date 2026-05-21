@@ -13,8 +13,19 @@ interface GrowState {
   apple_pay_domain_association: string;
 }
 
+type CustomerPaymentMethod = "cash" | "card" | "bit" | "apple_pay" | "google_pay";
+
+const PAYMENT_METHOD_LABELS: Record<CustomerPaymentMethod, string> = {
+  cash: "מזומן בעת המסירה",
+  card: "כרטיס אשראי",
+  bit: "Bit",
+  apple_pay: "Apple Pay",
+  google_pay: "Google Pay",
+};
+
 interface Initial {
   accepts_cash: boolean;
+  default_payment_method: CustomerPaymentMethod | null;
   grow: GrowState;
 }
 
@@ -36,8 +47,27 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
   function setGrow<K extends keyof GrowState>(k: K, val: GrowState[K]) {
     setV((x) => ({ ...x, grow: { ...x.grow, [k]: val } }));
   }
+  function setDefaultMethod(m: CustomerPaymentMethod | null) {
+    setV((x) => ({ ...x, default_payment_method: m }));
+  }
 
   const hasAnyActive = v.accepts_cash || v.grow.is_active;
+
+  // Methods that are currently enabled — this drives the default-method
+  // dropdown so the merchant can't pick a method that won't appear at
+  // checkout. Order mirrors what the public storefront API will return
+  // (which is also the order on the customer's pill grid).
+  const enabledMethods: CustomerPaymentMethod[] = [];
+  if (v.accepts_cash) enabledMethods.push("cash");
+  if (v.grow.is_active) {
+    enabledMethods.push("card", "bit", "apple_pay", "google_pay");
+  }
+  // If the previously-saved default is no longer enabled, drop it on the
+  // client so the customer doesn't end up with a stale selection after save.
+  const effectiveDefault =
+    v.default_payment_method && enabledMethods.includes(v.default_payment_method)
+      ? v.default_payment_method
+      : null;
 
   async function save() {
     if (!hasAnyActive) {
@@ -55,6 +85,9 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           accepts_cash: v.accepts_cash,
+          // Always send the effective default — if the saved one is no
+          // longer enabled, this sends null so the server clears it.
+          default_payment_method: effectiveDefault,
           grow: {
             is_active: v.grow.is_active,
             test_mode: v.grow.test_mode,
@@ -114,6 +147,53 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
           </div>
         )}
       </div>
+
+      {/* Default method selector — only visible when there's more than one
+          enabled method (otherwise the choice is trivial). */}
+      {enabledMethods.length > 1 && (
+        <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
+          <div>
+            <h2 className="font-semibold text-base lg:text-lg">אמצעי תשלום ברירת מחדל</h2>
+            <p className="text-sm text-qf-mute mt-0.5">
+              איזה אמצעי תשלום יהיה מסומן ראשון לקופה. הלקוח עדיין יוכל לבחור אחר.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {enabledMethods.map((m) => {
+              const active = effectiveDefault === m;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setDefaultMethod(m)}
+                  aria-pressed={active}
+                  className={
+                    "px-3.5 py-3 rounded-xl border-2 text-start text-sm font-medium transition " +
+                    (active
+                      ? "border-(--qf-primary) bg-qf-green-soft"
+                      : "border-qf-line-dash bg-white hover:bg-qf-line-soft")
+                  }
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span>{PAYMENT_METHOD_LABELS[m]}</span>
+                    {active && <IcoCheck c="var(--qf-primary)" s={14} />}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          {effectiveDefault && (
+            <button
+              type="button"
+              onClick={() => setDefaultMethod(null)}
+              className="text-xs text-qf-mute hover:text-qf-ink underline"
+            >
+              בלי ברירת מחדל (השאר על הסדר הדיפולטיבי)
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Grow config — only when Grow is enabled */}
       {v.grow.is_active && (

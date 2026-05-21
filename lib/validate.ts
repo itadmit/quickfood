@@ -344,6 +344,14 @@ export const MerchantPaymentsPatchSchema = z
   .object({
     /** Tenant.acceptsCash — show "cash on delivery" at checkout */
     accepts_cash: z.boolean(),
+    /** Which method should be pre-selected for the customer at checkout.
+     *  Server validates this is one of the methods the tenant actually
+     *  accepts before persisting; nullable means "fall back to the
+     *  platform default order (cash → card → bit → apple_pay → google_pay)". */
+    default_payment_method: z
+      .enum(["cash", "card", "bit", "apple_pay", "google_pay"])
+      .nullable()
+      .optional(),
     grow: z
       .object({
         is_active: z.boolean(),

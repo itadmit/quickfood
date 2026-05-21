@@ -14,7 +14,7 @@ import { apiError, apiJson, handler } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { MerchantPaymentsPatchSchema } from "@/lib/validate";
-import { PaymentProvider, Prisma } from "@prisma/client";
+import { PaymentMethod, PaymentProvider, Prisma } from "@prisma/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,7 +36,11 @@ export const GET = handler(async () => {
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
-    select: { acceptsCash: true, customDomain: true },
+    select: {
+      acceptsCash: true,
+      customDomain: true,
+      defaultPaymentMethod: true,
+    },
   });
   if (!tenant) return apiError("not_found", "tenant not found", 404);
 
@@ -55,6 +59,7 @@ export const GET = handler(async () => {
   return apiJson({
     accepts_cash: tenant.acceptsCash,
     custom_domain: tenant.customDomain,
+    default_payment_method: tenant.defaultPaymentMethod,
     grow: {
       is_active: config?.isActive ?? false,
       test_mode: config?.testMode ?? true,
@@ -72,10 +77,39 @@ export const PATCH = handler(async (req: Request) => {
 
   const body = MerchantPaymentsPatchSchema.parse(await req.json());
 
-  // 1) Tenant-level toggle for cash
+  // Validate the default-method choice up-front so we never persist a
+  // value that won't appear at checkout: it must be a method this
+  // tenant is currently accepting.
+  if (body.default_payment_method !== undefined && body.default_payment_method !== null) {
+    const chosen = body.default_payment_method;
+    const growActive = body.grow?.is_active ?? false;
+    const allowed = new Set<PaymentMethod>();
+    if (body.accepts_cash) allowed.add(PaymentMethod.cash);
+    if (growActive) {
+      allowed.add(PaymentMethod.card);
+      allowed.add(PaymentMethod.bit);
+      allowed.add(PaymentMethod.apple_pay);
+      allowed.add(PaymentMethod.google_pay);
+    }
+    if (!allowed.has(chosen as PaymentMethod)) {
+      return apiError(
+        "validation_error",
+        "ברירת המחדל חייבת להיות אחד מאמצעי התשלום שמופעלים",
+        422,
+        "default_payment_method",
+      );
+    }
+  }
+
+  // 1) Tenant-level toggle for cash + default-method
   await prisma.tenant.update({
     where: { id: session.tenantId },
-    data: { acceptsCash: body.accepts_cash },
+    data: {
+      acceptsCash: body.accepts_cash,
+      ...(body.default_payment_method !== undefined && {
+        defaultPaymentMethod: body.default_payment_method as PaymentMethod | null,
+      }),
+    },
   });
 
   // 2) Grow provider config (optional in the payload)

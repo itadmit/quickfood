@@ -192,7 +192,13 @@ model Tenant {
   planId          String?         @map("plan_id") @db.Uuid
   plan            Plan?           @relation(fields: [planId], references: [id])
   customDomain    String?         @unique @map("custom_domain")
-  acceptsCash     Boolean         @default(true) @map("accepts_cash")
+  acceptsCash           Boolean       @default(true) @map("accepts_cash")
+  /// Which payment method should be pre-selected for the customer at
+  /// checkout. NULL means "fall back to the platform default order"
+  /// (first allowed from cash → card → bit → apple_pay → google_pay).
+  /// Server validates the value is currently in the tenant's allowed
+  /// methods on every PATCH.
+  defaultPaymentMethod  PaymentMethod? @map("default_payment_method")
   allowedOrigins  String[]        @default([]) @map("allowed_origins")
 
   // Checkout configuration. When false (default) the post-order screen is a

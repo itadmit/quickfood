@@ -24,7 +24,7 @@ export default async function PaymentsSettingsPage() {
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
-    select: { acceptsCash: true, customDomain: true },
+    select: { acceptsCash: true, customDomain: true, defaultPaymentMethod: true },
   });
   if (!tenant) redirect("/dashboard/login");
 
@@ -53,6 +53,7 @@ export default async function PaymentsSettingsPage() {
         customDomain={tenant.customDomain}
         initial={{
           accepts_cash: tenant.acceptsCash,
+          default_payment_method: tenant.defaultPaymentMethod ?? null,
           grow: {
             is_active: config?.isActive ?? false,
             test_mode: config?.testMode ?? true,

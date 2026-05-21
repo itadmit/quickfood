@@ -27,6 +27,14 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ slug: st
   if (growActive) {
     paymentMethods.push("card", "bit", "apple_pay", "google_pay");
   }
+  // If the merchant picked a default at /settings/payments, lift it to
+  // the front of the list. CustomerCheckout selects the first allowed
+  // method, so this effectively makes that method pre-selected.
+  if (tenant.defaultPaymentMethod && paymentMethods.includes(tenant.defaultPaymentMethod)) {
+    const idx = paymentMethods.indexOf(tenant.defaultPaymentMethod);
+    paymentMethods.splice(idx, 1);
+    paymentMethods.unshift(tenant.defaultPaymentMethod);
+  }
 
   return apiJson({
     restaurant: {

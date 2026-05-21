@@ -73,9 +73,11 @@ export function CustomerCheckout({
     }
   }, [pendingPayment, sdkReady]);
 
-  // Load the restaurant's accepted payment methods. If a prefill already
-  // picked something (via the effect below), keep it as long as it's still
-  // allowed; otherwise fall back to the first allowed method.
+  // Load the restaurant's accepted payment methods. The server returns
+  // them in the merchant's chosen order (defaultPaymentMethod first),
+  // so we just pick the first one as the initial selection. If a
+  // prefill from "הזמן שוב" already picked a method, we keep it as long
+  // as it's still allowed.
   useEffect(() => {
     let cancelled = false;
     fetch(`/api/v1/restaurants/${encodeURIComponent(tenantSlug)}`)
@@ -84,8 +86,7 @@ export function CustomerCheckout({
         if (cancelled) return;
         const methods = d.restaurant?.payment_methods ?? [];
         setAvailableMethods(methods);
-        const preferred: CustomerPaymentMethod[] = ["cash", "card", "bit", "apple_pay", "google_pay"];
-        const first = preferred.find((m) => methods.includes(m)) ?? null;
+        const first = methods[0] ?? null;
         setPaymentMethod((cur) => (cur && methods.includes(cur) ? cur : first));
       })
       .catch(() => {});
