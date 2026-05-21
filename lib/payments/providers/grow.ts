@@ -334,7 +334,14 @@ export class GrowProvider extends BasePaymentProvider {
         "pageField[email]": this.sanitize(req.customer.email, 80),
         cField1: this.sanitize(req.orderReference, 50),
         cField2: this.sanitize(req.tenantId, 50),
-        productData,
+        // productData is optional and Grow's server-side validator has been
+        // flaky about it — even when Σ(price × quantity) === sum exactly,
+        // we see err 617 ("סכום הכללי של העסקה אינו זהה…"). Suspected
+        // root cause: catalogNumber "1"/"2" collide with a stored merchant
+        // catalog whose price differs from ours. Skipping productData for
+        // now — Grow trusts the top-level `sum`. Receipts still show the
+        // amount; only the per-line breakdown is lost.
+        // productData,
       };
 
       if (maxInstallments > 1) body.maxPaymentNum = Math.min(maxInstallments, 12);
