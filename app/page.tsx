@@ -6,6 +6,7 @@ import Typewriter from "./_components/Typewriter";
 import VerticalRotator from "./_components/VerticalRotator";
 import LivePhoneDemo from "./_components/LivePhoneDemo";
 import FeatureIcon, { type IconName } from "./_components/FeatureIcon";
+import ItemCustomizerMockup from "./_components/ItemCustomizerMockup";
 import styles from "./page.module.css";
 
 const rubik = Rubik({
@@ -24,9 +25,9 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "QuickFood — אפליקציית הזמנות עצמאית למסעדות",
+  title: "QuickFood — חנות אונליין שנולדה למזון",
   description:
-    "פיצרייה, שווארמייה, המבורגרייה או סושייה — חנות אונליין משלך, בעיצוב שלך, בלי לחלוק עם החברות הגדולות. ₪299 לחודש + 0.5% להזמנה. 7 ימים על חשבוננו.",
+    "פיצרייה, המבורגרייה, סושייה או שווארמייה — תוספות, גדלים, סוג בצק, רטבי-צד, הערות לטבח. תפריט בשפה של המטבח, דשבורד בקצב של משמרת. ₪299 לחודש + 0.5% להזמנה.",
 };
 
 export default function LandingPage() {
@@ -76,7 +77,7 @@ function Hero() {
           </span>
         </h1>
         <p className={styles.headlineSmall}>
-          חנות אונליין משלך, בעיצוב שלך, על דומיין משלך. בלי לחלוק עם החברות הגדולות את השליש שאתה מרוויח על כל מנה.
+          נולד למזון. גדלים, תוספות, סוג בצק, חצי-חצי, רטבי-צד, הערות לטבח, זמני הכנה לכל פריט — מובנה בכל מנה. לא תבנית של חנות בגדים שמנסה להתאים את עצמה למטבח, אלא תפריט בשפה של מי שמכין אוכל ומוסר אותו.
         </p>
 
         <div className={styles.heroCta}>
@@ -149,36 +150,36 @@ function SuitedFor() {
   );
 }
 
-/* ─── MATH (the comparison) ──────────────────────────────── */
+/* ─── WHY FOOD-FIRST ─────────────────────────────────────── */
 function Math() {
   return (
     <section className={styles.section}>
       <div className={styles.container}>
-        <div className={styles.sectionEyebrow}>המתמטיקה</div>
+        <div className={styles.sectionEyebrow}>נולד למזון</div>
         <h2 className={styles.sectionTitle}>
-          הלקוח שילם 100 שקל. <em>למי הולך השליש?</em>
+          לא חנות אונליין שמנסה למכור מנות. <em>תפריט שמדבר השפה של המטבח.</em>
         </h2>
 
         <div className={styles.problemGrid}>
           <div className={`${styles.problemCard} ${styles.problemCardPeach}`}>
-            <div className={styles.problemNum}>הפורטלים</div>
-            <h3>30 שקל הולכים להם.</h3>
+            <div className={styles.problemNum}>התפריט</div>
+            <h3>גדלים, בצק, תוספות, חצי-חצי.</h3>
             <p>
-              החברות הגדולות שמרכזות מסעדות גובות שליש מכל הזמנה. בנוסף תשלם להן בשביל להופיע ראשון, ולקבל לוגו רגיל, ולקבל פוש להזמנה הבאה. הלקוחות, אגב, שלהן.
+              כל פריט נבנה עם גדלים (אישית · משפחתית · XL), קבוצות אפשרויות (סוג בצק, רטב צד, מילוי), תוספות עם תמחור פר-יחידה, ומגבלת מקסימום. הלקוח רואה את הסכום מתעדכן בכל קליק. אתה מקבל בקבלה בדיוק "בלי בצל, חתוך ל-8".
             </p>
           </div>
           <div className={`${styles.problemCard} ${styles.problemCardMist}`}>
-            <div className={styles.problemNum}>QuickFood</div>
-            <h3>חצי שקל. ואפס שטויות.</h3>
+            <div className={styles.problemNum}>המטבח</div>
+            <h3>זמן הכנה לכל מנה. סטטוסים אמיתיים.</h3>
             <p>
-              ₪299 לחודש על הפלטפורמה (נעול לכל החיים), פלוס חצי אחוז עמלת סליקה לכל הזמנה. כל השאר נשאר אצלך. הלקוחות, ההיסטוריה, הצבעים, הלוגו — שלך.
+              3 דק׳ לסלט, 11 לפיצה — אתה מגדיר פר-פריט, האפליקציה מחשבת ETA מצרפי לכל הזמנה. סטטוסים שאתה מכיר: "בתנור", "בטיגון", "מוכן", "יצא לדרך". לא "processing" של חברת שילוח.
             </p>
           </div>
           <div className={`${styles.problemCard} ${styles.problemCardLilac}`}>
-            <div className={styles.problemNum}>בסוף חודש</div>
-            <h3>1,000 הזמנות = ₪5,000 בכיס.</h3>
+            <div className={styles.problemNum}>המשמרת</div>
+            <h3>Kanban אמיתי. עובד גם ב-21:00.</h3>
             <p>
-              אצלם 1,000 הזמנות של ₪100 = ₪30,000 ירדו לך. אצלנו אותן אלף הזמנות = ₪500 עמלת סליקה. ההפרש קונה לך חודש שלם של תוכנית עם תוספת של חמש כפול חמש.
+              חדשות / בהכנה / מוכן / במשלוח — קליק לקידום סטטוס, התראת קול להזמנה חדשה. סטטוס מסעדה: פתוח / עומס / סגור — במצב עומס, ה-ETA אוטומטית מתארך והלקוח רואה את זה לפני שהוא לוחץ שלם.
             </p>
           </div>
         </div>
@@ -277,75 +278,98 @@ function Features() {
       <div className={styles.container}>
         <div className={styles.sectionEyebrow}>מה מקבלים</div>
         <h2 className={styles.sectionTitle}>
-          כל מה שצריך כדי למכור. <em>בלי שום דבר שלא.</em>
+          הכל מותאם למזון. <em>בלי שום דבר שלא.</em>
         </h2>
 
         <div className={styles.woltStack}>
+          <CustomizerWoltCard
+            tag="התפריט"
+            heading="תוספות, גדלים, וחצי-חצי. כמו בוולט. רק שלך."
+            body="כל מנה — גדלים (אישית 25 / משפחתית 32 / XL 40), קבוצות אפשרויות עם בחירה חובה ('סוג בצק', 'רטב צד'), תוספות עם תמחור פר-יחידה ומגבלת מקסימום, והערות חופשיות לטבח. הלקוח רואה את המחיר מתעדכן בכל קליק. הקבלה אצלך מציינת בדיוק מה לא לשים."
+          />
+
           <WoltCard
             tone="mist"
-            layout="decor-end"
-            tag="חנות"
-            heading="האפליקציה שלך, לא הרשימה של מישהו אחר."
-            body="לוגו שלך, צבעים שלך, שם שלך, דומיין משלך (order.השם.co.il). הלקוח לא רואה אותנו ולא רואה אף אחד אחר. רק אותך."
+            layout="decor-start"
+            tag="החנות"
+            heading="עיצוב משלך. דומיין משלך. הלקוחות — שלך."
+            body="לוגו שלך, צבעים שלך, שם שלך, דומיין משלך (order.השם.co.il). שעות פעילות נפרדות לכל סניף, מינימום הזמנה, אזורי משלוח עם ETA לכל שכונה. הלקוח לא רואה אותנו ולא רואה אף אחד אחר — רק אותך."
             icon="store"
           />
 
           <WoltCard
             tone="sand"
-            layout="decor-start"
-            tag="תשלום"
-            heading="Bit, אשראי, Apple Pay, Google Pay — באותו מסך."
-            body="הלקוח לוחץ ׳שלם׳ בתוך החנות, ארנק התשלום נפתח לידו, מקיש PIN ב-Bit או טבעת אצבע ב-Apple Pay — והכסף בחשבון תוך 24 שעות. בלי הפניות, בלי iframe מוזר."
-            icon="wallet"
+            layout="decor-end"
+            tag="המטבח"
+            heading="זמן הכנה לכל פריט. סטטוסים בשפה של המטבח."
+            body="3 דק׳ לסלט, 9 לפיצה, 12 להמבורגר — אתה מגדיר, האפליקציה מחשבת ETA מצרפי לכל הזמנה. סטטוס מסעדה פתוח / עומס / סגור — במצב עומס ה-ETA מתארך אוטומטית עוד לפני שהלקוח לוחץ שלם. דשבורד שעובד על טאבלט ליד הקופה."
+            icon="flame"
           />
 
           <WoltCard
             tone="peach"
-            layout="decor-end"
-            tag="ביקורות"
-            heading="הוא יקבל וואטסאפ. אתה תקבל את הכוכב החמישי."
-            body="שעה אחרי המסירה, אנחנו שולחים לו לבד תזכורת לדרג. SMS, וואטסאפ או מייל — אתה בוחר. הכוכבים מצטברים בדשבורד שלך, ואתה עונה מאותו מסך."
-            icon="star"
+            layout="decor-start"
+            tag="תשלום"
+            heading="Bit, אשראי, Apple Pay, Google Pay — באותו מסך."
+            body="הלקוח לוחץ ׳שלם׳ בתוך החנות, ארנק התשלום נפתח לידו, מקיש PIN ב-Bit או טבעת אצבע ב-Apple Pay — והכסף בחשבון תוך 24 שעות. בלי הפניות, בלי iframe מוזר. אתה בוחר ברירת מחדל בדשבורד."
+            icon="wallet"
           />
 
           <WoltCard
             tone="lilac"
-            layout="decor-start"
-            tag="מעקב"
-            heading="הוא רואה איפה ההזמנה. אתה רואה איפה הוא."
-            body="התקבלה ← בהכנה ← מוכנה ← בדרך, עדכון חי בלי לרענן. אפשר להציג ETA לדקה או רק לכתוב ׳תודה׳ — לבחירתך. עוזר להפחית טלפונים של ׳עוד כמה זמן?׳."
-            icon="pin"
+            layout="decor-end"
+            tag="ביקורות"
+            heading="הוא יקבל וואטסאפ. אתה תקבל את הכוכב החמישי."
+            body="שעה אחרי המסירה, אנחנו שולחים לו לבד תזכורת לדרג. SMS, וואטסאפ או מייל — אתה בוחר. הכוכבים מצטברים בדשבורד, ואתה עונה לכל ביקורת מאותו מסך."
+            icon="star"
           />
 
           <WoltCard
             tone="sand"
-            layout="decor-end"
+            layout="decor-start"
             tag="וואטסאפ"
             heading="ההודעות מהמספר שלך. לא מאיזה +1."
-            body="הודעות יוצאות מהמספר של החנות שלך. אישור הזמנה, יצא לדרך, בקשת ביקורת — אוטומטית. חבילות מ-₪39 לאלפי הודעות. מייל ללא הגבלה, חינם."
+            body="אישור הזמנה, יצא לדרך, בקשת ביקורת — יוצאות אוטומטית מהמספר של החנות שלך דרך iBot Chat. חבילות מ-₪39 לאלפי הודעות. מייל חינם, ללא הגבלה."
             icon="chat"
-          />
-
-          <WoltCard
-            tone="midnight"
-            layout="decor-end"
-            tag="העלות האמיתית"
-            heading="₪299 לחודש. נעול. לכל החיים."
-            body="לא מעלים. לא הופכים אותך ל-tier-2 בעוד שנה. לא גובים אחוז שונה לפי חודש. רק חצי אחוז להזמנה (זה עמלת סליקה רגילה) ומייל חינם. וזהו."
-            icon="coin"
           />
         </div>
 
         <div className={styles.miniGrid}>
-          <MiniCell tag="סניפים" title="מולטי-סניף" body="שעות, דמי משלוח ועמלת שירות נפרדים לכל סניף." />
-          <MiniCell tag="שליחים" title="ניהול שליחים שלך" body="אזורי משלוח, ETA לכל אזור, הקצאה אוטומטית או ידנית." />
-          <MiniCell tag="קמפיינים" title="פופאפים ובאנרים" body="מבצע בכניסה לחנות, באנר תמידי, או טריגר על שעות שיא." />
+          <MiniCell tag="סניפים" title="מולטי-סניף" body="שעות, דמי משלוח, עמלת שירות ומינימום הזמנה נפרדים לכל סניף." />
+          <MiniCell tag="שליחים" title="ניהול שליחים שלך" body="אזורי משלוח עם ETA לכל אזור, הקצאה אוטומטית או ידנית, היסטוריית משלוחים." />
+          <MiniCell tag="קופונים" title="קופונים חכמים" body="לפי קטגוריה, סכום מינימום, מגבלת שימוש פר-לקוח, חלון תאריכים." />
+          <MiniCell tag="מעקב" title="מעקב הזמנה חי" body="עדכון לייב ללקוח דרך SSE — בלי לרענן את המסך. אופציונלי לפי בחירה." />
           <MiniCell tag="אנליטיקה" title="נתונים אמיתיים" body="שעות שיא, פריטים מובילים, AOV, אחוז חזרה של לקוחות." />
           <MiniCell tag="חיבורים" title="Webhooks + REST" body="זפייר, Make, קופות רושמות וכל מערכת חיצונית שמדברת HTTP — מתחברות בלי כאב ראש." />
-          <MiniCell tag="עברית" title="RTL בלידה" body="תוכנן לעברית מהיום הראשון. חודשים, סטטוסים, מספרים — הכל." />
         </div>
       </div>
     </section>
+  );
+}
+
+/* Customizer-mockup variant of the wolt-card — used once, for the anchor
+   "תוספות, גדלים, חצי-חצי" feature card. Lives in the same `.woltStack`
+   so the rhythm of the section stays intact. */
+function CustomizerWoltCard({
+  tag,
+  heading,
+  body,
+}: {
+  tag: string;
+  heading: string;
+  body: string;
+}) {
+  return (
+    <article className={`${styles.woltCard} ${styles.woltCardMidnight} ${styles.woltCardCustomizer}`}>
+      <div className={styles.woltCardBody}>
+        <div className={styles.woltCardTag}>{tag}</div>
+        <h3 className={styles.woltCardHeading}>{heading}</h3>
+        <p className={styles.woltCardCopy}>{body}</p>
+      </div>
+      <div className={styles.woltCardMockup} aria-hidden>
+        <ItemCustomizerMockup />
+      </div>
+    </article>
   );
 }
 

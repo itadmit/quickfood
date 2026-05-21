@@ -776,6 +776,46 @@
 .woltCardMidnight .woltCardHeading { color: var(--ink); }
 .woltCardMidnight .woltCardTag { color: var(--ink); opacity: 0.65; }
 
+/* Customizer-mockup card — body on the start side, live mockup on the
+   end side. Wider end-slot than the icon variants so the customizer card
+   isn't squashed. Falls back to a stack on mobile. */
+.woltCardCustomizer {
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: 48px;
+  align-items: stretch;
+  padding: 56px 56px 56px;
+}
+.woltCardCustomizer .woltCardBody {
+  align-self: center;
+  max-width: 38ch;
+}
+.woltCardMockup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+}
+@media (max-width: 1100px) {
+  .woltCardCustomizer {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 32px;
+    padding: 44px 40px;
+  }
+}
+@media (max-width: 900px) {
+  .woltCardCustomizer {
+    grid-template-columns: 1fr;
+    padding: 32px 24px 36px;
+    gap: 24px;
+  }
+  .woltCardCustomizer .woltCardBody {
+    text-align: center;
+    margin: 0 auto;
+  }
+  .woltCardCustomizer .woltCardCopy { margin-inline: auto; }
+}
+
 /* Icon tone — the midnight (yellow anchor) card keeps black strokes;
    all other cards get a quieter ink-2 so the type stays the hero. */
 .woltCardMist .woltCardDecor svg,

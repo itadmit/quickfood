@@ -1,4 +1,4 @@
-type IconName = "store" | "wallet" | "star" | "pin" | "chat" | "coin";
+type IconName = "store" | "wallet" | "star" | "pin" | "chat" | "coin" | "slices" | "flame";
 
 const PATHS: Record<IconName, React.ReactNode> = {
   store: (
@@ -39,6 +39,22 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <circle cx="12" cy="12" r="8.5" />
       <path d="M14.5 9.5c-.5-.7-1.4-1-2.5-1-1.5 0-2.5.7-2.5 1.8s1 1.5 2.5 1.7 2.5.7 2.5 1.8-1 1.7-2.5 1.7c-1.1 0-2-.3-2.5-1" />
       <path d="M12 7.6v9" />
+    </>
+  ),
+  slices: (
+    <>
+      <path d="M12 3l9 7-9 11-9-11z" />
+      <path d="M12 3v18" />
+      <path d="M3 10h18" />
+      <circle cx="8.5" cy="13" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="15.5" cy="13" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="16.5" r="0.9" fill="currentColor" stroke="none" />
+    </>
+  ),
+  flame: (
+    <>
+      <path d="M12 3c1 3 4 4 4 8a4 4 0 1 1-8 0c0-2 1-3 1-5 1.5 1 3-1 3-3z" />
+      <path d="M10 15a2 2 0 1 0 4 0c0-1.2-1-1.6-2-3-1 1.4-2 1.8-2 3z" />
     </>
   ),
 };
