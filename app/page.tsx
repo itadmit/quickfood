@@ -3,6 +3,8 @@ import { Rubik, JetBrains_Mono } from "next/font/google";
 import Link from "next/link";
 import { IcoArrowLeft } from "@/components/shared/Icons";
 import Typewriter from "./_components/Typewriter";
+import VerticalRotator from "./_components/VerticalRotator";
+import LivePhoneDemo from "./_components/LivePhoneDemo";
 import FeatureIcon, { type IconName } from "./_components/FeatureIcon";
 import styles from "./page.module.css";
 
@@ -32,6 +34,7 @@ export default function LandingPage() {
     <div className={`${styles.root} ${rubik.variable} ${mono.variable}`}>
       <Nav />
       <Hero />
+      <SuitedFor />
       <Math />
       <Features />
       <Showcase />
@@ -73,7 +76,7 @@ function Hero() {
           </span>
         </h1>
         <p className={styles.headlineSmall}>
-          חנות אונליין משלך, בעיצוב שלך, על דומיין משלך. בלי לחלוק עם החברות הגדולות את השליש שאתה מרוויח על כל פיצה.
+          חנות אונליין משלך, בעיצוב שלך, על דומיין משלך. בלי לחלוק עם החברות הגדולות את השליש שאתה מרוויח על כל מנה.
         </p>
 
         <div className={styles.heroCta}>
@@ -104,6 +107,45 @@ function Hero() {
         </div>
       </div>
     </header>
+  );
+}
+
+/* ─── SUITED FOR (rotating food types) ──────────────────── */
+function SuitedFor() {
+  const types = [
+    "פיצרייה",
+    "המבורגרייה",
+    "סושייה",
+    "שווארמייה",
+    "פלאפלייה",
+    "מאפייה",
+    "גלידרייה",
+    "סטייקייה",
+    "מטבח אסיאתי",
+    "מטבח איטלקי",
+    "אוכל ים-תיכוני",
+    "אוכל ויגני",
+    "ארוחת בוקר",
+    "קייטרינג",
+    "בר משקאות",
+    "מטבח כשר",
+  ];
+  return (
+    <section className={styles.suitedSection}>
+      <div className={styles.container}>
+        <div className={styles.suitedEyebrow}>מתאים ל</div>
+        <h2 className={styles.suitedHeadline}>
+          <VerticalRotator
+            words={types}
+            wordClassName={styles.suitedWord}
+            className={styles.suitedRotator}
+          />
+        </h2>
+        <p className={styles.suitedFoot}>
+          ולכל מי שמכין אוכל ומוסר אותו. אם זה אוכל, יש לו בית ב-QuickFood.
+        </p>
+      </div>
+    </section>
   );
 }
 
@@ -206,17 +248,11 @@ function Showcase() {
             <h3>חוויה שמרגישה כמו הגדולים. רק שלך.</h3>
             <p>אפליקציה מהירה, צבעים שלך, לוגו שלך. לא עוד שורה ברשימה של פורטל. הלקוח חוזר ישר לכתובת שלך, לא דרך אף אחד אחר.</p>
 
-            {/* Live demo — embed the actual Verde storefront in a phone
-                bezel so the showcase reflects real production output. */}
             <div className={styles.phoneLive}>
-              <div className={styles.phoneLiveScreen}>
-                <iframe
-                  src="https://quickfood.co.il/pizzeria-verde"
-                  title="הדגמה חיה — פיצרייה ורדה"
-                  loading="lazy"
-                  className={styles.phoneLiveFrame}
-                />
-              </div>
+              <LivePhoneDemo
+                src="https://quickfood.co.il/pizzeria-verde"
+                title="הדגמה חיה — פיצרייה ורדה"
+              />
               <a
                 href="https://quickfood.co.il/pizzeria-verde"
                 target="_blank"
