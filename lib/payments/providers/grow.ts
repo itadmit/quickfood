@@ -268,12 +268,45 @@ export class GrowProvider extends BasePaymentProvider {
       const phone = this.normalizeIsraeliPhone(req.customer.phone);
       const description = this.sanitize(`Order ${req.orderReference}`, 100);
 
-      const productData = req.items.slice(0, 10).map((item, i) => ({
+      // Grow validates `sum == Σ(productData.price × quantity)` and rejects
+      // with "סכום הכללי של העסקה אינו זהה לסכום המוצרים" on mismatch.
+      // Two cases break that arithmetic:
+      //   1. Grow only accepts ≤10 rows, so slice() drops trailing items.
+      //   2. Callers occasionally pass items that don't sum to `amount`
+      //      (e.g. detailed lines minus a discount, rounding drift).
+      // We compute the lines, verify they reconcile against `amount`, and
+      // collapse to a single all-encompassing row when they don't — so the
+      // wallet always opens even when itemization is imperfect.
+      const detailedItems = req.items.slice(0, 10).map((item, i) => ({
         catalogNumber: item.sku || String(i + 1),
         quantity: item.quantity,
         price: this.formatAmount(item.price),
         itemDescription: this.sanitize(item.name, 80),
       }));
+      const detailedSum =
+        Math.round(
+          detailedItems.reduce((acc, it) => acc + Number(it.price) * it.quantity, 0) * 100,
+        ) / 100;
+      const expectedSum = Math.round(req.amount * 100) / 100;
+      const reconciles =
+        detailedItems.length > 0 && Math.abs(detailedSum - expectedSum) < 0.01;
+      const productData = reconciles
+        ? detailedItems
+        : [
+            {
+              catalogNumber: "1",
+              quantity: 1,
+              price: this.formatAmount(req.amount),
+              itemDescription: this.sanitize(`Order ${req.orderReference}`, 80),
+            },
+          ];
+      if (!reconciles && req.items.length > 0) {
+        this.logError("productData reconciliation mismatch — collapsed to single row", {
+          expectedSum,
+          detailedSum,
+          itemCount: req.items.length,
+        });
+      }
 
       const maxInstallments = Number(this.config!.settings?.maxInstallments) || 1;
 

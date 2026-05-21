@@ -95,6 +95,31 @@ export const POST = handler(
       fullName(order.customerFirstNameSnap, order.customerLastNameSnap) ||
       "Customer";
 
+    // Grow validates `sum == Σ(productData.price × quantity)` server-side
+    // and returns "סכום הכללי של העסקה אינו זהה לסכום המוצרים" when off.
+    // Order.total = subtotal + deliveryFee + serviceFee + tip - discount,
+    // so we MUST append synthetic line items for the non-item charges or
+    // the arithmetic won't reconcile and initiate fails with a 502.
+    const items: InitiatePaymentRequest["items"] = order.items.map((it) => ({
+      name: it.nameSnapshot,
+      sku: undefined,
+      quantity: it.quantity,
+      price: it.unitPrice,
+    }));
+    if (order.deliveryFee > 0) {
+      items.push({ name: "דמי משלוח", quantity: 1, price: order.deliveryFee });
+    }
+    if (order.serviceFee > 0) {
+      items.push({ name: "דמי שירות", quantity: 1, price: order.serviceFee });
+    }
+    if (order.tip > 0) {
+      items.push({ name: "טיפ", quantity: 1, price: order.tip });
+    }
+    if (order.discount > 0) {
+      // Grow accepts negative-price rows the same way; this keeps the sum honest.
+      items.push({ name: "הנחה", quantity: 1, price: -order.discount });
+    }
+
     const initiateReq: InitiatePaymentRequest = {
       tenantId: order.tenantId,
       tenantSlug: order.tenant.slug,
@@ -111,12 +136,7 @@ export const POST = handler(
         email: customer?.email ?? undefined,
         phone: customer?.phone ?? order.customerPhoneSnap ?? undefined,
       },
-      items: order.items.map((it) => ({
-        name: it.nameSnapshot,
-        sku: undefined,
-        quantity: it.quantity,
-        price: it.unitPrice,
-      })),
+      items,
       successUrl: `${baseUrl}/checkout/thank-you?ref=${encodeURIComponent(orderRef)}`,
       cancelUrl: `${baseUrl}/checkout/cancel?ref=${encodeURIComponent(orderRef)}`,
       failureUrl: `${baseUrl}/checkout/failed?ref=${encodeURIComponent(orderRef)}`,
