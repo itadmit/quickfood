@@ -1,26 +1,26 @@
 /* QuickFood landing — design tokens are scoped to .root so they don't leak. */
 
 .root {
-  /* Linen & Bone — quiet editorial palette. White surfaces, black ink,
-     a single warm terracotta accent. No pastel cards, no gradients on
-     emphasis surfaces, no dark/midnight blocks. The page reads as a
-     calm, premium product page rather than a colorful poster. */
-  --cream:       #FAFAF8;   /* Page background — warm off-white */
-  --cream-2:     #F4F2EC;   /* Slightly deeper surface for contrast */
+  /* Triolla Yellow — bold confident hero, white-cream body, true black ink.
+     Single primary accent (saturated yellow #F8CB1E) used as a full-bleed
+     section background AND as the single highlight color elsewhere. Black
+     and yellow do all the work; secondary colors stay neutral. */
+  --cream:       #FAF8F2;   /* Page background — warm off-white */
+  --cream-2:     #F2EFE6;   /* Slightly deeper neutral surface */
   --paper:       #FFFFFF;   /* Card / surface */
-  --ink:         #1A1A1A;   /* Body + headlines */
-  --ink-2:       #4A4A4A;   /* Soft headline */
-  --mute:        #8B8B8B;   /* Captions / labels */
-  /* Single accent — warm terracotta. Used VERY sparingly: italic
-     emphasis in headlines, the eyebrow dot in the hero, link hover.
-     All other "color" callouts collapse onto ink. */
-  --tomato:      #9E4A2F;
-  --tomato-deep: #7A361F;
-  --cheese:      #8B8B8B; /* alias for mute — legacy class compatibility */
-  --basil:       #4A4A4A; /* alias for ink-2 — legacy class compatibility */
-  --basil-deep:  #2A2A2A;
-  --line:        #E5E2DC;   /* Border on cards */
-  --line-soft:   #EFEDE7;   /* Faint divider */
+  --ink:         #0A0A0A;   /* Body + headlines — near-true-black */
+  --ink-2:       #2A2A2A;   /* Soft headline */
+  --mute:        #6E6E6E;   /* Captions / labels */
+  /* Primary brand accent — saturated sunny yellow. Used for the hero
+     full-bleed background and the single highlight color across the
+     page (the anchor feature card, the 0.5% pill, link hover, etc.). */
+  --tomato:      #F8CB1E;   /* legacy name — now == primary yellow */
+  --tomato-deep: #E0B214;
+  --cheese:      #FFE99A;   /* yellow soft — for chip backgrounds */
+  --basil:       #2A2A2A;
+  --basil-deep:  #0A0A0A;
+  --line:        #E8E4D5;   /* Border on cards */
+  --line-soft:   #F1EEE3;   /* Faint divider */
 
   font-family: var(--font-noto-hebrew), "Noto Sans Hebrew", "Heebo", "Rubik", -apple-system, system-ui, sans-serif;
   background: var(--cream);
@@ -52,10 +52,10 @@
 /* ─── NAV ────────────────────────────────────────────────── */
 .nav {
   position: sticky; top: 0; z-index: 100;
-  background: rgba(241,233,216,0.85);
+  background: rgba(250,248,242,0.92);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border-bottom: 1px solid rgba(216,207,186,0.6);
+  border-bottom: 1px solid var(--line-soft);
 }
 .navRow {
   display: flex; align-items: center; justify-content: space-between;
@@ -100,11 +100,12 @@
   border-color: var(--ink);
 }
 .btnGhostOutline:hover { background: var(--ink); color: white; }
-/* Primary CTA — flat black on white. No gradients, no glow. Just a
-   confident button that disappears into the wordmark above it. */
+/* Primary CTA — black pill, white text. Triolla-style "צור קשר" feel,
+   pops on both the yellow hero and the cream body sections. */
 .btnInk {
   background: var(--ink);
   color: white;
+  border-radius: 999px;
 }
 .btnInk:hover {
   background: #000;
@@ -113,64 +114,83 @@
 .btnTomato {
   background: var(--ink);
   color: white;
+  border-radius: 999px;
 }
 .btnTomato:hover {
   background: #000;
   transform: translateY(-1px);
 }
 .btnTomato:active { transform: translateY(1px); }
+.btnLg { border-radius: 999px; }
+/* Secondary on the yellow hero — black-outlined pill, transparent fill */
+.btnGhostOutline {
+  background: transparent;
+  border: 1.5px solid var(--ink);
+  color: var(--ink);
+  border-radius: 999px;
+}
+.btnGhostOutline:hover {
+  background: var(--ink);
+  color: white;
+}
 .btnLg { padding: 18px 28px; font-size: 15px; border-radius: 14px; font-weight: 700; }
 .btnFull { width: 100%; justify-content: center; }
 .btnWhite { background: white; color: var(--ink); padding: 18px 32px; font-size: 15px; border-radius: 14px; font-weight: 700; }
 .btnWhite:hover { background: var(--cream-2); }
 
-/* ─── HERO ───────────────────────────────────────────────── */
+/* ─── HERO — TRIOLLA YELLOW FULL-BLEED ───────────────────── */
 .hero {
   position: relative;
-  padding: 80px 0 100px;
+  background: var(--tomato);
+  padding: 100px 0 120px;
   overflow: hidden;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 .hero .container { position: relative; z-index: 2; }
 .eyebrow {
   display: inline-flex; align-items: center; gap: 10px;
-  background: var(--paper); border: 1px solid var(--line);
+  background: rgba(255,255,255,0.6);
+  border: 1px solid rgba(0,0,0,0.08);
   padding: 6px 14px 6px 6px; border-radius: 999px;
-  font-size: 12px; font-weight: 600; color: var(--ink-2);
-  margin-bottom: 28px;
+  font-size: 12px; font-weight: 700; color: var(--ink);
+  margin-bottom: 32px;
 }
 .eyebrowDot {
-  background: var(--tomato); color: white;
+  background: var(--ink); color: var(--tomato);
   padding: 4px 11px; border-radius: 999px;
-  font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  font-size: 11px; font-weight: 800; letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 .headline {
   font-family: var(--font-rubik), "Rubik", sans-serif;
   font-weight: 900;
   letter-spacing: -0.05em;
-  line-height: 0.9;
-  font-size: clamp(56px, 9vw, 132px);
+  line-height: 0.92;
+  font-size: clamp(64px, 11vw, 156px);
   margin: 0;
   color: var(--ink);
 }
 .headline em {
   font-style: normal;
   font-weight: 900;
-  color: var(--tomato);
-  position: relative;
+  color: var(--ink);
+  background: var(--paper);
+  padding: 0 12px;
+  border-radius: 16px;
+  display: inline-block;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
-/* Drop the cheese underline gimmick — the formal pass should let the
-   tomato word stand on its own without a decorative bar next to it. */
 .headline em::before { content: none; }
 .stack { display: block; }
 .headlineSmall {
   font-family: var(--font-noto-hebrew), "Noto Sans Hebrew", "Heebo", sans-serif;
-  font-weight: 400;
+  font-weight: 500;
   font-style: normal;
   font-size: 0.165em;
-  color: var(--ink-2);
+  color: var(--ink);
   letter-spacing: -0.005em;
-  margin-top: 28px;
+  margin-top: 32px;
   line-height: 1.55;
   max-width: 26em;
   display: block;
@@ -182,11 +202,11 @@
 .heroCta { display: flex; gap: 10px; flex-wrap: wrap; }
 .heroStats {
   display: flex; gap: 32px;
-  padding: 20px 0; border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  padding: 24px 0; border-top: 1px solid rgba(0,0,0,0.12);
+  border-bottom: 1px solid rgba(0,0,0,0.12);
 }
-.heroStatN { font-family: var(--font-rubik), "Rubik", sans-serif; font-weight: 900; font-size: 36px; letter-spacing: -0.04em; line-height: 1; color: var(--ink); }
-.heroStatL { font-size: 11px; color: var(--mute); font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; margin-top: 6px; }
+.heroStatN { font-family: var(--font-rubik), "Rubik", sans-serif; font-weight: 900; font-size: 40px; letter-spacing: -0.04em; line-height: 1; color: var(--ink); }
+.heroStatL { font-size: 11px; color: var(--ink); opacity: 0.7; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 6px; }
 
 .heroDecoPizza {
   position: absolute; top: -80px; left: -100px; z-index: 1;
@@ -390,11 +410,21 @@
   color: var(--ink-2);
 }
 .problemCardPeach,
-.problemCardMist,
 .problemCardLilac { background: var(--paper); }
+/* Middle "QuickFood" card — yellow anchor in the math comparison */
+.problemCardMist {
+  background: var(--tomato);
+  border-color: transparent;
+  color: var(--ink);
+}
+.problemCardMist h3,
+.problemCardMist p { color: var(--ink); }
 .problemCardPeach .problemNum,
-.problemCardMist .problemNum,
 .problemCardLilac .problemNum { background: var(--cream-2); color: var(--ink); }
+.problemCardMist .problemNum {
+  background: var(--ink);
+  color: var(--tomato);
+}
 .problemNum {
   display: inline-flex;
   align-items: center;
@@ -661,12 +691,13 @@
 }
 
 .woltCardMidnight {
-  /* Single dark anchor — flat black, no glow, just contrast. */
-  background: var(--ink);
-  color: rgba(255,255,255,0.78);
+  /* Anchor — yellow card, black text. Same energy as the hero band. */
+  background: var(--tomato);
+  color: var(--ink);
+  border-color: transparent;
 }
-.woltCardMidnight .woltCardHeading { color: white; }
-.woltCardMidnight .woltCardTag { color: rgba(255,255,255,0.55); }
+.woltCardMidnight .woltCardHeading { color: var(--ink); }
+.woltCardMidnight .woltCardTag { color: var(--ink); opacity: 0.65; }
 
 /* Decor — shrink + de-emphasize for the editorial pass. Big emoji
    was the playful pass; this one wants the type to do the work. */
@@ -986,6 +1017,12 @@
   display: flex; flex-direction: column;
   gap: 18px;
 }
+.priceSingleHead .priceSingleNum {
+  color: var(--tomato);
+}
+.priceSingleHead .priceSingleFeeNum {
+  color: var(--tomato);
+}
 .priceSingleTag {
   align-self: flex-start;
   font-size: 11px; font-weight: 700; letter-spacing: 0.2em;
@@ -1173,7 +1210,12 @@
 }
 .finalCtaCard h2 em {
   font-style: normal;
-  color: var(--tomato);
+  color: var(--ink);
+  background: var(--tomato);
+  padding: 0 12px;
+  border-radius: 14px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 .finalCtaCard p {
   font-size: 17px; margin: 24px auto 40px; max-width: 50ch;

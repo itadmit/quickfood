@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Rubik, JetBrains_Mono } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
-import LiveDashboard from "./_components/LiveDashboard";
 import { IcoArrowLeft } from "@/components/shared/Icons";
 import styles from "./page.module.css";
 
@@ -106,8 +105,6 @@ function Hero() {
             </div>
           </div>
         </div>
-
-        <LiveDashboard />
       </div>
     </header>
   );
