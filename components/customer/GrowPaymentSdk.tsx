@@ -121,25 +121,43 @@ export function GrowPaymentSdk({
           return;
         }
 
+        // eslint-disable-next-line no-console
+        console.info("[grow-sdk] init", { environment: testMode ? "DEV" : "PRODUCTION" });
         window.growPayment.init({
           environment: testMode ? "DEV" : "PRODUCTION",
           version: 1,
           events: {
-            onSuccess: () => {
+            onSuccess: (response) => {
+              // eslint-disable-next-line no-console
+              console.info("[grow-sdk] onSuccess", response);
               if (navigatingRef.current) return;
               navigatingRef.current = true;
               window.location.href = propsRef.current.thankYouUrl;
             },
             onFailure: (response) => {
-              propsRef.current.onError?.(response.message || "התשלום נכשל");
+              // eslint-disable-next-line no-console
+              console.warn("[grow-sdk] onFailure", response);
+              propsRef.current.onError?.(
+                response.message || JSON.stringify(response) || "התשלום נכשל",
+              );
             },
             onError: (response) => {
-              propsRef.current.onError?.(response.message || "אירעה שגיאה בעיבוד התשלום");
+              // eslint-disable-next-line no-console
+              console.error("[grow-sdk] onError", response);
+              propsRef.current.onError?.(
+                response.message ||
+                  JSON.stringify(response) ||
+                  "אירעה שגיאה בעיבוד התשלום",
+              );
             },
-            onTimeout: () => {
+            onTimeout: (response) => {
+              // eslint-disable-next-line no-console
+              console.warn("[grow-sdk] onTimeout", response);
               propsRef.current.onError?.("פג תוקף הטופס. נסה שוב.");
             },
             onWalletChange: (state) => {
+              // eslint-disable-next-line no-console
+              console.info("[grow-sdk] onWalletChange", state);
               propsRef.current.onWalletChange?.(state);
             },
           },
@@ -149,6 +167,8 @@ export function GrowPaymentSdk({
       })
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : "Failed to load payment SDK";
+        // eslint-disable-next-line no-console
+        console.error("[grow-sdk] load failed", err);
         propsRef.current.onError?.(msg);
       });
 
@@ -166,7 +186,16 @@ export function GrowPaymentSdk({
  * Returns true if the SDK is ready, false otherwise.
  */
 export function renderGrowWallet(authCode: string): boolean {
-  if (typeof window === "undefined" || !window.growPayment) return false;
+  if (typeof window === "undefined" || !window.growPayment) {
+    // eslint-disable-next-line no-console
+    console.error("[grow-sdk] renderGrowWallet called but SDK not loaded yet", {
+      hasWindow: typeof window !== "undefined",
+      hasGrowPayment: typeof window !== "undefined" && !!window.growPayment,
+    });
+    return false;
+  }
+  // eslint-disable-next-line no-console
+  console.info("[grow-sdk] renderPaymentOptions", { authCode });
   window.growPayment.renderPaymentOptions(authCode);
   return true;
 }
