@@ -54,6 +54,8 @@ interface GrowSdkConfig {
     onError?: (response: GrowSdkErrorResponse) => void;
     onTimeout?: (response: GrowSdkErrorResponse) => void;
     onWalletChange?: (state: "open" | "close") => void;
+    onPaymentStart?: () => void;
+    onPaymentCancel?: () => void;
   };
 }
 
@@ -159,6 +161,17 @@ export function GrowPaymentSdk({
               // eslint-disable-next-line no-console
               console.info("[grow-sdk] onWalletChange", state);
               propsRef.current.onWalletChange?.(state);
+            },
+            onPaymentStart: () => {
+              // eslint-disable-next-line no-console
+              console.info("[grow-sdk] onPaymentStart");
+            },
+            onPaymentCancel: () => {
+              // eslint-disable-next-line no-console
+              console.info("[grow-sdk] onPaymentCancel");
+              // Treat cancel like an error so we drop pendingPayment and
+              // let the merchant try again.
+              propsRef.current.onError?.("התשלום בוטל");
             },
           },
         });

@@ -70,6 +70,15 @@ export const POST = handler(
     if (!provider) {
       return apiError("provider_unavailable", "ספק התשלום לא מוגדר במסעדה", 503);
     }
+    // Load the raw config row so we can echo `testMode` back to the client.
+    // The SDK environment MUST match the API mode that created the authCode
+    // (sandbox auth codes don't resolve under PRODUCTION and vice versa).
+    const providerConfig = await prisma.paymentProviderConfig.findUnique({
+      where: {
+        tenantId_provider: { tenantId: order.tenantId, provider: providerType },
+      },
+      select: { testMode: true },
+    });
 
     const customer = order.customerId
       ? await prisma.customer.findUnique({
@@ -156,6 +165,9 @@ export const POST = handler(
       sdk_auth_code: result.sdkAuthCode ?? null,
       payment_url: result.paymentUrl ?? null,
       provider_request_id: result.providerRequestId ?? null,
+      // The SDK's environment must match the API mode that issued the authCode.
+      // Default true (sandbox) if the column is missing for any reason.
+      test_mode: providerConfig?.testMode ?? true,
       success_url: initiateReq.successUrl,
       cancel_url: initiateReq.cancelUrl,
     });

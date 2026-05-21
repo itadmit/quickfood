@@ -54,9 +54,11 @@ export function CustomerCheckout({
 
   // Grow SDK orchestration. The SDK only loads/initializes when there's an
   // active pending payment, and the wallet is rendered once both the SDK is
-  // ready and we have an authCode from /pay/initiate.
+  // ready and we have an authCode from /pay/initiate. We also receive the
+  // `testMode` flag from the server so the SDK's environment matches the
+  // mode the authCode was issued under (sandbox vs production).
   const [pendingPayment, setPendingPayment] = useState<
-    | { orderId: string; authCode: string; thankYouUrl: string }
+    | { orderId: string; authCode: string; thankYouUrl: string; testMode: boolean }
     | null
   >(null);
   const [sdkReady, setSdkReady] = useState(false);
@@ -66,8 +68,6 @@ export function CustomerCheckout({
       renderGrowWallet(pendingPayment.authCode);
     }
   }, [pendingPayment, sdkReady]);
-
-  const isDevGrow = (process.env.NEXT_PUBLIC_GROW_ENV ?? "DEV").toUpperCase() !== "PRODUCTION";
 
   // Load the restaurant's accepted payment methods. If a prefill already
   // picked something (via the effect below), keep it as long as it's still
@@ -245,6 +245,9 @@ export function CustomerCheckout({
             orderId,
             authCode: initData.sdk_auth_code,
             thankYouUrl: `/${tenantSlug}/orders/${orderId}`,
+            // Default to sandbox if the server didn't echo it back (safer
+            // than assuming production).
+            testMode: initData.test_mode !== false,
           });
           return;
         } catch {
@@ -651,7 +654,7 @@ export function CustomerCheckout({
           retry from the same form. */}
       {pendingPayment && (
         <GrowPaymentSdk
-          testMode={isDevGrow}
+          testMode={pendingPayment.testMode}
           thankYouUrl={pendingPayment.thankYouUrl}
           onReady={() => setSdkReady(true)}
           onWalletChange={(state) => setWalletOpen(state === "open")}

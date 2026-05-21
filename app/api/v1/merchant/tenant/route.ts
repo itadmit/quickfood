@@ -25,10 +25,12 @@ export const PATCH = handler(async (req: Request) => {
       name: body.name,
       logoLetter: body.logo_letter,
       logoUrl: body.logo_url,
+      coverImage: body.cover_image,
       themeId: body.theme_id,
       businessType: body.business_type,
       cuisineType: body.cuisine_type,
       vatNumber: body.vat_number,
+      checkoutShowTracking: body.checkout_show_tracking,
     },
   });
   return apiJson({
