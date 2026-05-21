@@ -278,50 +278,11 @@ export class GrowProvider extends BasePaymentProvider {
       const phone = this.normalizeIsraeliPhone(req.customer.phone);
       const description = this.sanitize(`Order ${req.orderReference}`, 100);
 
-      // Grow validates `sum == Σ(productData.price × quantity)` and rejects
-      // with "סכום הכללי של העסקה אינו זהה לסכום המוצרים" on mismatch.
-      // Two cases break that arithmetic:
-      //   1. Grow only accepts ≤10 rows, so slice() drops trailing items.
-      //   2. Callers occasionally pass items that don't sum to `amount`
-      //      (e.g. detailed lines minus a discount, rounding drift).
-      // We compute the lines, verify they reconcile against `amount`, and
-      // collapse to a single all-encompassing row when they don't — so the
-      // wallet always opens even when itemization is imperfect.
-      // Per-row `catalogNumber` must NOT collide with the merchant's stored
-      // Grow catalog — when it does, Grow validates `price` against THEIR
-      // stored value (not what we send) and rejects with err 617. We seed
-      // with the order reference so each row's id is unique to this order
-      // and can't match a pre-existing SKU.
-      const detailedItems = req.items.slice(0, 10).map((item, i) => ({
-        catalogNumber: item.sku || `qf-${req.orderReference}-${i + 1}`,
-        quantity: item.quantity,
-        price: this.formatAmount(item.price),
-        itemDescription: this.sanitize(item.name, 80),
-      }));
-      const detailedSum =
-        Math.round(
-          detailedItems.reduce((acc, it) => acc + Number(it.price) * it.quantity, 0) * 100,
-        ) / 100;
-      const expectedSum = Math.round(req.amount * 100) / 100;
-      const reconciles =
-        detailedItems.length > 0 && Math.abs(detailedSum - expectedSum) < 0.01;
-      const productData = reconciles
-        ? detailedItems
-        : [
-            {
-              catalogNumber: "1",
-              quantity: 1,
-              price: this.formatAmount(req.amount),
-              itemDescription: this.sanitize(`Order ${req.orderReference}`, 80),
-            },
-          ];
-      if (!reconciles && req.items.length > 0) {
-        this.logError("productData reconciliation mismatch — collapsed to single row", {
-          expectedSum,
-          detailedSum,
-          itemCount: req.items.length,
-        });
-      }
+      // NOTE: we deliberately do not build `productData` here — see comment
+      // on the body below. Grow's `sum`-vs-products validator rejects every
+      // shape we tried (string/number prices, unique/sequential catalog
+      // numbers, Hebrew/ASCII descriptions), so we omit the field entirely
+      // and Grow accepts `sum` as the source of truth.
 
       const maxInstallments = Number(this.config!.settings?.maxInstallments) || 1;
 
@@ -339,7 +300,14 @@ export class GrowProvider extends BasePaymentProvider {
         "pageField[email]": this.sanitize(req.customer.email, 80),
         cField1: this.sanitize(req.orderReference, 50),
         cField2: this.sanitize(req.tenantId, 50),
-        productData,
+        // ⚠ productData is intentionally NOT sent. Grow's validator rejects
+        // every shape we tried (str/num prices, unique/sequential catalog
+        // numbers, Hebrew/ASCII descriptions) with err 617 ("סכום הכללי…
+        // אינו זהה"), even when the wire body has Σ(price × quantity) ===
+        // sum bit-exact. Omitting the field lets Grow trust `sum`; verified
+        // 200 OK against sandbox. Trade-off: customer sees only the total
+        // in Grow's wallet/invoice, not a line-by-line breakdown. Re-add
+        // only after confirming Grow has fixed the validator.
       };
 
       if (maxInstallments > 1) body.maxPaymentNum = Math.min(maxInstallments, 12);
@@ -398,7 +366,7 @@ export class GrowProvider extends BasePaymentProvider {
             description,
             cField1: body.cField1,
             cField2: body.cField2,
-            productCount: productData.length,
+            productCount: req.items.length,
             maxPaymentNum: body.maxPaymentNum,
             hasCommission: typeof body.companyCommission === "number",
           },
