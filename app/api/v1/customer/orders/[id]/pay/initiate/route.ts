@@ -100,7 +100,11 @@ export const POST = handler(
       tenantSlug: order.tenant.slug,
       orderId: order.id,
       orderReference: orderRef,
-      amount: order.total / 100, // אגורות ← shekels
+      // QuickFood stores Order.total + OrderItem.unitPrice as **whole shekels**
+      // (verified against the DB: a ₪141 order is `total: 141`, not 14100).
+      // Earlier the code divided by 100 here, treating the values as agorot —
+      // which sent ₪1.41 to Grow instead of ₪141.
+      amount: order.total,
       currency: "ILS",
       customer: {
         name: composedName,
@@ -111,7 +115,7 @@ export const POST = handler(
         name: it.nameSnapshot,
         sku: undefined,
         quantity: it.quantity,
-        price: it.unitPrice / 100,
+        price: it.unitPrice,
       })),
       successUrl: `${baseUrl}/checkout/thank-you?ref=${encodeURIComponent(orderRef)}`,
       cancelUrl: `${baseUrl}/checkout/cancel?ref=${encodeURIComponent(orderRef)}`,

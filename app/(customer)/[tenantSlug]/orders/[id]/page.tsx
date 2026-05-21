@@ -25,7 +25,10 @@ export default async function OrderTrackingPage({
 
   const order = await prisma.order.findFirst({
     where: { id, tenantId: tenant.id },
-    include: { items: true, branch: { select: { phone: true, address: true } } },
+    include: {
+      items: { include: { menuItem: { select: { images: true } } } },
+      branch: { select: { phone: true, address: true } },
+    },
   });
   if (!order) notFound();
 
@@ -69,7 +72,9 @@ export default async function OrderTrackingPage({
           quantity: it.quantity,
           total: it.totalPrice,
           size: it.sizeSnapshot,
+          imageUrl: it.menuItem?.images?.[0] ?? null,
         })),
+        businessType: tenant.businessType,
       }}
       canReview={canReview}
       existingReview={

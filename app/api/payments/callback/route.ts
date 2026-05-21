@@ -117,13 +117,15 @@ export const POST = handler(async (req: Request) => {
     return apiJson({ received: true, matched: false });
   }
 
-  // Amount sanity check (allow 1 agora of rounding slack)
-  const expectedAgorot = pending.amount;
-  const receivedAgorot = Math.round(parsed.amount * 100);
-  if (Math.abs(receivedAgorot - expectedAgorot) > 1) {
+  // Amount sanity check. Both sides are in **whole shekels** (Order.total,
+  // PendingPayment.amount, and Grow's `sum` payload are all shekels in
+  // QuickFood). Allow ₪0.01 of float-rounding slack.
+  const expectedShekels = pending.amount;
+  const receivedShekels = parsed.amount;
+  if (Math.abs(receivedShekels - expectedShekels) > 0.01) {
     console.error("[payments/callback] amount mismatch", {
-      pending: expectedAgorot,
-      received: receivedAgorot,
+      pending: expectedShekels,
+      received: receivedShekels,
     });
     await prisma.pendingPayment.update({
       where: { id: pending.id },
@@ -156,7 +158,7 @@ export const POST = handler(async (req: Request) => {
             pendingPaymentId: pending!.id,
             provider: providerType,
             status: PaymentTransactionStatus.success,
-            amount: receivedAgorot,
+            amount: receivedShekels,
             currency: parsed.currency || "ILS",
             providerTransactionId: parsed.providerTransactionId,
             providerRequestId: parsed.providerRequestId,

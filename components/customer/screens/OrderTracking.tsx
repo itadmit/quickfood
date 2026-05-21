@@ -3,8 +3,18 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { IcoChev, IcoPhone, IcoClock, IcoCheck, IcoStar } from "@/components/shared/Icons";
+import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { formatPrice, formatTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
+
+interface OrderItemRow {
+  id: string;
+  name: string;
+  quantity: number;
+  total: number;
+  size: string | null;
+  imageUrl: string | null;
+}
 
 interface OrderData {
   id: string;
@@ -19,7 +29,8 @@ interface OrderData {
   readyAt: string | null;
   deliveredAt: string | null;
   branch: { phone: string; address: string } | null;
-  items: Array<{ id: string; name: string; quantity: number; total: number; size: string | null }>;
+  items: OrderItemRow[];
+  businessType: BusinessType;
 }
 
 const STAGES: Array<{ key: string; label: string }> = [
@@ -511,8 +522,8 @@ function ThankYouView({
   onReviewSubmitted: (r: ExistingReview) => void;
 }) {
   return (
-    <div className="pb-20 lg:pb-12 lg:max-w-2xl lg:mx-auto lg:pt-8">
-      <section className="px-5 pt-8 lg:pt-0 text-center">
+    <div className="pb-20 lg:pb-12 lg:max-w-2xl lg:mx-auto pt-14 lg:pt-12">
+      <section className="px-5 text-center">
         <div
           className="mx-auto w-20 h-20 rounded-full bg-qf-green-soft grid place-items-center shadow-sm animate-qf-check-in"
           aria-hidden
@@ -523,37 +534,64 @@ function ThankYouView({
         <p className="text-sm text-qf-mute mt-1">
           קיבלנו את ההזמנה שלך אצל {tenantName}.
         </p>
-        <div className="mt-3 inline-flex items-center gap-2 bg-white border border-qf-line rounded-full px-3 py-1.5 text-xs font-mono">
-          <span className="text-qf-mute">מספר הזמנה</span>
-          <span className="font-bold tnum">#{order.number}</span>
+        <div className="mt-4 inline-flex items-baseline gap-2 bg-white border border-qf-line rounded-full px-4 py-2">
+          <span className="text-xs text-qf-mute">מספר הזמנה</span>
+          {/* In RTL `#PV-5037` reads with the # next to the end of the
+              token. Render the number first, then a leading # before it,
+              so it sits on the visually-leading side of the code. */}
+          <span className="font-bold tnum text-sm" dir="ltr">
+            #{order.number}
+          </span>
         </div>
       </section>
 
       {/* Receipt */}
       <section className="px-5 mt-6">
-        <div className="bg-white rounded-2xl border border-qf-line divide-y divide-qf-line-soft">
-          <header className="px-4 py-3 flex items-center justify-between">
+        <div className="bg-white rounded-2xl border border-qf-line overflow-hidden">
+          <header className="px-4 py-3 flex items-center justify-between border-b border-qf-line-soft">
             <h2 className="font-semibold text-sm">פירוט ההזמנה</h2>
             <span className="text-xs text-qf-mute">
               {order.method === "delivery" ? "משלוח" : "איסוף"}
             </span>
           </header>
-          {order.items.map((it) => (
-            <div
-              key={it.id}
-              className="px-4 py-3 flex items-center justify-between gap-3 text-sm"
-            >
-              <div className="min-w-0">
-                <div className="font-medium truncate">{it.name}</div>
-                {it.size && <div className="text-xs text-qf-mute">{it.size}</div>}
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <div className="text-qf-mute text-xs tnum">×{it.quantity}</div>
-                <div className="font-medium tnum">{formatPrice(it.total)}</div>
-              </div>
-            </div>
-          ))}
-          <div className="px-4 py-3 flex items-center justify-between text-sm font-semibold">
+          {/* Column labels — small caps, dimmed, only here to anchor the
+              right-hand numbers (כמות + מחיר) the user expected. */}
+          <div className="px-4 pt-3 pb-1 flex items-center gap-3 text-[10px] uppercase tracking-wide text-qf-mute">
+            <div className="w-14 shrink-0" />
+            <div className="flex-1">מוצר</div>
+            <div className="w-12 text-center">כמות</div>
+            <div className="w-16 text-end">מחיר</div>
+          </div>
+          <ul className="divide-y divide-qf-line-soft">
+            {order.items.map((it) => (
+              <li
+                key={it.id}
+                className="px-4 py-3 flex items-center gap-3 text-sm"
+              >
+                <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0">
+                  <MenuItemImage
+                    src={it.imageUrl ?? null}
+                    alt={it.name}
+                    businessType={order.businessType}
+                    size={56}
+                    rounded="xl"
+                    className="w-full h-full"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium truncate">{it.name}</div>
+                  {it.size && <div className="text-xs text-qf-mute">{it.size}</div>}
+                </div>
+                <div className="w-12 text-center text-qf-mute text-xs tnum">
+                  ×{it.quantity}
+                </div>
+                <div className="w-16 text-end font-medium tnum">
+                  {formatPrice(it.total)}
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="px-4 py-3 border-t border-qf-line-soft flex items-center justify-between text-sm font-semibold">
             <div>סה״כ ששולם</div>
             <div className="tnum text-base">{formatPrice(order.total)}</div>
           </div>

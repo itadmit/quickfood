@@ -30,6 +30,11 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl, br
   // Don't show "go to cart" CTA when we're already there or on checkout.
   const onCartLike = path === `/${tenantSlug}/cart` || path === `/${tenantSlug}/checkout`;
 
+  // Post-order pages (the thank-you / tracking screen) should feel
+  // standalone — no top nav chrome competing with the confirmation.
+  const onOrderPage = /^\/[^/]+\/orders\/[^/]+/.test(path);
+  if (onOrderPage) return null;
+
   return (
     <header className="hidden lg:flex sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-qf-line">
       <div className="w-full max-w-7xl mx-auto px-6 h-16 flex items-center gap-5">
