@@ -72,8 +72,8 @@ export default function OpengraphImage() {
             textAlign: "right",
           }}
         >
-          <div>{rtl("חנות אונליין למסעדה שלך.")}</div>
-          <div>{rtl("בלי לחלוק עם החברות הגדולות.")}</div>
+          <div>{rtl("חנות אונליין למסעדה שלך,")}</div>
+          <div>{rtl("התחל למכור מיד ללא מאמץ")}</div>
         </div>
 
         {/* Bottom row: price chip on the right (RTL), URL on the left. */}
@@ -104,21 +104,22 @@ export default function OpengraphImage() {
             style={{
               background: "#0A0A0A",
               color: "#F8CB1E",
-              padding: "14px 24px",
+              padding: "18px 28px 22px",
               borderRadius: 999,
-              fontSize: 28,
+              fontSize: 26,
               fontWeight: 800,
+              lineHeight: 1,
               display: "flex",
               flexDirection: "row-reverse",
               gap: 10,
-              alignItems: "baseline",
+              alignItems: "center",
             }}
           >
-            <span>₪299</span>
-            <span>{rtl("לחודש")}</span>
-            <span>·</span>
-            <span>0.5%</span>
-            <span>{rtl("להזמנה")}</span>
+            <span style={{ lineHeight: 1 }}>₪299</span>
+            <span style={{ lineHeight: 1 }}>{rtl("לחודש")}</span>
+            <span style={{ lineHeight: 1, opacity: 0.5 }}>·</span>
+            <span style={{ lineHeight: 1 }}>0.5%</span>
+            <span style={{ lineHeight: 1 }}>{rtl("להזמנה")}</span>
           </div>
         </div>
       </div>
