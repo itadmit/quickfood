@@ -20,6 +20,7 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
       id: z.id,
       name: z.name,
       radius_km: z.radiusKm ? Number(z.radiusKm) : null,
+      cities: z.cities,
       delivery_fee: z.deliveryFee,
       min_eta: z.minEta,
       max_eta: z.maxEta,
@@ -42,6 +43,7 @@ export const POST = handler(async (req: Request, { params }: { params: Promise<{
       branchId: id,
       name: body.name,
       radiusKm: body.radius_km,
+      cities: normalizeCities(body.cities),
       deliveryFee: body.delivery_fee,
       minEta: body.min_eta,
       maxEta: body.max_eta,
@@ -50,3 +52,19 @@ export const POST = handler(async (req: Request, { params }: { params: Promise<{
   });
   return apiJson({ zone: { id: zone.id, name: zone.name } }, 201);
 });
+
+/** Trim, drop blanks, dedupe (case-insensitive). */
+function normalizeCities(input: string[] | undefined): string[] {
+  if (!input || input.length === 0) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of input) {
+    const v = raw.trim().replace(/\s+/g, " ");
+    if (!v) continue;
+    const key = v.toLocaleLowerCase("he-IL");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(v);
+  }
+  return out;
+}

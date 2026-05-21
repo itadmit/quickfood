@@ -299,6 +299,12 @@ model DeliveryZone {
   name        String
   radiusKm    Decimal? @map("radius_km") @db.Decimal(6, 2)
   geometry    Json?
+  /// Cities this zone delivers to. Single source of truth for the
+  /// customer-facing "select your city" picker on the storefront —
+  /// the union of all active zones' cities is the supported set.
+  /// Stored as plain strings (Hebrew city names) so merchants can
+  /// type freely; the picker also offers a curated suggestion list.
+  cities      String[] @default([])
   deliveryFee Int      @map("delivery_fee")
   minEta      Int      @map("min_eta")
   maxEta      Int      @map("max_eta")

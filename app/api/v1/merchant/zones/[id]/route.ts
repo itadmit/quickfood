@@ -26,6 +26,7 @@ export const PATCH = handler(async (req: Request, { params }: { params: Promise<
     data: {
       name: body.name,
       radiusKm: body.radius_km,
+      ...(body.cities !== undefined && { cities: normalizeCities(body.cities) }),
       deliveryFee: body.delivery_fee,
       minEta: body.min_eta,
       maxEta: body.max_eta,
@@ -34,6 +35,23 @@ export const PATCH = handler(async (req: Request, { params }: { params: Promise<
   });
   return apiJson({ zone: { id: updated.id, active: updated.active } });
 });
+
+/** Trim, drop blanks, dedupe (case-insensitive). Keep in sync with the
+ *  copy in /branches/[id]/zones/route.ts. */
+function normalizeCities(input: string[] | undefined): string[] {
+  if (!input || input.length === 0) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of input) {
+    const v = raw.trim().replace(/\s+/g, " ");
+    if (!v) continue;
+    const key = v.toLocaleLowerCase("he-IL");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(v);
+  }
+  return out;
+}
 
 export const DELETE = handler(async (_req, { params }: { params: Promise<{ id: string }> }) => {
   const session = await requireMerchant(["owner", "manager"]);

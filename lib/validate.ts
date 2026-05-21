@@ -207,6 +207,8 @@ export const DeliveryZoneInputSchema = z.object({
   name: z.string().min(1).max(80),
   radius_km: z.number().positive().optional(),
   geometry: z.unknown().optional(),
+  /** Cities this zone delivers to. Trimmed + deduped on the server. */
+  cities: z.array(z.string().min(1).max(60)).max(200).optional(),
   delivery_fee: z.number().int().min(0),
   min_eta: z.number().int().min(0),
   max_eta: z.number().int().min(0),

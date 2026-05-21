@@ -1,16 +1,23 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { IcoPin, IcoSearch, IcoClock, IcoBike, IcoUser, IcoArrowLeft, IcoStar } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
 import { CampaignPopup } from "@/components/customer/CampaignPopup";
 import { CampaignBanner, type CampaignBannerData } from "@/components/customer/CampaignBanner";
 import { ReorderRail } from "@/components/customer/ReorderRail";
+import { CityPickerModal } from "@/components/customer/CityPickerModal";
 import { resolveCategoryStyle } from "@/lib/category-style";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { SmartImg } from "@/components/shared/SmartImg";
+import {
+  readDeliveryChoice,
+  writeDeliveryChoice,
+  type DeliveryChoice,
+} from "@/lib/delivery-city-storage";
 import { cn } from "@/lib/cn";
 
 interface Props {
@@ -49,6 +56,11 @@ interface Props {
     headline_item: string | null;
     headline_image: string | null;
   }>;
+  /** Union of cities the tenant's active delivery zones cover. The
+   *  storefront uses this for the Wolt-style "select your city"
+   *  picker; empty = merchant hasn't configured zones, picker still
+   *  offers pickup as an option. */
+  deliveryCities?: string[];
   bannerCampaign?: CampaignBannerData | null;
   hasCustomerSession?: boolean;
   pendingReviewOrderId?: string | null;
@@ -61,6 +73,7 @@ export function CustomerHome({
   categories,
   popular,
   recentOrders = [],
+  deliveryCities = [],
   bannerCampaign = null,
   hasCustomerSession = false,
   pendingReviewOrderId = null,
@@ -70,6 +83,38 @@ export function CustomerHome({
   const open = branch?.status === "open";
 
   const hasCover = Boolean(tenant.coverImage);
+
+  // Wolt-style "select your delivery city" flow. On first visit the
+  // modal opens automatically; once the customer has answered (city OR
+  // pickup), we persist their choice in localStorage and keep the
+  // location chip in the hero clickable to change it later.
+  const [choice, setChoice] = useState<DeliveryChoice>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerRequired, setPickerRequired] = useState(false);
+
+  useEffect(() => {
+    const existing = readDeliveryChoice(tenant.slug);
+    setChoice(existing);
+    if (!existing) {
+      setPickerOpen(true);
+      setPickerRequired(true);
+    }
+  }, [tenant.slug]);
+
+  function applyChoice(next: { kind: "delivery"; city: string } | { kind: "pickup" }) {
+    setChoice(next);
+    writeDeliveryChoice(tenant.slug, next);
+    setMethod(next.kind === "delivery" ? "delivery" : "pickup");
+    setPickerOpen(false);
+    setPickerRequired(false);
+  }
+
+  const locationLabel =
+    choice?.kind === "pickup"
+      ? "איסוף עצמי"
+      : choice?.kind === "delivery"
+        ? choice.city
+        : "בחר כתובת";
 
   return (
     <div className="pb-20 lg:pb-12">
@@ -97,10 +142,17 @@ export function CustomerHome({
           {/* Mobile-only top row (location + profile). Desktop has these in the
               top nav already, so hide here. */}
           <div className="flex items-center justify-between mb-4 lg:hidden">
-            <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur px-3 py-1.5 rounded-full text-sm">
+            <button
+              type="button"
+              onClick={() => {
+                setPickerRequired(false);
+                setPickerOpen(true);
+              }}
+              className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 backdrop-blur px-3 py-1.5 rounded-full text-sm transition"
+            >
               <IcoPin c="#fff" s={14} />
-              <span className="truncate max-w-45">{branch?.address ?? "—"}</span>
-            </div>
+              <span className="truncate max-w-45">{locationLabel}</span>
+            </button>
             <Link
               href={`/${tenant.slug}/profile`}
               aria-label="אזור אישי"
@@ -311,6 +363,19 @@ export function CustomerHome({
 
       <BottomTabBar tenantSlug={tenant.slug} />
       <CampaignPopup tenantSlug={tenant.slug} />
+
+      {pickerOpen && (
+        <CityPickerModal
+          cities={deliveryCities}
+          branchAddress={branch?.address ?? null}
+          required={pickerRequired}
+          initialMethod={
+            method === "pickup" || deliveryCities.length === 0 ? "pickup" : "delivery"
+          }
+          onChoose={applyChoice}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
     </div>
   );
 }

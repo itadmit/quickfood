@@ -56,7 +56,17 @@ export default async function HomePage({
         })
       : null;
 
-  const [categories, popular, customerRecentOrders, bannerCampaign, pendingReview] = await Promise.all([
+  // Cities the merchant covers (union of active zones on the primary
+  // branch). Drives the Wolt-style "select your city" modal.
+  const primaryBranchId = tenant.branches[0]?.id;
+  const zonesPromise = primaryBranchId
+    ? prisma.deliveryZone.findMany({
+        where: { branchId: primaryBranchId, active: true },
+        select: { cities: true },
+      })
+    : Promise.resolve([] as { cities: string[] }[]);
+
+  const [categories, popular, customerRecentOrders, bannerCampaign, pendingReview, zones] = await Promise.all([
     prisma.menuCategory.findMany({
       where: { tenantId: tenant.id, active: true },
       orderBy: { position: "asc" },
@@ -83,7 +93,20 @@ export default async function HomePage({
       },
     }),
     pendingReviewPromise,
+    zonesPromise,
   ]);
+
+  const seenCity = new Set<string>();
+  const deliveryCities: string[] = [];
+  for (const z of zones) {
+    for (const c of z.cities) {
+      const key = c.toLocaleLowerCase("he-IL");
+      if (seenCity.has(key)) continue;
+      seenCity.add(key);
+      deliveryCities.push(c);
+    }
+  }
+  deliveryCities.sort((a, b) => a.localeCompare(b, "he-IL"));
 
   const popularSerialized = popular.map((p) => ({
     id: p.id,
@@ -143,6 +166,7 @@ export default async function HomePage({
       categories={categories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color }))}
       popular={popularSerialized}
       recentOrders={recentOrdersSerialized}
+      deliveryCities={deliveryCities}
       bannerCampaign={bannerCampaign}
       hasCustomerSession={session?.type === "customer"}
       pendingReviewOrderId={pendingReview?.id ?? null}
