@@ -612,6 +612,7 @@ export function CustomerCheckout({
               className="w-full mt-4 bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-14 text-base font-semibold flex items-center justify-between shadow-sm shadow-(--qf-primary)/25 transition"
             >
               <span className="inline-flex items-center gap-2">
+                {busy && <span className="qf-spinner text-white text-base" aria-hidden />}
                 <span>
                   {busy
                     ? "שולח..."
@@ -636,7 +637,14 @@ export function CustomerCheckout({
           className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-16 text-base font-semibold flex items-center justify-between shadow-lg shadow-(--qf-primary)/25 transition active:scale-[0.99]"
         >
           <span className="inline-flex items-center gap-2">
-            <span>{busy ? "שולח..." : "בצע הזמנה"}</span>
+            {busy && <span className="qf-spinner text-white text-base" aria-hidden />}
+            <span>
+              {busy
+                ? "שולח..."
+                : paymentMethod === "cash"
+                  ? "בצע הזמנה"
+                  : "לשלם כעת"}
+            </span>
             {!busy && <IcoArrowLeft c="#fff" s={16} />}
           </span>
           <span className="tnum text-lg">{formatPrice(total)}</span>

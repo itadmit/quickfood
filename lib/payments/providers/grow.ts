@@ -292,12 +292,19 @@ export class GrowProvider extends BasePaymentProvider {
       });
 
       if (String(response.status) === "1" && response.data) {
+        // Grow returns processId as a number; our DB column is String.
+        // Coerce here so the route never tries to write an Int into it.
+        const reqId =
+          response.data.processId !== undefined
+            ? String(response.data.processId)
+            : response.data.authCode;
+
         // SDK Wallet mode
         if (response.data.authCode) {
           return {
             success: true,
             sdkAuthCode: response.data.authCode,
-            providerRequestId: response.data.processId || response.data.authCode,
+            providerRequestId: reqId,
             providerResponse: response as unknown as Record<string, unknown>,
           };
         }
@@ -306,7 +313,7 @@ export class GrowProvider extends BasePaymentProvider {
           return {
             success: true,
             paymentUrl: response.data.url,
-            providerRequestId: response.data.processId,
+            providerRequestId: reqId,
             providerResponse: response as unknown as Record<string, unknown>,
           };
         }
