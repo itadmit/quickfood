@@ -175,7 +175,7 @@ function Problem() {
           <div className={styles.problemCard}>
             <div className={styles.problemNum}>01 ─ עמלות</div>
             <h3>30% מכל הזמנה הולך לאגרגטור.</h3>
-            <p>וולט, Tenbis ו-Cibus גובים עמלות מטורפות. ב-QuickFood אתה מקבל הזמנות ישירות מהלקוחות שלך, בלי מתווך באמצע.</p>
+            <p>אגרגטורים גדולים גובים עמלות שיכולות לאכול שליש מהזמנה. ב-QuickFood אתה מקבל הזמנות ישירות מהלקוחות שלך, בלי מתווך באמצע.</p>
           </div>
           <div className={styles.problemCard}>
             <div className={styles.problemNum}>02 ─ זהות</div>
@@ -415,7 +415,7 @@ function Bento() {
           {/* 12. Smart checkout polish */}
           <div className={styles.bentoCell}>
             <span className={styles.bentoTag}>חוויית רכישה</span>
-            <h4>חוויה של וולט</h4>
+            <h4>חוויית רכישה מודרנית</h4>
             <p>הזמן שוב בקליק, prefill לכתובת+תשלום, אזהרה כשהמחיר עלה, סקלטונים בכל מסך.</p>
           </div>
 
@@ -658,7 +658,7 @@ function Faq() {
             <details className={styles.faqItem}>
               <summary>מה עם משלוחים?</summary>
               <p>
-                יש לך שתי אפשרויות: לנהל שליחים שלך דרך מודול השליחים שלנו (כלול ב-Growth + Pro), או להתחבר לשירותי משלוחים חיצוניים כמו Wolt Drive או דליבר. אזורי משלוח, ETA לכל אזור ודמי משלוח שונים — הכל מוגדר בדשבורד.
+                יש לך שתי אפשרויות: לנהל שליחים שלך דרך מודול השליחים שלנו (כלול ב-Growth + Pro), או להתחבר לספקי משלוחים חיצוניים. אזורי משלוח, ETA לכל אזור ודמי משלוח שונים — הכל מוגדר בדשבורד.
               </p>
             </details>
             <details className={styles.faqItem}>
