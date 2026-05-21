@@ -72,8 +72,8 @@ export default function OpengraphImage() {
             textAlign: "right",
           }}
         >
-          <div>{rtl("חנות אונליין למסעדה שלך,")}</div>
-          <div>{rtl("התחל למכור מיד ללא מאמץ")}</div>
+          <div>{rtl("חנות אונליין למסעדה שלך.")}</div>
+          <div>{rtl("התחל למכור מיד ללא מאמץ.")}</div>
         </div>
 
         {/* Bottom row: price chip on the right (RTL), URL on the left. */}
