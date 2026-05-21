@@ -50,17 +50,36 @@ export interface SendWhatsAppResult {
 export async function sendWhatsApp(
   input: SendWhatsAppInput,
 ): Promise<SendWhatsAppResult> {
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: input.tenantId },
-    select: {
-      smsCreditsRemaining: true,
-      whatsappToken: true,
-      whatsappInstanceId: true,
-    },
-  });
+  // Tenant credentials win when set; otherwise fall back to the platform
+  // singleton (`platform_settings`) which the super-admin maintains from
+  // /admin/settings/whatsapp. This lets us onboard small merchants without
+  // forcing them to open their own iBot account.
+  const [tenant, platform] = await Promise.all([
+    prisma.tenant.findUnique({
+      where: { id: input.tenantId },
+      select: {
+        smsCreditsRemaining: true,
+        whatsappToken: true,
+        whatsappInstanceId: true,
+      },
+    }),
+    prisma.platformSettings.findUnique({
+      where: { id: "singleton" },
+      select: {
+        whatsappDefaultToken: true,
+        whatsappDefaultInstanceId: true,
+      },
+    }),
+  ]);
   if (!tenant) {
     throw new Error(`tenant ${input.tenantId} not found`);
   }
+
+  const token = tenant.whatsappToken ?? platform?.whatsappDefaultToken ?? null;
+  const instanceId =
+    tenant.whatsappInstanceId ?? platform?.whatsappDefaultInstanceId ?? null;
+  const usingPlatformDefault =
+    !tenant.whatsappToken && !tenant.whatsappInstanceId && !!token && !!instanceId;
 
   const to = normalizePhone(input.to);
   const jid = toJid(to);
@@ -69,7 +88,7 @@ export async function sendWhatsApp(
     data: {
       tenantId: input.tenantId,
       to,
-      sender: tenant.whatsappInstanceId ?? "whatsapp",
+      sender: instanceId ?? "whatsapp",
       body: input.body,
       channel: "whatsapp",
       kind: input.kind ?? "generic",
@@ -88,12 +107,13 @@ export async function sendWhatsApp(
     return { status: "invalid_recipient", logId: log.id };
   }
 
-  if (!tenant.whatsappToken || !tenant.whatsappInstanceId) {
+  if (!token || !instanceId) {
     await prisma.smsLog.update({
       where: { id: log.id },
       data: {
         status: "failed",
-        providerMsg: "whatsapp not configured (missing token or instance_id)",
+        providerMsg:
+          "whatsapp not configured (no tenant creds and no platform default)",
       },
     });
     return {
@@ -120,7 +140,9 @@ export async function sendWhatsApp(
         data: {
           status: "sent",
           sentAt: new Date(),
-          providerMsg: "console fallback",
+          providerMsg: usingPlatformDefault
+            ? "console fallback (platform default)"
+            : "console fallback",
         },
       }),
     ];
@@ -139,8 +161,8 @@ export async function sendWhatsApp(
   // iBot Chat is a GET-only API (querystring auth). Encode the message + jid
   // carefully — `msg` may contain Hebrew, newlines, or URL fragments.
   const params = new URLSearchParams({
-    token: tenant.whatsappToken,
-    instance_id: tenant.whatsappInstanceId,
+    token,
+    instance_id: instanceId,
     jid,
     msg: input.body,
   });
@@ -161,10 +183,13 @@ export async function sendWhatsApp(
   }
 
   if (providerOk) {
+    const finalMsg = usingPlatformDefault
+      ? `${providerMsg ? providerMsg + " · " : ""}via platform default`
+      : providerMsg;
     const ops: Promise<unknown>[] = [
       prisma.smsLog.update({
         where: { id: log.id },
-        data: { status: "sent", sentAt: new Date(), providerMsg },
+        data: { status: "sent", sentAt: new Date(), providerMsg: finalMsg },
       }),
     ];
     if (!input.skipCredit) {

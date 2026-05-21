@@ -14,13 +14,35 @@ export default async function CheckoutPage({
   const tenant = await resolveTenantBySlug(tenantSlug);
   if (!tenant) notFound();
 
-  const settings = await prisma.tenant.findUnique({
-    where: { id: tenant.id },
-    select: { reviewsChannel: true, reviewsEnabled: true },
-  });
+  const [settings, growConfig] = await Promise.all([
+    prisma.tenant.findUnique({
+      where: { id: tenant.id },
+      select: { reviewsChannel: true, reviewsEnabled: true },
+    }),
+    prisma.paymentProviderConfig.findUnique({
+      where: {
+        tenantId_provider: { tenantId: tenant.id, provider: "grow" },
+      },
+      select: { testMode: true, isActive: true },
+    }),
+  ]);
 
   const requireEmail =
     !!settings?.reviewsEnabled && settings.reviewsChannel === "email";
 
-  return <CustomerCheckout tenantSlug={tenantSlug} requireEmail={requireEmail} />;
+  // Pre-load Grow's SDK at page mount when the tenant has it active. The SDK
+  // needs ~1s of async work after init() before it can render the wallet
+  // safely; doing it at page open avoids "SDK was not loaded as needed" when
+  // the user clicks "pay" before that work finishes.
+  const growEnabled = !!growConfig?.isActive;
+  const growTestMode = growConfig?.testMode ?? true;
+
+  return (
+    <CustomerCheckout
+      tenantSlug={tenantSlug}
+      requireEmail={requireEmail}
+      growEnabled={growEnabled}
+      growTestMode={growTestMode}
+    />
+  );
 }

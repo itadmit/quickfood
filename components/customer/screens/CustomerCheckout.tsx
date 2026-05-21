@@ -25,9 +25,13 @@ const PAYMENT_METHOD_LABELS: Record<CustomerPaymentMethod, string> = {
 export function CustomerCheckout({
   tenantSlug,
   requireEmail = false,
+  growEnabled = false,
+  growTestMode = true,
 }: {
   tenantSlug: string;
   requireEmail?: boolean;
+  growEnabled?: boolean;
+  growTestMode?: boolean;
 }) {
   const router = useRouter();
   const { lines, method, subtotal, branch, tenant, clear, setMethod, hydrated } = useCart();
@@ -647,21 +651,24 @@ export function CustomerCheckout({
         </button>
       </div>
 
-      {/* Grow wallet — mounted once we have an authCode. The SDK overlays
-          its own wallet on top of this page; we don't render any UI of our
-          own here. On success the SDK navigates to the thank-you URL.
-          On failure/cancel we clear the pendingPayment so the user can
-          retry from the same form. */}
-      {pendingPayment && (
+      {/* Grow wallet — pre-loaded on page mount when the tenant has Grow
+          enabled, so the SDK has ~1s to do its async setup while the
+          customer fills out the form. The wallet itself only renders when
+          we trigger `renderGrowWallet(authCode)` after /pay/initiate. */}
+      {growEnabled && (
         <GrowPaymentSdk
-          testMode={pendingPayment.testMode}
-          thankYouUrl={pendingPayment.thankYouUrl}
+          testMode={pendingPayment?.testMode ?? growTestMode}
+          thankYouUrl={pendingPayment?.thankYouUrl ?? `/${tenantSlug}`}
           onReady={() => setSdkReady(true)}
           onWalletChange={(state) => setWalletOpen(state === "open")}
           onError={(message) => {
-            setError(message || "התשלום נכשל. אפשר לנסות שוב.");
-            setPendingPayment(null);
-            setSdkReady(false);
+            // Only surface the error if we actually have an in-flight
+            // payment — pre-mount SDK errors (none of our business) get
+            // silently logged via the console hooks in GrowPaymentSdk.
+            if (pendingPayment) {
+              setError(message || "התשלום נכשל. אפשר לנסות שוב.");
+              setPendingPayment(null);
+            }
           }}
         />
       )}

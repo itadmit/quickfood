@@ -176,7 +176,17 @@ export function GrowPaymentSdk({
           },
         });
         initializedRef.current = true;
-        onReady?.();
+        // The SDK's init() is synchronous but it kicks off async work
+        // (loading sub-frames, registering Apple Pay handlers, etc.).
+        // Calling renderPaymentOptions before that finishes throws
+        // "SDK was not loaded as needed". A short buffer lets the SDK
+        // settle before we tell our parent it's safe to render.
+        setTimeout(() => {
+          if (cancelled) return;
+          // eslint-disable-next-line no-console
+          console.info("[grow-sdk] ready");
+          onReady?.();
+        }, 800);
       })
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : "Failed to load payment SDK";
