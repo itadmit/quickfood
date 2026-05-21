@@ -595,6 +595,10 @@
   box-shadow: 0 24px 60px rgba(0,0,0,0.28);
   overflow: hidden;
   position: relative;
+  /* Force LTR flow so the oversized iframe (390px) anchors at top-left
+     inside the 264px screen — otherwise RTL pushes it left and the
+     transform-origin reference point lands outside the visible window. */
+  direction: ltr;
 }
 .phoneLiveScreen::after {
   /* notch */
@@ -615,6 +619,9 @@
   display: block;
   border-radius: 28px;
   background: #fff;
+  position: absolute;
+  top: 8px;
+  left: 8px;
   transform: scale(0.6769);            /* 264 / 390 */
   transform-origin: top left;
 }
