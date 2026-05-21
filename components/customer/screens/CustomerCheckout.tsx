@@ -9,6 +9,7 @@ import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { recordRecentOrder } from "@/lib/recent-orders-storage";
+import { takeCheckoutPrefill } from "@/lib/checkout-prefill";
 
 type CustomerPaymentMethod = "cash" | "card" | "bit" | "apple_pay" | "google_pay";
 
@@ -22,7 +23,7 @@ const PAYMENT_METHOD_LABELS: Record<CustomerPaymentMethod, string> = {
 
 export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
   const router = useRouter();
-  const { lines, method, subtotal, branch, tenant, clear } = useCart();
+  const { lines, method, subtotal, branch, tenant, clear, setMethod } = useCart();
 
   const [address, setAddress] = useState("");
   const [floor, setFloor] = useState("");
@@ -42,7 +43,9 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
   // screen instead of the "הסל ריק" empty-state flashing for ~250ms.
   const [submitted, setSubmitted] = useState(false);
 
-  // Load the restaurant's accepted payment methods.
+  // Load the restaurant's accepted payment methods. If a prefill already
+  // picked something (via the effect below), keep it as long as it's still
+  // allowed; otherwise fall back to the first allowed method.
   useEffect(() => {
     let cancelled = false;
     fetch(`/api/v1/restaurants/${encodeURIComponent(tenantSlug)}`)
@@ -53,13 +56,34 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
         setAvailableMethods(methods);
         const preferred: CustomerPaymentMethod[] = ["cash", "card", "bit", "apple_pay", "google_pay"];
         const first = preferred.find((m) => methods.includes(m)) ?? null;
-        setPaymentMethod(first);
+        setPaymentMethod((cur) => (cur && methods.includes(cur) ? cur : first));
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
   }, [tenantSlug]);
+
+  // Consume any "הזמן שוב" prefill the home rail dropped in sessionStorage
+  // on mount. takeCheckoutPrefill() clears the entry so a refresh doesn't
+  // replay it. Each field is only applied if the customer hasn't already
+  // typed something — we never clobber active edits.
+  useEffect(() => {
+    const prefill = takeCheckoutPrefill(tenantSlug);
+    if (!prefill) return;
+    if (prefill.firstName) setFirstName((cur) => cur || prefill.firstName!);
+    if (prefill.lastName) setLastName((cur) => cur || prefill.lastName!);
+    if (prefill.phone) setPhone((cur) => cur || prefill.phone!);
+    if (prefill.address) setAddress((cur) => cur || prefill.address!);
+    if (prefill.floor) setFloor((cur) => cur || prefill.floor!);
+    if (prefill.deliveryNotes)
+      setDeliveryNotes((cur) => cur || prefill.deliveryNotes!);
+    if (prefill.customerNotes)
+      setCustomerNotes((cur) => cur || prefill.customerNotes!);
+    if (typeof prefill.tip === "number") setTip(prefill.tip);
+    if (prefill.method) setMethod(prefill.method);
+    if (prefill.paymentMethod) setPaymentMethod(prefill.paymentMethod);
+  }, [tenantSlug, setMethod]);
 
   const deliveryFee = method === "delivery" ? branch?.deliveryFee ?? 0 : 0;
   const serviceFee = branch?.serviceFee ?? 0;

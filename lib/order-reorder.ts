@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/client";
+import { splitDeliveryNotes, type CheckoutPrefill } from "@/lib/checkout-prefill";
 
 /** Snapshot of an option as stored on OrderItem.selectedOptions. */
 export interface StoredOption {
@@ -82,6 +83,8 @@ export interface RebuildResult {
   lines: RebuildLine[];
   issues: RebuildIssue[];
   pricing: RebuildPricing;
+  /** Checkout fields the client should pre-fill on /checkout. */
+  prefill: CheckoutPrefill;
 }
 
 /**
@@ -94,6 +97,17 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     select: {
+      method: true,
+      paymentMethod: true,
+      tip: true,
+      customerNotes: true,
+      deliveryNotes: true,
+      customerPhoneSnap: true,
+      customerFirstNameSnap: true,
+      customerLastNameSnap: true,
+      customer: {
+        select: { firstName: true, lastName: true, phone: true },
+      },
       items: {
         select: {
           menuItemId: true,
@@ -112,6 +126,7 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
       lines: [],
       issues: [],
       pricing: { oldSubtotal: 0, newSubtotal: 0, delta: 0 },
+      prefill: {},
     };
   }
 
@@ -202,6 +217,37 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
     oldSubtotal += it.totalPrice;
   }
 
+  // Prefer the snapshot the customer used on this particular order
+  // (that's what they last typed) and fall back to their live profile.
+  const firstName =
+    order.customerFirstNameSnap?.trim() ||
+    order.customer?.firstName?.trim() ||
+    "";
+  const lastName =
+    order.customerLastNameSnap?.trim() ||
+    order.customer?.lastName?.trim() ||
+    "";
+  const phone =
+    order.customerPhoneSnap?.trim() ||
+    order.customer?.phone?.trim() ||
+    "";
+  const { address, floor, notes: deliveryHandoff } = splitDeliveryNotes(
+    order.deliveryNotes,
+  );
+
+  const prefill: CheckoutPrefill = {
+    ...(firstName && { firstName }),
+    ...(lastName && { lastName }),
+    ...(phone && { phone }),
+    method: order.method,
+    paymentMethod: order.paymentMethod,
+    ...(order.tip > 0 && { tip: order.tip }),
+    ...(order.customerNotes && { customerNotes: order.customerNotes }),
+    ...(address && { address }),
+    ...(floor && { floor }),
+    ...(deliveryHandoff && { deliveryNotes: deliveryHandoff }),
+  };
+
   return {
     lines,
     issues,
@@ -210,5 +256,6 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
       newSubtotal,
       delta: newSubtotal - oldSubtotal,
     },
+    prefill,
   };
 }

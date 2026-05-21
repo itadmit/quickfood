@@ -9,6 +9,7 @@ import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { RelativeTime } from "@/components/shared/RelativeTime";
 import { readRecentOrderIds } from "@/lib/recent-orders-storage";
+import { saveCheckoutPrefill, type CheckoutPrefill } from "@/lib/checkout-prefill";
 import { cn } from "@/lib/cn";
 
 interface RecentOrder {
@@ -116,10 +117,12 @@ export function ReorderRail({
           lines?: RebuildLine[];
           issues?: RebuildIssue[];
           pricing?: RebuildPricing;
+          prefill?: CheckoutPrefill;
         };
         const lines = data.lines ?? [];
         const reportedIssues = data.issues ?? [];
         const pricing = data.pricing ?? null;
+        const prefill = data.prefill ?? null;
 
         if (lines.length > 0) {
           addMany(
@@ -137,6 +140,12 @@ export function ReorderRail({
               notes: l.notes,
             })),
           );
+          // Stash the customer's previous checkout details so /checkout
+          // can prefill them on mount — saves them re-typing address,
+          // phone, payment, tip, etc.
+          if (prefill && Object.keys(prefill).length > 0) {
+            saveCheckoutPrefill(tenantSlug, prefill);
+          }
         }
 
         const priceChanged = pricing && pricing.delta !== 0 && lines.length > 0;
