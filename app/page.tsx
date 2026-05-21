@@ -295,7 +295,7 @@ function Showcase() {
   );
 }
 
-/* ─── BENTO FEATURES ─────────────────────────────────────── */
+/* ─── FEATURES — WOLT-STYLE STACKED CARDS ────────────────── */
 function Bento() {
   return (
     <section id="features" className={styles.section}>
@@ -305,7 +305,68 @@ function Bento() {
           כל מה שצריך כדי לקבל הזמנות. <em>וכל מה שלא חשבת שצריך.</em>
         </h2>
 
-        <div className={styles.bento}>
+        <div className={styles.woltStack}>
+          <WoltCard
+            tone="sky"
+            tag="ההזמנות שלך"
+            heading="ישירות מהלקוח אליך."
+            body="בלי אגרגטור באמצע. הלקוח נוחת באפליקציה שלך עם הלוגו, השם והצבעים שלך, מזמין, ואתה רואה את ההזמנה בדשבורד תוך שניות. הקשר הוא בינך לבינו."
+            decor="📦"
+          />
+
+          <WoltCard
+            tone="cream"
+            tag="תשלום מובנה"
+            heading="Bit, אשראי, Apple Pay, Google Pay."
+            body="ארנק התשלום של Grow רץ inline בתוך החנות שלך — אין הפניה לעמוד תשלום חיצוני, אין iframe מוזר. הלקוח רואה את הסל ואת כפתור התשלום באותו עמוד. הכסף בחשבון העסק תוך 24 שעות."
+            decor="💳"
+          />
+
+          <WoltCard
+            tone="blush"
+            tag="ביקורות"
+            heading="תזכורת אוטומטית בערוץ שלך."
+            body="שעה אחרי שההזמנה מסומנת 'נמסרה' — תזכורת אוטומטית ב-SMS, WhatsApp או Email (לבחירתך) עם לינק לדירוג. הכוכבים מצטברים אצלך, אתה מגיב לתגובות מהדשבורד."
+            decor="⭐"
+          />
+
+          <WoltCard
+            tone="sky"
+            tag="מעקב חי"
+            heading="הלקוח רואה איפה ההזמנה."
+            body="התקבלה ← בהכנה ← מוכנה ← בדרך. עדכון בלייב בלי refresh. בוחר אם להציג ETA או רק 'תודה' — toggle בדשבורד."
+            decor="🚴"
+          />
+
+          <WoltCard
+            tone="cream"
+            tag="WhatsApp"
+            heading="הודעות וואטסאפ מהמספר שלך."
+            body="חיבור ל-iBot Chat — מספר משלך, לא משותף עם מסעדות אחרות. אישור הזמנה, יצא לדרך, ביקורת — הכל אוטומטי מאותה שיחה."
+            decor="💬"
+          />
+
+          <WoltCard
+            tone="indigo"
+            tag="0 עמלה"
+            heading="תשלום חודשי קבוע. בלי אחוזים מכל הזמנה."
+            body="האגרגטורים גובים 25%–30% מכל הזמנה. ב-QuickFood אתה משלם תוכנית חודשית קבועה ושומר 100% מהמכירות. רק עמלת סליקת אשראי רגילה (~1.5%-2%) — תקני בכל המערכות."
+            decor="💎"
+          />
+        </div>
+
+        {/* Secondary feature grid — quieter, for everything the stacked
+            cards don't deserve full attention for. */}
+        <div className={styles.miniGrid}>
+          <MiniCell tag="מולטי-סניף" title="סניפים מרובים" body="שעות, דמי משלוח וטיפים נפרדים לכל סניף." />
+          <MiniCell tag="שליחים" title="ניהול שליחים" body="אזורי משלוח על מפה, ETA לכל אזור, הקצאה אוטו׳." />
+          <MiniCell tag="קמפיינים" title="פופאפים ובאנרים" body="הצג מבצע בכניסה לחנות, או באנר תמידי במסך הבית." />
+          <MiniCell tag="אנליטיקה" title="נתונים אמיתיים" body="שעות שיא, פריטים מובילים, ערך הזמנה ממוצע." />
+          <MiniCell tag="API" title="Webhooks + REST" body="חבר לקופה, ל-iCount או לכל מערכת חיצונית." />
+          <MiniCell tag="RTL" title="עברית מנצחת" body="RTL מלא, ניקוד, חודשים בעברית, מספרים tabular." />
+        </div>
+
+        <div className={styles.bento} hidden>
           {/* 1. Inline checkout — hero feature */}
           <div className={`${styles.bentoCell} ${styles.bentoTomato} ${styles.bWide}`}>
             <span className={styles.bentoTag}>תשלום מובנה</span>
@@ -435,6 +496,59 @@ function Bento() {
         </div>
       </div>
     </section>
+  );
+}
+
+type WoltTone = "sky" | "cream" | "blush" | "indigo";
+
+function WoltCard({
+  tone,
+  tag,
+  heading,
+  body,
+  decor,
+}: {
+  tone: WoltTone;
+  tag: string;
+  heading: string;
+  body: string;
+  decor: string;
+}) {
+  const toneClass = {
+    sky: styles.woltCardSky,
+    cream: styles.woltCardCream,
+    blush: styles.woltCardBlush,
+    indigo: styles.woltCardIndigo,
+  }[tone];
+  return (
+    <article className={`${styles.woltCard} ${toneClass}`}>
+      <div className={styles.woltCardDecor} aria-hidden>
+        {decor}
+      </div>
+      <div className={styles.woltCardBody}>
+        <div className={styles.woltCardTag}>{tag}</div>
+        <h3 className={styles.woltCardHeading}>{heading}</h3>
+        <p className={styles.woltCardCopy}>{body}</p>
+      </div>
+    </article>
+  );
+}
+
+function MiniCell({
+  tag,
+  title,
+  body,
+}: {
+  tag: string;
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className={styles.miniCell}>
+      <span className={styles.miniCellTag}>{tag}</span>
+      <h4 className={styles.miniCellTitle}>{title}</h4>
+      <p className={styles.miniCellBody}>{body}</p>
+    </div>
   );
 }
 

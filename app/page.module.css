@@ -495,7 +495,124 @@
 .phoneItemDesc { font-size: 8px; color: var(--mute); margin-top: 1px; }
 .phoneItemPrice { font-size: 11px; font-weight: 800; }
 
-/* ─── BENTO FEATURES ─────────────────────────────────────── */
+/* ─── WOLT-STYLE STACKED FEATURE CARDS ───────────────────── */
+/* Big single-column cards with pastel backgrounds, large illustration
+   slot on the right, and a colored headline keyed to the card tone. */
+.woltStack {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 56px;
+}
+.woltCard {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 160px;
+  align-items: center;
+  gap: 24px;
+  padding: 36px 40px;
+  border-radius: 28px;
+  overflow: hidden;
+}
+@media (max-width: 900px) {
+  .woltCard {
+    grid-template-columns: 1fr 100px;
+    padding: 28px 24px;
+    gap: 16px;
+  }
+}
+.woltCardBody { min-width: 0; }
+.woltCardTag {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  opacity: 0.7;
+}
+.woltCardHeading {
+  font-family: var(--font-rubik), "Rubik", sans-serif;
+  font-weight: 900;
+  font-size: clamp(26px, 3.4vw, 40px);
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  margin: 0 0 14px;
+}
+.woltCardCopy {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.6;
+  max-width: 56ch;
+}
+.woltCardDecor {
+  font-size: clamp(72px, 9vw, 110px);
+  line-height: 1;
+  text-align: center;
+  user-select: none;
+  filter: drop-shadow(0 12px 24px rgba(15,20,16,0.12));
+}
+
+/* Tones — sky / cream / blush / indigo */
+.woltCardSky {
+  background: #DBEEF8;
+  color: #102B3D;
+}
+.woltCardSky .woltCardHeading { color: #0F5A85; }
+
+.woltCardCream {
+  background: #F6EBD5;
+  color: #3E2F12;
+}
+.woltCardCream .woltCardHeading { color: #7A521C; }
+
+.woltCardBlush {
+  background: #FBE2E5;
+  color: #4A1424;
+}
+.woltCardBlush .woltCardHeading { color: #B72E50; }
+
+.woltCardIndigo {
+  background: #2A1F60;
+  color: rgba(255,255,255,0.85);
+}
+.woltCardIndigo .woltCardHeading { color: white; }
+.woltCardIndigo .woltCardTag { color: rgba(255,255,255,0.6); }
+
+/* Secondary feature grid — quieter cells for the "everything else" line */
+.miniGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 18px;
+}
+@media (max-width: 900px) {
+  .miniGrid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .miniGrid { grid-template-columns: 1fr; }
+}
+.miniCell {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 20px;
+  transition: border-color 0.18s, transform 0.18s;
+}
+.miniCell:hover { border-color: var(--ink); transform: translateY(-2px); }
+.miniCellTag {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--mute);
+  display: block; margin-bottom: 6px;
+}
+.miniCellTitle {
+  font-family: var(--font-rubik), "Rubik", sans-serif;
+  font-weight: 800; font-size: 18px; letter-spacing: -0.02em;
+  margin: 0 0 6px; color: var(--ink);
+}
+.miniCellBody {
+  margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--ink-2);
+}
+
+/* ─── BENTO FEATURES (legacy — kept until the rewrite finishes) ── */
 /* Editorial grid — all cards on white surface with a 1px line. Color
    blocks are reserved for the two "anchor" cards (Tomato + Ink) so the
    composition still has rhythm without looking like a Skittles ad. */
