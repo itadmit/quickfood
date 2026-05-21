@@ -42,6 +42,29 @@ const GROW_TEST_IPS = new Set<string>([
   "3.123.194.128", "3.124.62.248", "18.198.97.252", "3.75.43.49", "18.156.94.176",
 ]);
 
+/**
+ * Grow sometimes returns `message` / `err` as a nested object — most often a
+ * `{id, message}` validation wrapper. Flatten any non-string to a readable
+ * string so it survives a JSON round-trip and never reaches React as a
+ * raw object (which would throw React #31 when rendered as a child).
+ */
+function stringifyGrowField(value: unknown): string {
+  if (value == null) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (typeof value === "object") {
+    const obj = value as { message?: unknown; id?: unknown };
+    if (typeof obj.message === "string" && obj.message) return obj.message;
+    if (typeof obj.id === "string" && obj.id) return obj.id;
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return "";
+    }
+  }
+  return String(value);
+}
+
 const STATUS_MAP: Record<string, TransactionStatus> = {
   "0": "failed",
   "2": "success",
@@ -284,12 +307,60 @@ export class GrowProvider extends BasePaymentProvider {
 
       // Log the actual Grow response so we can diagnose initiate failures.
       // Don't dump the entire request body (PII / VAT-able amount fields).
-      this.log("createPaymentProcess response", {
-        status: response.status,
-        err: response.err,
-        message: response.message,
-        data: response.data,
-      });
+      // We log at error-level on failure so it surfaces in Vercel prod logs
+      // (this.log() is dev-only); successes stay quiet to avoid noise.
+      if (String(response.status) !== "1") {
+        // Log Grow's complaint AND the request fields most likely to have
+        // triggered it — without the request side we'd be guessing.
+        // Redact: phone → last 3 digits; email → masked local-part; URLs
+        // → host only; commission / apiKey never logged.
+        const maskedPhone = phone ? `***${phone.slice(-3)}` : "";
+        const maskedEmail = (() => {
+          const e = String(body["pageField[email]"] ?? "");
+          if (!e || !e.includes("@")) return e ? "***" : "";
+          const [local, domain] = e.split("@");
+          return `${local.slice(0, 1)}***@${domain}`;
+        })();
+        const hostOf = (u: string): string => {
+          try {
+            return new URL(u).host;
+          } catch {
+            return "(invalid)";
+          }
+        };
+        this.logError("createPaymentProcess failed", {
+          response: {
+            status: response.status,
+            err: response.err,
+            message: response.message,
+            data: response.data,
+          },
+          request: {
+            testMode: this.config?.testMode,
+            userId: this.userId,
+            pageCode: this.pageCode,
+            sum: body.sum,
+            chargeType: body.chargeType,
+            successHost: hostOf(String(body.successUrl ?? "")),
+            cancelHost: hostOf(String(body.cancelUrl ?? "")),
+            notifyHost: hostOf(String(body.notifyUrl ?? "")),
+            fullName,
+            phone: maskedPhone,
+            email: maskedEmail,
+            description,
+            cField1: body.cField1,
+            cField2: body.cField2,
+            productCount: productData.length,
+            maxPaymentNum: body.maxPaymentNum,
+            hasCommission: typeof body.companyCommission === "number",
+          },
+        });
+      } else {
+        this.log("createPaymentProcess response", {
+          status: response.status,
+          data: response.data,
+        });
+      }
 
       if (String(response.status) === "1" && response.data) {
         // Grow returns processId as a number; our DB column is String.
@@ -321,8 +392,15 @@ export class GrowProvider extends BasePaymentProvider {
 
       return {
         success: false,
-        errorCode: response.err || "grow_initiate_failed",
-        errorMessage: response.message || response.err || "Failed to create payment process",
+        errorCode: stringifyGrowField(response.err) || "grow_initiate_failed",
+        // Grow occasionally returns `message` as a nested object (e.g. validation
+        // error wrappers shaped like `{id, message}`). Flatten to a string so we
+        // don't leak a non-string through `apiError` → JSON.stringify → client,
+        // which would trigger React #31 when the client renders the message.
+        errorMessage:
+          stringifyGrowField(response.message) ||
+          stringifyGrowField(response.err) ||
+          "Failed to create payment process",
         providerResponse: response as unknown as Record<string, unknown>,
       };
     } catch (error) {
@@ -467,7 +545,13 @@ export class GrowProvider extends BasePaymentProvider {
       const response = await this.post<GrowResponse>("/approveTransaction", body);
 
       if (String(response.status) === "1") return { success: true };
-      return { success: false, error: response.message || response.err || "Approve failed" };
+      return {
+        success: false,
+        error:
+          stringifyGrowField(response.message) ||
+          stringifyGrowField(response.err) ||
+          "Approve failed",
+      };
     } catch (error) {
       this.logError("acknowledgeCallback failed", error);
       return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
@@ -496,8 +580,11 @@ export class GrowProvider extends BasePaymentProvider {
       }
       return {
         success: false,
-        errorCode: response.err || "grow_refund_failed",
-        errorMessage: response.message || response.err || "Refund failed",
+        errorCode: stringifyGrowField(response.err) || "grow_refund_failed",
+        errorMessage:
+          stringifyGrowField(response.message) ||
+          stringifyGrowField(response.err) ||
+          "Refund failed",
       };
     } catch (error) {
       this.logError("refund failed", error);

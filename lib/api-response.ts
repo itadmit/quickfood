@@ -12,7 +12,25 @@ export interface ApiErrorBody {
 }
 
 export function apiError(code: string, message: string, status = 400, field?: string): Response {
-  const body: ApiErrorBody = { error: { code, message, ...(field ? { field } : {}) } };
+  // Defense in depth: callers occasionally forward `message` straight from
+  // upstream providers (e.g. Grow's `{id, message}` validation wrappers).
+  // Coerce here so the body's `error.message` is always a string — otherwise
+  // clients that render `data.error.message` directly hit React #31.
+  const safeMessage =
+    typeof message === "string"
+      ? message
+      : message == null
+        ? "שגיאה"
+        : (() => {
+            try {
+              return JSON.stringify(message);
+            } catch {
+              return String(message);
+            }
+          })();
+  const body: ApiErrorBody = {
+    error: { code, message: safeMessage, ...(field ? { field } : {}) },
+  };
   return new Response(JSON.stringify(body), {
     status,
     headers: { "content-type": "application/json; charset=utf-8" },

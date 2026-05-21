@@ -217,7 +217,7 @@ export function CustomerCheckout({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data?.error?.message ?? "שגיאה ביצירת הזמנה");
+        setError(asErrorString(data?.error?.message, "שגיאה ביצירת הזמנה"));
         return;
       }
       const orderId = data.order.id as string;
@@ -239,7 +239,10 @@ export function CustomerCheckout({
           const initData = await initRes.json();
           if (!initRes.ok || !initData?.sdk_auth_code) {
             setError(
-              initData?.error?.message ?? "לא הצלחנו לפתוח את שדה התשלום",
+              asErrorString(
+                initData?.error?.message,
+                "לא הצלחנו לפתוח את שדה התשלום",
+              ),
             );
             return;
           }
@@ -666,7 +669,7 @@ export function CustomerCheckout({
             // payment — pre-mount SDK errors (none of our business) get
             // silently logged via the console hooks in GrowPaymentSdk.
             if (pendingPayment) {
-              setError(message || "התשלום נכשל. אפשר לנסות שוב.");
+              setError(asErrorString(message, "התשלום נכשל. אפשר לנסות שוב."));
               setPendingPayment(null);
             }
           }}
@@ -776,6 +779,22 @@ function SumRow({
       <div className={bold ? "font-bold tnum text-base" : "tnum"}>{value}</div>
     </div>
   );
+}
+
+/**
+ * Coerce anything that came back from an API/SDK error to a renderable
+ * string. We've seen Grow occasionally return `message` as a `{id, message}`
+ * object — without this, React error #31 ("object with keys {id, message}")
+ * fires the moment we drop it into <div>{error}</div>.
+ */
+function asErrorString(value: unknown, fallback: string): string {
+  if (typeof value === "string" && value) return value;
+  if (value == null) return fallback;
+  if (typeof value === "object") {
+    const obj = value as { message?: unknown };
+    if (typeof obj.message === "string" && obj.message) return obj.message;
+  }
+  return fallback;
 }
 
 function ProcessingScreen() {

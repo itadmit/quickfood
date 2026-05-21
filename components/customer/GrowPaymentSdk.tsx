@@ -61,6 +61,31 @@ interface GrowSdkConfig {
 
 const SDK_URL = "https://cdn.meshulam.co.il/sdk/gs.min.js";
 
+/**
+ * The Grow SDK's failure payloads aren't strict — `message` is occasionally a
+ * nested object (e.g. `{id, message}`). The parent renders our error as a
+ * React child, so we MUST hand back a string. Without this coercion a single
+ * non-string `message` trips React #31 on the entire checkout screen.
+ */
+function coerceSdkMessage(response: unknown, fallback: string): string {
+  if (response && typeof response === "object") {
+    const msg = (response as { message?: unknown }).message;
+    if (typeof msg === "string" && msg) return msg;
+    if (msg && typeof msg === "object") {
+      const inner = (msg as { message?: unknown }).message;
+      if (typeof inner === "string" && inner) return inner;
+    }
+    try {
+      const j = JSON.stringify(response);
+      if (j && j !== "{}") return j;
+    } catch {
+      // fall through
+    }
+  }
+  if (typeof response === "string" && response) return response;
+  return fallback;
+}
+
 interface GrowPaymentSdkProps {
   testMode: boolean;
   thankYouUrl: string;
@@ -139,17 +164,13 @@ export function GrowPaymentSdk({
             onFailure: (response) => {
               // eslint-disable-next-line no-console
               console.warn("[grow-sdk] onFailure", response);
-              propsRef.current.onError?.(
-                response.message || JSON.stringify(response) || "התשלום נכשל",
-              );
+              propsRef.current.onError?.(coerceSdkMessage(response, "התשלום נכשל"));
             },
             onError: (response) => {
               // eslint-disable-next-line no-console
               console.error("[grow-sdk] onError", response);
               propsRef.current.onError?.(
-                response.message ||
-                  JSON.stringify(response) ||
-                  "אירעה שגיאה בעיבוד התשלום",
+                coerceSdkMessage(response, "אירעה שגיאה בעיבוד התשלום"),
               );
             },
             onTimeout: (response) => {
