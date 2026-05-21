@@ -23,6 +23,10 @@ export interface CreateOrderInput {
   guestPhone?: string;
   guestFirstName?: string;
   guestLastName?: string;
+  // Customer email captured at checkout — persisted onto Customer.email when
+  // the order is placed by a logged-in customer. Required when the tenant's
+  // reviewsChannel === 'email' (enforced one layer up).
+  customerEmail?: string;
   method: "delivery" | "pickup";
   addressId?: string | null;
   deliveryNotes?: string | null;
@@ -168,6 +172,20 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   // Determine initial state — cash auto-confirms, card waits for callback
   const initialStatus = input.paymentMethod === "cash" ? "confirmed" : "pending";
   const paymentStatus = input.paymentMethod === "cash" ? "pending" : "pending";
+
+  // Persist email on the customer record for future review reminders, but
+  // don't fail the order if the update conflicts (e.g. unique constraints
+  // someone may add later). Best-effort.
+  if (input.customerEmail && input.customerId) {
+    try {
+      await prisma.customer.update({
+        where: { id: input.customerId },
+        data: { email: input.customerEmail.trim() },
+      });
+    } catch (err) {
+      console.warn("[orders-create] couldn't persist customer email", err);
+    }
+  }
 
   const order = await prisma.order.create({
     data: {

@@ -4,6 +4,8 @@ import { prisma } from "@/lib/db/client";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import { Sidebar } from "@/components/merchant/Sidebar";
 import { Topbar } from "@/components/merchant/Topbar";
+import { BillingSetupBanner } from "@/components/merchant/BillingSetupBanner";
+import { TrialGate } from "@/components/merchant/TrialGate";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -27,12 +29,33 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect("/dashboard/login");
   }
 
+  const hasPaymentMethod = !!tenant.billingPaymentMethodId;
+  const trialExpired = tenant.trialEndsAt
+    ? tenant.trialEndsAt.getTime() < Date.now()
+    : false;
+  const trialDaysLeft = tenant.trialEndsAt
+    ? Math.max(
+        0,
+        Math.ceil((tenant.trialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)),
+      )
+    : null;
+
   return (
     <ThemeProvider themeId={tenant.themeId}>
       <div className="min-h-screen bg-qf-bg-dash text-qf-ink flex flex-col">
+        <BillingSetupBanner
+          hasPaymentMethod={hasPaymentMethod}
+          trialDaysLeft={trialDaysLeft}
+          trialExpired={trialExpired}
+        />
         <Topbar
           user={user}
           tenantSlug={tenant.slug}
+          tenant={{
+            name: tenant.name,
+            logoLetter: tenant.logoLetter,
+            branchName: tenant.branches[0]?.name ?? "",
+          }}
           branch={
             tenant.branches[0]
               ? {
@@ -44,10 +67,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
         />
         <div className="flex-1 flex">
           <Sidebar tenant={{ name: tenant.name, logoLetter: tenant.logoLetter, branchName: tenant.branches[0]?.name ?? "" }} />
-          <main className="flex-1 min-w-0 p-6">
+          <main className="flex-1 min-w-0 p-3 lg:p-6 pb-20 lg:pb-6">
             <div className="mx-auto w-full max-w-7xl">{children}</div>
           </main>
         </div>
+        <TrialGate
+          trialExpired={trialExpired}
+          hasPaymentMethod={hasPaymentMethod}
+        />
       </div>
     </ThemeProvider>
   );

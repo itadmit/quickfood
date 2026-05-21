@@ -20,6 +20,7 @@ const CreateOrderSchema = z.object({
   guest_phone: z.string().optional(),
   guest_first_name: z.string().min(1).max(40).optional(),
   guest_last_name: z.string().max(40).optional(),
+  customer_email: z.string().email().optional(),
   lines: z
     .array(
       z.object({
@@ -56,6 +57,7 @@ export const POST = handler(async (req: Request) => {
       guestPhone,
       guestFirstName: body.guest_first_name,
       guestLastName: body.guest_last_name,
+      customerEmail: body.customer_email,
       method: body.method,
       addressId: body.address_id ?? null,
       deliveryNotes: body.delivery_notes ?? null,

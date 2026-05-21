@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IcoOrders, IcoMenu, IcoHome, IcoStar, IcoBike, IcoGear, IcoFlame, IcoMegaphone } from "@/components/shared/Icons";
+import { IcoOrders, IcoMenu, IcoHome, IcoStar, IcoBike, IcoGear, IcoFlame, IcoMegaphone, IcoBell, IcoCreditCard } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 
 type NavItem = {
@@ -19,6 +19,8 @@ const NAV: NavItem[] = [
   { href: "/dashboard/menu", label: "תפריט", Icon: IcoMenu },
   { href: "/dashboard/campaigns", label: "קמפיינים", Icon: IcoMegaphone },
   { href: "/dashboard/reviews", label: "ביקורות", Icon: IcoStar },
+  { href: "/dashboard/sms", label: "SMS", Icon: IcoBell },
+  { href: "/dashboard/billing", label: "חיוב ומנוי", Icon: IcoCreditCard },
   { href: "/dashboard/couriers", label: "שליחים", Icon: IcoBike },
   { href: "/dashboard/settings/branding", label: "הגדרות", Icon: IcoGear, match: "/dashboard/settings" },
 ];
@@ -26,7 +28,7 @@ const NAV: NavItem[] = [
 export function Sidebar({ tenant }: { tenant: { name: string; logoLetter: string; branchName: string } }) {
   const pathname = usePathname() || "";
   return (
-    <aside className="w-64 shrink-0 border-e border-qf-line-dash bg-white p-5 flex flex-col gap-6 sticky top-16 h-[calc(100vh-4rem)] self-start">
+    <aside className="hidden lg:flex w-64 shrink-0 border-e border-qf-line-dash bg-white p-5 flex-col gap-6 sticky top-16 h-[calc(100vh-4rem)] self-start">
       <div className="flex items-center gap-3">
         <div
           className="w-11 h-11 rounded-2xl bg-(--qf-primary) text-white flex items-center justify-center text-lg font-bold"

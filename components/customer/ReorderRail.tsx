@@ -178,7 +178,7 @@ export function ReorderRail({
   }
 
   return (
-    <section className="px-5 mt-4">
+    <section className="px-5 mt-4 lg:max-w-7xl lg:mx-auto lg:px-6 lg:mt-8">
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-base font-semibold">הזמנות קודמות</h2>
         <Link

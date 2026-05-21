@@ -57,28 +57,17 @@ export function HoursForm({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-qf-line-dash p-5">
-      <div className="space-y-2">
+    <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5">
+      <div className="divide-y divide-qf-line-soft sm:divide-y-0 sm:space-y-2">
         {DAYS.map((d) => {
           const h = hours[d.key];
           return (
-            <div key={d.key} className="grid grid-cols-[1fr_120px_120px_100px] gap-3 items-center py-1.5">
+            <div
+              key={d.key}
+              className="grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_120px_120px_100px] gap-x-3 gap-y-2 items-center py-3 sm:py-1.5"
+            >
               <div className="font-medium text-sm">{d.label}</div>
-              <input
-                type="time"
-                value={h.open}
-                onChange={(e) => setDay(d.key, { open: e.target.value })}
-                disabled={!h.active}
-                className="px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm disabled:opacity-50"
-              />
-              <input
-                type="time"
-                value={h.close}
-                onChange={(e) => setDay(d.key, { close: e.target.value })}
-                disabled={!h.active}
-                className="px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm disabled:opacity-50"
-              />
-              <label className="inline-flex items-center gap-2 text-sm">
+              <label className="inline-flex items-center gap-2 text-sm sm:order-last">
                 <button
                   type="button"
                   role="switch"
@@ -98,6 +87,20 @@ export function HoursForm({
                 </button>
                 <span className="text-xs text-qf-mute">{h.active ? "פתוח" : "סגור"}</span>
               </label>
+              <input
+                type="time"
+                value={h.open}
+                onChange={(e) => setDay(d.key, { open: e.target.value })}
+                disabled={!h.active}
+                className="col-start-1 sm:col-auto px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm disabled:opacity-50"
+              />
+              <input
+                type="time"
+                value={h.close}
+                onChange={(e) => setDay(d.key, { close: e.target.value })}
+                disabled={!h.active}
+                className="px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm disabled:opacity-50"
+              />
             </div>
           );
         })}

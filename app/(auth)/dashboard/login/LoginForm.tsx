@@ -60,7 +60,10 @@ export default function LoginForm() {
         autoComplete="current-password"
         required
         actionRight={
-          <Link href="#" className="text-xs text-qf-mute hover:text-qf-ink">
+          <Link
+            href="/dashboard/forgot-password"
+            className="text-xs text-qf-mute hover:text-qf-ink"
+          >
             שכחת סיסמה?
           </Link>
         }

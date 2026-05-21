@@ -107,6 +107,22 @@ enum CouponType {
   fixed
 }
 
+enum ReviewChannel {
+  off
+  email
+  sms
+  whatsapp
+}
+
+enum NotificationStatus {
+  pending
+  sent
+  delivered
+  failed
+  skipped_no_balance
+  invalid_recipient
+}
+
 enum ReviewStatus {
   visible
   hidden
@@ -178,6 +194,41 @@ model Tenant {
   customDomain    String?         @unique @map("custom_domain")
   acceptsCash     Boolean         @default(true) @map("accepts_cash")
   allowedOrigins  String[]        @default([]) @map("allowed_origins")
+
+  // Reviews configuration
+  reviewsEnabled       Boolean       @default(true) @map("reviews_enabled")
+  reviewsPublic        Boolean       @default(true) @map("reviews_public")
+  reviewsChannel       ReviewChannel @default(off) @map("reviews_channel")
+  reviewsDelayMinutes  Int           @default(60) @map("reviews_delay_minutes")
+  smsSender            String?       @map("sms_sender") @db.VarChar(11)
+
+  // SMS + WhatsApp credit balance. Top-ups (Starter/Growth/Scale) STACK —
+  // there is no messaging subscription. Each purchase is a one-off charge
+  // to the saved token that adds the package quota to this counter. Both
+  // SMS and WhatsApp sends decrement from the same pool because per-message
+  // price is the same.
+  smsCreditsRemaining  Int     @default(0) @map("sms_credits_remaining")
+
+  // iBot Chat (WhatsApp) credentials. Each tenant connects their own iBot
+  // instance — QuickFood does not host a shared WhatsApp number. When both
+  // fields are set we treat WhatsApp as available; the `reviewsChannel`
+  // value `whatsapp` triggers sends.
+  whatsappToken        String? @map("whatsapp_token")
+  whatsappInstanceId   String? @map("whatsapp_instance_id")
+
+  // Mirror IDs from the QuickBilling Hub (canonical state lives there).
+  billingCustomerId         String?   @map("billing_customer_id")
+  // Base platform subscription (quickfood_base — ₪299/mo + VAT).
+  billingSubscriptionId     String?   @map("billing_subscription_id")
+  billingPaymentMethodId    String?   @map("billing_payment_method_id")
+  // Set when the merchant has completed billing setup (token saved). Until
+  // then SMS purchases are blocked and after `trialEndsAt` the whole
+  // dashboard is locked behind a "complete payment" screen.
+  billingSetupCompletedAt   DateTime? @map("billing_setup_completed_at")
+  // 7-day local trial countdown set at signup. After this date, without a
+  // saved payment method, the dashboard is fully locked.
+  trialEndsAt               DateTime? @map("trial_ends_at")
+
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @updatedAt @map("updated_at")
 
@@ -196,6 +247,8 @@ model Tenant {
   pendingPayments  PendingPayment[]
   paymentTxns      PaymentTransaction[]
   campaigns        Campaign[]
+  smsLogs          SmsLog[]
+  emailLogs        EmailLog[]
 
   @@index([slug])
   @@map("tenants")
@@ -286,6 +339,7 @@ model MenuItem {
   sizes        ItemSize[]
   optionGroups ItemOptionGroup[]
   orderItems   OrderItem[]
+  reviewItems  ReviewItem[]
 
   @@index([tenantId, categoryId, position])
   @@index([tenantId, available])
@@ -429,6 +483,7 @@ model Order {
 
   rating     Int?
   reviewText String? @map("review_text")
+  reviewPromptDismissedAt DateTime? @map("review_prompt_dismissed_at")
 
   items           OrderItem[]
   events          OrderEvent[]
@@ -459,6 +514,8 @@ model OrderItem {
   selectedOptions Json @default("[]") @map("selected_options")
 
   notes String?
+
+  reviewItems ReviewItem[]
 
   @@index([orderId])
   @@map("order_items")
@@ -548,28 +605,119 @@ model Review {
   status     ReviewStatus @default(visible)
   createdAt  DateTime     @default(now()) @map("created_at")
 
+  items ReviewItem[]
+
   @@index([tenantId, createdAt(sort: Desc)])
   @@map("reviews")
+}
+
+model SmsLog {
+  id           String              @id @default(uuid()) @db.Uuid
+  tenantId     String              @map("tenant_id") @db.Uuid
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  to           String
+  sender       String
+  body         String
+  // "sms" or "whatsapp". Both channels write to this single audit log,
+  // since the credit pool, balance, and history UI are unified.
+  channel      String              @default("sms")
+  // What we're sending — e.g. "review_reminder", "order_status", etc.
+  kind         String              @default("generic")
+  // Free-form reference (e.g. orderId for a review reminder) for idempotency
+  // and observability. Not enforced as FK because senders may be diverse.
+  refKind      String?             @map("ref_kind")
+  refId        String?             @map("ref_id")
+  status       NotificationStatus  @default(pending)
+  providerCode Int?                @map("provider_code")
+  providerMsg  String?             @map("provider_msg")
+  sentAt       DateTime?           @map("sent_at")
+  deliveredAt  DateTime?           @map("delivered_at")
+  createdAt    DateTime            @default(now()) @map("created_at")
+
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([refKind, refId])
+  @@map("sms_logs")
+}
+
+model EmailLog {
+  id          String              @id @default(uuid()) @db.Uuid
+  tenantId    String?             @map("tenant_id") @db.Uuid
+  tenant      Tenant?             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  to          String
+  fromName    String              @default("") @map("from_name")
+  subject     String
+  body        String
+  kind        String              @default("generic")
+  refKind     String?             @map("ref_kind")
+  refId       String?             @map("ref_id")
+  status      NotificationStatus  @default(pending)
+  providerId  String?             @map("provider_id")
+  providerMsg String?             @map("provider_msg")
+  sentAt      DateTime?           @map("sent_at")
+  createdAt   DateTime            @default(now()) @map("created_at")
+
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([refKind, refId])
+  @@map("email_logs")
+}
+
+model ReviewItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  reviewId    String   @map("review_id") @db.Uuid
+  review      Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  // The order line this rating refers to. Cascade-delete with the review;
+  // if the order is deleted, the parent Review cascades too.
+  orderItemId String   @map("order_item_id") @db.Uuid
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  // Denormalized menu_item_id for fast per-product aggregation. Nullable
+  // because OrderItem.menuItemId is nullable (legacy/free items).
+  menuItemId  String?  @map("menu_item_id") @db.Uuid
+  menuItem    MenuItem? @relation(fields: [menuItemId], references: [id])
+  rating      Int
+  text        String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([menuItemId, createdAt(sort: Desc)])
+  @@index([reviewId])
+  @@map("review_items")
 }
 
 // ─── Auth ───────────────────────────────────────────────────────
 
 model MerchantUser {
-  id           String    @id @default(uuid()) @db.Uuid
-  tenantId     String?   @map("tenant_id") @db.Uuid
-  tenant       Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  email        String    @unique
-  passwordHash String    @map("password_hash")
-  name         String
-  role         UserRole  @default(owner)
-  branches     String[]  @default([])
-  tfaEnabled   Boolean   @default(false) @map("tfa_enabled")
-  tfaSecret    String?   @map("tfa_secret")
-  lastLoginAt  DateTime? @map("last_login_at")
-  createdAt    DateTime  @default(now()) @map("created_at")
+  id            String                @id @default(uuid()) @db.Uuid
+  tenantId      String?               @map("tenant_id") @db.Uuid
+  tenant        Tenant?               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email         String                @unique
+  passwordHash  String                @map("password_hash")
+  name          String
+  role          UserRole              @default(owner)
+  branches      String[]              @default([])
+  tfaEnabled    Boolean               @default(false) @map("tfa_enabled")
+  tfaSecret     String?               @map("tfa_secret")
+  lastLoginAt   DateTime?             @map("last_login_at")
+  createdAt     DateTime              @default(now()) @map("created_at")
+  passwordResets PasswordResetToken[]
 
   @@index([tenantId])
   @@map("merchant_users")
+}
+
+/// Short-lived tokens for the "forgot password" flow. We email a one-time
+/// URL containing the raw token; the DB only stores its SHA-256 hash, so a
+/// stolen DB row can't be redeemed. Tokens expire fast (default 30 min) and
+/// are single-use (usedAt is set on success).
+model PasswordResetToken {
+  id        String       @id @default(uuid()) @db.Uuid
+  userId    String       @map("user_id") @db.Uuid
+  user      MerchantUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String       @unique @map("token_hash")
+  expiresAt DateTime     @map("expires_at")
+  usedAt    DateTime?    @map("used_at")
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("password_reset_tokens")
 }
 
 model OtpCode {
@@ -799,19 +947,40 @@ model PaymentTransaction {
   @@map("payment_transactions")
 }
 
+enum CampaignKind {
+  popup
+  banner
+}
+
+enum CampaignStyle {
+  image
+  text
+}
+
 model Campaign {
-  id        String   @id @default(uuid()) @db.Uuid
-  tenantId  String   @map("tenant_id") @db.Uuid
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id        String        @id @default(uuid()) @db.Uuid
+  tenantId  String        @map("tenant_id") @db.Uuid
+  tenant    Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  title     String   @db.VarChar(120)
-  imageUrl  String   @map("image_url")
-  isActive  Boolean  @default(true) @map("is_active")
-  linkUrl   String?  @map("link_url")
+  kind      CampaignKind  @default(popup)
+  // For kind=banner only. popups are always rendered as their image.
+  style     CampaignStyle @default(image)
+  title     String        @db.VarChar(120)
+  // Optional second line, only used by text-style banners.
+  subtitle  String?       @db.VarChar(160)
+  // Icon + color slugs reused from lib/category-style.ts. Only text-style
+  // banners read these; popups and image banners ignore them.
+  icon      String?       @db.VarChar(40)
+  color     String?       @db.VarChar(40)
+  // Required for popups and image-style banners; optional (and unused) for
+  // text-style banners. Enforced at the API layer, not at the DB level.
+  imageUrl  String?       @map("image_url")
+  isActive  Boolean       @default(true) @map("is_active")
+  linkUrl   String?       @map("link_url")
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
 
-  @@index([tenantId, isActive, updatedAt(sort: Desc)])
+  @@index([tenantId, kind, isActive, updatedAt(sort: Desc)])
   @@map("campaigns")
 }

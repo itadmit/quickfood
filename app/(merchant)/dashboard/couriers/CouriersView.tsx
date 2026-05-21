@@ -79,11 +79,11 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
   }
 
   return (
-    <div className="space-y-5">
-      <header className="flex items-end justify-between">
+    <div className="space-y-4 lg:space-y-5">
+      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">שליחים</h1>
-          <p className="text-sm text-qf-mute">
+          <h1 className="text-xl lg:text-2xl font-bold">שליחים</h1>
+          <p className="text-xs lg:text-sm text-qf-mute">
             {onShift} במשמרת · {onDelivery} במשלוח
           </p>
         </div>

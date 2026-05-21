@@ -75,22 +75,22 @@ export function WebhooksManager({
       </div>
 
       <section className="bg-white rounded-2xl border border-qf-line-dash">
-        <header className="flex items-center justify-between px-5 py-4 border-b border-qf-line-soft">
-          <div>
+        <header className="flex items-center justify-between gap-2 px-4 lg:px-5 py-4 border-b border-qf-line-soft">
+          <div className="min-w-0">
             <div className="font-semibold">Endpoints</div>
             <div className="text-xs text-qf-mute">{endpoints.length} מוגדרים</div>
           </div>
           <button
             type="button"
             onClick={() => setCreating((v) => !v)}
-            className="px-3 py-1.5 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm"
+            className="shrink-0 px-3 py-1.5 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm"
           >
             {creating ? "ביטול" : "+ הוסף endpoint"}
           </button>
         </header>
 
         {creating && (
-          <div className="px-5 py-4 border-b border-qf-line-soft space-y-3 bg-qf-line-soft/40">
+          <div className="px-4 lg:px-5 py-4 border-b border-qf-line-soft space-y-3 bg-qf-line-soft/40">
             <div>
               <label className="text-sm font-medium block mb-1">URL</label>
               <input
@@ -146,20 +146,20 @@ export function WebhooksManager({
 
         <div>
           {endpoints.length === 0 ? (
-            <div className="px-5 py-10 text-center text-sm text-qf-mute">
+            <div className="px-4 lg:px-5 py-10 text-center text-sm text-qf-mute">
               אין endpoints מוגדרים. הוסף את הראשון כדי לחבר קופה או מדפסת.
             </div>
           ) : (
             endpoints.map((ep) => (
-              <div key={ep.id} className="px-5 py-4 border-t border-qf-line-soft first:border-t-0">
-                <div className="flex items-center justify-between gap-3">
+              <div key={ep.id} className="px-4 lg:px-5 py-4 border-t border-qf-line-soft first:border-t-0">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
                   <div className="min-w-0">
                     <div className="font-mono text-sm truncate" dir="ltr">{ep.url}</div>
-                    <div className="text-xs text-qf-mute">
+                    <div className="text-xs text-qf-mute truncate">
                       {ep.events.join(", ")} · נוצר ב-{formatDateTime(ep.createdAt)}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-xs">
+                  <div className="flex items-center gap-2 text-xs shrink-0">
                     <span
                       className={cn(
                         "px-2 py-0.5 rounded-md",
@@ -198,18 +198,21 @@ export function WebhooksManager({
       </section>
 
       <section className="bg-white rounded-2xl border border-qf-line-dash">
-        <header className="px-5 py-4 border-b border-qf-line-soft">
+        <header className="px-4 lg:px-5 py-4 border-b border-qf-line-soft">
           <div className="font-semibold">היסטוריית delivery אחרונה</div>
           <div className="text-xs text-qf-mute">25 deliveries אחרונים</div>
         </header>
         {deliveries.length === 0 ? (
-          <div className="px-5 py-10 text-center text-sm text-qf-mute">אין deliveries עדיין</div>
+          <div className="px-4 lg:px-5 py-10 text-center text-sm text-qf-mute">אין deliveries עדיין</div>
         ) : (
           <div className="divide-y divide-qf-line-soft">
             {deliveries.map((d) => (
-              <div key={d.id} className="px-5 py-3 grid grid-cols-[1fr_120px_80px_120px_80px] gap-2 text-sm items-center">
-                <div className="font-mono text-xs">{d.eventType}</div>
-                <div>
+              <div
+                key={d.id}
+                className="px-4 lg:px-5 py-3 flex flex-col sm:grid sm:grid-cols-[1fr_120px_80px_120px_80px] gap-2 text-sm sm:items-center"
+              >
+                <div className="font-mono text-xs truncate">{d.eventType}</div>
+                <div className="flex items-center justify-between gap-2 sm:contents">
                   <span
                     className={cn(
                       "inline-block text-[10px] px-2 py-0.5 rounded-md",
@@ -224,12 +227,13 @@ export function WebhooksManager({
                   >
                     {d.status}
                   </span>
+                  <div className="text-xs text-qf-mute tnum">
+                    {d.attempts} ניסיונות{d.responseCode ? ` · ${d.responseCode}` : ""}
+                  </div>
+                  <div className="text-xs text-qf-mute hidden sm:block">{formatDateTime(d.createdAt)}</div>
+                  <RetryDeliveryButton id={d.id} disabled={d.status === "success"} />
                 </div>
-                <div className="text-xs text-qf-mute tnum">
-                  {d.attempts} ניסיונות{d.responseCode ? ` · ${d.responseCode}` : ""}
-                </div>
-                <div className="text-xs text-qf-mute">{formatDateTime(d.createdAt)}</div>
-                <RetryDeliveryButton id={d.id} disabled={d.status === "success"} />
+                <div className="text-xs text-qf-mute sm:hidden">{formatDateTime(d.createdAt)}</div>
               </div>
             ))}
           </div>

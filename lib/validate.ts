@@ -86,6 +86,10 @@ export const OrderCreateSchema = z.object({
   guest_phone: PhoneSchema.optional(),
   guest_first_name: z.string().min(1).max(40).optional(),
   guest_last_name: z.string().max(40).optional(),
+  guest_email: EmailSchema.optional(),
+  // Customer email (logged-in flow). Server-side will persist this onto the
+  // Customer row before creating the order so review reminders can use it.
+  customer_email: EmailSchema.optional(),
 });
 
 export const OrderStatusPatchSchema = z.object({
@@ -161,7 +165,7 @@ export const MenuItemInputSchema = z.object({
 export const TenantPatchSchema = z.object({
   name: z.string().min(1).max(120).optional(),
   logo_letter: z.string().min(1).max(2).optional(),
-  logo_url: z.string().url().optional(),
+  logo_url: z.string().url().nullable().optional(),
   cover_image: z.string().url().nullable().optional(),
   theme_id: z.enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt"]).optional(),
   business_type: z
@@ -227,14 +231,56 @@ export const WebhookEndpointPatchSchema = WebhookEndpointInputSchema.partial();
 
 // ─── Campaigns ─────────────────────────────────────────────────
 
-export const CampaignCreateSchema = z.object({
-  title: z.string().min(1).max(120),
-  image_url: z.string().url(),
-  is_active: z.boolean().optional().default(true),
-  link_url: z.string().url().or(z.string().regex(/^\/[^\s]*$/, "must be absolute URL or path starting with /")).nullable().optional(),
+export const CampaignCreateSchema = z
+  .object({
+    kind: z.enum(["popup", "banner"]).optional().default("popup"),
+    style: z.enum(["image", "text"]).optional().default("image"),
+    title: z.string().min(1).max(120),
+    subtitle: z.string().max(160).nullable().optional(),
+    icon: z.string().max(40).nullable().optional(),
+    color: z.string().max(40).nullable().optional(),
+    image_url: z.string().url().nullable().optional(),
+    is_active: z.boolean().optional().default(true),
+    link_url: z
+      .string()
+      .url()
+      .or(z.string().regex(/^\/[^\s]*$/, "must be absolute URL or path starting with /"))
+      .nullable()
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    // Image is required everywhere EXCEPT a banner that explicitly opts into
+    // the text style. Popups are always image-based.
+    const needsImage = data.kind !== "banner" || data.style !== "text";
+    if (needsImage && !data.image_url) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["image_url"],
+        message: "image_url is required for popups and image-style banners",
+      });
+    }
+  });
+
+// .partial() doesn't work on a refined schema; build the patch schema from
+// the underlying object instead and re-apply the same cross-field rule.
+const CampaignPatchObject = z.object({
+  kind: z.enum(["popup", "banner"]).optional(),
+  style: z.enum(["image", "text"]).optional(),
+  title: z.string().min(1).max(120).optional(),
+  subtitle: z.string().max(160).nullable().optional(),
+  icon: z.string().max(40).nullable().optional(),
+  color: z.string().max(40).nullable().optional(),
+  image_url: z.string().url().nullable().optional(),
+  is_active: z.boolean().optional(),
+  link_url: z
+    .string()
+    .url()
+    .or(z.string().regex(/^\/[^\s]*$/, "must be absolute URL or path starting with /"))
+    .nullable()
+    .optional(),
 });
 
-export const CampaignPatchSchema = CampaignCreateSchema.partial();
+export const CampaignPatchSchema = CampaignPatchObject;
 
 // ─── Uploads ───────────────────────────────────────────────────
 

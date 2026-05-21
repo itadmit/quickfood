@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
+import { getSession } from "@/lib/auth/session";
 import { OrderTracking } from "@/components/customer/screens/OrderTracking";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,23 @@ export default async function OrderTrackingPage({
     include: { items: true, branch: { select: { phone: true, address: true } } },
   });
   if (!order) notFound();
+
+  // Review eligibility: only the logged-in customer who owns the order can
+  // review. We surface (a) whether the form should show at all and (b) any
+  // existing review so the UI can switch into a "thank you" state.
+  const session = await getSession();
+  const canReview =
+    !!session &&
+    session.type === "customer" &&
+    !!order.customerId &&
+    order.customerId === session.userId;
+
+  const existingReview = canReview
+    ? await prisma.review.findUnique({
+        where: { orderId: order.id },
+        select: { id: true, rating: true, text: true, createdAt: true },
+      })
+    : null;
 
   return (
     <OrderTracking
@@ -45,6 +63,16 @@ export default async function OrderTrackingPage({
           size: it.sizeSnapshot,
         })),
       }}
+      canReview={canReview}
+      existingReview={
+        existingReview
+          ? {
+              rating: existingReview.rating,
+              text: existingReview.text,
+              createdAt: existingReview.createdAt.toISOString(),
+            }
+          : null
+      }
     />
   );
 }

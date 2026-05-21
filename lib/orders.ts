@@ -1,6 +1,8 @@
 import { OrderStatus } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
+import { scheduleReviewReminder } from "@/lib/reviews/schedule";
+import { recordOrderCommission } from "@/lib/billing-hub/commission";
 
 /**
  * Order status state machine. Defines which transitions are legal.
@@ -70,6 +72,24 @@ export async function advanceStatus(
       },
     },
   });
+
+  // When the order is delivered, kick off two billing-hub side effects:
+  //   (1) queue the review reminder
+  //   (2) record the 0.5% commission, but ONLY for cash orders. Card
+  //       orders already fire the commission from the payment callback the
+  //       moment Grow confirms (so a lazy merchant who never marks
+  //       "delivered" doesn't cost us the cut). The hub dedupes on
+  //       `idempotency_key: "order:<orderId>"` if both paths somehow fire.
+  if (to === "delivered") {
+    void scheduleReviewReminder(orderId).catch((err) => {
+      console.error("[reviews] schedule failed", err);
+    });
+    if (order.paymentMethod === "cash") {
+      void recordOrderCommission(orderId).catch((err) => {
+        console.error("[commission] record failed", err);
+      });
+    }
+  }
 
   // Fire webhooks (best-effort, non-blocking)
   if (to === "cancelled") {

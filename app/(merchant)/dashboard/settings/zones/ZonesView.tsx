@@ -74,7 +74,7 @@ export function ZonesView({ branchId, initial }: { branchId: string; initial: Zo
   return (
     <div className="space-y-4">
       <div className="bg-white rounded-2xl border border-qf-line-dash">
-        <header className="px-5 py-4 border-b border-qf-line-soft flex items-center justify-between">
+        <header className="px-4 lg:px-5 py-4 border-b border-qf-line-soft flex items-center justify-between gap-2">
           <div>
             <div className="font-semibold">אזורים פעילים</div>
             <div className="text-xs text-qf-mute">{zones.length} מוגדרים</div>
@@ -89,7 +89,7 @@ export function ZonesView({ branchId, initial }: { branchId: string; initial: Zo
         </header>
 
         {adding && (
-          <div className="px-5 py-4 border-b border-qf-line-soft space-y-3 bg-qf-line-soft/40">
+          <div className="px-4 lg:px-5 py-4 border-b border-qf-line-soft space-y-3 bg-qf-line-soft/40">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2 items-end">
               <Field label="שם">
                 <input
@@ -153,7 +153,7 @@ export function ZonesView({ branchId, initial }: { branchId: string; initial: Zo
         )}
 
         {zones.length === 0 ? (
-          <div className="px-5 py-10 text-center text-sm text-qf-mute">
+          <div className="px-4 lg:px-5 py-10 text-center text-sm text-qf-mute">
             אין אזורי משלוח. הוסף אזור כדי שלקוחות יוכלו להזמין עם משלוח.
           </div>
         ) : (
@@ -161,9 +161,9 @@ export function ZonesView({ branchId, initial }: { branchId: string; initial: Zo
             {zones.map((z) => (
               <div
                 key={z.id}
-                className="px-5 py-3 grid grid-cols-[1fr_auto] gap-3 items-center"
+                className="px-4 lg:px-5 py-3 grid grid-cols-[1fr_auto] gap-3 items-center"
               >
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-center">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 items-center">
                   <div>
                     <div className="font-medium">{z.name}</div>
                     <div className="text-xs text-qf-mute tnum">

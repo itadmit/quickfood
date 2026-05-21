@@ -77,19 +77,19 @@ export function DashboardView({
 
   return (
     <div className="space-y-5">
-      <header className="flex items-end justify-between">
+      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">דשבורד</h1>
-          <p className="text-sm text-qf-mute">מבט-על על המסעדה</p>
+          <h1 className="text-xl lg:text-2xl font-bold">דשבורד</h1>
+          <p className="text-xs lg:text-sm text-qf-mute">מבט-על על המסעדה</p>
         </div>
-        <div className="flex gap-1 bg-white rounded-xl border border-qf-line-dash p-1">
+        <div className="flex gap-1 bg-white rounded-xl border border-qf-line-dash p-1 self-start sm:self-auto overflow-x-auto no-scrollbar max-w-full">
           {RANGES.map((r) => (
             <button
               key={r.key}
               type="button"
               onClick={() => router.push(`/dashboard?range=${r.key}`)}
               className={cn(
-                "px-3.5 py-1.5 rounded-lg text-sm transition",
+                "px-3 sm:px-3.5 py-1.5 rounded-lg text-sm transition whitespace-nowrap",
                 range === r.key
                   ? "bg-(--qf-primary) text-white"
                   : "text-qf-ink2 hover:bg-qf-line-soft",
@@ -101,7 +101,7 @@ export function DashboardView({
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 lg:gap-4">
         <KpiCard label="הזמנות" value={summary.orders.count ?? 0} delta={summary.orders.delta} />
         <KpiCard
           label="הכנסה"
@@ -124,8 +124,8 @@ export function DashboardView({
         />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-4">
-        <section className="bg-white rounded-2xl border border-qf-line-dash p-5">
+      <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-3 lg:gap-4">
+        <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5">
           <header className="flex items-center justify-between mb-4">
             <div>
               <h2 className="font-semibold">הזמנות לפי שעה</h2>
@@ -172,7 +172,7 @@ export function DashboardView({
           )}
         </section>
 
-        <section className="bg-white rounded-2xl border border-qf-line-dash p-5">
+        <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5">
           <header className="mb-3">
             <h2 className="font-semibold">פריטים מובילים</h2>
             <p className="text-xs text-qf-mute">{topItems.length === 0 ? "אין נתונים בטווח" : "לפי כמות הזמנות"}</p>
@@ -221,7 +221,7 @@ export function DashboardView({
         </section>
       </div>
 
-      <section className="bg-white rounded-2xl border border-qf-line-dash p-5">
+      <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5">
         <header className="flex items-center justify-between mb-3">
           <div>
             <h2 className="font-semibold">הזמנות אחרונות</h2>
@@ -283,10 +283,10 @@ function KpiCard({
   const positive = invertColor ? delta < 0 : delta > 0;
   const formatted = format ? format(value) : value.toLocaleString("he-IL");
   return (
-    <div className="bg-white rounded-2xl border border-qf-line-dash p-4">
+    <div className="bg-white rounded-2xl border border-qf-line-dash p-3 lg:p-4">
       <div className="text-xs text-qf-mute">{label}</div>
-      <div className="text-2xl font-bold mt-1 tnum">{formatted}</div>
-      <div className="flex items-center gap-1 mt-1 text-xs">
+      <div className="text-xl lg:text-2xl font-bold mt-1 tnum">{formatted}</div>
+      <div className="flex items-center gap-1 mt-1 text-[11px] lg:text-xs">
         <span
           className={cn(
             "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md tnum",
@@ -301,7 +301,7 @@ function KpiCard({
           {delta}%
           <IcoTrend c={positive ? "var(--qf-primary)" : "#c2421f"} s={10} />
         </span>
-        <span className="text-qf-mute">לעומת התקופה הקודמת</span>
+        <span className="text-qf-mute hidden sm:inline">לעומת התקופה הקודמת</span>
       </div>
     </div>
   );

@@ -4,6 +4,11 @@ import { handler, apiJson, apiError } from "@/lib/api-response";
 import { prisma } from "@/lib/db/client";
 import { isValidSlug } from "@/lib/slug";
 import { issueTokensForMerchant, setSessionCookies } from "@/lib/auth/session";
+import { createCustomer, BillingHubError } from "@/lib/billing-hub/client";
+import { sendEmail } from "@/lib/email/send";
+import { welcomeEmail } from "@/lib/email/templates";
+
+const TRIAL_DAYS = 7;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -137,6 +142,63 @@ export const POST = handler(async (req: Request) => {
     "owner",
   );
 
+  // Start a 7-day local trial. The merchant gets full dashboard access
+  // immediately; SMS purchases are gated behind billing setup, and after
+  // the trial expires the whole dashboard locks until they pay.
+  const trialEndsAt = new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+
+  // Create the billing-hub customer up-front so we have an id to reference
+  // when the merchant later clicks "complete billing setup". Best-effort —
+  // signup must not fail just because the hub is briefly unreachable.
+  try {
+    const customer = await createCustomer({
+      email: body.owner_email.toLowerCase(),
+      name: body.business_name,
+      external_id: tenant.id,
+      external_slug: tenant.slug,
+      metadata: { tenant_id: tenant.id },
+    });
+    await prisma.tenant.update({
+      where: { id: tenant.id },
+      data: { billingCustomerId: customer.id, trialEndsAt },
+    });
+  } catch (err) {
+    if (err instanceof BillingHubError) {
+      console.warn("[signup] billing-hub customer create failed", err.status, err.code, err.message);
+    } else {
+      console.warn("[signup] billing-hub customer create threw", err);
+    }
+    // Even if the hub call failed, we still want the local trial to start.
+    await prisma.tenant.update({
+      where: { id: tenant.id },
+      data: { trialEndsAt },
+    });
+  }
+
+  // Welcome email — fire-and-forget; signup must not fail if Resend hiccups.
+  void (async () => {
+    try {
+      const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://quickfood.co.il").replace(/\/$/, "");
+      const { html, text } = welcomeEmail({
+        ownerName: owner.name,
+        businessName: tenant.name,
+        dashboardUrl: `${appUrl}/dashboard`,
+      });
+      await sendEmail({
+        tenantId: tenant.id,
+        to: owner.email,
+        subject: `ברוכים הבאים ל-QuickFood, ${tenant.name}!`,
+        body: text,
+        html,
+        kind: "welcome",
+        refKind: "merchant_user",
+        refId: owner.id,
+      });
+    } catch (err) {
+      console.warn("[signup] welcome email failed", err);
+    }
+  })();
+
   const userPayload = {
     id: owner.id,
     email: owner.email,
@@ -152,7 +214,10 @@ export const POST = handler(async (req: Request) => {
 
   if (body.client_type === "web") {
     await setSessionCookies(accessToken, refreshToken);
-    return apiJson({ user: userPayload, redirect: "/dashboard" }, 201);
+    return apiJson(
+      { user: userPayload, redirect: "/dashboard" },
+      201,
+    );
   }
   return apiJson(
     { access_token: accessToken, refresh_token: refreshToken, user: userPayload },

@@ -280,6 +280,15 @@ export class GrowProvider extends BasePaymentProvider {
         { "X-API-KEY": this.apiKey },
       );
 
+      // Log the actual Grow response so we can diagnose initiate failures.
+      // Don't dump the entire request body (PII / VAT-able amount fields).
+      this.log("createPaymentProcess response", {
+        status: response.status,
+        err: response.err,
+        message: response.message,
+        data: response.data,
+      });
+
       if (response.status === "1" && response.data) {
         // SDK Wallet mode
         if (response.data.authCode) {

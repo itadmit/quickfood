@@ -23,8 +23,13 @@ export const POST = handler(async (req: Request) => {
   const campaign = await prisma.campaign.create({
     data: {
       tenantId: session.tenantId,
+      kind: body.kind,
+      style: body.style,
       title: body.title,
-      imageUrl: body.image_url,
+      subtitle: body.subtitle ?? null,
+      icon: body.icon ?? null,
+      color: body.color ?? null,
+      imageUrl: body.image_url ?? null,
       isActive: body.is_active ?? true,
       linkUrl: body.link_url ?? null,
     },

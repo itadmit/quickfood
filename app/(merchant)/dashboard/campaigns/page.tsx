@@ -20,7 +20,12 @@ export default async function CampaignsPage() {
     <CampaignsView
       initial={campaigns.map((c) => ({
         id: c.id,
+        kind: c.kind,
+        style: c.style,
         title: c.title,
+        subtitle: c.subtitle,
+        icon: c.icon,
+        color: c.color,
         imageUrl: c.imageUrl,
         isActive: c.isActive,
         linkUrl: c.linkUrl,

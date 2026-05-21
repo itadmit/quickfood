@@ -6,12 +6,14 @@ import Link from "next/link";
 import { IcoSearch, IcoBell, IcoChevDown, Dot, IcoClose, IcoEye, IcoGear, IcoLogout } from "@/components/shared/Icons";
 import { formatPrice } from "@/lib/format";
 import { RelativeTime } from "@/components/shared/RelativeTime";
+import { MobileNav } from "@/components/merchant/MobileNav";
 import { cn } from "@/lib/cn";
 
 interface Props {
   user: { id: string; name: string; email: string; role: string };
   branch: { id: string; status: "open" | "busy" | "closed" } | null;
   tenantSlug: string;
+  tenant: { name: string; logoLetter: string; branchName: string };
 }
 
 type Status = "open" | "busy" | "closed";
@@ -28,7 +30,7 @@ const STATUS_COLOR: Record<Status, { bg: string; text: string; dot: string }> = 
   closed: { bg: "bg-qf-tomato-soft border-qf-tomato/40", text: "text-qf-tomato", dot: "bg-qf-tomato" },
 };
 
-export function Topbar({ user, branch, tenantSlug }: Props) {
+export function Topbar({ user, branch, tenantSlug, tenant }: Props) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
@@ -119,16 +121,27 @@ export function Topbar({ user, branch, tenantSlug }: Props) {
 
   return (
     <header className="sticky top-0 z-30 bg-white border-b border-qf-line-dash">
-      <div className="h-16 px-6 flex items-center gap-4">
-        {/* Search */}
+      <div className="h-16 px-3 lg:px-6 flex items-center gap-2 lg:gap-4">
+        {/* Mobile-only hamburger + drawer */}
+        <MobileNav tenant={tenant} />
+
+        {/* Search — full pill on desktop, icon-only button on mobile */}
         <button
           type="button"
           onClick={() => setSearchOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl border border-qf-line-dash text-qf-mute text-sm w-72 hover:bg-qf-line-soft transition"
+          className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-xl border border-qf-line-dash text-qf-mute text-sm w-72 hover:bg-qf-line-soft transition"
         >
           <IcoSearch c="#7c8a82" s={16} />
           <span>חיפוש בכל המערכת</span>
           <span className="ms-auto text-[10px] text-qf-mute/60">⌘K</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setSearchOpen(true)}
+          aria-label="חיפוש"
+          className="lg:hidden w-10 h-10 rounded-xl border border-qf-line-dash grid place-items-center hover:bg-qf-line-soft"
+        >
+          <IcoSearch c="#7c8a82" s={18} />
         </button>
 
         {/* Live KPIs */}
@@ -150,14 +163,14 @@ export function Topbar({ user, branch, tenantSlug }: Props) {
           </Chip>
         </div>
 
-        {/* Status dropdown */}
+        {/* Status dropdown — compact icon+label on mobile */}
         <div className="ms-auto relative">
           <button
             type="button"
             onClick={() => setStatusOpen((v) => !v)}
             disabled={!branch || statusBusy}
             className={cn(
-              "flex items-center gap-2 px-3 py-2 rounded-xl border text-sm transition",
+              "flex items-center gap-2 px-2.5 lg:px-3 py-2 rounded-xl border text-sm transition",
               statusUi.bg,
               statusUi.text,
               statusBusy && "opacity-60",
@@ -169,7 +182,7 @@ export function Topbar({ user, branch, tenantSlug }: Props) {
               )}
               <span className={cn("relative inline-flex rounded-full h-2.5 w-2.5", statusUi.dot)} />
             </span>
-            <span className="font-medium">{currentStatusOpt.label}</span>
+            <span className="font-medium hidden sm:inline">{currentStatusOpt.label}</span>
             <IcoChevDown c="currentColor" s={14} />
           </button>
           {statusOpen && (
@@ -251,21 +264,21 @@ export function Topbar({ user, branch, tenantSlug }: Props) {
           )}
         </div>
 
-        {/* User */}
+        {/* User — avatar only on mobile, full pill on desktop */}
         <div className="relative">
           <button
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
-            className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft"
+            className="flex items-center gap-2 ps-1 pe-1 lg:pe-2 py-1 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft"
           >
             <div className="w-8 h-8 rounded-lg bg-(--qf-primary) text-white grid place-items-center text-xs font-bold">
               {user.name.slice(0, 2)}
             </div>
-            <div className="text-xs leading-tight ps-0.5">
+            <div className="text-xs leading-tight ps-0.5 hidden lg:block">
               <div className="font-medium">{user.name}</div>
               <div className="text-qf-mute">{roleLabel(user.role)}</div>
             </div>
-            <IcoChevDown s={14} className="me-2" />
+            <IcoChevDown s={14} className="me-2 hidden lg:inline" />
           </button>
           {menuOpen && (
             <div className="absolute inset-e-0 mt-2 w-56 bg-white border border-qf-line-dash rounded-2xl shadow-lg p-1.5 text-sm z-50">

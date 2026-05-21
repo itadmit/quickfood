@@ -23,6 +23,7 @@ export interface CheckoutPrefill {
   customerNotes?: string;
   address?: string;
   floor?: string;
+  apartment?: string;
   deliveryNotes?: string;
 }
 
@@ -57,24 +58,29 @@ export function takeCheckoutPrefill(tenantSlug: string): CheckoutPrefill | null 
 }
 
 /**
- * Split the joined Order.deliveryNotes ("address · קומה N · notes") back
- * into the three checkout fields. Mirrors the join logic in
+ * Split the joined Order.deliveryNotes ("address · דירה N · קומה M · notes")
+ * back into the four checkout fields. Mirrors the join logic in
  * CustomerCheckout.place() — keep the two in sync.
  */
 export function splitDeliveryNotes(
   raw: string | null | undefined,
-): { address: string; floor: string; notes: string } {
-  if (!raw) return { address: "", floor: "", notes: "" };
+): { address: string; floor: string; apartment: string; notes: string } {
+  if (!raw) return { address: "", floor: "", apartment: "", notes: "" };
   const parts = raw
     .split(" · ")
     .map((p) => p.trim())
     .filter(Boolean);
   let address = "";
   let floor = "";
+  let apartment = "";
   const notesParts: string[] = [];
   for (const part of parts) {
     if (!address) {
       address = part;
+      continue;
+    }
+    if (!apartment && part.startsWith("דירה ")) {
+      apartment = part.slice("דירה ".length).trim();
       continue;
     }
     if (!floor && part.startsWith("קומה ")) {
@@ -83,5 +89,5 @@ export function splitDeliveryNotes(
     }
     notesParts.push(part);
   }
-  return { address, floor, notes: notesParts.join(" · ") };
+  return { address, floor, apartment, notes: notesParts.join(" · ") };
 }

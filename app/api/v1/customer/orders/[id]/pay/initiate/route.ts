@@ -8,7 +8,7 @@
  */
 
 import { apiError, apiJson, handler } from "@/lib/api-response";
-import { requireCustomer } from "@/lib/auth/guards";
+import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { getConfiguredProvider } from "@/lib/payments/factory";
 import type { InitiatePaymentRequest } from "@/lib/payments/types";
@@ -25,7 +25,6 @@ export const dynamic = "force-dynamic";
 
 export const POST = handler(
   async (_req: Request, { params }: { params: Promise<{ id: string }> }) => {
-    const session = await requireCustomer();
     const { id: orderId } = await params;
 
     const order = await prisma.order.findUnique({
@@ -37,7 +36,15 @@ export const POST = handler(
     });
     if (!order) return apiError("not_found", "הזמנה לא נמצאה", 404);
 
-    if (order.customerId && order.customerId !== session.userId) {
+    // Visibility matches GET /customer/orders/[id]: if a logged-in customer
+    // is calling, the order must be theirs. Guest orders (no customerId)
+    // are reachable by anyone holding the UUID — same as the tracking page.
+    const session = await getSession();
+    if (
+      session?.type === "customer" &&
+      order.customerId &&
+      order.customerId !== session.userId
+    ) {
       return apiError("forbidden", "אין הרשאה להזמנה זו", 403);
     }
     if (order.paymentStatus === PaymentStatus.paid) {

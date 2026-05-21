@@ -199,6 +199,60 @@ export const IcoMenu = ({ c = "#11231a", s = 20, className }: IconProps) => (
   </svg>
 );
 
+export const IcoPhoneSms = ({ c = "#11231a", s = 36, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    <rect
+      x="6"
+      y="2.5"
+      width="12"
+      height="19"
+      rx="2.5"
+      stroke={c}
+      strokeWidth="1.7"
+    />
+    <path d="M10.5 5h3" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
+    <circle cx="9.5" cy="12" r="0.95" fill={c} />
+    <circle cx="12" cy="12" r="0.95" fill={c} />
+    <circle cx="14.5" cy="12" r="0.95" fill={c} />
+  </svg>
+);
+
+export const IcoMenuList = ({ c = "#11231a", s = 22, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    <path
+      d="M6 3h9.5L19 6.5V19a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"
+      stroke={c}
+      strokeWidth="1.7"
+      strokeLinejoin="round"
+    />
+    <path d="M15 3v3.5h4" stroke={c} strokeWidth="1.7" strokeLinejoin="round" />
+    <path
+      d="M8 11h7M8 14h7M8 17h4.5"
+      stroke={c}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+export const IcoMenuBook = ({ c = "#11231a", s = 22, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    <path
+      d="M12 6.5C9.5 5 5.5 4.7 3.5 5v13c2-.3 6 0 8.5 1.5M12 6.5C14.5 5 18.5 4.7 20.5 5v13c-2-.3-6 0-8.5 1.5M12 6.5v13"
+      stroke={c}
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M6 9.5h3.5M6 12.5h3.5M14.5 9.5H18M14.5 12.5H18"
+      stroke={c}
+      strokeWidth="1.3"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
 export const IcoChart = ({ c = "#11231a", s = 20, className }: IconProps) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
     <path d="M4 20V6M10 20v-8M16 20v-5M22 20H2" stroke={c} strokeWidth="1.8" strokeLinecap="round" />

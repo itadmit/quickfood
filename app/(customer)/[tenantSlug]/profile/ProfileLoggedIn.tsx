@@ -74,17 +74,17 @@ export function ProfileLoggedIn({
   }
 
   return (
-    <>
-      <header className="bg-gradient-to-b from-(--qf-primary) to-(--qf-deep) text-white px-5 pt-5 pb-7 rounded-b-3xl">
+    <div className="lg:max-w-2xl lg:mx-auto lg:pt-6 lg:pb-12">
+      <header className="bg-linear-to-b from-(--qf-primary) to-(--qf-deep) text-white px-5 pt-5 pb-7 rounded-b-3xl lg:rounded-3xl lg:px-8">
         <div className="flex items-center gap-3 mb-4">
           <Link
             href={`/${tenantSlug}`}
-            className="w-9 h-9 rounded-full bg-white/15 grid place-items-center"
+            className="w-9 h-9 rounded-full bg-white/15 grid place-items-center lg:hidden"
             aria-label="חזרה"
           >
             <IcoChev c="#fff" s={18} />
           </Link>
-          <h1 className="font-bold text-lg">אזור אישי</h1>
+          <h1 className="font-bold text-lg lg:text-2xl">אזור אישי</h1>
         </div>
         <div className="flex items-center gap-3">
           <div className="w-16 h-16 rounded-full bg-white/15 grid place-items-center text-2xl font-bold">
@@ -100,7 +100,7 @@ export function ProfileLoggedIn({
         </div>
       </header>
 
-      <section className="px-5 mt-4">
+      <section className="px-5 mt-4 lg:px-0 lg:mt-5">
         <div className="bg-white rounded-2xl border border-qf-line p-4 space-y-3">
           <div className="text-sm font-semibold">פרטים אישיים</div>
           <div className="grid grid-cols-2 gap-2">
@@ -130,7 +130,7 @@ export function ProfileLoggedIn({
         </div>
       </section>
 
-      <section className="px-5 mt-4">
+      <section className="px-5 mt-4 lg:px-0 lg:mt-5">
         <div className="flex items-center justify-between mb-2">
           <h2 className="font-semibold">ההזמנות שלי</h2>
           <span className="text-xs text-qf-mute tnum">{orders.length}</span>
@@ -166,7 +166,7 @@ export function ProfileLoggedIn({
         )}
       </section>
 
-      <section className="px-5 mt-4">
+      <section className="px-5 mt-4 lg:px-0 lg:mt-5">
         <div className="bg-white rounded-2xl border border-qf-line divide-y divide-qf-line">
           <MenuRow icon={<IcoUser s={18} />} label="כתובות שמורות" hint="בקרוב" />
           <MenuRow icon={<IcoReceipt s={18} />} label="אמצעי תשלום" hint="בקרוב" />
@@ -179,7 +179,7 @@ export function ProfileLoggedIn({
           </button>
         </div>
       </section>
-    </>
+    </div>
   );
 }
 

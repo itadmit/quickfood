@@ -45,11 +45,11 @@ export function ReviewsView({ summary, reviews }: { summary: Summary; reviews: R
   return (
     <div className="space-y-5">
       <header>
-        <h1 className="text-2xl font-bold">ביקורות</h1>
-        <p className="text-sm text-qf-mute">{summary.count} ביקורות גלויות</p>
+        <h1 className="text-xl lg:text-2xl font-bold">ביקורות</h1>
+        <p className="text-xs lg:text-sm text-qf-mute">{summary.count} ביקורות גלויות</p>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-3 lg:gap-4">
         <aside className="bg-white rounded-2xl border border-qf-line-dash p-5 h-fit">
           <div className="text-center">
             <div className="text-5xl font-bold tnum">{summary.average.toFixed(1)}</div>

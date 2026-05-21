@@ -1,8 +1,4 @@
 {
-  "crons": [
-    {
-      "path": "/api/_internal/webhooks/process",
-      "schedule": "* * * * *"
-    }
-  ]
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": []
 }

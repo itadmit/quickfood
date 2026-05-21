@@ -34,6 +34,10 @@ interface CartContextValue extends CartState {
   itemCount: number;
   tenant: TenantInfo;
   branch: BranchInfo | null;
+  /** True once localStorage has been read on mount. Until then,
+   * `lines` may transiently look empty even when a cart exists — consumers
+   * should suppress empty-state UI while this is false. */
+  hydrated: boolean;
 }
 
 interface TenantInfo {
@@ -141,8 +145,9 @@ export function CartProvider({
       itemCount,
       tenant,
       branch,
+      hydrated,
     };
-  }, [state, tenant, branch]);
+  }, [state, tenant, branch, hydrated]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

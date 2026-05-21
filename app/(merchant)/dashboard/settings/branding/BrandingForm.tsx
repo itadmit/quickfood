@@ -15,6 +15,7 @@ interface Tenant {
   id: string;
   name: string;
   logoLetter: string;
+  logoUrl: string | null;
   themeId: ThemeId;
   businessType: BusinessType;
   cuisineType: string | null;
@@ -41,6 +42,7 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
   const [businessType, setBusinessType] = useState<BusinessType>(tenant.businessType);
   const [cuisineType, setCuisineType] = useState(tenant.cuisineType ?? "");
   const [coverImage, setCoverImage] = useState<string | null>(tenant.coverImage);
+  const [logoUrl, setLogoUrl] = useState<string | null>(tenant.logoUrl);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -56,6 +58,7 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
         body: JSON.stringify({
           name,
           logo_letter: logoLetter,
+          logo_url: logoUrl,
           theme_id: themeId,
           business_type: businessType,
           cuisine_type: cuisineType || undefined,
@@ -75,8 +78,8 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-      <div className="space-y-5 bg-white rounded-2xl border border-qf-line-dash p-5">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4 lg:gap-6">
+      <div className="space-y-5 bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5">
         <div className="space-y-1.5">
           <label className="text-sm font-medium" htmlFor="name">שם הפיצרייה</label>
           <input
@@ -103,6 +106,39 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
           value={businessType}
           onChange={setBusinessType}
         />
+
+        <div className="space-y-2">
+          <div className="text-sm font-medium">לוגו</div>
+          <p className="text-xs text-qf-mute">
+            מומלץ ריבוע (1:1) עם רקע שקוף — png או webp. הלוגו מופיע בעיגול
+            הקטן ליד שם החנות בלקוח. אם לא יועלה לוגו — יוצגו האותיות
+            הראשונות מהשם.
+          </p>
+
+          {logoUrl ? (
+            <div className="flex items-center gap-3">
+              <div className="relative w-20 h-20 rounded-2xl overflow-hidden border border-qf-line-dash bg-qf-line-soft/40">
+                <SmartImg src={logoUrl} alt="" fill className="absolute inset-0 object-contain" />
+              </div>
+              <button
+                type="button"
+                onClick={() => setLogoUrl(null)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-qf-tomato/40 text-qf-tomato hover:bg-qf-tomato-soft text-sm font-medium"
+              >
+                <IcoTrash c="currentColor" s={14} />
+                מחק לוגו
+              </button>
+            </div>
+          ) : (
+            <ImageUploader
+              type="logo"
+              value={[]}
+              onChange={(urls) => setLogoUrl(urls[0] ?? null)}
+              max={1}
+              multiple={false}
+            />
+          )}
+        </div>
 
         <div className="space-y-2">
           <div className="text-sm font-medium">תמונת קאבר לחנות</div>
@@ -192,7 +228,7 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
 
       {/* Live preview card */}
       <aside
-        className="bg-white rounded-2xl border border-qf-line-dash p-5 h-fit space-y-4"
+        className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 h-fit space-y-4"
         data-theme={themeId}
         style={
           {
@@ -204,8 +240,14 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
         }
       >
         <div className="text-xs text-qf-mute">תצוגה מקדימה</div>
-        <div className="rounded-2xl bg-gradient-to-br from-(--qf-primary) to-(--qf-deep) p-5 text-white space-y-2">
-          <div className="text-3xl font-bold">{logoLetter}</div>
+        <div className="rounded-2xl bg-linear-to-br from-(--qf-primary) to-(--qf-deep) p-5 text-white space-y-2">
+          {logoUrl ? (
+            <div className="w-14 h-14 rounded-full overflow-hidden bg-white grid place-items-center">
+              <SmartImg src={logoUrl} alt="" width={56} height={56} className="object-contain w-full h-full" />
+            </div>
+          ) : (
+            <div className="text-3xl font-bold">{logoLetter}</div>
+          )}
           <div className="text-lg font-semibold">{name}</div>
           {cuisineType && <div className="text-sm opacity-80">{cuisineType}</div>}
         </div>

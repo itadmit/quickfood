@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { IcoChev, IcoArrowLeft } from "@/components/shared/Icons";
+import { IcoChev, IcoArrowLeft, IcoBag } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { recordRecentOrder } from "@/lib/recent-orders-storage";
 import { takeCheckoutPrefill } from "@/lib/checkout-prefill";
+import { GrowPaymentSdk, renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
 
 type CustomerPaymentMethod = "cash" | "card" | "bit" | "apple_pay" | "google_pay";
 
@@ -21,15 +22,23 @@ const PAYMENT_METHOD_LABELS: Record<CustomerPaymentMethod, string> = {
   google_pay: "Google Pay",
 };
 
-export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
+export function CustomerCheckout({
+  tenantSlug,
+  requireEmail = false,
+}: {
+  tenantSlug: string;
+  requireEmail?: boolean;
+}) {
   const router = useRouter();
-  const { lines, method, subtotal, branch, tenant, clear, setMethod } = useCart();
+  const { lines, method, subtotal, branch, tenant, clear, setMethod, hydrated } = useCart();
 
   const [address, setAddress] = useState("");
   const [floor, setFloor] = useState("");
+  const [apartment, setApartment] = useState("");
   const [phone, setPhone] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
   const [deliveryNotes, setDeliveryNotes] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
   const [availableMethods, setAvailableMethods] = useState<CustomerPaymentMethod[]>([]);
@@ -42,6 +51,23 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
   // finishes navigating to /orders/[id], so we can show a "processing"
   // screen instead of the "הסל ריק" empty-state flashing for ~250ms.
   const [submitted, setSubmitted] = useState(false);
+
+  // Grow SDK orchestration. The SDK only loads/initializes when there's an
+  // active pending payment, and the wallet is rendered once both the SDK is
+  // ready and we have an authCode from /pay/initiate.
+  const [pendingPayment, setPendingPayment] = useState<
+    | { orderId: string; authCode: string; thankYouUrl: string }
+    | null
+  >(null);
+  const [sdkReady, setSdkReady] = useState(false);
+  const [walletOpen, setWalletOpen] = useState(false);
+  useEffect(() => {
+    if (pendingPayment && sdkReady) {
+      renderGrowWallet(pendingPayment.authCode);
+    }
+  }, [pendingPayment, sdkReady]);
+
+  const isDevGrow = (process.env.NEXT_PUBLIC_GROW_ENV ?? "DEV").toUpperCase() !== "PRODUCTION";
 
   // Load the restaurant's accepted payment methods. If a prefill already
   // picked something (via the effect below), keep it as long as it's still
@@ -76,6 +102,7 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
     if (prefill.phone) setPhone((cur) => cur || prefill.phone!);
     if (prefill.address) setAddress((cur) => cur || prefill.address!);
     if (prefill.floor) setFloor((cur) => cur || prefill.floor!);
+    if (prefill.apartment) setApartment((cur) => cur || prefill.apartment!);
     if (prefill.deliveryNotes)
       setDeliveryNotes((cur) => cur || prefill.deliveryNotes!);
     if (prefill.customerNotes)
@@ -94,16 +121,67 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
   // While we wait for the route transition to /orders/[id], the cart is
   // already empty — show a friendly processing screen instead of the
   // "הסל ריק" empty state that would flash for the route-change frame.
-  if (submitted) {
+  if (submitted && !pendingPayment) {
+    return <ProcessingScreen />;
+  }
+
+  // Order created, waiting for the Grow wallet to take over. The SDK
+  // overlay is mounted via the GrowPaymentSdk component below — we just
+  // need a calm "processing" backdrop here.
+  if (pendingPayment) {
+    return (
+      <>
+        <PaymentWaitingScreen
+          walletOpen={walletOpen}
+          error={error}
+          onRetry={() => {
+            setError(null);
+            renderGrowWallet(pendingPayment.authCode);
+          }}
+        />
+        <GrowPaymentSdk
+          testMode={isDevGrow}
+          thankYouUrl={pendingPayment.thankYouUrl}
+          onReady={() => setSdkReady(true)}
+          onWalletChange={(state) => setWalletOpen(state === "open")}
+          onError={(message) => setError(message)}
+        />
+      </>
+    );
+  }
+
+  // Suppress the empty-state during the brief window between the client
+  // mounting and the cart finishing localStorage hydration. Otherwise a
+  // refresh on /checkout flashes "הסל ריק" before the lines appear (most
+  // visible on desktop where the loading.tsx skeleton is taller and the
+  // empty-state contrast is sharper).
+  if (!hydrated) {
     return <ProcessingScreen />;
   }
 
   if (lines.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8 text-center">
-        <div>
-          <p className="text-qf-mute mb-4">הסל ריק</p>
-          <Link href={`/${tenantSlug}/menu`} className="text-(--qf-deep) underline">
+      <div className="min-h-screen flex flex-col">
+        <header className="px-5 pt-5 pb-3 flex items-center gap-3">
+          <Link
+            href={`/${tenantSlug}/menu`}
+            className="w-9 h-9 rounded-full bg-white border border-qf-line grid place-items-center"
+            aria-label="חזרה"
+          >
+            <IcoChev s={18} />
+          </Link>
+          <h1 className="font-bold text-lg">סיום הזמנה</h1>
+        </header>
+        <div className="flex-1 flex flex-col items-center justify-center px-8 text-center -mt-12">
+          <div className="w-20 h-20 rounded-full bg-qf-green-soft grid place-items-center mb-4">
+            <IcoBag c="var(--qf-primary)" s={36} />
+          </div>
+          <h2 className="font-semibold text-lg mb-1">הסל ריק</h2>
+          <p className="text-sm text-qf-mute mb-5">הוסף פריטים מהתפריט וחזור הנה לסיום ההזמנה</p>
+          <Link
+            href={`/${tenantSlug}/menu`}
+            className="px-5 py-3 rounded-full bg-(--qf-primary) text-white font-medium text-sm"
+          >
             לתפריט
           </Link>
         </div>
@@ -130,12 +208,20 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
           tip,
           customer_notes: customerNotes || undefined,
           delivery_notes:
-            method === "delivery" && (address || floor)
-              ? `${address} ${floor ? `· קומה ${floor}` : ""}${deliveryNotes ? ` · ${deliveryNotes}` : ""}`.trim()
+            method === "delivery" && (address || floor || apartment)
+              ? [
+                  address,
+                  apartment ? `דירה ${apartment}` : "",
+                  floor ? `קומה ${floor}` : "",
+                  deliveryNotes,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")
               : undefined,
           guest_phone: phone || undefined,
           guest_first_name: firstName || undefined,
           guest_last_name: lastName || undefined,
+          customer_email: email.trim() || undefined,
           lines: lines.map((l) => ({
             item_id: l.itemId,
             quantity: l.quantity,
@@ -155,9 +241,43 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
       // home screen rail. Logged-in customers see the same rail
       // server-rendered from the DB, but storing the id is harmless.
       recordRecentOrder(tenantSlug, orderId);
-      // Flip to "submitted" BEFORE clearing the cart so the next render
-      // shows the processing screen instead of the "הסל ריק" early
-      // return. Then clear() + navigate.
+
+      // For non-cash payments we need to render the Grow wallet inline
+      // before navigating away. Initiate the payment and stash the
+      // authCode — the SDK mount + effect will render the wallet on top.
+      if (data.needs_payment) {
+        try {
+          const initRes = await fetch(
+            `/api/v1/customer/orders/${orderId}/pay/initiate`,
+            { method: "POST", credentials: "include" },
+          );
+          const initData = await initRes.json();
+          if (!initRes.ok || !initData?.sdk_auth_code) {
+            setError(
+              initData?.error?.message ?? "לא הצלחנו לפתוח את שדה התשלום",
+            );
+            return;
+          }
+          // Mark "submitted" + clear cart so we don't bounce back to the
+          // empty-cart UI while the wallet is open.
+          setSubmitted(true);
+          clear();
+          setPendingPayment({
+            orderId,
+            authCode: initData.sdk_auth_code,
+            thankYouUrl: `/${tenantSlug}/orders/${orderId}`,
+          });
+          // Don't navigate — the wallet runs as an overlay. On success the
+          // SDK redirects to thankYouUrl; on cancel the merchant can close
+          // the wallet and we stay on this page.
+          return;
+        } catch {
+          setError("שגיאה ביצירת תשלום");
+          return;
+        }
+      }
+
+      // Cash flow: skip straight to tracking.
       setSubmitted(true);
       clear();
       router.push(`/${tenantSlug}/orders/${orderId}`);
@@ -172,27 +292,30 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
     }
   }
 
+  const emailLooksValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
   const canPlace =
     !busy &&
     !!paymentMethod &&
     !!firstName &&
     !!phone &&
-    (method !== "delivery" || !!address);
+    (method !== "delivery" || !!address) &&
+    (!requireEmail || emailLooksValid);
 
   return (
-    <div className="pb-32 bg-qf-bg/40 min-h-screen">
-      <header className="px-5 pt-5 pb-3 flex items-center gap-3 bg-white border-b border-qf-line sticky top-0 z-10">
+    <div className="pb-32 bg-qf-bg/40 min-h-screen lg:bg-transparent lg:pb-12">
+      <header className="px-5 pt-5 pb-3 flex items-center gap-3 bg-white border-b border-qf-line sticky top-0 z-10 lg:static lg:bg-transparent lg:border-0 lg:max-w-6xl lg:mx-auto lg:px-6 lg:pt-6 lg:pb-2">
         <Link
           href={`/${tenantSlug}/cart`}
-          className="w-9 h-9 rounded-full border border-qf-line grid place-items-center"
+          className="w-9 h-9 rounded-full border border-qf-line grid place-items-center lg:hidden"
           aria-label="חזרה"
         >
           <IcoChev s={18} />
         </Link>
-        <h1 className="font-bold text-lg">סיום הזמנה</h1>
+        <h1 className="font-bold text-lg lg:text-3xl">סיום הזמנה</h1>
       </header>
 
-      <div className="px-4 mt-4 space-y-3">
+      <div className="px-4 mt-4 space-y-3 lg:max-w-6xl lg:mx-auto lg:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-6 lg:space-y-0 lg:mt-4"><div className="lg:col-start-1 space-y-3">
         {/* 1. Contact — promoted to the top */}
         <Card>
           <CardTitle>פרטי קשר</CardTitle>
@@ -225,6 +348,23 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
                 />
               </Field>
             </div>
+            {requireEmail && (
+              <div className="col-span-2">
+                <Field label="דוא״ל" required>
+                  <Input
+                    value={email}
+                    onChange={setEmail}
+                    placeholder="you@example.com"
+                    dir="ltr"
+                    inputMode="email"
+                    autoComplete="email"
+                  />
+                </Field>
+                <div className="text-xs text-qf-mute mt-1">
+                  נשלח אליך מייל קצר לאחר ההזמנה כדי שתוכל לדרג אותה
+                </div>
+              </div>
+            )}
           </div>
         </Card>
 
@@ -232,25 +372,32 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
         {method === "delivery" ? (
           <Card>
             <CardTitle>כתובת משלוח</CardTitle>
-            <div className="grid grid-cols-1 gap-3 mt-3">
-              <Field label="כתובת" required>
-                <Input
-                  value={address}
-                  onChange={setAddress}
-                  placeholder="רחוב, מספר, עיר"
-                  autoComplete="street-address"
-                />
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <div className="col-span-2">
+                <Field label="כתובת" required>
+                  <Input
+                    value={address}
+                    onChange={setAddress}
+                    placeholder="רחוב, מספר, עיר"
+                    autoComplete="street-address"
+                  />
+                </Field>
+              </div>
+              <Field label="דירה">
+                <Input value={apartment} onChange={setApartment} placeholder="12" />
               </Field>
-              <Field label="קומה / דירה">
-                <Input value={floor} onChange={setFloor} placeholder="לדוגמה: 3 · דירה 12" />
+              <Field label="קומה">
+                <Input value={floor} onChange={setFloor} placeholder="3" />
               </Field>
-              <Field label="הוראות לשליח">
-                <Input
-                  value={deliveryNotes}
-                  onChange={setDeliveryNotes}
-                  placeholder="השאר ליד הדלת, להתקשר בהגעה"
-                />
-              </Field>
+              <div className="col-span-2">
+                <Field label="הוראות לשליח">
+                  <Input
+                    value={deliveryNotes}
+                    onChange={setDeliveryNotes}
+                    placeholder="השאר ליד הדלת, להתקשר בהגעה"
+                  />
+                </Field>
+              </div>
             </div>
           </Card>
         ) : (
@@ -262,8 +409,11 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
           </Card>
         )}
 
-        {/* 3. Order summary — with thumbnails */}
-        <Card>
+        {/* 3. Order summary — inline on mobile (between Delivery and Payment).
+            On desktop this is rendered again in the right sidebar so it stays
+            visible while scrolling through the form. */}
+        <div className="lg:hidden">
+          <Card>
           <div className="flex items-baseline justify-between">
             <CardTitle>סיכום הזמנה</CardTitle>
             <Link
@@ -322,9 +472,12 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
               <div className="font-bold tnum text-lg">{formatPrice(total)}</div>
             </div>
           </div>
-        </Card>
+          </Card>
+        </div>
 
-        {/* 4. Payment */}
+        {/* 4. Payment — collapsed to two top-level choices. All online methods
+              (card / Bit / Apple Pay / Google Pay) are picked inside Grow's
+              wallet when it opens, so showing them all here is noise. */}
         <Card>
           <CardTitle>אמצעי תשלום</CardTitle>
           {availableMethods.length === 0 ? (
@@ -334,19 +487,31 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
           ) : (
             <>
               <div className="grid grid-cols-2 gap-2 mt-3">
-                {availableMethods.map((m) => (
+                {availableMethods.includes("cash") && (
                   <Pill
-                    key={m}
-                    active={paymentMethod === m}
-                    onClick={() => setPaymentMethod(m)}
+                    active={paymentMethod === "cash"}
+                    onClick={() => setPaymentMethod("cash")}
                   >
-                    {PAYMENT_METHOD_LABELS[m]}
+                    {PAYMENT_METHOD_LABELS.cash}
                   </Pill>
-                ))}
+                )}
+                {availableMethods.some((m) => m !== "cash") && (
+                  <Pill
+                    active={!!paymentMethod && paymentMethod !== "cash"}
+                    onClick={() => {
+                      // Always advertise as `card`; Grow's wallet shows
+                      // whatever payment options the merchant has enabled
+                      // (card form, Bit, Apple Pay, Google Pay) once it opens.
+                      setPaymentMethod("card");
+                    }}
+                  >
+                    תשלום אונליין
+                  </Pill>
+                )}
               </div>
               {paymentMethod && paymentMethod !== "cash" && (
-                <div className="mt-2 text-xs text-qf-mute bg-qf-yolk-soft border border-qf-yolk/40 rounded-lg px-3 py-2">
-                  החיוב יתבצע מיד אחרי אישור ההזמנה דרך Grow.
+                <div className="mt-2 text-xs text-qf-mute">
+                  ניתן לשלם בכרטיס אשראי, Bit, Apple Pay ו-Google Pay.
                 </div>
               )}
             </>
@@ -387,9 +552,83 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
             {error}
           </div>
         )}
+        </div>{/* end left column */}
+
+        {/* Desktop sidebar — sticky order summary + CTA. Hidden on mobile,
+            which keeps the inline summary + fixed-footer CTA instead. */}
+        <aside className="hidden lg:block lg:col-start-2 lg:sticky lg:top-20 lg:self-start">
+          <Card>
+            <CardTitle>סיכום הזמנה</CardTitle>
+            <ul className="mt-3 divide-y divide-qf-line-soft max-h-72 overflow-y-auto">
+              {lines.map((l) => {
+                const opts = l.options.reduce((a, o) => a + o.priceDelta, 0);
+                const unit = l.basePrice + l.sizeDelta + opts;
+                const lineTotal = unit * l.quantity;
+                const variant = [l.sizeName, ...l.options.map((o) => o.name)]
+                  .filter(Boolean)
+                  .join(" · ");
+                return (
+                  <li key={l.lineId} className="py-2.5 flex gap-3 items-start">
+                    <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0">
+                      <MenuItemImage
+                        src={l.imageUrl ?? undefined}
+                        alt={l.name}
+                        businessType={businessType}
+                        size={48}
+                        rounded="md"
+                        fill
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="font-medium text-sm leading-tight">{l.name}</div>
+                        <div className="text-sm tnum font-medium shrink-0">{formatPrice(lineTotal)}</div>
+                      </div>
+                      {variant && (
+                        <div className="text-xs text-qf-mute mt-0.5 line-clamp-1">{variant}</div>
+                      )}
+                      <div className="text-xs text-qf-ink2 mt-0.5 tnum">× {l.quantity}</div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="mt-3 pt-3 border-t border-qf-line-soft space-y-1.5 text-sm">
+              <SumRow label={`${itemCount} פריטים`} value={formatPrice(subtotal)} />
+              {method === "delivery" && (
+                <SumRow label="דמי משלוח" value={formatPrice(deliveryFee)} />
+              )}
+              {serviceFee > 0 && <SumRow label="דמי שירות" value={formatPrice(serviceFee)} />}
+              {tip > 0 && <SumRow label="טיפ לשליח" value={formatPrice(tip)} />}
+              <div className="pt-2 border-t border-qf-line-soft flex items-center justify-between">
+                <div className="font-semibold">סה״כ לתשלום</div>
+                <div className="font-bold tnum text-lg">{formatPrice(total)}</div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={place}
+              disabled={!canPlace}
+              className="w-full mt-4 bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-14 text-base font-semibold flex items-center justify-between shadow-sm shadow-(--qf-primary)/25 transition"
+            >
+              <span className="inline-flex items-center gap-2">
+                <span>
+                  {busy
+                    ? "שולח..."
+                    : paymentMethod === "cash"
+                      ? "בצע הזמנה"
+                      : "לשלם כעת"}
+                </span>
+                {!busy && <IcoArrowLeft c="#fff" s={16} />}
+              </span>
+              <span className="tnum text-lg">{formatPrice(total)}</span>
+            </button>
+          </Card>
+        </aside>
       </div>
 
-      <div className="fixed bottom-0 inset-x-0 z-30 max-w-md mx-auto bg-white border-t border-qf-line px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      {/* Fixed CTA — mobile only (desktop uses the sidebar above). */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 max-w-md mx-auto bg-white border-t border-qf-line px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <button
           type="button"
           onClick={place}
@@ -523,6 +762,55 @@ function ProcessingScreen() {
           <div className="font-bold text-lg">מעבד את ההזמנה...</div>
           <div className="text-sm text-qf-mute mt-1">רק שניה, מעביר אותך למסך המעקב</div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Static backdrop while the Grow wallet overlay is open. The wallet itself
+ * is owned by Grow's SDK and renders on top of this; we just keep the user
+ * from staring at a blank page if the SDK is slow to appear.
+ */
+function PaymentWaitingScreen({
+  walletOpen,
+  error,
+  onRetry,
+}: {
+  walletOpen: boolean;
+  error: string | null;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="min-h-screen flex items-center justify-center p-8 text-center bg-qf-bg/60">
+      <div className="flex flex-col items-center gap-4 max-w-sm">
+        <div
+          className="w-16 h-16 rounded-full bg-white shadow-lg grid place-items-center"
+          aria-hidden
+        >
+          <span className="qf-spinner text-(--qf-primary) text-2xl" />
+        </div>
+        <div>
+          <div className="font-bold text-lg">
+            {error ? "אירעה תקלה בתשלום" : walletOpen ? "השלמת תשלום" : "פותח שדה תשלום..."}
+          </div>
+          <div className="text-sm text-qf-mute mt-1">
+            {error
+              ? error
+              : walletOpen
+                ? "מלא/י את פרטי האשראי בחלון שנפתח כדי לסיים את ההזמנה"
+                : "השדה לתשלום ייפתח כאן בעוד רגע"}
+          </div>
+        </div>
+        {error && (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="px-5 py-2.5 rounded-full bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium"
+          >
+            נסה שוב
+          </button>
+        )}
       </div>
     </div>
   );

@@ -85,9 +85,9 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
   return (
     <div className="space-y-5">
       {/* Section: which methods to accept */}
-      <div className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-4">
+      <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
         <div>
-          <h2 className="font-semibold text-lg">אמצעי תשלום שהמסעדה מקבלת</h2>
+          <h2 className="font-semibold text-base lg:text-lg">אמצעי תשלום שהמסעדה מקבלת</h2>
           <p className="text-sm text-qf-mute mt-0.5">
             סמן את כל מה שאתה רוצה לקבל. הלקוח יבחר בקופה.
           </p>
@@ -117,9 +117,9 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
 
       {/* Grow config — only when Grow is enabled */}
       {v.grow.is_active && (
-        <div className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-4">
+        <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
           <div>
-            <h2 className="font-semibold text-lg">הגדרות חשבון Grow</h2>
+            <h2 className="font-semibold text-base lg:text-lg">הגדרות חשבון Grow</h2>
             <p className="text-sm text-qf-mute mt-0.5">
               מקבלים את הפרטים אחרי שמשלימים onboarding מול{" "}
               <a
@@ -201,9 +201,9 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
 
       {/* Apple Pay verification — only when Grow is on AND tenant has custom domain */}
       {v.grow.is_active && (
-        <div className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-3">
+        <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
           <div>
-            <h2 className="font-semibold text-lg">Apple Pay — אישור דומיין</h2>
+            <h2 className="font-semibold text-base lg:text-lg">Apple Pay — אישור דומיין</h2>
             <p className="text-sm text-qf-mute mt-0.5">
               דרוש רק אם החנות שלך רצה על דומיין מותאם (custom domain).
             </p>

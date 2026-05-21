@@ -231,7 +231,7 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
     order.customerPhoneSnap?.trim() ||
     order.customer?.phone?.trim() ||
     "";
-  const { address, floor, notes: deliveryHandoff } = splitDeliveryNotes(
+  const { address, floor, apartment, notes: deliveryHandoff } = splitDeliveryNotes(
     order.deliveryNotes,
   );
 
@@ -245,6 +245,7 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
     ...(order.customerNotes && { customerNotes: order.customerNotes }),
     ...(address && { address }),
     ...(floor && { floor }),
+    ...(apartment && { apartment }),
     ...(deliveryHandoff && { deliveryNotes: deliveryHandoff }),
   };
 

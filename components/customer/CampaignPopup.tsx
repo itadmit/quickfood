@@ -36,9 +36,10 @@ export function CampaignPopup({ tenantSlug }: Props) {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`/api/v1/restaurants/${tenantSlug}/campaigns/active`, {
-          cache: "no-store",
-        });
+        const res = await fetch(
+          `/api/v1/restaurants/${tenantSlug}/campaigns/active?kind=popup`,
+          { cache: "no-store" },
+        );
         if (!res.ok) return;
         const data = (await res.json()) as { campaign: Campaign | null };
         if (cancelled || !data.campaign) return;
@@ -104,7 +105,7 @@ export function CampaignPopup({ tenantSlug }: Props) {
   return (
     <div
       className={
-        "fixed inset-0 z-[60] grid place-items-center p-5 transition-opacity duration-200 " +
+        "fixed inset-0 z-60 grid place-items-center p-5 transition-opacity duration-200 " +
         (visible ? "opacity-100" : "opacity-0 pointer-events-none")
       }
       style={{ background: "rgba(0,0,0,0.55)" }}

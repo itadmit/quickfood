@@ -351,7 +351,7 @@ export function ItemEditor({
             ) : (
               <div className="space-y-2">
                 {data.sizes.map((s, i) => (
-                  <div key={i} className="grid grid-cols-[80px_1fr_120px_80px_32px] gap-2 items-center">
+                  <div key={i} className="grid grid-cols-[64px_1fr_88px_56px_28px] sm:grid-cols-[80px_1fr_120px_80px_32px] gap-2 items-center">
                     <input
                       value={s.code}
                       onChange={(e) =>
@@ -570,7 +570,7 @@ function GroupEditor({
       </div>
       <div className="space-y-1.5">
         {group.options.map((o, oi) => (
-          <div key={oi} className="grid grid-cols-[1fr_100px_90px_32px] gap-2 items-center">
+          <div key={oi} className="grid grid-cols-[1fr_80px_72px_28px] sm:grid-cols-[1fr_100px_90px_32px] gap-2 items-center">
             <input
               value={o.name}
               onChange={(e) =>

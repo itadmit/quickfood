@@ -161,11 +161,11 @@ export function ItemDetail({
   const ctaLabel = missingGroup ? `בחר ${missingGroup.name}` : "הוסף לסל";
 
   return (
-    <div className="pb-36">
-      {/* Sticky top bar — appears once the hero scrolls out */}
+    <div className="pb-36 lg:pb-12 lg:max-w-4xl lg:mx-auto lg:mt-8 lg:bg-white lg:rounded-3xl lg:shadow-xl lg:overflow-hidden">
+      {/* Sticky top bar — mobile only (desktop has the TopNav) */}
       <div
         className={cn(
-          "fixed top-0 inset-x-0 z-40 max-w-md mx-auto bg-white/95 backdrop-blur border-b border-qf-line transition-all duration-200",
+          "lg:hidden fixed top-0 inset-x-0 z-40 max-w-md mx-auto bg-white/95 backdrop-blur border-b border-qf-line transition-all duration-200",
           showStickyBar ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none",
         )}
       >
@@ -183,7 +183,7 @@ export function ItemDetail({
 
       {/* Hero */}
       <div className="relative">
-        <div className="relative h-72 overflow-hidden bg-qf-line-soft rounded-b-3xl">
+        <div className="relative h-72 overflow-hidden bg-qf-line-soft rounded-b-3xl lg:h-96 lg:rounded-none">
           <MenuItemImage
             src={item.images?.[0]}
             alt={item.name}
@@ -196,7 +196,7 @@ export function ItemDetail({
         </div>
         <Link
           href={`/${tenantSlug}/menu`}
-          className="absolute top-4 inset-s-4 w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-md grid place-items-center"
+          className="lg:hidden absolute top-4 inset-s-4 w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-md grid place-items-center"
           aria-label="חזרה"
         >
           <IcoChev s={18} />
@@ -304,11 +304,11 @@ export function ItemDetail({
         />
       </Section>
 
-      {/* Sticky footer CTA — Wolt-style: chunky pill with quantity stepper on
-          one side and the bold add-to-cart CTA on the other. Bigger touch
-          targets all around. */}
-      <div className="fixed bottom-0 inset-x-0 z-30 max-w-md mx-auto">
-        <div className="bg-white border-t border-qf-line px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center gap-3">
+      {/* Footer CTA — Wolt-style chunky pill with quantity stepper on one side
+          and bold add-to-cart CTA on the other. Sticks to viewport on mobile,
+          sits naturally at the bottom of the card on desktop. */}
+      <div className="fixed bottom-0 inset-x-0 z-30 max-w-md mx-auto lg:static lg:inset-auto lg:max-w-none lg:mx-0 lg:z-auto">
+        <div className="bg-white border-t border-qf-line px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center gap-3 lg:pb-4 lg:px-5">
           <div className="flex items-center bg-qf-line-soft rounded-full">
             <button
               type="button"

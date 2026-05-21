@@ -19,7 +19,12 @@ export const PATCH = handler(
     const campaign = await prisma.campaign.update({
       where: { id },
       data: {
+        ...(body.kind !== undefined && { kind: body.kind }),
+        ...(body.style !== undefined && { style: body.style }),
         ...(body.title !== undefined && { title: body.title }),
+        ...(body.subtitle !== undefined && { subtitle: body.subtitle }),
+        ...(body.icon !== undefined && { icon: body.icon }),
+        ...(body.color !== undefined && { color: body.color }),
         ...(body.image_url !== undefined && { imageUrl: body.image_url }),
         ...(body.is_active !== undefined && { isActive: body.is_active }),
         ...(body.link_url !== undefined && { linkUrl: body.link_url }),

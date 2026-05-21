@@ -167,18 +167,18 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
   const totalActive = orders.length;
 
   return (
-    <div className="space-y-5">
-      <header className="flex items-end justify-between">
+    <div className="space-y-4 lg:space-y-5">
+      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">הזמנות חיות</h1>
-          <p className="text-sm text-qf-mute">
+          <h1 className="text-xl lg:text-2xl font-bold">הזמנות חיות</h1>
+          <p className="text-xs lg:text-sm text-qf-mute">
             {totalActive} הזמנות פעילות · עדכון אוטומטי
           </p>
         </div>
         <div className="flex gap-2">
           <button
             type="button"
-            className="px-3.5 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm inline-flex items-center gap-2"
+            className="hidden sm:inline-flex px-3.5 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm items-center gap-2"
             onClick={() => window.print()}
           >
             <IcoPrinter s={16} /> הדפסת תור
@@ -186,14 +186,14 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
           <button
             type="button"
             onClick={() => setManualOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm"
+            className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm"
           >
             + הזמנה ידנית
           </button>
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 lg:gap-4">
         {byColumn.map((col) => (
           <Column
             key={col.title}
@@ -245,7 +245,7 @@ function Column({
   onSelect: (id: string) => void;
 }) {
   return (
-    <section className="bg-white rounded-2xl border border-qf-line-dash p-3 min-h-[60vh] flex flex-col">
+    <section className="bg-white rounded-2xl border border-qf-line-dash p-3 min-h-[40vh] md:min-h-[60vh] flex flex-col">
       <header className="px-2 pt-1 pb-2 flex items-center justify-between">
         <div>
           <div className="font-semibold flex items-center gap-2">

@@ -17,6 +17,7 @@
 import { apiError, apiJson, handler } from "@/lib/api-response";
 import { prisma } from "@/lib/db/client";
 import { advanceStatus, canTransition } from "@/lib/orders";
+import { recordOrderCommission } from "@/lib/billing-hub/commission";
 import { getConfiguredProvider } from "@/lib/payments/factory";
 import {
   OrderStatus,
@@ -200,6 +201,14 @@ export const POST = handler(async (req: Request) => {
           console.error("[payments/callback] advanceStatus failed", err);
         }
       }
+
+      // Record the 0.5% commission as soon as the card actually paid — we
+      // can't wait for the merchant to manually mark `delivered`, since some
+      // never do. The hub dedupes by `idempotency_key: "order:<orderId>"`,
+      // so a cash order that also fires this on delivery won't double-charge.
+      void recordOrderCommission(pending.orderId).catch((err) => {
+        console.error("[payments/callback] commission record failed", err);
+      });
     }
   } else {
     if (pending.status === PendingPaymentStatus.pending) {

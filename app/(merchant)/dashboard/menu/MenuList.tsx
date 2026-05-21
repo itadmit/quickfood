@@ -119,11 +119,11 @@ export function MenuList({
   const catMap = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c.name])), [categories]);
 
   return (
-    <div className="space-y-5">
-      <header className="flex items-end justify-between">
+    <div className="space-y-4 lg:space-y-5">
+      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">תפריט</h1>
-          <p className="text-sm text-qf-mute">
+          <h1 className="text-xl lg:text-2xl font-bold">תפריט</h1>
+          <p className="text-xs lg:text-sm text-qf-mute">
             {visibleCount} פריטים זמינים · {hiddenCount} מוסתרים
           </p>
         </div>
@@ -131,13 +131,13 @@ export function MenuList({
           <button
             type="button"
             onClick={() => setImportOpen(true)}
-            className="px-3.5 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm"
+            className="hidden sm:inline-flex px-3.5 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm"
           >
             ייבוא מ-CSV
           </button>
           <Link
             href="/dashboard/menu/new"
-            className="px-3.5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm"
+            className="flex-1 sm:flex-initial text-center px-3.5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm"
           >
             + פריט חדש
           </Link>
@@ -184,7 +184,8 @@ export function MenuList({
       </div>
 
       <div className="bg-white rounded-2xl border border-qf-line-dash overflow-hidden">
-        <div className="grid grid-cols-[60px_44px_1fr_140px_100px_120px_100px_60px] gap-3 px-4 py-2.5 text-xs font-medium text-qf-mute border-b border-qf-line-dash bg-qf-line-soft/60">
+        {/* Table header — desktop only. Mobile rows are self-explanatory cards. */}
+        <div className="hidden lg:grid grid-cols-[60px_44px_1fr_140px_100px_120px_100px_60px] gap-3 px-4 py-2.5 text-xs font-medium text-qf-mute border-b border-qf-line-dash bg-qf-line-soft/60">
           <div></div>
           <div className="text-center">מומלץ</div>
           <div>שם / SKU</div>
@@ -204,21 +205,21 @@ export function MenuList({
               if (e.key === "Enter") router.push(`/dashboard/menu/${item.id}`);
             }}
             className={cn(
-              "grid grid-cols-[60px_44px_1fr_140px_100px_120px_100px_60px] gap-3 px-4 py-3 items-center border-b border-qf-line-soft last:border-b-0 hover:bg-qf-line-soft/40 cursor-pointer",
+              "flex items-center gap-3 px-3 lg:px-4 py-3 border-b border-qf-line-soft last:border-b-0 hover:bg-qf-line-soft/40 cursor-pointer lg:grid lg:grid-cols-[60px_44px_1fr_140px_100px_120px_100px_60px]",
               !item.available && "opacity-55",
             )}
           >
-            <div className="w-10 h-10 rounded-xl overflow-hidden">
+            <div className="w-12 h-12 lg:w-10 lg:h-10 rounded-xl overflow-hidden shrink-0">
               <MenuItemImage
                 src={item.images?.[0]}
                 alt={item.name}
                 businessType={businessType}
-                size={40}
+                size={48}
                 rounded="xl"
                 fill
               />
             </div>
-            <div className="grid place-items-center" onClick={(e) => e.stopPropagation()}>
+            <div className="hidden lg:grid place-items-center" onClick={(e) => e.stopPropagation()}>
               <button
                 type="button"
                 aria-pressed={item.featured}
@@ -239,14 +240,27 @@ export function MenuList({
                 />
               </button>
             </div>
-            <div className="min-w-0">
-              <div className="font-medium truncate">{item.name}</div>
-              {item.sku && <div className="text-xs text-qf-mute" dir="ltr">{item.sku}</div>}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 min-w-0">
+                {item.featured && (
+                  <span className="lg:hidden shrink-0" aria-label="מומלץ">
+                    <IcoStar c="#e8a93b" fill="#e8a93b" s={14} />
+                  </span>
+                )}
+                <div className="font-medium truncate">{item.name}</div>
+              </div>
+              {/* On mobile, surface key meta below the name since the columns are hidden */}
+              <div className="lg:hidden text-xs text-qf-mute flex items-center gap-2 mt-0.5">
+                <span className="truncate">{catMap[item.categoryId]}</span>
+                <span>·</span>
+                <span className="tnum font-medium text-qf-ink2">{formatPrice(item.basePrice)}</span>
+              </div>
+              {item.sku && <div className="hidden lg:block text-xs text-qf-mute" dir="ltr">{item.sku}</div>}
             </div>
-            <div className="text-sm text-qf-ink2 truncate">{catMap[item.categoryId]}</div>
-            <div className="text-sm tnum font-medium">{formatPrice(item.basePrice)}</div>
-            <div className="text-sm text-qf-ink2 tnum">{item.prepMinutes} דק&apos;</div>
-            <div onClick={(e) => e.stopPropagation()}>
+            <div className="hidden lg:block text-sm text-qf-ink2 truncate">{catMap[item.categoryId]}</div>
+            <div className="hidden lg:block text-sm tnum font-medium">{formatPrice(item.basePrice)}</div>
+            <div className="hidden lg:block text-sm text-qf-ink2 tnum">{item.prepMinutes} דק&apos;</div>
+            <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
               <button
                 type="button"
                 role="switch"

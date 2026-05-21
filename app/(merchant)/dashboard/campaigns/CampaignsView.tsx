@@ -1,15 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { IcoMegaphone, IcoPlus, IcoEdit, IcoTrash, IcoClose } from "@/components/shared/Icons";
+import { IcoMegaphone, IcoPlus, IcoEdit, IcoTrash, IcoClose, IcoCheck } from "@/components/shared/Icons";
 import { ImageUploader } from "@/components/shared/ImageUploader";
 import { RelativeTime } from "@/components/shared/RelativeTime";
+import {
+  CATEGORY_ICONS,
+  CATEGORY_COLORS,
+  type CategoryIconKey,
+  type CategoryColorKey,
+  resolveCategoryStyle,
+} from "@/lib/category-style";
 import { cn } from "@/lib/cn";
+
+type CampaignKind = "popup" | "banner";
+type CampaignStyle = "image" | "text";
 
 interface Campaign {
   id: string;
+  kind: CampaignKind;
+  style: CampaignStyle;
   title: string;
-  imageUrl: string;
+  subtitle: string | null;
+  icon: string | null;
+  color: string | null;
+  imageUrl: string | null;
   isActive: boolean;
   linkUrl: string | null;
   updatedAt: string;
@@ -17,18 +32,43 @@ interface Campaign {
 
 type DraftCampaign = {
   id?: string;
+  kind: CampaignKind;
+  style: CampaignStyle;
   title: string;
+  subtitle: string;
+  icon: string | null;
+  color: string | null;
   imageUrl: string;
   isActive: boolean;
   linkUrl: string;
 };
 
 const EMPTY_DRAFT: DraftCampaign = {
+  kind: "popup",
+  style: "image",
   title: "",
+  subtitle: "",
+  icon: null,
+  color: null,
   imageUrl: "",
   isActive: true,
   linkUrl: "",
 };
+
+const KIND_LABEL: Record<CampaignKind, string> = {
+  popup: "פופאפ",
+  banner: "באנר",
+};
+
+const STYLE_LABEL: Record<CampaignStyle, string> = {
+  image: "תמונה",
+  text: "כיתוב",
+};
+
+/** Text-style banners are the only campaign that doesn't need an image. */
+function needsImage(d: { kind: CampaignKind; style: CampaignStyle }) {
+  return !(d.kind === "banner" && d.style === "text");
+}
 
 export function CampaignsView({ initial }: { initial: Campaign[] }) {
   const [items, setItems] = useState(initial);
@@ -45,8 +85,13 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
     setError(null);
     setEditing({
       id: c.id,
+      kind: c.kind,
+      style: c.style,
       title: c.title,
-      imageUrl: c.imageUrl,
+      subtitle: c.subtitle ?? "",
+      icon: c.icon,
+      color: c.color,
+      imageUrl: c.imageUrl ?? "",
       isActive: c.isActive,
       linkUrl: c.linkUrl ?? "",
     });
@@ -58,7 +103,7 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
       setError("נדרשת כותרת");
       return;
     }
-    if (!editing.imageUrl) {
+    if (needsImage(editing) && !editing.imageUrl) {
       setError("נדרשת תמונה");
       return;
     }
@@ -68,12 +113,19 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
     const url = isCreate
       ? "/api/v1/merchant/campaigns"
       : `/api/v1/merchant/campaigns/${editing.id}`;
+    // Effective style: popups are always image-style, regardless of UI state.
+    const effectiveStyle: CampaignStyle = editing.kind === "popup" ? "image" : editing.style;
     const res = await fetch(url, {
       method: isCreate ? "POST" : "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
+        kind: editing.kind,
+        style: effectiveStyle,
         title: editing.title.trim(),
-        image_url: editing.imageUrl,
+        subtitle: editing.subtitle.trim() || null,
+        icon: editing.icon,
+        color: editing.color,
+        image_url: editing.imageUrl || null,
         is_active: editing.isActive,
         link_url: editing.linkUrl.trim() || null,
       }),
@@ -87,15 +139,25 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
     const data = await res.json();
     const saved = data.campaign as {
       id: string;
+      kind: CampaignKind;
+      style: CampaignStyle;
       title: string;
-      imageUrl: string;
+      subtitle: string | null;
+      icon: string | null;
+      color: string | null;
+      imageUrl: string | null;
       isActive: boolean;
       linkUrl: string | null;
       updatedAt: string;
     };
     const mapped: Campaign = {
       id: saved.id,
+      kind: saved.kind,
+      style: saved.style,
       title: saved.title,
+      subtitle: saved.subtitle,
+      icon: saved.icon,
+      color: saved.color,
       imageUrl: saved.imageUrl,
       isActive: saved.isActive,
       linkUrl: saved.linkUrl,
@@ -137,15 +199,17 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
 
   return (
     <div className="space-y-5">
-      <header className="flex items-end justify-between gap-3">
+      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">קמפיינים</h1>
-          <p className="text-sm text-qf-mute">פופאפ מבצע שמופיע ללקוחות בעמוד הבית של המסעדה.</p>
+          <h1 className="text-xl lg:text-2xl font-bold">קמפיינים</h1>
+          <p className="text-xs lg:text-sm text-qf-mute">
+            פופאפ שצף ללקוחות בעמוד הבית, או באנר קידום משובץ בתוך עמוד הבית.
+          </p>
         </div>
         <button
           type="button"
           onClick={openNew}
-          className="bg-(--qf-primary) hover:bg-(--qf-deep) text-white rounded-xl px-4 py-2.5 text-sm font-semibold inline-flex items-center gap-1.5 shadow-sm transition"
+          className="bg-(--qf-primary) hover:bg-(--qf-deep) text-white rounded-xl px-4 py-2.5 text-sm font-semibold inline-flex items-center justify-center gap-1.5 shadow-sm transition"
         >
           <IcoPlus c="#fff" s={16} />
           קמפיין חדש
@@ -172,9 +236,22 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
                 c.isActive ? "border-qf-line-dash" : "border-qf-line opacity-70",
               )}
             >
-              <div className="aspect-4/3 bg-qf-line-soft relative">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={c.imageUrl} alt={c.title} className="w-full h-full object-cover" />
+              <div className="h-44 bg-qf-line-soft relative overflow-hidden shrink-0">
+                {c.kind === "banner" && c.style === "text" ? (
+                  <ThumbTextBanner
+                    title={c.title}
+                    subtitle={c.subtitle}
+                    icon={c.icon}
+                    color={c.color}
+                  />
+                ) : c.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={c.imageUrl}
+                    alt={c.title}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : null}
                 <span
                   className={cn(
                     "absolute top-2 inset-s-2 text-[10px] font-semibold px-2 py-1 rounded-full",
@@ -184,6 +261,17 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
                   )}
                 >
                   {c.isActive ? "פעיל" : "כבוי"}
+                </span>
+                <span
+                  className={cn(
+                    "absolute top-2 inset-e-2 text-[10px] font-semibold px-2 py-1 rounded-full",
+                    c.kind === "popup"
+                      ? "bg-qf-blue-soft text-qf-blue"
+                      : "bg-qf-yolk-soft text-qf-ink2",
+                  )}
+                >
+                  {KIND_LABEL[c.kind]}
+                  {c.kind === "banner" ? ` · ${STYLE_LABEL[c.style]}` : ""}
                 </span>
               </div>
               <div className="p-3 flex-1 flex flex-col gap-2">
@@ -253,8 +341,79 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
 
             <div className="p-5 space-y-4">
               <div>
+                <label className="text-sm font-medium block mb-1.5">
+                  סוג קמפיין <span className="text-qf-tomato">*</span>
+                </label>
+                <div className="grid grid-cols-2 gap-2 bg-qf-line-soft p-1 rounded-xl">
+                  {(["popup", "banner"] as const).map((k) => {
+                    const active = editing.kind === k;
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() =>
+                          setEditing((prev) => prev && { ...prev, kind: k })
+                        }
+                        className={cn(
+                          "px-3 py-2 rounded-lg text-sm font-semibold transition",
+                          active
+                            ? "bg-white shadow-sm text-qf-ink"
+                            : "text-qf-ink2 hover:text-qf-ink",
+                        )}
+                      >
+                        {KIND_LABEL[k]}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-qf-mute mt-1.5">
+                  {editing.kind === "popup"
+                    ? "פופאפ מופיע פעם ביום ללקוח כשהוא נכנס לעמוד הבית."
+                    : "באנר מופיע משובץ בעמוד הבית, בלי הפרעה לגלילה."}
+                </p>
+              </div>
+
+              {editing.kind === "banner" && (
+                <div>
+                  <label className="text-sm font-medium block mb-1.5">
+                    סגנון באנר <span className="text-qf-tomato">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-2 bg-qf-line-soft p-1 rounded-xl">
+                    {(["image", "text"] as const).map((s) => {
+                      const active = editing.style === s;
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() =>
+                            setEditing((prev) => prev && { ...prev, style: s })
+                          }
+                          className={cn(
+                            "px-3 py-2 rounded-lg text-sm font-semibold transition",
+                            active
+                              ? "bg-white shadow-sm text-qf-ink"
+                              : "text-qf-ink2 hover:text-qf-ink",
+                          )}
+                        >
+                          {STYLE_LABEL[s]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[11px] text-qf-mute mt-1.5">
+                    {editing.style === "image"
+                      ? "באנר תמונה — מעלים תמונה רחבה שכוללת את כל הטקסט."
+                      : "באנר כיתוב — כרטיס עם כותרת, תיאור ואייקון; ללא צורך בתמונה."}
+                  </p>
+                </div>
+              )}
+
+              <div>
                 <label className="text-sm font-medium block mb-1">
-                  כותרת פנימית <span className="text-qf-tomato">*</span>
+                  {editing.kind === "banner" && editing.style === "text"
+                    ? "כותרת"
+                    : "כותרת פנימית"}{" "}
+                  <span className="text-qf-tomato">*</span>
                 </label>
                 <input
                   type="text"
@@ -267,27 +426,115 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
                   className="w-full border border-qf-line rounded-xl px-3 py-2.5 text-sm outline-none focus:border-(--qf-primary)"
                 />
                 <p className="text-[11px] text-qf-mute mt-1">
-                  משמש רק לזיהוי פנימי. הלקוח רואה את התמונה בלבד.
+                  {editing.kind === "banner" && editing.style === "text"
+                    ? "מופיע ככותרת הראשית בבאנר ללקוח."
+                    : "משמש רק לזיהוי פנימי. הלקוח רואה את התמונה בלבד."}
                 </p>
               </div>
 
-              <div>
-                <label className="text-sm font-medium block mb-1">
-                  תמונת הפופאפ <span className="text-qf-tomato">*</span>
-                </label>
-                <ImageUploader
-                  type="campaign_image"
-                  value={editing.imageUrl ? [editing.imageUrl] : []}
-                  onChange={(next) =>
-                    setEditing((prev) => prev && { ...prev, imageUrl: next[0] ?? "" })
-                  }
-                  multiple={false}
-                  max={1}
-                />
-                <p className="text-[11px] text-qf-mute mt-1">
-                  מומלץ יחס 4:5 או 1:1. תכלול את הכותרת והפרטים על התמונה עצמה.
-                </p>
-              </div>
+              {editing.kind === "banner" && editing.style === "text" && (
+                <>
+                  <div>
+                    <label className="text-sm font-medium block mb-1">
+                      תיאור (אופציונלי)
+                    </label>
+                    <input
+                      type="text"
+                      value={editing.subtitle}
+                      maxLength={160}
+                      onChange={(e) =>
+                        setEditing((prev) => prev && { ...prev, subtitle: e.target.value })
+                      }
+                      placeholder="לדוגמה: 1+1 על קלאסיות · כל יום 14:00–17:00"
+                      className="w-full border border-qf-line rounded-xl px-3 py-2.5 text-sm outline-none focus:border-(--qf-primary)"
+                    />
+                    <p className="text-[11px] text-qf-mute mt-1">
+                      שורה שנייה קטנה מתחת לכותרת. השאר ריק להסתרה.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium block mb-2">צבע</label>
+                    <div className="grid grid-cols-8 gap-2">
+                      {(Object.keys(CATEGORY_COLORS) as CategoryColorKey[]).map((key) => {
+                        const c = CATEGORY_COLORS[key];
+                        const active = editing.color === key;
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() =>
+                              setEditing((prev) => prev && { ...prev, color: key })
+                            }
+                            aria-label={c.label}
+                            aria-pressed={active}
+                            className={cn(
+                              "aspect-square rounded-full grid place-items-center transition",
+                              active ? "ring-2 ring-offset-2 ring-qf-ink" : "hover:scale-110",
+                            )}
+                            style={{ backgroundColor: c.bg }}
+                          >
+                            {active && <IcoCheck c={c.fg} s={14} />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium block mb-2">אייקון</label>
+                    <div className="grid grid-cols-8 gap-2">
+                      {(Object.keys(CATEGORY_ICONS) as CategoryIconKey[]).map((key) => {
+                        const I = CATEGORY_ICONS[key].Icon;
+                        const active = editing.icon === key;
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() =>
+                              setEditing((prev) => prev && { ...prev, icon: key })
+                            }
+                            title={CATEGORY_ICONS[key].label}
+                            aria-pressed={active}
+                            className={cn(
+                              "aspect-square rounded-xl grid place-items-center transition",
+                              active
+                                ? "bg-(--qf-primary) text-white"
+                                : "bg-qf-line-soft/70 hover:bg-qf-line-soft text-qf-ink2",
+                            )}
+                          >
+                            <I size={18} strokeWidth={1.8} />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <BannerPreview draft={editing} />
+                </>
+              )}
+
+              {needsImage(editing) && (
+                <div>
+                  <label className="text-sm font-medium block mb-1">
+                    תמונה <span className="text-qf-tomato">*</span>
+                  </label>
+                  <ImageUploader
+                    type="campaign_image"
+                    value={editing.imageUrl ? [editing.imageUrl] : []}
+                    onChange={(next) =>
+                      setEditing((prev) => prev && { ...prev, imageUrl: next[0] ?? "" })
+                    }
+                    multiple={false}
+                    max={1}
+                  />
+                  <p className="text-[11px] text-qf-mute mt-1">
+                    {editing.kind === "popup"
+                      ? "מומלץ יחס 4:5 או 1:1. כלול את הכותרת והפרטים על התמונה עצמה."
+                      : "מומלץ יחס 16:9 או 21:9 — באנר רחב משובץ. כלול את הכותרת והפרטים על התמונה עצמה."}
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="text-sm font-medium block mb-1">קישור (אופציונלי)</label>
@@ -302,7 +549,7 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
                   className="w-full border border-qf-line rounded-xl px-3 py-2.5 text-sm outline-none focus:border-(--qf-primary)"
                 />
                 <p className="text-[11px] text-qf-mute mt-1">
-                  אם תמלא — לחיצה על התמונה תנווט לקישור. השאר ריק כדי שהתמונה תהיה לא־לחיצה.
+                  אם תמלא — לחיצה על הקמפיין תנווט לקישור. השאר ריק כדי שלא יהיה לחיץ.
                 </p>
               </div>
 
@@ -345,6 +592,71 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Live mini-preview of the customer-facing text banner inside the editor. */
+function BannerPreview({ draft }: { draft: DraftCampaign }) {
+  const style = resolveCategoryStyle(draft.icon, draft.color);
+  const Icon = style.Icon;
+  return (
+    <div>
+      <div className="text-xs font-medium text-qf-mute mb-1.5">תצוגה מקדימה</div>
+      <div
+        className="rounded-2xl border border-qf-line p-4 flex items-center gap-3 shadow-sm"
+        style={{ backgroundColor: style.bg }}
+      >
+        <div
+          className="rounded-xl p-3 shrink-0"
+          style={{ backgroundColor: "rgba(255,255,255,0.55)" }}
+        >
+          <Icon size={28} color={style.fg} strokeWidth={1.8} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold leading-tight truncate" style={{ color: style.fg }}>
+            {draft.title || "כותרת"}
+          </div>
+          {draft.subtitle && (
+            <div className="text-xs text-qf-ink2 mt-0.5 truncate">{draft.subtitle}</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Card thumbnail when there's no uploaded image — mirrors the customer banner. */
+function ThumbTextBanner({
+  title,
+  subtitle,
+  icon,
+  color,
+}: {
+  title: string;
+  subtitle: string | null;
+  icon: string | null;
+  color: string | null;
+}) {
+  const style = resolveCategoryStyle(icon, color);
+  const Icon = style.Icon;
+  return (
+    <div
+      className="absolute inset-3 rounded-xl border border-qf-line p-3 flex items-center gap-3 shadow-sm"
+      style={{ backgroundColor: style.bg }}
+    >
+      <div
+        className="rounded-lg p-2 shrink-0"
+        style={{ backgroundColor: "rgba(255,255,255,0.55)" }}
+      >
+        <Icon size={20} color={style.fg} strokeWidth={1.8} />
+      </div>
+      <div className="min-w-0">
+        <div className="font-semibold leading-tight truncate" style={{ color: style.fg }}>
+          {title}
+        </div>
+        {subtitle && <div className="text-xs text-qf-ink2 truncate">{subtitle}</div>}
+      </div>
     </div>
   );
 }

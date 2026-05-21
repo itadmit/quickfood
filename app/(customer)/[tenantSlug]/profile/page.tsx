@@ -22,16 +22,16 @@ export default async function ProfilePage({
   const session = await getSession();
   if (!session || session.type !== "customer") {
     return (
-      <div className="min-h-screen pb-24">
-        <header className="px-5 pt-5 pb-3 flex items-center gap-3 bg-white border-b border-qf-line">
+      <div className="min-h-screen pb-24 lg:pb-12">
+        <header className="px-5 pt-5 pb-3 flex items-center gap-3 bg-white border-b border-qf-line lg:bg-transparent lg:border-0 lg:max-w-md lg:mx-auto lg:px-0 lg:pt-10 lg:pb-2">
           <Link
             href={`/${tenantSlug}`}
-            className="w-9 h-9 rounded-full border border-qf-line grid place-items-center"
+            className="w-9 h-9 rounded-full border border-qf-line grid place-items-center lg:hidden"
             aria-label="חזרה"
           >
             <IcoChev s={18} />
           </Link>
-          <h1 className="font-bold text-lg">התחברות</h1>
+          <h1 className="font-bold text-lg lg:text-2xl">התחברות</h1>
         </header>
         <ProfileLogin />
         <BottomTabBar tenantSlug={tenantSlug} />

@@ -38,7 +38,25 @@ export default async function HomePage({
         })
       : null;
 
-  const [categories, popular, customerRecentOrders] = await Promise.all([
+  // Surface a "rate your last order" banner when the logged-in customer has
+  // a delivered order that hasn't been reviewed and the prompt wasn't
+  // dismissed. Only when the tenant has reviews enabled.
+  const pendingReviewPromise =
+    session?.type === "customer" && tenant.reviewsEnabled
+      ? prisma.order.findFirst({
+          where: {
+            tenantId: tenant.id,
+            customerId: session.userId,
+            status: "delivered",
+            review: null,
+            reviewPromptDismissedAt: null,
+          },
+          orderBy: { deliveredAt: "desc" },
+          select: { id: true, number: true, deliveredAt: true },
+        })
+      : null;
+
+  const [categories, popular, customerRecentOrders, bannerCampaign, pendingReview] = await Promise.all([
     prisma.menuCategory.findMany({
       where: { tenantId: tenant.id, active: true },
       orderBy: { position: "asc" },
@@ -50,6 +68,21 @@ export default async function HomePage({
       take: 6,
     }),
     customerRecentOrdersPromise,
+    prisma.campaign.findFirst({
+      where: { tenantId: tenant.id, kind: "banner", isActive: true },
+      orderBy: { updatedAt: "desc" },
+      select: {
+        id: true,
+        style: true,
+        title: true,
+        subtitle: true,
+        icon: true,
+        color: true,
+        imageUrl: true,
+        linkUrl: true,
+      },
+    }),
+    pendingReviewPromise,
   ]);
 
   const popularSerialized = popular.map((p) => ({
@@ -92,6 +125,7 @@ export default async function HomePage({
         slug: tenant.slug,
         name: tenant.name,
         logoLetter: tenant.logoLetter,
+        logoUrl: tenant.logoUrl,
         cuisineType: tenant.cuisineType,
         businessType: tenant.businessType,
         coverImage: tenant.coverImage,
@@ -109,7 +143,9 @@ export default async function HomePage({
       categories={categories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color }))}
       popular={popularSerialized}
       recentOrders={recentOrdersSerialized}
+      bannerCampaign={bannerCampaign}
       hasCustomerSession={session?.type === "customer"}
+      pendingReviewOrderId={pendingReview?.id ?? null}
     >
       <Link
         href={`/${tenant.slug}/menu`}

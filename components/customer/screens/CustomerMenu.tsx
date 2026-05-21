@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { IcoChev, IcoSearch, IcoStar } from "@/components/shared/Icons";
+import { IcoChev, IcoSearch } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
+import { MenuCartSidebar } from "@/components/customer/MenuCartSidebar";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { resolveCategoryStyle } from "@/lib/category-style";
@@ -111,10 +112,9 @@ export function CustomerMenu({ tenantSlug, tenantName, businessType = "general",
   };
 
   return (
-    <div className="pb-32">
-      {/* Hero — cover image if set, fallback to the brand green gradient. Same
-          height + composition as the storefront landing hero. */}
-      <header className="relative text-white px-5 pt-5 pb-7 overflow-hidden isolate">
+    <div className="pb-32 lg:pb-12">
+      {/* Hero — full-bleed on desktop, inner content capped to max-w-7xl */}
+      <header className="relative text-white px-5 pt-5 pb-7 overflow-hidden isolate rounded-b-3xl lg:rounded-none lg:px-6 lg:pt-8 lg:pb-10">
         {hasCover ? (
           <>
             <SmartImg
@@ -131,156 +131,162 @@ export function CustomerMenu({ tenantSlug, tenantName, businessType = "general",
           <div className="absolute inset-0 -z-10 bg-linear-to-b from-(--qf-primary) to-(--qf-deep)" />
         )}
 
-        <div className="flex items-center gap-3 mb-4">
-          <Link
-            href={`/${tenantSlug}`}
-            className="w-9 h-9 rounded-full bg-white/20 backdrop-blur grid place-items-center"
-            aria-label="חזרה"
-          >
-            <IcoChev c="#fff" s={18} />
-          </Link>
-          <div className="flex-1 min-w-0">
-            <h1 className="font-bold text-lg truncate drop-shadow-md">{tenantName}</h1>
-            <div className="text-xs opacity-90 flex items-center gap-1.5 drop-shadow">
-              <IcoStar c="#fff" s={10} fill="#fff" />
-              <span className="tnum">4.8</span>
-              <span>· 1,247 ביקורות</span>
+        <div className="lg:max-w-7xl lg:mx-auto">
+          <div className="flex items-center gap-3 mb-4 lg:mb-6">
+            <Link
+              href={`/${tenantSlug}`}
+              className="w-9 h-9 rounded-full bg-white/20 backdrop-blur grid place-items-center lg:hidden"
+              aria-label="חזרה"
+            >
+              <IcoChev c="#fff" s={18} />
+            </Link>
+            <div className="flex-1 min-w-0">
+              <h1 className="font-bold text-lg truncate drop-shadow-md lg:text-3xl">{tenantName}</h1>
             </div>
           </div>
-        </div>
 
-        <div className="bg-white rounded-full flex items-center gap-2 px-4 py-2.5">
-          <IcoSearch c="#7c8a82" s={16} />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="חיפוש בתפריט"
-            className="flex-1 bg-transparent outline-none text-sm text-qf-ink placeholder:text-qf-mute"
-          />
+          <div className="bg-white rounded-full flex items-center gap-2.5 px-5 py-3.5 focus-within:ring-2 focus-within:ring-(--qf-primary) lg:max-w-xl">
+            <IcoSearch c="#7c8a82" s={18} />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="חיפוש בתפריט"
+              className="flex-1 bg-transparent outline-none text-[15px] text-qf-ink placeholder:text-qf-mute"
+            />
+          </div>
         </div>
       </header>
 
-      {/* Sticky category nav */}
-      <div className="sticky top-0 z-20 bg-qf-bg/95 backdrop-blur border-b border-qf-line">
-        <div className="flex gap-1.5 overflow-x-auto no-scrollbar px-4 py-2.5">
-          {visibleCategories.map((c) => {
-            const active = activeCat === c.id;
-            const style = resolveCategoryStyle(c.icon, c.color);
-            const Icon = style.Icon;
-            return (
-              <button
-                key={c.id}
-                ref={(el) => {
-                  chipRefs.current[c.id] = el;
-                }}
-                type="button"
-                onClick={() => handleChipClick(c.id)}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition inline-flex items-center gap-1.5",
-                  active
-                    ? "bg-(--qf-primary) text-white border-transparent"
-                    : "bg-white text-qf-ink2 border-qf-line",
-                )}
-              >
-                <span
-                  className="w-5 h-5 rounded-full grid place-items-center shrink-0"
-                  style={{ backgroundColor: active ? "rgba(255,255,255,0.18)" : style.bg }}
-                  aria-hidden
-                >
-                  <Icon size={11} color={active ? "#fff" : style.fg} strokeWidth={2} />
-                </span>
-                <span>{c.name}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="px-5 mt-3 space-y-6">
-        {visibleCategories.map((c) => {
-          const list = byCategory[c.id] ?? [];
-          return (
-            <section
-              key={c.id}
-              id={`cat-${c.id}`}
-              ref={(el) => {
-                sectionRefs.current[c.id] = el;
-              }}
-              data-cat-id={c.id}
-              className="space-y-2.5 scroll-mt-20"
-            >
-              <h2 className="font-semibold text-base">{c.name}</h2>
-              <div className="space-y-2.5">
-                {list.map((item) => (
-                  <Link
-                    key={item.id}
-                    href={`/${tenantSlug}/menu/${item.id}`}
-                    className="relative block bg-white rounded-2xl border border-qf-line p-3 pe-3.5 flex gap-3 transition active:scale-[0.99] active:bg-qf-line-soft"
+      {/* Below-hero shell: single column on mobile, 2-col grid on desktop with
+          a sticky cart sidebar. */}
+      <div className="lg:max-w-7xl lg:mx-auto lg:px-6 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
+        <div className="min-w-0">
+          {/* Sticky category nav — sticks to the top of the page on mobile,
+              below the TopNav (h-16) on desktop. */}
+          <div className="sticky top-0 z-20 bg-qf-bg/95 backdrop-blur border-b border-qf-line lg:top-16 lg:border-x lg:border-qf-line lg:rounded-2xl lg:mt-0">
+            <div className="flex gap-1.5 overflow-x-auto no-scrollbar px-4 py-2.5">
+              {visibleCategories.map((c) => {
+                const active = activeCat === c.id;
+                const style = resolveCategoryStyle(c.icon, c.color);
+                const Icon = style.Icon;
+                return (
+                  <button
+                    key={c.id}
+                    ref={(el) => {
+                      chipRefs.current[c.id] = el;
+                    }}
+                    type="button"
+                    onClick={() => handleChipClick(c.id)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition inline-flex items-center gap-1.5",
+                      active
+                        ? "bg-(--qf-primary) text-white border-transparent"
+                        : "bg-white text-qf-ink2 border-qf-line",
+                    )}
                   >
-                    {/* Outer wrapper stays overflow-visible so the floating "+" disk
-                        can sit half-outside the rounded image without getting clipped.
-                        The image itself is masked by the inner rounded-xl overflow-hidden. */}
-                    <div className="relative w-24 h-24 shrink-0">
-                      <div className="w-full h-full rounded-xl overflow-hidden">
-                        <MenuItemImage
-                          src={item.images?.[0]}
-                          alt={item.name}
-                          businessType={businessType}
-                          size={96}
-                          rounded="xl"
-                          className="w-full h-full"
-                        />
-                      </div>
-                      <span
-                        aria-hidden
-                        className="absolute -bottom-2 -end-2 w-9 h-9 rounded-full bg-white shadow-md border border-qf-line grid place-items-center text-(--qf-primary) text-2xl leading-none font-light pointer-events-none"
-                      >
-                        +
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0 flex flex-col justify-between">
-                      <div>
-                        <div className="font-semibold leading-tight">{item.name}</div>
-                        <div className="text-xs text-qf-mute line-clamp-2 mt-0.5">
-                          {item.description}
-                        </div>
-                        {item.tags.length > 0 && (
-                          <div className="flex gap-1 mt-1.5 flex-wrap">
-                            {item.tags.slice(0, 3).map((t) => (
-                              <span
-                                key={t}
-                                className="text-[10px] bg-qf-green-soft text-qf-green-deep px-1.5 py-0.5 rounded-md font-medium"
-                              >
-                                {t}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between mt-1.5">
-                        <div className="font-bold tnum text-base">{formatPrice(item.basePrice)}</div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          );
-        })}
-
-        {filtered.length === 0 && (
-          <div className="text-center text-sm text-qf-mute py-10">
-            לא נמצאו פריטים תואמים
+                    <span
+                      className="w-5 h-5 rounded-full grid place-items-center shrink-0"
+                      style={{ backgroundColor: active ? "rgba(255,255,255,0.18)" : style.bg }}
+                      aria-hidden
+                    >
+                      <Icon size={11} color={active ? "#fff" : style.fg} strokeWidth={2} />
+                    </span>
+                    <span>{c.name}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        )}
+
+          <div className="px-5 mt-3 space-y-6 lg:px-0 lg:mt-6">
+            {visibleCategories.map((c) => {
+              const list = byCategory[c.id] ?? [];
+              return (
+                <section
+                  key={c.id}
+                  id={`cat-${c.id}`}
+                  ref={(el) => {
+                    sectionRefs.current[c.id] = el;
+                  }}
+                  data-cat-id={c.id}
+                  className="space-y-2.5 scroll-mt-20 lg:scroll-mt-32"
+                >
+                  <h2 className="font-semibold text-base lg:text-xl">{c.name}</h2>
+                  <div className="space-y-2.5 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
+                    {list.map((item) => (
+                      <Link
+                        key={item.id}
+                        href={`/${tenantSlug}/menu/${item.id}`}
+                        className="relative bg-white rounded-2xl border border-qf-line p-3 pe-3.5 flex gap-3 transition active:scale-[0.99] active:bg-qf-line-soft hover:border-(--qf-primary)/40 hover:shadow-sm"
+                      >
+                        {/* Outer wrapper stays overflow-visible so the floating "+" disk
+                            can sit half-outside the rounded image without getting clipped.
+                            The image itself is masked by the inner rounded-xl overflow-hidden. */}
+                        <div className="relative w-24 h-24 shrink-0">
+                          <div className="w-full h-full rounded-xl overflow-hidden">
+                            <MenuItemImage
+                              src={item.images?.[0]}
+                              alt={item.name}
+                              businessType={businessType}
+                              size={96}
+                              rounded="xl"
+                              className="w-full h-full"
+                            />
+                          </div>
+                          <span
+                            aria-hidden
+                            className="absolute bottom-1 -inset-e-2 w-8 h-8 rounded-full bg-white shadow-md border border-qf-line grid place-items-center text-(--qf-primary) text-xl leading-none font-light pointer-events-none"
+                          >
+                            +
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0 flex flex-col justify-between">
+                          <div>
+                            <div className="font-semibold leading-tight">{item.name}</div>
+                            <div className="text-xs text-qf-mute line-clamp-2 mt-0.5">
+                              {item.description}
+                            </div>
+                            {item.tags.length > 0 && (
+                              <div className="flex gap-1 mt-1.5 flex-wrap">
+                                {item.tags.slice(0, 3).map((t) => (
+                                  <span
+                                    key={t}
+                                    className="text-[10px] bg-qf-green-soft text-qf-green-deep px-1.5 py-0.5 rounded-md font-medium"
+                                  >
+                                    {t}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between mt-1.5">
+                            <div className="font-bold tnum text-base">{formatPrice(item.basePrice)}</div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+
+            {filtered.length === 0 && (
+              <div className="text-center text-sm text-qf-mute py-10">
+                לא נמצאו פריטים תואמים
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Desktop-only sticky cart sidebar */}
+        <MenuCartSidebar tenantSlug={tenantSlug} businessType={businessType} />
       </div>
 
-      {/* Floating cart bar — Wolt-style: slides up from the bottom whenever the
-          first item lands in the cart and pulses lightly to draw the eye. */}
+      {/* Floating cart bar — mobile only; desktop has the sticky sidebar. */}
       {itemCount > 0 && (
         <Link
           href={`/${tenantSlug}/cart`}
-          className="fixed bottom-20 inset-x-0 z-30 max-w-md mx-auto px-4 animate-qf-slide-up"
+          className="lg:hidden fixed bottom-20 inset-x-0 z-30 max-w-md mx-auto px-4 animate-qf-slide-up"
         >
           <div className="bg-(--qf-primary) text-white rounded-2xl shadow-lg shadow-(--qf-primary)/30 flex items-center justify-between px-4 py-3.5 active:scale-[0.99] transition">
             <div className="flex items-center gap-2.5">
