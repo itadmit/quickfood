@@ -17,6 +17,12 @@ export function PlatformSettingsForm({ initial }: { initial: Initial }) {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
+  const [testPhone, setTestPhone] = useState("");
+  const [testBusy, setTestBusy] = useState(false);
+  const [testResult, setTestResult] = useState<
+    { ok: true } | { ok: false; message: string } | null
+  >(null);
+
   function set<K extends keyof Initial>(k: K, val: Initial[K]) {
     setV((x) => ({ ...x, [k]: val }));
   }
@@ -48,7 +54,40 @@ export function PlatformSettingsForm({ initial }: { initial: Initial }) {
     }
   }
 
+  async function sendTest() {
+    setTestBusy(true);
+    setTestResult(null);
+    try {
+      const res = await fetch("/api/v1/admin/settings/whatsapp/test", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ to: testPhone.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setTestResult({
+          ok: false,
+          message: data?.error?.message ?? "שליחה נכשלה",
+        });
+        return;
+      }
+      if (data.ok) {
+        setTestResult({ ok: true });
+      } else {
+        setTestResult({
+          ok: false,
+          message: data.message || "iBot החזיר כישלון. בדוק את ה-Token וה-Instance.",
+        });
+      }
+    } catch {
+      setTestResult({ ok: false, message: "שגיאת רשת" });
+    } finally {
+      setTestBusy(false);
+    }
+  }
+
   const configured = !!initial.whatsappDefaultToken && !!initial.whatsappDefaultInstanceId;
+  const canTest = configured && !testBusy && testPhone.trim().length >= 9;
 
   return (
     <div className="space-y-5">
@@ -120,6 +159,53 @@ export function PlatformSettingsForm({ initial }: { initial: Initial }) {
             {saving ? "שומר..." : "שמירת שינויים"}
           </button>
         </div>
+      </section>
+
+      <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3 max-w-2xl">
+        <div>
+          <h2 className="text-base lg:text-lg font-semibold">בדיקת חיבור</h2>
+          <p className="text-xs lg:text-sm text-qf-mute">
+            שליחת הודעת בדיקה דרך פרטי ה-fallback. לא מנוכה משום מסעדה ולא נרשם בלוג ההיסטוריה.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="tel"
+            inputMode="tel"
+            dir="ltr"
+            value={testPhone}
+            onChange={(e) => setTestPhone(e.target.value)}
+            placeholder="050-1234567"
+            className="flex-1 px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum text-sm"
+          />
+          <button
+            type="button"
+            onClick={sendTest}
+            disabled={!canTest}
+            className="px-4 py-2.5 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
+          >
+            {testBusy ? "שולח..." : "שליחת בדיקה"}
+          </button>
+        </div>
+        {!configured && (
+          <div className="text-xs text-qf-mute">
+            שמור Token + Instance ID לפני שליחת בדיקה.
+          </div>
+        )}
+        {testResult && (
+          <div
+            className={cn(
+              "text-sm rounded-xl px-3 py-2 border",
+              testResult.ok
+                ? "bg-qf-green-soft border-(--qf-primary)/30 text-qf-green-deep"
+                : "bg-qf-tomato-soft border-qf-tomato/40 text-qf-tomato",
+            )}
+          >
+            {testResult.ok
+              ? "הודעת הבדיקה נשלחה. בדוק/י את ה-WhatsApp."
+              : testResult.message}
+          </div>
+        )}
       </section>
     </div>
   );

@@ -212,17 +212,58 @@ export async function sendWhatsApp(
 }
 
 /** "05X-XXXXXXX" → "05XXXXXXXX". */
-function normalizePhone(raw: string): string {
+export function normalizePhone(raw: string): string {
   return raw.replace(/[^\d]/g, "");
 }
 
-function isValidIsraeliMobile(digits: string): boolean {
+export function isValidIsraeliMobile(digits: string): boolean {
   return /^05\d{8}$/.test(digits);
 }
 
 /** "0501234567" → "972501234567@s.whatsapp.net". iBot expects the WhatsApp
  * JID format: country code without `+`, no leading zero, then the suffix. */
-function toJid(israeliMobile: string): string {
+export function toJid(israeliMobile: string): string {
   const local = israeliMobile.replace(/^0/, "");
   return `972${local}@s.whatsapp.net`;
+}
+
+/**
+ * Bare iBot `/send-text` call — no DB writes, no credit accounting, no
+ * tenant lookup. Used for admin-level smoke tests of the platform's
+ * fallback credentials and for the merchant-level test (which has its
+ * own logging path). Returns the parsed iBot response so the caller can
+ * decide how to surface success/failure to the UI.
+ */
+export async function callIBotSendText(args: {
+  token: string;
+  instanceId: string;
+  jid: string;
+  msg: string;
+}): Promise<{ ok: boolean; message: string }> {
+  if (CONSOLE_FALLBACK) {
+    // eslint-disable-next-line no-console
+    console.log(`[whatsapp:console] jid=${args.jid} body=${args.msg}`);
+    return { ok: true, message: "console fallback" };
+  }
+  const params = new URLSearchParams({
+    token: args.token,
+    instance_id: args.instanceId,
+    jid: args.jid,
+    msg: args.msg,
+  });
+  try {
+    const res = await fetch(`${BASE_URL}${SEND_TEXT_PATH}?${params.toString()}`, {
+      method: "GET",
+    });
+    const data = (await res.json().catch(() => ({}))) as {
+      success?: boolean;
+      message?: string;
+    };
+    return { ok: !!data.success, message: data.message ?? "" };
+  } catch (err) {
+    return {
+      ok: false,
+      message: err instanceof Error ? err.message : "fetch_failed",
+    };
+  }
 }

@@ -15,6 +15,14 @@ export default async function OrderTrackingPage({
   const tenant = await resolveTenantBySlug(tenantSlug);
   if (!tenant) notFound();
 
+  // checkoutShowTracking decides whether the post-order page is a simple
+  // e-commerce "thank you" receipt (default) or the full live-tracking
+  // experience the restaurant can opt into in Settings → Checkout.
+  const tenantSettings = await prisma.tenant.findUnique({
+    where: { id: tenant.id },
+    select: { checkoutShowTracking: true },
+  });
+
   const order = await prisma.order.findFirst({
     where: { id, tenantId: tenant.id },
     include: { items: true, branch: { select: { phone: true, address: true } } },
@@ -73,6 +81,7 @@ export default async function OrderTrackingPage({
             }
           : null
       }
+      showTracking={tenantSettings?.checkoutShowTracking ?? false}
     />
   );
 }

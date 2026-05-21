@@ -50,12 +50,14 @@ export function OrderTracking({
   order: initialOrder,
   canReview = false,
   existingReview = null,
+  showTracking = false,
 }: {
   tenantSlug: string;
   tenantName: string;
   order: OrderData;
   canReview?: boolean;
   existingReview?: ExistingReview | null;
+  showTracking?: boolean;
 }) {
   const [order, setOrder] = useState(initialOrder);
   const [review, setReview] = useState<ExistingReview | null>(existingReview);
@@ -66,8 +68,11 @@ export function OrderTracking({
   // know the order went through.
   const isJustPlaced = order.status === "pending";
 
-  // SSE updates
+  // SSE updates — only relevant when the merchant opted into live tracking.
+  // For the lite thank-you screen, the page never refreshes (less work, less
+  // server load, and the customer doesn't expect a live timeline).
   useEffect(() => {
+    if (!showTracking) return;
     const es = new EventSource(`/api/v1/realtime/orders/${order.id}`);
     es.addEventListener("snapshot", (e) => {
       try {
@@ -95,7 +100,24 @@ export function OrderTracking({
         .catch(() => {});
     });
     return () => es.close();
-  }, [order.id]);
+  }, [order.id, showTracking]);
+
+  // E-commerce style: clean "thank you" receipt, no ETA hero, no live
+  // step timeline, no branch contact card. Merchants get this by default;
+  // they can flip the switch in Settings → Checkout to opt into the full
+  // tracking experience instead.
+  if (!showTracking) {
+    return (
+      <ThankYouView
+        tenantSlug={tenantSlug}
+        tenantName={tenantName}
+        order={order}
+        canReview={canReview}
+        review={review}
+        onReviewSubmitted={setReview}
+      />
+    );
+  }
 
   return (
     <div className="pb-20 lg:max-w-2xl lg:mx-auto lg:pt-6 lg:pb-12">
@@ -461,6 +483,110 @@ function ReviewCard({
       >
         {busy ? "שולח..." : "שליחת דירוג"}
       </button>
+    </div>
+  );
+}
+
+/**
+ * E-commerce style post-order confirmation. Shown when the merchant has the
+ * "show order tracking" toggle off (the default) in Settings → Checkout.
+ *
+ * Goal: feel like the thank-you page on any decent online store — clear
+ * confirmation, order number, receipt, and a path back to shopping or to
+ * the restaurant. NO live ETA, NO step timeline, NO SSE refresh.
+ */
+function ThankYouView({
+  tenantSlug,
+  tenantName,
+  order,
+  canReview,
+  review,
+  onReviewSubmitted,
+}: {
+  tenantSlug: string;
+  tenantName: string;
+  order: OrderData;
+  canReview: boolean;
+  review: ExistingReview | null;
+  onReviewSubmitted: (r: ExistingReview) => void;
+}) {
+  return (
+    <div className="pb-20 lg:pb-12 lg:max-w-2xl lg:mx-auto lg:pt-8">
+      <section className="px-5 pt-8 lg:pt-0 text-center">
+        <div
+          className="mx-auto w-20 h-20 rounded-full bg-qf-green-soft grid place-items-center shadow-sm animate-qf-check-in"
+          aria-hidden
+        >
+          <IcoCheck c="var(--qf-primary)" s={44} />
+        </div>
+        <h1 className="text-2xl font-bold mt-5">תודה על ההזמנה!</h1>
+        <p className="text-sm text-qf-mute mt-1">
+          קיבלנו את ההזמנה שלך אצל {tenantName}.
+        </p>
+        <div className="mt-3 inline-flex items-center gap-2 bg-white border border-qf-line rounded-full px-3 py-1.5 text-xs font-mono">
+          <span className="text-qf-mute">מספר הזמנה</span>
+          <span className="font-bold tnum">#{order.number}</span>
+        </div>
+      </section>
+
+      {/* Receipt */}
+      <section className="px-5 mt-6">
+        <div className="bg-white rounded-2xl border border-qf-line divide-y divide-qf-line-soft">
+          <header className="px-4 py-3 flex items-center justify-between">
+            <h2 className="font-semibold text-sm">פירוט ההזמנה</h2>
+            <span className="text-xs text-qf-mute">
+              {order.method === "delivery" ? "משלוח" : "איסוף"}
+            </span>
+          </header>
+          {order.items.map((it) => (
+            <div
+              key={it.id}
+              className="px-4 py-3 flex items-center justify-between gap-3 text-sm"
+            >
+              <div className="min-w-0">
+                <div className="font-medium truncate">{it.name}</div>
+                {it.size && <div className="text-xs text-qf-mute">{it.size}</div>}
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="text-qf-mute text-xs tnum">×{it.quantity}</div>
+                <div className="font-medium tnum">{formatPrice(it.total)}</div>
+              </div>
+            </div>
+          ))}
+          <div className="px-4 py-3 flex items-center justify-between text-sm font-semibold">
+            <div>סה״כ ששולם</div>
+            <div className="tnum text-base">{formatPrice(order.total)}</div>
+          </div>
+        </div>
+      </section>
+
+      {/* Review prompt — exact same component as the tracking view */}
+      {order.status === "delivered" && canReview && (
+        <section className="px-5 mt-4" id="review">
+          <ReviewCard
+            orderId={order.id}
+            items={order.items}
+            review={review}
+            onSubmitted={onReviewSubmitted}
+          />
+        </section>
+      )}
+
+      {/* Footer CTAs */}
+      <section className="px-5 mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <Link
+          href={`/${tenantSlug}`}
+          className="text-center py-3 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white font-medium text-sm"
+        >
+          חזרה לחנות
+        </Link>
+        <Link
+          href={`/${tenantSlug}/menu`}
+          className="text-center py-3 rounded-2xl border border-qf-line bg-white hover:bg-qf-line-soft text-qf-ink font-medium text-sm"
+        >
+          הזמנה נוספת
+        </Link>
+      </section>
     </div>
   );
 }
