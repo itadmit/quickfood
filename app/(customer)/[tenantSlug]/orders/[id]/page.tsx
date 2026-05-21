@@ -23,6 +23,7 @@ export default async function OrderTrackingPage({
   return (
     <OrderTracking
       tenantSlug={tenant.slug}
+      tenantName={tenant.name}
       order={{
         id: order.id,
         number: order.number,

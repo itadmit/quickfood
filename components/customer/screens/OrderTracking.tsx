@@ -38,7 +38,15 @@ function stageOf(status: string): number {
   return 0;
 }
 
-export function OrderTracking({ tenantSlug, order: initialOrder }: { tenantSlug: string; order: OrderData }) {
+export function OrderTracking({
+  tenantSlug,
+  tenantName,
+  order: initialOrder,
+}: {
+  tenantSlug: string;
+  tenantName: string;
+  order: OrderData;
+}) {
   const [order, setOrder] = useState(initialOrder);
   const stage = stageOf(order.status);
   const isDelivered = order.status === "delivered";
@@ -100,9 +108,9 @@ export function OrderTracking({ tenantSlug, order: initialOrder }: { tenantSlug:
               >
                 <IcoCheck c="#16a34a" s={44} />
               </div>
-              <div className="text-2xl font-bold mt-4">ההזמנה התקבלה!</div>
+              <div className="text-2xl font-bold mt-4">תודה על ההזמנה!</div>
               <div className="text-sm mt-1 opacity-90">
-                שלחנו אותה למסעדה — תקבל עדכון ברגע שהיא תאושר
+                ההזמנה אצל {tenantName} — תקבל עדכון ברגע שהיא תיכנס להכנה
               </div>
             </>
           ) : isDelivered ? (
@@ -173,11 +181,11 @@ export function OrderTracking({ tenantSlug, order: initialOrder }: { tenantSlug:
       {order.branch && (
         <section className="px-5 mt-4">
           <div className="bg-white rounded-2xl border border-qf-line p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-qf-green-soft grid place-items-center text-(--qf-deep) font-bold">
-              ?
+            <div className="w-10 h-10 rounded-full bg-qf-green-soft grid place-items-center text-(--qf-deep) font-bold text-base">
+              {tenantName.slice(0, 1)}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-medium text-sm">המסעדה</div>
+              <div className="font-semibold text-sm">{tenantName}</div>
               <div className="text-xs text-qf-mute truncate">{order.branch.address}</div>
             </div>
             <a

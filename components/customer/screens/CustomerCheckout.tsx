@@ -36,6 +36,11 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
   const [tip, setTip] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // True once the POST /orders call has succeeded — even though we clear()
+  // the cart immediately afterward, this stays true until the browser
+  // finishes navigating to /orders/[id], so we can show a "processing"
+  // screen instead of the "הסל ריק" empty-state flashing for ~250ms.
+  const [submitted, setSubmitted] = useState(false);
 
   // Load the restaurant's accepted payment methods.
   useEffect(() => {
@@ -61,6 +66,13 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
   const total = subtotal + deliveryFee + serviceFee + tip;
   const itemCount = lines.reduce((n, l) => n + l.quantity, 0);
   const businessType = (tenant.businessType as BusinessType) ?? "general";
+
+  // While we wait for the route transition to /orders/[id], the cart is
+  // already empty — show a friendly processing screen instead of the
+  // "הסל ריק" empty state that would flash for the route-change frame.
+  if (submitted) {
+    return <ProcessingScreen />;
+  }
 
   if (lines.length === 0) {
     return (
@@ -119,8 +131,16 @@ export function CustomerCheckout({ tenantSlug }: { tenantSlug: string }) {
       // home screen rail. Logged-in customers see the same rail
       // server-rendered from the DB, but storing the id is harmless.
       recordRecentOrder(tenantSlug, orderId);
+      // Flip to "submitted" BEFORE clearing the cart so the next render
+      // shows the processing screen instead of the "הסל ריק" early
+      // return. Then clear() + navigate.
+      setSubmitted(true);
       clear();
       router.push(`/${tenantSlug}/orders/${orderId}`);
+      // Don't fall through to `setBusy(false)` in finally — the route
+      // change tears the component down anyway, and letting `busy` flip
+      // back briefly would re-enable the CTA for one frame.
+      return;
     } catch {
       setError("שגיאת רשת");
     } finally {
@@ -461,6 +481,25 @@ function SumRow({
     <div className="flex items-center justify-between">
       <div className={bold ? "font-semibold" : "text-qf-ink2"}>{label}</div>
       <div className={bold ? "font-bold tnum text-base" : "tnum"}>{value}</div>
+    </div>
+  );
+}
+
+function ProcessingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center p-8 text-center bg-qf-bg/60">
+      <div className="flex flex-col items-center gap-4">
+        <div
+          className="w-16 h-16 rounded-full bg-white shadow-lg grid place-items-center"
+          aria-hidden
+        >
+          <span className="qf-spinner text-(--qf-primary) text-2xl" />
+        </div>
+        <div>
+          <div className="font-bold text-lg">מעבד את ההזמנה...</div>
+          <div className="text-sm text-qf-mute mt-1">רק שניה, מעביר אותך למסך המעקב</div>
+        </div>
+      </div>
     </div>
   );
 }
