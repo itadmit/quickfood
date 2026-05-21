@@ -52,21 +52,11 @@ function Nav() {
     <nav className={styles.nav}>
       <div className={`${styles.container} ${styles.navRow}`}>
         <a href="#" className={styles.brand}>
-          <div className={styles.brandMark}>Q</div>
-          <div>
-            QuickFood
-            <div className={styles.brandSub}>BY QUICKSHOP</div>
-          </div>
+          QuickFood
         </a>
-        <div className={styles.navLinks}>
-          <a href="#product">המוצר</a>
-          <a href="#features">פיצ&apos;רים</a>
-          <a href="#pricing">תמחור</a>
-          <a href="#faq">שאלות נפוצות</a>
-        </div>
         <div className={styles.navCta}>
           <Link href="/dashboard/login" className={`${styles.btn} ${styles.btnGhost}`}>התחברות</Link>
-          <Link href="/signup" className={`${styles.btn} ${styles.btnInk}`}>התחל חינם</Link>
+          <Link href="/signup" className={`${styles.btn} ${styles.btnInk}`}>התחל ניסיון</Link>
         </div>
       </div>
     </nav>
@@ -164,28 +154,28 @@ function Marquee() {
 /* ─── PROBLEM ────────────────────────────────────────────── */
 function Problem() {
   return (
-    <section className={`${styles.section} ${styles.problem}`}>
+    <section className={styles.section}>
       <div className={styles.container}>
-        <div className={`${styles.sectionEyebrow} ${styles.sectionEyebrowCheese}`}>למה QuickFood</div>
+        <div className={styles.sectionEyebrow}>למה QuickFood</div>
         <h2 className={styles.sectionTitle}>
-          תוויות משלוח, גוגל שיטס וקבלות.<br />הגיע הזמן <em>להפסיק.</em>
+          תוויות משלוח, גוגל שיטס וקבלות. <em>הגיע הזמן להפסיק.</em>
         </h2>
 
         <div className={styles.problemGrid}>
-          <div className={styles.problemCard}>
-            <div className={styles.problemNum}>01 ─ עמלות</div>
-            <h3>30% מכל הזמנה הולך לאגרגטור.</h3>
-            <p>אגרגטורים גדולים גובים עמלות שיכולות לאכול שליש מהזמנה. ב-QuickFood אתה מקבל הזמנות ישירות מהלקוחות שלך, בלי מתווך באמצע.</p>
+          <div className={`${styles.problemCard} ${styles.problemCardPeach}`}>
+            <div className={styles.problemNum}>01</div>
+            <h3>עמלות שאוכלות שליש.</h3>
+            <p>אגרגטורים גדולים גובים 25%–30% מכל הזמנה. ב-QuickFood אתה מקבל הזמנות ישירות מהלקוחות שלך, בלי מתווך — ומשלם תוכנית חודשית קבועה.</p>
           </div>
-          <div className={styles.problemCard}>
-            <div className={styles.problemNum}>02 ─ זהות</div>
-            <h3>באגרגטור אתה שורה ברשימה.</h3>
-            <p>עם QuickFood אתה לינק ישיר ללקוח — אפליקציה בצבעים שלך, בלוגו שלך, בשם שלך. לא עוד מסעדה בין מאה.</p>
+          <div className={`${styles.problemCard} ${styles.problemCardMist}`}>
+            <div className={styles.problemNum}>02</div>
+            <h3>שורה ברשימה — או חנות משלך.</h3>
+            <p>באגרגטור אתה עוד אחד מ-מאה. עם QuickFood הלקוח נוחת באפליקציה עם הלוגו שלך, בצבעים שלך, בשם שלך. הקשר הוא בינך לבינו.</p>
           </div>
-          <div className={styles.problemCard}>
-            <div className={styles.problemNum}>03 ─ נתונים</div>
-            <h3>אתה לא יודע מי מזמין ממך.</h3>
-            <p>הפלטפורמות הגדולות שומרות לעצמן את הלקוחות. QuickFood נותן לך את הנתונים, ההיסטוריה ויכולת לבנות בסיס לקוחות נאמן.</p>
+          <div className={`${styles.problemCard} ${styles.problemCardLilac}`}>
+            <div className={styles.problemNum}>03</div>
+            <h3>הנתונים אצלך, לא אצל מישהו אחר.</h3>
+            <p>הפלטפורמות שומרות לעצמן את הלקוחות. אצלנו הנתונים שלך — ההיסטוריה, הטלפונים, ההעדפות — נשארים אצלך, ולך יש מה לעשות איתם.</p>
           </div>
         </div>
       </div>
@@ -377,135 +367,6 @@ function Bento() {
           <MiniCell tag="אנליטיקה" title="נתונים אמיתיים" body="שעות שיא, פריטים מובילים, ערך הזמנה ממוצע." />
           <MiniCell tag="API" title="Webhooks + REST" body="חבר לקופה, ל-iCount או לכל מערכת חיצונית." />
           <MiniCell tag="RTL" title="עברית מנצחת" body="RTL מלא, ניקוד, חודשים בעברית, מספרים tabular." />
-        </div>
-
-        <div className={styles.bento} hidden>
-          {/* 1. Inline checkout — hero feature */}
-          <div className={`${styles.bentoCell} ${styles.bentoTomato} ${styles.bWide}`}>
-            <span className={styles.bentoTag}>תשלום מובנה</span>
-            <h4>Bit, אשראי, Apple Pay, Google Pay — הכל באותו מסך.</h4>
-            <p>
-              ארנק התשלום של Grow רץ inline בתוך החנות שלך — אין הפניה החוצה, אין עמוד תשלום נפרד.
-              הלקוח רואה את הסל, את הכפתור, ומסיים תוך שניות. הכסף בחשבון העסק תוך 24 שעות.
-            </p>
-          </div>
-
-          {/* 2. Live order tracking */}
-          <div className={styles.bentoCell}>
-            <span className={styles.bentoTag}>מעקב חי</span>
-            <h4>סטטוס בזמן אמת</h4>
-            <p>SSE בלייב: התקבלה ← בהכנה ← מוכנה ← בדרך. בלי refresh.</p>
-          </div>
-
-          {/* 3. Reviews — phase 1 launched */}
-          <div className={`${styles.bentoCell} ${styles.bentoCheese}`}>
-            <span className={styles.bentoTag}>ביקורות</span>
-            <h4>תזכורת אוטומטית לדירוג</h4>
-            <p>שעה אחרי המסירה, תזכורת ב-SMS / WhatsApp / Email — לבחירתך. דירוגים פומביים בעמוד נפרד.</p>
-          </div>
-
-          {/* 4. WhatsApp — built-in via iBot */}
-          <div className={`${styles.bentoCell} ${styles.bentoBasil}`}>
-            <span className={styles.bentoTag}>WhatsApp</span>
-            <h4>הודעות וואטסאפ מובנות</h4>
-            <p>חיבור ל-iBot Chat. אישור הזמנה, יצא לדרך, ביקורת — בלי לעבור לטלפון פעמיים.</p>
-          </div>
-
-          {/* 5. Branding — tall column */}
-          <div className={`${styles.bentoCell} ${styles.bentoInk} ${styles.bTall}`}>
-            <span className={styles.bentoTag}>מיתוג</span>
-            <h4>ה-DNA שלך, לא שלנו.</h4>
-            <p>
-              בחר ערכת צבע, העלה לוגו, הוסף תמונת כריכה, החלף את שם החנות והסלוגן. דומיין מותאם
-              (order.your-name.co.il) כלול גם בתוכניות הבסיסיות.
-            </p>
-            <div className={styles.swatchRow}>
-              <span className={styles.swatch} style={{ background: "#1f6b3c" }} />
-              <span className={styles.swatch} style={{ background: "#d63f1a" }} />
-              <span className={styles.swatch} style={{ background: "#f5b942" }} />
-              <span className={styles.swatch} style={{ background: "#1a4dad" }} />
-              <span className={styles.swatch} style={{ background: "#6b7a36" }} />
-              <span className={styles.swatch} style={{ background: "#2a2926" }} />
-              <span className={styles.swatch} style={{ background: "#15543a" }} />
-            </div>
-          </div>
-
-          {/* 6. Analytics */}
-          <div className={styles.bentoCell}>
-            <span className={styles.bentoTag}>אנליטיקה</span>
-            <h4>נתונים אמיתיים</h4>
-            <p>שעות שיא, פריטים מובילים, ערך הזמנה ממוצע, אחוז לקוחות חוזרים.</p>
-          </div>
-
-          {/* 7. Couriers + delivery zones */}
-          <div className={styles.bentoCell}>
-            <span className={styles.bentoTag}>שליחים</span>
-            <h4>שליחים + אזורי משלוח</h4>
-            <p>הגדר אזורים על מפה, ETA לכל אזור, הקצה שליחים אוטומטית או ידנית.</p>
-          </div>
-
-          {/* 8. Menu editor — wide with photo */}
-          <div className={`${styles.bentoCell} ${styles.bWide}`}>
-            <div className={styles.bentoMenuLayout}>
-              <div>
-                <span className={styles.bentoTag}>תפריט</span>
-                <h4>עורך תפריט גמיש לחלוטין</h4>
-                <p>
-                  גדלים, תוספות (single/multi), הערות, מבצעים, סטוקים. גרור-זרוק לסידור. הוסף פריט עם תמונה ב-30 שניות.
-                </p>
-              </div>
-              <div className={styles.bentoMenuImg}>
-                <Image
-                  src="/img/landing/pizza-overhead.jpg"
-                  alt="פיצה מעל"
-                  fill
-                  sizes="(max-width: 900px) 100vw, 140px"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* 9. Campaigns — popup + banner */}
-          <div className={styles.bentoCell}>
-            <span className={styles.bentoTag}>קמפיינים</span>
-            <h4>פופאפים ובאנרים</h4>
-            <p>הצג קמפיין בכניסה לחנות או באנר תמידי. תזמן, נטרל, נסה גרסאות.</p>
-          </div>
-
-          {/* 10. SMS credits */}
-          <div className={`${styles.bentoCell} ${styles.bentoCheese}`}>
-            <span className={styles.bentoTag}>SMS</span>
-            <h4>בלוקים גמישים</h4>
-            <p>קנה בלוק קרדיטים פעם אחת, נשלף מאותו pool ל-SMS וגם ל-WhatsApp. בלי הפתעות.</p>
-          </div>
-
-          {/* 11. Multi-branch */}
-          <div className={styles.bentoCell}>
-            <span className={styles.bentoTag}>סניפים</span>
-            <h4>מולטי-סניף</h4>
-            <p>סניפים מרובים עם שעות פעילות, דמי משלוח ושירות נפרדים לכל אחד.</p>
-          </div>
-
-          {/* 12. Smart checkout polish */}
-          <div className={styles.bentoCell}>
-            <span className={styles.bentoTag}>חוויית רכישה</span>
-            <h4>חוויית רכישה מודרנית</h4>
-            <p>הזמן שוב בקליק, prefill לכתובת+תשלום, אזהרה כשהמחיר עלה, סקלטונים בכל מסך.</p>
-          </div>
-
-          {/* 13. Reviews-driven trust */}
-          <div className={styles.bentoCell}>
-            <span className={styles.bentoTag}>RTL</span>
-            <h4>עברית מנצחת</h4>
-            <p>תוכנן לעברית מהשנייה הראשונה — RTL מלא, ניקוד, חודשים בעברית, מספרים tabular.</p>
-          </div>
-
-          {/* 14. Webhooks + API */}
-          <div className={styles.bentoCell}>
-            <span className={styles.bentoTag}>אינטגרציות</span>
-            <h4>Webhooks + REST API</h4>
-            <p>חבר את ההזמנות לקופה, iCount, מערכת CRM. אירועים יוצאים בכל סטטוס שמשתנה.</p>
-          </div>
         </div>
       </div>
     </section>
@@ -821,14 +682,21 @@ function FinalCta() {
   return (
     <section className={styles.finalCta}>
       <div className={styles.container}>
-        <h2>
-          11 דקות.<br />
-          <em>זה כל מה שצריך.</em>
-        </h2>
-        <p>14 יום חינם. בלי כרטיס אשראי. בלי התחייבות. רק האפשרות לראות איך נראות הזמנות שמגיעות ישר אליך.</p>
-        <Link href="/signup" className={`${styles.btn} ${styles.btnLg} ${styles.btnWhite}`}>
-          פתח חנות עכשיו <IcoArrowLeft c="currentColor" s={14} />
-        </Link>
+        <div className={styles.finalCtaCard}>
+          <div className={styles.finalCtaBody}>
+            <span className={styles.finalCtaTag}>7 ימים חינם</span>
+            <h2>
+              11 דקות. <em>זה כל מה שצריך.</em>
+            </h2>
+            <p>
+              7 ימי ניסיון בלי כרטיס אשראי. בלי התחייבות. רק האפשרות לראות איך נראות הזמנות שמגיעות ישר אליך — ולהוציא אם זה לא מתאים.
+            </p>
+            <Link href="/signup" className={`${styles.btn} ${styles.btnLg} ${styles.btnWhite}`}>
+              פתח חנות עכשיו <IcoArrowLeft c="currentColor" s={14} />
+            </Link>
+          </div>
+          <div className={styles.finalCtaArt} aria-hidden>🍕</div>
+        </div>
       </div>
     </section>
   );
