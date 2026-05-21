@@ -100,14 +100,34 @@
   border-color: var(--ink);
 }
 .btnGhostOutline:hover { background: var(--ink); color: white; }
-.btnInk { background: var(--ink); color: white; }
-.btnInk:hover { box-shadow: 0 8px 22px -10px rgba(15,20,16,0.45); }
-.btnTomato {
-  background: var(--tomato); color: white;
-  box-shadow: 0 8px 22px -10px rgba(31,92,102,0.55);
+/* Primary CTA — same midnight + glows as the FinalCta / anchor card.
+   The glows are subtle on a button-sized element but they live in the
+   token so every emphasis surface on the page matches. */
+.btnInk {
+  background:
+    radial-gradient(circle at 88% 0%, rgba(255,180,143,0.32) 0%, transparent 60%),
+    radial-gradient(circle at 0% 100%, rgba(200,212,255,0.32) 0%, transparent 60%),
+    #161B3D;
+  color: white;
+  box-shadow: 0 8px 22px -10px rgba(22,27,61,0.5);
 }
-.btnTomato:hover { background: var(--tomato-deep); box-shadow: 0 12px 28px -12px rgba(31,92,102,0.6); }
-.btnTomato:active { transform: translateY(2px); }
+.btnInk:hover {
+  box-shadow: 0 14px 32px -10px rgba(22,27,61,0.6);
+  transform: translateY(-1px);
+}
+.btnTomato {
+  background:
+    radial-gradient(circle at 88% 0%, rgba(255,180,143,0.32) 0%, transparent 60%),
+    radial-gradient(circle at 0% 100%, rgba(200,212,255,0.32) 0%, transparent 60%),
+    #161B3D;
+  color: white;
+  box-shadow: 0 8px 22px -10px rgba(22,27,61,0.5);
+}
+.btnTomato:hover {
+  box-shadow: 0 14px 32px -10px rgba(22,27,61,0.6);
+  transform: translateY(-1px);
+}
+.btnTomato:active { transform: translateY(1px); }
 .btnLg { padding: 18px 28px; font-size: 15px; border-radius: 14px; font-weight: 700; }
 .btnFull { width: 100%; justify-content: center; }
 .btnWhite { background: white; color: var(--ink); padding: 18px 32px; font-size: 15px; border-radius: 14px; font-weight: 700; }
@@ -382,12 +402,18 @@
 .problemCardLilac { background: #ECE5F2; color: #2A1C44; }
 .problemCardLilac .problemNum { color: #5A3B8A; }
 .problemNum {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-family: var(--font-rubik), "Rubik", sans-serif;
-  font-weight: 900;
-  font-size: 32px;
-  margin-bottom: 14px;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: rgba(15,20,16,0.08);
+  margin-bottom: 22px;
   line-height: 1;
-  opacity: 0.9;
 }
 .problemCard h3 {
   font-family: var(--font-rubik), "Rubik", sans-serif;
@@ -651,12 +677,19 @@
 .woltCardLilac .woltCardHeading { color: #5A3B8A; }
 
 .woltCardMidnight {
-  /* Deep plum-navy — anchor card */
-  background: #161B3D;
+  /* Anchor card — same midnight + two soft glows as the FinalCta so
+     the page reads as one cohesive treatment of emphasis. */
+  background:
+    radial-gradient(circle at 85% 0%, rgba(255,180,143,0.18) 0%, transparent 55%),
+    radial-gradient(circle at 0% 100%, rgba(200,212,255,0.22) 0%, transparent 55%),
+    #161B3D;
   color: rgba(255,255,255,0.84);
 }
 .woltCardMidnight .woltCardHeading { color: white; }
 .woltCardMidnight .woltCardTag { color: rgba(255,255,255,0.55); }
+.woltCardMidnight .woltCardDecor {
+  filter: drop-shadow(0 14px 24px rgba(0,0,0,0.35));
+}
 
 
 /* Secondary feature grid — quieter cells for the "everything else" line */
@@ -937,6 +970,128 @@
 .priceCta { margin-top: 22px; }
 .priceCardFeatured .btnInk { background: var(--tomato); color: white; }
 .priceCardFeatured .btnInk:hover { background: var(--tomato-deep); }
+
+/* ─── PRICING — SINGLE PLAN CARD ─────────────────────────── */
+/* One big card replacing the three-tier grid. Left column owns the
+   price + CTA; right column lists everything included. Mobile stacks. */
+.priceSingleWrap {
+  margin-top: 56px;
+  display: flex;
+  justify-content: center;
+}
+.priceSingle {
+  width: 100%;
+  max-width: 980px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 32px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  overflow: hidden;
+  box-shadow: 0 24px 60px -32px rgba(15,20,16,0.18);
+}
+@media (max-width: 900px) {
+  .priceSingle { grid-template-columns: 1fr; }
+}
+.priceSingleHead {
+  padding: 40px 36px;
+  background:
+    radial-gradient(circle at 90% 0%, rgba(255,180,143,0.18) 0%, transparent 55%),
+    radial-gradient(circle at 0% 100%, rgba(200,212,255,0.22) 0%, transparent 60%),
+    #161B3D;
+  color: white;
+  display: flex; flex-direction: column;
+  gap: 18px;
+}
+.priceSingleTag {
+  align-self: flex-start;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.6);
+  background: rgba(255,255,255,0.08);
+  padding: 6px 14px; border-radius: 999px;
+}
+.priceSingleAmounts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.priceSingleAmount {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  color: white;
+}
+.priceSingleNum {
+  font-family: var(--font-rubik), "Rubik", sans-serif;
+  font-weight: 900;
+  font-size: clamp(56px, 8vw, 88px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.priceSingleUnit {
+  font-family: var(--font-noto-hebrew), "Noto Sans Hebrew", "Heebo", sans-serif;
+  font-size: 17px; font-weight: 500;
+  color: rgba(255,255,255,0.65);
+}
+.priceSingleSub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.04em;
+}
+.priceSingleFee {
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.priceSingleFeeNum {
+  font-family: var(--font-rubik), "Rubik", sans-serif;
+  font-weight: 900; font-size: 28px;
+  letter-spacing: -0.025em;
+  color: #C8D4FF;
+  line-height: 1;
+}
+.priceSingleFeeLabel {
+  font-size: 14px;
+  line-height: 1.4;
+  color: rgba(255,255,255,0.85);
+}
+.priceSingleFeeLabel small {
+  display: block;
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+  margin-top: 2px;
+}
+.priceSingleHead .btn { margin-top: 4px; }
+.priceSingleHead .btnInk {
+  /* Already gradient ink — but inside the midnight card we want a white
+     CTA so it pops off the dark background. */
+  background: white;
+  color: var(--ink);
+}
+.priceSingleHead .btnInk:hover {
+  background: var(--cream-2);
+  color: var(--ink);
+  box-shadow: 0 10px 24px -8px rgba(15,20,16,0.35);
+}
+.priceSingleNote {
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+  text-align: center;
+  line-height: 1.55;
+}
+.priceSingleBody {
+  padding: 40px 36px;
+}
+.priceSingleIncluded {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-bottom: 18px;
+}
 
 /* ─── FAQ ───────────────────────────────────────────────── */
 .faq { background: var(--cream-2); }

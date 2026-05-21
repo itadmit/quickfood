@@ -497,6 +497,20 @@ function Rotator() {
 
 /* ─── PRICING ───────────────────────────────────────────── */
 function Pricing() {
+  const features = [
+    "אפליקציית לקוח ממותגת",
+    "דשבורד ניהול הזמנות מלא",
+    "תשלום inline: Bit / אשראי / Apple Pay / Google Pay",
+    "מעקב הזמנה חי + סטטוס SSE",
+    "ביקורות + תזכורת אוטומטית (SMS / WhatsApp / Email)",
+    "WhatsApp דרך iBot Chat (מספר משלך)",
+    "קמפיינים — פופאפים ובאנרים",
+    "ניהול שליחים + אזורי משלוח",
+    "אנליטיקה מתקדמת",
+    "סניפים מרובים",
+    "REST API + Webhooks",
+    "תמיכה בוואטסאפ",
+  ];
   return (
     <section id="pricing" className={styles.section}>
       <div className={styles.container}>
@@ -504,95 +518,50 @@ function Pricing() {
           <div className={styles.sectionEyebrow}>תמחור</div>
           <h2 className={styles.sectionTitle}>פשוט. שקוף. <em>בלי הפתעות.</em></h2>
           <p className={styles.sectionLede}>
-            בלי אחוזים מההזמנות. בלי תוספות. רק תוכנית חודשית קבועה ומה שאתה מרוויח — שלך.
+            תוכנית אחת לכולם, ועמלת סליקה נמוכה במקום אחוזים של אגרגטור. כל מה שיש לנו — כלול.
           </p>
         </div>
 
-        <div className={styles.priceGrid}>
-          <PriceCard
-            name="Starter"
-            sub="לעסקים קטנים שמתחילים"
-            amount="₪199"
-            features={[
-              "אפליקציית לקוח ממותגת",
-              "דשבורד ניהול הזמנות",
-              "תשלום inline: Bit / אשראי / Apple Pay / Google Pay",
-              "מעקב הזמנה חי + סטטוס SSE",
-              "תפריט עם תמונות, גדלים ותוספות",
-              "תמיכה במייל",
-            ]}
-            cta="התחל ניסיון של 7 יום"
-          />
-          <PriceCard
-            featured
-            name="Growth"
-            sub="הכי פופולרי בקרב מסעדות שכונתיות"
-            amount="₪499"
-            features={[
-              "הכל מ-Starter",
-              "הזמנות ללא הגבלה",
-              "ביקורות + תזכורת אוטומטית (SMS/WhatsApp/Email)",
-              "WhatsApp דרך iBot Chat",
-              "קמפיינים: פופאפים ובאנרים",
-              "ניהול שליחים + אזורי משלוח",
-              "אנליטיקה מתקדמת",
-              "תמיכת וואטסאפ בעדיפות",
-            ]}
-            cta="התחל ניסיון של 7 יום"
-          />
-          <PriceCard
-            name="Pro"
-            sub="לרשתות וסניפים מרובים"
-            amount="₪999"
-            features={[
-              "הכל מ-Growth",
-              "סניפים מרובים",
-              "REST API מלא + Webhooks",
-              "דומיין מותאם משלך",
-              "אינטגרציות לקופה (iCount, idani — בקרוב)",
-              "Account Manager אישי",
-              "SLA 99.9% + עדיפות יציאה לאוויר",
-            ]}
-            cta="דבר איתנו"
-          />
+        <div className={styles.priceSingleWrap}>
+          <article className={styles.priceSingle}>
+            <div className={styles.priceSingleHead}>
+              <div className={styles.priceSingleTag}>תוכנית יחידה</div>
+              <div className={styles.priceSingleAmounts}>
+                <div className={styles.priceSingleAmount}>
+                  <span className={styles.priceSingleNum}>₪299</span>
+                  <span className={styles.priceSingleUnit}>/ חודש</span>
+                </div>
+                <div className={styles.priceSingleSub}>+ מע״מ</div>
+              </div>
+              <div className={styles.priceSingleFee}>
+                <span className={styles.priceSingleFeeNum}>0.5%</span>
+                <span className={styles.priceSingleFeeLabel}>
+                  עמלת סליקה לכל הזמנה
+                  <small> + מע״מ</small>
+                </span>
+              </div>
+              <Link
+                href="/signup"
+                className={`${styles.btn} ${styles.btnLg} ${styles.btnInk} ${styles.btnFull}`}
+              >
+                התחל ניסיון של 7 ימים <IcoArrowLeft c="currentColor" s={14} />
+              </Link>
+              <div className={styles.priceSingleNote}>
+                7 ימים חינם · בלי כרטיס אשראי · בטל מתי שתרצה
+              </div>
+            </div>
+            <div className={styles.priceSingleBody}>
+              <div className={styles.priceSingleIncluded}>כלול בתוכנית:</div>
+              <ul className={styles.priceFeatures}>
+                {features.map((f) => (
+                  <li key={f}>{f}</li>
+                ))}
+              </ul>
+            </div>
+          </article>
         </div>
       </div>
     </section>
-  );
-}
-
-function PriceCard({
-  name,
-  sub,
-  amount,
-  features,
-  cta,
-  featured,
-}: {
-  name: string;
-  sub: string;
-  amount: string;
-  features: string[];
-  cta: string;
-  featured?: boolean;
-}) {
-  return (
-    <div className={`${styles.priceCard} ${featured ? styles.priceCardFeatured : ""}`}>
-      <div className={styles.priceName}>{name}</div>
-      <div className={styles.priceSub}>{sub}</div>
-      <div className={styles.priceAmount}>
-        {amount}
-        <small> / חודש</small>
-      </div>
-      <ul className={styles.priceFeatures}>
-        {features.map((f) => (
-          <li key={f}>{f}</li>
-        ))}
-      </ul>
-      <div className={styles.priceCta}>
-        <a href="#" className={`${styles.btn} ${styles.btnInk} ${styles.btnFull}`}>{cta}</a>
-      </div>
-    </div>
   );
 }
 
