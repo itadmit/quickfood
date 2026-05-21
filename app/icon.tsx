@@ -21,12 +21,12 @@ export default function Icon() {
           borderRadius: 14,
           color: "#0A0A0A",
           fontFamily: "Pacifico",
-          fontSize: 52,
           lineHeight: 1,
-          paddingBottom: 6,
+          position: "relative",
         }}
       >
-        Q
+        <span style={{ fontSize: 44, position: "absolute", top: 6, left: 10 }}>Q</span>
+        <span style={{ fontSize: 28, position: "absolute", bottom: 4, right: 12 }}>f</span>
       </div>
     ),
     {

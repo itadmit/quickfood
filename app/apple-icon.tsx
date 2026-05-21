@@ -20,12 +20,12 @@ export default function AppleIcon() {
           justifyContent: "center",
           color: "#0A0A0A",
           fontFamily: "Pacifico",
-          fontSize: 138,
           lineHeight: 1,
-          paddingBottom: 14,
+          position: "relative",
         }}
       >
-        Q
+        <span style={{ fontSize: 124, position: "absolute", top: 16, left: 28 }}>Q</span>
+        <span style={{ fontSize: 80, position: "absolute", bottom: 10, right: 36 }}>f</span>
       </div>
     ),
     {

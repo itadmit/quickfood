@@ -6,6 +6,13 @@ export const alt = "QuickFood — חנות אונליין למסעדה שלך";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+/** Satori doesn't run the Unicode bidi algorithm, so Hebrew strings come
+ *  out left-to-right (reading backwards). Reversing the codepoints up
+ *  front fixes pure-Hebrew runs; for mixed-language rows we use
+ *  flex-direction: row-reverse so each child stays internally correct
+ *  while the row reads right-to-left. */
+const rtl = (s: string) => Array.from(s).reverse().join("");
+
 export default function OpengraphImage() {
   const pacifico = readFileSync(join(process.cwd(), "app", "Pacifico-Regular.ttf"));
   const rubikBold = readFileSync(join(process.cwd(), "app", "Rubik-Bold.ttf"));
@@ -50,23 +57,26 @@ export default function OpengraphImage() {
           QuickFood
         </div>
 
-        {/* Hebrew headline */}
+        {/* Hebrew headline. Satori has no bidi reordering — Hebrew runs
+            get reversed up-front and the column is right-anchored so the
+            text looks native-RTL in the rendered PNG. */}
         <div
           style={{
             fontSize: 56,
             fontWeight: 900,
             letterSpacing: "-0.02em",
-            lineHeight: 1.05,
+            lineHeight: 1.1,
             display: "flex",
             flexDirection: "column",
-            direction: "rtl",
+            alignItems: "flex-end",
+            textAlign: "right",
           }}
         >
-          <div>חנות אונליין למסעדה שלך.</div>
-          <div>בלי לחלוק עם החברות הגדולות.</div>
+          <div>{rtl("חנות אונליין למסעדה שלך.")}</div>
+          <div>{rtl("בלי לחלוק עם החברות הגדולות.")}</div>
         </div>
 
-        {/* Bottom row: price chip + URL */}
+        {/* Bottom row: price chip on the right (RTL), URL on the left. */}
         <div
           style={{
             position: "absolute",
@@ -80,19 +90,6 @@ export default function OpengraphImage() {
         >
           <div
             style={{
-              background: "#0A0A0A",
-              color: "#F8CB1E",
-              padding: "14px 24px",
-              borderRadius: 999,
-              fontSize: 28,
-              fontWeight: 800,
-              display: "flex",
-            }}
-          >
-            ₪299 לחודש · 0.5% להזמנה
-          </div>
-          <div
-            style={{
               fontSize: 26,
               fontWeight: 700,
               opacity: 0.7,
@@ -100,6 +97,28 @@ export default function OpengraphImage() {
             }}
           >
             quickfood.co.il
+          </div>
+          {/* row-reverse keeps the segments visually right-to-left while
+              each segment (digits, Hebrew word reversed) stays intact. */}
+          <div
+            style={{
+              background: "#0A0A0A",
+              color: "#F8CB1E",
+              padding: "14px 24px",
+              borderRadius: 999,
+              fontSize: 28,
+              fontWeight: 800,
+              display: "flex",
+              flexDirection: "row-reverse",
+              gap: 10,
+              alignItems: "baseline",
+            }}
+          >
+            <span>₪299</span>
+            <span>{rtl("לחודש")}</span>
+            <span>·</span>
+            <span>0.5%</span>
+            <span>{rtl("להזמנה")}</span>
           </div>
         </div>
       </div>
