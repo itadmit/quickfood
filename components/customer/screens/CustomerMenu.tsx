@@ -217,17 +217,20 @@ export function CustomerMenu({ tenantSlug, tenantName, businessType = "general",
                     href={`/${tenantSlug}/menu/${item.id}`}
                     className="relative block bg-white rounded-2xl border border-qf-line p-3 pe-3.5 flex gap-3 transition active:scale-[0.99] active:bg-qf-line-soft"
                   >
-                    <div className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0">
-                      <MenuItemImage
-                        src={item.images?.[0]}
-                        alt={item.name}
-                        businessType={businessType}
-                        size={96}
-                        rounded="xl"
-                        className="w-full h-full"
-                      />
-                      {/* Floating add affordance — half-tucked into the image corner so it reads
-                          as a clear Wolt-style CTA without taking the whole price row. */}
+                    {/* Outer wrapper stays overflow-visible so the floating "+" disk
+                        can sit half-outside the rounded image without getting clipped.
+                        The image itself is masked by the inner rounded-xl overflow-hidden. */}
+                    <div className="relative w-24 h-24 shrink-0">
+                      <div className="w-full h-full rounded-xl overflow-hidden">
+                        <MenuItemImage
+                          src={item.images?.[0]}
+                          alt={item.name}
+                          businessType={businessType}
+                          size={96}
+                          rounded="xl"
+                          className="w-full h-full"
+                        />
+                      </div>
                       <span
                         aria-hidden
                         className="absolute -bottom-2 -end-2 w-9 h-9 rounded-full bg-white shadow-md border border-qf-line grid place-items-center text-(--qf-primary) text-2xl leading-none font-light pointer-events-none"
