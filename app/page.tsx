@@ -33,9 +33,12 @@ export const metadata: Metadata = {
 export default function LandingPage() {
   return (
     <div className={`${styles.root} ${rubik.variable} ${mono.variable}`}>
+      <FaqSchema />
       <Nav />
       <Hero />
+      <TrustStrip />
       <SuitedFor />
+      <HowItWorks />
       <Math />
       <Features />
       <Showcase />
@@ -44,6 +47,151 @@ export default function LandingPage() {
       <FinalCta />
       <Footer />
     </div>
+  );
+}
+
+/* ─── TRUST STRIP ─────────────────────────────────────────
+   Slot right below the hero. Apple + CRO playbook: re-assure the user
+   the minute they land (no card needed, real payment providers, real
+   guarantee). High-impact, low-real-estate. */
+function TrustStrip() {
+  return (
+    <section className={styles.trustStrip}>
+      <div className={styles.container}>
+        <div className={styles.trustRow}>
+          <div className={styles.trustGroup}>
+            <span className={styles.trustLabel}>תשלום</span>
+            <div className={styles.trustPills}>
+              <span className={styles.trustPill}>Bit</span>
+              <span className={styles.trustPill}>אשראי</span>
+              <span className={styles.trustPill}>Apple Pay</span>
+              <span className={styles.trustPill}>Google Pay</span>
+            </div>
+          </div>
+          <div className={styles.trustDivider} aria-hidden />
+          <div className={styles.trustPromises}>
+            <span className={styles.trustPromise}>
+              <strong>7 ימים על חשבוננו</strong>
+            </span>
+            <span className={styles.trustPromise}>בלי כרטיס אשראי</span>
+            <span className={styles.trustPromise}>ביטול בקליק</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── HOW IT WORKS ────────────────────────────────────────
+   The three concrete steps a new merchant goes through. Big numbered
+   discs, one-line each, no jargon. Wolt + Apple Pay both lead with a
+   pattern like this on their merchant landings. */
+function HowItWorks() {
+  const steps = [
+    {
+      n: "1",
+      title: "הרשמה ב-2 דקות",
+      body: "אימייל + סיסמה. בלי טפסים, בלי טלפון ממכירות.",
+    },
+    {
+      n: "2",
+      title: "מקלידים תפריט ולוגו",
+      body: "ייבוא מ-CSV או הוספה ידנית. גדלים, תוספות וצבעים — בעורך אחד.",
+    },
+    {
+      n: "3",
+      title: "החנות עולה לאוויר",
+      body: "כתובת לשתף בוואטסאפ, על הדומיין שלך, מקבלת הזמנות מהדקה הראשונה.",
+    },
+  ];
+  return (
+    <section className={styles.howItWorks}>
+      <div className={styles.container}>
+        <div className={styles.sectionEyebrow}>איך זה עובד</div>
+        <h2 className={styles.sectionTitle}>
+          11 דקות. <em>שלוש פעולות.</em>
+        </h2>
+        <div className={styles.howGrid}>
+          {steps.map((s, i) => (
+            <article key={s.n} className={styles.howStep}>
+              <div className={styles.howNum} aria-hidden>{s.n}</div>
+              <h3 className={styles.howStepTitle}>{s.title}</h3>
+              <p className={styles.howStepBody}>{s.body}</p>
+              {i < steps.length - 1 && (
+                <div className={styles.howConnector} aria-hidden />
+              )}
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── FAQ SCHEMA (SEO) ────────────────────────────────────
+   schema.org JSON-LD for the FAQ. Lets Google render the questions
+   as rich snippets directly in search results — well-documented CTR
+   lift on long-tail searches like "מערכת הזמנות לפיצרייה".
+   Source of truth for question/answer text mirrors the Faq() copy
+   below; keep them in sync if either changes. */
+function FaqSchema() {
+  const qa: Array<[string, string]> = [
+    [
+      "תוך כמה זמן אני באוויר?",
+      "בערך 11 דקות. נרשמים, בוחרים צבעים ולוגו, מקלידים תפריט בסיסי, מחברים את חשבון התשלום — ויש לך כתובת לשתף בוואטסאפ. ליווי אישי בהקמה — חינם, פשוט תפנה אלינו.",
+    ],
+    [
+      "אז מה זה ה-0.5%?",
+      "זו עמלת הסליקה שאנחנו גובים על כל הזמנה — מה שאתה משלם לחברת האשראי שלך פלוס תוספת מינימלית על הפעולה. הלקוח שילם 100 ש״ח? חמישים אגורות יורדו לך, וזהו. כל השאר — שלך, כולל הלקוח עצמו, ההיסטוריה שלו והמספר שלו.",
+    ],
+    [
+      "איזה אמצעי תשלום הלקוח רואה?",
+      "Bit, כרטיס אשראי, Apple Pay, Google Pay. כולם נפתחים בתוך המסך של החנות שלך — בלי דפים חיצוניים, בלי iframe מסורבל. אתה גם בוחר בדשבורד איזה אמצעי תשלום יהיה ברירת המחדל הראשונה.",
+    ],
+    [
+      "מה עם וואטסאפ ו-SMS?",
+      "מייל אנחנו שולחים ללא הגבלה, חינם. וואטסאפ ו-SMS — חבילות שמתחילות מ-₪39, ונשלפות אוטומטית לאישור הזמנה, ׳יצא לדרך׳ ולבקשת ביקורת. הוואטסאפ עובד מהמספר שלך (דרך iBot Chat), לא ממספר משותף.",
+    ],
+    [
+      "אוספים ביקורות אוטומטית?",
+      "כן. שעה אחרי שהזמנה סומנה ׳נמסרה׳, הלקוח מקבל הודעה (וואטסאפ / SMS / מייל — אתה בוחר) עם לינק להשארת דירוג. הכוכבים מצטברים בדשבורד שלך, ואתה עונה על תגובות מאותו מסך.",
+    ],
+    [
+      "אפשר לחבר לקופה הקיימת?",
+      "כן. REST API מלא + Webhooks יוצאים על כל אירוע (הזמנה חדשה, שינוי סטטוס, וכו׳). מתחבר ל-iCount, Wix Restaurants, או לכל מערכת אחרת. אינטגרציות built-in ל-iCount ו-idani בתכנון לרבעון הקרוב.",
+    ],
+    [
+      "ואיך זה עובד עם משלוחים?",
+      "שתי אפשרויות. אחת — מנהלים את השליחים שלך דרך המודול שלנו (כלול בתוכנית). שתיים — מתחברים לספק חיצוני. אזורי משלוח, ETA לאזור, דמי משלוח שונים — הכל בדשבורד.",
+    ],
+    [
+      "הלקוח רואה דף תודה גנרי או מסך מעקב?",
+      "לבחירתך. יש toggle בדשבורד — קבלה פשוטה כמו אתר אי-קומרס רגיל, או מסך מעקב חי עם ETA, סטטוס, ופרטי המסעדה. אם לא רוצה לחשוף זמני הכנה — מכבים.",
+    ],
+    [
+      "מה אם בעוד שנה תעלו לי את המחיר?",
+      "לא נעלה. המחיר נעול לכל החיים — ₪299 + מע״מ וחצי אחוז על הזמנה. אם נשנה את התמחור בעתיד, זה יחול רק על מי שייכנס אחרי השינוי. אתה תישאר במחיר ההצטרפות שלך.",
+    ],
+    [
+      "אני יכול לקבל את הקוד או אפליקציה משלי ב-App Store?",
+      "לארגונים גדולים יש אפשרות לקבל את הקוד מחוץ לפלטפורמה, וגם אפליקציה ייעודית ב-App Store ו-Google Play בשם שלך. פנו אלינו ונדבר ישירות.",
+    ],
+  ];
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: qa.map(([q, a]) => ({
+      "@type": "Question",
+      name: q,
+      acceptedAnswer: { "@type": "Answer", text: a },
+    })),
+  };
+  return (
+    <script
+      type="application/ld+json"
+      // eslint-disable-next-line react/no-danger
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
   );
 }
 

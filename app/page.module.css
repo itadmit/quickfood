@@ -411,6 +411,157 @@
    Stripe page. Doubles the previous vertical padding on desktop. */
 .section { padding: 120px 0; position: relative; }
 
+/* ─── TRUST STRIP ───────────────────────────────────────── */
+/* Calm horizontal band that lives between the hero and "Suited for".
+   Pulls payment-method labels + guarantee copy into one glance. Cream
+   surface so it blends with the page background while still reading
+   as its own zone. */
+.trustStrip {
+  background: var(--cream-2);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 18px 0;
+}
+.trustRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+}
+.trustGroup,
+.trustPromises {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.trustLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--mute);
+  text-transform: uppercase;
+}
+.trustPills { display: flex; gap: 6px; flex-wrap: wrap; }
+.trustPill {
+  font-family: var(--font-rubik), "Rubik", sans-serif;
+  font-weight: 700;
+  font-size: 12.5px;
+  color: var(--ink);
+  background: var(--paper);
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+.trustDivider {
+  width: 1px;
+  height: 22px;
+  background: var(--line);
+}
+.trustPromise {
+  font-size: 13px;
+  color: var(--ink-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.trustPromise::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 999px;
+  background: var(--tomato);
+  display: inline-block;
+}
+.trustPromise strong { font-weight: 800; color: var(--ink); }
+@media (max-width: 700px) {
+  .trustDivider { display: none; }
+  .trustRow { gap: 12px; }
+  .trustPromises { gap: 10px; }
+}
+
+/* ─── HOW IT WORKS ──────────────────────────────────────── */
+.howItWorks {
+  padding: 96px 0 80px;
+  background: var(--cream);
+  border-bottom: 1px solid var(--line);
+  text-align: center;
+}
+.howItWorks .sectionEyebrow {
+  display: inline-block;
+  margin-bottom: 18px;
+}
+.howItWorks .sectionTitle {
+  margin: 0 auto 64px;
+  max-width: 24ch;
+}
+.howGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  position: relative;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.howStep {
+  position: relative;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 36px 28px 32px;
+  text-align: center;
+}
+.howNum {
+  width: 56px; height: 56px;
+  border-radius: 999px;
+  background: var(--tomato);
+  color: var(--ink);
+  font-family: var(--font-rubik), "Rubik", sans-serif;
+  font-weight: 900;
+  font-size: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  line-height: 1;
+  box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.15);
+}
+.howStepTitle {
+  font-family: var(--font-rubik), "Rubik", sans-serif;
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  margin: 0 0 10px;
+  color: var(--ink);
+}
+.howStepBody {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  margin: 0;
+  max-width: 30ch;
+  margin-inline: auto;
+}
+/* Connector line — visual rhythm between steps on desktop only. RTL
+   aware: drawn on the inline-end edge so it points to the next step. */
+.howConnector {
+  position: absolute;
+  top: 64px;
+  inset-inline-start: -16px;
+  width: 24px;
+  height: 2px;
+  background: var(--ink);
+  opacity: 0.18;
+}
+@media (max-width: 900px) {
+  .howItWorks { padding: 56px 0 48px; }
+  .howGrid { grid-template-columns: 1fr; gap: 12px; }
+  .howItWorks .sectionTitle { margin-bottom: 32px; font-size: clamp(32px, 8vw, 56px); }
+  .howStep { padding: 28px 24px 24px; }
+  .howNum { width: 48px; height: 48px; font-size: 22px; }
+  .howConnector { display: none; }
+}
+
 /* "Suited for" — single rotating food type, big and bold. Reads as one
    answer-line: who is this product for? */
 .suitedSection {
