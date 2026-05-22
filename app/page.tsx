@@ -169,7 +169,7 @@ function FaqSchema() {
     ],
     [
       "מה אם בעוד שנה תעלו לי את המחיר?",
-      "לא נעלה. המחיר נעול לכל החיים - ₪299 + מע״מ וחצי אחוז על הזמנה. אם נשנה את התמחור בעתיד, זה יחול רק על מי שייכנס אחרי השינוי. אתה תישאר במחיר ההצטרפות שלך.",
+      "לא נעלה. המחיר מחיר קבוע לכל החיים - ₪299 + מע״מ וחצי אחוז על הזמנה. אם נשנה את התמחור בעתיד, זה יחול רק על מי שייכנס אחרי השינוי. אתה תישאר במחיר ההצטרפות שלך.",
     ],
     [
       "אני יכול לקבל את הקוד או אפליקציה משלי ב-App Store?",
@@ -242,7 +242,7 @@ function Hero() {
         <div className={styles.heroStats}>
           <div className={styles.heroStat}>
             <div className={styles.heroStatN}>₪299</div>
-            <div className={styles.heroStatL}>לחודש. נעול לכל החיים.</div>
+            <div className={styles.heroStatL}>לחודש. מחיר קבוע לכל החיים.</div>
           </div>
           <div className={styles.heroStat}>
             <div className={styles.heroStatN}>0.5%</div>
@@ -544,7 +544,7 @@ function Pricing() {
         <div className={styles.pricingHead}>
           <div className={styles.sectionEyebrow}>כמה זה עולה</div>
           <h2 className={styles.sectionTitle}>
-            תוכנית אחת. <em>נעולה לכל החיים.</em>
+            תוכנית אחת. <em>מחיר קבוע לכל החיים.</em>
           </h2>
           <p className={styles.sectionLede}>
             בלי דרגות תמחור, בלי הפתעות בעוד שנה, בלי שדרוגים כפויים. אותו מחיר היום, אותו מחיר בעוד עשר שנים - בלי תלות בכמה הזמנות יצאו לך החודש.
@@ -554,13 +554,13 @@ function Pricing() {
         <div className={styles.priceSingleWrap}>
           <article className={styles.priceSingle}>
             <div className={styles.priceSingleHead}>
-              <div className={styles.priceSingleTag}>תוכנית יחידה · נעולה</div>
+              <div className={styles.priceSingleTag}>תוכנית יחידה · מחיר קבוע</div>
               <div className={styles.priceSingleAmounts}>
                 <div className={styles.priceSingleAmount}>
                   <span className={styles.priceSingleNum}>₪299</span>
                   <span className={styles.priceSingleUnit}>/ חודש</span>
                 </div>
-                <div className={styles.priceSingleSub}>+ מע״מ. נעול לכל החיים.</div>
+                <div className={styles.priceSingleSub}>+ מע״מ. מחיר קבוע לכל החיים.</div>
               </div>
               <div className={styles.priceSingleFee}>
                 <span className={styles.priceSingleFeeNum}>0.5%</span>
@@ -674,7 +674,7 @@ function Faq() {
             <details className={styles.faqItem}>
               <summary>מה אם בעוד שנה תעלו לי את המחיר?</summary>
               <p>
-                לא נעלה. המחיר נעול לכל החיים - ₪299 + מע״מ וחצי אחוז על הזמנה. אם נשנה את התמחור בעתיד, זה יחול רק על מי שייכנס אחרי השינוי. אתה תישאר במחיר ההצטרפות שלך.
+                לא נעלה. המחיר מחיר קבוע לכל החיים - ₪299 + מע״מ וחצי אחוז על הזמנה. אם נשנה את התמחור בעתיד, זה יחול רק על מי שייכנס אחרי השינוי. אתה תישאר במחיר ההצטרפות שלך.
               </p>
             </details>
             <details className={styles.faqItem}>
