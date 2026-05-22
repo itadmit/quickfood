@@ -110,9 +110,11 @@ export function MenuList({
     setPendingDelete(null);
     if (!res.ok) {
       setLocalItems(prev);
-      alert("מחיקה נכשלה");
+      const body = await res.json().catch(() => ({}));
+      pushToast("err", body?.error?.message ?? "מחיקה נכשלה");
       return;
     }
+    pushToast("ok", "הפריט נמחק");
     router.refresh();
   }
 

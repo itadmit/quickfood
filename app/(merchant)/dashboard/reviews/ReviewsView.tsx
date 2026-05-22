@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { IcoStar } from "@/components/shared/Icons";
+import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { RelativeTime } from "@/components/shared/RelativeTime";
 
 interface Summary {
@@ -23,6 +24,10 @@ interface Review {
 
 export function ReviewsView({ summary, reviews }: { summary: Summary; reviews: Review[] }) {
   const [items, setItems] = useState(reviews);
+  const [toast, setToast] = useState<ToastState | null>(null);
+  function pushToast(kind: ToastKind, message: string) {
+    setToast({ id: Date.now(), kind, message });
+  }
 
   async function reply(id: string, text: string) {
     if (!text.trim()) return;
@@ -31,13 +36,18 @@ export function ReviewsView({ summary, reviews }: { summary: Summary; reviews: R
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ text }),
     });
-    if (!res.ok) return;
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      pushToast("err", body?.error?.message ?? "שליחת התשובה נכשלה");
+      return;
+    }
     const data = await res.json();
     setItems((prev) =>
       prev.map((r) =>
         r.id === id ? { ...r, replyText: data.review.reply_text, replyAt: data.review.reply_at } : r,
       ),
     );
+    pushToast("ok", "התשובה פורסמה");
   }
 
   const maxDist = Math.max(1, ...summary.distribution);
@@ -87,6 +97,7 @@ export function ReviewsView({ summary, reviews }: { summary: Summary; reviews: R
           )}
         </div>
       </div>
+      <Toast toast={toast} onDismiss={() => setToast(null)} />
     </div>
   );
 }

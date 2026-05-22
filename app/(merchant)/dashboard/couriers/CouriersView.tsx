@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoBike, IcoPhone, IcoStar } from "@/components/shared/Icons";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { cn } from "@/lib/cn";
 
 interface Courier {
@@ -37,45 +39,73 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
   const [phone, setPhone] = useState("");
   const [vehicle, setVehicle] = useState<"scooter" | "bike" | "car" | "walking">("scooter");
   const [busy, setBusy] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<Courier | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
+  function pushToast(kind: ToastKind, message: string) {
+    setToast({ id: Date.now(), kind, message });
+  }
 
   const onShift = couriers.filter((c) => c.status !== "offline").length;
   const onDelivery = couriers.filter((c) => c.status === "on_delivery").length;
 
   async function addCourier() {
-    if (!name || !phone) return;
+    if (!name.trim() || !phone.trim()) {
+      pushToast("err", "שם וטלפון נדרשים");
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch("/api/v1/merchant/couriers", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name, phone, vehicle }),
+        body: JSON.stringify({ name: name.trim(), phone: phone.trim(), vehicle }),
       });
-      if (res.ok) {
-        router.refresh();
-        setName("");
-        setPhone("");
-        setAdding(false);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        pushToast("err", body?.error?.message ?? "הוספת שליח נכשלה");
+        return;
       }
+      router.refresh();
+      setName("");
+      setPhone("");
+      setAdding(false);
+      pushToast("ok", "השליח נוסף");
     } finally {
       setBusy(false);
     }
   }
 
   async function setStatus(id: string, status: Courier["status"]) {
-    setCouriers((prev) => prev.map((c) => (c.id === id ? { ...c, status } : c)));
-    await fetch(`/api/v1/merchant/couriers/${id}/status`, {
+    const prev = couriers;
+    setCouriers((p) => p.map((c) => (c.id === id ? { ...c, status } : c)));
+    const res = await fetch(`/api/v1/merchant/couriers/${id}/status`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ status }),
     });
+    if (!res.ok) {
+      setCouriers(prev);
+      pushToast("err", "עדכון סטטוס נכשל");
+    }
   }
 
-  async function remove(id: string) {
-    if (!confirm("למחוק את השליח?")) return;
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    const id = pendingDelete.id;
+    setDeleting(true);
     const prev = couriers;
     setCouriers((p) => p.filter((c) => c.id !== id));
     const res = await fetch(`/api/v1/merchant/couriers/${id}`, { method: "DELETE" });
-    if (!res.ok) setCouriers(prev);
+    setDeleting(false);
+    setPendingDelete(null);
+    if (!res.ok) {
+      setCouriers(prev);
+      const body = await res.json().catch(() => ({}));
+      pushToast("err", body?.error?.message ?? "מחיקת שליח נכשלה");
+      return;
+    }
+    pushToast("ok", "השליח הוסר");
   }
 
   return (
@@ -159,9 +189,10 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
                 </div>
                 <button
                   type="button"
-                  onClick={() => remove(c.id)}
+                  onClick={() => setPendingDelete(c)}
                   className="text-qf-mute hover:text-qf-tomato text-xl leading-none"
-                  aria-label="הסר"
+                  aria-label="הסר שליח"
+                  title="הסר שליח"
                 >
                   ×
                 </button>
@@ -206,6 +237,24 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        title="הסרת שליח"
+        message={
+          <>
+            השליח <span className="font-semibold">&quot;{pendingDelete?.name}&quot;</span> יוסר.
+            ההיסטוריה שלו נשמרת, אבל הוא לא יוצג יותר ברשימה.
+          </>
+        }
+        confirmLabel="הסר"
+        cancelLabel="ביטול"
+        variant="danger"
+        busy={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+      <Toast toast={toast} onDismiss={() => setToast(null)} />
     </div>
   );
 }

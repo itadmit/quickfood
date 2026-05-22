@@ -177,6 +177,7 @@ export function ItemEditor({
   async function save() {
     if (!data.name || !data.categoryId || data.basePrice < 0) {
       setError("חובה: שם, קטגוריה, ומחיר תקין");
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
     setBusy(true);
@@ -230,6 +231,7 @@ export function ItemEditor({
       const result = await res.json();
       if (!res.ok) {
         setError(result.error?.message ?? "שמירה נכשלה");
+        window.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }
       router.push("/dashboard/menu");
@@ -248,7 +250,14 @@ export function ItemEditor({
       setConfirmDel(false);
       router.push("/dashboard/menu");
       router.refresh();
+      return;
     }
+    const body = await res.json().catch(() => ({}));
+    setConfirmDel(false);
+    setError(body?.error?.message ?? "מחיקה נכשלה");
+    // Scroll up so the merchant actually sees the error banner at the top
+    // of the form (otherwise it lives off-screen on tall items).
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   const [duplicating, setDuplicating] = useState(false);

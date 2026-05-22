@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoClose, IcoEdit, IcoTrash, IcoPlus, IcoCheck } from "@/components/shared/Icons";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import {
   CATEGORY_ICONS,
   CATEGORY_COLORS,
@@ -48,6 +50,13 @@ export function CategoryEditorModal({ open, onClose, categories }: Props) {
   const [editing, setEditing] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<EditableCategory | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
+
+  function pushToast(kind: ToastKind, message: string) {
+    setToast({ id: Date.now(), kind, message });
+  }
 
   if (!open) return null;
 
@@ -103,16 +112,25 @@ export function CategoryEditorModal({ open, onClose, categories }: Props) {
     router.refresh();
   }
 
-  async function remove(c: EditableCategory) {
-    if (!confirm(`למחוק את "${c.name}"?`)) return;
-    const res = await fetch(`/api/v1/merchant/menu/categories/${c.id}`, {
+  function startDelete(c: EditableCategory) {
+    setPendingDelete(c);
+  }
+
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    const res = await fetch(`/api/v1/merchant/menu/categories/${pendingDelete.id}`, {
       method: "DELETE",
     });
+    setDeleting(false);
     if (!res.ok) {
       const e = await res.json().catch(() => ({}));
-      alert(e?.error?.message ?? "מחיקה נכשלה");
+      pushToast("err", e?.error?.message ?? "מחיקה נכשלה");
+      setPendingDelete(null);
       return;
     }
+    pushToast("ok", "הקטגוריה נמחקה");
+    setPendingDelete(null);
     router.refresh();
   }
 
@@ -173,7 +191,7 @@ export function CategoryEditorModal({ open, onClose, categories }: Props) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => remove(c)}
+                      onClick={() => startDelete(c)}
                       className="w-8 h-8 rounded-lg hover:bg-qf-tomato-soft grid place-items-center"
                       aria-label="מחק"
                     >
@@ -197,6 +215,24 @@ export function CategoryEditorModal({ open, onClose, categories }: Props) {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        title="מחיקת קטגוריה"
+        message={
+          <>
+            הקטגוריה <span className="font-semibold">&quot;{pendingDelete?.name}&quot;</span> תימחק.
+            פריטים שמשויכים לקטגוריה צריכים לעבור לקטגוריה אחרת לפני המחיקה.
+          </>
+        }
+        confirmLabel="מחק"
+        cancelLabel="ביטול"
+        variant="danger"
+        busy={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+      <Toast toast={toast} onDismiss={() => setToast(null)} />
     </div>
   );
 }

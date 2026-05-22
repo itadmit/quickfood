@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { IcoClock, IcoPhone, IcoPrinter, IcoFlame } from "@/components/shared/Icons";
+import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { OrderDrawer } from "@/components/merchant/OrderDrawer";
@@ -141,8 +142,13 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ status: to }),
       });
-      if (!res.ok) await refresh();
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        pushToast("err", body?.error?.message ?? "עדכון הסטטוס נכשל");
+        await refresh();
+      }
     } catch {
+      pushToast("err", "אין חיבור לשרת — מנסה לסנכרן");
       await refresh();
     }
   }
@@ -156,6 +162,10 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
 
   const [drawerOrderId, setDrawerOrderId] = useState<string | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
+  function pushToast(kind: ToastKind, message: string) {
+    setToast({ id: Date.now(), kind, message });
+  }
 
   function nextStatusFor(o: OrderRow): Status | "delivered" {
     const col = COLUMNS.find((c) => c.status.includes(o.status));
@@ -220,6 +230,7 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
       )}
 
       {manualOpen && <ManualOrderModal onClose={() => setManualOpen(false)} />}
+      <Toast toast={toast} onDismiss={() => setToast(null)} />
     </div>
   );
 }

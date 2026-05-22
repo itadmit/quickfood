@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { IcoPlus, IcoClose, IcoChev } from "@/components/shared/Icons";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { DragList, DragHandle } from "@/components/shared/DragList";
 import { MiniImagePicker } from "@/components/shared/MiniImagePicker";
 import { cn } from "@/lib/cn";
@@ -59,6 +60,10 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
   const [busy, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<ModifierSet | null>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
+  function pushToast(kind: ToastKind, message: string) {
+    setToast({ id: Date.now(), kind, message });
+  }
 
   function startNew() {
     setEditing({ ...EMPTY, position: sets.length });
@@ -103,6 +108,7 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
       return;
     }
     setEditing(null);
+    pushToast("ok", editing.id ? "הקטלוג עודכן" : "הקטלוג נוצר");
     startTransition(() => router.refresh());
   }
 
@@ -111,10 +117,15 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
     const res = await fetch(`/api/v1/merchant/menu/modifier-sets/${confirmDelete.id}`, {
       method: "DELETE",
     });
-    if (res.ok) {
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      pushToast("err", body?.error?.message ?? "מחיקה נכשלה");
       setConfirmDelete(null);
-      startTransition(() => router.refresh());
+      return;
     }
+    pushToast("ok", "הקטלוג נמחק");
+    setConfirmDelete(null);
+    startTransition(() => router.refresh());
   }
 
   return (
@@ -167,14 +178,20 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
       {!editing && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {sets.length === 0 && (
-            <div className="col-span-full text-center py-12 bg-white border border-dashed border-qf-line-dash rounded-2xl">
-              <p className="text-sm text-qf-mute">עוד לא יצרת קטלוגים.</p>
+            <div className="col-span-full text-center py-14 bg-white border-2 border-dashed border-qf-line-dash rounded-2xl px-6">
+              <div className="text-base font-semibold text-qf-ink mb-1">
+                אין קטלוגים עדיין
+              </div>
+              <p className="text-sm text-qf-mute max-w-md mx-auto leading-snug">
+                צור פעם אחת קבוצת תוספות (לדוגמה: ׳תוספות פיצה׳ עם 12 אפשרויות), ושייך אותה
+                לכל המנות הרלוונטיות. שינוי במחיר תוספת מתעדכן בכל הפריטים בו-זמנית.
+              </p>
               <button
                 type="button"
                 onClick={startNew}
-                className="mt-3 text-(--qf-deep) text-sm font-medium underline"
+                className="mt-4 inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium"
               >
-                ליצור את הראשון
+                <IcoPlus c="white" s={14} /> צור את הקטלוג הראשון
               </button>
             </div>
           )}
@@ -275,6 +292,7 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
         onConfirm={performDelete}
         onCancel={() => setConfirmDelete(null)}
       />
+      <Toast toast={toast} onDismiss={() => setToast(null)} />
     </div>
   );
 }
