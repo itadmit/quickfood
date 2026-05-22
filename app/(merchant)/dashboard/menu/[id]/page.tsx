@@ -83,6 +83,10 @@ export default async function ItemEditPage({
         available: item.available,
         tags: item.tags,
         sku: item.sku,
+        availableFrom: item.availableFrom,
+        availableTo: item.availableTo,
+        availableDays: item.availableDays,
+        stockRemaining: item.stockRemaining,
         sizes: item.sizes.map((s) => ({
           code: s.code,
           name: s.name,

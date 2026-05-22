@@ -177,6 +177,13 @@ export const MenuItemInputSchema = z.object({
   tags: z.array(z.string()).default([]),
   position: z.number().int().default(0),
   sku: z.string().max(40).optional(),
+  // Time-of-day windowing — minutes since midnight, 0..1439. Both null =
+  // no time restriction. availableDays is a 7-bit mask, null = every day.
+  available_from: z.number().int().min(0).max(1439).nullable().optional(),
+  available_to: z.number().int().min(0).max(1439).nullable().optional(),
+  available_days: z.number().int().min(0).max(127).nullable().optional(),
+  // Inventory countdown — null = no inventory tracking (infinite).
+  stock_remaining: z.number().int().min(0).nullable().optional(),
   sizes: z.array(ItemSizeInputSchema).default([]),
   option_groups: z.array(ItemOptionGroupInputSchema).default([]),
 });

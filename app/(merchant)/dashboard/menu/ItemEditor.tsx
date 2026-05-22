@@ -67,6 +67,10 @@ interface ItemData {
   sku: string | null;
   sizes: Size[];
   optionGroups: OptionGroup[];
+  availableFrom: number | null;
+  availableTo: number | null;
+  availableDays: number | null;
+  stockRemaining: number | null;
 }
 
 const TAGS = ALL_TAG_LABELS;
@@ -85,7 +89,28 @@ const EMPTY_ITEM: ItemData = {
   sku: null,
   sizes: [],
   optionGroups: [],
+  availableFrom: null,
+  availableTo: null,
+  availableDays: null,
+  stockRemaining: null,
 };
+
+// Hebrew weekday names indexed by JavaScript getDay() (0 = Sunday). Used by
+// the availability windowing UI's weekday-bitmask checkboxes.
+const HEBREW_DAYS = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"] as const;
+
+function minutesToHM(min: number | null): string {
+  if (min === null || min === undefined) return "";
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+function hmToMinutes(hm: string): number | null {
+  if (!hm) return null;
+  const [h, m] = hm.split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 60 + m;
+}
 
 export function ItemEditor({
   mode,
@@ -197,6 +222,10 @@ export function ItemEditor({
         tags: data.tags,
         position: 0,
         sku: data.sku ?? undefined,
+        available_from: data.availableFrom,
+        available_to: data.availableTo,
+        available_days: data.availableDays,
+        stock_remaining: data.stockRemaining,
         sizes: data.sizes.map((s) => ({
           code: s.code,
           name: s.name,
@@ -420,6 +449,94 @@ export function ItemEditor({
                   )}
                 />
               </button>
+            </Field>
+          </section>
+
+          {/* Availability windowing — when does this item appear on the
+              storefront. Time + weekdays + stock. NULL on all = always. */}
+          <section className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-4">
+            <header>
+              <h2 className="font-semibold">זמינות מתקדמת</h2>
+              <p className="text-xs text-qf-mute mt-0.5">
+                הצג את הפריט רק בחלון שעות מסוים (לדוגמה ארוחת בוקר עד 11:00), רק בימים מסוימים, או מוגבל ב-X מנות בלבד.
+              </p>
+            </header>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="זמין משעה">
+                <input
+                  type="time"
+                  value={minutesToHM(data.availableFrom)}
+                  onChange={(e) => update("availableFrom", hmToMinutes(e.target.value))}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum"
+                />
+              </Field>
+              <Field label="עד שעה">
+                <input
+                  type="time"
+                  value={minutesToHM(data.availableTo)}
+                  onChange={(e) => update("availableTo", hmToMinutes(e.target.value))}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum"
+                />
+              </Field>
+            </div>
+            <Field label="ימים בשבוע">
+              <div className="flex gap-1.5">
+                {HEBREW_DAYS.map((label, i) => {
+                  const mask = 1 << i;
+                  // null means "every day" — treat as all on so checks reflect reality
+                  const days = data.availableDays ?? 0b1111111;
+                  const on = (days & mask) !== 0;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => {
+                        const current = data.availableDays ?? 0b1111111;
+                        const next = on ? current & ~mask : current | mask;
+                        // Going back to "every day" = stash null so we don't bias toward saturday-only
+                        update("availableDays", next === 0b1111111 ? null : next);
+                      }}
+                      className={cn(
+                        "w-9 h-9 rounded-lg text-xs font-bold transition",
+                        on
+                          ? "bg-(--qf-primary) text-white"
+                          : "bg-qf-line-soft text-qf-mute hover:bg-qf-line-dash/60",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              {data.availableDays !== null && (
+                <button
+                  type="button"
+                  onClick={() => update("availableDays", null)}
+                  className="text-xs text-qf-mute hover:text-qf-ink underline mt-2 inline-block"
+                >
+                  אפס לכל הימים
+                </button>
+              )}
+            </Field>
+            <Field label="מלאי נשאר (אופציונלי)">
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  value={data.stockRemaining ?? ""}
+                  onChange={(e) =>
+                    update(
+                      "stockRemaining",
+                      e.target.value === "" ? null : Math.max(0, parseInt(e.target.value, 10) || 0),
+                    )
+                  }
+                  placeholder="ללא הגבלה"
+                  className="w-32 px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum"
+                />
+                <span className="text-xs text-qf-mute leading-snug">
+                  כשהמספר מגיע ל-0 הפריט יוסתר אוטומטית מהתפריט. השאר ריק אם אין הגבלת מלאי.
+                </span>
+              </div>
             </Field>
           </section>
 

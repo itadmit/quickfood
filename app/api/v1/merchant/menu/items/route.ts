@@ -36,6 +36,10 @@ export const POST = handler(async (req: Request) => {
       tags: body.tags,
       position: body.position,
       sku: body.sku,
+      availableFrom: body.available_from ?? null,
+      availableTo: body.available_to ?? null,
+      availableDays: body.available_days ?? null,
+      stockRemaining: body.stock_remaining ?? null,
       sizes: {
         create: body.sizes.map((s, i) => ({
           code: s.code,

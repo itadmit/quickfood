@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { prisma } from "@/lib/db/client";
 import { CustomerMenu } from "@/components/customer/screens/CustomerMenu";
+import { isItemVisibleNow } from "@/lib/menu-availability";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export default async function MenuPage({
   const tenant = await resolveTenantBySlug(tenantSlug);
   if (!tenant) notFound();
 
-  const [categories, items] = await Promise.all([
+  const [categories, allItems] = await Promise.all([
     prisma.menuCategory.findMany({
       where: { tenantId: tenant.id, active: true },
       orderBy: { position: "asc" },
@@ -24,6 +25,13 @@ export default async function MenuPage({
       orderBy: [{ categoryId: "asc" }, { position: "asc" }],
     }),
   ]);
+
+  // Apply server-side time/day/stock filtering — items that have a
+  // breakfast window of 7-11 don't show up at 14:00, items with weekday-
+  // only restriction don't show on Saturday, items with 0 stock left
+  // disappear. The merchant's boolean "available" toggle is still
+  // honored by the DB query above.
+  const items = allItems.filter((i) => isItemVisibleNow(i));
 
   return (
     <CustomerMenu

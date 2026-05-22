@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db/client";
 import { generateOrderNumber } from "@/lib/format";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
+import { isItemVisibleNow } from "@/lib/menu-availability";
 import type { Prisma } from "@prisma/client";
 
 /**
@@ -91,6 +92,12 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   for (const line of input.lines) {
     const item = itemsById.get(line.item_id);
     if (!item) throw new CartValidationError("item_unavailable", line.item_id);
+    // Time-windowed items (breakfast-only, out-of-stock, etc.) are filtered
+    // out of the storefront menu, but a stale cart can still try to submit
+    // one. Server is the source of truth.
+    if (!isItemVisibleNow(item)) {
+      throw new CartValidationError("item_unavailable", line.item_id);
+    }
     if (line.quantity < 1 || line.quantity > 20) {
       throw new CartValidationError("invalid_quantity", line.item_id);
     }
