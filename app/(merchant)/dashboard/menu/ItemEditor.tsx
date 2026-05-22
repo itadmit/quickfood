@@ -312,46 +312,53 @@ export function ItemEditor({
   }
 
   return (
-    <div className="space-y-5 max-w-3xl">
-      <header className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+    <div className="space-y-5 max-w-3xl pb-28 lg:pb-0">
+      {/* Header — on mobile we drop the "save" button (it lives in the
+          sticky bottom bar instead) and only keep back + title + the
+          destructive/secondary actions, so 3 buttons don't elbow the
+          title into ellipsis. */}
+      <header className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-3 min-w-0">
           <Link
             href="/dashboard/menu"
-            className="w-9 h-9 rounded-full border border-qf-line-dash grid place-items-center"
+            className="w-9 h-9 rounded-full border border-qf-line-dash grid place-items-center shrink-0"
             aria-label="חזרה"
           >
             <IcoChev s={18} />
           </Link>
-          <div>
-            <h1 className="text-2xl font-bold">{mode === "edit" ? "עריכת פריט" : "פריט חדש"}</h1>
-            <p className="text-sm text-qf-mute">{data.name || "ללא שם"}</p>
+          <div className="min-w-0">
+            <h1 className="text-xl lg:text-2xl font-bold truncate">
+              {mode === "edit" ? "עריכת פריט" : "פריט חדש"}
+            </h1>
+            <p className="text-xs lg:text-sm text-qf-mute truncate">{data.name || "ללא שם"}</p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 shrink-0">
           {mode === "edit" && (
             <>
               <button
                 type="button"
                 onClick={duplicate}
                 disabled={duplicating}
-                className="px-3.5 py-2 rounded-xl border border-qf-line-dash text-qf-ink2 hover:bg-qf-line-soft text-sm disabled:opacity-60"
+                className="px-3 py-2 rounded-xl border border-qf-line-dash text-qf-ink2 hover:bg-qf-line-soft text-sm disabled:opacity-60"
               >
-                {duplicating ? "משכפל..." : "שכפל"}
+                {duplicating ? "..." : "שכפל"}
               </button>
               <button
                 type="button"
                 onClick={() => setConfirmDel(true)}
-                className="px-3.5 py-2 rounded-xl border border-qf-tomato/40 text-qf-tomato hover:bg-qf-tomato-soft text-sm"
+                className="px-3 py-2 rounded-xl border border-qf-tomato/40 text-qf-tomato hover:bg-qf-tomato-soft text-sm"
               >
                 מחק
               </button>
             </>
           )}
+          {/* Desktop save button — mobile uses the sticky bottom bar */}
           <button
             type="button"
             onClick={save}
             disabled={busy}
-            className="px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
+            className="hidden lg:inline-flex px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
           >
             {busy ? "שומר..." : "שמירת שינויים"}
           </button>
@@ -367,7 +374,7 @@ export function ItemEditor({
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-5">
         <div className="space-y-5">
           {/* Basics */}
-          <section className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-3">
+          <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
             <h2 className="font-semibold">פרטים בסיסיים</h2>
             <Field label="שם הפריט" required>
               <input
@@ -454,7 +461,7 @@ export function ItemEditor({
 
           {/* Availability windowing — when does this item appear on the
               storefront. Time + weekdays + stock. NULL on all = always. */}
-          <section className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-4">
+          <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
             <header>
               <h2 className="font-semibold">זמינות מתקדמת</h2>
               <p className="text-xs text-qf-mute mt-0.5">
@@ -497,7 +504,7 @@ export function ItemEditor({
                         update("availableDays", next === 0b1111111 ? null : next);
                       }}
                       className={cn(
-                        "w-9 h-9 rounded-lg text-xs font-bold transition",
+                        "w-10 h-10 lg:w-9 lg:h-9 rounded-lg text-sm lg:text-xs font-bold transition shrink-0",
                         on
                           ? "bg-(--qf-primary) text-white"
                           : "bg-qf-line-soft text-qf-mute hover:bg-qf-line-dash/60",
@@ -541,7 +548,7 @@ export function ItemEditor({
           </section>
 
           {/* Images */}
-          <section className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-3">
+          <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
             <h2 className="font-semibold">תמונות המוצר</h2>
             <p className="text-xs text-qf-mute">
               העלה תמונה אחת או יותר. אם לא תעלה — יוצג פלייסהולדר מותאם לסוג העסק שלך.
@@ -556,7 +563,7 @@ export function ItemEditor({
           </section>
 
           {/* Sizes */}
-          <section className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-3">
+          <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
             <header className="flex items-center justify-between">
               <h2 className="font-semibold">גדלים</h2>
               <button
@@ -650,7 +657,7 @@ export function ItemEditor({
           </section>
 
           {/* Option groups */}
-          <section className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-3">
+          <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
             <header className="flex items-center justify-between gap-2 flex-wrap">
               <h2 className="font-semibold">קבוצות אפשרויות</h2>
               <div className="flex items-center gap-2">
@@ -715,7 +722,7 @@ export function ItemEditor({
           </section>
 
           {/* Tags */}
-          <section className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-3">
+          <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
             <h2 className="font-semibold">תגיות</h2>
             <div className="flex flex-wrap gap-1.5">
               {TAGS.map((t) => (
@@ -774,6 +781,23 @@ export function ItemEditor({
         onConfirm={performDelete}
         onCancel={() => setConfirmDel(false)}
       />
+
+      {/* Mobile-only sticky save bar — Wolt-style commit affordance at the
+          bottom of the viewport instead of a tiny header button. Desktop
+          keeps the header save (visible from line ~360). pb safe-area on
+          iPhone home-indicator handsets. */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-qf-line shadow-[0_-4px_16px_-8px_rgba(0,0,0,0.1)]">
+        <div className="max-w-3xl mx-auto px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <button
+            type="button"
+            onClick={save}
+            disabled={busy}
+            className="w-full h-14 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-base font-bold disabled:opacity-60 active:scale-[0.99] transition"
+          >
+            {busy ? "שומר..." : mode === "edit" ? "שמירת שינויים" : "צור פריט"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
