@@ -90,6 +90,10 @@ export const OrderCreateSchema = z.object({
   // Customer email (logged-in flow). Server-side will persist this onto the
   // Customer row before creating the order so review reminders can use it.
   customer_email: EmailSchema.optional(),
+  // Optional discount code applied at checkout. Validated server-side
+  // against the Coupon model; invalid/expired codes are silently dropped
+  // (the cart already shows the validation result in real time before submit).
+  coupon_code: z.string().min(1).max(40).optional(),
 });
 
 export const OrderStatusPatchSchema = z.object({

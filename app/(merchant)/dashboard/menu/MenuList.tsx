@@ -10,6 +10,7 @@ import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toas
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { cn } from "@/lib/cn";
 import { ItemPreviewModal } from "./ItemPreviewModal";
+import { BulkPriceModal } from "./BulkPriceModal";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { CategoryEditorModal, type EditableCategory } from "./CategoryEditorModal";
 import { resolveCategoryStyle } from "@/lib/category-style";
@@ -56,6 +57,7 @@ export function MenuList({
   const [pendingDelete, setPendingDelete] = useState<Item | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [bulkPriceOpen, setBulkPriceOpen] = useState(false);
   const [categoryEditorOpen, setCategoryEditorOpen] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
 
@@ -136,6 +138,13 @@ export function MenuList({
           >
             קטלוג תוספות
           </Link>
+          <button
+            type="button"
+            onClick={() => setBulkPriceOpen(true)}
+            className="hidden sm:inline-flex px-3.5 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm"
+          >
+            עדכון מחירים
+          </button>
           <button
             type="button"
             onClick={() => setImportOpen(true)}
@@ -325,6 +334,17 @@ export function MenuList({
       />
 
       {importOpen && <CsvImportModal onClose={() => setImportOpen(false)} />}
+      {bulkPriceOpen && (
+        <BulkPriceModal
+          categories={categories}
+          onClose={() => setBulkPriceOpen(false)}
+          onSuccess={(updated) => {
+            setBulkPriceOpen(false);
+            pushToast("ok", `${updated} מחירים עודכנו`);
+            router.refresh();
+          }}
+        />
+      )}
 
       <CategoryEditorModal
         open={categoryEditorOpen}

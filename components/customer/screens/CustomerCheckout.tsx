@@ -50,6 +50,25 @@ export function CustomerCheckout({
   const [tip, setTip] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Schedule-for-later. asap = deliver as soon as possible (the default);
+  // scheduledTime is a "HH:mm" string for today only (no multi-day picker
+  // for V1 — the most common use is "אסוף בעוד שעתיים" / "תספיק להגיע
+  // בשמונה"). The merchant's open hours could be enforced server-side
+  // later; for now we just let the merchant decline if it's outside hours.
+  const [scheduledTime, setScheduledTime] = useState<string>("");
+
+  // Coupon. couponCode is what the user typed; couponApplied is the result
+  // of the last successful /coupons/validate call. They're separate so the
+  // user can edit the code without losing the active discount until they
+  // re-apply.
+  const [couponCode, setCouponCode] = useState("");
+  const [couponApplied, setCouponApplied] = useState<
+    | { code: string; discount: number; message: string }
+    | null
+  >(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponBusy, setCouponBusy] = useState(false);
   // True once the POST /orders call has succeeded — even though we clear()
   // the cart immediately afterward, this stays true until the browser
   // finishes navigating to /orders/[id], so we can show a "processing"
@@ -119,7 +138,73 @@ export function CustomerCheckout({
 
   const deliveryFee = method === "delivery" ? branch?.deliveryFee ?? 0 : 0;
   const serviceFee = branch?.serviceFee ?? 0;
-  const total = subtotal + deliveryFee + serviceFee + tip;
+  const couponDiscount = couponApplied?.discount ?? 0;
+  const total = subtotal + deliveryFee + serviceFee + tip - couponDiscount;
+
+  /**
+   * Re-validate when subtotal changes (line added/removed), since a coupon
+   * with min_order or maxDiscount could become invalid or change amount.
+   */
+  useEffect(() => {
+    if (!couponApplied) return;
+    void revalidateCoupon(couponApplied.code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal]);
+
+  async function revalidateCoupon(code: string) {
+    try {
+      const res = await fetch("/api/v1/customer/coupons/validate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ tenant_slug: tenantSlug, code, subtotal }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setCouponApplied({ code, discount: data.discount, message: data.message });
+        setCouponError(null);
+      } else {
+        setCouponApplied(null);
+        setCouponError(data.message ?? "הקופון כבר לא תקף");
+      }
+    } catch {
+      setCouponApplied(null);
+      setCouponError("בעיה בבדיקת הקוד");
+    }
+  }
+
+  async function applyCoupon() {
+    const code = couponCode.trim();
+    if (!code) return;
+    setCouponBusy(true);
+    setCouponError(null);
+    try {
+      await revalidateCoupon(code);
+    } finally {
+      setCouponBusy(false);
+    }
+  }
+
+  function clearCoupon() {
+    setCouponCode("");
+    setCouponApplied(null);
+    setCouponError(null);
+  }
+
+  /** Convert "HH:mm" to today's ISO datetime so the server gets a real
+      timestamp. Returns null if the input is empty/invalid. */
+  function scheduledIso(): string | null {
+    if (!scheduledTime) return null;
+    const [h, m] = scheduledTime.split(":").map(Number);
+    if (Number.isNaN(h) || Number.isNaN(m)) return null;
+    const d = new Date();
+    d.setHours(h, m, 0, 0);
+    // If the merchant chose a time that's already past, push to tomorrow —
+    // the customer probably typo'd; let them confirm before submit.
+    if (d.getTime() < Date.now() - 60_000) {
+      d.setDate(d.getDate() + 1);
+    }
+    return d.toISOString();
+  }
   const itemCount = lines.reduce((n, l) => n + l.quantity, 0);
   const businessType = (tenant.businessType as BusinessType) ?? "general";
 
@@ -191,6 +276,8 @@ export function CustomerCheckout({
           method,
           payment_method: paymentMethod,
           tip,
+          scheduled_for: scheduledIso() ?? undefined,
+          coupon_code: couponApplied?.code ?? undefined,
           customer_notes: customerNotes || undefined,
           delivery_notes:
             method === "delivery" && (address || floor || apartment)
@@ -459,6 +546,13 @@ export function CustomerCheckout({
             )}
             {serviceFee > 0 && <SumRow label="דמי שירות" value={formatPrice(serviceFee)} />}
             {tip > 0 && <SumRow label="טיפ לשליח" value={formatPrice(tip)} />}
+            {couponApplied && (
+              <SumRow
+                label={`קופון ${couponApplied.code}`}
+                value={`−${formatPrice(couponApplied.discount)}`}
+                tone="discount"
+              />
+            )}
             <div className="pt-2 border-t border-qf-line-soft flex items-center justify-between">
               <div className="font-semibold">סה״כ לתשלום</div>
               <div className="font-bold tnum text-lg">{formatPrice(total)}</div>
@@ -527,6 +621,91 @@ export function CustomerCheckout({
           </Card>
         )}
 
+        {/* 5b. Schedule order */}
+        <Card>
+          <div className="flex items-baseline justify-between">
+            <CardTitle>זמן {method === "delivery" ? "משלוח" : "איסוף"}</CardTitle>
+            <span className="text-xs text-qf-mute">אופציונלי</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2 mt-3">
+            <Pill active={!scheduledTime} onClick={() => setScheduledTime("")}>
+              בהקדם האפשרי
+            </Pill>
+            <label className={cn(
+              "rounded-2xl border px-4 py-3 text-base flex items-center justify-center gap-2 transition cursor-pointer",
+              scheduledTime
+                ? "border-(--qf-primary) bg-(--qf-primary) text-white"
+                : "border-qf-line-dash bg-white text-qf-ink2 hover:border-qf-mute",
+            )}>
+              <span className="text-sm">לזמן ספציפי</span>
+              <input
+                type="time"
+                value={scheduledTime}
+                onChange={(e) => setScheduledTime(e.target.value)}
+                className="bg-transparent outline-none text-sm tnum w-20"
+                step={900}
+              />
+            </label>
+          </div>
+        </Card>
+
+        {/* 5c. Coupon code */}
+        <Card>
+          <div className="flex items-baseline justify-between">
+            <CardTitle>קוד הנחה</CardTitle>
+            {couponApplied && (
+              <button
+                type="button"
+                onClick={clearCoupon}
+                className="text-xs text-qf-mute hover:text-qf-tomato"
+              >
+                הסר קופון
+              </button>
+            )}
+          </div>
+          {couponApplied ? (
+            <div className="mt-3 bg-qf-green-soft border border-qf-green-deep/20 rounded-2xl px-4 py-3 flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="font-semibold text-qf-green-deep tnum">
+                  {couponApplied.code}
+                </span>
+                <span className="text-xs text-qf-ink2">{couponApplied.message}</span>
+              </div>
+              <span className="font-bold tnum text-qf-green-deep">
+                −{formatPrice(couponApplied.discount)}
+              </span>
+            </div>
+          ) : (
+            <div className="mt-3 flex gap-2">
+              <input
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void applyCoupon();
+                  }
+                }}
+                placeholder="הקלד קוד"
+                maxLength={40}
+                dir="ltr"
+                className="flex-1 bg-qf-bg border border-qf-line rounded-2xl px-4 py-3 text-base outline-none focus:border-(--qf-primary) focus:bg-white transition tnum"
+              />
+              <button
+                type="button"
+                onClick={applyCoupon}
+                disabled={!couponCode.trim() || couponBusy}
+                className="px-5 rounded-2xl bg-qf-ink text-white text-sm font-semibold disabled:opacity-50 transition"
+              >
+                {couponBusy ? "..." : "החל"}
+              </button>
+            </div>
+          )}
+          {couponError && (
+            <div className="mt-2 text-xs text-qf-tomato">{couponError}</div>
+          )}
+        </Card>
+
         {/* 6. Notes */}
         <Card>
           <CardTitle>הערה למסעדה</CardTitle>
@@ -592,6 +771,13 @@ export function CustomerCheckout({
               )}
               {serviceFee > 0 && <SumRow label="דמי שירות" value={formatPrice(serviceFee)} />}
               {tip > 0 && <SumRow label="טיפ לשליח" value={formatPrice(tip)} />}
+            {couponApplied && (
+              <SumRow
+                label={`קופון ${couponApplied.code}`}
+                value={`−${formatPrice(couponApplied.discount)}`}
+                tone="discount"
+              />
+            )}
               <div className="pt-2 border-t border-qf-line-soft flex items-center justify-between">
                 <div className="font-semibold">סה״כ לתשלום</div>
                 <div className="font-bold tnum text-lg">{formatPrice(total)}</div>
@@ -769,15 +955,23 @@ function SumRow({
   label,
   value,
   bold,
+  tone,
 }: {
   label: string;
   value: string;
   bold?: boolean;
+  tone?: "discount";
 }) {
+  const valueClass =
+    tone === "discount"
+      ? "tnum text-qf-green-deep font-semibold"
+      : bold
+        ? "font-bold tnum text-base"
+        : "tnum";
   return (
     <div className="flex items-center justify-between">
       <div className={bold ? "font-semibold" : "text-qf-ink2"}>{label}</div>
-      <div className={bold ? "font-bold tnum text-base" : "tnum"}>{value}</div>
+      <div className={valueClass}>{value}</div>
     </div>
   );
 }

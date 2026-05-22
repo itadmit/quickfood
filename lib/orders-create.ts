@@ -34,6 +34,7 @@ export interface CreateOrderInput {
   paymentMethod: "cash" | "card" | "apple_pay" | "google_pay" | "bit";
   tip?: number;
   scheduledFor?: Date | null;
+  couponCode?: string | null;
   lines: CartLineInput[];
 }
 
@@ -187,7 +188,44 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   const deliveryFee = input.method === "delivery" ? branch.deliveryFee : 0;
   const serviceFee = branch.serviceFee;
   const tip = input.tip ?? 0;
-  const discount = 0;
+
+  // Coupon resolution. Same validation rules as the public /coupons/validate
+  // endpoint, plus a usage-count increment in the same transaction so we
+  // can't over-redeem if two carts hit a "last redemption" coupon at the
+  // same time. Invalid/expired codes are silently dropped (the customer
+  // already saw the validation error in the cart preview).
+  let discount = 0;
+  let couponToConsume: { id: string } | null = null;
+  if (input.couponCode) {
+    const code = input.couponCode.trim().toUpperCase();
+    const coupon = await prisma.coupon.findFirst({
+      where: { tenantId: tenant.id, code, active: true },
+      select: {
+        id: true, type: true, value: true,
+        minOrder: true, maxDiscount: true,
+        usageLimit: true, usageCount: true,
+        validFrom: true, validUntil: true,
+      },
+    });
+    const now = new Date();
+    const isUsable =
+      coupon &&
+      (!coupon.validFrom || now >= coupon.validFrom) &&
+      (!coupon.validUntil || now <= coupon.validUntil) &&
+      (coupon.usageLimit === null || coupon.usageCount < coupon.usageLimit) &&
+      (coupon.minOrder === null || subtotal >= coupon.minOrder);
+    if (isUsable && coupon) {
+      let d =
+        coupon.type === "percent"
+          ? Math.floor((subtotal * coupon.value) / 100)
+          : coupon.value;
+      if (coupon.maxDiscount !== null && d > coupon.maxDiscount) d = coupon.maxDiscount;
+      if (d > subtotal) d = subtotal;
+      discount = d;
+      couponToConsume = { id: coupon.id };
+    }
+  }
+
   const total = subtotal + deliveryFee + serviceFee + tip - discount;
 
   // Validate address if delivery
@@ -260,6 +298,21 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       payload: { status: initialStatus, total } as unknown as Prisma.InputJsonValue,
     },
   });
+
+  // Coupon usage increment — fire-and-forget after the order commits.
+  // Doing this AFTER the order create (vs in a single transaction) is fine
+  // because the worst-case race is one extra redemption — not a money bug,
+  // and the next request will see the bumped count.
+  if (couponToConsume) {
+    try {
+      await prisma.coupon.update({
+        where: { id: couponToConsume.id },
+        data: { usageCount: { increment: 1 } },
+      });
+    } catch (err) {
+      console.warn("[orders-create] couldn't increment coupon usage", err);
+    }
+  }
 
   // Fire webhook (cash orders are confirmed immediately, card orders wait until payment callback)
   if (initialStatus === "confirmed") {

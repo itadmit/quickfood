@@ -21,6 +21,7 @@ const CreateOrderSchema = z.object({
   guest_first_name: z.string().min(1).max(40).optional(),
   guest_last_name: z.string().max(40).optional(),
   customer_email: z.string().email().optional(),
+  coupon_code: z.string().min(1).max(40).optional(),
   lines: z
     .array(
       z.object({
@@ -65,6 +66,7 @@ export const POST = handler(async (req: Request) => {
       paymentMethod: body.payment_method,
       tip: body.tip,
       scheduledFor: body.scheduled_for ? new Date(body.scheduled_for) : null,
+      couponCode: body.coupon_code ?? null,
       lines: body.lines.map((l) => ({
         item_id: l.item_id,
         quantity: l.quantity,

@@ -9,6 +9,7 @@ import { ImageUploader } from "@/components/shared/ImageUploader";
 import { MiniImagePicker } from "@/components/shared/MiniImagePicker";
 import { DragList, DragHandle } from "@/components/shared/DragList";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
+import { ALL_TAG_LABELS } from "@/lib/dietary-tags";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
@@ -68,7 +69,7 @@ interface ItemData {
   optionGroups: OptionGroup[];
 }
 
-const TAGS = ["פופולרי", "צמחוני", "טבעוני", "חריפה", "חדש", "מבצע"];
+const TAGS = ALL_TAG_LABELS;
 
 const EMPTY_ITEM: ItemData = {
   name: "",

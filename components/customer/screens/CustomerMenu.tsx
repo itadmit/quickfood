@@ -10,6 +10,7 @@ import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { resolveCategoryStyle } from "@/lib/category-style";
 import { SmartImg } from "@/components/shared/SmartImg";
+import { FILTERABLE_TAG_LABELS, findTag, TONE_CLASSES } from "@/lib/dietary-tags";
 import { cn } from "@/lib/cn";
 
 interface Item {
@@ -38,15 +39,42 @@ const SCROLL_OFFSET = 80;
 export function CustomerMenu({ tenantSlug, tenantName, businessType = "general", coverImage, categories, items }: Props) {
   const hasCover = Boolean(coverImage);
   const [query, setQuery] = useState("");
+  const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
   const { itemCount, subtotal } = useCart();
 
+  // Only show tag chips for tags that actually appear on items in this
+  // tenant's menu — keeps the bar tight on a small menu (no "ללא לקטוז"
+  // chip when the restaurant doesn't use it).
+  const availableTags = useMemo(() => {
+    const usage = new Set<string>();
+    for (const it of items) for (const t of it.tags) usage.add(t);
+    return FILTERABLE_TAG_LABELS.filter((t) => usage.has(t));
+  }, [items]);
+
+  function toggleTag(t: string) {
+    setActiveTags((prev) => {
+      const next = new Set(prev);
+      if (next.has(t)) next.delete(t);
+      else next.add(t);
+      return next;
+    });
+  }
+
   const filtered = useMemo(() => {
-    if (!query.trim()) return items;
     const q = query.trim().toLowerCase();
-    return items.filter(
-      (i) => i.name.toLowerCase().includes(q) || i.description.toLowerCase().includes(q),
-    );
-  }, [items, query]);
+    return items.filter((i) => {
+      if (q && !i.name.toLowerCase().includes(q) && !i.description.toLowerCase().includes(q)) {
+        return false;
+      }
+      // AND semantics: all selected tags must be present. Most natural for
+      // dietary filters — vegan AND gluten-free returns only items that are
+      // both, not either.
+      for (const t of activeTags) {
+        if (!i.tags.includes(t)) return false;
+      }
+      return true;
+    });
+  }, [items, query, activeTags]);
 
   const byCategory = useMemo(() => {
     const groups: Record<string, Item[]> = {};
@@ -154,6 +182,43 @@ export function CustomerMenu({ tenantSlug, tenantName, businessType = "general",
               className="flex-1 bg-transparent outline-none text-[15px] text-qf-ink placeholder:text-qf-mute"
             />
           </div>
+
+          {/* Dietary filter chips — only rendered when this menu actually
+              has tagged items. Each chip toggles independently; AND
+              semantics across chips (vegan AND gluten-free). */}
+          {availableTags.length > 0 && (
+            <div className="mt-3 flex gap-1.5 overflow-x-auto no-scrollbar lg:max-w-xl">
+              {availableTags.map((t) => {
+                const meta = findTag(t);
+                const active = activeTags.has(t);
+                const tone = meta ? TONE_CLASSES[meta.tone] : TONE_CLASSES.muted;
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => toggleTag(t)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border transition shrink-0",
+                      active
+                        ? "bg-white text-qf-ink border-white"
+                        : cn(tone.bg, tone.text, "border-transparent hover:bg-white/90"),
+                    )}
+                  >
+                    {t}
+                  </button>
+                );
+              })}
+              {activeTags.size > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTags(new Set())}
+                  className="px-3 py-1.5 rounded-full text-xs whitespace-nowrap text-white/80 hover:text-white shrink-0"
+                >
+                  נקה הכל
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
@@ -248,14 +313,22 @@ export function CustomerMenu({ tenantSlug, tenantName, businessType = "general",
                             </div>
                             {item.tags.length > 0 && (
                               <div className="flex gap-1 mt-1.5 flex-wrap">
-                                {item.tags.slice(0, 3).map((t) => (
-                                  <span
-                                    key={t}
-                                    className="text-[10px] bg-qf-green-soft text-qf-green-deep px-1.5 py-0.5 rounded-md font-medium"
-                                  >
-                                    {t}
-                                  </span>
-                                ))}
+                                {item.tags.slice(0, 3).map((t) => {
+                                  const meta = findTag(t);
+                                  const tone = meta ? TONE_CLASSES[meta.tone] : TONE_CLASSES.green;
+                                  return (
+                                    <span
+                                      key={t}
+                                      className={cn(
+                                        "text-[10px] px-1.5 py-0.5 rounded-md font-medium",
+                                        tone.bg,
+                                        tone.text,
+                                      )}
+                                    >
+                                      {t}
+                                    </span>
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
