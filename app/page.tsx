@@ -441,7 +441,7 @@ function Features() {
             layout="decor-start"
             tag="החנות"
             heading="עיצוב משלך. דומיין משלך. הלקוחות - שלך."
-            body="לוגו שלך, צבעים שלך, שם שלך, דומיין משלך (order.השם.co.il). שעות פעילות נפרדות לכל סניף, מינימום הזמנה, אזורי משלוח עם ETA לכל שכונה. הלקוח לא רואה אותנו ולא רואה אף אחד אחר - רק אותך."
+            body="לוגו שלך, צבעים שלך, שם שלך, דומיין משלך (domain.co.il). שעות פעילות נפרדות לכל סניף, מינימום הזמנה, אזורי משלוח עם ETA לכל שכונה. הלקוח לא רואה אותנו ולא רואה אף אחד אחר - רק אותך."
             icon="store"
           />
 
@@ -514,8 +514,28 @@ function CustomizerWoltCard({
         <h3 className={styles.woltCardHeading}>{heading}</h3>
         <p className={styles.woltCardCopy}>{body}</p>
       </div>
-      <div className={styles.woltCardMockup} aria-hidden>
-        <ItemCustomizerMockup />
+      <div className={styles.woltCardMockup}>
+        <div className={styles.mockupAnnotation} aria-hidden>
+          <span className={styles.mockupAnnotationText}>נסו ללחוץ — זה חי!</span>
+          <svg
+            className={styles.mockupAnnotationArrow}
+            viewBox="0 0 110 90"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            {/* Hand-drawn squiggly arrow that curls from the caption down
+                to the customizer card's top-end corner. Two loose curves
+                then an arrowhead. */}
+            <path d="M10 12 C 35 8, 60 22, 70 42 S 85 78, 95 80" />
+            <path d="M83 70 L 95 80 L 88 88" />
+          </svg>
+        </div>
+        <div aria-hidden>
+          <ItemCustomizerMockup />
+        </div>
       </div>
     </article>
   );
