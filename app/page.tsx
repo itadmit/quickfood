@@ -311,7 +311,7 @@ function Math() {
         <div className={styles.problemGrid}>
           <div className={`${styles.problemCard} ${styles.problemCardPeach}`}>
             <div className={styles.problemNum}>התפריט</div>
-            <h3>גדלים, בצק, תוספות, חצי-חצי.</h3>
+            <h3>גדלים, תוספות, חצי-חצי, רטבים בצד.</h3>
             <p>
               כל פריט נבנה עם גדלים (אישית · משפחתית · XL), קבוצות אפשרויות (סוג בצק, רטב צד, מילוי), תוספות עם תמחור לכל יחידה ומגבלת מקסימום. הלקוח רואה את הסכום מתעדכן בכל קליק. אתה רואה בקבלה בדיוק &quot;בלי בצל, חתוך ל-8&quot;.
             </p>
