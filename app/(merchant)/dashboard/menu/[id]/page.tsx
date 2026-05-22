@@ -103,6 +103,7 @@ export default async function ItemEditPage({
             priceDelta: o.priceDelta,
             isDefault: o.isDefault,
             available: o.available,
+            imageUrl: o.imageUrl,
           })),
         })),
       }}

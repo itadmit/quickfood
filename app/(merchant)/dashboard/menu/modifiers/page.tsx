@@ -38,6 +38,7 @@ export default async function ModifiersPage() {
           priceDelta: o.priceDelta,
           isDefault: o.isDefault,
           available: o.available,
+          imageUrl: o.imageUrl,
         })),
       }))}
     />

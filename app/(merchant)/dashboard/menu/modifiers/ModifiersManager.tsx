@@ -5,6 +5,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { IcoPlus, IcoClose, IcoChev } from "@/components/shared/Icons";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { DragList, DragHandle } from "@/components/shared/DragList";
+import { MiniImagePicker } from "@/components/shared/MiniImagePicker";
 import { cn } from "@/lib/cn";
 
 interface SetOption {
@@ -12,6 +14,7 @@ interface SetOption {
   priceDelta: number;
   isDefault: boolean;
   available: boolean;
+  imageUrl: string | null;
 }
 
 interface ModifierSet {
@@ -82,6 +85,7 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
         price_delta: o.priceDelta,
         is_default: o.isDefault,
         available: o.available,
+        image_url: o.imageUrl,
       })),
     };
     const url = editing.id
@@ -408,7 +412,13 @@ function SetEditor({
                 ...set,
                 options: [
                   ...set.options,
-                  { name: "אפשרות חדשה", priceDelta: 0, isDefault: false, available: true },
+                  {
+                    name: "אפשרות חדשה",
+                    priceDelta: 0,
+                    isDefault: false,
+                    available: true,
+                    imageUrl: null,
+                  },
                 ],
               })
             }
@@ -420,12 +430,32 @@ function SetEditor({
         {set.options.length === 0 ? (
           <p className="text-xs text-qf-mute italic">הוסף לפחות אפשרות אחת.</p>
         ) : (
-          <div className="space-y-1.5">
-            {set.options.map((o, oi) => (
-              <div
-                key={oi}
-                className="grid grid-cols-[1fr_72px_28px_56px_28px] sm:grid-cols-[1fr_90px_36px_64px_32px] gap-2 items-center"
-              >
+          <DragList
+            items={set.options}
+            onReorder={(next) => onChange({ ...set, options: next })}
+            className="space-y-1.5"
+          >
+            {(o, oi, drag) => (
+              <div className="flex items-center gap-2">
+                <span
+                  {...drag.handleProps}
+                  className="grid place-items-center w-5 h-8 rounded-md hover:bg-qf-line-soft cursor-grab active:cursor-grabbing shrink-0"
+                >
+                  <DragHandle />
+                </span>
+                <MiniImagePicker
+                  value={o.imageUrl}
+                  onChange={(url) =>
+                    onChange({
+                      ...set,
+                      options: set.options.map((x, i) =>
+                        i === oi ? { ...x, imageUrl: url } : x,
+                      ),
+                    })
+                  }
+                  size={36}
+                  className="shrink-0"
+                />
                 <input
                   value={o.name}
                   onChange={(e) =>
@@ -437,7 +467,7 @@ function SetEditor({
                     })
                   }
                   className={cn(
-                    "px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white",
+                    "flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white",
                     !o.available && "opacity-50",
                   )}
                 />
@@ -452,11 +482,11 @@ function SetEditor({
                       ),
                     })
                   }
-                  className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white tnum"
+                  className="w-16 px-2 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white tnum shrink-0"
                   title="מחיר נוסף (₪)"
                 />
                 <label
-                  className="text-xs inline-flex items-center justify-center"
+                  className="text-xs inline-flex items-center justify-center w-6 h-8 shrink-0"
                   title="ברירת מחדל"
                 >
                   <input
@@ -474,6 +504,7 @@ function SetEditor({
                               ),
                       })
                     }
+                    className="cursor-pointer"
                   />
                 </label>
                 <button
@@ -487,7 +518,7 @@ function SetEditor({
                     })
                   }
                   className={cn(
-                    "text-[10px] font-semibold px-2 py-1 rounded-md transition",
+                    "text-[10px] font-semibold px-2 py-1 rounded-md transition shrink-0",
                     o.available
                       ? "bg-qf-green-soft text-qf-green-deep"
                       : "bg-qf-tomato-soft text-qf-tomato",
@@ -504,14 +535,14 @@ function SetEditor({
                       options: set.options.filter((_, i) => i !== oi),
                     })
                   }
-                  className="w-8 h-8 rounded-lg hover:bg-qf-tomato-soft text-qf-mute hover:text-qf-tomato"
+                  className="w-8 h-8 rounded-lg hover:bg-qf-tomato-soft text-qf-mute hover:text-qf-tomato shrink-0"
                   aria-label="הסר"
                 >
                   <IcoClose s={12} />
                 </button>
               </div>
-            ))}
-          </div>
+            )}
+          </DragList>
         )}
       </div>
     </section>

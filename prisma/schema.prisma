@@ -413,6 +413,7 @@ model ItemOption {
   priceDelta Int             @default(0) @map("price_delta")
   isDefault  Boolean         @default(false) @map("is_default")
   available  Boolean         @default(true)
+  imageUrl   String?         @map("image_url")
   position   Int             @default(0)
 
   @@index([groupId, position])
@@ -453,6 +454,7 @@ model ModifierSetOption {
   priceDelta Int         @default(0) @map("price_delta")
   isDefault  Boolean     @default(false) @map("is_default")
   available  Boolean     @default(true)
+  imageUrl   String?     @map("image_url")
   position   Int         @default(0)
 
   @@index([setId, position])

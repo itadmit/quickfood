@@ -21,6 +21,7 @@ interface Option {
   name: string;
   priceDelta: number;
   isDefault: boolean;
+  imageUrl?: string | null;
 }
 interface OptionGroup {
   id: string;
@@ -294,6 +295,7 @@ export function ItemDetail({
                   active={checked}
                   onClick={() => toggleOption(g, o.id)}
                   label={o.name}
+                  imageUrl={o.imageUrl}
                   priceLabel={
                     o.priceDelta === 0
                       ? null
@@ -418,6 +420,7 @@ function Row({
   priceLabel,
   priceTone,
   radio,
+  imageUrl,
 }: {
   active: boolean;
   onClick: () => void;
@@ -425,6 +428,7 @@ function Row({
   priceLabel: string | null;
   priceTone: "absolute" | "delta";
   radio?: boolean;
+  imageUrl?: string | null;
 }) {
   return (
     <button
@@ -447,6 +451,15 @@ function Row({
               <IcoCheck c="#fff" s={12} />
             ))}
         </span>
+        {imageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={imageUrl}
+            alt=""
+            className="w-9 h-9 rounded-lg object-cover shrink-0 border border-qf-line"
+            loading="lazy"
+          />
+        )}
         <span className={cn("truncate", active ? "font-medium text-qf-ink" : "text-qf-ink")}>
           {label}
         </span>

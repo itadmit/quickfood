@@ -37,6 +37,7 @@ export const GET = handler(async () => {
         price_delta: o.priceDelta,
         is_default: o.isDefault,
         available: o.available,
+        image_url: o.imageUrl,
       })),
     })),
   });
@@ -65,6 +66,7 @@ export const POST = handler(async (req: Request) => {
           priceDelta: o.price_delta,
           isDefault: o.is_default,
           available: o.available,
+          imageUrl: o.image_url ?? null,
           position: oi,
         })),
       },

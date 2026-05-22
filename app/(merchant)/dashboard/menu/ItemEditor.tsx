@@ -6,6 +6,8 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useRouter } from "next/navigation";
 import { IcoChev, IcoPlus, IcoClose } from "@/components/shared/Icons";
 import { ImageUploader } from "@/components/shared/ImageUploader";
+import { MiniImagePicker } from "@/components/shared/MiniImagePicker";
+import { DragList, DragHandle } from "@/components/shared/DragList";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -27,6 +29,7 @@ interface Option {
   priceDelta: number;
   isDefault: boolean;
   available: boolean;
+  imageUrl: string | null;
 }
 
 interface OptionGroup {
@@ -212,6 +215,7 @@ export function ItemEditor({
             price_delta: o.priceDelta,
             is_default: o.isDefault,
             available: o.available,
+            image_url: o.imageUrl,
           })),
         })),
       };
@@ -429,9 +433,19 @@ export function ItemEditor({
             {data.sizes.length === 0 ? (
               <div className="text-xs text-qf-mute">לא מוגדרים גדלים</div>
             ) : (
-              <div className="space-y-2">
-                {data.sizes.map((s, i) => (
-                  <div key={i} className="grid grid-cols-[64px_1fr_88px_56px_28px] sm:grid-cols-[80px_1fr_120px_80px_32px] gap-2 items-center">
+              <DragList
+                items={data.sizes}
+                onReorder={(next) => setData((d) => ({ ...d, sizes: next }))}
+                className="space-y-2"
+              >
+                {(s, i, drag) => (
+                  <div className="grid grid-cols-[20px_56px_1fr_72px_44px_28px] sm:grid-cols-[24px_80px_1fr_120px_80px_32px] gap-2 items-center">
+                    <span
+                      {...drag.handleProps}
+                      className="grid place-items-center h-8 rounded-md hover:bg-qf-line-soft cursor-grab active:cursor-grabbing"
+                    >
+                      <DragHandle />
+                    </span>
                     <input
                       value={s.code}
                       onChange={(e) =>
@@ -465,8 +479,12 @@ export function ItemEditor({
                         }))
                       }
                       className="px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
+                      title="הפרש מחיר מהבסיס (₪)"
                     />
-                    <label className="text-xs inline-flex items-center gap-1.5">
+                    <label
+                      className="text-xs inline-flex items-center justify-center"
+                      title="ברירת מחדל"
+                    >
                       <input
                         type="radio"
                         name="default-size"
@@ -477,8 +495,8 @@ export function ItemEditor({
                             sizes: d.sizes.map((x, idx) => ({ ...x, isDefault: idx === i })),
                           }))
                         }
+                        className="cursor-pointer"
                       />
-                      ברירת מחדל
                     </label>
                     <button
                       type="button"
@@ -489,8 +507,8 @@ export function ItemEditor({
                       <IcoClose s={14} />
                     </button>
                   </div>
-                ))}
-              </div>
+                )}
+              </DragList>
             )}
           </section>
 
@@ -533,11 +551,15 @@ export function ItemEditor({
                 אחת ושייך אותו לעשרות פריטים — עורכים במקום אחד, מתעדכן בכל הפריטים.
               </p>
             )}
-            <div className="space-y-3">
-              {data.optionGroups.map((g, gi) => (
+            <DragList
+              items={data.optionGroups}
+              onReorder={(next) => setData((d) => ({ ...d, optionGroups: next }))}
+              className="space-y-3"
+            >
+              {(g, gi, drag) => (
                 <GroupEditor
-                  key={gi}
                   group={g}
+                  dragHandleProps={drag.handleProps}
                   templateSet={
                     g.templateSetId
                       ? modifierSets.find((s) => s.id === g.templateSetId) ?? null
@@ -551,8 +573,8 @@ export function ItemEditor({
                   }
                   onRemove={() => removeGroup(gi)}
                 />
-              ))}
-            </div>
+              )}
+            </DragList>
           </section>
 
           {/* Tags */}
@@ -631,11 +653,16 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function GroupEditor({
   group,
   templateSet,
+  dragHandleProps,
   onChange,
   onRemove,
 }: {
   group: OptionGroup;
   templateSet: ModifierSetSummary | null;
+  dragHandleProps?: React.HTMLAttributes<HTMLElement> & {
+    draggable?: boolean;
+    style?: React.CSSProperties;
+  };
   onChange: (g: OptionGroup) => void;
   onRemove: () => void;
 }) {
@@ -646,6 +673,14 @@ function GroupEditor({
     return (
       <div className="border border-(--qf-primary)/30 rounded-xl p-3 space-y-2 bg-(--qf-primary)/5">
         <div className="flex items-center gap-2 flex-wrap">
+          {dragHandleProps && (
+            <span
+              {...dragHandleProps}
+              className="grid place-items-center w-6 h-6 rounded-md hover:bg-qf-line-soft cursor-grab active:cursor-grabbing"
+            >
+              <DragHandle />
+            </span>
+          )}
           <span className="text-[10px] bg-(--qf-primary) text-white px-2 py-0.5 rounded-md font-semibold tracking-wider">
             מקטלוג
           </span>
@@ -679,6 +714,14 @@ function GroupEditor({
   return (
     <div className="border border-qf-line-dash rounded-xl p-3 space-y-3 bg-qf-line-soft/40">
       <div className="flex items-center gap-2 flex-wrap">
+        {dragHandleProps && (
+          <span
+            {...dragHandleProps}
+            className="grid place-items-center w-6 h-6 rounded-md hover:bg-qf-line-dash/60 cursor-grab active:cursor-grabbing"
+          >
+            <DragHandle />
+          </span>
+        )}
         <input
           value={group.name}
           onChange={(e) => onChange({ ...group, name: e.target.value })}
@@ -761,12 +804,32 @@ function GroupEditor({
         placeholder="טקסט עזר (אופציונלי) — ׳בחר רטב לצד׳"
         className="w-full px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-xs bg-white resize-none"
       />
-      <div className="space-y-1.5">
-        {group.options.map((o, oi) => (
-          <div
-            key={oi}
-            className="grid grid-cols-[1fr_64px_28px_28px_28px] sm:grid-cols-[1fr_80px_80px_36px_32px] gap-2 items-center"
-          >
+      <DragList
+        items={group.options}
+        onReorder={(next) => onChange({ ...group, options: next })}
+        className="space-y-1.5"
+      >
+        {(o, oi, drag) => (
+          <div className="flex items-center gap-2">
+            <span
+              {...drag.handleProps}
+              className="grid place-items-center w-5 h-8 rounded-md hover:bg-qf-line-dash/60 cursor-grab active:cursor-grabbing shrink-0"
+            >
+              <DragHandle />
+            </span>
+            <MiniImagePicker
+              value={o.imageUrl}
+              onChange={(url) =>
+                onChange({
+                  ...group,
+                  options: group.options.map((x, idx) =>
+                    idx === oi ? { ...x, imageUrl: url } : x,
+                  ),
+                })
+              }
+              size={36}
+              className="shrink-0"
+            />
             <input
               value={o.name}
               onChange={(e) =>
@@ -776,7 +839,7 @@ function GroupEditor({
                 })
               }
               className={cn(
-                "px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white",
+                "flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white",
                 !o.available && "opacity-50",
               )}
             />
@@ -791,11 +854,11 @@ function GroupEditor({
                   ),
                 })
               }
-              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white tnum"
-              title="מחיר נוסף"
+              className="w-16 px-2 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white tnum shrink-0"
+              title="מחיר נוסף (₪)"
             />
             <label
-              className="text-xs inline-flex items-center justify-center gap-1"
+              className="text-xs inline-flex items-center justify-center w-6 h-8 shrink-0"
               title="ברירת מחדל"
             >
               <input
@@ -827,7 +890,7 @@ function GroupEditor({
                 })
               }
               className={cn(
-                "text-[10px] font-semibold px-2 py-1 rounded-md transition",
+                "text-[10px] font-semibold px-2 py-1 rounded-md transition shrink-0",
                 o.available
                   ? "bg-qf-green-soft text-qf-green-deep"
                   : "bg-qf-tomato-soft text-qf-tomato",
@@ -841,29 +904,35 @@ function GroupEditor({
               onClick={() =>
                 onChange({ ...group, options: group.options.filter((_, idx) => idx !== oi) })
               }
-              className="w-8 h-8 rounded-lg hover:bg-qf-tomato-soft text-qf-mute hover:text-qf-tomato"
+              className="w-8 h-8 rounded-lg hover:bg-qf-tomato-soft text-qf-mute hover:text-qf-tomato shrink-0"
               aria-label="הסר"
             >
               <IcoClose s={12} />
             </button>
           </div>
-        ))}
-        <button
-          type="button"
-          onClick={() =>
-            onChange({
-              ...group,
-              options: [
-                ...group.options,
-                { name: "אפשרות חדשה", priceDelta: 0, isDefault: false, available: true },
-              ],
-            })
-          }
-          className="text-xs text-(--qf-deep) inline-flex items-center gap-1"
-        >
-          <IcoPlus c="var(--qf-deep)" s={12} /> אפשרות
-        </button>
-      </div>
+        )}
+      </DragList>
+      <button
+        type="button"
+        onClick={() =>
+          onChange({
+            ...group,
+            options: [
+              ...group.options,
+              {
+                name: "אפשרות חדשה",
+                priceDelta: 0,
+                isDefault: false,
+                available: true,
+                imageUrl: null,
+              },
+            ],
+          })
+        }
+        className="text-xs text-(--qf-deep) inline-flex items-center gap-1"
+      >
+        <IcoPlus c="var(--qf-deep)" s={12} /> אפשרות
+      </button>
     </div>
   );
 }

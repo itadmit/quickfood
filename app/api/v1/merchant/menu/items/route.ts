@@ -65,6 +65,7 @@ export const POST = handler(async (req: Request) => {
               priceDelta: o.price_delta,
               isDefault: o.is_default,
               available: o.available,
+              imageUrl: o.image_url ?? null,
               position: oi,
             })),
           },

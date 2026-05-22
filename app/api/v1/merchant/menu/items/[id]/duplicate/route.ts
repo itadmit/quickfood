@@ -85,6 +85,7 @@ export const POST = handler(async (_req, { params }: { params: Promise<{ id: str
               priceDelta: o.priceDelta,
               isDefault: o.isDefault,
               available: o.available,
+              imageUrl: o.imageUrl,
               position: oi,
             })),
           },

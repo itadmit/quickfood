@@ -133,6 +133,7 @@ export const ItemOptionInputSchema = z.object({
   price_delta: z.number().int().default(0),
   is_default: z.boolean().default(false),
   available: z.boolean().default(true),
+  image_url: z.string().url().nullable().optional(),
 });
 
 export const ItemOptionGroupInputSchema = z.object({

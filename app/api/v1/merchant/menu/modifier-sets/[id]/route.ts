@@ -38,6 +38,7 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
         price_delta: o.priceDelta,
         is_default: o.isDefault,
         available: o.available,
+        image_url: o.imageUrl,
       })),
     },
   });
@@ -77,6 +78,7 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
         priceDelta: o.price_delta,
         isDefault: o.is_default,
         available: o.available,
+        imageUrl: o.image_url ?? null,
         position: oi,
       })),
     }),

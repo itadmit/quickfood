@@ -71,6 +71,7 @@ export default async function ItemPage({
                 name: o.name,
                 priceDelta: o.priceDelta,
                 isDefault: o.isDefault,
+                imageUrl: o.imageUrl,
               })),
           };
         }),
