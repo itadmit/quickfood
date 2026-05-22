@@ -107,6 +107,12 @@ enum CouponType {
   fixed
 }
 
+enum CouponAppliesTo {
+  all
+  category
+  items
+}
+
 enum ReviewChannel {
   off
   email
@@ -351,6 +357,16 @@ model MenuItem {
   position    Int          @default(0)
   tags        String[]     @default([])
   sku         String?
+  // Optional time-of-day windowing — minutes since midnight in the local
+  // timezone. NULL on either side = no restriction; both set = visible
+  // only when the current time is in [from, to). availableDays is a 7-bit
+  // mask (bit 0 = Sunday, bit 6 = Saturday); NULL = every day.
+  availableFrom Int?       @map("available_from")
+  availableTo   Int?       @map("available_to")
+  availableDays Int?       @map("available_days")
+  // Inventory: if non-null the item auto-disappears when this hits 0.
+  // Refilled manually (or via API) when the merchant restocks.
+  stockRemaining Int?      @map("stock_remaining")
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
 
@@ -358,10 +374,29 @@ model MenuItem {
   optionGroups ItemOptionGroup[]
   orderItems   OrderItem[]
   reviewItems  ReviewItem[]
+  favoritedBy  Favorite[]
 
   @@index([tenantId, categoryId, position])
   @@index([tenantId, available])
   @@map("menu_items")
+}
+
+/// Customer "heart" on a menu item — single global favorites list per
+/// customer (cross-tenant is fine since one customer eats at multiple
+/// restaurants). Composite PK (customerId, itemId) prevents duplicates and
+/// makes the "toggle" call a simple upsert.
+model Favorite {
+  customerId String @map("customer_id") @db.Uuid
+  itemId     String @map("item_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  item     MenuItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@id([customerId, itemId])
+  @@index([customerId])
+  @@index([itemId])
+  @@map("favorites")
 }
 
 model ItemSize {
@@ -478,6 +513,7 @@ model Customer {
   orders    Order[]
   reviews   Review[]
   apiKeys   ApiKey[]
+  favorites Favorite[]
 
   @@map("customers")
 }
@@ -875,21 +911,28 @@ model Subscription {
 // ─── Coupons & Notifications ────────────────────────────────────
 
 model Coupon {
-  id               String     @id @default(uuid()) @db.Uuid
-  tenantId         String     @map("tenant_id") @db.Uuid
-  tenant           Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id               String          @id @default(uuid()) @db.Uuid
+  tenantId         String          @map("tenant_id") @db.Uuid
+  tenant           Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   code             String
-  description      String     @default("")
-  type             CouponType @default(percent)
+  description      String          @default("")
+  type             CouponType      @default(percent)
   value            Int
-  minOrder         Int?       @map("min_order")
-  maxDiscount      Int?       @map("max_discount")
-  usageLimit       Int?       @map("usage_limit")
-  usageCount       Int        @default(0) @map("usage_count")
-  perCustomerLimit Int?       @map("per_customer_limit")
-  validFrom        DateTime   @default(now()) @map("valid_from")
-  validUntil       DateTime?  @map("valid_until")
-  active           Boolean    @default(true)
+  minOrder         Int?            @map("min_order")
+  maxDiscount      Int?            @map("max_discount")
+  usageLimit       Int?            @map("usage_limit")
+  usageCount       Int             @default(0) @map("usage_count")
+  perCustomerLimit Int?            @map("per_customer_limit")
+  validFrom        DateTime        @default(now()) @map("valid_from")
+  validUntil       DateTime?       @map("valid_until")
+  active           Boolean         @default(true)
+  // Targeting: by default applies to the whole order. Restrict to a single
+  // category or to a list of specific items to enable promos like
+  // "20% off all pizzas" or "₪10 off a chosen drink." Discount is computed
+  // server-side on just the matching lines (not the whole subtotal).
+  appliesTo        CouponAppliesTo @default(all) @map("applies_to")
+  categoryId       String?         @map("category_id") @db.Uuid
+  itemIds          String[]        @default([]) @map("item_ids") @db.Uuid
 
   @@unique([tenantId, code])
   @@index([tenantId, active])

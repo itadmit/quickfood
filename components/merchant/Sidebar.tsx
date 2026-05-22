@@ -18,6 +18,7 @@ const NAV: NavItem[] = [
   { href: "/dashboard/orders", label: "הזמנות", Icon: IcoOrders },
   { href: "/dashboard/menu", label: "תפריט", Icon: IcoMenu },
   { href: "/dashboard/campaigns", label: "קמפיינים", Icon: IcoMegaphone },
+  { href: "/dashboard/coupons", label: "קופונים", Icon: IcoCreditCard },
   { href: "/dashboard/reviews", label: "ביקורות", Icon: IcoStar },
   { href: "/dashboard/sms", label: "SMS", Icon: IcoBell },
   { href: "/dashboard/billing", label: "חיוב ומנוי", Icon: IcoCreditCard },

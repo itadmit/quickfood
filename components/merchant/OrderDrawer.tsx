@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { IcoClose, IcoPhone, IcoPrinter } from "@/components/shared/Icons";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { formatPrice, formatDateTime, formatRelativeMinutes } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
@@ -68,6 +70,42 @@ export function OrderDrawer({
 }) {
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [confirmRefund, setConfirmRefund] = useState(false);
+  const [refundReason, setRefundReason] = useState("");
+  const [refunding, setRefunding] = useState(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
+  function pushToast(kind: ToastKind, message: string) {
+    setToast({ id: Date.now(), kind, message });
+  }
+
+  async function performRefund() {
+    if (!order) return;
+    setRefunding(true);
+    const res = await fetch(`/api/v1/merchant/orders/${order.id}/refund`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ reason: refundReason || undefined, cancel_workflow: true }),
+    });
+    const data = await res.json();
+    setRefunding(false);
+    setConfirmRefund(false);
+    if (!res.ok) {
+      pushToast("err", data?.error?.message ?? "החזרת הזמנה נכשלה");
+      return;
+    }
+    pushToast(
+      "ok",
+      data.money_action_required
+        ? `סומן כהוחזר. שים לב: ${data.money_action_required}`
+        : "ההזמנה הוחזרה",
+    );
+    // Re-fetch to reflect new status in the drawer
+    const fresh = await fetch(`/api/v1/customer/orders/${order.id}`);
+    if (fresh.ok) {
+      const d = await fresh.json();
+      setOrder(d.order ?? null);
+    }
+  }
 
   useEffect(() => {
     let alive = true;
@@ -238,7 +276,7 @@ export function OrderDrawer({
         </div>
 
         {order && (
-          <footer className="border-t border-qf-line-soft px-5 py-3 flex items-center gap-2">
+          <footer className="border-t border-qf-line-soft px-5 py-3 flex items-center gap-2 flex-wrap">
             <button
               type="button"
               onClick={() => window.print()}
@@ -246,16 +284,66 @@ export function OrderDrawer({
             >
               <IcoPrinter s={14} /> הדפסה
             </button>
+            {order.status !== "refunded" && order.status !== "cancelled" && (
+              <button
+                type="button"
+                onClick={() => setConfirmRefund(true)}
+                className="px-3 py-2 rounded-xl border border-qf-tomato/40 text-qf-tomato hover:bg-qf-tomato-soft text-sm"
+              >
+                החזרה / ביטול
+              </button>
+            )}
             <button
               type="button"
               onClick={() => onAdvance(order.id)}
-              className="flex-1 px-3 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium"
+              disabled={order.status === "refunded" || order.status === "cancelled"}
+              className="flex-1 px-3 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               קדם סטטוס
             </button>
           </footer>
         )}
       </aside>
+
+      <ConfirmDialog
+        open={confirmRefund}
+        title="החזרה / ביטול הזמנה"
+        message={
+          <div className="space-y-2">
+            <p>
+              ההזמנה <span className="font-mono font-semibold">#{order?.number}</span> תסומן
+              כהוחזרה ותועבר לסטטוס &quot;הוחזרה&quot;. וובהוק `order.refunded` יישלח.
+            </p>
+            {order?.payment_method !== "cash" && (
+              <p className="text-xs bg-qf-yolk-soft border border-qf-yolk/40 rounded-lg px-3 py-2">
+                <strong>שים לב:</strong> לתשלום בכרטיס, ההחזר עצמו צריך להתבצע ידנית בלוח
+                הבקרה של Grow Payments. הסטטוס במערכת רק מסמן שזה קרה.
+              </p>
+            )}
+            <label className="block">
+              <span className="text-xs font-medium block mb-1">סיבה (אופציונלי)</span>
+              <textarea
+                value={refundReason}
+                onChange={(e) => setRefundReason(e.target.value)}
+                rows={2}
+                maxLength={500}
+                placeholder="למשל: ביטול לבקשת הלקוח"
+                className="w-full px-3 py-2 rounded-lg border border-qf-line-dash text-sm resize-none"
+              />
+            </label>
+          </div>
+        }
+        confirmLabel="החזר / בטל"
+        cancelLabel="ביטול"
+        variant="danger"
+        busy={refunding}
+        onConfirm={performRefund}
+        onCancel={() => {
+          setConfirmRefund(false);
+          setRefundReason("");
+        }}
+      />
+      <Toast toast={toast} onDismiss={() => setToast(null)} />
     </div>
   );
 }
