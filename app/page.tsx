@@ -4,7 +4,6 @@ import Link from "next/link";
 import { IcoArrowLeft } from "@/components/shared/Icons";
 import Typewriter from "./_components/Typewriter";
 import VerticalRotator from "./_components/VerticalRotator";
-import LivePhoneDemo from "./_components/LivePhoneDemo";
 import FeatureIcon, { type IconName } from "./_components/FeatureIcon";
 import ItemCustomizerMockup from "./_components/ItemCustomizerMockup";
 import styles from "./page.module.css";
@@ -41,7 +40,6 @@ export default function LandingPage() {
       <HowItWorks />
       <Math />
       <Features />
-      <Showcase />
       <Pricing />
       <Faq />
       <FinalCta />
@@ -65,6 +63,7 @@ function TrustStrip() {
               <span className={styles.trustPill}>Bit</span>
               <span className={styles.trustPill}>אשראי</span>
               <span className={styles.trustPill}>Apple Pay</span>
+              <span className={styles.trustPill}>פייבוקס</span>
               <span className={styles.trustPill}>Google Pay</span>
             </div>
           </div>
@@ -146,7 +145,7 @@ function FaqSchema() {
     ],
     [
       "איזה אמצעי תשלום הלקוח רואה?",
-      "Bit, כרטיס אשראי, Apple Pay, Google Pay. כולם נפתחים בתוך המסך של החנות שלך - בלי דפים חיצוניים, בלי iframe מסורבל. אתה גם בוחר בדשבורד איזה אמצעי תשלום יהיה ברירת המחדל הראשונה.",
+      "Bit, כרטיס אשראי, Apple Pay, פייבוקס, Google Pay. כולם נפתחים בתוך המסך של החנות שלך - בלי דפים חיצוניים, בלי iframe מסורבל. אתה גם בוחר בדשבורד איזה אמצעי תשלום יהיה ברירת המחדל הראשונה.",
     ],
     [
       "מה עם וואטסאפ ו-SMS?",
@@ -320,7 +319,7 @@ function Math() {
             <div className={styles.problemNum}>המטבח</div>
             <h3>זמן הכנה לכל מנה. סטטוסים אמיתיים.</h3>
             <p>
-              3 דק׳ לסלט, 11 לפיצה - אתה מגדיר פר-פריט, האפליקציה מחשבת ETA מצרפי לכל הזמנה. סטטוסים שאתה מכיר: "בתנור", "בטיגון", "מוכן", "יצא לדרך". לא "processing" של חברת שילוח.
+              3 דק׳ לסלט, 11 לפיצה - אתה מגדיר פר-פריט, האפליקציה מחשבת זמן משוער להכנת המנה. סטטוסים שאתה מכיר: "בתנור", "בטיגון", "מוכן", "יצא לדרך". לא "processing" של חברת שילוח.
             </p>
           </div>
           <div className={`${styles.problemCard} ${styles.problemCardLilac}`}>
@@ -337,88 +336,6 @@ function Math() {
 }
 
 /* ─── PRODUCT SHOWCASE ──────────────────────────────────── */
-function Showcase() {
-  return (
-    <section id="product" className={`${styles.section} ${styles.showcase}`}>
-      <div className={styles.container}>
-        <div className={styles.showcaseHead}>
-          <div>
-            <div className={`${styles.sectionEyebrow} ${styles.sectionEyebrowBasil}`}>המוצר</div>
-            <h2 className={styles.sectionTitle}>שני צדדים. <em>אותו סיפור.</em></h2>
-          </div>
-          <p className={styles.sectionLede}>
-            אפליקציה שהלקוח מרגיש בבית, ודשבורד שגם עובד המשמרת מצליח לתפעל. הכל מוכן מהיום הראשון - בלי טכנאי, בלי הגדרות, בלי כאב ראש.
-          </p>
-        </div>
-
-        <div className={styles.showcaseGrid}>
-          <div className={`${styles.showcaseCard} ${styles.showcaseCardDark}`}>
-            <div className={styles.showcaseTag}>הדשבורד שלך</div>
-            <h3>קוקפיט אחד. כל מה שקורה במסעדה.</h3>
-            <p>הזמנות חדשות מקפיצות לקנבן, אתה לוחץ ׳מתחילים׳, הלקוח כבר מקבל וואטסאפ. סטטוסים, שליחים, תפריט, ניתוחי מכירות - הכל כאן. עובד גם על טאבלט שעומד ליד הקופה.</p>
-            <div className={styles.showcaseFeatures}>
-              <span className={styles.featChip}>קנבן הזמנות</span>
-              <span className={styles.featChip}>תוספות וגדלים</span>
-              <span className={styles.featChip}>אזורי משלוח</span>
-              <span className={styles.featChip}>7 ערכות צבע</span>
-              <span className={styles.featChip}>מולטי-סניף</span>
-            </div>
-
-            <div className={styles.miniDashKpis}>
-              <div className={styles.miniDashRow}>
-                <div className={`${styles.miniDashCell} ${styles.miniDashCellRed}`}>
-                  <div className={styles.miniDashLabel}>חדשות</div>
-                  <div className={styles.miniDashValue}>2</div>
-                </div>
-                <div className={`${styles.miniDashCell} ${styles.miniDashCellYellow}`}>
-                  <div className={styles.miniDashLabel}>בהכנה</div>
-                  <div className={styles.miniDashValue}>4</div>
-                </div>
-                <div className={`${styles.miniDashCell} ${styles.miniDashCellGreen}`}>
-                  <div className={styles.miniDashLabel}>מוכן</div>
-                  <div className={styles.miniDashValue}>3</div>
-                </div>
-                <div className={`${styles.miniDashCell} ${styles.miniDashCellMuted}`}>
-                  <div className={styles.miniDashLabel}>במשלוח</div>
-                  <div className={styles.miniDashValue}>5</div>
-                </div>
-              </div>
-              <div className={styles.miniDashHint}>
-                <span className="inline-flex items-center gap-1">
-                  קליק לפתיחת הדמו
-                  <IcoArrowLeft c="currentColor" s={12} />
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.showcaseCard}>
-            <div className={styles.showcaseTag}>הלקוח שלך</div>
-            <h3>חוויה רכה, מהירה. על הדומיין שלך.</h3>
-            <p>אפליקציה שנטענת תוך שנייה, צבעים שלך, לוגו שלך. הלקוח שומר אותך במסך הבית, חוזר ישר לכתובת שלך, ומקבל וואטסאפ ׳ההזמנה התקבלה׳ לפני שהוא הגיע לאוטו.</p>
-
-            <div className={styles.phoneLive}>
-              <LivePhoneDemo
-                src="https://quickfood.co.il/pizzeria-verde"
-                title="הדגמה חיה - פיצרייה ורדה"
-              />
-              <a
-                href="https://quickfood.co.il/pizzeria-verde"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.phoneLiveLink}
-              >
-                לחץ לפתיחת ההדגמה
-                <IcoArrowLeft c="currentColor" s={12} />
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 /* ─── FEATURES ────────────────────────────────────────── */
 function Features() {
   return (
@@ -450,7 +367,7 @@ function Features() {
             layout="decor-end"
             tag="המטבח"
             heading="זמן הכנה לכל פריט. סטטוסים בשפה של המטבח."
-            body="3 דק׳ לסלט, 9 לפיצה, 12 להמבורגר - אתה מגדיר, האפליקציה מחשבת ETA מצרפי לכל הזמנה. סטטוס מסעדה פתוח / עומס / סגור - במצב עומס ה-ETA מתארך אוטומטית עוד לפני שהלקוח לוחץ ׳שלם׳. דשבורד שעובד על טאבלט ליד הקופה."
+            body="3 דק׳ לסלט, 9 לפיצה, 12 להמבורגר - אתה מגדיר, האפליקציה מחשבת זמן משוער להכנת המנה. סטטוס מסעדה פתוח / עומס / סגור - במצב עומס הזמן המשוער מתארך אוטומטית עוד לפני שהלקוח לוחץ ׳שלם׳. דשבורד שעובד על טאבלט ליד הקופה."
             icon="flame"
           />
 
@@ -458,7 +375,7 @@ function Features() {
             tone="peach"
             layout="decor-start"
             tag="תשלום"
-            heading="Bit, אשראי, Apple Pay, Google Pay - באותו מסך."
+            heading="Bit, אשראי, Apple Pay, פייבוקס, Google Pay - הכל נתמך בצ׳קאוט אחד."
             body="הלקוח לוחץ ׳שלם׳ בתוך החנות, ארנק התשלום נפתח לידו, מקיש PIN ב-Bit או טביעת אצבע ב-Apple Pay - והכסף בחשבון תוך 24 שעות. בלי הפניות, בלי iframe מוזר. אתה בוחר ברירת מחדל בדשבורד."
             icon="wallet"
           />
@@ -607,11 +524,11 @@ function MiniCell({
 function Pricing() {
   const features = [
     "מנות עם גדלים, אפשרויות חובה ותוספות פר-יחידה",
-    "זמן הכנה לכל פריט + ETA מצרפי לכל הזמנה",
+    "זמן הכנה לכל פריט + זמן משוער מצרפי לכל הזמנה",
     "סטטוס מסעדה: פתוח / עומס / סגור - ETA אוטומטי",
     "אפליקציית לקוח ממותגת על דומיין שלך",
     "דשבורד ניהול הזמנות (Kanban) - תפריט ושליחים",
-    "תשלום inline - Bit, אשראי, Apple Pay, Google Pay",
+    "תשלום inline - Bit, אשראי, Apple Pay, פייבוקס, Google Pay",
     "מעקב הזמנה חי + סטטוס בלייב",
     "ביקורות אוטומטיות עם תזכורת בוואטסאפ",
     "וואטסאפ מהמספר שלך (דרך iBot Chat)",
@@ -695,7 +612,7 @@ function Faq() {
           <div>
             <div className={styles.sectionEyebrow}>שאלות נפוצות</div>
             <h2 className={styles.sectionTitle}>
-              השאלות <em>שכנראה תרצה לדעת.</em>
+              השאלות <em>שכנראה תרצה לשאול.</em>
             </h2>
             <p className={styles.faqIntro}>
               לא מצאת תשובה? כתוב לנו ב-WhatsApp ונחזור תוך שעה.
@@ -721,7 +638,7 @@ function Faq() {
             <details className={styles.faqItem}>
               <summary>איזה אמצעי תשלום הלקוח רואה?</summary>
               <p>
-                Bit, כרטיס אשראי, Apple Pay, Google Pay. כולם נפתחים בתוך המסך של החנות שלך - בלי דפים חיצוניים, בלי iframe מסורבל. אתה גם בוחר בדשבורד איזה אמצעי תשלום יהיה ברירת המחדל הראשונה.
+                Bit, כרטיס אשראי, Apple Pay, פייבוקס, Google Pay. כולם נפתחים בתוך המסך של החנות שלך - בלי דפים חיצוניים, בלי iframe מסורבל. אתה גם בוחר בדשבורד איזה אמצעי תשלום יהיה ברירת המחדל הראשונה.
               </p>
             </details>
             <details className={styles.faqItem}>
@@ -814,8 +731,8 @@ function Footer() {
           </div>
           <div className={styles.footCol}>
             <h5>מוצר</h5>
-            <a href="#product">דשבורד</a>
-            <a href="#product">אפליקציה</a>
+            <a href="#features">דשבורד</a>
+            <a href="#features">אפליקציה</a>
             <a href="#features">פיצ&apos;רים</a>
             <a href="#pricing">תמחור</a>
           </div>
