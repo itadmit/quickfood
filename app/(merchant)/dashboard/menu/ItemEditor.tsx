@@ -468,23 +468,59 @@ export function ItemEditor({
                 הצג את הפריט רק בחלון שעות מסוים (לדוגמה ארוחת בוקר עד 11:00), רק בימים מסוימים, או מוגבל ב-X מנות בלבד.
               </p>
             </header>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="זמין משעה">
-                <input
-                  type="time"
-                  value={minutesToHM(data.availableFrom)}
-                  onChange={(e) => update("availableFrom", hmToMinutes(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum"
-                />
-              </Field>
-              <Field label="עד שעה">
-                <input
-                  type="time"
-                  value={minutesToHM(data.availableTo)}
-                  onChange={(e) => update("availableTo", hmToMinutes(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum"
-                />
-              </Field>
+            {/* Time-of-day window. Both ends NULL → no restriction; we show
+                an explicit pill so the merchant sees the current state at a
+                glance, plus a "אפס" link when a window is set. Native time
+                inputs on iOS Safari can look thin/empty until tapped — the
+                pill makes the intent ("zone of activity") obvious. */}
+            <div>
+              <div className="flex items-baseline justify-between mb-2">
+                <span className="text-sm font-medium">חלון שעות</span>
+                <span
+                  className={cn(
+                    "text-[11px] font-semibold px-2 py-0.5 rounded-md",
+                    data.availableFrom === null && data.availableTo === null
+                      ? "bg-qf-green-soft text-qf-green-deep"
+                      : "bg-qf-yolk-soft text-qf-ink",
+                  )}
+                >
+                  {data.availableFrom === null && data.availableTo === null
+                    ? "תמיד זמין"
+                    : `${minutesToHM(data.availableFrom) || "—"} → ${minutesToHM(data.availableTo) || "—"}`}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <label className="flex flex-col gap-1">
+                  <span className="text-[10px] text-qf-mute">משעה</span>
+                  <input
+                    type="time"
+                    value={minutesToHM(data.availableFrom)}
+                    onChange={(e) => update("availableFrom", hmToMinutes(e.target.value))}
+                    className="px-3 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-(--qf-primary) outline-none tnum text-base"
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-[10px] text-qf-mute">עד שעה</span>
+                  <input
+                    type="time"
+                    value={minutesToHM(data.availableTo)}
+                    onChange={(e) => update("availableTo", hmToMinutes(e.target.value))}
+                    className="px-3 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-(--qf-primary) outline-none tnum text-base"
+                  />
+                </label>
+              </div>
+              {(data.availableFrom !== null || data.availableTo !== null) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    update("availableFrom", null);
+                    update("availableTo", null);
+                  }}
+                  className="text-xs text-qf-mute hover:text-qf-ink underline mt-2 inline-block"
+                >
+                  אפס חלון שעות
+                </button>
+              )}
             </div>
             <Field label="ימים בשבוע">
               <div className="flex gap-1.5">
@@ -583,73 +619,93 @@ export function ItemEditor({
                 className="space-y-2"
               >
                 {(s, i, drag) => (
-                  <div className="grid grid-cols-[20px_56px_1fr_72px_44px_28px] sm:grid-cols-[24px_80px_1fr_120px_80px_32px] gap-2 items-center">
-                    <span
-                      {...drag.handleProps}
-                      className="grid place-items-center h-8 rounded-md hover:bg-qf-line-soft cursor-grab active:cursor-grabbing"
-                    >
-                      <DragHandle />
-                    </span>
-                    <input
-                      value={s.code}
-                      onChange={(e) =>
-                        setData((d) => ({
-                          ...d,
-                          sizes: d.sizes.map((x, idx) => (idx === i ? { ...x, code: e.target.value } : x)),
-                        }))
-                      }
-                      placeholder="קוד"
-                      maxLength={4}
-                      className="px-2 py-2 rounded-lg border border-qf-line-dash text-center text-sm"
-                    />
-                    <input
-                      value={s.name}
-                      onChange={(e) =>
-                        setData((d) => ({
-                          ...d,
-                          sizes: d.sizes.map((x, idx) => (idx === i ? { ...x, name: e.target.value } : x)),
-                        }))
-                      }
-                      placeholder="שם"
-                      className="px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm"
-                    />
-                    <input
-                      type="number"
-                      value={s.priceDelta}
-                      onChange={(e) =>
-                        setData((d) => ({
-                          ...d,
-                          sizes: d.sizes.map((x, idx) => (idx === i ? { ...x, priceDelta: parseInt(e.target.value, 10) || 0 } : x)),
-                        }))
-                      }
-                      className="px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
-                      title="הפרש מחיר מהבסיס (₪)"
-                    />
-                    <label
-                      className="text-xs inline-flex items-center justify-center"
-                      title="ברירת מחדל"
-                    >
+                  // Each size is its own bordered card. Top row carries the
+                  // name (the customer-facing label, which gets the most
+                  // room); the secondary fields (short code, price delta,
+                  // default radio) live in a 3-col grid below WITH LABELS so
+                  // a merchant on a 390px phone can tell what each tiny
+                  // input is for.
+                  <div className="border border-qf-line-soft bg-qf-bg/40 rounded-xl p-3 space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <span
+                        {...drag.handleProps}
+                        className="grid place-items-center w-7 h-9 rounded-md hover:bg-qf-line-dash/60 cursor-grab active:cursor-grabbing shrink-0"
+                        aria-label="גרור לסידור"
+                      >
+                        <DragHandle />
+                      </span>
                       <input
-                        type="radio"
-                        name="default-size"
-                        checked={s.isDefault}
-                        onChange={() =>
+                        value={s.name}
+                        onChange={(e) =>
                           setData((d) => ({
                             ...d,
-                            sizes: d.sizes.map((x, idx) => ({ ...x, isDefault: idx === i })),
+                            sizes: d.sizes.map((x, idx) => (idx === i ? { ...x, name: e.target.value } : x)),
                           }))
                         }
-                        className="cursor-pointer"
+                        placeholder="שם הגודל (למשל: משפחתית 32 ס״מ)"
+                        className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-qf-line-dash bg-white text-sm"
                       />
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => removeSize(i)}
-                      className="w-8 h-8 rounded-lg hover:bg-qf-tomato-soft text-qf-mute hover:text-qf-tomato"
-                      aria-label="הסר"
-                    >
-                      <IcoClose s={14} />
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => removeSize(i)}
+                        className="w-9 h-9 rounded-md hover:bg-qf-tomato-soft text-qf-mute hover:text-qf-tomato grid place-items-center shrink-0"
+                        aria-label="הסר גודל"
+                      >
+                        <IcoClose s={14} />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <label className="flex flex-col gap-1">
+                        <span className="text-[10px] font-medium text-qf-mute">קוד</span>
+                        <input
+                          value={s.code}
+                          onChange={(e) =>
+                            setData((d) => ({
+                              ...d,
+                              sizes: d.sizes.map((x, idx) => (idx === i ? { ...x, code: e.target.value.toUpperCase() } : x)),
+                            }))
+                          }
+                          maxLength={4}
+                          placeholder="S"
+                          dir="ltr"
+                          className="px-2 py-1.5 rounded-lg border border-qf-line-dash bg-white text-center text-sm tnum"
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className="text-[10px] font-medium text-qf-mute">הפרש מחיר (₪)</span>
+                        <input
+                          type="number"
+                          value={s.priceDelta}
+                          onChange={(e) =>
+                            setData((d) => ({
+                              ...d,
+                              sizes: d.sizes.map((x, idx) => (idx === i ? { ...x, priceDelta: parseInt(e.target.value, 10) || 0 } : x)),
+                            }))
+                          }
+                          className="px-2 py-1.5 rounded-lg border border-qf-line-dash bg-white text-center text-sm tnum"
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className="text-[10px] font-medium text-qf-mute">ברירת מחדל</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setData((d) => ({
+                              ...d,
+                              sizes: d.sizes.map((x, idx) => ({ ...x, isDefault: idx === i })),
+                            }))
+                          }
+                          className={cn(
+                            "px-2 py-1.5 rounded-lg border text-xs font-semibold transition",
+                            s.isDefault
+                              ? "bg-(--qf-primary) text-white border-(--qf-primary)"
+                              : "bg-white text-qf-mute border-qf-line-dash hover:border-qf-mute",
+                          )}
+                        >
+                          {s.isDefault ? "כן" : "לא"}
+                        </button>
+                      </label>
+                    </div>
                   </div>
                 )}
               </DragList>
