@@ -18,7 +18,7 @@ export default async function ItemEditPage({
   const { id } = await params;
   const isNew = id === "new";
 
-  const [categories, tenant] = await Promise.all([
+  const [categories, tenant, modifierSets] = await Promise.all([
     prisma.menuCategory.findMany({
       where: { tenantId: session.tenantId, active: true },
       orderBy: { position: "asc" },
@@ -27,7 +27,19 @@ export default async function ItemEditPage({
       where: { id: session.tenantId },
       select: { businessType: true },
     }),
+    prisma.modifierSet.findMany({
+      where: { tenantId: session.tenantId },
+      orderBy: { position: "asc" },
+      include: { options: { select: { id: true } } },
+    }),
   ]);
+
+  const modifierSetsForEditor = modifierSets.map((s) => ({
+    id: s.id,
+    name: s.name,
+    type: s.type as "single" | "multi",
+    optionsCount: s.options.length,
+  }));
 
   if (isNew) {
     return (
@@ -35,6 +47,7 @@ export default async function ItemEditPage({
         mode="new"
         categories={categories.map((c) => ({ id: c.id, name: c.name }))}
         businessType={tenant?.businessType ?? "general"}
+        modifierSets={modifierSetsForEditor}
       />
     );
   }
@@ -56,6 +69,7 @@ export default async function ItemEditPage({
       mode="edit"
       categories={categories.map((c) => ({ id: c.id, name: c.name }))}
       businessType={tenant?.businessType ?? "general"}
+      modifierSets={modifierSetsForEditor}
       item={{
         id: item.id,
         name: item.name,
@@ -81,10 +95,14 @@ export default async function ItemEditPage({
           required: g.required,
           minSelect: g.minSelect,
           maxSelect: g.maxSelect,
+          includedFree: g.includedFree,
+          helpText: g.helpText,
+          templateSetId: g.templateSetId,
           options: g.options.map((o) => ({
             name: o.name,
             priceDelta: o.priceDelta,
             isDefault: o.isDefault,
+            available: o.available,
           })),
         })),
       }}

@@ -66,13 +66,20 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     throw new CartValidationError("cart_empty");
   }
 
-  // Load all menu items + their sizes/options in one shot
+  // Load all menu items + their sizes/options in one shot. Groups that link
+  // to a ModifierSet pull their options from the set (Wolt-style reusable
+  // modifier library) instead of the inline ItemOption rows.
   const itemIds = Array.from(new Set(input.lines.map((l) => l.item_id)));
   const items = await prisma.menuItem.findMany({
     where: { id: { in: itemIds }, tenantId: tenant.id, available: true },
     include: {
       sizes: true,
-      optionGroups: { include: { options: true } },
+      optionGroups: {
+        include: {
+          options: true,
+          templateSet: { include: { options: true } },
+        },
+      },
     },
   });
   const itemsById = new Map(items.map((i) => [i.id, i]));
@@ -106,17 +113,46 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     let optionsDelta = 0;
     const optionIds = new Set(line.option_ids ?? []);
     for (const group of item.optionGroups) {
-      const picksInGroup = group.options.filter((o) => optionIds.has(o.id));
-      if (group.type === "single" && picksInGroup.length > 1) {
+      // Resolve the effective options + config: ModifierSet overrides inline.
+      const fromSet = group.templateSet;
+      const effectiveOptions = fromSet ? fromSet.options : group.options;
+      const effectiveType = fromSet?.type ?? group.type;
+      const effectiveRequired = fromSet?.required ?? group.required;
+      const effectiveMin = fromSet?.minSelect ?? group.minSelect;
+      const effectiveMax = fromSet?.maxSelect ?? group.maxSelect;
+      const effectiveFree = fromSet?.includedFree ?? group.includedFree;
+      const availableOptions = effectiveOptions.filter((o) => o.available);
+      const picksInGroup = availableOptions.filter((o) => optionIds.has(o.id));
+
+      if (effectiveType === "single" && picksInGroup.length > 1) {
         throw new CartValidationError("too_many_in_single_group", group.id);
       }
-      if (group.required && picksInGroup.length < group.minSelect) {
+      if (effectiveRequired && picksInGroup.length < effectiveMin) {
         throw new CartValidationError("required_group_missing", group.id);
       }
-      if (picksInGroup.length > group.maxSelect) {
+      if (picksInGroup.length > effectiveMax) {
         throw new CartValidationError("too_many_in_group", group.id);
       }
-      for (const o of picksInGroup) {
+
+      // Apply free-count: cheapest paid options first don't add to total.
+      const paid = picksInGroup
+        .filter((o) => o.priceDelta > 0)
+        .sort((a, b) => a.priceDelta - b.priceDelta);
+      const negative = picksInGroup.filter((o) => o.priceDelta < 0);
+      const zero = picksInGroup.filter((o) => o.priceDelta === 0);
+
+      for (let i = 0; i < paid.length; i++) {
+        const o = paid[i];
+        const effectiveDelta = i < effectiveFree ? 0 : o.priceDelta;
+        selectedOptions.push({
+          group_id: group.id,
+          option_id: o.id,
+          name: o.name,
+          price_delta: effectiveDelta,
+        });
+        optionsDelta += effectiveDelta;
+      }
+      for (const o of [...negative, ...zero]) {
         selectedOptions.push({
           group_id: group.id,
           option_id: o.id,

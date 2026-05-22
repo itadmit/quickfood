@@ -29,6 +29,8 @@ interface OptionGroup {
   required: boolean;
   minSelect: number;
   maxSelect: number;
+  includedFree?: number;
+  helpText?: string | null;
   options: Option[];
 }
 interface ItemData {
@@ -90,8 +92,21 @@ export function ItemDetail({
     let oDelta = 0;
     for (const g of item.optionGroups) {
       const selected = picks[g.id] ?? new Set();
+      // Free-count: the first `includedFree` selected paid options in this
+      // group cost 0; remaining ones pay their delta. We sort by ascending
+      // priceDelta so the merchant-friendliest interpretation applies
+      // (cheapest free first → customer pays more, encourages upsell). Wolt
+      // does it the same way.
+      const paidSelections = g.options
+        .filter((o) => selected.has(o.id) && o.priceDelta > 0)
+        .sort((a, b) => a.priceDelta - b.priceDelta);
+      const free = g.includedFree ?? 0;
+      for (let i = 0; i < paidSelections.length; i++) {
+        if (i >= free) oDelta += paidSelections[i].priceDelta;
+      }
+      // Negative deltas (rare; e.g., "no cheese -₪3") always apply.
       for (const o of g.options) {
-        if (selected.has(o.id)) oDelta += o.priceDelta;
+        if (selected.has(o.id) && o.priceDelta < 0) oDelta += o.priceDelta;
       }
     }
     return (item.basePrice + sDelta + oDelta) * quantity;
@@ -252,13 +267,15 @@ export function ItemDetail({
 
       {/* Option groups */}
       {item.optionGroups.map((g) => {
-        const subtitle = g.required
+        const free = g.includedFree ?? 0;
+        const base = g.required
           ? g.type === "single"
             ? "חובה לבחור 1"
             : `חובה ${g.minSelect}${g.minSelect === g.maxSelect ? "" : `–${g.maxSelect}`}`
           : g.type === "multi"
             ? `אופציונלי · עד ${g.maxSelect}`
             : "אופציונלי";
+        const subtitle = free > 0 ? `${base} · ${free} כלולים במחיר` : base;
         return (
           <Section
             key={g.id}
@@ -266,6 +283,7 @@ export function ItemDetail({
             title={g.name}
             required={g.required}
             subtitle={subtitle}
+            helpText={g.helpText}
             flash={flashGroupId === g.id}
           >
             {g.options.map((o) => {
@@ -354,6 +372,7 @@ function Section({
   title,
   subtitle,
   required,
+  helpText,
   flash,
   children,
 }: {
@@ -361,6 +380,7 @@ function Section({
   title: string;
   subtitle?: string;
   required?: boolean;
+  helpText?: string | null;
   flash?: boolean;
   children: React.ReactNode;
 }) {
@@ -372,7 +392,7 @@ function Section({
         flash && "ring-2 ring-qf-tomato/60",
       )}
     >
-      <div className="flex items-baseline justify-between gap-3 mb-2">
+      <div className="flex items-baseline justify-between gap-3 mb-1">
         <div className="flex items-center gap-2">
           <h2 className="font-semibold text-base">{title}</h2>
           {required && (
@@ -383,6 +403,9 @@ function Section({
         </div>
         {subtitle && <span className="text-xs text-qf-mute">{subtitle}</span>}
       </div>
+      {helpText && (
+        <p className="text-xs text-qf-mute mb-2 leading-snug">{helpText}</p>
+      )}
       <div>{children}</div>
     </section>
   );

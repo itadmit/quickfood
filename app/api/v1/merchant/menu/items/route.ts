@@ -52,12 +52,19 @@ export const POST = handler(async (req: Request) => {
           required: g.required,
           minSelect: g.min_select,
           maxSelect: g.max_select,
+          includedFree: g.included_free,
+          helpText: g.help_text ?? null,
+          templateSetId: g.template_set_id ?? null,
           position: gi,
           options: {
+            // Inline options are ignored at runtime when templateSetId is set,
+            // but we still persist them so that detaching the set later keeps
+            // the merchant's previous inline rows around.
             create: g.options.map((o, oi) => ({
               name: o.name,
               priceDelta: o.price_delta,
               isDefault: o.is_default,
+              available: o.available,
               position: oi,
             })),
           },

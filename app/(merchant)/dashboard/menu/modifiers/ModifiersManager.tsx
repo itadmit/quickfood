@@ -1,0 +1,519 @@
+"use client";
+
+import Link from "next/link";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { IcoPlus, IcoClose, IcoChev } from "@/components/shared/Icons";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { cn } from "@/lib/cn";
+
+interface SetOption {
+  name: string;
+  priceDelta: number;
+  isDefault: boolean;
+  available: boolean;
+}
+
+interface ModifierSet {
+  id: string;
+  name: string;
+  type: "single" | "multi";
+  required: boolean;
+  minSelect: number;
+  maxSelect: number;
+  includedFree: number;
+  helpText: string | null;
+  position: number;
+  attachedCount: number;
+  options: SetOption[];
+}
+
+interface NewModifierSet extends Omit<ModifierSet, "id" | "attachedCount"> {
+  id: null;
+  attachedCount: 0;
+}
+
+type EditingSet = ModifierSet | NewModifierSet;
+
+const EMPTY: NewModifierSet = {
+  id: null,
+  name: "תוספות חדשות",
+  type: "multi",
+  required: false,
+  minSelect: 0,
+  maxSelect: 5,
+  includedFree: 0,
+  helpText: null,
+  position: 0,
+  attachedCount: 0,
+  options: [],
+};
+
+export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }) {
+  const router = useRouter();
+  const [sets] = useState(initialSets);
+  const [editing, setEditing] = useState<EditingSet | null>(null);
+  const [busy, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<ModifierSet | null>(null);
+
+  function startNew() {
+    setEditing({ ...EMPTY, position: sets.length });
+  }
+
+  function startEdit(s: ModifierSet) {
+    setEditing({ ...s, options: s.options.map((o) => ({ ...o })) });
+  }
+
+  async function save() {
+    if (!editing) return;
+    setError(null);
+    const payload = {
+      name: editing.name,
+      type: editing.type,
+      required: editing.required,
+      min_select: editing.minSelect,
+      max_select: editing.maxSelect,
+      included_free: editing.includedFree,
+      help_text: editing.helpText,
+      position: editing.position,
+      options: editing.options.map((o) => ({
+        name: o.name,
+        price_delta: o.priceDelta,
+        is_default: o.isDefault,
+        available: o.available,
+      })),
+    };
+    const url = editing.id
+      ? `/api/v1/merchant/menu/modifier-sets/${editing.id}`
+      : `/api/v1/merchant/menu/modifier-sets`;
+    const method = editing.id ? "PUT" : "POST";
+    const res = await fetch(url, {
+      method,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const result = await res.json();
+    if (!res.ok) {
+      setError(result.error?.message ?? "שמירה נכשלה");
+      return;
+    }
+    setEditing(null);
+    startTransition(() => router.refresh());
+  }
+
+  async function performDelete() {
+    if (!confirmDelete) return;
+    const res = await fetch(`/api/v1/merchant/menu/modifier-sets/${confirmDelete.id}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      setConfirmDelete(null);
+      startTransition(() => router.refresh());
+    }
+  }
+
+  return (
+    <div className="space-y-5 max-w-3xl">
+      <header className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/menu"
+            className="w-9 h-9 rounded-full border border-qf-line-dash grid place-items-center"
+            aria-label="חזרה לתפריט"
+          >
+            <IcoChev s={18} />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold">קטלוג תוספות</h1>
+            <p className="text-sm text-qf-mute">
+              קבוצות לשימוש חוזר — צור פעם אחת, שייך לעשרות פריטים. שינוי מתעדכן בכל הפריטים בו-זמנית.
+            </p>
+          </div>
+        </div>
+        {!editing && (
+          <button
+            type="button"
+            onClick={startNew}
+            className="px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium inline-flex items-center gap-1"
+          >
+            <IcoPlus c="white" s={14} /> קטלוג חדש
+          </button>
+        )}
+      </header>
+
+      {error && (
+        <div className="bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm rounded-xl px-3 py-2">
+          {error}
+        </div>
+      )}
+
+      {editing && (
+        <SetEditor
+          set={editing}
+          onChange={setEditing}
+          onCancel={() => {
+            setEditing(null);
+            setError(null);
+          }}
+          onSave={save}
+        />
+      )}
+
+      {!editing && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {sets.length === 0 && (
+            <div className="col-span-full text-center py-12 bg-white border border-dashed border-qf-line-dash rounded-2xl">
+              <p className="text-sm text-qf-mute">עוד לא יצרת קטלוגים.</p>
+              <button
+                type="button"
+                onClick={startNew}
+                className="mt-3 text-(--qf-deep) text-sm font-medium underline"
+              >
+                ליצור את הראשון
+              </button>
+            </div>
+          )}
+          {sets.map((s) => (
+            <article
+              key={s.id}
+              className="bg-white border border-qf-line-dash rounded-2xl p-4 space-y-2"
+            >
+              <header className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <h3 className="font-semibold truncate">{s.name}</h3>
+                  <p className="text-xs text-qf-mute">
+                    {s.type === "single" ? "בחירה יחידה" : `בחירה מרובה (מקס׳ ${s.maxSelect})`}
+                    {s.required && " · חובה"}
+                    {s.includedFree > 0 && ` · ${s.includedFree} כלולים`}
+                  </p>
+                </div>
+                <span
+                  className={cn(
+                    "text-[10px] font-semibold px-2 py-0.5 rounded-md whitespace-nowrap",
+                    s.attachedCount > 0
+                      ? "bg-qf-green-soft text-qf-green-deep"
+                      : "bg-qf-line-soft text-qf-mute",
+                  )}
+                  title="מספר פריטים שמשתמשים בקטלוג הזה"
+                >
+                  {s.attachedCount} פריטים
+                </span>
+              </header>
+              {s.helpText && (
+                <p className="text-xs text-qf-mute leading-snug line-clamp-2">{s.helpText}</p>
+              )}
+              <div className="flex flex-wrap gap-1">
+                {s.options.slice(0, 6).map((o, i) => (
+                  <span
+                    key={i}
+                    className={cn(
+                      "text-[11px] px-2 py-0.5 rounded-md",
+                      o.available
+                        ? "bg-qf-line-soft text-qf-ink2"
+                        : "bg-qf-tomato-soft/40 text-qf-tomato line-through",
+                    )}
+                  >
+                    {o.name}
+                    {o.priceDelta !== 0 && (
+                      <span className="text-qf-mute mr-1 tnum">
+                        {o.priceDelta > 0 ? `+₪${o.priceDelta}` : `-₪${Math.abs(o.priceDelta)}`}
+                      </span>
+                    )}
+                  </span>
+                ))}
+                {s.options.length > 6 && (
+                  <span className="text-[11px] text-qf-mute px-1">+{s.options.length - 6}</span>
+                )}
+                {s.options.length === 0 && (
+                  <span className="text-[11px] text-qf-mute italic">אין אפשרויות</span>
+                )}
+              </div>
+              <footer className="flex justify-end gap-2 pt-2 border-t border-qf-line-soft">
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(s)}
+                  disabled={s.attachedCount > 0}
+                  className="text-xs text-qf-tomato hover:underline disabled:opacity-40 disabled:no-underline"
+                  title={
+                    s.attachedCount > 0
+                      ? "נתק את הקטלוג מכל הפריטים לפני המחיקה"
+                      : undefined
+                  }
+                >
+                  מחק
+                </button>
+                <button
+                  type="button"
+                  onClick={() => startEdit(s)}
+                  className="text-xs text-(--qf-deep) hover:underline font-medium"
+                >
+                  עריכה
+                </button>
+              </footer>
+            </article>
+          ))}
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="מחיקת קטלוג"
+        message={
+          <>
+            הקטלוג <span className="font-semibold">&quot;{confirmDelete?.name}&quot;</span> יימחק. פעולה זו לא ניתנת לביטול.
+          </>
+        }
+        confirmLabel="מחק"
+        cancelLabel="ביטול"
+        variant="danger"
+        busy={busy}
+        onConfirm={performDelete}
+        onCancel={() => setConfirmDelete(null)}
+      />
+    </div>
+  );
+}
+
+function SetEditor({
+  set,
+  onChange,
+  onCancel,
+  onSave,
+}: {
+  set: EditingSet;
+  onChange: (s: EditingSet) => void;
+  onCancel: () => void;
+  onSave: () => void;
+}) {
+  const isMulti = set.type === "multi";
+  return (
+    <section className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-4">
+      <header className="flex items-center justify-between">
+        <h2 className="font-semibold">
+          {set.id ? "עריכת קטלוג" : "קטלוג חדש"}
+        </h2>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-3 py-1.5 rounded-lg border border-qf-line-dash text-sm"
+          >
+            ביטול
+          </button>
+          <button
+            type="button"
+            onClick={onSave}
+            className="px-3.5 py-1.5 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium"
+          >
+            שמור קטלוג
+          </button>
+        </div>
+      </header>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label className="flex flex-col gap-1">
+          <span className="text-sm font-medium">שם הקטלוג</span>
+          <input
+            value={set.name}
+            onChange={(e) => onChange({ ...set, name: e.target.value })}
+            className="px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+            placeholder="למשל: תוספות פיצה"
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-sm font-medium">סוג בחירה</span>
+          <select
+            value={set.type}
+            onChange={(e) => onChange({ ...set, type: e.target.value as "single" | "multi" })}
+            className="px-3 py-2 rounded-xl border border-qf-line-dash bg-white focus:border-(--qf-primary) outline-none"
+          >
+            <option value="single">בחירה יחידה (למשל: סוג בצק)</option>
+            <option value="multi">בחירה מרובה (למשל: תוספות)</option>
+          </select>
+        </label>
+      </div>
+
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={set.required}
+          onChange={(e) => onChange({ ...set, required: e.target.checked })}
+        />
+        <span>חובה לבחור — הלקוח לא יוכל להזמין בלי לבחור</span>
+      </label>
+
+      {isMulti && (
+        <div className="grid grid-cols-3 gap-3">
+          <label className="flex flex-col gap-1 text-xs">
+            <span className="text-qf-mute">מינ׳ בחירות</span>
+            <input
+              type="number"
+              min={0}
+              value={set.minSelect}
+              onChange={(e) =>
+                onChange({ ...set, minSelect: Math.max(0, parseInt(e.target.value, 10) || 0) })
+              }
+              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs">
+            <span className="text-qf-mute">מקס׳ בחירות</span>
+            <input
+              type="number"
+              min={1}
+              value={set.maxSelect}
+              onChange={(e) =>
+                onChange({ ...set, maxSelect: Math.max(1, parseInt(e.target.value, 10) || 1) })
+              }
+              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs">
+            <span className="text-qf-mute" title="כמה תוספות כלולות במחיר לפני שמחייבים">
+              כלולות חינם
+            </span>
+            <input
+              type="number"
+              min={0}
+              value={set.includedFree}
+              onChange={(e) =>
+                onChange({ ...set, includedFree: Math.max(0, parseInt(e.target.value, 10) || 0) })
+              }
+              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
+            />
+          </label>
+        </div>
+      )}
+
+      <label className="flex flex-col gap-1">
+        <span className="text-sm font-medium">טקסט עזר ללקוח (אופציונלי)</span>
+        <textarea
+          value={set.helpText ?? ""}
+          onChange={(e) => onChange({ ...set, helpText: e.target.value || null })}
+          rows={2}
+          maxLength={200}
+          placeholder="למשל: ׳3 תוספות חינם, כל תוספת נוספת בתשלום׳"
+          className="px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm resize-none"
+        />
+      </label>
+
+      <div className="border-t border-qf-line-soft pt-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <h3 className="font-medium text-sm">אפשרויות בקטלוג</h3>
+          <button
+            type="button"
+            onClick={() =>
+              onChange({
+                ...set,
+                options: [
+                  ...set.options,
+                  { name: "אפשרות חדשה", priceDelta: 0, isDefault: false, available: true },
+                ],
+              })
+            }
+            className="text-xs text-(--qf-deep) inline-flex items-center gap-1 font-medium"
+          >
+            <IcoPlus c="var(--qf-deep)" s={12} /> אפשרות
+          </button>
+        </div>
+        {set.options.length === 0 ? (
+          <p className="text-xs text-qf-mute italic">הוסף לפחות אפשרות אחת.</p>
+        ) : (
+          <div className="space-y-1.5">
+            {set.options.map((o, oi) => (
+              <div
+                key={oi}
+                className="grid grid-cols-[1fr_72px_28px_56px_28px] sm:grid-cols-[1fr_90px_36px_64px_32px] gap-2 items-center"
+              >
+                <input
+                  value={o.name}
+                  onChange={(e) =>
+                    onChange({
+                      ...set,
+                      options: set.options.map((x, i) =>
+                        i === oi ? { ...x, name: e.target.value } : x,
+                      ),
+                    })
+                  }
+                  className={cn(
+                    "px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white",
+                    !o.available && "opacity-50",
+                  )}
+                />
+                <input
+                  type="number"
+                  value={o.priceDelta}
+                  onChange={(e) =>
+                    onChange({
+                      ...set,
+                      options: set.options.map((x, i) =>
+                        i === oi ? { ...x, priceDelta: parseInt(e.target.value, 10) || 0 } : x,
+                      ),
+                    })
+                  }
+                  className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white tnum"
+                  title="מחיר נוסף (₪)"
+                />
+                <label
+                  className="text-xs inline-flex items-center justify-center"
+                  title="ברירת מחדל"
+                >
+                  <input
+                    type={set.type === "single" ? "radio" : "checkbox"}
+                    name="default-opt"
+                    checked={o.isDefault}
+                    onChange={(e) =>
+                      onChange({
+                        ...set,
+                        options:
+                          set.type === "single"
+                            ? set.options.map((x, i) => ({ ...x, isDefault: i === oi }))
+                            : set.options.map((x, i) =>
+                                i === oi ? { ...x, isDefault: e.target.checked } : x,
+                              ),
+                      })
+                    }
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onChange({
+                      ...set,
+                      options: set.options.map((x, i) =>
+                        i === oi ? { ...x, available: !x.available } : x,
+                      ),
+                    })
+                  }
+                  className={cn(
+                    "text-[10px] font-semibold px-2 py-1 rounded-md transition",
+                    o.available
+                      ? "bg-qf-green-soft text-qf-green-deep"
+                      : "bg-qf-tomato-soft text-qf-tomato",
+                  )}
+                  title={o.available ? "זמין — לחץ לסמן כאזל" : "אזל — לחץ להחזיר לזמין"}
+                >
+                  {o.available ? "זמין" : "אזל"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onChange({
+                      ...set,
+                      options: set.options.filter((_, i) => i !== oi),
+                    })
+                  }
+                  className="w-8 h-8 rounded-lg hover:bg-qf-tomato-soft text-qf-mute hover:text-qf-tomato"
+                  aria-label="הסר"
+                >
+                  <IcoClose s={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}

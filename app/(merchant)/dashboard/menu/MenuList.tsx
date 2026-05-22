@@ -127,7 +127,13 @@ export function MenuList({
             {visibleCount} פריטים זמינים · {hiddenCount} מוסתרים
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Link
+            href="/dashboard/menu/modifiers"
+            className="hidden sm:inline-flex px-3.5 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm"
+          >
+            קטלוג תוספות
+          </Link>
           <button
             type="button"
             onClick={() => setImportOpen(true)}

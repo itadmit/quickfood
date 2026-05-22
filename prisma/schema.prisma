@@ -178,70 +178,70 @@ enum PaymentTransactionStatus {
 // ─── Tenant & Branches ──────────────────────────────────────────
 
 model Tenant {
-  id              String          @id @default(uuid()) @db.Uuid
-  slug            String          @unique
-  name            String
-  logoLetter      String          @map("logo_letter") @db.VarChar(2)
-  logoUrl         String?         @map("logo_url")
-  coverImage      String?         @map("cover_image")
-  themeId         ThemeId         @default(fresh) @map("theme_id")
-  businessType    BusinessType    @default(general) @map("business_type")
-  cuisineType     String?         @map("cuisine_type")
-  vatNumber       String?         @map("vat_number")
-  status          TenantStatus    @default(active)
-  planId          String?         @map("plan_id") @db.Uuid
-  plan            Plan?           @relation(fields: [planId], references: [id])
-  customDomain    String?         @unique @map("custom_domain")
-  acceptsCash           Boolean       @default(true) @map("accepts_cash")
+  id                   String         @id @default(uuid()) @db.Uuid
+  slug                 String         @unique
+  name                 String
+  logoLetter           String         @map("logo_letter") @db.VarChar(2)
+  logoUrl              String?        @map("logo_url")
+  coverImage           String?        @map("cover_image")
+  themeId              ThemeId        @default(fresh) @map("theme_id")
+  businessType         BusinessType   @default(general) @map("business_type")
+  cuisineType          String?        @map("cuisine_type")
+  vatNumber            String?        @map("vat_number")
+  status               TenantStatus   @default(active)
+  planId               String?        @map("plan_id") @db.Uuid
+  plan                 Plan?          @relation(fields: [planId], references: [id])
+  customDomain         String?        @unique @map("custom_domain")
+  acceptsCash          Boolean        @default(true) @map("accepts_cash")
   /// Which payment method should be pre-selected for the customer at
   /// checkout. NULL means "fall back to the platform default order"
   /// (first allowed from cash → card → bit → apple_pay → google_pay).
   /// Server validates the value is currently in the tenant's allowed
   /// methods on every PATCH.
-  defaultPaymentMethod  PaymentMethod? @map("default_payment_method")
-  allowedOrigins  String[]        @default([]) @map("allowed_origins")
+  defaultPaymentMethod PaymentMethod? @map("default_payment_method")
+  allowedOrigins       String[]       @default([]) @map("allowed_origins")
 
   // Checkout configuration. When false (default) the post-order screen is a
   // simple e-commerce "thank you" receipt. When true it also renders the live
   // order tracking (ETA, status timeline, SSE updates, branch contact).
-  checkoutShowTracking Boolean       @default(false) @map("checkout_show_tracking")
+  checkoutShowTracking Boolean @default(false) @map("checkout_show_tracking")
 
   // Reviews configuration
-  reviewsEnabled       Boolean       @default(true) @map("reviews_enabled")
-  reviewsPublic        Boolean       @default(true) @map("reviews_public")
-  reviewsChannel       ReviewChannel @default(off) @map("reviews_channel")
-  reviewsDelayMinutes  Int           @default(60) @map("reviews_delay_minutes")
-  smsSender            String?       @map("sms_sender") @db.VarChar(11)
+  reviewsEnabled      Boolean       @default(true) @map("reviews_enabled")
+  reviewsPublic       Boolean       @default(true) @map("reviews_public")
+  reviewsChannel      ReviewChannel @default(off) @map("reviews_channel")
+  reviewsDelayMinutes Int           @default(60) @map("reviews_delay_minutes")
+  smsSender           String?       @map("sms_sender") @db.VarChar(11)
 
   // SMS + WhatsApp credit balance. Top-ups (Starter/Growth/Scale) STACK —
   // there is no messaging subscription. Each purchase is a one-off charge
   // to the saved token that adds the package quota to this counter. Both
   // SMS and WhatsApp sends decrement from the same pool because per-message
   // price is the same.
-  smsCreditsRemaining  Int     @default(0) @map("sms_credits_remaining")
+  smsCreditsRemaining Int @default(0) @map("sms_credits_remaining")
 
   // iBot Chat (WhatsApp) credentials. Each tenant connects their own iBot
   // instance — QuickFood does not host a shared WhatsApp number. When both
   // fields are set we treat WhatsApp as available; the `reviewsChannel`
   // value `whatsapp` triggers sends.
-  whatsappToken        String? @map("whatsapp_token")
-  whatsappInstanceId   String? @map("whatsapp_instance_id")
+  whatsappToken      String? @map("whatsapp_token")
+  whatsappInstanceId String? @map("whatsapp_instance_id")
 
   // Mirror IDs from the QuickBilling Hub (canonical state lives there).
-  billingCustomerId         String?   @map("billing_customer_id")
+  billingCustomerId       String?   @map("billing_customer_id")
   // Base platform subscription (quickfood_base — ₪299/mo + VAT).
-  billingSubscriptionId     String?   @map("billing_subscription_id")
-  billingPaymentMethodId    String?   @map("billing_payment_method_id")
+  billingSubscriptionId   String?   @map("billing_subscription_id")
+  billingPaymentMethodId  String?   @map("billing_payment_method_id")
   // Set when the merchant has completed billing setup (token saved). Until
   // then SMS purchases are blocked and after `trialEndsAt` the whole
   // dashboard is locked behind a "complete payment" screen.
-  billingSetupCompletedAt   DateTime? @map("billing_setup_completed_at")
+  billingSetupCompletedAt DateTime? @map("billing_setup_completed_at")
   // 7-day local trial countdown set at signup. After this date, without a
   // saved payment method, the dashboard is fully locked.
-  trialEndsAt               DateTime? @map("trial_ends_at")
+  trialEndsAt             DateTime? @map("trial_ends_at")
 
-  createdAt       DateTime        @default(now()) @map("created_at")
-  updatedAt       DateTime        @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   branches         Branch[]
   menuCategories   MenuCategory[]
@@ -260,6 +260,7 @@ model Tenant {
   campaigns        Campaign[]
   smsLogs          SmsLog[]
   emailLogs        EmailLog[]
+  modifierSets     ModifierSet[]
 
   @@index([slug])
   @@map("tenants")
@@ -378,19 +379,29 @@ model ItemSize {
 }
 
 model ItemOptionGroup {
-  id        String          @id @default(uuid()) @db.Uuid
-  itemId    String          @map("item_id") @db.Uuid
-  item      MenuItem        @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  name      String
-  type      OptionGroupType @default(single)
-  required  Boolean         @default(false)
-  minSelect Int             @default(0) @map("min_select")
-  maxSelect Int             @default(1) @map("max_select")
-  position  Int             @default(0)
+  id            String          @id @default(uuid()) @db.Uuid
+  itemId        String          @map("item_id") @db.Uuid
+  item          MenuItem        @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  name          String
+  type          OptionGroupType @default(single)
+  required      Boolean         @default(false)
+  minSelect     Int             @default(0) @map("min_select")
+  maxSelect     Int             @default(1) @map("max_select")
+  // Number of selections that are included in the base price (multi-select
+  // only). Selections beyond this count add their priceDelta. Default 0 =
+  // every selection adds its delta (existing behaviour).
+  includedFree  Int             @default(0) @map("included_free")
+  helpText      String?         @map("help_text")
+  position      Int             @default(0)
+  // When set, this group inherits its options + config from a ModifierSet.
+  // Inline `options` rows are ignored when templateSetId is non-null.
+  templateSetId String?         @map("template_set_id") @db.Uuid
+  templateSet   ModifierSet?    @relation(fields: [templateSetId], references: [id], onDelete: SetNull)
 
   options ItemOption[]
 
   @@index([itemId])
+  @@index([templateSetId])
   @@map("item_option_groups")
 }
 
@@ -401,10 +412,51 @@ model ItemOption {
   name       String
   priceDelta Int             @default(0) @map("price_delta")
   isDefault  Boolean         @default(false) @map("is_default")
+  available  Boolean         @default(true)
   position   Int             @default(0)
 
   @@index([groupId, position])
   @@map("item_options")
+}
+
+// Reusable option group ("modifier set") — the Wolt-style library that lets a
+// merchant define a set of toppings/extras once and attach it to many items.
+// Attached via ItemOptionGroup.templateSetId; edits to the set propagate to
+// every item that references it.
+model ModifierSet {
+  id           String          @id @default(uuid()) @db.Uuid
+  tenantId     String          @map("tenant_id") @db.Uuid
+  tenant       Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name         String
+  type         OptionGroupType @default(multi)
+  required     Boolean         @default(false)
+  minSelect    Int             @default(0) @map("min_select")
+  maxSelect    Int             @default(5) @map("max_select")
+  includedFree Int             @default(0) @map("included_free")
+  helpText     String?         @map("help_text")
+  position     Int             @default(0)
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  options    ModifierSetOption[]
+  attachedTo ItemOptionGroup[]
+
+  @@index([tenantId, position])
+  @@map("modifier_sets")
+}
+
+model ModifierSetOption {
+  id         String      @id @default(uuid()) @db.Uuid
+  setId      String      @map("set_id") @db.Uuid
+  set        ModifierSet @relation(fields: [setId], references: [id], onDelete: Cascade)
+  name       String
+  priceDelta Int         @default(0) @map("price_delta")
+  isDefault  Boolean     @default(false) @map("is_default")
+  available  Boolean     @default(true)
+  position   Int         @default(0)
+
+  @@index([setId, position])
+  @@map("modifier_set_options")
 }
 
 // ─── Customer & Address ─────────────────────────────────────────
@@ -484,10 +536,10 @@ model Order {
   courierId String?  @map("courier_id") @db.Uuid
   courier   Courier? @relation(fields: [courierId], references: [id])
 
-  customerNotes          String? @map("customer_notes")
-  customerPhoneSnap      String? @map("customer_phone_snap")
-  customerFirstNameSnap  String? @map("customer_first_name_snap")
-  customerLastNameSnap   String? @map("customer_last_name_snap")
+  customerNotes         String? @map("customer_notes")
+  customerPhoneSnap     String? @map("customer_phone_snap")
+  customerFirstNameSnap String? @map("customer_first_name_snap")
+  customerLastNameSnap  String? @map("customer_last_name_snap")
 
   estimatedReadyAt    DateTime? @map("estimated_ready_at")
   estimatedDeliveryAt DateTime? @map("estimated_delivery_at")
@@ -498,8 +550,8 @@ model Order {
   deliveredAt DateTime? @map("delivered_at")
   cancelledAt DateTime? @map("cancelled_at")
 
-  rating     Int?
-  reviewText String? @map("review_text")
+  rating                  Int?
+  reviewText              String?   @map("review_text")
   reviewPromptDismissedAt DateTime? @map("review_prompt_dismissed_at")
 
   items           OrderItem[]
@@ -629,27 +681,27 @@ model Review {
 }
 
 model SmsLog {
-  id           String              @id @default(uuid()) @db.Uuid
-  tenantId     String              @map("tenant_id") @db.Uuid
-  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id           String             @id @default(uuid()) @db.Uuid
+  tenantId     String             @map("tenant_id") @db.Uuid
+  tenant       Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   to           String
   sender       String
   body         String
   // "sms" or "whatsapp". Both channels write to this single audit log,
   // since the credit pool, balance, and history UI are unified.
-  channel      String              @default("sms")
+  channel      String             @default("sms")
   // What we're sending — e.g. "review_reminder", "order_status", etc.
-  kind         String              @default("generic")
+  kind         String             @default("generic")
   // Free-form reference (e.g. orderId for a review reminder) for idempotency
   // and observability. Not enforced as FK because senders may be diverse.
-  refKind      String?             @map("ref_kind")
-  refId        String?             @map("ref_id")
-  status       NotificationStatus  @default(pending)
-  providerCode Int?                @map("provider_code")
-  providerMsg  String?             @map("provider_msg")
-  sentAt       DateTime?           @map("sent_at")
-  deliveredAt  DateTime?           @map("delivered_at")
-  createdAt    DateTime            @default(now()) @map("created_at")
+  refKind      String?            @map("ref_kind")
+  refId        String?            @map("ref_id")
+  status       NotificationStatus @default(pending)
+  providerCode Int?               @map("provider_code")
+  providerMsg  String?            @map("provider_msg")
+  sentAt       DateTime?          @map("sent_at")
+  deliveredAt  DateTime?          @map("delivered_at")
+  createdAt    DateTime           @default(now()) @map("created_at")
 
   @@index([tenantId, createdAt(sort: Desc)])
   @@index([refKind, refId])
@@ -657,21 +709,21 @@ model SmsLog {
 }
 
 model EmailLog {
-  id          String              @id @default(uuid()) @db.Uuid
-  tenantId    String?             @map("tenant_id") @db.Uuid
-  tenant      Tenant?             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id          String             @id @default(uuid()) @db.Uuid
+  tenantId    String?            @map("tenant_id") @db.Uuid
+  tenant      Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   to          String
-  fromName    String              @default("") @map("from_name")
+  fromName    String             @default("") @map("from_name")
   subject     String
   body        String
-  kind        String              @default("generic")
-  refKind     String?             @map("ref_kind")
-  refId       String?             @map("ref_id")
-  status      NotificationStatus  @default(pending)
-  providerId  String?             @map("provider_id")
-  providerMsg String?             @map("provider_msg")
-  sentAt      DateTime?           @map("sent_at")
-  createdAt   DateTime            @default(now()) @map("created_at")
+  kind        String             @default("generic")
+  refKind     String?            @map("ref_kind")
+  refId       String?            @map("ref_id")
+  status      NotificationStatus @default(pending)
+  providerId  String?            @map("provider_id")
+  providerMsg String?            @map("provider_msg")
+  sentAt      DateTime?          @map("sent_at")
+  createdAt   DateTime           @default(now()) @map("created_at")
 
   @@index([tenantId, createdAt(sort: Desc)])
   @@index([refKind, refId])
@@ -679,20 +731,20 @@ model EmailLog {
 }
 
 model ReviewItem {
-  id          String   @id @default(uuid()) @db.Uuid
-  reviewId    String   @map("review_id") @db.Uuid
-  review      Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  id          String    @id @default(uuid()) @db.Uuid
+  reviewId    String    @map("review_id") @db.Uuid
+  review      Review    @relation(fields: [reviewId], references: [id], onDelete: Cascade)
   // The order line this rating refers to. Cascade-delete with the review;
   // if the order is deleted, the parent Review cascades too.
-  orderItemId String   @map("order_item_id") @db.Uuid
+  orderItemId String    @map("order_item_id") @db.Uuid
   orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
   // Denormalized menu_item_id for fast per-product aggregation. Nullable
   // because OrderItem.menuItemId is nullable (legacy/free items).
-  menuItemId  String?  @map("menu_item_id") @db.Uuid
+  menuItemId  String?   @map("menu_item_id") @db.Uuid
   menuItem    MenuItem? @relation(fields: [menuItemId], references: [id])
   rating      Int
   text        String?
-  createdAt   DateTime @default(now()) @map("created_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
 
   @@index([menuItemId, createdAt(sort: Desc)])
   @@index([reviewId])
@@ -702,18 +754,18 @@ model ReviewItem {
 // ─── Auth ───────────────────────────────────────────────────────
 
 model MerchantUser {
-  id            String                @id @default(uuid()) @db.Uuid
-  tenantId      String?               @map("tenant_id") @db.Uuid
-  tenant        Tenant?               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  email         String                @unique
-  passwordHash  String                @map("password_hash")
-  name          String
-  role          UserRole              @default(owner)
-  branches      String[]              @default([])
-  tfaEnabled    Boolean               @default(false) @map("tfa_enabled")
-  tfaSecret     String?               @map("tfa_secret")
-  lastLoginAt   DateTime?             @map("last_login_at")
-  createdAt     DateTime              @default(now()) @map("created_at")
+  id             String               @id @default(uuid()) @db.Uuid
+  tenantId       String?              @map("tenant_id") @db.Uuid
+  tenant         Tenant?              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email          String               @unique
+  passwordHash   String               @map("password_hash")
+  name           String
+  role           UserRole             @default(owner)
+  branches       String[]             @default([])
+  tfaEnabled     Boolean              @default(false) @map("tfa_enabled")
+  tfaSecret      String?              @map("tfa_secret")
+  lastLoginAt    DateTime?            @map("last_login_at")
+  createdAt      DateTime             @default(now()) @map("created_at")
   passwordResets PasswordResetToken[]
 
   @@index([tenantId])
@@ -903,21 +955,21 @@ model WebhookDelivery {
 /// For Grow: credentials contains { userId, pageCode? }. The platform-level
 /// apiKey + default pageCode live in env (GROW_API_KEY, GROW_PAGE_CODE).
 model PaymentProviderConfig {
-  id          String          @id @default(uuid()) @db.Uuid
-  tenantId    String          @map("tenant_id") @db.Uuid
-  tenant      Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  provider    PaymentProvider
-  credentials Json            @default("{}")
-  settings    Json            @default("{}")
-  testMode    Boolean         @default(true) @map("test_mode")
-  isActive    Boolean         @default(false) @map("is_active")
+  id                        String          @id @default(uuid()) @db.Uuid
+  tenantId                  String          @map("tenant_id") @db.Uuid
+  tenant                    Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  provider                  PaymentProvider
+  credentials               Json            @default("{}")
+  settings                  Json            @default("{}")
+  testMode                  Boolean         @default(true) @map("test_mode")
+  isActive                  Boolean         @default(false) @map("is_active")
   /// Per-tenant Apple Pay domain-association file content. Only used when the
   /// tenant serves checkout from a custom domain (Tenant.customDomain). Issued
   /// by Grow per domain. For tenants on the platform domain, leave NULL — the
   /// /.well-known/ route falls back to APPLE_PAY_DOMAIN_ASSOCIATION_(DEV|PROD).
-  applePayDomainAssociation String?    @map("apple_pay_domain_association") @db.Text
-  createdAt                 DateTime   @default(now()) @map("created_at")
-  updatedAt                 DateTime   @updatedAt @map("updated_at")
+  applePayDomainAssociation String?         @map("apple_pay_domain_association") @db.Text
+  createdAt                 DateTime        @default(now()) @map("created_at")
+  updatedAt                 DateTime        @updatedAt @map("updated_at")
 
   @@unique([tenantId, provider])
   @@map("payment_provider_configs")
@@ -992,28 +1044,28 @@ enum CampaignStyle {
 }
 
 model Campaign {
-  id        String        @id @default(uuid()) @db.Uuid
-  tenantId  String        @map("tenant_id") @db.Uuid
-  tenant    Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  kind      CampaignKind  @default(popup)
+  kind     CampaignKind  @default(popup)
   // For kind=banner only. popups are always rendered as their image.
-  style     CampaignStyle @default(image)
-  title     String        @db.VarChar(120)
+  style    CampaignStyle @default(image)
+  title    String        @db.VarChar(120)
   // Optional second line, only used by text-style banners.
-  subtitle  String?       @db.VarChar(160)
+  subtitle String?       @db.VarChar(160)
   // Icon + color slugs reused from lib/category-style.ts. Only text-style
   // banners read these; popups and image banners ignore them.
-  icon      String?       @db.VarChar(40)
-  color     String?       @db.VarChar(40)
+  icon     String?       @db.VarChar(40)
+  color    String?       @db.VarChar(40)
   // Required for popups and image-style banners; optional (and unused) for
   // text-style banners. Enforced at the API layer, not at the DB level.
-  imageUrl  String?       @map("image_url")
-  isActive  Boolean       @default(true) @map("is_active")
-  linkUrl   String?       @map("link_url")
+  imageUrl String?       @map("image_url")
+  isActive Boolean       @default(true) @map("is_active")
+  linkUrl  String?       @map("link_url")
 
-  createdAt DateTime      @default(now()) @map("created_at")
-  updatedAt DateTime      @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([tenantId, kind, isActive, updatedAt(sort: Desc)])
   @@map("campaigns")

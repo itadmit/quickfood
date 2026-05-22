@@ -26,6 +26,7 @@ interface Option {
   name: string;
   priceDelta: number;
   isDefault: boolean;
+  available: boolean;
 }
 
 interface OptionGroup {
@@ -34,7 +35,17 @@ interface OptionGroup {
   required: boolean;
   minSelect: number;
   maxSelect: number;
+  includedFree: number;
+  helpText: string | null;
+  templateSetId: string | null;
   options: Option[];
+}
+
+export interface ModifierSetSummary {
+  id: string;
+  name: string;
+  type: "single" | "multi";
+  optionsCount: number;
 }
 
 interface ItemData {
@@ -77,11 +88,13 @@ export function ItemEditor({
   categories,
   item,
   businessType = "general",
+  modifierSets = [],
 }: {
   mode: "new" | "edit";
   categories: Category[];
   item?: ItemData;
   businessType?: BusinessType;
+  modifierSets?: ModifierSetSummary[];
 }) {
   const router = useRouter();
   const [data, setData] = useState<ItemData>(item ?? { ...EMPTY_ITEM, categoryId: categories[0]?.id ?? "" });
@@ -117,7 +130,39 @@ export function ItemEditor({
       ...d,
       optionGroups: [
         ...d.optionGroups,
-        { name: "קבוצה חדשה", type: "multi", required: false, minSelect: 0, maxSelect: 5, options: [] },
+        {
+          name: "קבוצה חדשה",
+          type: "multi",
+          required: false,
+          minSelect: 0,
+          maxSelect: 5,
+          includedFree: 0,
+          helpText: null,
+          templateSetId: null,
+          options: [],
+        },
+      ],
+    }));
+  }
+
+  function attachSet(setId: string) {
+    const set = modifierSets.find((s) => s.id === setId);
+    if (!set) return;
+    setData((d) => ({
+      ...d,
+      optionGroups: [
+        ...d.optionGroups,
+        {
+          name: set.name,
+          type: set.type,
+          required: false,
+          minSelect: 0,
+          maxSelect: 5,
+          includedFree: 0,
+          helpText: null,
+          templateSetId: set.id,
+          options: [],
+        },
       ],
     }));
   }
@@ -159,10 +204,14 @@ export function ItemEditor({
           required: g.required,
           min_select: g.minSelect,
           max_select: g.maxSelect,
+          included_free: g.includedFree,
+          help_text: g.helpText,
+          template_set_id: g.templateSetId,
           options: g.options.map((o) => ({
             name: o.name,
             price_delta: o.priceDelta,
             is_default: o.isDefault,
+            available: o.available,
           })),
         })),
       };
@@ -198,6 +247,27 @@ export function ItemEditor({
     }
   }
 
+  const [duplicating, setDuplicating] = useState(false);
+  async function duplicate() {
+    if (mode !== "edit" || !item?.id) return;
+    setDuplicating(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/v1/merchant/menu/items/${item.id}/duplicate`, {
+        method: "POST",
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        setError(result.error?.message ?? "שכפול נכשל");
+        return;
+      }
+      router.push(`/dashboard/menu/${result.item.id}`);
+      router.refresh();
+    } finally {
+      setDuplicating(false);
+    }
+  }
+
   return (
     <div className="space-y-5 max-w-3xl">
       <header className="flex items-center justify-between gap-3">
@@ -216,13 +286,23 @@ export function ItemEditor({
         </div>
         <div className="flex gap-2">
           {mode === "edit" && (
-            <button
-              type="button"
-              onClick={() => setConfirmDel(true)}
-              className="px-3.5 py-2 rounded-xl border border-qf-tomato/40 text-qf-tomato hover:bg-qf-tomato-soft text-sm"
-            >
-              מחק
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={duplicate}
+                disabled={duplicating}
+                className="px-3.5 py-2 rounded-xl border border-qf-line-dash text-qf-ink2 hover:bg-qf-line-soft text-sm disabled:opacity-60"
+              >
+                {duplicating ? "משכפל..." : "שכפל"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmDel(true)}
+                className="px-3.5 py-2 rounded-xl border border-qf-tomato/40 text-qf-tomato hover:bg-qf-tomato-soft text-sm"
+              >
+                מחק
+              </button>
+            </>
           )}
           <button
             type="button"
@@ -416,21 +496,53 @@ export function ItemEditor({
 
           {/* Option groups */}
           <section className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-3">
-            <header className="flex items-center justify-between">
+            <header className="flex items-center justify-between gap-2 flex-wrap">
               <h2 className="font-semibold">קבוצות אפשרויות</h2>
-              <button
-                type="button"
-                onClick={addGroup}
-                className="text-(--qf-deep) text-sm inline-flex items-center gap-1"
-              >
-                <IcoPlus c="var(--qf-deep)" s={14} /> הוסף קבוצה
-              </button>
+              <div className="flex items-center gap-2">
+                {modifierSets.length > 0 && (
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        attachSet(e.target.value);
+                        e.target.value = "";
+                      }
+                    }}
+                    value=""
+                    className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white text-(--qf-deep)"
+                  >
+                    <option value="">+ מקטלוג…</option>
+                    {modifierSets.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name} ({s.optionsCount})
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <button
+                  type="button"
+                  onClick={addGroup}
+                  className="text-(--qf-deep) text-sm inline-flex items-center gap-1"
+                >
+                  <IcoPlus c="var(--qf-deep)" s={14} /> קבוצה חדשה
+                </button>
+              </div>
             </header>
+            {modifierSets.length === 0 && (
+              <p className="text-xs text-qf-mute leading-snug">
+                טיפ: יצרת תפריט גדול? פתח <Link href="/dashboard/menu/modifiers" className="underline">קטלוג תוספות</Link> פעם
+                אחת ושייך אותו לעשרות פריטים — עורכים במקום אחד, מתעדכן בכל הפריטים.
+              </p>
+            )}
             <div className="space-y-3">
               {data.optionGroups.map((g, gi) => (
                 <GroupEditor
                   key={gi}
                   group={g}
+                  templateSet={
+                    g.templateSetId
+                      ? modifierSets.find((s) => s.id === g.templateSetId) ?? null
+                      : null
+                  }
                   onChange={(next) =>
                     setData((d) => ({
                       ...d,
@@ -518,20 +630,59 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function GroupEditor({
   group,
+  templateSet,
   onChange,
   onRemove,
 }: {
   group: OptionGroup;
+  templateSet: ModifierSetSummary | null;
   onChange: (g: OptionGroup) => void;
   onRemove: () => void;
 }) {
+  // When this group is linked to a ModifierSet, all its fields and options
+  // come from the set at runtime. The merchant edits the set itself (in the
+  // catalog page) — here we just show a read-only summary + offer to detach.
+  if (group.templateSetId) {
+    return (
+      <div className="border border-(--qf-primary)/30 rounded-xl p-3 space-y-2 bg-(--qf-primary)/5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[10px] bg-(--qf-primary) text-white px-2 py-0.5 rounded-md font-semibold tracking-wider">
+            מקטלוג
+          </span>
+          <div className="font-medium text-sm flex-1 min-w-0 truncate">
+            {templateSet?.name ?? group.name}
+          </div>
+          <Link
+            href="/dashboard/menu/modifiers"
+            className="text-xs text-(--qf-deep) underline"
+          >
+            עריכה
+          </Link>
+          <button
+            type="button"
+            onClick={onRemove}
+            className="w-8 h-8 rounded-lg hover:bg-qf-tomato-soft text-qf-mute hover:text-qf-tomato"
+            aria-label="הסר מהמנה"
+            title="הסר את הקבוצה מהמנה (לא מוחק את הקטלוג)"
+          >
+            <IcoClose s={14} />
+          </button>
+        </div>
+        <p className="text-xs text-qf-mute leading-snug">
+          הקבוצה הזו נשלפת מקטלוג התוספות. עריכת השם, האפשרויות והמחירים — בדף הקטלוג. כל שינוי שם
+          יחול גם על שאר הפריטים שמחוברים אליה.
+          {templateSet ? ` (${templateSet.optionsCount} אפשרויות)` : ""}
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="border border-qf-line-dash rounded-xl p-3 space-y-3 bg-qf-line-soft/40">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <input
           value={group.name}
           onChange={(e) => onChange({ ...group, name: e.target.value })}
-          className="flex-1 px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white"
+          className="flex-1 min-w-32 px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white"
         />
         <select
           value={group.type}
@@ -549,16 +700,6 @@ function GroupEditor({
           />
           חובה
         </label>
-        {group.type === "multi" && (
-          <input
-            type="number"
-            min={1}
-            value={group.maxSelect}
-            onChange={(e) => onChange({ ...group, maxSelect: parseInt(e.target.value, 10) || 1 })}
-            className="w-14 px-2 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white tnum"
-            title="מקסימום"
-          />
-        )}
         <button
           type="button"
           onClick={onRemove}
@@ -568,9 +709,64 @@ function GroupEditor({
           <IcoClose s={14} />
         </button>
       </div>
+      {/* Limits row — only relevant for multi. min_select also matters for
+          single+required (effectively 1) but we keep the UI simple. */}
+      {group.type === "multi" && (
+        <div className="grid grid-cols-3 gap-2 text-xs">
+          <label className="flex flex-col gap-1">
+            <span className="text-qf-mute">מינ׳ בחירות</span>
+            <input
+              type="number"
+              min={0}
+              value={group.minSelect}
+              onChange={(e) =>
+                onChange({ ...group, minSelect: Math.max(0, parseInt(e.target.value, 10) || 0) })
+              }
+              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-qf-mute">מקס׳ בחירות</span>
+            <input
+              type="number"
+              min={1}
+              value={group.maxSelect}
+              onChange={(e) =>
+                onChange({ ...group, maxSelect: Math.max(1, parseInt(e.target.value, 10) || 1) })
+              }
+              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-qf-mute" title="כמה בחירות כלולות במחיר לפני שמחייבים">
+              כלולות חינם
+            </span>
+            <input
+              type="number"
+              min={0}
+              value={group.includedFree}
+              onChange={(e) =>
+                onChange({ ...group, includedFree: Math.max(0, parseInt(e.target.value, 10) || 0) })
+              }
+              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
+            />
+          </label>
+        </div>
+      )}
+      <textarea
+        value={group.helpText ?? ""}
+        onChange={(e) => onChange({ ...group, helpText: e.target.value || null })}
+        rows={1}
+        maxLength={200}
+        placeholder="טקסט עזר (אופציונלי) — ׳בחר רטב לצד׳"
+        className="w-full px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-xs bg-white resize-none"
+      />
       <div className="space-y-1.5">
         {group.options.map((o, oi) => (
-          <div key={oi} className="grid grid-cols-[1fr_80px_72px_28px] sm:grid-cols-[1fr_100px_90px_32px] gap-2 items-center">
+          <div
+            key={oi}
+            className="grid grid-cols-[1fr_64px_28px_28px_28px] sm:grid-cols-[1fr_80px_80px_36px_32px] gap-2 items-center"
+          >
             <input
               value={o.name}
               onChange={(e) =>
@@ -579,7 +775,10 @@ function GroupEditor({
                   options: group.options.map((x, idx) => (idx === oi ? { ...x, name: e.target.value } : x)),
                 })
               }
-              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white"
+              className={cn(
+                "px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white",
+                !o.available && "opacity-50",
+              )}
             />
             <input
               type="number"
@@ -593,11 +792,15 @@ function GroupEditor({
                 })
               }
               className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white tnum"
+              title="מחיר נוסף"
             />
-            <label className="text-xs inline-flex items-center gap-1">
+            <label
+              className="text-xs inline-flex items-center justify-center gap-1"
+              title="ברירת מחדל"
+            >
               <input
                 type={group.type === "single" ? "radio" : "checkbox"}
-                name={`g-${group.name}`}
+                name={`g-${group.name}-default`}
                 checked={o.isDefault}
                 onChange={(e) =>
                   onChange({
@@ -610,9 +813,29 @@ function GroupEditor({
                           ),
                   })
                 }
+                className="cursor-pointer"
               />
-              ברירת מחדל
             </label>
+            <button
+              type="button"
+              onClick={() =>
+                onChange({
+                  ...group,
+                  options: group.options.map((x, idx) =>
+                    idx === oi ? { ...x, available: !x.available } : x,
+                  ),
+                })
+              }
+              className={cn(
+                "text-[10px] font-semibold px-2 py-1 rounded-md transition",
+                o.available
+                  ? "bg-qf-green-soft text-qf-green-deep"
+                  : "bg-qf-tomato-soft text-qf-tomato",
+              )}
+              title={o.available ? "זמין — לחץ כדי לסמן כאזל" : "אזל היום — לחץ להחזיר לזמין"}
+            >
+              {o.available ? "זמין" : "אזל"}
+            </button>
             <button
               type="button"
               onClick={() =>
@@ -630,7 +853,10 @@ function GroupEditor({
           onClick={() =>
             onChange({
               ...group,
-              options: [...group.options, { name: "אפשרות חדשה", priceDelta: 0, isDefault: false }],
+              options: [
+                ...group.options,
+                { name: "אפשרות חדשה", priceDelta: 0, isDefault: false, available: true },
+              ],
             })
           }
           className="text-xs text-(--qf-deep) inline-flex items-center gap-1"

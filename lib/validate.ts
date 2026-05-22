@@ -132,6 +132,7 @@ export const ItemOptionInputSchema = z.object({
   name: z.string().min(1).max(60),
   price_delta: z.number().int().default(0),
   is_default: z.boolean().default(false),
+  available: z.boolean().default(true),
 });
 
 export const ItemOptionGroupInputSchema = z.object({
@@ -140,6 +141,21 @@ export const ItemOptionGroupInputSchema = z.object({
   required: z.boolean().default(false),
   min_select: z.number().int().min(0).default(0),
   max_select: z.number().int().min(1).default(1),
+  included_free: z.number().int().min(0).default(0),
+  help_text: z.string().max(200).nullable().optional(),
+  template_set_id: UuidSchema.nullable().optional(),
+  options: z.array(ItemOptionInputSchema).default([]),
+});
+
+export const ModifierSetInputSchema = z.object({
+  name: z.string().min(1).max(60),
+  type: z.enum(["single", "multi"]).default("multi"),
+  required: z.boolean().default(false),
+  min_select: z.number().int().min(0).default(0),
+  max_select: z.number().int().min(1).default(5),
+  included_free: z.number().int().min(0).default(0),
+  help_text: z.string().max(200).nullable().optional(),
+  position: z.number().int().default(0),
   options: z.array(ItemOptionInputSchema).default([]),
 });
 

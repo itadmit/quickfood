@@ -20,7 +20,10 @@ export default async function ItemPage({
       sizes: { orderBy: { position: "asc" } },
       optionGroups: {
         orderBy: { position: "asc" },
-        include: { options: { orderBy: { position: "asc" } } },
+        include: {
+          options: { orderBy: { position: "asc" } },
+          templateSet: { include: { options: { orderBy: { position: "asc" } } } },
+        },
       },
     },
   });
@@ -45,20 +48,32 @@ export default async function ItemPage({
           priceDelta: s.priceDelta,
           isDefault: s.isDefault,
         })),
-        optionGroups: item.optionGroups.map((g) => ({
-          id: g.id,
-          name: g.name,
-          type: g.type,
-          required: g.required,
-          minSelect: g.minSelect,
-          maxSelect: g.maxSelect,
-          options: g.options.map((o) => ({
-            id: o.id,
-            name: o.name,
-            priceDelta: o.priceDelta,
-            isDefault: o.isDefault,
-          })),
-        })),
+        optionGroups: item.optionGroups.map((g) => {
+          // When the group is templated (linked to a ModifierSet) we render
+          // the set's options, not the inline ItemOption rows. The set is
+          // also allowed to override the group's name/help/limits, so that
+          // editing the set propagates.
+          const fromSet = g.templateSet;
+          const opts = fromSet ? fromSet.options : g.options;
+          return {
+            id: g.id,
+            name: fromSet?.name ?? g.name,
+            type: fromSet?.type ?? g.type,
+            required: fromSet?.required ?? g.required,
+            minSelect: fromSet?.minSelect ?? g.minSelect,
+            maxSelect: fromSet?.maxSelect ?? g.maxSelect,
+            includedFree: fromSet?.includedFree ?? g.includedFree,
+            helpText: fromSet?.helpText ?? g.helpText,
+            options: opts
+              .filter((o) => o.available)
+              .map((o) => ({
+                id: o.id,
+                name: o.name,
+                priceDelta: o.priceDelta,
+                isDefault: o.isDefault,
+              })),
+          };
+        }),
       }}
     />
   );
