@@ -171,6 +171,9 @@ export function ItemDetail({
       options: selectedOpts,
       notes: notes || null,
     });
+    // Reset scroll BEFORE navigating so the cart opens at its hero, not at
+    // the cart's bottom CTA (matches the cart → checkout fix).
+    window.scrollTo(0, 0);
     router.push(`/${tenantSlug}/cart`);
   }
 

@@ -164,7 +164,14 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
               <button
                 type="button"
                 disabled={!meetsMin}
-                onClick={() => router.push(`/${tenantSlug}/checkout`)}
+                onClick={() => {
+                  // Belt-and-suspenders: scroll to top BEFORE the route change
+                  // so the user sees the new screen open from the top even on
+                  // mobile Safari where streaming/layout shifts can race the
+                  // global ScrollToTop.
+                  window.scrollTo(0, 0);
+                  router.push(`/${tenantSlug}/checkout`);
+                }}
                 className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-14 text-base font-semibold flex items-center justify-between shadow-sm shadow-(--qf-primary)/25 transition"
               >
                 <span className="inline-flex items-center gap-2">

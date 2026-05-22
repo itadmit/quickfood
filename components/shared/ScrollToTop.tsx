@@ -1,7 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { usePathname } from "next/navigation";
+
+// useLayoutEffect warns when running on the server (it's a no-op there).
+// Pick the right hook based on environment so the scroll reset happens
+// SYNCHRONOUSLY before paint on the client, but doesn't trip SSR.
+const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 /**
  * Force every route change to start at the very top — no remembered scroll
@@ -41,15 +46,25 @@ export function ScrollToTop() {
     };
   }, []);
 
-  useEffect(() => {
+  // useLayoutEffect runs synchronously after the DOM is updated but BEFORE
+  // the browser paints — so the user never sees the mid-scroll frame on the
+  // new route. The earlier useEffect-based version sometimes flashed the
+  // previous scroll position on cart → checkout because by the time the
+  // browser scheduled the post-paint effect, the new layout had already
+  // rendered at the old scroll position.
+  useIsoLayoutEffect(() => {
     if (typeof window === "undefined") return;
-    // Immediate — covers normal forward nav.
     jumpToTop();
-    // Next frame — covers cases where the browser's restoration nudges the
-    // page mid-paint on back/forward, or where the new layout is still
-    // mounting its children when our effect fires.
+    // Then again next frame for the back/forward + streaming-Suspense cases
+    // where the new layout's children mount AFTER our sync effect runs.
     const raf = window.requestAnimationFrame(() => jumpToTop());
-    return () => window.cancelAnimationFrame(raf);
+    // And once more after layout settles (50ms) — covers iOS Safari URL-bar
+    // shrink + Next.js streaming a second chunk in the same tick.
+    const tid = window.setTimeout(() => jumpToTop(), 50);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.clearTimeout(tid);
+    };
   }, [pathname]);
 
   return null;
