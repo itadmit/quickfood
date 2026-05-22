@@ -6,9 +6,16 @@ import { recordOrderCommission } from "@/lib/billing-hub/commission";
 
 /**
  * Order status state machine. Defines which transitions are legal.
+ *
+ * `pending → preparing` is allowed (in addition to the more granular
+ * `pending → confirmed → preparing` path) so the merchant's Kanban
+ * "אשר וקבל" button works on stuck-in-pending orders too. Those typically
+ * happen when a card payment callback was lost — the merchant decides
+ * to accept and prepare anyway. We auto-set confirmedAt when moving out
+ * of pending so the timestamps stay sane.
  */
 const TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  pending: ["confirmed", "cancelled"],
+  pending: ["confirmed", "preparing", "cancelled"],
   confirmed: ["preparing", "cancelled"],
   preparing: ["in_oven", "ready", "cancelled"],
   in_oven: ["ready", "cancelled"],
@@ -50,6 +57,13 @@ export async function advanceStatus(
   const updates: Record<string, unknown> = { status: to };
   if (options?.courierId) updates.courierId = options.courierId;
   if (to === "confirmed") updates.confirmedAt = now;
+  // If we're leaving "pending" for anything other than cancelled (i.e. the
+  // merchant fast-forwarded straight to preparing), still record the moment
+  // the order became "confirmed" — without this the confirmedAt column
+  // would stay NULL and break commission accrual / SLA timers downstream.
+  if (order.status === "pending" && to !== "cancelled" && to !== "confirmed") {
+    updates.confirmedAt = now;
+  }
   if (to === "ready") updates.readyAt = now;
   if (to === "delivered") updates.deliveredAt = now;
   if (to === "cancelled") updates.cancelledAt = now;
