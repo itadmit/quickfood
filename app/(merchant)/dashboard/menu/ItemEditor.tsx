@@ -339,26 +339,36 @@ export function ItemEditor({
           {/* Basics */}
           <section className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-3">
             <h2 className="font-semibold">פרטים בסיסיים</h2>
-            <Field label="שם הפריט">
+            <Field label="שם הפריט" required>
               <input
                 value={data.name}
                 onChange={(e) => update("name", e.target.value)}
+                aria-required="true"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
               />
             </Field>
-            <Field label="קטגוריה">
-              <select
-                value={data.categoryId}
-                onChange={(e) => update("categoryId", e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
-              >
-                {categories.length === 0 && <option value="">אין קטגוריות</option>}
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+            <Field label="קטגוריה" required>
+              {categories.length === 0 ? (
+                <Link
+                  href="/dashboard/menu"
+                  className="block w-full px-3.5 py-2.5 rounded-xl border border-qf-tomato/40 bg-qf-tomato-soft text-qf-tomato text-sm"
+                >
+                  אין קטגוריות עדיין — פתח קטגוריה לפני שמירה
+                </Link>
+              ) : (
+                <select
+                  value={data.categoryId}
+                  onChange={(e) => update("categoryId", e.target.value)}
+                  aria-required="true"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+                >
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </Field>
             <Field label="תיאור">
               <textarea
@@ -650,10 +660,21 @@ export function ItemEditor({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium block">{label}</label>
+      <label className="text-sm font-medium block">
+        {label}
+        {required && <span className="text-qf-tomato ms-1" aria-hidden>*</span>}
+      </label>
       {children}
     </div>
   );

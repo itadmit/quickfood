@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { IcoMegaphone, IcoPlus, IcoEdit, IcoTrash, IcoClose, IcoCheck } from "@/components/shared/Icons";
 import { ImageUploader } from "@/components/shared/ImageUploader";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { RelativeTime } from "@/components/shared/RelativeTime";
 import {
   CATEGORY_ICONS,
@@ -189,12 +191,33 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
     }
   }
 
-  async function remove(c: Campaign) {
-    if (!confirm(`למחוק את "${c.title}"?`)) return;
+  const [pendingDelete, setPendingDelete] = useState<Campaign | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
+  function pushToast(kind: ToastKind, message: string) {
+    setToast({ id: Date.now(), kind, message });
+  }
+
+  function startDelete(c: Campaign) {
+    setPendingDelete(c);
+  }
+
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    const c = pendingDelete;
+    setDeleting(true);
     const prev = items;
     setItems(items.filter((x) => x.id !== c.id));
     const res = await fetch(`/api/v1/merchant/campaigns/${c.id}`, { method: "DELETE" });
-    if (!res.ok) setItems(prev);
+    setDeleting(false);
+    setPendingDelete(null);
+    if (!res.ok) {
+      setItems(prev);
+      const body = await res.json().catch(() => ({}));
+      pushToast("err", body?.error?.message ?? "מחיקת קמפיין נכשלה");
+      return;
+    }
+    pushToast("ok", "הקמפיין נמחק");
   }
 
   return (
@@ -305,9 +328,10 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => remove(c)}
+                      onClick={() => startDelete(c)}
                       className="w-8 h-8 grid place-items-center rounded-lg hover:bg-qf-tomato-soft"
-                      aria-label="מחק"
+                      aria-label="מחק קמפיין"
+                      title="מחק קמפיין"
                     >
                       <IcoTrash c="#c2421f" s={15} />
                     </button>
@@ -592,6 +616,23 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        title="מחיקת קמפיין"
+        message={
+          <>
+            הקמפיין <span className="font-semibold">&quot;{pendingDelete?.title}&quot;</span> יימחק. פעולה זו אינה ניתנת לביטול.
+          </>
+        }
+        confirmLabel="מחק"
+        cancelLabel="ביטול"
+        variant="danger"
+        busy={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+      <Toast toast={toast} onDismiss={() => setToast(null)} />
     </div>
   );
 }

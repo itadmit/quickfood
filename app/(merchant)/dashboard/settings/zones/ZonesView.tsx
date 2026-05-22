@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoClose } from "@/components/shared/Icons";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { cn } from "@/lib/cn";
 
 interface Zone {
@@ -102,12 +104,33 @@ export function ZonesView({ branchId, initial }: { branchId: string; initial: Zo
     });
   }
 
-  async function remove(id: string) {
-    if (!confirm("למחוק את האזור?")) return;
+  const [pendingDelete, setPendingDelete] = useState<Zone | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
+  function pushToast(kind: ToastKind, message: string) {
+    setToast({ id: Date.now(), kind, message });
+  }
+
+  function startDelete(z: Zone) {
+    setPendingDelete(z);
+  }
+
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    const id = pendingDelete.id;
+    setDeleting(true);
     const prev = zones;
     setZones((p) => p.filter((z) => z.id !== id));
     const res = await fetch(`/api/v1/merchant/zones/${id}`, { method: "DELETE" });
-    if (!res.ok) setZones(prev);
+    setDeleting(false);
+    setPendingDelete(null);
+    if (!res.ok) {
+      setZones(prev);
+      const body = await res.json().catch(() => ({}));
+      pushToast("err", body?.error?.message ?? "מחיקת האזור נכשלה");
+      return;
+    }
+    pushToast("ok", "האזור נמחק");
   }
 
   return (
@@ -238,9 +261,10 @@ export function ZonesView({ branchId, initial }: { branchId: string; initial: Zo
                   </div>
                   <button
                     type="button"
-                    onClick={() => remove(z.id)}
+                    onClick={() => startDelete(z)}
                     className="w-8 h-8 rounded-lg hover:bg-qf-tomato-soft text-qf-mute hover:text-qf-tomato"
-                    aria-label="הסר"
+                    aria-label="הסר אזור"
+                    title="הסר אזור"
                   >
                     <IcoClose s={14} />
                   </button>
@@ -312,6 +336,24 @@ export function ZonesView({ branchId, initial }: { branchId: string; initial: Zo
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        title="מחיקת אזור משלוח"
+        message={
+          <>
+            האזור <span className="font-semibold">&quot;{pendingDelete?.name}&quot;</span> יימחק.
+            לקוחות בכתובות שמכוסות רק על-ידי האזור הזה לא יוכלו לקבל משלוח עד שתגדיר אחד אחר.
+          </>
+        }
+        confirmLabel="מחק"
+        cancelLabel="ביטול"
+        variant="danger"
+        busy={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+      <Toast toast={toast} onDismiss={() => setToast(null)} />
     </div>
   );
 }

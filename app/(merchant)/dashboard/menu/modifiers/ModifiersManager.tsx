@@ -237,7 +237,7 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
                   >
                     {o.name}
                     {o.priceDelta !== 0 && (
-                      <span className="text-qf-mute mr-1 tnum">
+                      <span className="text-qf-mute ms-1 tnum">
                         {o.priceDelta > 0 ? `+₪${o.priceDelta}` : `-₪${Math.abs(o.priceDelta)}`}
                       </span>
                     )}
