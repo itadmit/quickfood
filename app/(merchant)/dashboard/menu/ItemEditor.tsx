@@ -897,7 +897,7 @@ function GroupEditor({
         <input
           value={group.name}
           onChange={(e) => onChange({ ...group, name: e.target.value })}
-          className="flex-1 min-w-32 px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white"
+          className="flex-1 min-w-0 basis-32 px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white"
         />
         <select
           value={group.type}

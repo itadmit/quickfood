@@ -42,7 +42,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <ThemeProvider themeId={tenant.themeId}>
-      <div className="min-h-screen bg-qf-bg-dash text-qf-ink flex flex-col">
+      <div className="min-h-screen bg-qf-bg-dash text-qf-ink flex flex-col overflow-x-hidden">
         <BillingSetupBanner
           hasPaymentMethod={hasPaymentMethod}
           trialDaysLeft={trialDaysLeft}
@@ -67,7 +67,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         />
         <div className="flex-1 flex">
           <Sidebar tenant={{ name: tenant.name, logoLetter: tenant.logoLetter, branchName: tenant.branches[0]?.name ?? "" }} />
-          <main className="flex-1 min-w-0 p-3 lg:p-6 pb-20 lg:pb-6">
+          <main className="flex-1 min-w-0 p-3 lg:p-6 pb-20 lg:pb-6 overflow-x-hidden">
             <div className="mx-auto w-full max-w-7xl">{children}</div>
           </main>
         </div>
