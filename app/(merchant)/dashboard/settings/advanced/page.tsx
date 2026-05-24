@@ -5,6 +5,7 @@ import { SettingsHeader } from "../SettingsHeader";
 import { WoltImportClient } from "./WoltImportClient";
 import { AppearanceToggle } from "./AppearanceToggle";
 import { DeleteAllItems } from "./DeleteAllItems";
+import { ResetStore } from "./ResetStore";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ export default async function AdvancedSettingsPage() {
     }),
     prisma.tenant.findUnique({
       where: { id: session.tenantId },
-      select: { dashboardVersion: true },
+      select: { dashboardVersion: true, name: true },
     }),
     prisma.menuItem.count({ where: { tenantId: session.tenantId } }),
   ]);
@@ -89,6 +90,25 @@ export default async function AdvancedSettingsPage() {
             </p>
           </header>
           <DeleteAllItems itemCount={itemCount} />
+        </section>
+      )}
+
+      {isOwner && tenant?.name && (
+        <section className="bg-white rounded-2xl border border-qf-tomato/30 p-4 lg:p-6 max-w-3xl">
+          <header className="mb-4">
+            <h2 className="text-lg font-bold text-qf-tomato">
+              איפוס מוחלט של החנות
+            </h2>
+            <p className="text-sm text-qf-mute mt-1 leading-relaxed">
+              מאפס את החנות לחלוטין: תפריט, קטגוריות, תוספות, שיווק
+              (קופונים/קמפיינים), ביקורות, שליחים, אזורי משלוח,
+              webhooks, לוגו, cover, סוג עסק, ערכת צבעים. חוזרים למסך
+              ברוך-הבא — ממש כאילו החנות נפתחה מחדש. הזמנות, לקוחות,
+              חברי צוות, יתרת SMS ופרטי חיוב נשמרים. דורש להקליד את
+              שם החנות לאישור.
+            </p>
+          </header>
+          <ResetStore tenantName={tenant.name} />
         </section>
       )}
     </div>
