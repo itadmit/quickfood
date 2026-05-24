@@ -60,6 +60,9 @@ export interface Theme {
   deep: string;
   soft: string;
   line: string;
+  /** Foreground color to use on top of `primary` / `deep` backgrounds.
+   *  Yellow themes need black text; everything else gets white. */
+  onPrimary: "#000" | "#fff";
 }
 
 export const THEMES: Record<ThemeId, Theme> = {
@@ -70,6 +73,7 @@ export const THEMES: Record<ThemeId, Theme> = {
     deep: "#0a5d2d",
     soft: "#e7f5ec",
     line: "#cfe8d8",
+    onPrimary: "#fff",
   },
   basil: {
     id: "basil",
@@ -78,6 +82,7 @@ export const THEMES: Record<ThemeId, Theme> = {
     deep: "#2c5a1d",
     soft: "#eef5e7",
     line: "#d3e3c4",
+    onPrimary: "#fff",
   },
   forest: {
     id: "forest",
@@ -86,6 +91,7 @@ export const THEMES: Record<ThemeId, Theme> = {
     deep: "#0e3c29",
     soft: "#e3eee9",
     line: "#bdd6c9",
+    onPrimary: "#fff",
   },
   olive: {
     id: "olive",
@@ -94,6 +100,7 @@ export const THEMES: Record<ThemeId, Theme> = {
     deep: "#4f5b25",
     soft: "#f1f3e0",
     line: "#d8dcb5",
+    onPrimary: "#fff",
   },
   tomato: {
     id: "tomato",
@@ -102,6 +109,7 @@ export const THEMES: Record<ThemeId, Theme> = {
     deep: "#8e2a10",
     soft: "#fde2dc",
     line: "#f4b8a8",
+    onPrimary: "#fff",
   },
   charcoal: {
     id: "charcoal",
@@ -110,6 +118,7 @@ export const THEMES: Record<ThemeId, Theme> = {
     deep: "#181715",
     soft: "#ececea",
     line: "#cfcec9",
+    onPrimary: "#fff",
   },
   cobalt: {
     id: "cobalt",
@@ -118,6 +127,7 @@ export const THEMES: Record<ThemeId, Theme> = {
     deep: "#12377d",
     soft: "#e3ebf8",
     line: "#bccfee",
+    onPrimary: "#fff",
   },
   sunflower: {
     id: "sunflower",
@@ -126,6 +136,7 @@ export const THEMES: Record<ThemeId, Theme> = {
     deep: "#d4ad19",
     soft: "#fff2c9",
     line: "#f0d97a",
+    onPrimary: "#000",
   },
 };
 
@@ -142,6 +153,7 @@ export function themeVars(id: ThemeId): Record<string, string> {
     "--qf-deep": t.deep,
     "--qf-soft": t.soft,
     "--qf-line": t.line,
+    "--qf-on-primary": t.onPrimary,
   };
 }
 

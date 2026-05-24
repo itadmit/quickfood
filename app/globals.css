@@ -106,6 +106,7 @@
   --qf-deep: #d4ad19;
   --qf-soft: #fff2c9;
   --qf-line: #000000;
+  --qf-on-primary: #000;
 }
 
 /* Card border — the standard "white card with hairline" pattern
@@ -139,15 +140,17 @@
   border-width: revert;
 }
 
-/* V2 brand: --qf-primary / --qf-deep are bold yellows. Many legacy
-   buttons pair them with `text-white` (the V1 dark-green button
-   convention) which is unreadable on yellow. Force text to black on
-   any V2 element that uses the yellow as a background — this is
-   strictly additive (it doesn't touch elements that *aren't* yellow). */
-.dash-v2 .bg-\(--qf-primary\),
-.dash-v2 .bg-\(--qf-deep\),
-.dash-v2 .hover\:bg-\(--qf-deep\):hover {
-  color: #000 !important;
+/* `--qf-primary` / `--qf-deep` may be any tenant color: yellow needs
+   black text, dark greens/blues/reds need white. Themes ship the right
+   foreground color in `--qf-on-primary` (see lib/themes.ts); this rule
+   wires every primary-bg element to it so we don't have to hand-pick
+   text-white vs text-black at each usage site. Applies across the whole
+   app (customer storefront + merchant dash) so the contrast rule holds
+   wherever ThemeProvider re-tints the primary. */
+.bg-\(--qf-primary\),
+.bg-\(--qf-deep\),
+.hover\:bg-\(--qf-deep\):hover {
+  color: var(--qf-on-primary, #000);
 }
 
 /* Focus ring stays yellow on the V2 skin. */
