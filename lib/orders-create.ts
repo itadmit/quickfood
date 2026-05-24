@@ -34,6 +34,7 @@ export interface CreateOrderInput {
   customerNotes?: string | null;
   paymentMethod: "cash" | "card" | "apple_pay" | "google_pay" | "bit";
   tip?: number;
+  cutleryCount?: number;
   scheduledFor?: Date | null;
   couponCode?: string | null;
   lines: CartLineInput[];
@@ -201,6 +202,15 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   const deliveryFee = input.method === "delivery" ? branch.deliveryFee : 0;
   const serviceFee = branch.serviceFee;
   const tip = input.tip ?? 0;
+  const cutleryCountRaw = Math.max(0, Math.min(20, input.cutleryCount ?? 0));
+  const cutleryCount = tenant.cutleryEnabled ? cutleryCountRaw : 0;
+  const cutleryFreeAbove = tenant.cutleryFreeAbove;
+  const cutleryFee =
+    tenant.cutleryEnabled &&
+    cutleryCount > 0 &&
+    !(cutleryFreeAbove !== null && cutleryFreeAbove !== undefined && subtotal >= cutleryFreeAbove)
+      ? tenant.cutleryPrice * cutleryCount
+      : 0;
 
   // Coupon resolution. Same validation rules as the public /coupons/validate
   // endpoint, plus a usage-count increment in the same transaction so we
@@ -239,7 +249,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     }
   }
 
-  const total = subtotal + deliveryFee + serviceFee + tip - discount;
+  const total = subtotal + deliveryFee + serviceFee + cutleryFee + tip - discount;
 
   // Validate address if delivery
   if (input.method === "delivery") {
@@ -291,6 +301,8 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       subtotal,
       deliveryFee,
       serviceFee,
+      cutleryCount,
+      cutleryFee,
       tip,
       discount,
       total,

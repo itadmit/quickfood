@@ -2,9 +2,95 @@ import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { MenuItemInputSchema } from "@/lib/validate";
+import type { Prisma } from "@prisma/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+export const GET = handler(async (req: Request) => {
+  const session = await requireMerchant();
+  if (!session.tenantId) {
+    return apiJson({ items: [], meta: { total: 0, page: 1, per_page: 0 } });
+  }
+  const url = new URL(req.url);
+  const categoryId = url.searchParams.get("category_id");
+  const availableParam = url.searchParams.get("available");
+  const q = url.searchParams.get("q");
+  const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
+  const perPage = Math.min(200, Math.max(1, parseInt(url.searchParams.get("per_page") || "50", 10)));
+
+  const where: Prisma.MenuItemWhereInput = { tenantId: session.tenantId };
+  if (categoryId) where.categoryId = categoryId;
+  if (availableParam === "true") where.available = true;
+  else if (availableParam === "false") where.available = false;
+  if (q) where.name = { contains: q, mode: "insensitive" };
+
+  const [items, total] = await Promise.all([
+    prisma.menuItem.findMany({
+      where,
+      include: {
+        sizes: { orderBy: { position: "asc" } },
+        optionGroups: {
+          orderBy: { position: "asc" },
+          include: { options: { orderBy: { position: "asc" } } },
+        },
+      },
+      orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+      skip: (page - 1) * perPage,
+      take: perPage,
+    }),
+    prisma.menuItem.count({ where }),
+  ]);
+
+  return apiJson({
+    items: items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      category_id: item.categoryId,
+      base_price: item.basePrice,
+      prep_minutes: item.prepMinutes,
+      art_type: item.artType,
+      image_url: item.imageUrl,
+      images: item.images,
+      available: item.available,
+      tags: item.tags,
+      position: item.position,
+      sku: item.sku,
+      available_from: item.availableFrom,
+      available_to: item.availableTo,
+      available_days: item.availableDays,
+      stock_remaining: item.stockRemaining,
+      sizes: item.sizes.map((s) => ({
+        id: s.id,
+        code: s.code,
+        name: s.name,
+        price_delta: s.priceDelta,
+        is_default: s.isDefault,
+      })),
+      option_groups: item.optionGroups.map((g) => ({
+        id: g.id,
+        name: g.name,
+        type: g.type,
+        required: g.required,
+        min_select: g.minSelect,
+        max_select: g.maxSelect,
+        included_free: g.includedFree,
+        help_text: g.helpText,
+        template_set_id: g.templateSetId,
+        options: g.options.map((o) => ({
+          id: o.id,
+          name: o.name,
+          price_delta: o.priceDelta,
+          is_default: o.isDefault,
+          available: o.available,
+          image_url: o.imageUrl,
+        })),
+      })),
+    })),
+    meta: { total, page, per_page: perPage },
+  });
+});
 
 export const POST = handler(async (req: Request) => {
   const session = await requireMerchant(["owner", "manager"]);

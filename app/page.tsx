@@ -908,17 +908,17 @@ function Footer() {
           </div>
           <div className={styles.footCol}>
             <h5>חברה</h5>
-            <a href="#">אודות</a>
-            <a href="#">בלוג</a>
-            <a href="#">קריירה</a>
-            <a href="#">צור קשר</a>
+            <Link href="/about">אודות</Link>
+            <Link href="/blog">בלוג</Link>
+            <Link href="/careers">קריירה</Link>
+            <Link href="/contact">צור קשר</Link>
           </div>
           <div className={styles.footCol}>
             <h5>מסמכים</h5>
-            <a href="#">תנאי שימוש</a>
-            <a href="#">פרטיות</a>
-            <a href="#">SLA</a>
-            <Link href="/api/v1/openapi">API Docs</Link>
+            <Link href="/terms">תנאי שימוש</Link>
+            <Link href="/privacy">פרטיות</Link>
+            <Link href="/sla">SLA</Link>
+            <Link href="/docs/pos">API Docs</Link>
           </div>
         </div>
         <div className={styles.footBottom}>

@@ -139,7 +139,10 @@ async function findApiKey(raw: string) {
   const prefix = rest.slice(0, sep);
   const secret = rest.slice(sep + 1);
   const candidates = await prisma.apiKey.findMany({
-    where: { prefix, expiresAt: { gte: new Date() } },
+    where: {
+      prefix,
+      OR: [{ expiresAt: null }, { expiresAt: { gte: new Date() } }],
+    },
     select: { id: true, hash: true, tenantId: true, customerId: true },
   });
   for (const c of candidates) {

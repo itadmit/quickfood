@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { useRouter } from "next/navigation";
 import { IcoClose } from "@/components/shared/Icons";
 
@@ -20,14 +20,29 @@ import { IcoClose } from "@/components/shared/Icons";
 export function ItemDetailModal({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
-  // Body scroll lock — restore on unmount so direct navigation away
-  // (clicking "add to cart" → cart page) leaves the body in a clean
-  // overflow state.
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+  // Scroll lock — `<html>` is the scroll container, so setting overflow:
+  // hidden on it freezes the page exactly where it is without touching
+  // `<body>`'s flow. The earlier position:fixed approach was capturing
+  // scrollY too late (after some layout shift had already moved the
+  // visible viewport), which made the background look like it had
+  // scrolled to top during the modal-open animation. useLayoutEffect
+  // applies the lock synchronously, before the browser gets a chance
+  // to paint anything in-between.
+  useLayoutEffect(() => {
+    const html = document.documentElement;
+    const prevOverflow = html.style.overflow;
+    const prevPaddingRight = document.body.style.paddingRight;
+    // Compensate for the disappearing scrollbar so the layout doesn't
+    // shift horizontally when the modal opens on platforms where the
+    // scrollbar takes width (Windows/Linux).
+    const scrollbarWidth = window.innerWidth - html.clientWidth;
+    html.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
     return () => {
-      document.body.style.overflow = prev;
+      html.style.overflow = prevOverflow;
+      document.body.style.paddingRight = prevPaddingRight;
     };
   }, []);
 
@@ -52,23 +67,24 @@ export function ItemDetailModal({ children }: { children: React.ReactNode }) {
       }}
     >
       <div
-        className="relative w-full sm:max-w-2xl bg-white sm:rounded-3xl sm:border-2 sm:border-black sm:shadow-[0_6px_0_#000] overflow-hidden max-h-[100dvh] sm:max-h-[92vh] animate-qf-check-in"
+        className="relative w-full sm:max-w-3xl bg-white rounded-t-3xl sm:rounded-3xl sm:shadow-xl overflow-hidden max-h-[92dvh] sm:max-h-[92vh] animate-qf-sheet-in sm:animate-qf-modal-in"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={() => router.back()}
           aria-label="סגור"
-          className="absolute top-3 inset-s-3 z-50 w-10 h-10 rounded-full grid place-items-center bg-white text-black border-2 border-black shadow-[0_2px_0_#000] hover:shadow-[0_3px_0_#000] active:translate-y-px active:shadow-[0_1px_0_#000] transition"
+          className="absolute top-4 inset-s-4 z-50 w-9 h-9 rounded-full grid place-items-center bg-white/95 backdrop-blur text-qf-ink shadow-md hover:bg-white transition"
         >
-          <IcoClose s={16} c="currentColor" />
+          <IcoClose s={14} c="currentColor" />
         </button>
 
-        {/* Scrollable body. The ItemDetail screen has its own bottom
-            CTA bar (`fixed bottom-0 ...`); inside the modal that's
-            still anchored to the viewport, which is the desired UX
-            (CTA visible while you scroll the modal content). */}
-        <div className="overflow-y-auto max-h-[100dvh] sm:max-h-[92vh]">
+        {/* Scrollable body. Scrollbars hidden so the hero image goes truly
+            edge-to-edge (otherwise the gutter steals width on Windows/Linux
+            and on RTL Macs). The ItemDetail screen has its own bottom CTA
+            bar (`fixed bottom-0 ...`); inside the modal it sits anchored to
+            the modal's containing block — visible while you scroll. */}
+        <div className="overflow-y-auto max-h-[92dvh] sm:max-h-[92vh] scrollbar-none [&::-webkit-scrollbar]:hidden">
           {children}
         </div>
       </div>

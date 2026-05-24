@@ -16,6 +16,8 @@ interface OrderDetail {
   subtotal: number;
   delivery_fee: number;
   service_fee: number;
+  cutlery_count: number;
+  cutlery_fee: number;
   tip: number;
   discount: number;
   payment_method: string;
@@ -258,6 +260,12 @@ export function OrderDrawer({
                 )}
                 {order.service_fee > 0 && (
                   <SumRow label="דמי שירות" value={formatPrice(order.service_fee)} />
+                )}
+                {order.cutlery_count > 0 && (
+                  <SumRow
+                    label={`סכו״ם חד״פ × ${order.cutlery_count}`}
+                    value={order.cutlery_fee > 0 ? formatPrice(order.cutlery_fee) : "חינם"}
+                  />
                 )}
                 {order.tip > 0 && <SumRow label="טיפ" value={formatPrice(order.tip)} />}
                 {order.discount > 0 && (

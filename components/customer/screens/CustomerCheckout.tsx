@@ -62,6 +62,7 @@ export function CustomerCheckout({
   // בשמונה"). The merchant's open hours could be enforced server-side
   // later; for now we just let the merchant decline if it's outside hours.
   const [scheduledTime, setScheduledTime] = useState<string>("");
+  const [cutleryCount, setCutleryCount] = useState<number>(0);
   // Once the user taps "תזמן" we reveal the slot row even before they pick
   // a specific time. Without this the only signal of "schedule mode" would
   // be a non-empty scheduledTime, so the user can't browse slots without
@@ -152,7 +153,15 @@ export function CustomerCheckout({
   const deliveryFee = method === "delivery" ? branch?.deliveryFee ?? 0 : 0;
   const serviceFee = branch?.serviceFee ?? 0;
   const couponDiscount = couponApplied?.discount ?? 0;
-  const total = subtotal + deliveryFee + serviceFee + tip - couponDiscount;
+  const cutleryUnitPrice = tenant.cutleryPrice ?? 0;
+  const cutleryFreeAbove = tenant.cutleryFreeAbove ?? null;
+  const cutleryFreeUnlocked =
+    cutleryFreeAbove !== null && cutleryFreeAbove !== undefined && subtotal >= cutleryFreeAbove;
+  const cutleryFee =
+    tenant.cutleryEnabled && cutleryCount > 0 && !cutleryFreeUnlocked
+      ? cutleryUnitPrice * cutleryCount
+      : 0;
+  const total = subtotal + deliveryFee + serviceFee + cutleryFee + tip - couponDiscount;
 
   /**
    * Re-validate when subtotal changes (line added/removed), since a coupon
@@ -267,7 +276,7 @@ export function CustomerCheckout({
       <div className="min-h-screen flex flex-col">
         <header className="px-5 pt-5 pb-3 flex items-center gap-3">
           <Link
-            href={`/${tenantSlug}/menu`}
+            href={`/${tenantSlug}`}
             className="w-9 h-9 rounded-full bg-white border border-qf-line grid place-items-center"
             aria-label="חזרה"
           >
@@ -282,7 +291,7 @@ export function CustomerCheckout({
           <h2 className="font-semibold text-lg mb-1">הסל ריק</h2>
           <p className="text-sm text-qf-mute mb-5">הוסף פריטים מהתפריט וחזור הנה לסיום ההזמנה</p>
           <Link
-            href={`/${tenantSlug}/menu`}
+            href={`/${tenantSlug}`}
             className="px-5 py-3 rounded-full bg-(--qf-primary) text-white font-medium text-sm"
           >
             לתפריט
@@ -309,6 +318,7 @@ export function CustomerCheckout({
           method,
           payment_method: paymentMethod,
           tip,
+          cutlery_count: cutleryCount,
           scheduled_for: scheduledIso() ?? undefined,
           coupon_code: couponApplied?.code ?? undefined,
           customer_notes: customerNotes || undefined,
@@ -578,6 +588,12 @@ export function CustomerCheckout({
               <SumRow label="דמי משלוח" value={formatPrice(deliveryFee)} />
             )}
             {serviceFee > 0 && <SumRow label="דמי שירות" value={formatPrice(serviceFee)} />}
+            {cutleryFee > 0 && (
+              <SumRow
+                label={`${tenant.cutleryLabel || "סכו״ם חד״פ"} × ${cutleryCount}`}
+                value={formatPrice(cutleryFee)}
+              />
+            )}
             {tip > 0 && <SumRow label="טיפ לשליח" value={formatPrice(tip)} />}
             {couponApplied && (
               <SumRow
@@ -655,6 +671,50 @@ export function CustomerCheckout({
                   {t === 0 ? "ללא" : `+${formatPrice(t)}`}
                 </Pill>
               ))}
+            </div>
+          </Card>
+        )}
+
+        {tenant.cutleryEnabled && (
+          <Card>
+            <div className="flex items-baseline justify-between">
+              <CardTitle>{tenant.cutleryLabel || "סכו״ם חד״פ"}</CardTitle>
+              <span className="text-xs text-qf-mute">אופציונלי</span>
+            </div>
+            {cutleryFreeUnlocked && cutleryCount > 0 && (
+              <div className="text-xs text-qf-green-deep mt-2">
+                כלול חינם להזמנה מעל {formatPrice(cutleryFreeAbove!)}
+              </div>
+            )}
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <div className="text-sm">
+                <div className="font-medium">להוסיף סטים?</div>
+                <div className="text-xs text-qf-mute mt-0.5">
+                  {cutleryUnitPrice > 0 && !cutleryFreeUnlocked
+                    ? `${formatPrice(cutleryUnitPrice)} לסט`
+                    : "ללא עלות"}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  aria-label="פחות"
+                  onClick={() => setCutleryCount((c) => Math.max(0, c - 1))}
+                  disabled={cutleryCount === 0}
+                  className="w-9 h-9 rounded-full border border-qf-line-dash text-lg leading-none disabled:opacity-40"
+                >
+                  −
+                </button>
+                <div className="w-8 text-center font-semibold tnum">{cutleryCount}</div>
+                <button
+                  type="button"
+                  aria-label="עוד"
+                  onClick={() => setCutleryCount((c) => Math.min(20, c + 1))}
+                  className="w-9 h-9 rounded-full border border-qf-line-dash text-lg leading-none"
+                >
+                  +
+                </button>
+              </div>
             </div>
           </Card>
         )}
@@ -841,6 +901,12 @@ export function CustomerCheckout({
                 <SumRow label="דמי משלוח" value={formatPrice(deliveryFee)} />
               )}
               {serviceFee > 0 && <SumRow label="דמי שירות" value={formatPrice(serviceFee)} />}
+            {cutleryFee > 0 && (
+              <SumRow
+                label={`${tenant.cutleryLabel || "סכו״ם חד״פ"} × ${cutleryCount}`}
+                value={formatPrice(cutleryFee)}
+              />
+            )}
               {tip > 0 && <SumRow label="טיפ לשליח" value={formatPrice(tip)} />}
             {couponApplied && (
               <SumRow

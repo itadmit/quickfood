@@ -48,6 +48,10 @@ interface TenantInfo {
   themeId: string;
   businessType?: string;
   scheduledOrdersEnabled?: boolean;
+  cutleryEnabled?: boolean;
+  cutleryLabel?: string;
+  cutleryPrice?: number;
+  cutleryFreeAbove?: number | null;
 }
 
 interface BranchInfo {

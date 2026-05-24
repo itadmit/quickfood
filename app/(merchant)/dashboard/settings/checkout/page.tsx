@@ -14,7 +14,15 @@ export default async function CheckoutSettingsPage() {
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
-    select: { checkoutShowTracking: true, scheduledOrdersEnabled: true },
+    select: {
+      checkoutShowTracking: true,
+      scheduledOrdersEnabled: true,
+      pickupEnabled: true,
+      cutleryEnabled: true,
+      cutleryLabel: true,
+      cutleryPrice: true,
+      cutleryFreeAbove: true,
+    },
   });
   if (!tenant) redirect("/dashboard/login");
 
@@ -25,6 +33,11 @@ export default async function CheckoutSettingsPage() {
         initial={{
           showTracking: tenant.checkoutShowTracking,
           scheduledOrdersEnabled: tenant.scheduledOrdersEnabled,
+          pickupEnabled: tenant.pickupEnabled,
+          cutleryEnabled: tenant.cutleryEnabled,
+          cutleryLabel: tenant.cutleryLabel,
+          cutleryPrice: tenant.cutleryPrice,
+          cutleryFreeAbove: tenant.cutleryFreeAbove,
         }}
       />
     </div>

@@ -14,6 +14,7 @@ export interface WoltCategory {
 export interface WoltOptionGroupRefOnItem {
   id: string;
   name: string;
+  parent?: string;
   free_selections?: number;
   minimum_total_selections?: number;
   maximum_total_selections?: number;

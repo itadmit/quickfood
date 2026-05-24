@@ -12,6 +12,10 @@ interface Props {
   coverImage: string | null;
   /** Cities the merchant has marked as covered (union of all active zones). */
   cities: string[];
+  /** Merchant-level toggle. When false the pickup option is rendered as a
+   *  muted, non-selectable tab — the modal still opens so the customer
+   *  sees why their tap on "איסוף" did nothing. Defaults to true. */
+  pickupEnabled?: boolean;
   /** The branch address — shown when the customer picks "pickup". */
   branchAddress: string | null;
   /** True if this is the first time the modal opens — used to choose the
@@ -35,6 +39,7 @@ export function CityPickerModal({
   tenantName,
   coverImage,
   cities,
+  pickupEnabled = true,
   branchAddress,
   required,
   initialMethod,
@@ -68,7 +73,7 @@ export function CityPickerModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Hero header — cover image when available, otherwise a
-            yellow brand surface with a dot pattern, so the modal
+            theme-colored surface with a dot pattern, so the modal
             always opens with something hearty above the fold. */}
         <div
           className="relative h-32 w-full overflow-hidden"
@@ -76,7 +81,7 @@ export function CityPickerModal({
             coverImage
               ? undefined
               : {
-                  backgroundColor: "#F8CB1E",
+                  backgroundColor: "var(--qf-primary)",
                   backgroundImage:
                     "radial-gradient(circle, rgba(0,0,0,0.12) 1.5px, transparent 1.5px)",
                   backgroundSize: "20px 20px",
@@ -94,15 +99,22 @@ export function CityPickerModal({
               className="absolute inset-0 w-full h-full object-cover"
             />
           )}
-          {/* Soft top→bottom yellow wash so the title that overlaps
-              the bottom of the image stays legible regardless of
-              what's in the photo. */}
+          {/* Darkening scrim — keeps the close button + any future overlay
+              text readable on bright covers (yellow pizzas, lit dishes). */}
+          {coverImage && (
+            <div aria-hidden className="absolute inset-0 bg-black/35" />
+          )}
+          {/* Soft top→bottom theme wash so the title that overlaps the
+              bottom of the image stays legible regardless of what's in
+              the photo. color-mix lets us tint with the tenant's
+              brand color at varying opacity. Soft fall-off: starts
+              later, peaks lower so the cover stays the hero. */}
           <div
             aria-hidden
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(180deg, rgba(248,203,30,0.0) 30%, rgba(248,203,30,0.55) 70%, rgba(248,203,30,0.9) 100%)",
+                "linear-gradient(180deg, color-mix(in srgb, var(--qf-primary) 0%, transparent) 50%, color-mix(in srgb, var(--qf-primary) 25%, transparent) 80%, color-mix(in srgb, var(--qf-primary) 55%, transparent) 100%)",
             }}
           />
 
@@ -124,19 +136,25 @@ export function CityPickerModal({
               id="qf-city-picker-title"
               className="font-black text-2xl leading-tight text-black"
             >
-              איפה נפגוש אותך?
+              מה כתובת המשלוח?
             </h2>
             <p className="text-sm text-black/65 leading-snug">
-              {hasCities
+              {hasCities && pickupEnabled
                 ? `בדקו אם ${tenantName} מגיעים עד אליכם — בחרו עיר למשלוח, או הזמינו לאיסוף עצמי מהסניף.`
-                : "המסעדה לא הגדירה ערי משלוח. אפשר להזמין לאיסוף עצמי מהסניף."}
+                : hasCities && !pickupEnabled
+                  ? `${tenantName} מציעים משלוחים בלבד — בחרו את העיר שלכם.`
+                  : !hasCities && pickupEnabled
+                    ? "המסעדה לא הגדירה ערי משלוח. אפשר להזמין לאיסוף עצמי מהסניף."
+                    : "המסעדה לא מציעה משלוחים ולא איסוף עצמי בשלב זה."}
             </p>
           </header>
 
           {/* Method toggle */}
           <div
             className="rounded-2xl p-1 grid grid-cols-2 border-2 border-black"
-            style={{ backgroundColor: "#FFF6CE" }}
+            style={{
+              backgroundColor: "color-mix(in srgb, var(--qf-primary) 18%, white)",
+            }}
           >
             <button
               type="button"
@@ -145,7 +163,7 @@ export function CityPickerModal({
               className={cn(
                 "py-2.5 text-sm rounded-xl transition font-bold inline-flex items-center justify-center gap-1.5",
                 method === "delivery"
-                  ? "bg-black text-[#F8CB1E]"
+                  ? "bg-black text-white"
                   : "text-black/70 hover:text-black",
                 !hasCities && "opacity-40 cursor-not-allowed",
               )}
@@ -156,11 +174,13 @@ export function CityPickerModal({
             <button
               type="button"
               onClick={() => setMethod("pickup")}
+              disabled={!pickupEnabled}
               className={cn(
                 "py-2.5 text-sm rounded-xl transition font-bold inline-flex items-center justify-center gap-1.5",
                 method === "pickup"
-                  ? "bg-black text-[#F8CB1E]"
+                  ? "bg-black text-white"
                   : "text-black/70 hover:text-black",
+                !pickupEnabled && "opacity-40 cursor-not-allowed",
               )}
             >
               <IcoBag s={14} c="currentColor" />
@@ -171,7 +191,12 @@ export function CityPickerModal({
           {method === "delivery" ? (
             hasCities ? (
               <>
-                <div className="flex items-center gap-2 bg-[#FFFBEC] border-2 border-black rounded-xl px-3.5 py-2.5 focus-within:bg-white focus-within:shadow-[0_2px_0_#000] transition">
+                <div
+                  className="flex items-center gap-2 border-2 border-black rounded-xl px-3.5 py-2.5 focus-within:bg-white focus-within:shadow-[0_2px_0_#000] transition"
+                  style={{
+                    backgroundColor: "color-mix(in srgb, var(--qf-primary) 10%, white)",
+                  }}
+                >
                   <IcoSearch c="currentColor" s={16} />
                   <input
                     value={query}
@@ -183,7 +208,9 @@ export function CityPickerModal({
                 <ul className="max-h-72 overflow-y-auto -mx-1 px-1 space-y-1">
                   {filtered.length === 0 ? (
                     <li className="text-center text-sm font-medium text-black/55 py-8">
-                      לא מצאנו עיר תואמת. אפשר להזמין לאיסוף עצמי.
+                      {pickupEnabled
+                        ? "לא מצאנו עיר תואמת. אפשר להזמין לאיסוף עצמי."
+                        : "לא מצאנו עיר תואמת."}
                     </li>
                   ) : (
                     filtered.map((c) => (
@@ -191,7 +218,7 @@ export function CityPickerModal({
                         <button
                           type="button"
                           onClick={() => onChoose({ kind: "delivery", city: c })}
-                          className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-start text-sm font-bold text-black border-2 border-transparent hover:border-black hover:bg-[#FFFBEC] transition"
+                          className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-start text-sm font-bold text-black border-2 border-transparent hover:border-black hover:bg-(--qf-primary)/10 transition"
                         >
                           <IcoPin c="currentColor" s={16} />
                           <span className="flex-1">{c}</span>
@@ -203,16 +230,20 @@ export function CityPickerModal({
               </>
             ) : (
               <div className="bg-[#FFE2DC] border-2 border-black rounded-xl px-3.5 py-3 text-sm font-bold text-black shadow-[0_2px_0_#000]">
-                המסעדה לא מספקת משלוחים בשלב זה. נסו איסוף עצמי.
+                {pickupEnabled
+                  ? "המסעדה לא מספקת משלוחים בשלב זה. נסו איסוף עצמי."
+                  : "המסעדה לא מספקת משלוחים בשלב זה."}
               </div>
             )
-          ) : (
+          ) : pickupEnabled ? (
             <div className="space-y-3">
               <div
                 className="rounded-2xl p-4 flex items-start gap-3 border-2 border-black"
-                style={{ backgroundColor: "#FFF6CE" }}
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--qf-primary) 18%, white)",
+                }}
               >
-                <div className="w-10 h-10 rounded-xl bg-black grid place-items-center text-[#F8CB1E] border-2 border-black shadow-[0_2px_0_#000] shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-black grid place-items-center text-white border-2 border-black shadow-[0_2px_0_#000] shrink-0">
                   <IcoBag c="currentColor" s={18} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -227,11 +258,15 @@ export function CityPickerModal({
               <button
                 type="button"
                 onClick={() => onChoose({ kind: "pickup" })}
-                className="w-full bg-[#F8CB1E] hover:bg-[#ffd84a] text-black rounded-xl h-12 text-base font-black border-2 border-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] inline-flex items-center justify-center gap-2 transition"
+                className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) text-white rounded-xl h-12 text-base font-black border-2 border-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] inline-flex items-center justify-center gap-2 transition"
               >
                 <IcoCheck c="currentColor" s={18} />
                 אישור איסוף עצמי
               </button>
+            </div>
+          ) : (
+            <div className="bg-[#FFE2DC] border-2 border-black rounded-xl px-3.5 py-3 text-sm font-bold text-black shadow-[0_2px_0_#000]">
+              המסעדה לא מציעה איסוף עצמי. הזמינו במשלוח.
             </div>
           )}
         </div>

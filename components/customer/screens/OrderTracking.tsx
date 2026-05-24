@@ -619,7 +619,7 @@ function ThankYouView({
           חזרה לחנות
         </Link>
         <Link
-          href={`/${tenantSlug}/menu`}
+          href={`/${tenantSlug}#menu-section`}
           className="text-center py-3 rounded-2xl border border-qf-line bg-white hover:bg-qf-line-soft text-qf-ink font-medium text-sm"
         >
           הזמנה נוספת

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { ALL_WEBHOOK_EVENTS, type WebhookEventType } from "@/lib/webhooks/events";
-import { IcoWarning } from "@/components/shared/Icons";
+import { IcoWarning, IcoArrowLeft } from "@/components/shared/Icons";
 
 interface Endpoint {
   id: string;
@@ -68,10 +68,29 @@ export function WebhooksManager({
 
   return (
     <div className="space-y-5">
-      <div className="bg-qf-blue-soft border border-qf-blue/30 text-sm rounded-2xl p-4 text-qf-ink2">
-        <div className="font-medium text-qf-ink mb-1">לחיבור קופה / מדפסת תרמית / Slack / Telegram</div>
-        כל הזמנה חדשה ושינוי סטטוס נשלחים אוטומטית ל-URL שתגדיר כאן. החתימה היא
-        HMAC-SHA256 ב-header <code className="bg-white px-1 rounded">X-QuickFood-Signature</code>.
+      <div className="bg-qf-blue-soft border border-qf-blue/30 text-sm rounded-2xl p-4 text-qf-ink2 space-y-2">
+        <div className="font-medium text-qf-ink">
+          חיבור לקופה, מדפסת תרמית, Make / Zapier ועוד
+        </div>
+        <p>
+          כל הזמנה חדשה ושינוי סטטוס נשלחים אוטומטית ל-URL שתגדיר כאן - קופות
+          רגילות (לדוגמה Restigo, Tabit, ResApp), מדפסות תרמיות (כל מדפסת
+          שמדברת HTTP), אוטומציות ב-Make, Zapier, n8n, וכלי התראות כמו Slack
+          ו-Telegram. החתימה היא HMAC-SHA256 ב-header{" "}
+          <code className="bg-white px-1 rounded">X-QuickFood-Signature</code>.
+        </p>
+        <p>
+          <a
+            href="/docs/pos#webhooks"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-(--qf-deep) font-semibold underline"
+          >
+            <IcoArrowLeft s={14} />
+            <span>מדריך אינטגרציה מלא לחברות קופה</span>
+          </a>{" "}
+          - כולל אימות חתימה, retry policy ודוגמאות payload לכל אירוע.
+        </p>
       </div>
 
       <section className="bg-white rounded-2xl border border-qf-line-dash">
@@ -175,7 +194,7 @@ export function WebhooksManager({
                   <div className="mt-3 p-3 rounded-lg bg-qf-yolk-soft border border-qf-yolk/40 text-xs space-y-1">
                     <div className="font-medium text-qf-ink inline-flex items-center gap-1.5">
                       <IcoWarning c="#c2421f" s={14} />
-                      Secret מוצג פעם אחת בלבד — שמור אותו עכשיו
+                      Secret מוצג פעם אחת בלבד - שמור אותו עכשיו
                     </div>
                     <code className="block font-mono text-[11px] break-all" dir="ltr">
                       {revealedSecret.secret}

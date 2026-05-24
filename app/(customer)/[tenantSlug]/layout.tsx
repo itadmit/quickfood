@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/client";
 import { getSession } from "@/lib/auth/session";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import { CartProvider } from "@/components/customer/CartProvider";
+import { MenuSearchProvider } from "@/components/customer/MenuSearchProvider";
 import { CustomerTopNav } from "@/components/customer/CustomerTopNav";
 import { ReviewPromptModal } from "@/components/customer/ReviewPromptModal";
 import { MerchantPreviewBar } from "@/components/customer/MerchantPreviewBar";
@@ -90,28 +91,29 @@ export default async function CustomerLayout({
             : null
         }
       >
-        {/* Mobile = phone-sized column with shadow (max-w-md).
-            Desktop (lg+) = top nav appears, the wrapper widens and screens
-            handle their own multi-column layouts internally. */}
-        <CustomerTopNav
-          tenantSlug={tenant.slug}
-          tenantName={tenant.name}
-          logoLetter={tenant.logoLetter}
-          logoUrl={tenant.logoUrl}
-          branchAddress={branch?.address ?? null}
-        />
-        <div className="max-w-md mx-auto bg-qf-bg min-h-screen relative shadow-md lg:max-w-none lg:mx-0 lg:shadow-none">
-          {children}
-          {pendingReview && (
-            <ReviewPromptModal
-              tenantSlug={tenant.slug}
-              orderId={pendingReview.id}
-              orderNumber={pendingReview.number}
-            />
-          )}
-        </div>
-        {modal}
-        {isOwnMerchant && <MerchantPreviewBar tenantName={tenant.name} />}
+        <MenuSearchProvider>
+          {/* Mobile = phone-sized column with shadow (max-w-md).
+              Desktop (lg+) = top nav appears, the wrapper widens and screens
+              handle their own multi-column layouts internally. */}
+          <CustomerTopNav
+            tenantSlug={tenant.slug}
+            tenantName={tenant.name}
+            logoLetter={tenant.logoLetter}
+            logoUrl={tenant.logoUrl}
+          />
+          <div className="max-w-md mx-auto bg-qf-bg min-h-screen relative shadow-md lg:max-w-none lg:mx-0 lg:shadow-none">
+            {children}
+            {pendingReview && (
+              <ReviewPromptModal
+                tenantSlug={tenant.slug}
+                orderId={pendingReview.id}
+                orderNumber={pendingReview.number}
+              />
+            )}
+          </div>
+          {modal}
+          {isOwnMerchant && <MerchantPreviewBar tenantName={tenant.name} />}
+        </MenuSearchProvider>
       </CartProvider>
     </ThemeProvider>
   );

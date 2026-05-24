@@ -1,12 +1,19 @@
 import Link from "next/link";
+import { IcoArrowLeft } from "@/components/shared/Icons";
 
 interface Props {
   /** Page title (e.g. "תנאי שימוש"). */
   title: string;
   /** Short page subtitle / context line under the title. */
   subtitle: string;
-  /** ISO date string the document was last updated. */
-  lastUpdated: string;
+  /** ISO date string the document was last updated. Omit for evergreen pages. */
+  lastUpdated?: string;
+  /** Top-of-header chip label. Defaults to the legal-doc wording. */
+  chipLabel?: string;
+  /** Back-button destination. Defaults to /dashboard/login. */
+  backHref?: string;
+  /** Back-button label. Defaults to "להתחברות". */
+  backLabel?: string;
   /** Sections of the document. */
   children: React.ReactNode;
 }
@@ -17,7 +24,15 @@ interface Props {
  * black-bordered + hard-shadow white content card, brand chip top
  * bar — so the merchant never feels like they've left the product.
  */
-export function LegalShell({ title, subtitle, lastUpdated, children }: Props) {
+export function LegalShell({
+  title,
+  subtitle,
+  lastUpdated,
+  chipLabel = "QUICKFOOD · מסמך משפטי",
+  backHref = "/dashboard/login",
+  backLabel = "להתחברות",
+  children,
+}: Props) {
   return (
     <div
       className="dash-v2 min-h-screen text-black"
@@ -32,11 +47,12 @@ export function LegalShell({ title, subtitle, lastUpdated, children }: Props) {
       <header className="px-5 lg:px-10 pt-6 flex items-center justify-between gap-4">
         <BrandChip />
         <Link
-          href="/dashboard/login"
+          href={backHref}
           className="inline-flex items-center gap-2 text-sm font-bold text-black bg-white px-4 py-2 rounded-full border-2 border-black shadow-[0_2px_0_#000] hover:shadow-[0_3px_0_#000] active:translate-y-px active:shadow-[0_1px_0_#000] transition"
         >
+          <IcoArrowLeft c="#000" s={14} />
           <span className="hidden sm:inline text-black/70">חזרה</span>
-          <span className="font-black">← להתחברות</span>
+          <span className="font-black">{backLabel}</span>
         </Link>
       </header>
 
@@ -45,7 +61,7 @@ export function LegalShell({ title, subtitle, lastUpdated, children }: Props) {
         <div className="mx-auto max-w-3xl">
           <header className="mb-8 lg:mb-10 space-y-3">
             <span className="inline-block bg-black text-[#F8CB1E] px-3 py-1 rounded-full text-[11px] font-black tracking-wider">
-              QUICKFOOD · מסמך משפטי
+              {chipLabel}
             </span>
             <h1 className="text-3xl lg:text-5xl font-black tracking-tight leading-tight">
               {title}
@@ -53,9 +69,11 @@ export function LegalShell({ title, subtitle, lastUpdated, children }: Props) {
             <p className="text-base text-black/65 leading-relaxed max-w-xl">
               {subtitle}
             </p>
-            <p className="text-xs font-bold text-black/55 tracking-wider uppercase">
-              עודכן לאחרונה: {formatHebrewDate(lastUpdated)}
-            </p>
+            {lastUpdated && (
+              <p className="text-xs font-bold text-black/55 tracking-wider uppercase">
+                עודכן לאחרונה: {formatHebrewDate(lastUpdated)}
+              </p>
+            )}
           </header>
 
           <article className="bg-white rounded-3xl border-2 border-black shadow-[0_6px_0_#000] p-7 lg:p-10 legal-prose">

@@ -1,16 +1,16 @@
 import { notFound } from "next/navigation";
 import { loadMenuItemForCustomer } from "@/lib/menu-item-load";
 import { ItemDetail } from "@/components/customer/screens/ItemDetail";
-import { ItemDetailModal } from "@/components/customer/ItemDetailModal";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Intercepting route for the customer item page. When the customer
- * is on `/[tenantSlug]/menu` and clicks an item Link, this slot
- * activates inside the parent `@modal` parallel slot and renders
- * <ItemDetail inModal /> inside an <ItemDetailModal> chrome so the
- * URL changes and the menu stays visible underneath.
+ * is on the storefront and clicks an item Link, this slot activates
+ * inside the parent `@modal` parallel slot and renders
+ * <ItemDetail inModal /> — the surrounding `layout.tsx` wraps it in
+ * <ItemDetailModal> chrome so the URL changes and the menu stays
+ * visible underneath.
  *
  * A direct navigation to `/[tenantSlug]/menu/[itemId]` still hits
  * the regular page (see ../../menu/[itemId]/page.tsx) and renders
@@ -26,13 +26,11 @@ export default async function MenuItemModalRoute({
   if (!loaded) notFound();
 
   return (
-    <ItemDetailModal>
-      <ItemDetail
-        tenantSlug={loaded.tenant.slug}
-        businessType={loaded.tenant.businessType}
-        item={loaded.item}
-        inModal
-      />
-    </ItemDetailModal>
+    <ItemDetail
+      tenantSlug={loaded.tenant.slug}
+      businessType={loaded.tenant.businessType}
+      item={loaded.item}
+      inModal
+    />
   );
 }

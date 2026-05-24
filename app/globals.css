@@ -344,6 +344,26 @@ button:disabled,
   animation: qf-slide-up 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Bottom-sheet modal entrance — mobile only. Slides up from below the
+   viewport with no scale/opacity flash, so the modal feels like a Wolt
+   sheet rather than a "pop in" alert. */
+@keyframes qf-sheet-in {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.animate-qf-sheet-in {
+  animation: qf-sheet-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Centered modal entrance — desktop. Subtle fade + tiny scale, no bounce. */
+@keyframes qf-modal-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.animate-qf-modal-in {
+  animation: qf-modal-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 /* Toast that pops in from the bottom edge. */
 @keyframes qf-toast-in {
   from { transform: translate(0, 24px) scale(0.95); opacity: 0; }
@@ -436,12 +456,92 @@ button:disabled,
   font-weight: 800;
   color: #000;
 }
+.legal-prose code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.88em;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 0.12em 0.4em;
+  border-radius: 5px;
+  direction: ltr;
+  unicode-bidi: embed;
+}
+.legal-prose pre {
+  direction: ltr;
+  text-align: left;
+  background: #0e0e10;
+  color: #f4f4f5;
+  border-radius: 12px;
+  padding: 16px 18px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  overflow-x: auto;
+  margin: 0.75rem 0 1.25rem;
+  border: 1px solid rgba(0, 0, 0, 0.85);
+  box-shadow: 0 3px 0 #000;
+}
+.legal-prose pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+  color: inherit;
+}
+.legal-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0 1.25rem;
+  font-size: 14px;
+  border: 1.5px solid #000;
+  background: #fff;
+}
+.legal-prose th,
+.legal-prose td {
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  padding: 8px 10px;
+  text-align: start;
+  vertical-align: top;
+}
+.legal-prose th {
+  background: #fff7d6;
+  font-weight: 800;
+}
+.legal-prose .docs-callout {
+  border-inline-start: 4px solid #000;
+  background: #fff7d6;
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+.legal-prose .docs-callout--warn {
+  background: #ffe7e0;
+  border-inline-start-color: #c2421f;
+}
+.legal-prose details {
+  border: 1.5px solid #000;
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px 14px;
+  margin: 0.5rem 0;
+}
+.legal-prose details[open] {
+  background: #fffbec;
+}
+.legal-prose summary {
+  cursor: pointer;
+  font-weight: 800;
+  list-style: none;
+}
+.legal-prose summary::-webkit-details-marker {
+  display: none;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .animate-qf-pulse,
   .qf-spinner,
   .animate-qf-check-in,
   .animate-qf-slide-up,
+  .animate-qf-sheet-in,
+  .animate-qf-modal-in,
   .animate-qf-toast-in,
   .animate-qf-preview-bar-in,
   .animate-tagline-roll {

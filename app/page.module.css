@@ -950,7 +950,10 @@
   color: var(--ink-2);
 }
 @media (max-width: 900px) {
-  .problemCard { padding: 32px 28px; }
+  .problemCard {
+    padding: 32px 24px;
+    margin-inline: 4px;
+  }
 }
 .problemCardPeach,
 .problemCardLilac { background: var(--paper); }
@@ -1917,7 +1920,7 @@
 /* ─── Mobile ────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .navLinks { display: none; }
-  .container { padding: 0 18px; }
+  .container { padding: 0 24px; }
   .hero { padding: 140px 0 44px; }
   .heroMeta { grid-template-columns: 1fr; gap: 22px; }
   .heroStats { flex-wrap: wrap; gap: 14px; }

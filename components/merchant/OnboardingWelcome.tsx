@@ -69,12 +69,12 @@ export function OnboardingWelcome({
       body: JSON.stringify({ onboarding_dismissed: true }),
     }).catch(() => {});
 
+    setOpen(false);
     if (target === "scratch") {
       router.push("/dashboard/menu");
     } else if (target === "wolt") {
       router.push("/dashboard/settings/advanced");
     } else {
-      setOpen(false);
       router.refresh();
     }
   }

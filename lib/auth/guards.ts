@@ -1,5 +1,6 @@
 import { getSession, type Session } from "./session";
 import { apiError } from "@/lib/api-response";
+import { assertApiKeyRateLimit } from "@/lib/api/rate-limit";
 
 /**
  * Guards — call from API Route Handlers. Throw a Response on failure.
@@ -29,6 +30,12 @@ export async function requireMerchant(roles?: string[]): Promise<Session> {
   }
   if (roles && roles.length > 0 && !roles.includes(s.role ?? "")) {
     throw apiError("forbidden", "אין הרשאה לפעולה זו", 403);
+  }
+  if (s.via === "api_key") {
+    const apiKeyId = s.userId.startsWith("api_key:")
+      ? s.userId.slice("api_key:".length)
+      : s.userId;
+    assertApiKeyRateLimit(apiKeyId);
   }
   return s;
 }

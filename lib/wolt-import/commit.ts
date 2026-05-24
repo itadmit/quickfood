@@ -214,18 +214,22 @@ export async function commitImport(
       });
       itemsImported += 1;
 
-      // Re-attach option groups. Simpler to clear + recreate than to
-      // diff — these rows are cheap and merchant edits on imported
-      // items would be lost on the next re-import anyway (by design).
       await prisma.itemOptionGroup.deleteMany({ where: { itemId: saved.id } });
       for (const [gidx, ref] of (it.options ?? []).entries()) {
-        const templateSetId = setIdMap.get(ref.id);
-        if (!templateSetId) continue; // group was on an unknown set
+        const topLevelId = ref.parent ?? ref.id;
+        const templateSetId = setIdMap.get(topLevelId);
+        if (!templateSetId) {
+          errors.push({
+            context: `item_option_group:${it.name}:${ref.name}`,
+            message: `קבוצת תוספות "${ref.name}" לא נמצאה ברשימת ה-option groups של וולט (parent=${topLevelId})`,
+          });
+          continue;
+        }
         await prisma.itemOptionGroup.create({
           data: {
             itemId: saved.id,
             name: ref.name,
-            type: pickGroupType(menu.options, ref.id),
+            type: pickGroupType(menu.options, topLevelId),
             required: (ref.minimum_total_selections ?? 0) > 0,
             minSelect: ref.minimum_total_selections ?? 0,
             maxSelect: ref.maximum_total_selections ?? 1,

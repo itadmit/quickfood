@@ -81,6 +81,7 @@ export const OrderCreateSchema = z.object({
   payment_method: z.enum(["card", "cash", "apple_pay", "google_pay", "bit"]).default("cash"),
   payment_token: z.string().optional(),
   tip: z.number().int().min(0).default(0),
+  cutlery_count: z.number().int().min(0).max(20).default(0),
   customer_notes: z.string().max(500).optional(),
   delivery_notes: z.string().max(200).optional(),
   guest_phone: PhoneSchema.optional(),
@@ -216,11 +217,30 @@ export const TenantPatchSchema = z.object({
   vat_number: z.string().max(20).optional(),
   checkout_show_tracking: z.boolean().optional(),
   scheduled_orders_enabled: z.boolean().optional(),
+  pickup_enabled: z.boolean().optional(),
+  cutlery_enabled: z.boolean().optional(),
+  cutlery_label: z.string().min(1).max(60).optional(),
+  cutlery_price: z.number().int().min(0).max(10000).optional(),
+  cutlery_free_above: z.number().int().min(0).max(1000000).nullable().optional(),
   // Only setter-shape we accept: `true` = stamp now, anything else ignored.
   // Cleared via the DB if a tenant ever needs to be re-shown.
   onboarding_dismissed: z.literal(true).optional(),
   dashboard_version: z.enum(["v1", "v2"]).optional(),
 });
+
+export const NoticeInputSchema = z.object({
+  scope: z.enum(["store", "category", "item"]),
+  category_id: UuidSchema.nullable().optional(),
+  item_id: UuidSchema.nullable().optional(),
+  kind: z.enum(["info", "warning", "allergen", "kosher", "dietary"]).default("info"),
+  title: z.string().min(1).max(120),
+  body: z.string().max(500).nullable().optional(),
+  icon: z.string().max(40).nullable().optional(),
+  active: z.boolean().default(true),
+  position: z.number().int().default(0),
+});
+
+export const NoticePatchSchema = NoticeInputSchema.partial();
 
 export const BranchInputSchema = z.object({
   name: z.string().min(1).max(80),
@@ -255,6 +275,7 @@ export const WebhookEventSchema = z.enum([
   "order.created",
   "order.status_changed",
   "order.cancelled",
+  "order.refunded",
   "order.ready_for_print",
 ]);
 

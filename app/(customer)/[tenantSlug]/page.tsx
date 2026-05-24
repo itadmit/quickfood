@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { prisma } from "@/lib/db/client";
 import { getSession } from "@/lib/auth/session";
 import { CustomerHome } from "@/components/customer/screens/CustomerHome";
-import { IcoArrowLeft } from "@/components/shared/Icons";
+import { isItemVisibleNow } from "@/lib/menu-availability";
 import { fingerprintOrderItems } from "@/lib/order-reorder";
 
 export const dynamic = "force-dynamic";
@@ -66,16 +65,32 @@ export default async function HomePage({
       })
     : Promise.resolve([] as { cities: string[] }[]);
 
-  const [categories, popular, customerRecentOrders, bannerCampaign, pendingReview, zones] = await Promise.all([
+  const [
+    allCategories,
+    popular,
+    allMenuItems,
+    notices,
+    customerRecentOrders,
+    bannerCampaign,
+    pendingReview,
+    zones,
+  ] = await Promise.all([
     prisma.menuCategory.findMany({
       where: { tenantId: tenant.id, active: true },
       orderBy: { position: "asc" },
-      take: 8,
     }),
     prisma.menuItem.findMany({
       where: { tenantId: tenant.id, available: true, tags: { has: "פופולרי" } },
       orderBy: { position: "asc" },
       take: 6,
+    }),
+    prisma.menuItem.findMany({
+      where: { tenantId: tenant.id, available: true },
+      orderBy: [{ categoryId: "asc" }, { position: "asc" }],
+    }),
+    prisma.notice.findMany({
+      where: { tenantId: tenant.id, active: true },
+      orderBy: [{ position: "asc" }, { updatedAt: "desc" }],
     }),
     customerRecentOrdersPromise,
     prisma.campaign.findFirst({
@@ -95,6 +110,9 @@ export default async function HomePage({
     pendingReviewPromise,
     zonesPromise,
   ]);
+
+  const menuItems = allMenuItems.filter((i) => isItemVisibleNow(i));
+  const categories = allCategories.slice(0, 8);
 
   const seenCity = new Set<string>();
   const deliveryCities: string[] = [];
@@ -165,20 +183,33 @@ export default async function HomePage({
           : null
       }
       categories={categories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color }))}
+      allCategories={allCategories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color }))}
+      menuItems={menuItems.map((i) => ({
+        id: i.id,
+        categoryId: i.categoryId,
+        name: i.name,
+        description: i.description,
+        basePrice: i.basePrice,
+        artType: i.artType,
+        images: i.images,
+        tags: i.tags,
+      }))}
+      notices={notices.map((n) => ({
+        id: n.id,
+        scope: n.scope,
+        categoryId: n.categoryId,
+        itemId: n.itemId,
+        kind: n.kind,
+        title: n.title,
+        body: n.body,
+      }))}
       popular={popularSerialized}
       recentOrders={recentOrdersSerialized}
       deliveryCities={deliveryCities}
+      pickupEnabled={tenant.pickupEnabled}
       bannerCampaign={bannerCampaign}
       hasCustomerSession={session?.type === "customer"}
       pendingReviewOrderId={pendingReview?.id ?? null}
-    >
-      <Link
-        href={`/${tenant.slug}/menu`}
-        className="text-xs text-(--qf-deep) underline pt-2 inline-flex items-center justify-center gap-1 w-full"
-      >
-        לתפריט המלא
-        <IcoArrowLeft c="currentColor" s={12} />
-      </Link>
-    </CustomerHome>
+    />
   );
 }

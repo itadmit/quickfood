@@ -187,7 +187,8 @@ export function ItemDetail({
   return (
     <div
       className={cn(
-        "pb-36 lg:pb-12",
+        "pb-36",
+        inModal ? "lg:pb-0" : "lg:pb-12",
         // Card chrome only on the full-page route; inside the modal
         // the wrapper provides its own card surface.
         !inModal &&
@@ -208,7 +209,7 @@ export function ItemDetail({
         >
           <div className="flex items-center gap-3 px-4 py-3">
             <Link
-              href={`/${tenantSlug}/menu`}
+              href={`/${tenantSlug}`}
               className="w-9 h-9 rounded-full bg-qf-line-soft grid place-items-center"
               aria-label="חזרה"
             >
@@ -223,7 +224,14 @@ export function ItemDetail({
 
       {/* Hero */}
       <div className="relative">
-        <div className="relative h-72 overflow-hidden bg-qf-line-soft rounded-b-3xl lg:h-96 lg:rounded-none">
+        <div
+          className={cn(
+            "relative overflow-hidden bg-qf-line-soft",
+            inModal
+              ? "h-64 sm:h-80 lg:h-105"
+              : "h-72 lg:h-96 rounded-b-3xl lg:rounded-none",
+          )}
+        >
           <MenuItemImage
             src={item.images?.[0]}
             alt={item.name}
@@ -236,7 +244,7 @@ export function ItemDetail({
         </div>
         {!inModal && (
           <Link
-            href={`/${tenantSlug}/menu`}
+            href={`/${tenantSlug}`}
             className="lg:hidden absolute top-4 inset-s-4 w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-md grid place-items-center"
             aria-label="חזרה"
           >
@@ -295,14 +303,37 @@ export function ItemDetail({
       {/* Option groups */}
       {item.optionGroups.map((g) => {
         const free = g.includedFree ?? 0;
-        const base = g.required
-          ? g.type === "single"
-            ? "חובה לבחור 1"
-            : `חובה ${g.minSelect}${g.minSelect === g.maxSelect ? "" : `–${g.maxSelect}`}`
-          : g.type === "multi"
-            ? `אופציונלי · עד ${g.maxSelect}`
-            : "אופציונלי";
-        const subtitle = free > 0 ? `${base} · ${free} כלולים במחיר` : base;
+        const selected = picks[g.id]?.size ?? 0;
+        const remaining = Math.max(0, g.maxSelect - selected);
+        const atMax = selected >= g.maxSelect;
+        const freeRemaining = Math.max(0, free - selected);
+
+        let subtitle: string;
+        if (g.required) {
+          if (g.type === "single") {
+            subtitle = selected > 0 ? "נבחר" : "חובה לבחור 1";
+          } else {
+            const range = g.minSelect === g.maxSelect ? `${g.minSelect}` : `${g.minSelect}–${g.maxSelect}`;
+            subtitle = selected >= g.minSelect
+              ? `הושלם · ${selected}/${g.maxSelect}`
+              : `חובה ${range} · ${selected}/${g.maxSelect}`;
+          }
+        } else if (g.type === "multi") {
+          if (atMax) {
+            subtitle = `הגעת למקסימום · ${g.maxSelect}/${g.maxSelect}`;
+          } else if (selected > 0) {
+            subtitle = freeRemaining > 0
+              ? `אפשר לבחור עוד ${remaining} · ${freeRemaining} חינם נותרו`
+              : `אפשר לבחור עוד ${remaining}`;
+          } else {
+            subtitle = free > 0
+              ? `${free} הראשונים חינם · אפשר לבחור עד ${g.maxSelect}`
+              : `אפשר לבחור עד ${g.maxSelect}`;
+          }
+        } else {
+          subtitle = selected > 0 ? "נבחר" : "אופציונלי";
+        }
+
         return (
           <Section
             key={g.id}
@@ -310,16 +341,26 @@ export function ItemDetail({
             title={g.name}
             required={g.required}
             subtitle={subtitle}
+            counter={
+              g.type === "multi" && g.maxSelect > 1
+                ? { selected, max: g.maxSelect, atMax }
+                : undefined
+            }
             helpText={g.helpText}
             flash={flashGroupId === g.id}
           >
             {g.options.map((o) => {
               const checked = picks[g.id]?.has(o.id) ?? false;
+              const blocked = !checked && atMax;
               return (
                 <Row
                   key={o.id}
                   active={checked}
-                  onClick={() => toggleOption(g, o.id)}
+                  disabled={blocked}
+                  onClick={() => {
+                    if (blocked) return;
+                    toggleOption(g, o.id);
+                  }}
                   label={o.name}
                   imageUrl={o.imageUrl}
                   priceLabel={
@@ -400,6 +441,7 @@ function Section({
   title,
   subtitle,
   required,
+  counter,
   helpText,
   flash,
   children,
@@ -408,6 +450,7 @@ function Section({
   title: string;
   subtitle?: string;
   required?: boolean;
+  counter?: { selected: number; max: number; atMax: boolean };
   helpText?: string | null;
   flash?: boolean;
   children: React.ReactNode;
@@ -421,15 +464,38 @@ function Section({
       )}
     >
       <div className="flex items-baseline justify-between gap-3 mb-1">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <h2 className="font-semibold text-base">{title}</h2>
           {required && (
             <span className="text-[10px] bg-qf-tomato-soft text-qf-tomato px-1.5 py-0.5 rounded-md font-semibold">
               חובה
             </span>
           )}
+          {counter && (
+            <span
+              className={cn(
+                "text-[11px] tnum px-1.5 py-0.5 rounded-md font-bold",
+                counter.atMax
+                  ? "bg-qf-ink text-white"
+                  : counter.selected > 0
+                    ? "bg-(--qf-soft) text-(--qf-deep)"
+                    : "bg-qf-line-soft text-qf-mute",
+              )}
+            >
+              {counter.selected}/{counter.max}
+            </span>
+          )}
         </div>
-        {subtitle && <span className="text-xs text-qf-mute">{subtitle}</span>}
+        {subtitle && (
+          <span
+            className={cn(
+              "text-xs",
+              counter?.atMax ? "text-qf-tomato font-semibold" : "text-qf-mute",
+            )}
+          >
+            {subtitle}
+          </span>
+        )}
       </div>
       {helpText && (
         <p className="text-xs text-qf-mute mb-2 leading-snug">{helpText}</p>
@@ -447,6 +513,7 @@ function Row({
   priceTone,
   radio,
   imageUrl,
+  disabled,
 }: {
   active: boolean;
   onClick: () => void;
@@ -455,12 +522,18 @@ function Row({
   priceTone: "absolute" | "delta";
   radio?: boolean;
   imageUrl?: string | null;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center justify-between gap-3 py-3 text-sm border-b border-qf-line last:border-0 active:bg-qf-line-soft transition"
+      disabled={disabled}
+      aria-disabled={disabled || undefined}
+      className={cn(
+        "w-full flex items-center justify-between gap-3 py-3 text-sm border-b border-qf-line last:border-0 transition",
+        disabled ? "opacity-40 cursor-not-allowed" : "active:bg-qf-line-soft",
+      )}
     >
       <div className="flex items-center gap-3 min-w-0">
         <span

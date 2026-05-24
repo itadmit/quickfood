@@ -4,6 +4,11 @@ import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { createOrder, CartValidationError } from "@/lib/orders-create";
 import { toE164 } from "@/lib/format";
+import {
+  checkIdempotency,
+  persistIdempotency,
+  replayHit,
+} from "@/lib/api/idempotency";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,7 +36,16 @@ export const POST = handler(async (req: Request) => {
   const session = await requireMerchant();
   if (!session.tenantId) return apiError("forbidden", "no tenant", 403);
 
-  const body = ManualSchema.parse(await req.json());
+  const rawBody = await req.text();
+  const idem = await checkIdempotency(
+    session.tenantId,
+    "POST",
+    "/api/v1/merchant/orders/manual",
+    rawBody,
+  );
+  if (idem && "hit" in idem) return replayHit(idem.hit);
+
+  const body = ManualSchema.parse(JSON.parse(rawBody || "{}"));
   const phone = toE164(body.customer_phone);
   if (!phone) return apiError("validation_error", "טלפון לא תקין", 422, "customer_phone");
 
@@ -41,10 +55,8 @@ export const POST = handler(async (req: Request) => {
   });
   if (!tenant) return apiError("not_found", "tenant not found", 404);
 
+  let response: Response;
   try {
-    // Merchant manual entry still takes one "customer name" field;
-    // split on the first space to match the new firstName/lastName
-    // schema. Trailing tokens collapse into lastName.
     const trimmed = body.customer_name.trim();
     const spaceAt = trimmed.indexOf(" ");
     const customerFirstName =
@@ -69,7 +81,7 @@ export const POST = handler(async (req: Request) => {
         option_ids: l.option_ids,
       })),
     });
-    return apiJson(
+    response = apiJson(
       {
         order: {
           id: result.order.id,
@@ -82,8 +94,20 @@ export const POST = handler(async (req: Request) => {
     );
   } catch (err) {
     if (err instanceof CartValidationError) {
-      return apiError(err.code, err.code, 422);
+      response = apiError(err.code, err.code, 422);
+    } else {
+      throw err;
     }
-    throw err;
   }
+
+  if (idem && "context" in idem) {
+    return persistIdempotency(
+      session.tenantId,
+      "POST",
+      "/api/v1/merchant/orders/manual",
+      idem.context,
+      response,
+    );
+  }
+  return response;
 });
