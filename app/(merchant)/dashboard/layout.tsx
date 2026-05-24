@@ -67,7 +67,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
         // cream backdrop are inline because they reach through the dot
         // grid behind the cards.
         <div
-          className="dash-v2 min-h-screen text-black flex flex-col overflow-x-hidden"
+          // `overflow-x-clip` (not `-hidden`) — `-hidden` implies a
+          // scroll container, which captures the page scroll and
+          // breaks the sidebar's `position: sticky`. `-clip` clips
+          // overflow without creating a new scroll context.
+          className="dash-v2 min-h-screen text-black flex flex-col overflow-x-clip"
           style={{
             backgroundColor: "#FFFBEC",
             backgroundImage:
@@ -114,7 +118,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           />
         </div>
       ) : (
-        <div className="min-h-screen bg-qf-bg-dash text-qf-ink flex flex-col overflow-x-hidden">
+        <div className="min-h-screen bg-qf-bg-dash text-qf-ink flex flex-col overflow-x-clip">
           <BillingSetupBanner
             hasPaymentMethod={hasPaymentMethod}
             trialDaysLeft={trialDaysLeft}

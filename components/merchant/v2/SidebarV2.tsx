@@ -12,6 +12,7 @@ import {
   IcoMegaphone,
   IcoBell,
   IcoCreditCard,
+  IcoFlame,
 } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 
@@ -120,6 +121,22 @@ export function SidebarV2({
         ))}
       </nav>
 
+      {/* "Peak hour coming" callout — pinned to the bottom of the
+          sidebar via the parent's flex-col + `mt-auto`. V2 brand
+          language: warm yellow tile with 2px black border + hard
+          shadow, flame icon in tomato red. */}
+      <div
+        className="mt-auto flex items-start gap-2.5 rounded-2xl border-2 border-black px-3 py-3 text-xs shadow-[0_3px_0_#000]"
+        style={{ backgroundColor: "#FFF2C9" }}
+      >
+        <IcoFlame c="#c2421f" s={16} className="mt-0.5 shrink-0" />
+        <div className="min-w-0">
+          <div className="font-black text-black">שעת שיא קרבה</div>
+          <div className="text-black/70 leading-snug">
+            היערכו לעומס בשעות 19–21
+          </div>
+        </div>
+      </div>
     </aside>
   );
 }
