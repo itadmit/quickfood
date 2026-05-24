@@ -57,33 +57,29 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
         }}
       />
 
-      {/* ─── Full-bleed video pinned to the VISUAL-RIGHT edge of the
-              viewport (desktop only). In RTL `right: 0` is the
-              geometric right edge regardless of dir. Eyes in Hebrew
-              flow right→left, so anchoring the decorative video at the
-              start of the read and the form at the end keeps the
-              visual hierarchy intuitive.
-
-              Hosts the rotating marketing tagline + eyebrow pill in
-              its bottom area (visual-LEFT side, where the gradient
-              has already faded the video to solid yellow → text stays
-              legible without a scrim). */}
+      {/* ─── Full-bleed video pinned to the VISUAL-LEFT edge of the
+              viewport (desktop only), matching the landing-page
+              `.heroMedia` geometry exactly (`left: 0; width: 42%`).
+              Inline `left/right` overrides any inline-direction
+              shorthand so the video lands on the same edge regardless
+              of dir. */}
       <aside
         aria-hidden
         className="hidden lg:block absolute inset-y-0 w-[42%] z-1 overflow-hidden"
-        style={{ right: 0, left: "auto" }}
+        style={{ left: 0, right: "auto" }}
       >
         <AuthHeroVideo />
-        {/* Horizontal yellow melt — mirrors the landing-page
-            `.heroMedia::after` but flipped: clear video on the
-            visual-right edge, dissolves into the brand yellow well
-            before reaching the visual-left edge. */}
+        {/* Horizontal yellow melt — matches the landing-page
+            `.heroMedia::after` exactly: clear video on the
+            visual-left edge, dissolves into the brand yellow well
+            before reaching the visual-right edge so there's no
+            "video ends here" hard line adjacent to the form column. */}
         <div
           aria-hidden
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "linear-gradient(to left, transparent 0%, rgba(248,203,30,0.4) 35%, rgba(248,203,30,0.85) 65%, #F8CB1E 90%)",
+              "linear-gradient(to right, transparent 0%, rgba(248,203,30,0.4) 35%, rgba(248,203,30,0.85) 65%, #F8CB1E 90%)",
           }}
         />
       </aside>
@@ -104,17 +100,12 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
         </Link>
       </header>
 
-      {/* ─── Main split — video on visual-RIGHT, form on visual-LEFT.
+      {/* ─── Main split — form on visual-RIGHT, video on visual-LEFT.
               RTL grid: first DOM child lands in the inline-start
-              column (= visual right). So the spacer (under the
-              absolute video) is first, form is second. */}
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[42%_58%] lg:h-[calc(100vh-88px)]">
-        {/* Spacer column where the video lives (desktop only). On
-            mobile this collapses out. */}
-        <div className="hidden lg:block" aria-hidden />
-
-        {/* Form column — visual left (58%). Just the form card —
-            marketing voice lives in the video column. */}
+              column (= visual right). So form is first, spacer
+              (under the absolute video) is second. */}
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[58%_42%] lg:h-[calc(100vh-88px)]">
+        {/* Form column — visual right (58%). */}
         <main className="flex items-center justify-center px-5 lg:px-12 py-10 lg:py-6">
           <div className="w-full max-w-md">
             <div className="bg-white rounded-3xl border-2 border-black shadow-[0_6px_0_#000] p-7 lg:p-9 space-y-6">
@@ -130,6 +121,10 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
             </div>
           </div>
         </main>
+
+        {/* Spacer column where the video lives (desktop only). On
+            mobile this collapses out. */}
+        <div className="hidden lg:block" aria-hidden />
       </div>
     </div>
   );
