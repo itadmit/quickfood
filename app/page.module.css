@@ -750,7 +750,11 @@
   line-height: 0.96;
   letter-spacing: -0.04em;
   margin: 0 0 20px;
-  max-width: 18ch;
+  /* 22ch fits "כלים שנבנו למטבח. לא לחנות חולצות." on a single line
+     at desktop sizes — was 18ch which broke "חולצות." onto its own
+     row. `balance` keeps short titles centered nicely too. */
+  max-width: 22ch;
+  text-wrap: balance;
   color: var(--ink);
 }
 .sectionTitle em {

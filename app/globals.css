@@ -289,13 +289,89 @@ a {
 .animate-qf-preview-bar-in {
   animation: qf-preview-bar-in 360ms cubic-bezier(0.22, 1, 0.36, 1) 400ms both;
 }
+/* Auth rotating tagline — each pick of the marketing one-liner rolls
+   up from below the line, fades in, and de-blurs as it settles.
+   Snappy easing (~620ms) so it doesn't feel slow on the auth screen. */
+@keyframes tagline-roll {
+  0% {
+    opacity: 0;
+    transform: translateY(36px) rotate(-1.5deg);
+    filter: blur(4px);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotate(0);
+    filter: blur(0);
+  }
+}
+.animate-tagline-roll {
+  animation: tagline-roll 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Long-form legal copy (terms / privacy) — typographic defaults so
+   the body content reads cleanly without per-element Tailwind. RTL
+   inherits from <html dir="rtl">. */
+.legal-prose {
+  color: rgba(0, 0, 0, 0.85);
+  font-size: 15px;
+  line-height: 1.7;
+}
+.legal-prose > section + section {
+  margin-top: 2.5rem;
+}
+.legal-prose h2 {
+  font-size: 22px;
+  font-weight: 900;
+  color: #000;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.01em;
+}
+.legal-prose h3 {
+  font-size: 16px;
+  font-weight: 800;
+  color: #000;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.legal-prose p {
+  margin-bottom: 1rem;
+}
+.legal-prose p:last-child {
+  margin-bottom: 0;
+}
+.legal-prose ul,
+.legal-prose ol {
+  margin: 0.75rem 0 1.25rem;
+  padding-inline-start: 1.5rem;
+}
+.legal-prose ul { list-style: disc; }
+.legal-prose ol { list-style: decimal; }
+.legal-prose li {
+  margin-bottom: 0.5rem;
+}
+.legal-prose a {
+  color: #000;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.legal-prose strong {
+  font-weight: 800;
+  color: #000;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-qf-pulse,
   .qf-spinner,
   .animate-qf-check-in,
   .animate-qf-slide-up,
   .animate-qf-toast-in,
-  .animate-qf-preview-bar-in {
+  .animate-qf-preview-bar-in,
+  .animate-tagline-roll {
     animation: none;
   }
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AuthHeroVideo } from "./AuthHeroVideo";
+import { AuthRotatingTagline } from "./AuthRotatingTagline";
 
 interface Props {
   /** "login" or "signup" — controls the top-bar cross-link */
@@ -39,9 +40,12 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
       className="dash-v2 relative min-h-screen lg:h-screen lg:overflow-hidden text-black"
       style={{ backgroundColor: "#F8CB1E" }}
     >
-      {/* ─── Dot pattern across the entire surface. Faded to transparent
-              toward the bottom via mask-image so the pattern frames the
-              top of the screen and clears out under the form card. */}
+      {/* ─── Dot pattern across the surface. Horizontal mask so the
+              dots are dense across the YELLOW area on the visual-right
+              and fade out to transparent on the visual-left where the
+              video starts — instead of being covered awkwardly by the
+              video, the pattern simply ends. The fade boundary sits
+              around 42% (video edge) with a soft ramp from 35–55%. */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none"
@@ -51,9 +55,9 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
           backgroundSize: "26px 26px",
           zIndex: 1,
           WebkitMaskImage:
-            "linear-gradient(to bottom, black 0%, black 35%, rgba(0,0,0,0.55) 70%, transparent 100%)",
+            "linear-gradient(to right, transparent 0%, transparent 35%, rgba(0,0,0,0.55) 55%, black 70%, black 100%)",
           maskImage:
-            "linear-gradient(to bottom, black 0%, black 35%, rgba(0,0,0,0.55) 70%, transparent 100%)",
+            "linear-gradient(to right, transparent 0%, transparent 35%, rgba(0,0,0,0.55) 55%, black 70%, black 100%)",
         }}
       />
 
@@ -107,7 +111,19 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[58%_42%] lg:h-[calc(100vh-88px)]">
         {/* Form column — visual right (58%). */}
         <main className="flex items-center justify-center px-5 lg:px-12 py-10 lg:py-6">
-          <div className="w-full max-w-md">
+          <div className="w-full max-w-md space-y-5">
+            {/* Eyebrow + rotating marketing tagline above the card —
+                a different one-liner shows on each visit so returning
+                merchants don't see the same screen twice. Desktop only:
+                on mobile the form already owns the viewport, and the
+                tagline would compete with the card's own title. */}
+            <div className="space-y-3 hidden lg:block">
+              <span className="inline-block bg-black text-[#F8CB1E] px-3 py-1 rounded-full text-[11px] font-black tracking-wider">
+                QUICKFOOD · ניהול
+              </span>
+              <AuthRotatingTagline />
+            </div>
+
             <div className="bg-white rounded-3xl border-2 border-black shadow-[0_6px_0_#000] p-7 lg:p-9 space-y-6">
               <div className="space-y-2">
                 <h1 className="text-2xl lg:text-3xl font-black tracking-tight leading-tight">

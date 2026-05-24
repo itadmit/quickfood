@@ -108,21 +108,14 @@ export default function LoginForm() {
 
       <p className="text-[10px] text-black/55 text-center leading-relaxed">
         בהמשך אתה מסכים ל-
-        <a href="#" className="underline font-bold text-black/70">
+        <Link href="/terms" className="underline font-bold text-black/70 hover:text-black">
           תנאי השימוש
-        </a>{" "}
-        ו-{" "}
-        <a href="#" className="underline font-bold text-black/70">
+        </Link>{" "}
+        ול-
+        <Link href="/privacy" className="underline font-bold text-black/70 hover:text-black">
           מדיניות הפרטיות
-        </a>
+        </Link>
       </p>
-
-      <div className="rounded-lg bg-black/[0.04] border border-dashed border-black/20 px-3 py-2 text-center">
-        <p className="text-[10px] text-black/55">
-          <span className="font-black tracking-wider text-black/70">DEMO ·</span>{" "}
-          owner@pizzeria-verde.local · verde1234
-        </p>
-      </div>
     </form>
   );
 }

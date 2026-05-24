@@ -216,9 +216,9 @@ export function SignupForm() {
 
       <p className="text-[10px] text-qf-mute/80 text-center pt-1">
         בהמשך אתה מסכים ל-
-        <a href="#" className="underline">תנאי השימוש</a>
-        {" "}ו-{" "}
-        <a href="#" className="underline">מדיניות הפרטיות</a>
+        <a href="/terms" className="underline">תנאי השימוש</a>
+        {" "}ול-{" "}
+        <a href="/privacy" className="underline">מדיניות הפרטיות</a>
       </p>
     </div>
   );
