@@ -104,7 +104,11 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
               RTL grid: first DOM child lands in the inline-start
               column (= visual right). So form is first, spacer
               (under the absolute video) is second. */}
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[58%_42%] min-h-[calc(100vh-88px)] lg:h-[calc(100vh-88px)]">
+      {/* `min-h` only, never `h` — the form column grows naturally
+          when the wizard's step content is taller than the viewport
+          (e.g. Step 1 with 6 fields). With `h-[...]` the grid was
+          locked to viewport height and the form clipped at the bottom. */}
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[58%_42%] min-h-[calc(100vh-88px)]">
         {/* Form column — visual right (58%). */}
         <main className="flex items-center justify-center px-5 lg:px-12 py-6 lg:py-6">
           <div className="w-full max-w-md space-y-5">
