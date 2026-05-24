@@ -29,7 +29,7 @@ const NAV: NavItem[] = [
 export function Sidebar({ tenant }: { tenant: { name: string; logoLetter: string; branchName: string } }) {
   const pathname = usePathname() || "";
   return (
-    <aside className="hidden lg:flex w-64 shrink-0 border-e border-qf-line-dash bg-white p-5 flex-col gap-6 sticky top-16 h-[calc(100vh-4rem)] self-start">
+    <aside className="hidden lg:flex w-64 shrink-0 border-e border-qf-line-dash bg-white p-5 flex-col gap-6 sticky top-16 h-[calc(100vh-4rem)] self-start overflow-y-auto">
       <div className="flex items-center gap-3">
         <div
           className="w-11 h-11 rounded-2xl bg-(--qf-primary) text-white flex items-center justify-center text-lg font-bold"
@@ -43,7 +43,7 @@ export function Sidebar({ tenant }: { tenant: { name: string; logoLetter: string
         </div>
       </div>
 
-      <nav className="flex-1 -mx-1 space-y-0.5 overflow-y-auto">
+      <nav className="-mx-1 space-y-0.5">
         {NAV.map(({ href, label, Icon, match, exact }) => {
           const active = exact ? pathname === href : pathname.startsWith(match ?? href);
           return (
