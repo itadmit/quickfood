@@ -412,6 +412,26 @@ export const IcoArrowRight = ({ c = "currentColor", s = 16, className }: IconPro
   </svg>
 );
 
+export const IcoImport = ({ c = "currentColor", s = 18, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    {/* Arrow pointing down into a tray — the universal "import" glyph */}
+    <path
+      d="M12 3v12M7 10l5 5 5-5"
+      stroke={c}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
+      stroke={c}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 export const IcoCopy = ({ c = "currentColor", s = 16, className }: IconProps) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
     <rect x="9" y="9" width="11" height="11" rx="2" stroke={c} strokeWidth="1.6" />

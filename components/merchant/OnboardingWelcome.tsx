@@ -1,22 +1,57 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IcoArrowLeft } from "@/components/shared/Icons";
+
+/**
+ * Custom event that any place in the dashboard can dispatch to re-open
+ * this overlay after the initial dismiss. The Topbar "import shortcut"
+ * button uses it so a merchant who skipped the welcome on first login
+ * can still reach the import flow with one tap.
+ */
+export const OPEN_WELCOME_EVENT = "qf:open-welcome";
 
 /**
  * First-login welcome overlay for new merchants. Full-screen, branded
  * with the landing-page yellow (#F8CB1E) + bold black energy to feel
  * like a continuation of the marketing site rather than an HR form.
  *
- * Two big choices, plus a quiet "later" escape. Every choice dismisses
- * via PATCH /api/v1/merchant/tenant so the overlay never appears again
- * (`tenant.onboardingDismissedAt` gets stamped server-side). Mount in
- * the dashboard layout — see app/(merchant)/dashboard/layout.tsx.
+ * Two big choices, plus a quiet "later" escape. Auto-opens for tenants
+ * whose `onboardingDismissedAt` is NULL (controlled via `initialOpen`).
+ * Subsequent opens come from the OPEN_WELCOME_EVENT — dispatched by
+ * the Topbar import shortcut. Every choice/dismiss stamps the field
+ * server-side via PATCH /api/v1/merchant/tenant.
  */
-export function OnboardingWelcome({ merchantName }: { merchantName: string | null }) {
+export function OnboardingWelcome({
+  merchantName,
+  initialOpen,
+}: {
+  merchantName: string | null;
+  initialOpen: boolean;
+}) {
   const router = useRouter();
+  const [open, setOpen] = useState(initialOpen);
   const [busy, setBusy] = useState<"scratch" | "wolt" | "later" | null>(null);
+
+  useEffect(() => {
+    function onOpen() {
+      setOpen(true);
+    }
+    window.addEventListener(OPEN_WELCOME_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_WELCOME_EVENT, onOpen);
+  }, []);
+
+  // ESC to close once it has been dismissed at least once — first-time
+  // users we keep "trapped" so the choice is mandatory.
+  useEffect(() => {
+    if (!open || initialOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, initialOpen]);
 
   async function dismissAndGo(target: "scratch" | "wolt" | "later") {
     setBusy(target);
@@ -29,10 +64,17 @@ export function OnboardingWelcome({ merchantName }: { merchantName: string | nul
       body: JSON.stringify({ onboarding_dismissed: true }),
     }).catch(() => {});
 
-    if (target === "scratch") router.push("/dashboard/menu");
-    else if (target === "wolt") router.push("/dashboard/settings/advanced");
-    else router.refresh();
+    if (target === "scratch") {
+      router.push("/dashboard/menu");
+    } else if (target === "wolt") {
+      router.push("/dashboard/settings/advanced");
+    } else {
+      setOpen(false);
+      router.refresh();
+    }
   }
+
+  if (!open) return null;
 
   const firstName = merchantName?.split(" ")[0] ?? "";
 

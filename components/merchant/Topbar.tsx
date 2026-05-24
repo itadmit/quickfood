@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { IcoSearch, IcoBell, IcoChevDown, Dot, IcoClose, IcoEye, IcoGear, IcoLogout } from "@/components/shared/Icons";
+import { IcoSearch, IcoBell, IcoChevDown, Dot, IcoClose, IcoEye, IcoGear, IcoLogout, IcoImport } from "@/components/shared/Icons";
 import { formatPrice } from "@/lib/format";
 import { RelativeTime } from "@/components/shared/RelativeTime";
 import { MobileNav } from "@/components/merchant/MobileNav";
+import { OPEN_WELCOME_EVENT } from "@/components/merchant/OnboardingWelcome";
 import { cn } from "@/lib/cn";
 
 interface Props {
@@ -14,6 +15,10 @@ interface Props {
   branch: { id: string; status: "open" | "busy" | "closed" } | null;
   tenantSlug: string;
   tenant: { name: string; logoLetter: string; branchName: string };
+  // When true, render a small import-shortcut next to the bell that
+  // re-opens the welcome overlay. Layout passes true while the tenant
+  // still has zero MenuItem rows, false once they've added anything.
+  showImportShortcut?: boolean;
 }
 
 type Status = "open" | "busy" | "closed";
@@ -30,7 +35,7 @@ const STATUS_COLOR: Record<Status, { bg: string; text: string; dot: string }> = 
   closed: { bg: "bg-qf-tomato-soft border-qf-tomato/40", text: "text-qf-tomato", dot: "bg-qf-tomato" },
 };
 
-export function Topbar({ user, branch, tenantSlug, tenant }: Props) {
+export function Topbar({ user, branch, tenantSlug, tenant, showImportShortcut }: Props) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
@@ -211,6 +216,23 @@ export function Topbar({ user, branch, tenantSlug, tenant }: Props) {
             </div>
           )}
         </div>
+
+        {/* Import shortcut — only shown while the menu is empty. Uses the
+            landing-page brand yellow so it pops next to the neutral icons
+            and reads as "you have something to do here". Re-opens the
+            welcome overlay (which has the two big tiles). */}
+        {showImportShortcut && (
+          <button
+            type="button"
+            aria-label="ייבוא תפריט"
+            title="ייבוא תפריט מ-Wolt או התחלה מאפס"
+            onClick={() => window.dispatchEvent(new Event(OPEN_WELCOME_EVENT))}
+            className="relative w-10 h-10 rounded-xl bg-[#F8CB1E] hover:bg-[#e9bd0e] border-2 border-black grid place-items-center text-black transition active:scale-95 shadow-[0_2px_0_#000]"
+          >
+            <IcoImport c="#000" s={18} />
+            <span className="absolute -top-1.5 -inset-e-1.5 min-w-[10px] h-[10px] rounded-full bg-qf-tomato ring-2 ring-white pointer-events-none" />
+          </button>
+        )}
 
         {/* Bell */}
         <div className="relative">

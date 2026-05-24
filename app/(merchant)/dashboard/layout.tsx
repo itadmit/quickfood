@@ -30,6 +30,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect("/dashboard/login");
   }
 
+  // Used by the Topbar "import shortcut" button + the welcome overlay
+  // gate. A `count` is cheap enough to run on every dashboard load (the
+  // tenantId index makes it sub-ms). When > 0 the import shortcut hides
+  // because the menu is clearly already populated.
+  const menuItemCount = await prisma.menuItem.count({
+    where: { tenantId: tenant.id },
+  });
+  const hasNoMenuItems = menuItemCount === 0;
+
   const hasPaymentMethod = !!tenant.billingPaymentMethodId;
   const trialExpired = tenant.trialEndsAt
     ? tenant.trialEndsAt.getTime() < Date.now()
@@ -65,6 +74,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
                 }
               : null
           }
+          showImportShortcut={hasNoMenuItems}
         />
         <div className="flex-1 flex">
           <Sidebar tenant={{ name: tenant.name, logoLetter: tenant.logoLetter, branchName: tenant.branches[0]?.name ?? "" }} />
@@ -76,9 +86,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
           trialExpired={trialExpired}
           hasPaymentMethod={hasPaymentMethod}
         />
-        {!tenant.onboardingDismissedAt && (
-          <OnboardingWelcome merchantName={user.name} />
-        )}
+        <OnboardingWelcome
+          merchantName={user.name}
+          initialOpen={!tenant.onboardingDismissedAt}
+        />
       </div>
     </ThemeProvider>
   );
