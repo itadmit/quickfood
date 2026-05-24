@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Rubik, JetBrains_Mono } from "next/font/google";
 import Link from "next/link";
 import { IcoArrowLeft } from "@/components/shared/Icons";
@@ -60,9 +61,25 @@ function TrustStrip() {
           <div className={styles.trustGroup}>
             <span className={styles.trustLabel}>תשלום</span>
             <div className={styles.trustPills}>
-              <span className={styles.trustPill}>Bit</span>
-              <span className={styles.trustPill}>אשראי</span>
-              <span className={styles.trustPill}>Apple Pay</span>
+              <Image
+                src="/payments/bit.webp"
+                alt="Bit"
+                width={28}
+                height={28}
+                className={`${styles.trustLogo} ${styles.trustLogoBit}`}
+              />
+              <span className={styles.trustLogoGroup} aria-label="כרטיסי אשראי">
+                <Image src="/payments/visa.webp" alt="Visa" width={204} height={136} className={styles.trustLogo} />
+                <Image src="/payments/mastercard.webp" alt="Mastercard" width={204} height={132} className={styles.trustLogo} />
+                <Image src="/payments/amex.webp" alt="American Express" width={190} height={126} className={styles.trustLogo} />
+              </span>
+              <Image
+                src="/payments/apple-pay.webp"
+                alt="Apple Pay"
+                width={198}
+                height={136}
+                className={styles.trustLogo}
+              />
               <span className={styles.trustPill}>פייבוקס</span>
               <span className={styles.trustPill}>Google Pay</span>
             </div>
