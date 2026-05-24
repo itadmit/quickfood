@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
-import { SettingsTabs } from "../SettingsTabs";
+import { SettingsHeader } from "../SettingsHeader";
 import { WoltImportClient } from "./WoltImportClient";
 import { AppearanceToggle } from "./AppearanceToggle";
+import { DeleteAllItems } from "./DeleteAllItems";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,7 @@ export default async function AdvancedSettingsPage() {
     redirect("/dashboard/login");
   }
 
-  const [lastImport, tenant] = await Promise.all([
+  const [lastImport, tenant, itemCount] = await Promise.all([
     prisma.woltImport.findFirst({
       where: { tenantId: session.tenantId },
       orderBy: { createdAt: "desc" },
@@ -33,15 +34,14 @@ export default async function AdvancedSettingsPage() {
       where: { id: session.tenantId },
       select: { dashboardVersion: true },
     }),
+    prisma.menuItem.count({ where: { tenantId: session.tenantId } }),
   ]);
+
+  const isOwner = session.role === "owner";
 
   return (
     <div className="space-y-5">
-      <header>
-        <h1 className="text-2xl font-bold">הגדרות</h1>
-        <p className="text-sm text-qf-mute">פעולות מתקדמות לחנות שלך</p>
-      </header>
-      <SettingsTabs />
+      <SettingsHeader subtitle="פעולות מתקדמות לחנות שלך" />
 
       <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-6 max-w-3xl">
         <header className="mb-4">
@@ -78,6 +78,19 @@ export default async function AdvancedSettingsPage() {
           }
         />
       </section>
+
+      {isOwner && (
+        <section className="bg-white rounded-2xl border border-qf-tomato/30 p-4 lg:p-6 max-w-3xl">
+          <header className="mb-4">
+            <h2 className="text-lg font-bold text-qf-tomato">איזור מסוכן</h2>
+            <p className="text-sm text-qf-mute mt-1 leading-relaxed">
+              מחיקת כל המוצרים שבתפריט בלחיצה אחת. שימושי כשרוצים להתחיל
+              מחדש אחרי ייבוא שגוי מוולט.
+            </p>
+          </header>
+          <DeleteAllItems itemCount={itemCount} />
+        </section>
+      )}
     </div>
   );
 }

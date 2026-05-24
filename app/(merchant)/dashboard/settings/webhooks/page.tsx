@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db/client";
 import { getSession } from "@/lib/auth/session";
-import { SettingsTabs } from "../SettingsTabs";
+import { SettingsHeader } from "../SettingsHeader";
 import { WebhooksManager } from "./WebhooksManager";
 
 export const dynamic = "force-dynamic";
@@ -32,11 +32,7 @@ export default async function WebhooksPage() {
 
   return (
     <div className="space-y-5">
-      <header>
-        <h1 className="text-2xl font-bold">הגדרות</h1>
-        <p className="text-sm text-qf-mute">ניהול הגדרות העסק והאפליקציה</p>
-      </header>
-      <SettingsTabs />
+      <SettingsHeader subtitle="חיבור POS, מדפסות ומערכות חיצוניות" />
       <WebhooksManager
         initial={endpoints.map((e) => ({
           id: e.id,

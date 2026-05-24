@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
-import { SettingsTabs } from "../SettingsTabs";
+import { SettingsHeader } from "../SettingsHeader";
 import { ReviewsSettingsForm } from "./ReviewsSettingsForm";
 
 export const dynamic = "force-dynamic";
@@ -26,11 +26,7 @@ export default async function ReviewsSettingsPage() {
 
   return (
     <div className="space-y-5">
-      <header>
-        <h1 className="text-2xl font-bold">הגדרות</h1>
-        <p className="text-sm text-qf-mute">ביקורות לקוחות</p>
-      </header>
-      <SettingsTabs />
+      <SettingsHeader subtitle="איך מבקשים ביקורות מלקוחות אחרי ההזמנה" />
       <ReviewsSettingsForm
         initial={{
           enabled: tenant.reviewsEnabled,

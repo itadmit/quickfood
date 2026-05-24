@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
-import { SettingsTabs } from "../SettingsTabs";
+import { SettingsHeader } from "../SettingsHeader";
 import { WhatsappSettingsForm } from "./WhatsappSettingsForm";
 
 export const dynamic = "force-dynamic";
@@ -24,11 +24,7 @@ export default async function WhatsappSettingsPage() {
 
   return (
     <div className="space-y-5">
-      <header>
-        <h1 className="text-2xl font-bold">הגדרות</h1>
-        <p className="text-sm text-qf-mute">חיבור WhatsApp (iBot Chat)</p>
-      </header>
-      <SettingsTabs />
+      <SettingsHeader subtitle="חיבור WhatsApp (iBot Chat)" />
       <WhatsappSettingsForm
         initial={{
           token: tenant.whatsappToken ?? "",

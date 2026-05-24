@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
-import { SettingsTabs } from "../SettingsTabs";
+import { SettingsHeader } from "../SettingsHeader";
 import { BusinessForm } from "./BusinessForm";
 
 export const dynamic = "force-dynamic";
@@ -24,11 +24,7 @@ export default async function BusinessSettingsPage() {
 
   return (
     <div className="space-y-5">
-      <header>
-        <h1 className="text-2xl font-bold">הגדרות</h1>
-        <p className="text-sm text-qf-mute">פרטי עסק וסניף ראשי</p>
-      </header>
-      <SettingsTabs />
+      <SettingsHeader subtitle="פרטי עסק וסניף ראשי" />
       <BusinessForm
         branchId={branch.id}
         initial={{
