@@ -46,6 +46,11 @@ export function CustomerCheckout({
   const [deliveryNotes, setDeliveryNotes] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
   const [availableMethods, setAvailableMethods] = useState<CustomerPaymentMethod[]>([]);
+  // Tri-state: while true, render a skeleton instead of the "merchant has
+  // no payment methods" empty state. Without this, the empty copy flashes
+  // for the few hundred ms between mount and when the restaurants endpoint
+  // resolves — looks broken.
+  const [methodsLoading, setMethodsLoading] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<CustomerPaymentMethod | null>(null);
   const [tip, setTip] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -113,7 +118,10 @@ export function CustomerCheckout({
         const first = methods[0] ?? null;
         setPaymentMethod((cur) => (cur && methods.includes(cur) ? cur : first));
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setMethodsLoading(false);
+      });
     return () => {
       cancelled = true;
     };
@@ -591,7 +599,12 @@ export function CustomerCheckout({
               wallet when it opens, so showing them all here is noise. */}
         <Card>
           <CardTitle>אמצעי תשלום</CardTitle>
-          {availableMethods.length === 0 ? (
+          {methodsLoading ? (
+            <div className="grid grid-cols-2 gap-2 mt-3" aria-hidden>
+              <div className="h-14 rounded-2xl bg-qf-line-soft animate-pulse" />
+              <div className="h-14 rounded-2xl bg-qf-line-soft animate-pulse" />
+            </div>
+          ) : availableMethods.length === 0 ? (
             <div className="text-xs text-qf-mute bg-qf-line-soft border border-qf-line-dash rounded-lg px-3 py-2 mt-3">
               המסעדה עוד לא הגדירה אמצעי תשלום. צור איתם קשר ישירות.
             </div>
