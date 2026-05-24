@@ -68,6 +68,12 @@
    bespoke under components/merchant/v2/* uses hard-coded brand hex
    values already and is unaffected by this block. */
 .dash-v2 {
+  /* Baseline body weight bumped from 400 → 500. Hebrew Noto at 400
+     renders too thin against the bold yellow brand and cream
+     surface; 500 gives every paragraph, label, and button text
+     enough presence without making the screen feel shouty. */
+  font-weight: 500;
+
   /* Brand: forest green → signal yellow */
   --color-qf-green: #f8cb1e;
   --color-qf-green-deep: #d4ad19;
@@ -82,10 +88,12 @@
   --color-qf-warm: #fff2c9;
   --color-qf-warm-dash: #fff2c9;
 
-  /* Ink */
+  /* Ink — bumped opacity on mute so secondary copy stays readable
+     on the cream surface; thin Hebrew Noto at low opacity was
+     near-invisible. */
   --color-qf-ink: #000000;
   --color-qf-ink2: #1a1a1a;
-  --color-qf-mute: rgba(0, 0, 0, 0.6);
+  --color-qf-mute: rgba(0, 0, 0, 0.78);
 
   /* Lines */
   --color-qf-line: #000000;
@@ -133,6 +141,18 @@
 /* Focus ring stays yellow on the V2 skin. */
 .dash-v2 :focus-visible {
   outline-color: #000;
+}
+
+.dash-v2 [role="switch"] {
+  border: 2px solid #000;
+  box-shadow: 0 2px 0 #000;
+}
+.dash-v2 [role="switch"] > span {
+  border: 1.5px solid #000;
+}
+
+.dash-v2 .bg-qf-line-soft {
+  background-color: #f3eccb !important;
 }
 
 /* Billing-setup banner — the legacy yolk-soft surface is fine, but the
@@ -205,6 +225,27 @@ body {
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+}
+
+/* ─── Cursor: pointer on interactive elements ─────────────────
+   Tailwind v4 (and modern browser defaults) don't apply
+   `cursor: pointer` to <button> automatically — the spec says
+   buttons should match form controls (arrow cursor). For our
+   product feel we want every clickable interactive element to
+   signal hand-cursor on hover. `<a href>` already gets it from
+   the UA stylesheet; this rule covers the rest. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+[role="switch"]:not([aria-disabled="true"]),
+[role="tab"],
+[role="menuitem"],
+summary,
+label[for] {
+  cursor: pointer;
+}
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
 }
 
 /* ─── iOS Safari: stop the zoom-on-focus dance ───────────────── */

@@ -6,7 +6,10 @@ import { ScrollToTop } from "@/components/shared/ScrollToTop";
 
 const notoHebrew = Noto_Sans_Hebrew({
   subsets: ["hebrew", "latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  // 300 + 900 added so light captions and the bold V2 sidebar /
+  // headlines render at the actual weight instead of falling back
+  // to the nearest available (300 → 400, 900 → 800).
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
   variable: "--font-noto-hebrew",
   display: "swap",
 });
