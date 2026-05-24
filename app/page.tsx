@@ -80,7 +80,13 @@ function TrustStrip() {
                 height={136}
                 className={styles.trustLogo}
               />
-              <span className={styles.trustPill}>פייבוקס</span>
+              <Image
+                src="/payments/paybox.webp"
+                alt="PayBox"
+                width={1262}
+                height={836}
+                className={`${styles.trustLogo} ${styles.trustLogoPaybox}`}
+              />
               <span className={styles.trustPill}>Google Pay</span>
             </div>
           </div>

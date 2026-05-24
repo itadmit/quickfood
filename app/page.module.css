@@ -469,6 +469,9 @@
   width: 28px;
   border-radius: 7px;
 }
+/* PayBox ships as a flat cyan rectangle — round the corners so it
+   matches the rounded-card silhouette of Visa/MC/AMEX/Apple Pay. */
+.trustLogoPaybox { border-radius: 5px; }
 .trustLogoGroup { display: inline-flex; align-items: center; gap: 4px; }
 .trustDivider {
   width: 1px;
