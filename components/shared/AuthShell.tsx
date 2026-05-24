@@ -37,7 +37,7 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
     // → black. SignupForm's many inline qf-* utilities pick up the V2
     // palette for free, without rewriting each input.
     <div
-      className="dash-v2 relative min-h-screen lg:h-screen lg:overflow-hidden text-black"
+      className="dash-v2 relative min-h-screen text-black"
       style={{ backgroundColor: "#F8CB1E" }}
     >
       {/* ─── Dot pattern across the surface. Horizontal mask so the

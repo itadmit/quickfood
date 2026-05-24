@@ -76,9 +76,17 @@ export function SignupForm() {
     if (!slug || slug === autoSlug(businessName)) setSlug(autoSlug(v));
   }
 
+  // Step 1 covers all business identity + contact details, so it
+  // gates on name, slug, address, and phone all being valid.
   const canNext1 =
-    businessName.length >= 2 && slug.length >= 2 && slugStatus === "available";
-  const canNext2 = branchAddress.length >= 3 && branchPhone.length >= 7;
+    businessName.length >= 2 &&
+    slug.length >= 2 &&
+    slugStatus === "available" &&
+    branchAddress.length >= 3 &&
+    branchPhone.length >= 7;
+  // Step 2 is branding only (theme picker) — always has a default
+  // selection, so the merchant can always proceed.
+  const canNext2 = true;
   const canSubmit =
     ownerName.length >= 1 &&
     /\S+@\S+\.\S+/.test(ownerEmail) &&
@@ -137,21 +145,18 @@ export function SignupForm() {
             setBusinessType={setBusinessType}
             cuisineType={cuisineType}
             setCuisineType={setCuisineType}
-            themeId={themeId}
-            setThemeId={setThemeId}
             slug={slug}
             setSlug={setSlug}
             slugStatus={slugStatus}
-          />
-        )}
-
-        {step === 2 && (
-          <Step2
             address={branchAddress}
             setAddress={setBranchAddress}
             phone={branchPhone}
             setPhone={setBranchPhone}
           />
+        )}
+
+        {step === 2 && (
+          <Step2 themeId={themeId} setThemeId={setThemeId} />
         )}
 
         {step === 3 && (
@@ -176,7 +181,7 @@ export function SignupForm() {
         <button
           type="button"
           onClick={() => (step > 1 ? setStep((step - 1) as 1 | 2 | 3) : router.push("/"))}
-          className="text-sm text-qf-mute hover:text-qf-ink inline-flex items-center gap-1.5"
+          className="text-sm font-bold text-black/65 hover:text-black inline-flex items-center gap-1.5"
         >
           <IcoArrowRight c="currentColor" s={14} />
           {step > 1 ? "חזרה" : "לעמוד הבית"}
@@ -187,17 +192,17 @@ export function SignupForm() {
             type="button"
             disabled={step === 1 ? !canNext1 : !canNext2}
             onClick={() => setStep(((step as number) + 1) as 1 | 2 | 3)}
-            className="px-5 py-3 rounded-xl bg-qf-ink hover:bg-black text-white text-sm font-medium disabled:opacity-50 inline-flex items-center gap-2"
+            className="px-5 py-3 rounded-xl bg-[#F8CB1E] hover:bg-[#ffd84a] text-black text-base font-black border-2 border-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
           >
             המשך
-            <IcoArrowLeft c="currentColor" s={14} />
+            <IcoArrowLeft c="currentColor" s={16} />
           </button>
         ) : (
           <button
             type="button"
             disabled={!canSubmit || busy}
             onClick={submit}
-            className="px-5 py-3 rounded-xl bg-qf-ink hover:bg-black text-white text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
+            className="px-5 py-3 rounded-xl bg-[#F8CB1E] hover:bg-[#ffd84a] text-black text-base font-black border-2 border-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
           >
             {busy ? (
               <>
@@ -207,7 +212,7 @@ export function SignupForm() {
             ) : (
               <>
                 <span>פתיחת חנות</span>
-                <IcoArrowLeft c="currentColor" s={14} />
+                <IcoArrowLeft c="currentColor" s={16} />
               </>
             )}
           </button>
@@ -233,11 +238,13 @@ function Step1({
   setBusinessType,
   cuisineType,
   setCuisineType,
-  themeId,
-  setThemeId,
   slug,
   setSlug,
   slugStatus,
+  address,
+  setAddress,
+  phone,
+  setPhone,
 }: {
   businessName: string;
   onBusinessName: (v: string) => void;
@@ -245,11 +252,13 @@ function Step1({
   setBusinessType: (v: BusinessType) => void;
   cuisineType: string;
   setCuisineType: (v: string) => void;
-  themeId: ThemeId;
-  setThemeId: (v: ThemeId) => void;
   slug: string;
   setSlug: (v: string) => void;
   slugStatus: SlugStatus;
+  address: string;
+  setAddress: (v: string) => void;
+  phone: string;
+  setPhone: (v: string) => void;
 }) {
   const borderColor =
     slug.length < 2
@@ -269,26 +278,26 @@ function Step1({
           value={businessName}
           onChange={(e) => onBusinessName(e.target.value)}
           placeholder="פיצרייה ורדה"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-qf-ink focus:ring-2 focus:ring-qf-ink/10 outline-none transition"
+          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:shadow-[0_3px_0_#000] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
         />
       </Field>
       <Field label="כתובת באתר" hint="אנגלית בלבד">
         <div
           dir="ltr"
           className={cn(
-            "flex items-center border rounded-xl bg-white transition focus-within:ring-2 focus-within:ring-qf-ink/10",
+            "flex items-center border-2 rounded-xl bg-[#FFFBEC] hover:bg-white focus-within:bg-white focus-within:shadow-[0_3px_0_#000] transition",
             borderColor,
           )}
         >
-          <span className="ps-3 pe-1 text-qf-mute text-xs font-mono select-none border-e border-qf-line-dash py-2.5 me-1">
-            quickfood.app/
+          <span className="ps-3 pe-2 text-black/55 text-xs font-mono font-bold select-none border-e-2 border-black py-3 me-2">
+            quickfood.co.il/
           </span>
           <input
             value={slug}
             onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
             dir="ltr"
             placeholder="my-restaurant"
-            className="flex-1 min-w-0 py-2.5 pe-2 outline-none bg-transparent font-mono text-sm"
+            className="flex-1 min-w-0 py-3 pe-2 outline-none bg-transparent font-mono font-bold text-sm text-black placeholder:text-black/35 placeholder:font-normal"
           />
           <SlugStatusBadge status={slugStatus} slug={slug} />
         </div>
@@ -307,12 +316,48 @@ function Step1({
           value={cuisineType}
           onChange={(e) => setCuisineType(e.target.value)}
           placeholder="פיצה נפוליטנית / המבורגרים אמריקאים / סושי יפני"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-qf-ink focus:ring-2 focus:ring-qf-ink/10 outline-none transition"
+          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:shadow-[0_3px_0_#000] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
         />
       </Field>
 
+      <Field label="כתובת מלאה (הסניף הראשי)">
+        <input
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          placeholder="אלנבי 42, תל אביב"
+          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:shadow-[0_3px_0_#000] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
+        />
+      </Field>
+
+      <Field label="טלפון לסניף">
+        <input
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          dir="ltr"
+          placeholder="03-555-1234"
+          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:shadow-[0_3px_0_#000] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
+        />
+      </Field>
+    </div>
+  );
+}
+
+// ─── Step 2: branding (theme picker only) ─────────────────
+
+function Step2({
+  themeId,
+  setThemeId,
+}: {
+  themeId: ThemeId;
+  setThemeId: (v: ThemeId) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-black/65 leading-relaxed">
+        בחרו ערכת צבעים לחנות שלכם. אפשר לשנות מאוחר יותר בהגדרות.
+      </p>
       <Field label="ערכת צבע">
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
           {Object.values(THEMES).map((t) => {
             const active = themeId === t.id;
             return (
@@ -321,61 +366,22 @@ function Step1({
                 type="button"
                 onClick={() => setThemeId(t.id)}
                 className={cn(
-                  "rounded-xl border p-2 text-start transition",
+                  "rounded-xl border-2 p-2.5 text-start transition",
                   active
-                    ? "border-qf-ink ring-2 ring-qf-ink/30"
-                    : "border-qf-line-dash hover:border-qf-ink/40",
+                    ? "border-black bg-[#FFF6CE] shadow-[0_3px_0_#000]"
+                    : "border-black/15 hover:border-black bg-white",
                 )}
               >
-                <div className="flex gap-1 mb-1">
-                  <span className="w-4 h-4 rounded" style={{ background: t.primary }} />
-                  <span className="w-4 h-4 rounded" style={{ background: t.deep }} />
-                  <span className="w-4 h-4 rounded" style={{ background: t.soft }} />
+                <div className="flex gap-1 mb-1.5">
+                  <span className="w-5 h-5 rounded border border-black/10" style={{ background: t.primary }} />
+                  <span className="w-5 h-5 rounded border border-black/10" style={{ background: t.deep }} />
+                  <span className="w-5 h-5 rounded border border-black/10" style={{ background: t.soft }} />
                 </div>
-                <div className="text-xs font-medium">{t.name}</div>
+                <div className="text-xs font-bold text-black">{t.name}</div>
               </button>
             );
           })}
         </div>
-      </Field>
-    </div>
-  );
-}
-
-// ─── Step 2: branch ────────────────────────────────────────
-
-function Step2({
-  address,
-  setAddress,
-  phone,
-  setPhone,
-}: {
-  address: string;
-  setAddress: (v: string) => void;
-  phone: string;
-  setPhone: (v: string) => void;
-}) {
-  return (
-    <div className="space-y-4">
-      <p className="text-sm text-qf-ink2">
-        זה הסניף הראשי. נוכל להוסיף סניפים נוספים מאוחר יותר מההגדרות.
-      </p>
-      <Field label="כתובת מלאה">
-        <input
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          placeholder="אלנבי 42, תל אביב"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-qf-ink focus:ring-2 focus:ring-qf-ink/10 outline-none transition"
-        />
-      </Field>
-      <Field label="טלפון לסניף">
-        <input
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          dir="ltr"
-          placeholder="03-555-1234"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-qf-ink focus:ring-2 focus:ring-qf-ink/10 outline-none transition"
-        />
       </Field>
     </div>
   );
@@ -407,7 +413,7 @@ function Step3({
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-qf-ink focus:ring-2 focus:ring-qf-ink/10 outline-none transition"
+          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:shadow-[0_3px_0_#000] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
         />
       </Field>
       <Field label="אימייל">
@@ -416,7 +422,7 @@ function Step3({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           dir="ltr"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-qf-ink focus:ring-2 focus:ring-qf-ink/10 outline-none transition"
+          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:shadow-[0_3px_0_#000] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
         />
       </Field>
       <Field label="סיסמה" hint="לפחות 8 תווים">
@@ -424,7 +430,7 @@ function Step3({
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-qf-ink focus:ring-2 focus:ring-qf-ink/10 outline-none transition font-mono"
+          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:shadow-[0_3px_0_#000] outline-none transition font-mono font-bold text-black placeholder:text-black/35 placeholder:font-normal tracking-widest"
         />
       </Field>
     </div>
@@ -443,8 +449,8 @@ function Field({
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between">
-        <label className="text-sm font-medium">{label}</label>
-        {hint && <span className="text-xs text-qf-mute">{hint}</span>}
+        <label className="text-sm font-black text-black">{label}</label>
+        {hint && <span className="text-xs font-medium text-black/55">{hint}</span>}
       </div>
       {children}
     </div>
@@ -458,8 +464,8 @@ const STEP_DEFS: Array<{
   label: string;
   Icon: typeof Sparkles;
 }> = [
-  { n: 1, label: "מותג ועיצוב", Icon: Sparkles },
-  { n: 2, label: "פרטי סניף", Icon: MapPin },
+  { n: 1, label: "פרטי עסק", Icon: MapPin },
+  { n: 2, label: "מותג ועיצוב", Icon: Sparkles },
   { n: 3, label: "בעלים", Icon: User },
 ];
 
@@ -471,12 +477,12 @@ function StepIndicator({ step }: { step: 1 | 2 | 3 }) {
       {/* Background line under the dots */}
       <div
         aria-hidden
-        className="absolute top-5 inset-x-[16.66%] h-px bg-qf-line-dash"
+        className="absolute top-5 inset-x-[16.66%] h-0.5 bg-black/15"
       />
       {/* Progress line — width based on current step */}
       <div
         aria-hidden
-        className="absolute top-5 h-px bg-qf-ink transition-all"
+        className="absolute top-5 h-0.5 bg-black transition-all"
         style={{
           insetInlineStart: "16.66%",
           width: step === 1 ? "0%" : step === 2 ? "33.33%" : "66.66%",
@@ -489,20 +495,20 @@ function StepIndicator({ step }: { step: 1 | 2 | 3 }) {
           <li key={n} className="flex flex-col items-center relative z-10">
             <div
               className={cn(
-                "w-10 h-10 rounded-full grid place-items-center transition-colors border-2",
-                done && "bg-qf-ink border-qf-ink text-white",
-                active && "bg-white border-qf-ink text-qf-ink ring-4 ring-qf-ink/10",
-                !active && !done && "bg-white border-qf-line-dash text-qf-mute",
+                "w-10 h-10 rounded-full grid place-items-center transition-colors border-2 border-black",
+                done && "bg-black text-[#F8CB1E]",
+                active && "bg-[#F8CB1E] text-black shadow-[0_3px_0_#000]",
+                !active && !done && "bg-white text-black/40",
               )}
             >
-              {done ? <Check size={18} strokeWidth={2.5} /> : <Icon size={18} strokeWidth={2} />}
+              {done ? <Check size={18} strokeWidth={2.8} /> : <Icon size={18} strokeWidth={2.4} />}
             </div>
             <div
               className={cn(
                 "mt-2 text-xs text-center",
-                active && "font-semibold text-qf-ink",
-                done && "text-qf-ink2",
-                !active && !done && "text-qf-mute",
+                active && "font-black text-black",
+                done && "font-bold text-black",
+                !active && !done && "font-medium text-black/55",
               )}
             >
               {label}

@@ -31,7 +31,7 @@ export function DashboardPreview({ variant = "kanban", className }: Props) {
             className="text-[10px] text-qf-mute bg-white border border-qf-line-dash rounded-md px-3 py-0.5 font-mono"
             dir="ltr"
           >
-            quickfood.app/dashboard/orders
+            quickfood.co.il/dashboard/orders
           </div>
         </div>
       </div>

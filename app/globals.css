@@ -120,11 +120,23 @@
 }
 
 /* Inputs / selects inside the V2 dashboard read better with a true
-   black border instead of the converted gray. */
+   black border instead of the converted gray. Border-width stays 0
+   unless an explicit Tailwind utility (`border` / `border-2` / …)
+   opts in — otherwise a UA-default border would double up on top of
+   the wrapper border we already paint (e.g. the slug widget). */
 .dash-v2 input,
 .dash-v2 select,
 .dash-v2 textarea {
   border-color: #000;
+  border-width: 0;
+}
+.dash-v2 input.border,
+.dash-v2 input.border-2,
+.dash-v2 select.border,
+.dash-v2 select.border-2,
+.dash-v2 textarea.border,
+.dash-v2 textarea.border-2 {
+  border-width: revert;
 }
 
 /* V2 brand: --qf-primary / --qf-deep are bold yellows. Many legacy
@@ -153,6 +165,11 @@
 
 .dash-v2 .bg-qf-line-soft {
   background-color: #f3eccb !important;
+}
+
+.dash-v2 label.font-medium {
+  color: #000 !important;
+  font-weight: 700 !important;
 }
 
 /* Billing-setup banner — the legacy yolk-soft surface is fine, but the

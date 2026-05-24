@@ -56,8 +56,8 @@ export function BusinessTypeSelect({
     <div className={cn("space-y-1.5", className)} ref={wrapRef}>
       {(label || hint) && (
         <div className="flex items-baseline justify-between">
-          {label && <label className="text-sm font-medium">{label}</label>}
-          {hint && <span className="text-xs text-qf-mute">{hint}</span>}
+          {label && <label className="text-sm font-black text-black">{label}</label>}
+          {hint && <span className="text-xs font-medium text-black/55">{hint}</span>}
         </div>
       )}
 
@@ -68,10 +68,10 @@ export function BusinessTypeSelect({
           aria-haspopup="listbox"
           aria-expanded={open}
           className={cn(
-            "w-full flex items-center gap-3 bg-white border rounded-xl px-2.5 py-2 transition",
+            "w-full flex items-center gap-3 border-2 border-black rounded-xl px-2.5 py-2 transition",
             open
-              ? "border-qf-ink ring-2 ring-qf-ink/10"
-              : "border-qf-line-dash hover:border-qf-ink/40",
+              ? "bg-white shadow-[0_3px_0_#000]"
+              : "bg-[#FFFBEC] hover:bg-white",
           )}
         >
           <MenuItemImage
@@ -80,11 +80,11 @@ export function BusinessTypeSelect({
             size={48}
             rounded="lg"
           />
-          <span className="flex-1 text-start font-medium">{selected.label}</span>
+          <span className="flex-1 text-start font-bold text-black">{selected.label}</span>
           <ChevronDown
             size={18}
             className={cn(
-              "text-qf-mute transition-transform",
+              "text-black/55 transition-transform",
               open && "rotate-180",
             )}
           />
@@ -93,7 +93,7 @@ export function BusinessTypeSelect({
         {open && (
           <ul
             role="listbox"
-            className="absolute z-30 inset-x-0 mt-2 bg-white border border-qf-line-dash rounded-xl shadow-xl overflow-hidden max-h-[420px] overflow-y-auto"
+            className="absolute z-30 inset-x-0 mt-2 bg-white border-2 border-black rounded-xl shadow-[0_4px_0_#000] overflow-hidden max-h-105 overflow-y-auto"
           >
             {BUSINESS_TYPES.map((t) => {
               const active = t.value === value;
@@ -110,8 +110,8 @@ export function BusinessTypeSelect({
                     className={cn(
                       "w-full flex items-center gap-3 px-2.5 py-2 text-start transition",
                       active
-                        ? "bg-qf-green-soft/50"
-                        : "hover:bg-qf-line-soft",
+                        ? "bg-[#FFF6CE]"
+                        : "hover:bg-black/5",
                     )}
                   >
                     <MenuItemImage
@@ -120,12 +120,12 @@ export function BusinessTypeSelect({
                       size={44}
                       rounded="lg"
                     />
-                    <span className="flex-1 font-medium text-sm">{t.label}</span>
+                    <span className="flex-1 font-bold text-sm text-black">{t.label}</span>
                     {active && (
                       <Check
                         size={16}
-                        className="text-qf-green-deep shrink-0"
-                        strokeWidth={2.5}
+                        className="text-black shrink-0"
+                        strokeWidth={2.8}
                       />
                     )}
                   </button>
