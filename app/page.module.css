@@ -181,6 +181,24 @@
   background-size: 26px 26px;
   pointer-events: none;
   z-index: 1;
+  /* Fade the dot grid toward the lower edge of the hero so the
+     pattern frames the headline at top and clears the CTAs / trust
+     strip below. Without this the uniform dots compete visually with
+     the content sitting on top of them. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 35%,
+    rgba(0, 0, 0, 0.55) 70%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 35%,
+    rgba(0, 0, 0, 0.55) 70%,
+    transparent 100%
+  );
 }
 .hero .container { position: relative; z-index: 2; }
 

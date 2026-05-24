@@ -40,7 +40,9 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
       className="dash-v2 relative min-h-screen lg:h-screen lg:overflow-hidden text-black"
       style={{ backgroundColor: "#F8CB1E" }}
     >
-      {/* ─── Dot pattern across the entire surface ─── */}
+      {/* ─── Dot pattern across the entire surface. Faded to transparent
+              toward the bottom via mask-image so the pattern frames the
+              top of the screen and clears out under the form card. */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none"
@@ -49,6 +51,10 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
             "radial-gradient(circle, rgba(0,0,0,0.09) 1.5px, transparent 1.5px)",
           backgroundSize: "26px 26px",
           zIndex: 1,
+          WebkitMaskImage:
+            "linear-gradient(to bottom, black 0%, black 35%, rgba(0,0,0,0.55) 70%, transparent 100%)",
+          maskImage:
+            "linear-gradient(to bottom, black 0%, black 35%, rgba(0,0,0,0.55) 70%, transparent 100%)",
         }}
       />
 
@@ -56,10 +62,14 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
               viewport (desktop only), matching the landing-page hero
               geometry exactly (`left: 0; width: 42%`). Inline `left/
               right` overrides any `inset-s/e` shorthand so the video
-              lands on the same edge regardless of dir. */}
+              lands on the same edge regardless of dir.
+
+              Hosts the rotating marketing tagline + eyebrow pill in
+              its bottom area so the form column on the right stays
+              dedicated to just the form card — clean two-column
+              composition. */}
       <aside
-        aria-hidden
-        className="hidden lg:block absolute inset-y-0 w-[42%] z-1 overflow-hidden"
+        className="hidden lg:flex absolute inset-y-0 w-[42%] z-1 overflow-hidden flex-col justify-end p-10"
         style={{ left: 0, right: "auto" }}
       >
         <AuthHeroVideo />
@@ -75,6 +85,26 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
               "linear-gradient(to right, transparent 0%, rgba(248,203,30,0.45) 45%, rgba(248,203,30,0.92) 78%, #F8CB1E 100%)",
           }}
         />
+        {/* Bottom-up readability gradient — keeps the rotating tagline
+            text legible over any video frame without painting the
+            whole panel. */}
+        <div
+          aria-hidden
+          className="absolute inset-x-0 bottom-0 h-2/5 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(to top, rgba(0,0,0,0.18) 0%, transparent 100%)",
+          }}
+        />
+
+        {/* Marketing voice — eyebrow + rotating tagline, pinned at the
+            bottom via flex justify-end on the aside. */}
+        <div className="relative z-10 space-y-3 max-w-md">
+          <span className="inline-block bg-black text-[#F8CB1E] px-3 py-1 rounded-full text-[11px] font-black tracking-wider">
+            QUICKFOOD · ניהול
+          </span>
+          <AuthRotatingTagline />
+        </div>
       </aside>
 
       {/* ─── Top bar — brand chip + cross-link, floats above everything ─── */}
@@ -98,19 +128,11 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
               column (= visual right). So form is first, spacer
               (under the absolute video) is second. */}
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[58%_42%] lg:h-[calc(100vh-88px)]">
-        {/* Form column — visual right (58%) */}
-        <main className="flex items-center justify-center px-5 lg:px-12 py-10 lg:py-4">
-          <div className="w-full max-w-md space-y-6">
-            {/* Eyebrow + rotating tagline — the screen's hero voice */}
-            <div className="space-y-3 hidden lg:block">
-              <span className="inline-block bg-black text-[#F8CB1E] px-3 py-1 rounded-full text-[11px] font-black tracking-wider">
-                QUICKFOOD · ניהול
-              </span>
-              <AuthRotatingTagline />
-            </div>
-
-            {/* Form card */}
-            <div className="bg-white rounded-3xl border-2 border-black shadow-[0_6px_0_#000] p-7 lg:p-8 space-y-6">
+        {/* Form column — visual right (58%). Just the form card —
+            marketing voice lives in the video column. */}
+        <main className="flex items-center justify-center px-5 lg:px-12 py-10 lg:py-6">
+          <div className="w-full max-w-md">
+            <div className="bg-white rounded-3xl border-2 border-black shadow-[0_6px_0_#000] p-7 lg:p-9 space-y-6">
               <div className="space-y-2">
                 <h1 className="text-2xl lg:text-3xl font-black tracking-tight leading-tight">
                   {title}
