@@ -514,16 +514,22 @@
 .howStep {
   position: relative;
   background: var(--paper);
-  border: 1px solid var(--line);
+  border: 3px solid var(--ink);
   border-radius: 24px;
   padding: 36px 28px 32px;
   text-align: center;
+  box-shadow: 0 6px 0 var(--ink);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.howStep:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 9px 0 var(--ink);
 }
 .howNum {
   width: 56px; height: 56px;
-  border-radius: 999px;
-  background: var(--tomato);
-  color: var(--ink);
+  border-radius: 14px;
+  background: var(--ink);
+  color: var(--tomato);
   font-family: var(--font-rubik), "Rubik", sans-serif;
   font-weight: 900;
   font-size: 26px;
@@ -532,7 +538,8 @@
   justify-content: center;
   margin-bottom: 18px;
   line-height: 1;
-  box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.15);
+  border: 3px solid var(--ink);
+  box-shadow: 0 3px 0 var(--ink);
 }
 .howStepTitle {
   font-family: var(--font-rubik), "Rubik", sans-serif;
@@ -550,24 +557,18 @@
   max-width: 30ch;
   margin-inline: auto;
 }
-/* Connector line — visual rhythm between steps on desktop only. RTL
-   aware: drawn on the inline-end edge so it points to the next step. */
+/* Connector line — hidden in the bold-tile treatment; the heavy black
+   shadows underneath each card carry the rhythm now. Kept defined so
+   the JSX still has a class to attach without throwing. */
 .howConnector {
-  position: absolute;
-  top: 64px;
-  inset-inline-start: -16px;
-  width: 24px;
-  height: 2px;
-  background: var(--ink);
-  opacity: 0.18;
+  display: none;
 }
 @media (max-width: 900px) {
   .howItWorks { padding: 56px 0 48px; }
   .howGrid { grid-template-columns: 1fr; gap: 12px; }
   .howItWorks .sectionTitle { margin-bottom: 32px; font-size: clamp(32px, 8vw, 56px); }
-  .howStep { padding: 28px 24px 24px; }
+  .howStep { padding: 28px 24px 24px; box-shadow: 0 4px 0 var(--ink); }
   .howNum { width: 48px; height: 48px; font-size: 22px; }
-  .howConnector { display: none; }
 }
 
 /* "Suited for" — single rotating food type, big and bold. Reads as one
