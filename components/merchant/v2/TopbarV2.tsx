@@ -121,17 +121,11 @@ export function TopbarV2({ user, branch, tenantSlug, showImportShortcut }: Props
       className="sticky top-0 z-30 border-b-2 border-black"
       style={{ backgroundColor: "#FFF2C9" }}
     >
-      <div className="h-16 px-3 lg:px-5 flex items-center gap-2 lg:gap-3">
-        {/* Brand chip — mirrors the welcome-overlay treatment */}
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-2 lg:hidden"
-        >
-          <span className="bg-black text-[#F8CB1E] px-2 py-0.5 rounded-md text-[10px] font-black tracking-wide">
-            QuickFood
-          </span>
-        </Link>
-
+      {/* `ps-16` on mobile reserves room for the fixed hamburger button
+          rendered by <MobileMenuV2> at the topbar's inline-start corner
+          (top-3 inset-s-3 = 40x40 + 12px inset). lg: returns to normal
+          padding when the hamburger is hidden and the sidebar takes over. */}
+      <div className="h-16 ps-16 pe-3 lg:px-5 flex items-center gap-2 lg:gap-3">
         <div className="ms-auto" />
 
         {/* "Updating store" loader — appears to the visual-right of

@@ -2,68 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  IcoOrders,
-  IcoMenu,
-  IcoHome,
-  IcoStar,
-  IcoBike,
-  IcoGear,
-  IcoMegaphone,
-  IcoBell,
-  IcoCreditCard,
-  IcoFlame,
-} from "@/components/shared/Icons";
+import { IcoFlame } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
-
-// Nav for the V2 dashboard skin. Same route set as the V1 Sidebar — the
-// shell choice (V1 vs V2) is layout-level, so all hrefs point at the
-// canonical /dashboard/* routes.
-type NavItem = {
-  href: string;
-  label: string;
-  Icon: typeof IcoHome;
-  exact?: boolean;
-  match?: string;
-};
-
-// Nav is grouped so the sidebar reads as "what I do daily" first, then
-// "what I configure occasionally" — gives the long list a visual break
-// instead of a 10-item undifferentiated stack.
-type NavSection = { title: string; items: NavItem[] };
-
-const NAV: NavSection[] = [
-  {
-    title: "תפעול",
-    items: [
-      { href: "/dashboard", label: "דשבורד", Icon: IcoHome, exact: true },
-      { href: "/dashboard/orders", label: "הזמנות", Icon: IcoOrders },
-      { href: "/dashboard/menu", label: "תפריט", Icon: IcoMenu },
-      { href: "/dashboard/couriers", label: "שליחים", Icon: IcoBike },
-    ],
-  },
-  {
-    title: "שיווק",
-    items: [
-      { href: "/dashboard/campaigns", label: "קמפיינים", Icon: IcoMegaphone },
-      { href: "/dashboard/coupons", label: "קופונים", Icon: IcoCreditCard },
-      { href: "/dashboard/reviews", label: "ביקורות", Icon: IcoStar },
-      { href: "/dashboard/sms", label: "SMS", Icon: IcoBell },
-    ],
-  },
-  {
-    title: "מערכת",
-    items: [
-      { href: "/dashboard/billing", label: "חיוב ומנוי", Icon: IcoCreditCard },
-      {
-        href: "/dashboard/settings/branding",
-        label: "הגדרות",
-        Icon: IcoGear,
-        match: "/dashboard/settings",
-      },
-    ],
-  },
-];
+import { NAV } from "./navConfig";
 
 export function SidebarV2({
   tenant,
