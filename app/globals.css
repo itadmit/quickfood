@@ -100,15 +100,15 @@
   --qf-line: #000000;
 }
 
-/* Card uplift — the standard "white card with hairline" pattern
-   (rounded-2xl + bg-white) gets the V2 thick-black-border +
-   hard-offset shadow treatment. Limited to the dashboard scope and to
-   the common 2xl rounding so we don't accidentally retouch modals,
-   pills, or small chips that share bg-white. */
+/* Card border — the standard "white card with hairline" pattern
+   (rounded-2xl + bg-white) keeps a regular 1px black hairline on the
+   V2 surface so it reads cleanly against the cream backdrop, but
+   without the bold 2px + offset-shadow uplift — that treatment is
+   reserved for specifically-highlighted surfaces (e.g. the Orders
+   KPI tile which carries its own yellow + shadow styling). */
 .dash-v2 .bg-white.rounded-2xl,
 .dash-v2 .bg-qf-card.rounded-2xl {
   border: 2px solid #000;
-  box-shadow: 0 3px 0 #000;
 }
 
 /* Inputs / selects inside the V2 dashboard read better with a true

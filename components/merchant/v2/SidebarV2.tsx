@@ -108,7 +108,7 @@ export function SidebarV2({
                     "flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition relative",
                     active
                       ? "bg-[#F8CB1E] text-black font-bold border-2 border-black shadow-[0_3px_0_#000]"
-                      : "text-black/85 hover:bg-black/4 font-medium",
+                      : "bg-white text-black/85 border border-black/15 hover:border-black/40 font-medium",
                   )}
                 >
                   <Icon c="#000" s={19} />
