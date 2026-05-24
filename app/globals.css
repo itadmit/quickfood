@@ -119,6 +119,17 @@
   border-color: #000;
 }
 
+/* V2 brand: --qf-primary / --qf-deep are bold yellows. Many legacy
+   buttons pair them with `text-white` (the V1 dark-green button
+   convention) which is unreadable on yellow. Force text to black on
+   any V2 element that uses the yellow as a background — this is
+   strictly additive (it doesn't touch elements that *aren't* yellow). */
+.dash-v2 .bg-\(--qf-primary\),
+.dash-v2 .bg-\(--qf-deep\),
+.dash-v2 .hover\:bg-\(--qf-deep\):hover {
+  color: #000 !important;
+}
+
 /* Focus ring stays yellow on the V2 skin. */
 .dash-v2 :focus-visible {
   outline-color: #000;

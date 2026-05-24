@@ -20,10 +20,27 @@ const STATUS_LABELS: Record<Status, string> = {
   closed: "סגור",
 };
 
+// Semantic status colors — green=open (ready), yellow=busy (slower
+// but still accepting), black=closed (not accepting). Matches the
+// universal POS convention so a glance at the chip = current state.
 const STATUS_STYLES: Record<Status, string> = {
-  open: "bg-[#F8CB1E] text-black",
-  busy: "bg-white text-black",
+  open: "bg-[#16A34A] text-white",
+  busy: "bg-[#F8CB1E] text-black",
   closed: "bg-black text-white",
+};
+
+const STATUS_DOT: Record<Status, string> = {
+  open: "bg-white",
+  busy: "bg-black",
+  closed: "bg-[#F8CB1E]",
+};
+
+// Row-level swatch shown next to each label inside the dropdown so the
+// merchant can pick by color at a glance.
+const STATUS_SWATCH: Record<Status, string> = {
+  open: "bg-[#16A34A]",
+  busy: "bg-[#F8CB1E]",
+  closed: "bg-black",
 };
 
 /**
@@ -120,10 +137,7 @@ export function TopbarV2({ user, branch, tenantSlug }: Props) {
             )}
           >
             <span
-              className={cn(
-                "w-2.5 h-2.5 rounded-full",
-                status === "open" ? "bg-black" : status === "busy" ? "bg-[#F8CB1E] border border-black" : "bg-white",
-              )}
+              className={cn("w-2.5 h-2.5 rounded-full", STATUS_DOT[status])}
             />
             <span className="hidden sm:inline">{STATUS_LABELS[status]}</span>
             <IcoChevDown c="currentColor" s={14} />
@@ -136,13 +150,19 @@ export function TopbarV2({ user, branch, tenantSlug }: Props) {
                   type="button"
                   onClick={() => changeStatus(s)}
                   className={cn(
-                    "w-full text-start px-3 py-2 rounded-lg text-sm font-bold transition",
+                    "w-full text-start px-3 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2.5",
                     s === status
-                      ? "bg-[#F8CB1E] text-black"
+                      ? "bg-black/5 text-black"
                       : "text-black/80 hover:bg-black/5",
                   )}
                 >
-                  {STATUS_LABELS[s]}
+                  <span
+                    className={cn(
+                      "w-2.5 h-2.5 rounded-full border border-black/30 shrink-0",
+                      STATUS_SWATCH[s],
+                    )}
+                  />
+                  <span>{STATUS_LABELS[s]}</span>
                 </button>
               ))}
             </div>
