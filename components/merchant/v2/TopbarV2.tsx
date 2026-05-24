@@ -68,8 +68,9 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
   const router = useRouter();
   const [status, setStatus] = useState<Status>(branch?.status ?? "open");
   const [statusBusy, setStatusBusy] = useState(false);
-  const [statusOpen, setStatusOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  // Single discriminated state for the two dropdowns so they're mutually
+  // exclusive — opening one auto-closes the other. Set to null to close.
+  const [openMenu, setOpenMenu] = useState<"status" | "user" | null>(null);
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
@@ -92,12 +93,12 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
 
   async function changeStatus(next: Status) {
     if (!branch || next === status) {
-      setStatusOpen(false);
+      setOpenMenu(null);
       return;
     }
     const prev = status;
     setStatus(next);
-    setStatusOpen(false);
+    setOpenMenu(null);
     setStatusBusy(true);
     try {
       const res = await fetch(`/api/v1/merchant/branches/${branch.id}`, {
@@ -151,7 +152,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
         <div className="relative">
           <button
             type="button"
-            onClick={() => setStatusOpen((v) => !v)}
+            onClick={() => setOpenMenu(openMenu === "status" ? null : "status")}
             disabled={!branch || statusBusy}
             className={cn(
               "inline-flex items-center gap-2 px-3 h-10 rounded-xl border-2 border-black text-sm font-bold transition active:scale-[0.98] shadow-[0_2px_0_#000]",
@@ -162,10 +163,10 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
             <span
               className={cn("w-2.5 h-2.5 rounded-full", STATUS_DOT[status])}
             />
-            <span className="hidden sm:inline">{STATUS_LABELS[status]}</span>
+            <span>{STATUS_LABELS[status]}</span>
             <IcoChevDown c="currentColor" s={14} />
           </button>
-          {statusOpen && (
+          {openMenu === "status" && (
             <div className="absolute inset-e-0 mt-2 w-48 bg-white border-2 border-black rounded-2xl shadow-[0_4px_0_#000] p-1.5 z-50">
               {(["open", "busy", "closed"] as Status[]).map((s) => (
                 <button
@@ -227,7 +228,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
         <div className="relative">
           <button
             type="button"
-            onClick={() => setMenuOpen((v) => !v)}
+            onClick={() => setOpenMenu(openMenu === "user" ? null : "user")}
             className="flex items-center gap-2 ps-1 pe-2.5 h-10 rounded-xl border border-black/15 bg-white hover:border-black transition"
           >
             <div className="w-7 h-7 rounded-lg bg-black text-[#F8CB1E] grid place-items-center text-xs font-black">
@@ -239,7 +240,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
             </div>
             <IcoChevDown c="currentColor" s={14} className="hidden lg:inline" />
           </button>
-          {menuOpen && (
+          {openMenu === "user" && (
             <div className="absolute inset-e-0 mt-2 w-56 bg-white border-2 border-black rounded-2xl shadow-[0_4px_0_#000] p-1.5 text-sm z-50">
               <div className="px-3 py-2 text-xs text-black/60" dir="ltr">
                 {user.email}
@@ -249,7 +250,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
                 href={`/${tenantSlug}`}
                 target="_blank"
                 rel="noopener"
-                onClick={() => setMenuOpen(false)}
+                onClick={() => setOpenMenu(null)}
                 className="w-full text-start px-3 py-2 rounded-lg hover:bg-black/5 flex items-center gap-2.5 font-bold"
               >
                 <IcoEye c="#000" s={16} />
