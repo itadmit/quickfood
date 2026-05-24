@@ -933,6 +933,7 @@ function Footer() {
             <Link href="/terms">תנאי שימוש</Link>
             <Link href="/privacy">פרטיות</Link>
             <Link href="/sla">SLA</Link>
+            <Link href="/status">סטטוס מערכת</Link>
             <Link href="/docs/pos">API Docs</Link>
           </div>
         </div>

@@ -103,8 +103,8 @@ export default function ContactPage() {
         <h2>סטטוס המערכת</h2>
         <p>
           לפני שאתם מדווחים על תקלה, שווה לבדוק את{" "}
-          <a href="https://status.quickfood.co.il">status.quickfood.co.il</a> -
-          ייתכן שכבר אנחנו מטפלים בה ומספקים עדכון בזמן אמת.
+          <a href="/status">עמוד סטטוס המערכת</a> - ייתכן שכבר אנחנו מטפלים
+          בה ומספקים עדכון בזמן אמת.
         </p>
       </section>
     </LegalShell>
