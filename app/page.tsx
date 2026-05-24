@@ -257,7 +257,7 @@ function Hero() {
 
         <div className={styles.heroCta}>
           <Link href="/signup" className={`${styles.btn} ${styles.btnTomato} ${styles.btnLg}`}>
-            QuickFood, פתח לי חנות
+            QuickFood, תפתחו לי חנות
           </Link>
           <a
             href="#pricing"
@@ -560,10 +560,10 @@ function GrowPartner() {
       <div className={styles.container}>
         <div className={styles.sectionEyebrow}>חדש · ספק סליקה מועדף</div>
         <h2 className={styles.sectionTitle}>
-          סליקה דרך Grow. <em>תנאים שלא תקבל לבד.</em>
+          סליקה דרך Grow. <em>סנכרון מלא לדשבורד. בלי תוספות.</em>
         </h2>
         <p className={styles.sectionLede}>
-          חברת הסליקה <strong>Grow</strong> מנהלת תשלומים ל-100,000 עסקים בישראל. דרך QuickFood אתה מקבל תנאים מיוחדים — שלא יציעו לך אם תפנה אליהם ישירות.
+          חברת הסליקה <strong>Grow</strong> מנהלת תשלומים ל-100,000 עסקים בישראל. דרך QuickFood היא מחוברת ישירות לדשבורד שלך — ביטולים, זיכויים, חשבוניות מס וכל אמצעי התשלום מסונכרנים אוטומטית, בלי לעבור בין מערכות.
         </p>
 
         <div className={styles.growCard}>
@@ -609,30 +609,30 @@ function GrowPartner() {
 
             <ul className={styles.growList}>
               <li>
-                <strong>Bit, פייבוקס, Apple Pay, Google Pay + אשראי</strong>
-                <span>כל אמצעי התשלום בצ׳קאוט אחד, בתוך החנות שלך — בלי הפניות לדפי תשלום חיצוניים.</span>
+                <strong>סנכרון מלא: ביטולים וזיכויים מהדשבורד</strong>
+                <span>ביטלת הזמנה? החיוב חוזר ללקוח בקליק אחד, הסכום מתעדכן ב-Grow, החשבונית הקודמת מתבטלת אוטומטית. בלי לעבור בין שתי מערכות, בלי טעויות הנהלת חשבונות.</span>
+              </li>
+              <li>
+                <strong>פייבוקס, ביט, Apple Pay, Google Pay — בלי תוספת</strong>
+                <span>אמצעי תשלום שספקים אחרים גובים עליהם בנפרד או דורשים &quot;חבילת תוספים&quot; — אצל Grow הכל כלול בתעריף הבסיס. בלי הפעלה ידנית, בלי עמלה אחרת לכל אחד.</span>
+              </li>
+              <li>
+                <strong>חשבוניות מס ללא הגבלה — כלולות במנוי</strong>
+                <span>על כל הזמנה Grow מנפיקה חשבונית מס תקנית, שולחת ללקוח ומגישה לרשויות. בלי תקרת חודש, בלי תשלום נוסף, בלי חשבון נפרד אצל סולק חשבוניות.</span>
+              </li>
+              <li>
+                <strong>תשלום מהיר לחשבון — תוך 24 שעות</strong>
+                <span>יום עסקים אחד מההזמנה ועד שהכסף בבנק שלך. בלי תור, בלי תקרה יומית, בלי חודש המתנה כמו אצל סולקים מסורתיים.</span>
               </li>
               <li>
                 <strong>חיבור בקליק אחד</strong>
                 <span>נרשמים ל-Grow מתוך הדשבורד של QuickFood. ההתאמה הראשונית מסתיימת תוך דקות. מתחיל לסלוק היום למחר.</span>
               </li>
-              <li>
-                <strong>חשבוניות מס אוטומטיות</strong>
-                <span>על כל הזמנה Grow מנפיקה חשבונית מס תקנית, שולחת ללקוח ומגישה לרשויות המס. אתה לא נוגע בנייר ולא משלם להנהלת חשבונות עבור זה.</span>
-              </li>
-              <li>
-                <strong>חיובים, זיכויים, מעקב מלא</strong>
-                <span>החזר ללקוח, ביטול חיוב, פירוט תנועות וכספים בדרך — הכל מתוך הדשבורד שלך, בלי להתחבר למערכת חיצונית.</span>
-              </li>
-              <li>
-                <strong>כסף בחשבון תוך 24 שעות</strong>
-                <span>יום עסקים אחד מהזמנה ועד שהכסף בבנק שלך. בלי תור, בלי חודש המתנה, בלי תקרה יומית.</span>
-              </li>
             </ul>
           </div>
 
           <div className={styles.growFootnote}>
-            <strong>שקיפות מלאה:</strong> Grow היא חברת סליקה עצמאית — לא חברת-בת ולא קוד שלנו. אנחנו ממליצים עליה כספק מועדף כי השגנו ללקוחות QuickFood תנאים טובים מהממוצע בשוק. אבל אתה לא נעול: <strong>אפשר לחבר כל חברת סליקה אחרת</strong> שעובדת איתך — Tranzila, CardCom, Pelecard, Isracard וכל מי שתומך ב-API סטנדרטי. הבחירה שלך.
+            <strong>שקיפות מלאה:</strong> Grow היא חברת סליקה עצמאית — לא חברת-בת שלנו. אנחנו ממליצים עליה כספק מועדף כי השגנו ללקוחות QuickFood אינטגרציה מלאה ותעריפים טובים. אבל <strong>אפשר לחבר כל חברת סליקה אחרת</strong> שעובדת איתך — Tranzila, CardCom, Pelecard, Isracard וכל מי שתומך ב-API סטנדרטי. הבחירה שלך, לא נועלים אותך.
           </div>
         </div>
       </div>
@@ -693,7 +693,7 @@ function Pricing() {
                 href="/signup"
                 className={`${styles.btn} ${styles.btnLg} ${styles.btnInk} ${styles.btnFull}`}
               >
-                QuickFood, פתח לי חנות <IcoArrowLeft c="currentColor" s={14} />
+                QuickFood, תפתחו לי חנות <IcoArrowLeft c="currentColor" s={14} />
               </Link>
               <div className={styles.priceSingleNote}>
                 7 ימים על חשבוננו · בלי כרטיס אשראי · בלי שיחת מכירה
@@ -825,7 +825,7 @@ function FinalCta() {
               בלי כרטיס אשראי, בלי התחייבות, בלי שיחת מכירה. תפתח חנות, תקבל הזמנה אחת, ותראה איך זה מרגיש כשהמנה הולכת ישר מהמטבח שלך ללקוח שלך - עם השם שלך על האפליקציה.
             </p>
             <Link href="/signup" className={`${styles.btn} ${styles.btnLg} ${styles.btnInk}`}>
-              QuickFood, פתח לי חנות <IcoArrowLeft c="currentColor" s={14} />
+              QuickFood, תפתחו לי חנות <IcoArrowLeft c="currentColor" s={14} />
             </Link>
           </div>
         </div>

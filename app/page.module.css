@@ -953,30 +953,29 @@
 }
 .woltCard {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0,1fr) 120px;
+  display: flex;
   align-items: center;
-  gap: 32px;
-  padding: 48px 52px;
+  gap: 56px;
+  padding: 48px 56px;
   border-radius: 24px;
   overflow: hidden;
   transition: border-color 0.2s, transform 0.2s;
 }
 .woltCard:hover { border-color: var(--ink-2); }
-/* Layout variants — each card picks one so the stack feels designed,
-   not stamped. */
-.woltCardDecorEnd  { grid-template-columns: minmax(0,1fr) 180px; }
-.woltCardDecorStart {
-  grid-template-columns: 180px minmax(0,1fr);
-}
+/* Layout variants — alternate which side the decor sits on. Default
+   DOM order puts decor first; in an RTL flex row that means decor on
+   the visual right. Push it past the body with `order` to flip it. */
+.woltCardDecorStart { /* default — decor on the RIGHT in RTL */ }
+.woltCardDecorEnd .woltCardDecor { order: 1; } /* decor on the LEFT in RTL */
 .woltCardWide {
-  grid-template-columns: minmax(0,1fr);
+  display: block;
   padding: 52px 56px 56px;
 }
 .woltCardWide .woltCardDecor {
   position: absolute;
   inset-block-end: -28px;
   inset-inline-end: -16px;
+  flex: none;
   font-size: clamp(140px, 18vw, 220px);
   opacity: 0.85;
   pointer-events: none;
@@ -987,10 +986,12 @@
   .woltCardDecorEnd,
   .woltCardDecorStart,
   .woltCardWide {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
     padding: 28px 26px 32px;
-    gap: 12px;
+    gap: 16px;
   }
+  .woltCardWide { display: block; }
   .woltCardWide .woltCardDecor {
     position: static;
     text-align: center;
@@ -998,13 +999,16 @@
     opacity: 1;
     margin-bottom: 4px;
   }
-  /* When decor came BEFORE on desktop, keep it first on mobile too.
-     When it came AFTER, move it back up to the top to match the Wolt
-     "illustration then story" rhythm on phones. */
-  .woltCardDecorStart .woltCardDecor { order: 0; }
-  .woltCardDecorEnd .woltCardDecor   { order: -1; }
+  /* Always put the decor at the top on mobile — "illustration then story"
+     reads better on a narrow screen than text-then-icon. */
+  .woltCardDecorStart .woltCardDecor,
+  .woltCardDecorEnd .woltCardDecor { order: -1; }
 }
-.woltCardBody { min-width: 0; }
+.woltCardBody {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 580px;
+}
 .woltCardTag {
   font-size: 11px; font-weight: 700;
   letter-spacing: 0.2em;
@@ -1028,20 +1032,42 @@
   opacity: 0.78;
 }
 .woltCardDecor {
+  position: relative;
+  flex: 0 0 260px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
   user-select: none;
 }
+/* Soft cream disc behind the icon so it has presence in the layout
+   instead of floating in dead whitespace. Skipped for the wide-decor
+   anchor card (uses an oversized character watermark instead) and the
+   customizer card (uses a live mockup). */
+.woltCardDecor::before {
+  content: '';
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: var(--cream-2);
+  transform: translate(-50%, -50%);
+  z-index: 0;
+}
+.woltCardWide .woltCardDecor::before,
+.woltCardCustomizer .woltCardDecor::before { display: none; }
 .woltCardDecor svg {
-  width: 88px;
-  height: 88px;
+  position: relative;
+  z-index: 1;
+  width: 132px;
+  height: 132px;
   color: var(--ink);
-  stroke-width: 1.4;
+  stroke-width: 1.5;
 }
 @media (max-width: 900px) {
-  .woltCardDecor svg { width: 72px; height: 72px; }
+  .woltCardDecor { flex: 0 0 auto; min-height: 160px; }
+  .woltCardDecor::before { width: 170px; height: 170px; }
+  .woltCardDecor svg { width: 96px; height: 96px; }
 }
 
 /* Tones — all white cards with quiet borders for the Linen & Bone
@@ -1075,8 +1101,10 @@
 
 /* Customizer-mockup card — body on the start side, live mockup on the
    end side. Wider end-slot than the icon variants so the customizer card
-   isn't squashed. Falls back to a stack on mobile. */
+   isn't squashed. Falls back to a stack on mobile. Switches the base
+   .woltCard flex back to grid because the mockup needs a fixed end-slot. */
 .woltCardCustomizer {
+  display: grid;
   grid-template-columns: minmax(0, 1fr) 400px;
   gap: 48px;
   align-items: stretch;
