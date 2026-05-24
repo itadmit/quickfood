@@ -6,6 +6,7 @@ import { IcoPlus, IcoClose, IcoCheck } from "@/components/shared/Icons";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { cn } from "@/lib/cn";
+import { PageHeader } from "@/components/merchant/v2/PageHeader";
 
 interface Coupon {
   id: string;
@@ -162,24 +163,23 @@ export function CouponsView({
   }
 
   return (
-    <div className="space-y-4 max-w-3xl">
-      <header className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl lg:text-2xl font-bold">קופונים</h1>
-          <p className="text-xs lg:text-sm text-qf-mute">
-            צור קוד הנחה, הגדר תוקף, ומגבלת שימוש. הלקוח מקליד בצ׳קאוט ומקבל את ההנחה בלייב.
-          </p>
-        </div>
-        {!editing && (
-          <button
-            type="button"
-            onClick={startNew}
-            className="px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium inline-flex items-center gap-1"
-          >
-            <IcoPlus c="white" s={14} /> קופון חדש
-          </button>
-        )}
-      </header>
+    <div className="space-y-4">
+      <PageHeader
+        chip="שיווק"
+        title="קופונים"
+        subtitle="קוד הנחה, תוקף ומגבלת שימוש — הלקוח מקליד בצ׳קאוט ומקבל את ההנחה בלייב"
+        actions={
+          !editing ? (
+            <button
+              type="button"
+              onClick={startNew}
+              className="px-4 py-2 rounded-xl bg-black text-[#F8CB1E] border-2 border-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/90 inline-flex items-center gap-1"
+            >
+              <IcoPlus c="#F8CB1E" s={14} /> קופון חדש
+            </button>
+          ) : undefined
+        }
+      />
 
       {error && (
         <div className="bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm rounded-xl px-3 py-2">

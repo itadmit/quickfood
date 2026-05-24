@@ -7,6 +7,7 @@ import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { OrderDrawer } from "@/components/merchant/OrderDrawer";
 import { ManualOrderModal } from "@/components/merchant/ManualOrderModal";
+import { PageHeader } from "@/components/merchant/v2/PageHeader";
 
 type Status =
   | "pending"
@@ -178,30 +179,29 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
 
   return (
     <div className="space-y-4 lg:space-y-5">
-      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
-          <h1 className="text-xl lg:text-2xl font-bold">הזמנות חיות</h1>
-          <p className="text-xs lg:text-sm text-qf-mute">
-            {totalActive} הזמנות פעילות · עדכון אוטומטי
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            className="hidden sm:inline-flex px-3.5 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm items-center gap-2"
-            onClick={() => window.print()}
-          >
-            <IcoPrinter s={16} /> הדפסת תור
-          </button>
-          <button
-            type="button"
-            onClick={() => setManualOpen(true)}
-            className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm"
-          >
-            + הזמנה ידנית
-          </button>
-        </div>
-      </header>
+      <PageHeader
+        chip="תפעול"
+        title="הזמנות חיות"
+        subtitle={`${totalActive} הזמנות פעילות · עדכון אוטומטי`}
+        actions={
+          <>
+            <button
+              type="button"
+              className="hidden sm:inline-flex px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm items-center gap-2 shadow-[0_2px_0_#000] hover:bg-black/5"
+              onClick={() => window.print()}
+            >
+              <IcoPrinter s={16} /> הדפסת תור
+            </button>
+            <button
+              type="button"
+              onClick={() => setManualOpen(true)}
+              className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-black text-[#F8CB1E] border-2 border-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/90"
+            >
+              + הזמנה ידנית
+            </button>
+          </>
+        }
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 lg:gap-4">
         {byColumn.map((col) => (

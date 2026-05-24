@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
+import { PageHeader } from "@/components/merchant/v2/PageHeader";
 
 interface TenantBilling {
   name: string;
@@ -64,12 +65,11 @@ export function BillingView({
 
   return (
     <div className="space-y-5">
-      <header>
-        <h1 className="text-xl lg:text-2xl font-bold">חיוב ומנוי</h1>
-        <p className="text-xs lg:text-sm text-qf-mute">
-          התשלום עובר דרך Quick Commerce Billing — כרטיס אחד, חשבונית אחת.
-        </p>
-      </header>
+      <PageHeader
+        chip="חשבון"
+        title="חיוב ומנוי"
+        subtitle="התשלום עובר דרך Quick Commerce Billing — כרטיס אחד, חשבונית אחת"
+      />
 
       {justReturnedFromSetup && status === "active" && (
         <div className="bg-qf-green-soft border border-(--qf-primary)/30 rounded-2xl px-4 py-3 text-sm">

@@ -1,20 +1,15 @@
 import { Skeleton } from "@/components/shared/Skeleton";
+import { PageHeaderSkeleton } from "@/components/merchant/v2/PageHeaderSkeleton";
 
 export default function CouriersLoading() {
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <Skeleton className="h-6 w-24" />
-          <Skeleton className="h-3 w-40" />
-        </div>
-        <Skeleton className="h-10 w-32 rounded-xl" />
-      </div>
+      <PageHeaderSkeleton withActions />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="rounded-2xl bg-white border border-qf-line-dash p-4 space-y-3"
+            className="rounded-2xl bg-white border-2 border-black p-4 space-y-3"
           >
             <div className="flex items-center gap-3">
               <Skeleton className="w-12 h-12 rounded-full" />

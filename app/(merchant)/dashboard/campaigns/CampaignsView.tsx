@@ -6,6 +6,7 @@ import { ImageUploader } from "@/components/shared/ImageUploader";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { RelativeTime } from "@/components/shared/RelativeTime";
+import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import {
   CATEGORY_ICONS,
   CATEGORY_COLORS,
@@ -222,22 +223,21 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
 
   return (
     <div className="space-y-5">
-      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
-          <h1 className="text-xl lg:text-2xl font-bold">קמפיינים</h1>
-          <p className="text-xs lg:text-sm text-qf-mute">
-            פופאפ שצף ללקוחות בעמוד הבית, או באנר קידום משובץ בתוך עמוד הבית.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={openNew}
-          className="bg-(--qf-primary) hover:bg-(--qf-deep) text-white rounded-xl px-4 py-2.5 text-sm font-semibold inline-flex items-center justify-center gap-1.5 shadow-sm transition"
-        >
-          <IcoPlus c="#fff" s={16} />
-          קמפיין חדש
-        </button>
-      </header>
+      <PageHeader
+        chip="שיווק"
+        title="קמפיינים"
+        subtitle="פופאפ צף או באנר קידום בתוך עמוד הבית"
+        actions={
+          <button
+            type="button"
+            onClick={openNew}
+            className="bg-black text-[#F8CB1E] border-2 border-black rounded-xl px-4 py-2 text-sm font-bold inline-flex items-center justify-center gap-1.5 shadow-[0_2px_0_#000] hover:bg-black/90"
+          >
+            <IcoPlus c="#F8CB1E" s={16} />
+            קמפיין חדש
+          </button>
+        }
+      />
 
       {items.length === 0 ? (
         <div className="bg-white rounded-2xl border border-dashed border-qf-line-dash p-10 text-center">

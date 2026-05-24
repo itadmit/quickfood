@@ -8,6 +8,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { DragList, DragHandle } from "@/components/shared/DragList";
 import { MiniImagePicker } from "@/components/shared/MiniImagePicker";
+import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import { cn } from "@/lib/cn";
 
 interface SetOption {
@@ -130,32 +131,33 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
 
   return (
     <div className="space-y-5 max-w-3xl">
-      <header className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard/menu"
-            className="w-9 h-9 rounded-full border border-qf-line-dash grid place-items-center"
-            aria-label="חזרה לתפריט"
-          >
-            <IcoChev s={18} />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold">קטלוג תוספות</h1>
-            <p className="text-sm text-qf-mute">
-              קבוצות לשימוש חוזר — צור פעם אחת, שייך לעשרות פריטים. שינוי מתעדכן בכל הפריטים בו-זמנית.
-            </p>
-          </div>
-        </div>
-        {!editing && (
-          <button
-            type="button"
-            onClick={startNew}
-            className="px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium inline-flex items-center gap-1"
-          >
-            <IcoPlus c="white" s={14} /> קטלוג חדש
-          </button>
-        )}
-      </header>
+      <PageHeader
+        chip="קטלוג"
+        title={
+          <span className="flex items-center gap-3">
+            <Link
+              href="/dashboard/menu"
+              className="w-9 h-9 rounded-xl bg-white border-2 border-black grid place-items-center shadow-[0_2px_0_#000] hover:bg-black/5 transition"
+              aria-label="חזרה לתפריט"
+            >
+              <IcoChev s={18} />
+            </Link>
+            <span>קטלוג תוספות</span>
+          </span>
+        }
+        subtitle="קבוצות לשימוש חוזר — צור פעם אחת, שייך לעשרות פריטים, שינוי מתעדכן בכולם"
+        actions={
+          !editing ? (
+            <button
+              type="button"
+              onClick={startNew}
+              className="px-4 py-2 rounded-xl bg-black text-[#F8CB1E] border-2 border-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/90 inline-flex items-center gap-1"
+            >
+              <IcoPlus c="#F8CB1E" s={14} /> קטלוג חדש
+            </button>
+          ) : undefined
+        }
+      />
 
       {error && (
         <div className="bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm rounded-xl px-3 py-2">

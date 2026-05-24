@@ -1,9 +1,5 @@
-import type { WoltMenu, WoltVenueInfo } from "./types";
+import type { WoltMenu, WoltVenue, WoltVenueInfo } from "./types";
 
-// Browser-flavored UA. The legacy /v3/venues/slug endpoint requires a
-// recent Wolt app version header and returns "update the app" otherwise;
-// /v4/venues/{id}/menu is happy with a plain Chrome UA, which is what we
-// use for both the HTML scrape (to discover venue_id) and the menu fetch.
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/125.0 Safari/537.36";
@@ -27,12 +23,6 @@ export class WoltFetchError extends Error {
   }
 }
 
-/**
- * Pull the slug from a Wolt venue URL. Tolerates trailing slashes,
- * query strings, and the optional language prefix (`/he/`, `/en/`...).
- *   wolt.com/he/isr/rishon-lezion-hashfela-area/restaurant/pizza-ninjagedera
- *   → "pizza-ninjagedera"
- */
 export function extractSlug(url: string): string | null {
   try {
     const u = new URL(url);
@@ -46,13 +36,30 @@ export function extractSlug(url: string): string | null {
   }
 }
 
-/**
- * Wolt no longer publishes a slug→venue_id JSON endpoint we can reach;
- * the legacy /v3/venues/slug returns 410 without a current app version.
- * The venue HTML page (which a regular browser loads anyway) embeds the
- * venue document inline as `"venue":{"id":"<24-hex>", ...}` — regex on
- * that is good enough and far less brittle than the JSON-LD blob.
- */
+function extractVenueBlob(html: string): WoltVenue | null {
+  const i = html.indexOf('"venue":{');
+  if (i < 0) return null;
+  let depth = 0;
+  const start = i + '"venue":'.length;
+  let j = start;
+  for (; j < html.length; j++) {
+    const c = html[j];
+    if (c === "{") depth++;
+    else if (c === "}") {
+      depth--;
+      if (depth === 0) {
+        j++;
+        break;
+      }
+    }
+  }
+  try {
+    return JSON.parse(html.slice(start, j)) as WoltVenue;
+  } catch {
+    return null;
+  }
+}
+
 export async function resolveVenue(url: string): Promise<WoltVenueInfo> {
   const slug = extractSlug(url);
   if (!slug) {
@@ -69,27 +76,16 @@ export async function resolveVenue(url: string): Promise<WoltVenueInfo> {
     );
   }
   const html = await res.text();
-  const m = html.match(/"venue":\{"id":"([a-f0-9]{20,32})"/);
-  if (!m) {
+  const venue = extractVenueBlob(html);
+  if (!venue?.id) {
     throw new WoltFetchError(
       "venue_not_found",
       "לא הצלחנו לזהות את החנות בדף שוולט החזירה — ייתכן שהיא סגורה זמנית",
     );
   }
-  const venueId = m[1];
-  const nameMatch = html.match(/"venue":\{[^}]*"name":"([^"]+)"/);
-  return {
-    venueId,
-    name: nameMatch?.[1] ?? slug,
-  };
+  return { venueId: venue.id, name: venue.name || slug, venue };
 }
 
-/**
- * Fetch the full menu document. ~50–150KB JSON depending on catalog size.
- * Caller is responsible for stowing it in WoltImport.rawMenu so the
- * commit step doesn't have to re-hit Wolt (and so we have an audit
- * trail if mapping ever blows up).
- */
 export async function fetchMenu(venueId: string): Promise<WoltMenu> {
   const res = await fetch(
     `https://restaurant-api.wolt.com/v4/venues/${venueId}/menu`,
@@ -108,7 +104,6 @@ export async function fetchMenu(venueId: string): Promise<WoltMenu> {
   return json;
 }
 
-/** Download an image from Wolt's CDN. Returns Uint8Array + mime sniff. */
 export async function fetchImage(
   url: string,
 ): Promise<{ bytes: Uint8Array; contentType: string } | null> {

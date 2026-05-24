@@ -6,6 +6,7 @@ import { IcoBike, IcoPhone, IcoStar } from "@/components/shared/Icons";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { cn } from "@/lib/cn";
+import { PageHeader } from "@/components/merchant/v2/PageHeader";
 
 interface Courier {
   id: string;
@@ -110,21 +111,20 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
 
   return (
     <div className="space-y-4 lg:space-y-5">
-      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
-          <h1 className="text-xl lg:text-2xl font-bold">שליחים</h1>
-          <p className="text-xs lg:text-sm text-qf-mute">
-            {onShift} במשמרת · {onDelivery} במשלוח
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setAdding(!adding)}
-          className="px-3.5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm"
-        >
-          {adding ? "ביטול" : "+ הוסף שליח"}
-        </button>
-      </header>
+      <PageHeader
+        chip="תפעול"
+        title="שליחים"
+        subtitle={`${onShift} במשמרת · ${onDelivery} במשלוח`}
+        actions={
+          <button
+            type="button"
+            onClick={() => setAdding(!adding)}
+            className="px-3.5 py-2 rounded-xl bg-black text-[#F8CB1E] border-2 border-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/90"
+          >
+            {adding ? "ביטול" : "+ הוסף שליח"}
+          </button>
+        }
+      />
 
       {adding && (
         <div className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-3">

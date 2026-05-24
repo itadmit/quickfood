@@ -1,18 +1,10 @@
 import { Skeleton } from "@/components/shared/Skeleton";
+import { PageHeaderSkeleton } from "@/components/merchant/v2/PageHeaderSkeleton";
 
 export default function MenuLoading() {
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <Skeleton className="h-6 w-24" />
-          <Skeleton className="h-3 w-56" />
-        </div>
-        <div className="flex gap-2">
-          <Skeleton className="h-10 w-28 rounded-xl" />
-          <Skeleton className="h-10 w-28 rounded-xl" />
-        </div>
-      </div>
+      <PageHeaderSkeleton withActions />
       <div className="flex gap-2 overflow-hidden">
         {Array.from({ length: 5 }).map((_, i) => (
           <Skeleton key={i} className="h-9 w-24 rounded-full shrink-0" />
@@ -22,7 +14,7 @@ export default function MenuLoading() {
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="rounded-2xl bg-white border border-qf-line-dash p-3 flex gap-3"
+            className="rounded-2xl bg-white border-2 border-black p-3 flex gap-3"
           >
             <Skeleton className="w-20 h-20 rounded-xl shrink-0" />
             <div className="flex-1 space-y-2 min-w-0">

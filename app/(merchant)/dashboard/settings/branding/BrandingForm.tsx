@@ -19,6 +19,7 @@ interface Tenant {
   themeId: ThemeId;
   businessType: BusinessType;
   cuisineType: string | null;
+  about: string | null;
   slug: string;
   coverImage: string | null;
 }
@@ -41,6 +42,7 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
   const [themeId, setThemeId] = useState<ThemeId>(tenant.themeId);
   const [businessType, setBusinessType] = useState<BusinessType>(tenant.businessType);
   const [cuisineType, setCuisineType] = useState(tenant.cuisineType ?? "");
+  const [about, setAbout] = useState(tenant.about ?? "");
   const [coverImage, setCoverImage] = useState<string | null>(tenant.coverImage);
   const [logoUrl, setLogoUrl] = useState<string | null>(tenant.logoUrl);
   const [saving, setSaving] = useState(false);
@@ -62,6 +64,7 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
           theme_id: themeId,
           business_type: businessType,
           cuisine_type: cuisineType || undefined,
+          about: about.trim() ? about.trim() : null,
           cover_image: coverImage,
         }),
       });
@@ -98,6 +101,21 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
             placeholder="לדוגמה: פיצה נפוליטנית"
             className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
           />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium" htmlFor="about">תיאור העסק</label>
+          <textarea
+            id="about"
+            value={about}
+            onChange={(e) => setAbout(e.target.value)}
+            rows={3}
+            maxLength={2000}
+            placeholder="טאגליין קצר או פסקה שמופיעה מתחת לשם החנות בעמוד הלקוח"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none resize-y leading-relaxed"
+          />
+          <p className="text-xs text-qf-mute">
+            עד 2000 תווים. מוצג בעמוד הראשי של החנות לצד הלוגו.
+          </p>
         </div>
 
         <BusinessTypeSelect

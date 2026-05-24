@@ -8,6 +8,7 @@ import { IcoChev, IcoPlus, IcoClose } from "@/components/shared/Icons";
 import { ImageUploader } from "@/components/shared/ImageUploader";
 import { MiniImagePicker } from "@/components/shared/MiniImagePicker";
 import { DragList, DragHandle } from "@/components/shared/DragList";
+import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { ALL_TAG_LABELS } from "@/lib/dietary-tags";
 import { formatPrice } from "@/lib/format";
@@ -317,53 +318,53 @@ export function ItemEditor({
           sticky bottom bar instead) and only keep back + title + the
           destructive/secondary actions, so 3 buttons don't elbow the
           title into ellipsis. */}
-      <header className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3 min-w-0">
-          <Link
-            href="/dashboard/menu"
-            className="w-9 h-9 rounded-full border border-qf-line-dash grid place-items-center shrink-0"
-            aria-label="חזרה"
-          >
-            <IcoChev s={18} />
-          </Link>
-          <div className="min-w-0">
-            <h1 className="text-xl lg:text-2xl font-bold truncate">
-              {mode === "edit" ? "עריכת פריט" : "פריט חדש"}
-            </h1>
-            <p className="text-xs lg:text-sm text-qf-mute truncate">{data.name || "ללא שם"}</p>
-          </div>
-        </div>
-        <div className="flex gap-2 shrink-0">
-          {mode === "edit" && (
-            <>
-              <button
-                type="button"
-                onClick={duplicate}
-                disabled={duplicating}
-                className="px-3 py-2 rounded-xl border border-qf-line-dash text-qf-ink2 hover:bg-qf-line-soft text-sm disabled:opacity-60"
-              >
-                {duplicating ? "..." : "שכפל"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirmDel(true)}
-                className="px-3 py-2 rounded-xl border border-qf-tomato/40 text-qf-tomato hover:bg-qf-tomato-soft text-sm"
-              >
-                מחק
-              </button>
-            </>
-          )}
-          {/* Desktop save button — mobile uses the sticky bottom bar */}
-          <button
-            type="button"
-            onClick={save}
-            disabled={busy}
-            className="hidden lg:inline-flex px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
-          >
-            {busy ? "שומר..." : "שמירת שינויים"}
-          </button>
-        </div>
-      </header>
+      <PageHeader
+        chip="קטלוג"
+        title={
+          <span className="flex items-center gap-3 min-w-0">
+            <Link
+              href="/dashboard/menu"
+              className="w-9 h-9 rounded-xl bg-white border-2 border-black grid place-items-center shrink-0 shadow-[0_2px_0_#000] hover:bg-black/5 transition"
+              aria-label="חזרה"
+            >
+              <IcoChev s={18} />
+            </Link>
+            <span className="truncate">{mode === "edit" ? "עריכת פריט" : "פריט חדש"}</span>
+          </span>
+        }
+        subtitle={data.name || "ללא שם"}
+        actions={
+          <>
+            {mode === "edit" && (
+              <>
+                <button
+                  type="button"
+                  onClick={duplicate}
+                  disabled={duplicating}
+                  className="px-3 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5 disabled:opacity-60"
+                >
+                  {duplicating ? "..." : "שכפל"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDel(true)}
+                  className="px-3 py-2 rounded-xl bg-white border-2 border-qf-tomato text-qf-tomato font-bold text-sm shadow-[0_2px_0_#c2421f] hover:bg-qf-tomato-soft"
+                >
+                  מחק
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={save}
+              disabled={busy}
+              className="hidden lg:inline-flex px-4 py-2 rounded-xl bg-black text-[#F8CB1E] border-2 border-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/90 disabled:opacity-60"
+            >
+              {busy ? "שומר..." : "שמירת שינויים"}
+            </button>
+          </>
+        }
+      />
 
       {error && (
         <div className="bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm rounded-xl px-3 py-2">

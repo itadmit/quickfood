@@ -15,6 +15,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { CategoryEditorModal, type EditableCategory } from "./CategoryEditorModal";
 import { resolveCategoryStyle } from "@/lib/category-style";
 import { IcoGear } from "@/components/shared/Icons";
+import { PageHeader } from "@/components/merchant/v2/PageHeader";
 
 interface Category {
   id: string;
@@ -124,42 +125,41 @@ export function MenuList({
 
   return (
     <div className="space-y-4 lg:space-y-5">
-      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
-          <h1 className="text-xl lg:text-2xl font-bold">תפריט</h1>
-          <p className="text-xs lg:text-sm text-qf-mute">
-            {visibleCount} פריטים זמינים · {hiddenCount} מוסתרים
-          </p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <Link
-            href="/dashboard/menu/modifiers"
-            className="hidden sm:inline-flex px-3.5 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm"
-          >
-            קטלוג תוספות
-          </Link>
-          <button
-            type="button"
-            onClick={() => setBulkPriceOpen(true)}
-            className="hidden sm:inline-flex px-3.5 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm"
-          >
-            עדכון מחירים
-          </button>
-          <button
-            type="button"
-            onClick={() => setImportOpen(true)}
-            className="hidden sm:inline-flex px-3.5 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm"
-          >
-            ייבוא מ-CSV
-          </button>
-          <Link
-            href="/dashboard/menu/new"
-            className="flex-1 sm:flex-initial text-center px-3.5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm"
-          >
-            + פריט חדש
-          </Link>
-        </div>
-      </header>
+      <PageHeader
+        chip="קטלוג"
+        title="תפריט"
+        subtitle={`${visibleCount} פריטים זמינים · ${hiddenCount} מוסתרים`}
+        actions={
+          <>
+            <Link
+              href="/dashboard/menu/modifiers"
+              className="hidden sm:inline-flex px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5"
+            >
+              קטלוג תוספות
+            </Link>
+            <button
+              type="button"
+              onClick={() => setBulkPriceOpen(true)}
+              className="hidden sm:inline-flex px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5"
+            >
+              עדכון מחירים
+            </button>
+            <button
+              type="button"
+              onClick={() => setImportOpen(true)}
+              className="hidden sm:inline-flex px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5"
+            >
+              ייבוא מ-CSV
+            </button>
+            <Link
+              href="/dashboard/menu/new"
+              className="flex-1 sm:flex-initial text-center px-3.5 py-2 rounded-xl bg-black text-[#F8CB1E] border-2 border-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/90"
+            >
+              + פריט חדש
+            </Link>
+          </>
+        }
+      />
 
       <div className="flex items-center gap-2">
         <div className="flex gap-2 overflow-x-auto no-scrollbar flex-1 min-w-0">

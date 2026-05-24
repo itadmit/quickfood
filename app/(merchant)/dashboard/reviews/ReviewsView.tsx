@@ -4,6 +4,7 @@ import { useState } from "react";
 import { IcoStar } from "@/components/shared/Icons";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { RelativeTime } from "@/components/shared/RelativeTime";
+import { PageHeader } from "@/components/merchant/v2/PageHeader";
 
 interface Summary {
   count: number;
@@ -54,10 +55,11 @@ export function ReviewsView({ summary, reviews }: { summary: Summary; reviews: R
 
   return (
     <div className="space-y-5">
-      <header>
-        <h1 className="text-xl lg:text-2xl font-bold">ביקורות</h1>
-        <p className="text-xs lg:text-sm text-qf-mute">{summary.count} ביקורות גלויות</p>
-      </header>
+      <PageHeader
+        chip="קהילה"
+        title="ביקורות"
+        subtitle={`${summary.count} ביקורות גלויות`}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-3 lg:gap-4">
         <aside className="bg-white rounded-2xl border border-qf-line-dash p-5 h-fit">

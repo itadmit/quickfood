@@ -28,6 +28,7 @@ enum ThemeId {
   tomato
   charcoal
   cobalt
+  sunflower
 }
 
 enum RestaurantStatus {
@@ -199,6 +200,10 @@ model Tenant {
   themeId              ThemeId        @default(fresh) @map("theme_id")
   businessType         BusinessType   @default(general) @map("business_type")
   cuisineType          String?        @map("cuisine_type")
+  /// Free-text "about" / tagline for the venue. Shown to customers on
+  /// the storefront under the venue name, editable from Branding.
+  /// Populated by the Wolt importer from the venue description.
+  about                String?        @db.Text
   vatNumber            String?        @map("vat_number")
   status               TenantStatus   @default(active)
   planId               String?        @map("plan_id") @db.Uuid
@@ -1194,6 +1199,11 @@ model WoltImport {
   // row (~megabyte per import — tolerable). Lets the commit step run
   // without re-fetching, and helps when debugging mapping issues.
   rawMenu            Json?            @map("raw_menu")
+  // Raw venue payload scraped from the Wolt HTML page (name, address,
+  // phone, hours, cover/logo URLs, description). Kept separately from
+  // rawMenu so the commit step can re-apply venue info without
+  // touching the menu pipeline. Same audit-trail rationale as rawMenu.
+  rawVenue           Json?            @map("raw_venue")
   createdAt          DateTime         @default(now()) @map("created_at")
   committedAt        DateTime?        @map("committed_at")
 

@@ -28,6 +28,7 @@ interface Props {
     logoLetter: string;
     logoUrl?: string | null;
     cuisineType: string | null;
+    about?: string | null;
     businessType?: BusinessType;
     coverImage?: string | null;
   };
@@ -180,6 +181,11 @@ export function CustomerHome({
               {tenant.cuisineType && (
                 <div className="text-base text-white/90 drop-shadow mt-1">{tenant.cuisineType}</div>
               )}
+              {tenant.about && (
+                <div className="text-sm text-white/85 drop-shadow mt-2 leading-relaxed whitespace-pre-line line-clamp-4 max-w-xl">
+                  {tenant.about}
+                </div>
+              )}
             </div>
           </div>
 
@@ -227,6 +233,11 @@ export function CustomerHome({
               <h1 className="text-2xl font-bold leading-tight drop-shadow-md truncate">{tenant.name}</h1>
               {tenant.cuisineType && (
                 <div className="text-sm text-white/90 drop-shadow truncate">{tenant.cuisineType}</div>
+              )}
+              {tenant.about && (
+                <div className="text-xs text-white/85 drop-shadow mt-1.5 leading-relaxed whitespace-pre-line line-clamp-3">
+                  {tenant.about}
+                </div>
               )}
             </div>
           </div>

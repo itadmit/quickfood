@@ -1,7 +1,22 @@
+import { z } from "zod";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { commitImport } from "@/lib/wolt-import/commit";
+
+const BodySchema = z.object({
+  applyVenueInfo: z
+    .object({
+      name: z.boolean().optional(),
+      about: z.boolean().optional(),
+      address: z.boolean().optional(),
+      phone: z.boolean().optional(),
+      hours: z.boolean().optional(),
+      cover: z.boolean().optional(),
+      logo: z.boolean().optional(),
+    })
+    .optional(),
+});
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,10 +28,13 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export const POST = handler(
-  async (_req: Request, ctx: { params: Promise<{ id: string }> }) => {
+  async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
     const session = await requireMerchant(["owner", "manager"]);
     if (!session.tenantId) return apiError("forbidden", "no tenant", 403);
     const { id } = await ctx.params;
+
+    const body = BodySchema.safeParse(await req.json().catch(() => ({})));
+    const applyVenueInfo = body.success ? body.data.applyVenueInfo : undefined;
 
     const row = await prisma.woltImport.findUnique({
       where: { id },
@@ -33,7 +51,7 @@ export const POST = handler(
     }
 
     try {
-      const result = await commitImport(id);
+      const result = await commitImport(id, { applyVenueInfo });
       return apiJson({ import_id: id, ...result });
     } catch (err) {
       await prisma.woltImport.update({

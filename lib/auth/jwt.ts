@@ -10,7 +10,12 @@ function getSecret(): Uint8Array {
   return enc.encode(s);
 }
 
-const ACCESS_TTL = "15m";
+// Access TTL bumped from 15m → 7d to match the cookie max-age, since
+// we don't yet have a refresh endpoint that would roll a new access
+// token before this expires. With both at 7d the user stays signed in
+// for a full week; the 30-day refresh cookie still backs it up for
+// when we wire `/api/v1/auth/refresh`.
+const ACCESS_TTL = "7d";
 const REFRESH_TTL = "30d";
 
 export interface AccessClaims extends JWTPayload {

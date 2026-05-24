@@ -150,6 +150,7 @@ export default async function HomePage({
         logoLetter: tenant.logoLetter,
         logoUrl: tenant.logoUrl,
         cuisineType: tenant.cuisineType,
+        about: tenant.about,
         businessType: tenant.businessType,
         coverImage: tenant.coverImage,
       }}

@@ -195,7 +195,7 @@ export const TenantPatchSchema = z.object({
   logo_letter: z.string().min(1).max(2).optional(),
   logo_url: z.string().url().nullable().optional(),
   cover_image: z.string().url().nullable().optional(),
-  theme_id: z.enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt"]).optional(),
+  theme_id: z.enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt", "sunflower"]).optional(),
   business_type: z
     .enum([
       "pizza",
@@ -212,6 +212,7 @@ export const TenantPatchSchema = z.object({
     ])
     .optional(),
   cuisine_type: z.string().max(60).optional(),
+  about: z.string().max(2000).nullable().optional(),
   vat_number: z.string().max(20).optional(),
   checkout_show_tracking: z.boolean().optional(),
   scheduled_orders_enabled: z.boolean().optional(),
@@ -338,7 +339,7 @@ export const TenantCreateSchema = z.object({
   name: z.string().min(1).max(120),
   logo_letter: z.string().min(1).max(2),
   theme_id: z
-    .enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt"])
+    .enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt", "sunflower"])
     .default("fresh"),
   business_type: z
     .enum([

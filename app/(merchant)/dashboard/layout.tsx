@@ -95,6 +95,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
                   }
                 : null
             }
+            showImportShortcut={hasNoMenuItems}
           />
           <div className="flex-1 flex">
             <SidebarV2

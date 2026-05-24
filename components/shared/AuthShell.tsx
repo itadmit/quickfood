@@ -48,7 +48,7 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
               around 42% (video edge) with a soft ramp from 35–55%. */}
       <div
         aria-hidden
-        className="absolute inset-0 pointer-events-none"
+        className="hidden lg:block absolute inset-0 pointer-events-none"
         style={{
           backgroundImage:
             "radial-gradient(circle, rgba(0,0,0,0.09) 1.5px, transparent 1.5px)",
@@ -61,26 +61,23 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
         }}
       />
 
-      {/* ─── Full-bleed video pinned to the VISUAL-LEFT edge of the
-              viewport (desktop only), matching the landing-page
-              `.heroMedia` geometry exactly (`left: 0; width: 42%`).
-              Inline `left/right` overrides any inline-direction
-              shorthand so the video lands on the same edge regardless
-              of dir. */}
       <aside
         aria-hidden
-        className="hidden lg:block absolute inset-y-0 w-[42%] z-1 overflow-hidden"
+        className="absolute inset-0 lg:inset-y-0 lg:w-[42%] z-0 lg:z-1 overflow-hidden"
         style={{ left: 0, right: "auto" }}
       >
         <AuthHeroVideo />
-        {/* Horizontal yellow melt — matches the landing-page
-            `.heroMedia::after` exactly: clear video on the
-            visual-left edge, dissolves into the brand yellow well
-            before reaching the visual-right edge so there's no
-            "video ends here" hard line adjacent to the form column. */}
         <div
           aria-hidden
-          className="absolute inset-0 pointer-events-none"
+          className="lg:hidden absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(248,203,30,0.55) 0%, rgba(248,203,30,0.30) 35%, rgba(248,203,30,0.55) 70%, rgba(248,203,30,0.92) 100%)",
+          }}
+        />
+        <div
+          aria-hidden
+          className="hidden lg:block absolute inset-0 pointer-events-none"
           style={{
             background:
               "linear-gradient(to right, transparent 0%, rgba(248,203,30,0.4) 35%, rgba(248,203,30,0.85) 65%, #F8CB1E 90%)",

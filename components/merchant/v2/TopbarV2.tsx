@@ -3,13 +3,23 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { IcoBell, IcoEye, IcoLogout, IcoChevDown } from "@/components/shared/Icons";
+import {
+  IcoBell,
+  IcoEye,
+  IcoLogout,
+  IcoChevDown,
+  IcoImport,
+} from "@/components/shared/Icons";
+import { OPEN_WELCOME_EVENT } from "@/components/merchant/OnboardingWelcome";
 import { cn } from "@/lib/cn";
 
 interface Props {
   user: { name: string; email: string; role: string };
   branch: { id: string; status: "open" | "busy" | "closed" } | null;
   tenantSlug: string;
+  /** Render the "import to a fresh store" shortcut next to the bell.
+   *  V2 layout passes true when the merchant has zero menu items. */
+  showImportShortcut?: boolean;
 }
 
 type Status = "open" | "busy" | "closed";
@@ -50,7 +60,7 @@ const STATUS_SWATCH: Record<Status, string> = {
  * are real, not mocked. Wear the same bold black borders + hard
  * shadow as the rest of the v2 surface.
  */
-export function TopbarV2({ user, branch, tenantSlug }: Props) {
+export function TopbarV2({ user, branch, tenantSlug, showImportShortcut }: Props) {
   const router = useRouter();
   const [status, setStatus] = useState<Status>(branch?.status ?? "open");
   const [statusBusy, setStatusBusy] = useState(false);
@@ -183,6 +193,23 @@ export function TopbarV2({ user, branch, tenantSlug }: Props) {
             </div>
           )}
         </div>
+
+        {/* Import shortcut — only when the menu is empty. Same
+            yellow-pulse treatment as the V1 topbar; click re-opens
+            the welcome overlay so the merchant can choose between
+            Wolt import and starting from scratch. */}
+        {showImportShortcut && (
+          <button
+            type="button"
+            aria-label="ייבוא לחנות חדשה"
+            title="ייבוא תפריט מ-Wolt או התחלה מאפס"
+            onClick={() => window.dispatchEvent(new Event(OPEN_WELCOME_EVENT))}
+            className="relative w-10 h-10 rounded-xl bg-[#F8CB1E] hover:bg-[#e9bd0e] border-2 border-black grid place-items-center text-black transition active:scale-95 shadow-[0_2px_0_#000]"
+          >
+            <IcoImport c="#000" s={18} />
+            <span className="absolute -top-1.5 -inset-e-1.5 min-w-[10px] h-[10px] rounded-full bg-[#DC2626] ring-2 ring-[#FFF2C9] pointer-events-none" />
+          </button>
+        )}
 
         {/* Bell — single click jumps straight to orders (no dropdown in v2) */}
         <Link

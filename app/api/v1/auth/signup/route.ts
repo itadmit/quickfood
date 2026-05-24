@@ -36,7 +36,7 @@ const SignupSchema = z.object({
     ])
     .default("general"),
   theme_id: z
-    .enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt"])
+    .enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt", "sunflower"])
     .default("fresh"),
   cuisine_type: z.string().max(60).optional(),
   branch_address: z.string().min(2).max(200),

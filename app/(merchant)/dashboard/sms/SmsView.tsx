@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { RelativeTime } from "@/components/shared/RelativeTime";
 import { cn } from "@/lib/cn";
+import { PageHeader } from "@/components/merchant/v2/PageHeader";
 
 type Package = "starter" | "growth" | "scale";
 type Status =
@@ -132,12 +133,11 @@ export function SmsView({
 
   return (
     <div className="space-y-5">
-      <header>
-        <h1 className="text-xl lg:text-2xl font-bold">הודעות</h1>
-        <p className="text-xs lg:text-sm text-qf-mute">
-          חבילות, יתרה והיסטוריית שליחה. היתרה משותפת ל-SMS ול-WhatsApp.
-        </p>
-      </header>
+      <PageHeader
+        chip="תקשורת"
+        title="הודעות"
+        subtitle="חבילות, יתרה והיסטוריית שליחה — היתרה משותפת ל-SMS ול-WhatsApp"
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
         <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5">

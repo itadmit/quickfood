@@ -19,6 +19,28 @@ interface LastImport {
   committedAt: string | null;
 }
 
+interface VenueInfoPreview {
+  wolt: {
+    name: string;
+    about: string | null;
+    address: string | null;
+    phone: string | null;
+    coverImageUrl: string | null;
+    logoImageUrl: string | null;
+    hours: Array<{ day: string; label: string; display: string; active: boolean }>;
+    hasHours: boolean;
+  };
+  current: {
+    name: string;
+    about: string | null;
+    address: string | null;
+    phone: string | null;
+    coverImage: string | null;
+    logoUrl: string | null;
+    hasHours: boolean;
+  };
+}
+
 interface Preview {
   importId: string;
   venueName: string;
@@ -27,12 +49,16 @@ interface Preview {
   optionsCount: number;
   imagesCount: number;
   sampleItems: Array<{ name: string; image: string | null; price: number }>;
+  venueInfo: VenueInfoPreview;
 }
+
+type VenueField = "about" | "address" | "phone" | "hours" | "cover" | "logo";
 
 interface CommitResult {
   categoriesImported: number;
   itemsImported: number;
   imagesUploaded: number;
+  venueInfoApplied: string[];
   errors: Array<{ context: string; message: string }>;
 }
 
@@ -47,6 +73,9 @@ export function WoltImportClient({ lastImport }: { lastImport: LastImport | null
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [result, setResult] = useState<CommitResult | null>(null);
+  const [applyFlags, setApplyFlags] = useState<Record<VenueField, boolean>>({
+    about: false, address: false, phone: false, hours: false, cover: false, logo: false,
+  });
 
   async function onPreview(e: React.FormEvent) {
     e.preventDefault();
@@ -67,11 +96,24 @@ export function WoltImportClient({ lastImport }: { lastImport: LastImport | null
         setError(body?.message || "שליפת התפריט מוולט נכשלה");
         return;
       }
-      setPreview(body.preview);
+      const p: Preview = body.preview;
+      setPreview(p);
+      setApplyFlags({
+        about: !!p.venueInfo.wolt.about && !p.venueInfo.current.about,
+        address: !!p.venueInfo.wolt.address && !p.venueInfo.current.address,
+        phone: !!p.venueInfo.wolt.phone && !p.venueInfo.current.phone,
+        hours: p.venueInfo.wolt.hasHours && !p.venueInfo.current.hasHours,
+        cover: !!p.venueInfo.wolt.coverImageUrl && !p.venueInfo.current.coverImage,
+        logo: !!p.venueInfo.wolt.logoImageUrl && !p.venueInfo.current.logoUrl,
+      });
       setStage("preview");
     } finally {
       setBusy(false);
     }
+  }
+
+  function toggleFlag(k: VenueField) {
+    setApplyFlags((prev) => ({ ...prev, [k]: !prev[k] }));
   }
 
   async function onCommit() {
@@ -82,7 +124,11 @@ export function WoltImportClient({ lastImport }: { lastImport: LastImport | null
     try {
       const res = await fetch(
         `/api/v1/merchant/import/wolt/${preview.importId}/commit`,
-        { method: "POST" },
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ applyVenueInfo: applyFlags }),
+        },
       );
       const body = await res.json();
       if (!res.ok) {
@@ -213,6 +259,12 @@ export function WoltImportClient({ lastImport }: { lastImport: LastImport | null
           </div>
         </div>
 
+        <VenueInfoPicker
+          info={preview.venueInfo}
+          flags={applyFlags}
+          onToggle={toggleFlag}
+        />
+
         <div className="bg-qf-bg border border-qf-line-dash rounded-xl p-3 text-xs text-qf-mute leading-relaxed">
           <strong className="text-qf-ink2">לפני שמתחילים:</strong> פריטים
           שכבר יובאו בעבר מאותה חנות יתעדכנו במקום להישכפל. פריטים שיצרתם
@@ -274,6 +326,11 @@ export function WoltImportClient({ lastImport }: { lastImport: LastImport | null
               {result.itemsImported} פריטים · {result.categoriesImported} קטגוריות
               · {result.imagesUploaded} תמונות
             </div>
+            {result.venueInfoApplied.length > 0 && (
+              <div className="text-sm text-qf-ink2 mt-1">
+                עודכנו פרטי החנות: {result.venueInfoApplied.map(venueFieldLabel).join(", ")}
+              </div>
+            )}
             {result.errors.length > 0 && (
               <details className="mt-2 text-xs">
                 <summary className="text-qf-mute cursor-pointer">
@@ -318,6 +375,169 @@ function Stat({ label, value }: { label: string; value: number }) {
     <div className="bg-qf-bg border border-qf-line-dash rounded-xl p-3 text-center">
       <div className="text-2xl font-bold tnum">{value}</div>
       <div className="text-xs text-qf-mute mt-0.5">{label}</div>
+    </div>
+  );
+}
+
+const FIELD_LABELS: Record<string, string> = {
+  about: "תיאור העסק",
+  address: "כתובת",
+  phone: "טלפון",
+  hours: "שעות פעילות",
+  cover: "תמונת כריכה",
+  logo: "לוגו",
+};
+
+function venueFieldLabel(field: string): string {
+  return FIELD_LABELS[field] ?? field;
+}
+
+function VenueInfoPicker({
+  info,
+  flags,
+  onToggle,
+}: {
+  info: VenueInfoPreview;
+  flags: Record<VenueField, boolean>;
+  onToggle: (k: VenueField) => void;
+}) {
+  const { wolt, current } = info;
+  const rows: Array<{
+    key: VenueField;
+    label: string;
+    available: boolean;
+    woltDisplay: React.ReactNode;
+    currentDisplay: React.ReactNode;
+    overwrite: boolean;
+  }> = [
+    {
+      key: "about",
+      label: "תיאור העסק",
+      available: !!wolt.about,
+      overwrite: !!wolt.about && !!current.about,
+      woltDisplay: wolt.about
+        ? <span className="line-clamp-3 leading-relaxed whitespace-pre-line">{wolt.about}</span>
+        : <em className="text-qf-mute">אין תיאור בוולט</em>,
+      currentDisplay: current.about
+        ? <span className="line-clamp-3 leading-relaxed whitespace-pre-line">{current.about}</span>
+        : <em className="text-qf-mute">ריק</em>,
+    },
+    {
+      key: "address",
+      label: "כתובת",
+      available: !!wolt.address,
+      overwrite: !!wolt.address && !!current.address,
+      woltDisplay: wolt.address ?? <em className="text-qf-mute">—</em>,
+      currentDisplay: current.address ?? <em className="text-qf-mute">ריק</em>,
+    },
+    {
+      key: "phone",
+      label: "טלפון",
+      available: !!wolt.phone,
+      overwrite: !!wolt.phone && !!current.phone,
+      woltDisplay: wolt.phone
+        ? <span dir="ltr" className="tnum">{wolt.phone}</span>
+        : <em className="text-qf-mute">—</em>,
+      currentDisplay: current.phone
+        ? <span dir="ltr" className="tnum">{current.phone}</span>
+        : <em className="text-qf-mute">ריק</em>,
+    },
+    {
+      key: "hours",
+      label: "שעות פעילות",
+      available: wolt.hasHours,
+      overwrite: wolt.hasHours && current.hasHours,
+      woltDisplay: wolt.hasHours ? (
+        <ul className="text-xs space-y-0.5">
+          {wolt.hours.map((h) => (
+            <li key={h.day} className="flex items-baseline gap-2 tnum">
+              <span className="text-qf-mute w-12">{h.label}</span>
+              <span className={h.active ? "" : "text-qf-mute"}>{h.display}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <em className="text-qf-mute">אין שעות בוולט</em>
+      ),
+      currentDisplay: current.hasHours ? "מוגדרות" : <em className="text-qf-mute">ריק</em>,
+    },
+    {
+      key: "cover",
+      label: "תמונת כריכה",
+      available: !!wolt.coverImageUrl,
+      overwrite: !!wolt.coverImageUrl && !!current.coverImage,
+      woltDisplay: wolt.coverImageUrl ? (
+        <div className="relative w-32 h-16 rounded-lg overflow-hidden bg-qf-line-soft">
+          <Image src={wolt.coverImageUrl} alt="" fill sizes="128px" className="object-cover" unoptimized />
+        </div>
+      ) : <em className="text-qf-mute">—</em>,
+      currentDisplay: current.coverImage ? (
+        <div className="relative w-32 h-16 rounded-lg overflow-hidden bg-qf-line-soft">
+          <Image src={current.coverImage} alt="" fill sizes="128px" className="object-cover" unoptimized />
+        </div>
+      ) : <em className="text-qf-mute">ריק</em>,
+    },
+    {
+      key: "logo",
+      label: "לוגו",
+      available: !!wolt.logoImageUrl,
+      overwrite: !!wolt.logoImageUrl && !!current.logoUrl,
+      woltDisplay: wolt.logoImageUrl ? (
+        <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-qf-line-soft">
+          <Image src={wolt.logoImageUrl} alt="" fill sizes="48px" className="object-contain" unoptimized />
+        </div>
+      ) : <em className="text-qf-mute">—</em>,
+      currentDisplay: current.logoUrl ? (
+        <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-qf-line-soft">
+          <Image src={current.logoUrl} alt="" fill sizes="48px" className="object-contain" unoptimized />
+        </div>
+      ) : <em className="text-qf-mute">ריק</em>,
+    },
+  ];
+
+  return (
+    <div>
+      <h3 className="text-sm font-semibold mb-1">פרטי החנות שזוהו בוולט</h3>
+      <p className="text-xs text-qf-mute mb-3 leading-relaxed">
+        סמנו מה לעדכן ב-QuickFood. שדה שמסומן ושכבר קיים אצלכם — יידרס בערך מוולט.
+      </p>
+      <div className="border border-qf-line-dash rounded-2xl overflow-hidden bg-white">
+        {rows.map((r, idx) => (
+          <label
+            key={r.key}
+            className={cn(
+              "grid grid-cols-[auto_1fr_1fr] gap-3 px-3 py-3 items-start text-sm cursor-pointer transition",
+              idx > 0 && "border-t border-qf-line-dash",
+              !r.available && "opacity-50 cursor-not-allowed",
+              r.available && flags[r.key] && "bg-qf-green-soft/40",
+            )}
+          >
+            <input
+              type="checkbox"
+              disabled={!r.available}
+              checked={!!flags[r.key]}
+              onChange={() => onToggle(r.key)}
+              className="mt-1 accent-(--qf-primary)"
+            />
+            <div>
+              <div className="font-medium flex items-center gap-2 flex-wrap">
+                {r.label}
+                {r.overwrite && flags[r.key] && (
+                  <span className="text-[10px] bg-qf-tomato/15 text-qf-tomato px-1.5 py-0.5 rounded-md">
+                    יידרוס קיים
+                  </span>
+                )}
+              </div>
+              <div className="text-xs text-qf-mute mt-0.5">מוולט</div>
+              <div className="text-sm text-qf-ink2 mt-1">{r.woltDisplay}</div>
+            </div>
+            <div>
+              <div className="text-xs text-qf-mute">ב-QuickFood עכשיו</div>
+              <div className="text-sm text-qf-ink2 mt-1">{r.currentDisplay}</div>
+            </div>
+          </label>
+        ))}
+      </div>
     </div>
   );
 }

@@ -2,16 +2,23 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { uploadBytes } from "@/lib/storage/r2";
 import { fetchImage } from "./fetch";
+import { woltScheduleToHours } from "./hours";
 import type {
-  WoltMenu,
+  ApplyVenueInfo,
   WoltCategory,
   WoltItem,
+  WoltMenu,
   WoltOptionGroup,
+  WoltVenue,
 } from "./types";
 
 const SOURCE = "wolt";
 
 type ImportError = { context: string; message: string };
+
+export interface CommitOptions {
+  applyVenueInfo?: ApplyVenueInfo;
+}
 
 /**
  * Run the commit half of a Wolt import. Reads WoltImport.rawMenu (stowed
@@ -30,10 +37,14 @@ type ImportError = { context: string; message: string };
  *   • Image fetch failures don't fail the import — they get logged into
  *     `errors[]` and the item is created without an image.
  */
-export async function commitImport(importId: string): Promise<{
+export async function commitImport(
+  importId: string,
+  opts: CommitOptions = {},
+): Promise<{
   categoriesImported: number;
   itemsImported: number;
   imagesUploaded: number;
+  venueInfoApplied: string[];
   errors: ImportError[];
 }> {
   const row = await prisma.woltImport.findUnique({ where: { id: importId } });
@@ -43,6 +54,7 @@ export async function commitImport(importId: string): Promise<{
       categoriesImported: row.categoriesImported,
       itemsImported: row.itemsImported,
       imagesUploaded: row.imagesUploaded,
+      venueInfoApplied: [],
       errors: (row.errors as ImportError[] | null) ?? [],
     };
   }
@@ -263,7 +275,7 @@ export async function commitImport(importId: string): Promise<{
           });
           await prisma.menuItem.update({
             where: { id: qfItemId },
-            data: { imageUrl: publicUrl },
+            data: { imageUrl: publicUrl, images: [publicUrl] },
           });
           return true;
         } catch (err) {
@@ -278,7 +290,16 @@ export async function commitImport(importId: string): Promise<{
     imagesUploaded += results.filter(Boolean).length;
   }
 
-  // ─── 5. Seal the import row ──────────────────────────────────────
+  const venue = row.rawVenue as unknown as WoltVenue | null;
+  const venueInfoApplied = venue
+    ? await applyVenueInfo({
+        tenantId,
+        venue,
+        flags: opts.applyVenueInfo ?? {},
+        errors,
+      })
+    : [];
+
   await prisma.woltImport.update({
     where: { id: importId },
     data: {
@@ -291,7 +312,151 @@ export async function commitImport(importId: string): Promise<{
     },
   });
 
-  return { categoriesImported, itemsImported, imagesUploaded, errors };
+  return {
+    categoriesImported,
+    itemsImported,
+    imagesUploaded,
+    venueInfoApplied,
+    errors,
+  };
+}
+
+async function applyVenueInfo({
+  tenantId,
+  venue,
+  flags,
+  errors,
+}: {
+  tenantId: string;
+  venue: WoltVenue;
+  flags: ApplyVenueInfo;
+  errors: ImportError[];
+}): Promise<string[]> {
+  const applied: string[] = [];
+  const tenantUpdate: Prisma.TenantUpdateInput = {};
+
+  if (flags.about && venue.description) {
+    tenantUpdate.about = venue.description.trim();
+    applied.push("about");
+  }
+
+  if (flags.cover && venue.image_url) {
+    const url = await uploadVenueImage(tenantId, venue.image_url, "cover", errors);
+    if (url) {
+      tenantUpdate.coverImage = url;
+      applied.push("cover");
+    }
+  }
+
+  if (flags.logo && venue.brand_logo_image_url) {
+    const url = await uploadVenueImage(tenantId, venue.brand_logo_image_url, "logo", errors);
+    if (url) {
+      tenantUpdate.logoUrl = url;
+      applied.push("logo");
+    }
+  }
+
+  if (Object.keys(tenantUpdate).length > 0) {
+    await prisma.tenant.update({ where: { id: tenantId }, data: tenantUpdate });
+  }
+
+  const wantsBranchPatch =
+    !!flags.address || !!flags.phone || !!flags.hours;
+  if (wantsBranchPatch) {
+    const branchUpdate: Prisma.BranchUpdateInput = {};
+    if (flags.address) {
+      const a = [venue.address, venue.city].filter(Boolean).join(", ").trim();
+      if (a) {
+        branchUpdate.address = a;
+        applied.push("address");
+      }
+    }
+    if (flags.phone && venue.phone) {
+      branchUpdate.phone = venue.phone.replace(/[\s()-]/g, "").trim();
+      applied.push("phone");
+    }
+    if (flags.hours) {
+      const hours = woltScheduleToHours(
+        venue.opening_times_schedule ?? venue.delivery_times_schedule,
+      );
+      branchUpdate.hours = hours as unknown as Prisma.InputJsonValue;
+      applied.push("hours");
+    }
+
+    if (Object.keys(branchUpdate).length > 0) {
+      const primary = await prisma.branch.findFirst({
+        where: { tenantId, isPrimary: true },
+        select: { id: true },
+      });
+      const targetId = primary?.id
+        ?? (await prisma.branch.findFirst({
+          where: { tenantId },
+          orderBy: { createdAt: "asc" },
+          select: { id: true },
+        }))?.id;
+
+      if (targetId) {
+        await prisma.branch.update({ where: { id: targetId }, data: branchUpdate });
+      } else {
+        try {
+          await prisma.branch.create({
+            data: {
+              tenantId,
+              name: venue.name,
+              isPrimary: true,
+              phone:
+                (branchUpdate.phone as string | undefined)
+                ?? venue.phone?.replace(/[\s()-]/g, "")
+                ?? "",
+              address:
+                (branchUpdate.address as string | undefined)
+                ?? [venue.address, venue.city].filter(Boolean).join(", ")
+                ?? "",
+              hours: branchUpdate.hours ?? (Prisma.JsonNull as unknown as Prisma.InputJsonValue),
+            },
+          });
+        } catch (err) {
+          errors.push({
+            context: "branch:create",
+            message: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
+    }
+  }
+
+  return applied;
+}
+
+async function uploadVenueImage(
+  tenantId: string,
+  sourceUrl: string,
+  kind: "cover" | "logo",
+  errors: ImportError[],
+): Promise<string | null> {
+  const img = await fetchImage(sourceUrl);
+  if (!img) {
+    errors.push({
+      context: `venue_${kind}`,
+      message: `הורדת תמונת ${kind === "cover" ? "כריכה" : "לוגו"} מוולט נכשלה`,
+    });
+    return null;
+  }
+  try {
+    const ext = mimeExt(img.contentType);
+    const key = `tenants/${tenantId}/wolt-import/venue-${kind}-${Date.now()}.${ext}`;
+    return await uploadBytes({
+      key,
+      body: img.bytes,
+      contentType: img.contentType,
+    });
+  } catch (err) {
+    errors.push({
+      context: `venue_${kind}`,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
 }
 
 /**
