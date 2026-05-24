@@ -13,9 +13,16 @@ type SlugStatus = "idle" | "checking" | "available" | "taken" | "invalid" | "res
 
 export function SignupForm() {
   const router = useRouter();
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  // Step 0 = optional "do you have Wolt?" pre-fill — initial view.
+  // Steps 1-3 = the actual wizard (business details, branding, owner).
+  const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Wolt URL the merchant pasted on Step 0 — kept so we can pass it
+  // through to /dashboard after signup and auto-trigger the menu
+  // import in the welcome overlay.
+  const [woltUrl, setWoltUrl] = useState("");
 
   // Step 1
   const [businessName, setBusinessName] = useState("");
@@ -121,7 +128,14 @@ export function SignupForm() {
         if (field === "owner_email") setStep(3);
         return;
       }
-      router.push(data.redirect ?? "/dashboard");
+      // If the merchant pasted a Wolt URL on Step 0, append it to the
+      // dashboard URL so the welcome overlay can pre-trigger the menu
+      // import without making them paste it again.
+      const dest = data.redirect ?? "/dashboard";
+      const withWolt = woltUrl
+        ? `${dest}${dest.includes("?") ? "&" : "?"}wolt=${encodeURIComponent(woltUrl)}`
+        : dest;
+      router.push(withWolt);
       router.refresh();
     } catch {
       setError("שגיאת רשת");
@@ -132,11 +146,38 @@ export function SignupForm() {
 
   return (
     <div className="space-y-6">
-      {/* Step indicator — dots-with-connector */}
-      <StepIndicator step={step} />
-      <div className="text-xs text-qf-mute">שלב {step} מתוך 3</div>
+      {/* Step indicator only after the optional Wolt pre-step. The
+          pre-step itself feels like a shortcut, not "Step 0 of 4". */}
+      {step > 0 && (
+        <>
+          <StepIndicator step={step as 1 | 2 | 3} />
+          <div className="text-xs font-bold text-black/65">
+            שלב {step} מתוך 3
+          </div>
+        </>
+      )}
 
       <div className="space-y-5">
+        {step === 0 && (
+          <Step0
+            woltUrl={woltUrl}
+            setWoltUrl={setWoltUrl}
+            onImported={(info) => {
+              setBusinessName(info.name);
+              setSlug(autoSlug(info.name));
+              if (info.address) setBranchAddress(info.address);
+              if (info.phone) setBranchPhone(info.phone);
+              // Skip past Step 1 — Wolt filled all the business
+              // details. Land on Step 2 (branding).
+              setStep(2);
+            }}
+            onSkip={() => {
+              setWoltUrl("");
+              setStep(1);
+            }}
+          />
+        )}
+
         {step === 1 && (
           <Step1
             businessName={businessName}
@@ -177,7 +218,8 @@ export function SignupForm() {
         )}
       </div>
 
-      <div className="pt-1 flex items-center justify-between gap-3">
+      {step > 0 && (
+        <div className="pt-1 flex items-center justify-between gap-3">
         <button
           type="button"
           onClick={() => (step > 1 ? setStep((step - 1) as 1 | 2 | 3) : router.push("/"))}
@@ -217,7 +259,8 @@ export function SignupForm() {
             )}
           </button>
         )}
-      </div>
+        </div>
+      )}
 
       <p className="text-[10px] text-qf-mute/80 text-center pt-1">
         בהמשך אתה מסכים ל-
@@ -225,6 +268,125 @@ export function SignupForm() {
         {" "}ול-{" "}
         <a href="/privacy" className="underline">מדיניות הפרטיות</a>
       </p>
+    </div>
+  );
+}
+
+// ─── Step 0: optional Wolt pre-fill ────────────────────────
+
+interface WoltPreview {
+  name: string;
+  address: string | null;
+  phone: string | null;
+  description: string | null;
+  logo_url: string | null;
+  cover_url: string | null;
+}
+
+function Step0({
+  woltUrl,
+  setWoltUrl,
+  onImported,
+  onSkip,
+}: {
+  woltUrl: string;
+  setWoltUrl: (v: string) => void;
+  onImported: (info: WoltPreview) => void;
+  onSkip: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function fetchPreview() {
+    const url = woltUrl.trim();
+    if (!url || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/v1/auth/signup/wolt-preview", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data?.error?.message ?? "כשל בקריאה מ-Wolt");
+        return;
+      }
+      onImported(data as WoltPreview);
+    } catch {
+      setError("שגיאת רשת");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="space-y-2">
+        <h3 className="text-lg lg:text-xl font-black text-black">
+          כבר יש לכם חנות בוולט?
+        </h3>
+        <p className="text-sm text-black/65 leading-relaxed">
+          הדביקו את כתובת החנות שלכם בוולט ונייבא בשבילכם את שם העסק,
+          הכתובת, הטלפון, הלוגו והתפריט המלא. תוך כמה שניות תהיו עם
+          חנות מוכנה.
+        </p>
+      </div>
+
+      <Field label="כתובת החנות בוולט" hint="https://wolt.com/he/...">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            value={woltUrl}
+            onChange={(e) => setWoltUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                fetchPreview();
+              }
+            }}
+            dir="ltr"
+            placeholder="https://wolt.com/he/isr/tel-aviv/restaurant/..."
+            className="flex-1 min-w-0 px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:shadow-[0_3px_0_#000] outline-none transition font-mono text-sm text-black placeholder:text-black/35 placeholder:font-normal"
+          />
+          <button
+            type="button"
+            onClick={fetchPreview}
+            disabled={!woltUrl.trim() || busy}
+            className="shrink-0 px-5 py-3 rounded-xl bg-[#F8CB1E] hover:bg-[#ffd84a] text-black text-base font-black border-2 border-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+          >
+            {busy ? (
+              <>
+                <span className="qf-spinner" aria-hidden />
+                <span>טוען…</span>
+              </>
+            ) : (
+              "ייבוא מוולט"
+            )}
+          </button>
+        </div>
+      </Field>
+
+      {error && (
+        <div className="bg-[#FFE2DC] border-2 border-black text-black text-sm font-bold rounded-xl px-3 py-2.5 shadow-[0_2px_0_#000]">
+          {error}
+        </div>
+      )}
+
+      {/* Divider */}
+      <div className="relative flex items-center gap-3 py-1">
+        <div className="flex-1 h-0.5 bg-black/15" />
+        <span className="text-xs font-bold text-black/55 tracking-wider">או</span>
+        <div className="flex-1 h-0.5 bg-black/15" />
+      </div>
+
+      <button
+        type="button"
+        onClick={onSkip}
+        className="block w-full text-center py-3 rounded-xl bg-white border-2 border-black hover:bg-[#FFFBEC] text-sm font-bold text-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition"
+      >
+        אני מתחיל מאפס — מילוי ידני
+      </button>
     </div>
   );
 }
