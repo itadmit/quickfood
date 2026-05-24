@@ -52,3 +52,28 @@ export async function objectExists(key: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Upload a Buffer/Uint8Array directly from the server. Used by importers
+ * that already have the bytes in memory (e.g. fetched a Wolt CDN image),
+ * so a client-side presigned PUT would be wasted hops.
+ *
+ * Returns the public URL via {@link publicUrlFor}.
+ */
+export async function uploadBytes(opts: {
+  key: string;
+  body: Uint8Array | Buffer;
+  contentType: string;
+  cacheControl?: string;
+}): Promise<string> {
+  await client().send(
+    new PutObjectCommand({
+      Bucket: BUCKET,
+      Key: opts.key,
+      Body: opts.body,
+      ContentType: opts.contentType,
+      CacheControl: opts.cacheControl ?? "public, max-age=31536000, immutable",
+    }),
+  );
+  return publicUrlFor(opts.key);
+}

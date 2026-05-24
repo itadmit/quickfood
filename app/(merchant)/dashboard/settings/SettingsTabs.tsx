@@ -14,6 +14,7 @@ const TABS = [
   { href: "/dashboard/settings/reviews", label: "ביקורות" },
   { href: "/dashboard/settings/whatsapp", label: "WhatsApp" },
   { href: "/dashboard/settings/webhooks", label: "Webhooks (POS / מדפסות)" },
+  { href: "/dashboard/settings/advanced", label: "מתקדם" },
 ];
 
 export function SettingsTabs() {
