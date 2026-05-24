@@ -20,26 +20,26 @@ const STATUS_LABELS: Record<Status, string> = {
   closed: "סגור",
 };
 
-// Semantic status colors — green=open (ready), yellow=busy (slower
-// but still accepting), black=closed (not accepting). Matches the
-// universal POS convention so a glance at the chip = current state.
+// Semantic status colors — brand yellow=open (ready, our brand
+// signal), red=busy (warning, slower), black=closed (off). A glance
+// at the chip = current state.
 const STATUS_STYLES: Record<Status, string> = {
-  open: "bg-[#16A34A] text-white",
-  busy: "bg-[#F8CB1E] text-black",
+  open: "bg-[#F8CB1E] text-black",
+  busy: "bg-[#DC2626] text-white",
   closed: "bg-black text-white",
 };
 
 const STATUS_DOT: Record<Status, string> = {
-  open: "bg-white",
-  busy: "bg-black",
+  open: "bg-black",
+  busy: "bg-white",
   closed: "bg-[#F8CB1E]",
 };
 
 // Row-level swatch shown next to each label inside the dropdown so the
 // merchant can pick by color at a glance.
 const STATUS_SWATCH: Record<Status, string> = {
-  open: "bg-[#16A34A]",
-  busy: "bg-[#F8CB1E]",
+  open: "bg-[#F8CB1E]",
+  busy: "bg-[#DC2626]",
   closed: "bg-black",
 };
 
@@ -123,6 +123,21 @@ export function TopbarV2({ user, branch, tenantSlug }: Props) {
         </Link>
 
         <div className="ms-auto" />
+
+        {/* "Updating store" loader — appears to the visual-right of
+            the status pill while the PATCH is in flight. RTL: this
+            element comes before the pill in source order, so flex
+            puts it on the visual-right side of the pill. */}
+        {statusBusy && (
+          <div
+            className="inline-flex items-center gap-2 px-3 h-9 rounded-xl bg-white border border-black/15 text-xs font-bold text-black/75"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="qf-spinner" aria-hidden />
+            <span>מעדכן את החנות…</span>
+          </div>
+        )}
 
         {/* Status pill */}
         <div className="relative">
