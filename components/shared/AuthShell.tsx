@@ -53,7 +53,7 @@ export function AuthShell({
         <div className="absolute inset-x-0 bottom-0 p-10 text-white">
           <p className="text-2xl font-semibold leading-snug max-w-md drop-shadow-md">
             המסעדה שלך אונליין{" "}
-            <span className="text-qf-yolk">תוך 11 דקות</span>.
+            <span className="text-qf-yolk">תוך 5 דקות</span>.
             <br />
             לא להפך.
           </p>

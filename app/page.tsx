@@ -5,8 +5,34 @@ import Link from "next/link";
 import { IcoArrowLeft } from "@/components/shared/Icons";
 import Typewriter from "./_components/Typewriter";
 import VerticalRotator from "./_components/VerticalRotator";
-import FeatureIcon, { type IconName } from "./_components/FeatureIcon";
+import {
+  Store,
+  Flame,
+  Wallet,
+  Star,
+  MessageCircle,
+  ChefHat,
+  Pizza,
+  MapPin,
+  type LucideIcon,
+} from "lucide-react";
+
+// Tight map for the WoltCard slots — extend here when a new section
+// needs an icon. Lucide gives consistent stroke + geometry which the
+// old hand-rolled FeatureIcon set didn't.
+type IconName = "store" | "flame" | "wallet" | "star" | "chat" | "chef" | "pizza" | "pin";
+const ICONS: Record<IconName, LucideIcon> = {
+  store: Store,
+  flame: Flame,
+  wallet: Wallet,
+  star: Star,
+  chat: MessageCircle,
+  chef: ChefHat,
+  pizza: Pizza,
+  pin: MapPin,
+};
 import ItemCustomizerMockup from "./_components/ItemCustomizerMockup";
+import ScrollAnimations from "./_components/ScrollAnimations";
 import styles from "./page.module.css";
 
 const rubik = Rubik({
@@ -46,6 +72,7 @@ export default function LandingPage() {
       <Faq />
       <FinalCta />
       <Footer />
+      <ScrollAnimations />
     </div>
   );
 }
@@ -136,7 +163,7 @@ function HowItWorks() {
       <div className={styles.container}>
         <div className={styles.sectionEyebrow}>איך זה עובד</div>
         <h2 className={styles.sectionTitle}>
-          11 דקות. <em>שלוש פעולות.</em>
+          5 דקות. <em>שלוש פעולות.</em>
         </h2>
         <div className={styles.howGrid}>
           {steps.map((s, i) => (
@@ -165,7 +192,7 @@ function FaqSchema() {
   const qa: Array<[string, string]> = [
     [
       "תוך כמה זמן אני באוויר?",
-      "בערך 11 דקות. נרשמים, בוחרים צבעים ולוגו, מקלידים תפריט בסיסי, מחברים את חשבון התשלום - ויש לך כתובת לשתף בוואטסאפ. ליווי אישי בהקמה - חינם, פשוט תפנה אלינו.",
+      "בערך 5 דקות. נרשמים, בוחרים צבעים ולוגו, מקלידים תפריט בסיסי, מחברים את חשבון התשלום - ויש לך כתובת לשתף בוואטסאפ. ליווי אישי בהקמה - חינם, פשוט תפנה אלינו.",
     ],
     [
       "אז מה זה ה-0.5%?",
@@ -243,6 +270,20 @@ function Nav() {
 function Hero() {
   return (
     <header className={styles.hero}>
+      {/* Decorative b-roll on the visual-left of the hero. Horizontal
+          gradient on ::after fades the right edge of the video into the
+          yellow surface so there's no hard cut next to the headline.
+          Auto-plays muted+looped, hidden on mobile to spare data. */}
+      <div className={styles.heroMedia} aria-hidden="true">
+        <video
+          src="https://videos.pexels.com/video-files/33880845/14378437_360_640_24fps.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+        />
+      </div>
       <div className={styles.container}>
         <h1 className={styles.headline}>
           <span className={styles.stack}>הלקוחות שלך.</span>
@@ -277,7 +318,7 @@ function Hero() {
             <div className={styles.heroStatL}>פר הזמנה. לא שלושים.</div>
           </div>
           <div className={styles.heroStat}>
-            <div className={styles.heroStatN}>11 דק׳</div>
+            <div className={styles.heroStatN}>5 דק׳</div>
             <div className={styles.heroStatL}>מהרישום ועד חנות חיה.</div>
           </div>
         </div>
@@ -371,10 +412,10 @@ function Features() {
       <div className={styles.container}>
         <div className={styles.sectionEyebrow}>מה מקבלים</div>
         <h2 className={styles.sectionTitle}>
-          הכל מותאם למזון. <em>בלי שום דבר שלא.</em>
+          כלים שנבנו למטבח. <em>לא לחנות חולצות.</em>
         </h2>
 
-        <div className={styles.woltStack}>
+        <div className={styles.qfoodStack}>
           <CustomizerWoltCard
             tag="התפריט"
             heading="תוספות, גדלים, וחצי-חצי. כמו בוולט. רק שלך."
@@ -435,6 +476,8 @@ function Features() {
           <MiniCell tag="תזמון" title="הזמנות מראש" body="הלקוח בוחר שעת מסירה או איסוף ספציפית - 'תאסוף לי בשמונה' - במקום 'בהקדם האפשרי'. אופציונלי, נשלט מהדשבורד." />
           <MiniCell tag="אנליטיקה" title="נתונים אמיתיים" body="שעות שיא, פריטים מובילים, AOV, אחוז חזרה של לקוחות." />
           <MiniCell tag="חיבורים" title="Webhooks + REST" body="זפייר, Make, קופות רושמות וכל מערכת חיצונית שמדברת HTTP - מתחברות בלי כאב ראש." />
+          <MiniCell tag="ייבוא" title="תפריט מ-Wolt בקליק" body="מדביקים כתובת חנות, ואנחנו מייבאים אוטומטית את הקטגוריות, הפריטים, התמונות והתוספות. במקום שעות הקלדה - שלוש דקות אישור." />
+          <MiniCell tag="הרשאות" title="תפקידים נפרדים" body="בעלים, מנהל, מטבח, שילוח. כל אחד רואה רק את מה שהוא צריך - בלי גישה לפיננסים או לסיסמאות." />
         </div>
       </div>
     </section>
@@ -442,7 +485,7 @@ function Features() {
 }
 
 /* Customizer-mockup variant of the wolt-card - used once, for the anchor
-   "תוספות, גדלים, חצי-חצי" feature card. Lives in the same `.woltStack`
+   "תוספות, גדלים, חצי-חצי" feature card. Lives in the same `.qfoodStack`
    so the rhythm of the section stays intact. */
 function CustomizerWoltCard({
   tag,
@@ -454,13 +497,13 @@ function CustomizerWoltCard({
   body: string;
 }) {
   return (
-    <article className={`${styles.woltCard} ${styles.woltCardMidnight} ${styles.woltCardCustomizer}`}>
-      <div className={styles.woltCardBody}>
-        <div className={styles.woltCardTag}>{tag}</div>
-        <h3 className={styles.woltCardHeading}>{heading}</h3>
-        <p className={styles.woltCardCopy}>{body}</p>
+    <article className={`${styles.qfoodCard} ${styles.qfoodCardMidnight} ${styles.qfoodCardCustomizer}`}>
+      <div className={styles.qfoodCardBody}>
+        <div className={styles.qfoodCardTag}>{tag}</div>
+        <h3 className={styles.qfoodCardHeading}>{heading}</h3>
+        <p className={styles.qfoodCardCopy}>{body}</p>
       </div>
-      <div className={styles.woltCardMockup}>
+      <div className={styles.qfoodCardMockup}>
         <div className={styles.mockupAnnotation} aria-hidden>
           <span className={styles.mockupAnnotationText}>נסו ללחוץ — זה חי!</span>
           <svg
@@ -506,26 +549,27 @@ function WoltCard({
   icon: IconName;
 }) {
   const toneClass = {
-    mist: styles.woltCardMist,
-    sand: styles.woltCardSand,
-    peach: styles.woltCardPeach,
-    lilac: styles.woltCardLilac,
-    midnight: styles.woltCardMidnight,
+    mist: styles.qfoodCardMist,
+    sand: styles.qfoodCardSand,
+    peach: styles.qfoodCardPeach,
+    lilac: styles.qfoodCardLilac,
+    midnight: styles.qfoodCardMidnight,
   }[tone];
   const layoutClass = {
-    "decor-end": styles.woltCardDecorEnd,
-    "decor-start": styles.woltCardDecorStart,
-    wide: styles.woltCardWide,
+    "decor-end": styles.qfoodCardDecorEnd,
+    "decor-start": styles.qfoodCardDecorStart,
+    wide: styles.qfoodCardWide,
   }[layout];
+  const Icon = ICONS[icon];
   return (
-    <article className={`${styles.woltCard} ${toneClass} ${layoutClass}`}>
-      <div className={styles.woltCardDecor} aria-hidden>
-        <FeatureIcon name={icon} />
+    <article className={`${styles.qfoodCard} ${toneClass} ${layoutClass}`}>
+      <div className={styles.qfoodCardDecor} aria-hidden>
+        <Icon strokeWidth={2} />
       </div>
-      <div className={styles.woltCardBody}>
-        <div className={styles.woltCardTag}>{tag}</div>
-        <h3 className={styles.woltCardHeading}>{heading}</h3>
-        <p className={styles.woltCardCopy}>{body}</p>
+      <div className={styles.qfoodCardBody}>
+        <div className={styles.qfoodCardTag}>{tag}</div>
+        <h3 className={styles.qfoodCardHeading}>{heading}</h3>
+        <p className={styles.qfoodCardCopy}>{body}</p>
       </div>
     </article>
   );
@@ -558,7 +602,7 @@ function GrowPartner() {
   return (
     <section id="grow" className={styles.section}>
       <div className={styles.container}>
-        <div className={styles.sectionEyebrow}>חדש · ספק סליקה מועדף</div>
+        <div className={styles.sectionEyebrow}>חדש · ספק סליקה מומלץ</div>
         <h2 className={styles.sectionTitle}>
           סליקה דרך Grow. <em>סנכרון מלא לדשבורד. בלי תוספות.</em>
         </h2>
@@ -632,7 +676,7 @@ function GrowPartner() {
           </div>
 
           <div className={styles.growFootnote}>
-            <strong>שקיפות מלאה:</strong> Grow היא חברת סליקה עצמאית — לא חברת-בת שלנו. אנחנו ממליצים עליה כספק מועדף כי השגנו ללקוחות QuickFood אינטגרציה מלאה ותעריפים טובים. אבל <strong>אפשר לחבר כל חברת סליקה אחרת</strong> שעובדת איתך — Tranzila, CardCom, Pelecard, Isracard וכל מי שתומך ב-API סטנדרטי. הבחירה שלך, לא נועלים אותך.
+            <strong>שקיפות מלאה:</strong> Grow היא חברת סליקה עצמאית — לא חברת-בת שלנו. אנחנו ממליצים עליה כספק מומלץ כי השגנו ללקוחות QuickFood אינטגרציה מלאה ותעריפים טובים. אבל <strong>אפשר לחבר כל חברת סליקה אחרת</strong> שעובדת איתך — Tranzila, CardCom, Pelecard, Isracard וכל מי שתומך ב-API סטנדרטי. הבחירה שלך, לא נועלים אותך.
           </div>
         </div>
       </div>
@@ -746,7 +790,7 @@ function Faq() {
             <details className={styles.faqItem} open>
               <summary>תוך כמה זמן אני באוויר?</summary>
               <p>
-                בערך 11 דקות. נרשמים, בוחרים צבעים ולוגו, מקלידים תפריט בסיסי, מחברים את חשבון התשלום - ויש לך כתובת לשתף בוואטסאפ. ליווי אישי בהקמה - חינם, פשוט תפנה אלינו.
+                בערך 5 דקות. נרשמים, בוחרים צבעים ולוגו, מקלידים תפריט בסיסי, מחברים את חשבון התשלום - ויש לך כתובת לשתף בוואטסאפ. ליווי אישי בהקמה - חינם, פשוט תפנה אלינו.
               </p>
             </details>
             <details className={styles.faqItem}>
@@ -819,7 +863,7 @@ function FinalCta() {
           <div className={styles.finalCtaBody}>
             <span className={styles.finalCtaTag}>7 ימים על חשבוננו</span>
             <h2>
-              11 דקות. <em>וזה כבר שלך.</em>
+              5 דקות. <em>וזה כבר שלך.</em>
             </h2>
             <p>
               בלי כרטיס אשראי, בלי התחייבות, בלי שיחת מכירה. תפתח חנות, תקבל הזמנה אחת, ותראה איך זה מרגיש כשהמנה הולכת ישר מהמטבח שלך ללקוח שלך - עם השם שלך על האפליקציה.

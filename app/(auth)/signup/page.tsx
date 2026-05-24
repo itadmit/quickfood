@@ -12,7 +12,7 @@ export default function SignupPage() {
     <AuthShell
       variant="signup"
       title="בוא נפתח חנות."
-      subtitle="11 דקות מהרגע הזה ועד שיש לך הזמנות אמיתיות. בלי כרטיס אשראי."
+      subtitle="5 דקות מהרגע הזה ועד שיש לך הזמנות אמיתיות. בלי כרטיס אשראי."
       illustration="menu"
     >
       <SignupForm />
