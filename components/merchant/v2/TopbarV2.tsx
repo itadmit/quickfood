@@ -10,7 +10,6 @@ interface Props {
   user: { name: string; email: string; role: string };
   branch: { id: string; status: "open" | "busy" | "closed" } | null;
   tenantSlug: string;
-  tenant: { name: string; logoLetter: string };
 }
 
 type Status = "open" | "busy" | "closed";
@@ -34,7 +33,7 @@ const STATUS_STYLES: Record<Status, string> = {
  * are real, not mocked. Wear the same bold black borders + hard
  * shadow as the rest of the v2 surface.
  */
-export function TopbarV2({ user, branch, tenantSlug, tenant }: Props) {
+export function TopbarV2({ user, branch, tenantSlug }: Props) {
   const router = useRouter();
   const [status, setStatus] = useState<Status>(branch?.status ?? "open");
   const [statusBusy, setStatusBusy] = useState(false);
@@ -93,24 +92,17 @@ export function TopbarV2({ user, branch, tenantSlug, tenant }: Props) {
   return (
     <header
       className="sticky top-0 z-30 border-b-2 border-black"
-      style={{ backgroundColor: "#FFFBEC" }}
+      style={{ backgroundColor: "#FFF2C9" }}
     >
       <div className="h-16 px-3 lg:px-5 flex items-center gap-2 lg:gap-3">
         {/* Brand chip — mirrors the welcome-overlay treatment */}
         <Link
-          href="/dashboard-v2"
+          href="/dashboard"
           className="inline-flex items-center gap-2 lg:hidden"
         >
           <span className="bg-black text-[#F8CB1E] px-2 py-0.5 rounded-md text-[10px] font-black tracking-wide">
             QuickFood
           </span>
-        </Link>
-
-        <Link
-          href="/dashboard"
-          className="hidden lg:inline-flex items-center gap-1.5 text-xs font-bold text-black/60 hover:text-black px-2.5 py-1.5 rounded-lg border-2 border-transparent hover:border-black/10 transition"
-        >
-          ← לדשבורד הרגיל
         </Link>
 
         <div className="ms-auto" />
@@ -161,11 +153,11 @@ export function TopbarV2({ user, branch, tenantSlug, tenant }: Props) {
         <Link
           href="/dashboard/orders"
           aria-label="התראות"
-          className="relative w-10 h-10 rounded-xl border-2 border-black bg-white hover:bg-[#F8CB1E] grid place-items-center transition active:scale-95 shadow-[0_2px_0_#000]"
+          className="relative w-10 h-10 rounded-xl border border-black/15 bg-white hover:border-black hover:bg-[#F8CB1E] grid place-items-center transition active:scale-95"
         >
           <IcoBell c="#000" s={18} />
           {unread > 0 && (
-            <span className="absolute -top-2 -inset-e-2 min-w-[20px] h-[20px] px-1 rounded-full bg-black text-[#F8CB1E] text-[10px] font-black grid place-items-center tnum border-2 border-black pointer-events-none">
+            <span className="absolute -top-1.5 -inset-e-1.5 min-w-5 h-5 px-1 rounded-full bg-black text-[#F8CB1E] text-[10px] font-black grid place-items-center tnum ring-2 ring-[#FFF2C9] pointer-events-none">
               {unread > 99 ? "99+" : unread}
             </span>
           )}
@@ -176,7 +168,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant }: Props) {
           <button
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
-            className="flex items-center gap-2 ps-1 pe-2.5 h-10 rounded-xl border-2 border-black bg-white hover:bg-[#F8CB1E]/30 transition shadow-[0_2px_0_#000]"
+            className="flex items-center gap-2 ps-1 pe-2.5 h-10 rounded-xl border border-black/15 bg-white hover:border-black transition"
           >
             <div className="w-7 h-7 rounded-lg bg-black text-[#F8CB1E] grid place-items-center text-xs font-black">
               {user.name.slice(0, 2)}

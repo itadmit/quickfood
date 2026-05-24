@@ -4,6 +4,8 @@ import { prisma } from "@/lib/db/client";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import { Sidebar } from "@/components/merchant/Sidebar";
 import { Topbar } from "@/components/merchant/Topbar";
+import { SidebarV2 } from "@/components/merchant/v2/SidebarV2";
+import { TopbarV2 } from "@/components/merchant/v2/TopbarV2";
 import { BillingSetupBanner } from "@/components/merchant/BillingSetupBanner";
 import { TrialGate } from "@/components/merchant/TrialGate";
 import { OnboardingWelcome } from "@/components/merchant/OnboardingWelcome";
@@ -50,47 +52,102 @@ export default async function DashboardLayout({ children }: { children: React.Re
       )
     : null;
 
+  // V2 = bold yellow/black brand shell (default for new tenants), V1 =
+  // legacy slate dashboard. Switched per-tenant from Settings → Advanced,
+  // so the merchant can flip between skins without us touching the route.
+  const isV2 = tenant.dashboardVersion === "v2";
+
   return (
     <ThemeProvider themeId={tenant.themeId}>
-      <div className="min-h-screen bg-qf-bg-dash text-qf-ink flex flex-col overflow-x-hidden">
-        <BillingSetupBanner
-          hasPaymentMethod={hasPaymentMethod}
-          trialDaysLeft={trialDaysLeft}
-          trialExpired={trialExpired}
-        />
-        <Topbar
-          user={user}
-          tenantSlug={tenant.slug}
-          tenant={{
-            name: tenant.name,
-            logoLetter: tenant.logoLetter,
-            branchName: tenant.branches[0]?.name ?? "",
+      {isV2 ? (
+        <div
+          className="min-h-screen text-black flex flex-col overflow-x-hidden"
+          style={{
+            backgroundColor: "#FFFBEC",
+            backgroundImage:
+              "radial-gradient(circle, rgba(0,0,0,0.07) 1px, transparent 1px)",
+            backgroundSize: "22px 22px",
           }}
-          branch={
-            tenant.branches[0]
-              ? {
-                  id: tenant.branches[0].id,
-                  status: tenant.branches[0].status,
-                }
-              : null
-          }
-          showImportShortcut={hasNoMenuItems}
-        />
-        <div className="flex-1 flex">
-          <Sidebar tenant={{ name: tenant.name, logoLetter: tenant.logoLetter, branchName: tenant.branches[0]?.name ?? "" }} />
-          <main className="flex-1 min-w-0 p-3 lg:p-6 pb-20 lg:pb-6 overflow-x-hidden">
-            <div className="mx-auto w-full max-w-7xl">{children}</div>
-          </main>
+        >
+          <BillingSetupBanner
+            hasPaymentMethod={hasPaymentMethod}
+            trialDaysLeft={trialDaysLeft}
+            trialExpired={trialExpired}
+          />
+          <TopbarV2
+            user={user}
+            tenantSlug={tenant.slug}
+            branch={
+              tenant.branches[0]
+                ? {
+                    id: tenant.branches[0].id,
+                    status: tenant.branches[0].status,
+                  }
+                : null
+            }
+          />
+          <div className="flex-1 flex">
+            <SidebarV2
+              tenant={{
+                name: tenant.name,
+                logoLetter: tenant.logoLetter,
+                branchName: tenant.branches[0]?.name ?? "",
+              }}
+            />
+            <main className="flex-1 min-w-0 p-3 lg:p-6 pb-20 lg:pb-6 overflow-x-hidden">
+              <div className="mx-auto w-full max-w-7xl">{children}</div>
+            </main>
+          </div>
+          <TrialGate
+            trialExpired={trialExpired}
+            hasPaymentMethod={hasPaymentMethod}
+          />
+          <OnboardingWelcome
+            merchantName={user.name}
+            initialOpen={!tenant.onboardingDismissedAt}
+          />
         </div>
-        <TrialGate
-          trialExpired={trialExpired}
-          hasPaymentMethod={hasPaymentMethod}
-        />
-        <OnboardingWelcome
-          merchantName={user.name}
-          initialOpen={!tenant.onboardingDismissedAt}
-        />
-      </div>
+      ) : (
+        <div className="min-h-screen bg-qf-bg-dash text-qf-ink flex flex-col overflow-x-hidden">
+          <BillingSetupBanner
+            hasPaymentMethod={hasPaymentMethod}
+            trialDaysLeft={trialDaysLeft}
+            trialExpired={trialExpired}
+          />
+          <Topbar
+            user={user}
+            tenantSlug={tenant.slug}
+            tenant={{
+              name: tenant.name,
+              logoLetter: tenant.logoLetter,
+              branchName: tenant.branches[0]?.name ?? "",
+            }}
+            branch={
+              tenant.branches[0]
+                ? {
+                    id: tenant.branches[0].id,
+                    status: tenant.branches[0].status,
+                  }
+                : null
+            }
+            showImportShortcut={hasNoMenuItems}
+          />
+          <div className="flex-1 flex">
+            <Sidebar tenant={{ name: tenant.name, logoLetter: tenant.logoLetter, branchName: tenant.branches[0]?.name ?? "" }} />
+            <main className="flex-1 min-w-0 p-3 lg:p-6 pb-20 lg:pb-6 overflow-x-hidden">
+              <div className="mx-auto w-full max-w-7xl">{children}</div>
+            </main>
+          </div>
+          <TrialGate
+            trialExpired={trialExpired}
+            hasPaymentMethod={hasPaymentMethod}
+          />
+          <OnboardingWelcome
+            merchantName={user.name}
+            initialOpen={!tenant.onboardingDismissedAt}
+          />
+        </div>
+      )}
     </ThemeProvider>
   );
 }

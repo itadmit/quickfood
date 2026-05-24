@@ -49,7 +49,7 @@ const RANGES: Array<{ key: "today" | "yesterday" | "7d" | "30d"; label: string }
 /**
  * V2 of the merchant home — same data shape as DashboardView, but
  * rebuilt with the landing-page aesthetic (yellow + bold black borders +
- * hard black drop-shadows). Sandbox-only at /dashboard-v2.
+ * hard black drop-shadows). Rendered when tenant.dashboardVersion === "v2".
  *
  * Shares formatRelative + STATUS labels with v1; intentionally
  * duplicated rather than imported so the two can drift independently
@@ -80,16 +80,19 @@ export function DashboardViewV2({
   return (
     <div className="space-y-5">
       {/* ─── HERO BAND ──────────────────────────────────────────── */}
+      {/* The one place we lean into the bold treatment fully. Dot
+          pattern dialed back so the chip + headline carry the energy
+          on their own. */}
       <section
-        className="relative rounded-3xl overflow-hidden p-6 lg:p-8 border-2 border-black shadow-[0_4px_0_#000]"
+        className="relative rounded-3xl overflow-hidden p-6 lg:p-8 border-2 border-black shadow-[0_3px_0_#000]"
         style={{ backgroundColor: "#F8CB1E" }}
       >
         <div
-          className="absolute inset-0 pointer-events-none opacity-[0.08]"
+          className="absolute inset-0 pointer-events-none opacity-[0.05]"
           style={{
             backgroundImage:
-              "radial-gradient(circle, #000 1.5px, transparent 1.5px)",
-            backgroundSize: "26px 26px",
+              "radial-gradient(circle, #000 1px, transparent 1px)",
+            backgroundSize: "22px 22px",
           }}
           aria-hidden
         />
@@ -116,7 +119,7 @@ export function DashboardViewV2({
               <button
                 key={r.key}
                 type="button"
-                onClick={() => router.push(`/dashboard-v2?range=${r.key}`)}
+                onClick={() => router.push(`/dashboard?range=${r.key}`)}
                 className={cn(
                   "px-3 sm:px-3.5 py-1.5 rounded-lg text-sm font-bold transition whitespace-nowrap",
                   range === r.key
@@ -132,26 +135,30 @@ export function DashboardViewV2({
       </section>
 
       {/* ─── KPI TILES ──────────────────────────────────────────── */}
+      {/* Quiet by default — only the "primary" KPI (orders) wears the
+          full bold treatment, the rest sit as restrained white cards
+          with a tiny yellow rule on top as the only color cue. Avoids
+          the "4 mini-heroes competing with the actual hero" trap. */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 lg:gap-4">
         <KpiTile
           label="הזמנות"
           value={summary.orders.count ?? 0}
           delta={summary.orders.delta}
-          accent="yellow"
+          accent="primary"
         />
         <KpiTile
           label="הכנסה"
           value={summary.revenue.value ?? 0}
           delta={summary.revenue.delta}
           format={(v) => formatPrice(v)}
-          accent="dark"
+          accent="quiet"
         />
         <KpiTile
           label="הזמנה ממוצעת"
           value={summary.avg_order.value ?? 0}
           delta={summary.avg_order.delta}
           format={(v) => formatPrice(v)}
-          accent="white"
+          accent="quiet"
         />
         <KpiTile
           label="זמן הכנה ממוצע"
@@ -159,7 +166,7 @@ export function DashboardViewV2({
           delta={summary.avg_prep.delta}
           format={(v) => `${v} דק׳`}
           invertColor
-          accent="white"
+          accent="quiet"
         />
       </div>
 
@@ -303,24 +310,27 @@ export function DashboardViewV2({
   );
 }
 
-/** Card primitive — white with bold black border + hard shadow. */
+/** Card primitive — quiet surface that lets the hero do the talking.
+    The bold-black-shadow treatment is reserved for the hero + the
+    primary KPI tile + the active sidebar item. Reusing it on every
+    card was visually exhausting. */
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <section className="bg-white rounded-2xl border-2 border-black p-4 lg:p-5 shadow-[0_3px_0_#000]">
+    <section className="bg-white rounded-2xl border border-black/10 p-4 lg:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
       {children}
     </section>
   );
 }
 
 function CardTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="font-black text-base lg:text-lg">{children}</h2>;
+  return <h2 className="font-bold text-base lg:text-lg">{children}</h2>;
 }
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="h-32 flex flex-col items-center justify-center gap-2 text-black/50">
-      <div className="w-11 h-11 rounded-full bg-black/5 border-2 border-black/10 grid place-items-center">
-        <IcoChart c="rgba(0,0,0,0.4)" s={20} />
+    <div className="h-32 flex flex-col items-center justify-center gap-2.5 text-black/70">
+      <div className="w-12 h-12 rounded-2xl bg-white border-2 border-black grid place-items-center shadow-[0_2px_0_#000]">
+        <IcoChart c="#000" s={20} />
       </div>
       <div className="text-sm font-medium">{text}</div>
     </div>
@@ -340,85 +350,170 @@ function KpiTile({
   delta: number;
   format?: (v: number) => string;
   invertColor?: boolean;
-  accent: "yellow" | "dark" | "white";
+  /**
+   * "primary" = the one KPI we want eyes on first (currently orders).
+   * Wears the full bold treatment: yellow surface, black border, hard
+   * shadow. "quiet" = white card with a thin yellow rule on top as the
+   * only color cue — keeps the grid from looking like 4 mini-heroes.
+   */
+  accent: "primary" | "quiet";
 }) {
   const positive = invertColor ? delta < 0 : delta > 0;
   const formatted = format ? format(value) : value.toLocaleString("he-IL");
 
-  const surface =
-    accent === "yellow"
-      ? { bg: "#F8CB1E", text: "text-black", subtext: "text-black/70" }
-      : accent === "dark"
-        ? { bg: "#000", text: "text-white", subtext: "text-white/70" }
-        : { bg: "#FFFFFF", text: "text-black", subtext: "text-black/60" };
+  if (accent === "primary") {
+    return (
+      <div
+        className="rounded-2xl border-2 border-black p-3 lg:p-4 shadow-[0_3px_0_#000] text-black"
+        style={{ backgroundColor: "#F8CB1E" }}
+      >
+        <div className="text-[11px] font-bold uppercase tracking-wide text-black/70">
+          {label}
+        </div>
+        <div className="text-2xl lg:text-3xl font-black mt-1 tnum">{formatted}</div>
+        <div className="flex items-center gap-1.5 mt-2 text-[11px] lg:text-xs">
+          <DeltaPill delta={delta} positive={positive} variant="onYellow" />
+        </div>
+      </div>
+    );
+  }
 
+  // Quiet variant — small yellow rule along the top edge is the only
+  // brand cue. Border + shadow as faint as the regular Card.
   return (
-    <div
-      className={cn(
-        "rounded-2xl border-2 border-black p-3 lg:p-4 shadow-[0_3px_0_#000]",
-        surface.text,
-      )}
-      style={{ backgroundColor: surface.bg }}
-    >
-      <div className={cn("text-[11px] font-bold uppercase tracking-wide", surface.subtext)}>
+    <div className="relative bg-white rounded-2xl border border-black/10 p-3 lg:p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] overflow-hidden">
+      <div
+        className="absolute inset-x-0 top-0 h-0.75"
+        style={{ backgroundColor: "#F8CB1E" }}
+        aria-hidden
+      />
+      <div className="text-[11px] font-bold uppercase tracking-wide text-black/55">
         {label}
       </div>
       <div className="text-2xl lg:text-3xl font-black mt-1 tnum">{formatted}</div>
       <div className="flex items-center gap-1.5 mt-2 text-[11px] lg:text-xs">
-        <span
-          className={cn(
-            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md tnum font-bold border",
-            accent === "dark"
-              ? positive
-                ? "bg-[#F8CB1E] text-black border-[#F8CB1E]"
-                : delta === 0
-                  ? "bg-white/15 text-white/80 border-white/20"
-                  : "bg-white text-black border-white"
-              : positive
-                ? "bg-black text-[#F8CB1E] border-black"
-                : delta === 0
-                  ? "bg-black/10 text-black/60 border-black/10"
-                  : "bg-white text-black border-2 border-black",
-          )}
-        >
-          {delta > 0 ? "+" : ""}
-          {delta}%
-          <IcoTrend c="currentColor" s={10} />
-        </span>
+        <DeltaPill delta={delta} positive={positive} variant="onWhite" />
       </div>
     </div>
   );
 }
 
-const STATUS_LABELS_V2: Record<string, string> = {
-  pending: "ממתינה",
-  confirmed: "אושרה",
-  preparing: "בהכנה",
-  in_oven: "בתנור",
-  ready: "מוכנה",
-  out_for_delivery: "בדרך",
-  delivered: "נמסרה",
-  canceled: "בוטלה",
-};
-
-function RecentStatusChipV2({ status }: { status: string }) {
-  const label = STATUS_LABELS_V2[status] ?? status;
-  const cls =
-    status === "delivered"
-      ? "bg-[#F8CB1E] text-black border-black"
-      : status === "canceled"
-        ? "bg-black text-white border-black"
-        : status === "pending"
-          ? "bg-white text-black border-black"
-          : "bg-white text-black/70 border-black/30";
+function DeltaPill({
+  delta,
+  positive,
+  variant,
+}: {
+  delta: number;
+  positive: boolean;
+  variant: "onYellow" | "onWhite";
+}) {
+  if (delta === 0) {
+    return (
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-black/55 bg-black/5">
+        0%
+      </span>
+    );
+  }
+  const onYellow = variant === "onYellow";
   return (
     <span
       className={cn(
-        "hidden sm:inline-block text-[10px] font-black uppercase tracking-wide px-2 py-1 rounded-md border-2",
-        cls,
+        "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md tnum font-bold",
+        positive
+          ? onYellow
+            ? "bg-black text-[#F8CB1E]"
+            : "bg-black text-[#F8CB1E]"
+          : onYellow
+            ? "bg-white text-black border border-black"
+            : "bg-black/5 text-black",
       )}
     >
-      {label}
+      {delta > 0 ? "+" : ""}
+      {delta}%
+      <IcoTrend c="currentColor" s={10} />
+    </span>
+  );
+}
+
+// Each status maps to a visual semantic in the cyan/black/white palette.
+// The system reads at a glance:
+//   • white + black border  = idle (waiting on someone)
+//   • cyan + black border   = active right now (kitchen in motion)
+//   • dot prefix            = en route (movement implied)
+//   • black + cyan text     = done well (success)
+//   • dashed + muted        = canceled (closed unsuccessfully)
+const STATUS_META: Record<
+  string,
+  { label: string; tone: "idle" | "active" | "transit" | "done" | "canceled" }
+> = {
+  pending: { label: "ממתינה", tone: "idle" },
+  confirmed: { label: "אושרה", tone: "idle" },
+  preparing: { label: "בהכנה", tone: "active" },
+  in_oven: { label: "בתנור", tone: "active" },
+  ready: { label: "מוכנה", tone: "active" },
+  out_for_delivery: { label: "בדרך", tone: "transit" },
+  delivered: { label: "נמסרה", tone: "done" },
+  canceled: { label: "בוטלה", tone: "canceled" },
+};
+
+function RecentStatusChipV2({ status }: { status: string }) {
+  const meta = STATUS_META[status] ?? { label: status, tone: "idle" as const };
+
+  const base =
+    "hidden sm:inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide px-2 py-1 rounded-md border-2";
+
+  if (meta.tone === "active") {
+    return (
+      <span
+        className={cn(base, "border-black text-black")}
+        style={{ backgroundColor: "#F8CB1E" }}
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
+        {meta.label}
+      </span>
+    );
+  }
+
+  if (meta.tone === "transit") {
+    return (
+      <span className={cn(base, "border-black bg-white text-black")}>
+        <span
+          className="w-1.5 h-1.5 rounded-full"
+          style={{ backgroundColor: "#F8CB1E" }}
+        />
+        {meta.label}
+      </span>
+    );
+  }
+
+  if (meta.tone === "done") {
+    return (
+      <span
+        className={cn(base, "border-black bg-black")}
+        style={{ color: "#F8CB1E" }}
+      >
+        {meta.label}
+      </span>
+    );
+  }
+
+  if (meta.tone === "canceled") {
+    return (
+      <span
+        className={cn(
+          base,
+          "border-dashed border-black/30 bg-transparent text-black/45 line-through decoration-black/40",
+        )}
+      >
+        {meta.label}
+      </span>
+    );
+  }
+
+  // idle (pending, confirmed) — clean black-bordered white pill
+  return (
+    <span className={cn(base, "border-black bg-white text-black")}>
+      {meta.label}
     </span>
   );
 }

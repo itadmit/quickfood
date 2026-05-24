@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/client";
 import { summary, hourly, topItems, type Range } from "@/lib/analytics";
 import { fullName } from "@/lib/format";
 import { DashboardView } from "./DashboardView";
+import { DashboardViewV2 } from "@/components/merchant/v2/DashboardViewV2";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export default async function DashboardPage({
   const range: Quick = allowed.includes(raw as Quick) ? (raw as Quick) : "today";
   const apiRange: Range = range;
 
-  const [sum, hr, items, recentOrders] = await Promise.all([
+  const [sum, hr, items, recentOrders, tenant, merchant] = await Promise.all([
     summary(session.tenantId, apiRange),
     hourly(session.tenantId, apiRange),
     topItems(session.tenantId, apiRange, 5),
@@ -32,6 +33,14 @@ export default async function DashboardPage({
       include: { customer: { select: { firstName: true, lastName: true } } },
       orderBy: { createdAt: "desc" },
       take: 6,
+    }),
+    prisma.tenant.findUnique({
+      where: { id: session.tenantId },
+      select: { dashboardVersion: true },
+    }),
+    prisma.merchantUser.findUnique({
+      where: { id: session.userId },
+      select: { name: true },
     }),
   ]);
 
@@ -47,6 +56,20 @@ export default async function DashboardPage({
       "אורח",
     createdAt: o.createdAt.toISOString(),
   }));
+
+  if (tenant?.dashboardVersion === "v2") {
+    const firstName = (merchant?.name ?? "").split(/\s+/)[0] ?? "";
+    return (
+      <DashboardViewV2
+        range={range}
+        summary={sum}
+        hourly={hr}
+        topItems={items}
+        recentOrders={recent}
+        merchantFirstName={firstName}
+      />
+    );
+  }
 
   return <DashboardView range={range} summary={sum} hourly={hr} topItems={items} recentOrders={recent} />;
 }

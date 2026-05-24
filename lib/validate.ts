@@ -218,6 +218,7 @@ export const TenantPatchSchema = z.object({
   // Only setter-shape we accept: `true` = stamp now, anything else ignored.
   // Cleared via the DB if a tenant ever needs to be re-shown.
   onboarding_dismissed: z.literal(true).optional(),
+  dashboard_version: z.enum(["v1", "v2"]).optional(),
 });
 
 export const BranchInputSchema = z.object({

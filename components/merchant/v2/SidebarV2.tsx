@@ -15,35 +15,52 @@ import {
 } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 
-// Mirrors the production NAV but rebased onto /dashboard-v2 for the
-// sandbox routes that exist (home only). Items we haven't ported yet
-// fall back to the live /dashboard route so the sidebar is fully
-// navigable even from the experiment.
+// Nav for the V2 dashboard skin. Same route set as the V1 Sidebar — the
+// shell choice (V1 vs V2) is layout-level, so all hrefs point at the
+// canonical /dashboard/* routes.
 type NavItem = {
   href: string;
   label: string;
   Icon: typeof IcoHome;
   exact?: boolean;
   match?: string;
-  external?: boolean; // true = jumps to the live /dashboard equivalent
 };
 
-const NAV: NavItem[] = [
-  { href: "/dashboard-v2", label: "דשבורד", Icon: IcoHome, exact: true },
-  { href: "/dashboard/orders", label: "הזמנות", Icon: IcoOrders, external: true },
-  { href: "/dashboard/menu", label: "תפריט", Icon: IcoMenu, external: true },
-  { href: "/dashboard/campaigns", label: "קמפיינים", Icon: IcoMegaphone, external: true },
-  { href: "/dashboard/coupons", label: "קופונים", Icon: IcoCreditCard, external: true },
-  { href: "/dashboard/reviews", label: "ביקורות", Icon: IcoStar, external: true },
-  { href: "/dashboard/sms", label: "SMS", Icon: IcoBell, external: true },
-  { href: "/dashboard/billing", label: "חיוב ומנוי", Icon: IcoCreditCard, external: true },
-  { href: "/dashboard/couriers", label: "שליחים", Icon: IcoBike, external: true },
+// Nav is grouped so the sidebar reads as "what I do daily" first, then
+// "what I configure occasionally" — gives the long list a visual break
+// instead of a 10-item undifferentiated stack.
+type NavSection = { title: string; items: NavItem[] };
+
+const NAV: NavSection[] = [
   {
-    href: "/dashboard/settings/branding",
-    label: "הגדרות",
-    Icon: IcoGear,
-    match: "/dashboard/settings",
-    external: true,
+    title: "תפעול",
+    items: [
+      { href: "/dashboard", label: "דשבורד", Icon: IcoHome, exact: true },
+      { href: "/dashboard/orders", label: "הזמנות", Icon: IcoOrders },
+      { href: "/dashboard/menu", label: "תפריט", Icon: IcoMenu },
+      { href: "/dashboard/couriers", label: "שליחים", Icon: IcoBike },
+    ],
+  },
+  {
+    title: "שיווק",
+    items: [
+      { href: "/dashboard/campaigns", label: "קמפיינים", Icon: IcoMegaphone },
+      { href: "/dashboard/coupons", label: "קופונים", Icon: IcoCreditCard },
+      { href: "/dashboard/reviews", label: "ביקורות", Icon: IcoStar },
+      { href: "/dashboard/sms", label: "SMS", Icon: IcoBell },
+    ],
+  },
+  {
+    title: "מערכת",
+    items: [
+      { href: "/dashboard/billing", label: "חיוב ומנוי", Icon: IcoCreditCard },
+      {
+        href: "/dashboard/settings/branding",
+        label: "הגדרות",
+        Icon: IcoGear,
+        match: "/dashboard/settings",
+      },
+    ],
   },
 ];
 
@@ -56,12 +73,12 @@ export function SidebarV2({
 
   return (
     <aside
-      className="hidden lg:flex w-64 shrink-0 sticky top-16 h-[calc(100vh-4rem)] self-start overflow-y-auto p-4 flex-col gap-5"
-      style={{ backgroundColor: "#FFFBEC" }}
+      className="hidden lg:flex w-64 shrink-0 sticky top-16 h-[calc(100vh-4rem)] self-start overflow-y-auto p-4 flex-col gap-5 border-l-2 border-black"
+      style={{ backgroundColor: "#FFF2C9" }}
     >
       {/* Brand mark — black tile with yellow letter */}
       <Link
-        href="/dashboard-v2"
+        href="/dashboard"
         className="flex items-center gap-3 p-2 rounded-2xl hover:bg-black/5 transition"
       >
         <div className="w-11 h-11 rounded-xl bg-black grid place-items-center text-[#F8CB1E] text-lg font-black shrink-0 border-2 border-black shadow-[0_3px_0_#000]">
@@ -73,49 +90,36 @@ export function SidebarV2({
         </div>
       </Link>
 
-      <nav className="space-y-1.5">
-        {NAV.map(({ href, label, Icon, exact, match, external }) => {
-          const active = exact
-            ? pathname === href
-            : pathname.startsWith(match ?? href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition border-2 relative",
-                active
-                  ? "bg-[#F8CB1E] text-black border-black shadow-[0_3px_0_#000]"
-                  : "bg-transparent text-black/80 border-transparent hover:bg-black/5 hover:border-black/10",
-              )}
-            >
-              <Icon
-                c={active ? "#000" : "rgba(0,0,0,0.7)"}
-                s={20}
-              />
-              <span>{label}</span>
-              {external && !active && (
-                <span
-                  className="ms-auto text-[9px] font-black tracking-wide text-black/40 bg-black/5 px-1.5 py-0.5 rounded"
-                  aria-label="עובר לדשבורד הקיים"
+      <nav className="space-y-4">
+        {NAV.map((section) => (
+          <div key={section.title} className="space-y-1">
+            <div className="px-3 text-[10px] font-black uppercase tracking-wider text-black/40">
+              {section.title}
+            </div>
+            {section.items.map(({ href, label, Icon, exact, match }) => {
+              const active = exact
+                ? pathname === href
+                : pathname.startsWith(match ?? href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition relative",
+                    active
+                      ? "bg-[#F8CB1E] text-black font-bold border-2 border-black shadow-[0_3px_0_#000]"
+                      : "text-black/85 hover:bg-black/4 font-medium",
+                  )}
                 >
-                  v1
-                </span>
-              )}
-            </Link>
-          );
-        })}
+                  <Icon c="#000" s={19} />
+                  <span>{label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
-      <div className="mt-auto rounded-2xl bg-black text-white px-3.5 py-3 border-2 border-black shadow-[0_3px_0_#000]">
-        <div className="text-[10px] font-black tracking-wide text-[#F8CB1E] mb-0.5">
-          ניסוי עיצוב
-        </div>
-        <div className="text-xs leading-snug text-white/90">
-          זו תצוגה בהתהוות (v2). הנתונים אמיתיים, חלק מהקישורים מובילים
-          לדשבורד הקיים.
-        </div>
-      </div>
     </aside>
   );
 }
