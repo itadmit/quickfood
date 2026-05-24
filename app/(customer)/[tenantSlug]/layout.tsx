@@ -24,9 +24,14 @@ export async function generateMetadata({
 
 export default async function CustomerLayout({
   children,
+  modal,
   params,
 }: {
   children: React.ReactNode;
+  // Parallel slot for the intercepting routes (the item-detail modal
+  // opened from the menu list). Empty `<ModalDefault />` when no
+  // interceptor is active. See app/(customer)/[tenantSlug]/@modal/.
+  modal: React.ReactNode;
   params: Promise<{ tenantSlug: string }>;
 }) {
   const { tenantSlug } = await params;
@@ -70,6 +75,10 @@ export default async function CustomerLayout({
           themeId: tenant.themeId,
           businessType: tenant.businessType,
           scheduledOrdersEnabled: tenant.scheduledOrdersEnabled,
+          cutleryEnabled: tenant.cutleryEnabled,
+          cutleryLabel: tenant.cutleryLabel,
+          cutleryPrice: tenant.cutleryPrice,
+          cutleryFreeAbove: tenant.cutleryFreeAbove,
         }}
         branch={
           branch
@@ -101,6 +110,7 @@ export default async function CustomerLayout({
             />
           )}
         </div>
+        {modal}
         {isOwnMerchant && <MerchantPreviewBar tenantName={tenant.name} />}
       </CartProvider>
     </ThemeProvider>

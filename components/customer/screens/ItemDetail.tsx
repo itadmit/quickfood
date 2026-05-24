@@ -50,10 +50,15 @@ export function ItemDetail({
   tenantSlug,
   item,
   businessType = "general",
+  inModal = false,
 }: {
   tenantSlug: string;
   item: ItemData;
   businessType?: BusinessType;
+  /** When true the screen is being rendered inside the intercepting
+   *  modal — drop the lg-card chrome (the modal supplies it) and
+   *  hide the back-arrow shortcuts (the modal's X button closes). */
+  inModal?: boolean;
 }) {
   const router = useRouter();
   const { add } = useCart();
@@ -180,25 +185,41 @@ export function ItemDetail({
   const ctaLabel = missingGroup ? `בחר ${missingGroup.name}` : "הוסף לסל";
 
   return (
-    <div className="pb-36 lg:pb-12 lg:max-w-4xl lg:mx-auto lg:mt-8 lg:bg-white lg:rounded-3xl lg:shadow-xl lg:overflow-hidden">
-      {/* Sticky top bar — mobile only (desktop has the TopNav) */}
-      <div
-        className={cn(
-          "lg:hidden fixed top-0 inset-x-0 z-40 max-w-md mx-auto bg-white/95 backdrop-blur border-b border-qf-line transition-all duration-200",
-          showStickyBar ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none",
-        )}
-      >
-        <div className="flex items-center gap-3 px-4 py-3">
-          <Link
-            href={`/${tenantSlug}/menu`}
-            className="w-9 h-9 rounded-full bg-qf-line-soft grid place-items-center"
-            aria-label="חזרה"
-          >
-            <IcoChev s={16} />
-          </Link>
-          <div className="flex-1 min-w-0 font-semibold truncate">{item.name}</div>
+    <div
+      className={cn(
+        "pb-36 lg:pb-12",
+        // Card chrome only on the full-page route; inside the modal
+        // the wrapper provides its own card surface.
+        !inModal &&
+          "lg:max-w-4xl lg:mx-auto lg:mt-8 lg:bg-white lg:rounded-3xl lg:shadow-xl lg:overflow-hidden",
+      )}
+    >
+      {/* Sticky top bar — mobile only on the full page. Inside the
+          modal the close button (top-right of the modal chrome)
+          handles "go back". */}
+      {!inModal && (
+        <div
+          className={cn(
+            "lg:hidden fixed top-0 inset-x-0 z-40 max-w-md mx-auto bg-white/95 backdrop-blur border-b border-qf-line transition-all duration-200",
+            showStickyBar
+              ? "translate-y-0 opacity-100"
+              : "-translate-y-full opacity-0 pointer-events-none",
+          )}
+        >
+          <div className="flex items-center gap-3 px-4 py-3">
+            <Link
+              href={`/${tenantSlug}/menu`}
+              className="w-9 h-9 rounded-full bg-qf-line-soft grid place-items-center"
+              aria-label="חזרה"
+            >
+              <IcoChev s={16} />
+            </Link>
+            <div className="flex-1 min-w-0 font-semibold truncate">
+              {item.name}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Hero */}
       <div className="relative">
@@ -213,13 +234,15 @@ export function ItemDetail({
           />
           <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-black/30 to-transparent pointer-events-none" />
         </div>
-        <Link
-          href={`/${tenantSlug}/menu`}
-          className="lg:hidden absolute top-4 inset-s-4 w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-md grid place-items-center"
-          aria-label="חזרה"
-        >
-          <IcoChev s={18} />
-        </Link>
+        {!inModal && (
+          <Link
+            href={`/${tenantSlug}/menu`}
+            className="lg:hidden absolute top-4 inset-s-4 w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-md grid place-items-center"
+            aria-label="חזרה"
+          >
+            <IcoChev s={18} />
+          </Link>
+        )}
         <button
           type="button"
           className="absolute top-4 inset-e-4 w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-md grid place-items-center"
