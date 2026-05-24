@@ -45,20 +45,23 @@ export function BillingSetupBanner({
       ? "לא נשמר אמצעי תשלום. השלם את פרטי החיוב כדי להפעיל את המנוי."
       : "השלם פתיחת מנוי כדי להמשיך להשתמש במערכת אחרי תום הניסיון ולפתוח רכישת חבילות SMS.";
 
+  // The `qf-billing-banner` / `qf-billing-cta` class hooks let
+  // globals.css repaint the banner under .dash-v2 with the V2 brand
+  // (yellow surface, black border, black CTA) without forking the JSX.
   return (
     <div
       className={
         urgent
-          ? "bg-qf-tomato-soft border-b border-qf-tomato/40"
-          : "bg-qf-yolk-soft border-b border-qf-yolk/40"
+          ? "qf-billing-banner qf-billing-banner-urgent bg-qf-tomato-soft border-b border-qf-tomato/40"
+          : "qf-billing-banner bg-qf-yolk-soft border-b border-qf-yolk/40"
       }
     >
       <div className="px-6 py-2.5 flex items-center gap-3 text-sm text-qf-ink">
         <div
           className={
             urgent
-              ? "w-7 h-7 rounded-full bg-qf-tomato/20 grid place-items-center shrink-0"
-              : "w-7 h-7 rounded-full bg-qf-yolk/30 grid place-items-center shrink-0"
+              ? "qf-billing-icon w-7 h-7 rounded-full bg-qf-tomato/20 grid place-items-center shrink-0"
+              : "qf-billing-icon w-7 h-7 rounded-full bg-qf-yolk/30 grid place-items-center shrink-0"
           }
         >
           <IcoCreditCard c={urgent ? "#c2421f" : "var(--qf-deep)"} s={14} />
@@ -69,7 +72,7 @@ export function BillingSetupBanner({
         </div>
         <Link
           href="/dashboard/billing"
-          className="inline-flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xs font-medium"
+          className="qf-billing-cta inline-flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xs font-medium"
         >
           השלמת תשלום
           <IcoArrowLeft c="currentColor" s={12} />

@@ -51,7 +51,7 @@ export function AppearanceToggle({ initial }: { initial: Version }) {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       {OPTIONS.map((opt) => {
         const active = value === opt.value;
         return (
@@ -60,23 +60,44 @@ export function AppearanceToggle({ initial }: { initial: Version }) {
             type="button"
             onClick={() => pick(opt.value)}
             disabled={saving}
-            className={cn(
-              "w-full text-start p-3 rounded-xl border-2 transition flex items-start gap-3",
+            // Explicit hex (#F8CB1E / #000) instead of design tokens so
+            // selection state reads clearly on both V1 (slate) and V2
+            // (cream) shells — and so the toggle that lets the merchant
+            // *leave* V2 still looks right while standing inside V2.
+            style={
               active
-                ? "border-qf-brand bg-qf-brand/5"
-                : "border-qf-line-dash hover:border-qf-brand/40",
+                ? {
+                    borderColor: "#000",
+                    backgroundColor: "#FFF6CE",
+                    boxShadow: "0 3px 0 #000",
+                  }
+                : { borderColor: "rgba(0,0,0,0.15)", backgroundColor: "#fff" }
+            }
+            className={cn(
+              "w-full text-start p-4 rounded-xl border-2 transition flex items-start gap-3",
+              !active && "hover:border-black/40",
               saving && "opacity-60 cursor-wait",
             )}
           >
             <span
-              className={cn(
-                "mt-1 w-4 h-4 rounded-full border-2 shrink-0 transition",
-                active ? "border-qf-brand bg-qf-brand" : "border-qf-line",
+              className="mt-0.5 w-5 h-5 rounded-full border-2 shrink-0 grid place-items-center transition"
+              style={{
+                borderColor: "#000",
+                backgroundColor: active ? "#F8CB1E" : "#fff",
+              }}
+            >
+              {active && (
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: "#000" }}
+                />
               )}
-            />
+            </span>
             <span className="min-w-0">
-              <span className="block text-sm font-bold">{opt.label}</span>
-              <span className="block text-xs text-qf-mute mt-0.5 leading-relaxed">
+              <span className="block text-sm font-bold text-black">
+                {opt.label}
+              </span>
+              <span className="block text-xs mt-0.5 leading-relaxed text-black/60">
                 {opt.description}
               </span>
             </span>
