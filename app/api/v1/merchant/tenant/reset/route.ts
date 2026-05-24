@@ -2,6 +2,7 @@ import { z } from "zod";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
+import { deletePrefix } from "@/lib/storage/r2";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -136,5 +137,30 @@ export const POST = handler(async (req: Request) => {
     { timeout: 60_000 },
   );
 
-  return apiJson({ ok: true, deleted: summary });
+  // R2 cleanup AFTER the DB transaction. If the bucket sweep fails we
+  // still want the DB reset to stand — leftover R2 objects are merely
+  // dead bytes, not a data-integrity problem. We sweep both key
+  // shapes used by the codebase: direct uploads land under
+  // `{tenantId}/...` (see app/api/v1/upload/init), Wolt imports under
+  // `tenants/{tenantId}/...` (see lib/wolt-import/commit). Best-effort
+  // — errors are surfaced in the response but don't fail the request.
+  const r2Direct = await safeDelete(`${tenantId}/`);
+  const r2Wolt = await safeDelete(`tenants/${tenantId}/`);
+
+  return apiJson({
+    ok: true,
+    deleted: summary,
+    r2: {
+      deleted: r2Direct.deleted + r2Wolt.deleted,
+      errors: r2Direct.errors + r2Wolt.errors,
+    },
+  });
 });
+
+async function safeDelete(prefix: string) {
+  try {
+    return await deletePrefix(prefix);
+  } catch {
+    return { deleted: 0, errors: 0 };
+  }
+}

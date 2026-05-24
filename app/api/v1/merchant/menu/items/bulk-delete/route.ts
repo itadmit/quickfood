@@ -2,6 +2,7 @@ import { z } from "zod";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
+import { deletePrefix } from "@/lib/storage/r2";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,5 +45,23 @@ export const POST = handler(async (req: Request) => {
     where: { tenantId: session.tenantId },
   });
 
-  return apiJson({ deleted: result.count });
+  // Sweep R2 for the tenant's uploaded menu images so the bucket
+  // doesn't accumulate orphaned bytes. Wolt imports live under a
+  // separate prefix and could include things we don't want to delete
+  // here (e.g. logo/cover), so we deliberately scope to the direct-
+  // upload bucket prefix `{tenantId}/menu/`. Failures are non-fatal.
+  let r2Deleted = 0;
+  let r2Errors = 0;
+  try {
+    const res = await deletePrefix(`${session.tenantId}/menu/`);
+    r2Deleted = res.deleted;
+    r2Errors = res.errors;
+  } catch {
+    // best-effort
+  }
+
+  return apiJson({
+    deleted: result.count,
+    r2: { deleted: r2Deleted, errors: r2Errors },
+  });
 });
