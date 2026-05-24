@@ -720,7 +720,6 @@ function Pricing() {
     "וואטסאפ מהמספר שלך (דרך iBot Chat)",
     "מייל ללא הגבלה - חינם",
     "אזורי משלוח עם זמן משלוח לכל אזור",
-    "מולטי-סניף עם הגדרות נפרדות",
     "אנליטיקה - שעות שיא, פריטים מובילים, חוזרים",
     "REST API + Webhooks לחיבור לקופה",
   ];
@@ -775,7 +774,7 @@ function Pricing() {
               <div className={styles.priceSingleAddon}>
                 <div className={styles.priceSingleAddonTag}>אופציונלי</div>
                 <div className={styles.priceSingleAddonBody}>
-                  <strong>חבילות וואטסאפ + SMS מ-₪39.</strong>
+                  <strong>חבילות וואטסאפ + SMS החל מ-₪39.</strong>
                   <span>
                     קונים פעם אחת, נשלפת אוטומטית לאישור הזמנה, ליציאה לדרך ולבקשות ביקורת. מייל חינם, ללא הגבלה.
                   </span>
