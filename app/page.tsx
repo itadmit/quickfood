@@ -254,8 +254,14 @@ function Nav() {
   return (
     <nav className={styles.nav}>
       <div className={`${styles.container} ${styles.navRow}`}>
-        <a href="#" className={styles.brand}>
-          QuickFood
+        <a href="#" className={styles.brand} aria-label="QuickFood">
+          <img
+            src="/quickfood-mark-white.png"
+            alt="QuickFood"
+            width={48}
+            height={48}
+            className={styles.brandImg}
+          />
         </a>
         <div className={styles.navCta}>
           <Link href="/dashboard/login" className={`${styles.btn} ${styles.btnGhost}`}>התחברות</Link>

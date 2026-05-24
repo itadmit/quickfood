@@ -63,8 +63,7 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
 
       <aside
         aria-hidden
-        className="absolute inset-0 lg:inset-y-0 lg:w-[42%] z-0 lg:z-1 overflow-hidden"
-        style={{ left: 0, right: "auto" }}
+        className="absolute inset-0 lg:right-auto lg:w-[42%] z-0 lg:z-1 overflow-hidden"
       >
         <AuthHeroVideo />
         <div
@@ -72,7 +71,7 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
           className="lg:hidden absolute inset-0 pointer-events-none"
           style={{
             background:
-              "linear-gradient(180deg, rgba(248,203,30,0.55) 0%, rgba(248,203,30,0.30) 35%, rgba(248,203,30,0.55) 70%, rgba(248,203,30,0.92) 100%)",
+              "linear-gradient(180deg, rgba(248,203,30,0.95) 0%, rgba(248,203,30,0.65) 20%, rgba(248,203,30,0.30) 50%, rgba(248,203,30,0.65) 80%, rgba(248,203,30,0.95) 100%)",
           }}
         />
         <div
@@ -105,9 +104,9 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
               RTL grid: first DOM child lands in the inline-start
               column (= visual right). So form is first, spacer
               (under the absolute video) is second. */}
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[58%_42%] lg:h-[calc(100vh-88px)]">
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[58%_42%] min-h-[calc(100vh-88px)] lg:h-[calc(100vh-88px)]">
         {/* Form column — visual right (58%). */}
-        <main className="flex items-center justify-center px-5 lg:px-12 py-10 lg:py-6">
+        <main className="flex items-center justify-center px-5 lg:px-12 py-6 lg:py-6">
           <div className="w-full max-w-md space-y-5">
             {/* Eyebrow + rotating marketing tagline above the card —
                 a different one-liner shows on each visit so returning
@@ -150,24 +149,14 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
  */
 function BrandChip() {
   return (
-    <Link href="/" className="flex items-center gap-3 group min-w-0">
-      <span
-        className="w-10 h-10 rounded-xl bg-black grid place-items-center text-[#F8CB1E] text-lg font-black border-2 border-black shadow-[0_3px_0_#000] group-active:translate-y-px group-active:shadow-[0_2px_0_#000] transition"
-        aria-hidden
-      >
-        F
-      </span>
-      <span className="flex flex-col leading-tight min-w-0">
-        <span
-          className="font-pacifico text-xl text-black leading-none"
-          style={{ letterSpacing: "0.5px" }}
-        >
-          Quick Food
-        </span>
-        <span className="text-[10px] font-black tracking-[0.12em] text-black/65 uppercase mt-1">
-          לוח בקרה למסעדן
-        </span>
-      </span>
+    <Link href="/" className="group inline-flex items-center">
+      <img
+        src="/quickfood-mark-white.png"
+        alt="QuickFood"
+        width={56}
+        height={56}
+        className="w-14 h-14 rounded-xl border-2 border-black shadow-[0_3px_0_#000] group-active:translate-y-px group-active:shadow-[0_2px_0_#000] transition shrink-0"
+      />
     </Link>
   );
 }
