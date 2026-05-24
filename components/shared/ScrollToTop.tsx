@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 // useLayoutEffect warns when running on the server (it's a no-op there).
@@ -31,6 +31,7 @@ const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayout
  */
 export function ScrollToTop() {
   const pathname = usePathname();
+  const prevPathRef = useRef(pathname);
 
   // Turn off the browser's auto-scroll-restoration once, app-wide.
   useEffect(() => {
@@ -54,6 +55,14 @@ export function ScrollToTop() {
   // rendered at the old scroll position.
   useIsoLayoutEffect(() => {
     if (typeof window === "undefined") return;
+    const prev = prevPathRef.current;
+    prevPathRef.current = pathname;
+    // Skip the reset for intercepted-modal open/close transitions
+    // (storefront ↔ item-detail). The pathname changes, but visually
+    // only a modal opens/closes — resetting scroll yanks the menu
+    // behind the modal to the top, which the customer perceives as
+    // the background jumping.
+    if (isInterceptedModalTransition(prev, pathname)) return;
     jumpToTop();
     // Then again next frame for the back/forward + streaming-Suspense cases
     // where the new layout's children mount AFTER our sync effect runs.
@@ -68,6 +77,25 @@ export function ScrollToTop() {
   }, [pathname]);
 
   return null;
+}
+
+// Matches `/[tenantSlug]/menu/[itemId]` — the only route currently mounted
+// behind an intercepting `@modal/(.)` slot. If a second modal-intercepted
+// route is added, extend this matcher.
+const ITEM_MODAL_RE = /^\/([^/]+)\/menu\/[^/]+\/?$/;
+
+function isInterceptedModalTransition(prev: string, next: string): boolean {
+  const prevMatch = prev.match(ITEM_MODAL_RE);
+  const nextMatch = next.match(ITEM_MODAL_RE);
+  // Modal opening: next is the item URL, prev is on the same tenant.
+  if (nextMatch && isSameTenant(prev, nextMatch[1])) return true;
+  // Modal closing: prev was the item URL, next is on the same tenant.
+  if (prevMatch && isSameTenant(next, prevMatch[1])) return true;
+  return false;
+}
+
+function isSameTenant(path: string, slug: string): boolean {
+  return path === `/${slug}` || path.startsWith(`/${slug}/`);
 }
 
 function jumpToTop() {
