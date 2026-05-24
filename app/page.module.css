@@ -1931,7 +1931,7 @@
   .ldCol:nth-child(n+3) { display: none; }
   .section { padding: 48px 0; }
   .showcaseHead, .showcaseGrid, .problemGrid { grid-template-columns: 1fr; gap: 22px; }
-  .problemCard { padding: 28px 22px; border-left: none; }
+  .problemCard { padding: 28px 22px; }
   .bento { grid-template-columns: 1fr 1fr; grid-auto-rows: 160px; }
   .bWide { grid-column: span 2; }
   .bTall { grid-row: span 1; }
