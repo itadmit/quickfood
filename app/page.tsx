@@ -14,13 +14,14 @@ import {
   ChefHat,
   Pizza,
   MapPin,
+  Heart,
   type LucideIcon,
 } from "lucide-react";
 
 // Tight map for the WoltCard slots — extend here when a new section
 // needs an icon. Lucide gives consistent stroke + geometry which the
 // old hand-rolled FeatureIcon set didn't.
-type IconName = "store" | "flame" | "wallet" | "star" | "chat" | "chef" | "pizza" | "pin";
+type IconName = "store" | "flame" | "wallet" | "star" | "chat" | "chef" | "pizza" | "pin" | "heart";
 const ICONS: Record<IconName, LucideIcon> = {
   store: Store,
   flame: Flame,
@@ -30,6 +31,7 @@ const ICONS: Record<IconName, LucideIcon> = {
   chef: ChefHat,
   pizza: Pizza,
   pin: MapPin,
+  heart: Heart,
 };
 import ItemCustomizerMockup from "./_components/ItemCustomizerMockup";
 import ScrollAnimations from "./_components/ScrollAnimations";
@@ -440,10 +442,10 @@ function Features() {
           <WoltCard
             tone="sand"
             layout="decor-end"
-            tag="המטבח"
-            heading="זמן הכנה לכל פריט. סטטוסים בשפה של המטבח."
-            body="3 דק׳ לסלט, 9 לפיצה, 12 להמבורגר - אתה מגדיר, האפליקציה מחשבת זמן משוער להכנת המנה. סטטוס מסעדה פתוח / עומס / סגור - במצב עומס הזמן המשוער מתארך אוטומטית עוד לפני שהלקוח לוחץ ׳שלם׳. דשבורד שעובד על טאבלט ליד הקופה."
-            icon="flame"
+            tag="הקבועים"
+            heading="הוא הזמין אצלך פעם. עכשיו הוא יזמין שוב - בקליק."
+            body="הלקוח החוזר רואה את ההזמנה האחרונה שלו על דף הבית של החנות, מסמן פריטים כמועדפים, וחוזר על אותה הזמנה בכפתור אחד - כולל הכתובת, התוספות וההערות מהפעם הקודמת. בלי לעבור באמצע, בלי לשלם עוד 30% על אותה פיצה שהוא כבר מכיר אצלך."
+            icon="heart"
           />
 
           <WoltCard
@@ -451,7 +453,7 @@ function Features() {
             layout="decor-start"
             tag="תשלום"
             heading="Bit, אשראי, Apple Pay, פייבוקס, Google Pay - הכל נתמך בצ׳קאוט אחד."
-            body="הלקוח לוחץ ׳שלם׳ בתוך החנות, ארנק התשלום נפתח לידו, מקיש PIN ב-Bit או טביעת אצבע ב-Apple Pay - והכסף בחשבון תוך 24 שעות. בלי הפניות, בלי מסך תשלום נפרד. אתה בוחר ברירת מחדל בדשבורד."
+            body="בשיתוף פעולה ייחודי עם חברת גרואו פיימנטס, תוכלו ליהנות מתשלומים בכל הפלטפורמות המובילות: פייבוקס, ביט, אפל פיי, גוגל פיי, כל כרטיסי האשראי ועוד. כמו כן תמיד אפשר להוסיף גם אפשרות תשלום של מזומן לשליח."
             icon="wallet"
           />
 
