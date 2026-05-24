@@ -262,38 +262,38 @@ function Step1({
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Field label="שם העסק">
+      {/* One field per row — the previous 2-column grid squeezed the
+          slug widget so the validation badge clipped on narrow viewports. */}
+      <Field label="שם העסק">
+        <input
+          value={businessName}
+          onChange={(e) => onBusinessName(e.target.value)}
+          placeholder="פיצרייה ורדה"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-qf-ink focus:ring-2 focus:ring-qf-ink/10 outline-none transition"
+        />
+      </Field>
+      <Field label="כתובת באתר" hint="אנגלית בלבד">
+        <div
+          dir="ltr"
+          className={cn(
+            "flex items-center border rounded-xl bg-white transition focus-within:ring-2 focus-within:ring-qf-ink/10",
+            borderColor,
+          )}
+        >
+          <span className="ps-3 pe-1 text-qf-mute text-xs font-mono select-none border-e border-qf-line-dash py-2.5 me-1">
+            quickfood.app/
+          </span>
           <input
-            value={businessName}
-            onChange={(e) => onBusinessName(e.target.value)}
-            placeholder="פיצרייה ורדה"
-            className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-qf-ink focus:ring-2 focus:ring-qf-ink/10 outline-none transition"
-          />
-        </Field>
-        <Field label="כתובת באתר" hint="אנגלית בלבד">
-          <div
+            value={slug}
+            onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
             dir="ltr"
-            className={cn(
-              "flex items-center border rounded-xl bg-white transition focus-within:ring-2 focus-within:ring-qf-ink/10",
-              borderColor,
-            )}
-          >
-            <span className="ps-3 pe-1 text-qf-mute text-xs font-mono select-none border-e border-qf-line-dash py-2.5 me-1">
-              quickfood.app/
-            </span>
-            <input
-              value={slug}
-              onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-              dir="ltr"
-              placeholder="my-restaurant"
-              className="flex-1 min-w-0 py-2.5 pe-2 outline-none bg-transparent font-mono text-sm"
-            />
-            <SlugStatusBadge status={slugStatus} slug={slug} />
-          </div>
-          <SlugStatusLine status={slugStatus} slug={slug} />
-        </Field>
-      </div>
+            placeholder="my-restaurant"
+            className="flex-1 min-w-0 py-2.5 pe-2 outline-none bg-transparent font-mono text-sm"
+          />
+          <SlugStatusBadge status={slugStatus} slug={slug} />
+        </div>
+        <SlugStatusLine status={slugStatus} slug={slug} />
+      </Field>
 
       <BusinessTypeSelect
         label="סוג עסק"
