@@ -377,6 +377,8 @@ export function CustomerHome({
 
       {pickerOpen && (
         <CityPickerModal
+          tenantName={tenant.name}
+          coverImage={tenant.coverImage ?? null}
           cities={deliveryCities}
           branchAddress={branch?.address ?? null}
           required={pickerRequired}
