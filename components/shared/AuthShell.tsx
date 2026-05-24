@@ -73,32 +73,26 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
         style={{ left: 0, right: "auto" }}
       >
         <AuthHeroVideo />
-        {/* Horizontal melt — video reads crisp on the leftmost slice
-            and dissolves into the brand yellow well before its right
-            edge, so there's no "video ends here" hard line next to the
-            form column. */}
+        {/* Horizontal yellow melt — matches the landing-page
+            `.heroMedia::after` exactly: clear video on the visual-left
+            edge, dissolves into the brand yellow well before reaching
+            the right edge so there's no "video ends here" hard line
+            adjacent to the form column. No vertical / readability
+            shading on top — the yellow itself provides the surface
+            the tagline sits on. */}
         <div
           aria-hidden
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "linear-gradient(to right, transparent 0%, rgba(248,203,30,0.45) 45%, rgba(248,203,30,0.92) 78%, #F8CB1E 100%)",
-          }}
-        />
-        {/* Bottom-up readability gradient — keeps the rotating tagline
-            text legible over any video frame without painting the
-            whole panel. */}
-        <div
-          aria-hidden
-          className="absolute inset-x-0 bottom-0 h-2/5 pointer-events-none"
-          style={{
-            background:
-              "linear-gradient(to top, rgba(0,0,0,0.18) 0%, transparent 100%)",
+              "linear-gradient(to right, transparent 0%, rgba(248,203,30,0.4) 35%, rgba(248,203,30,0.85) 65%, #F8CB1E 90%)",
           }}
         />
 
         {/* Marketing voice — eyebrow + rotating tagline, pinned at the
-            bottom via flex justify-end on the aside. */}
+            bottom via flex justify-end on the aside. Sits on the
+            yellow side of the melt so it stays legible without extra
+            scrim. */}
         <div className="relative z-10 space-y-3 max-w-md">
           <span className="inline-block bg-black text-[#F8CB1E] px-3 py-1 rounded-full text-[11px] font-black tracking-wider">
             QUICKFOOD · ניהול
