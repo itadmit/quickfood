@@ -102,6 +102,12 @@ enum OptionGroupType {
   multi
 }
 
+enum WoltImportStatus {
+  preview   // Menu fetched + parsed, raw JSON cached, awaiting merchant confirmation
+  committed // Successfully imported into the tenant's menu
+  failed    // Aborted mid-commit; `errors` holds the breakdown
+}
+
 enum CouponType {
   percent
   fixed
@@ -272,6 +278,7 @@ model Tenant {
   smsLogs          SmsLog[]
   emailLogs        EmailLog[]
   modifierSets     ModifierSet[]
+  woltImports      WoltImport[]
 
   @@index([slug])
   @@map("tenants")
@@ -338,8 +345,15 @@ model MenuCategory {
   position Int     @default(0)
   active   Boolean @default(true)
 
+  // Provenance for bulk imports (Wolt / CSV / future POS sync). Lets a
+  // re-import find the matching local row and update it instead of
+  // creating a duplicate. NULL on either side = manually created.
+  externalSource String? @map("external_source") @db.VarChar(20)
+  externalId     String? @map("external_id") @db.VarChar(64)
+
   items MenuItem[]
 
+  @@unique([tenantId, externalSource, externalId])
   @@index([tenantId, position])
   @@map("menu_categories")
 }
@@ -372,6 +386,11 @@ model MenuItem {
   // Inventory: if non-null the item auto-disappears when this hits 0.
   // Refilled manually (or via API) when the merchant restocks.
   stockRemaining Int?      @map("stock_remaining")
+  // Provenance for bulk imports — see MenuCategory.externalSource for the
+  // contract. A re-import keys off (tenantId, externalSource, externalId)
+  // to upsert rather than duplicate.
+  externalSource String? @map("external_source") @db.VarChar(20)
+  externalId     String? @map("external_id") @db.VarChar(64)
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
 
@@ -381,6 +400,7 @@ model MenuItem {
   reviewItems  ReviewItem[]
   favoritedBy  Favorite[]
 
+  @@unique([tenantId, externalSource, externalId])
   @@index([tenantId, categoryId, position])
   @@index([tenantId, available])
   @@map("menu_items")
@@ -476,12 +496,17 @@ model ModifierSet {
   includedFree Int             @default(0) @map("included_free")
   helpText     String?         @map("help_text")
   position     Int             @default(0)
+  // Provenance for bulk imports — see MenuCategory.externalSource. A
+  // re-import keys off (tenantId, externalSource, externalId) to upsert.
+  externalSource String?       @map("external_source") @db.VarChar(20)
+  externalId     String?       @map("external_id") @db.VarChar(64)
   createdAt    DateTime        @default(now()) @map("created_at")
   updatedAt    DateTime        @updatedAt @map("updated_at")
 
   options    ModifierSetOption[]
   attachedTo ItemOptionGroup[]
 
+  @@unique([tenantId, externalSource, externalId])
   @@index([tenantId, position])
   @@map("modifier_sets")
 }
@@ -496,7 +521,11 @@ model ModifierSetOption {
   available  Boolean     @default(true)
   imageUrl   String?     @map("image_url")
   position   Int         @default(0)
+  // Provenance for bulk imports — scoped per parent set so the same source
+  // option id can re-appear if the merchant has two imported sets.
+  externalId String?     @map("external_id") @db.VarChar(64)
 
+  @@unique([setId, externalId])
   @@index([setId, position])
   @@map("modifier_set_options")
 }
@@ -1119,4 +1148,44 @@ model Campaign {
 
   @@index([tenantId, kind, isActive, updatedAt(sort: Desc)])
   @@map("campaigns")
+}
+
+// Records a one-shot menu import from a Wolt venue. The flow is:
+// (1) merchant pastes a Wolt URL → server resolves venue_id, fetches the
+//     menu JSON, writes a row with status=preview and stows the raw JSON
+//     in rawMenu so the commit step doesn't have to re-fetch and so we
+//     have an audit trail for debugging.
+// (2) merchant confirms in the UI → server reads rawMenu, creates/updates
+//     MenuCategory + ModifierSet + MenuItem rows keyed by (tenantId,
+//     externalSource='wolt', externalId=<wolt id>), downloads images to
+//     R2, flips status to committed (or failed + errors[]).
+//
+// The most recent row per tenant gates re-import frequency — we don't
+// need a separate field on Tenant.
+model WoltImport {
+  id                 String           @id @default(uuid()) @db.Uuid
+  tenantId           String           @map("tenant_id") @db.Uuid
+  tenant             Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sourceUrl          String           @map("source_url")
+  venueId            String           @map("venue_id") @db.VarChar(64)
+  venueName          String           @map("venue_name")
+  status             WoltImportStatus
+  // Counts captured from the parsed menu and again after commit, so the
+  // UI can show "23/47 פריטים יובאו" without recomputing.
+  categoriesTotal    Int              @default(0) @map("categories_total")
+  itemsTotal         Int              @default(0) @map("items_total")
+  categoriesImported Int              @default(0) @map("categories_imported")
+  itemsImported      Int              @default(0) @map("items_imported")
+  imagesUploaded     Int              @default(0) @map("images_uploaded")
+  // Array of { context: string, message: string } for partial failures.
+  errors             Json?
+  // Raw Wolt /v4/venues/{id}/menu response, kept for the lifetime of the
+  // row (~megabyte per import — tolerable). Lets the commit step run
+  // without re-fetching, and helps when debugging mapping issues.
+  rawMenu            Json?            @map("raw_menu")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  committedAt        DateTime?        @map("committed_at")
+
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@map("wolt_imports")
 }
