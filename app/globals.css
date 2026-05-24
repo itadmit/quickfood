@@ -187,12 +187,23 @@ a {
 .animate-qf-toast-in {
   animation: qf-toast-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+/* Merchant "you're viewing your own storefront" bar — slides up from below
+   the viewport with a soft delay so it doesn't fight the first paint. */
+@keyframes qf-preview-bar-in {
+  from { transform: translate3d(0, calc(100% + 24px), 0); opacity: 0; }
+  to   { transform: translate3d(0, 0, 0);                 opacity: 1; }
+}
+.animate-qf-preview-bar-in {
+  animation: qf-preview-bar-in 360ms cubic-bezier(0.22, 1, 0.36, 1) 400ms both;
+}
 @media (prefers-reduced-motion: reduce) {
   .animate-qf-pulse,
   .qf-spinner,
   .animate-qf-check-in,
   .animate-qf-slide-up,
-  .animate-qf-toast-in {
+  .animate-qf-toast-in,
+  .animate-qf-preview-bar-in {
     animation: none;
   }
 }

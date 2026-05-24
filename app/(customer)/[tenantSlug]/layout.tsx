@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import { CartProvider } from "@/components/customer/CartProvider";
 import { CustomerTopNav } from "@/components/customer/CustomerTopNav";
 import { ReviewPromptModal } from "@/components/customer/ReviewPromptModal";
+import { MerchantPreviewBar } from "@/components/customer/MerchantPreviewBar";
 
 export async function generateMetadata({
   params,
@@ -52,6 +53,12 @@ export default async function CustomerLayout({
         })
       : null;
 
+  // Show the "you're viewing your own storefront" bar only when the logged-in
+  // merchant owns *this* tenant — a manager of a different store browsing
+  // here shouldn't see a "manage" CTA that lands them somewhere unrelated.
+  const isOwnMerchant =
+    session?.type === "merchant" && session.tenantId === tenant.id;
+
   return (
     <ThemeProvider themeId={tenant.themeId} className="min-h-screen bg-qf-bg">
       <CartProvider
@@ -94,6 +101,7 @@ export default async function CustomerLayout({
             />
           )}
         </div>
+        {isOwnMerchant && <MerchantPreviewBar tenantName={tenant.name} />}
       </CartProvider>
     </ThemeProvider>
   );
