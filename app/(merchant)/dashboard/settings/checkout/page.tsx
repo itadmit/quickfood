@@ -14,7 +14,7 @@ export default async function CheckoutSettingsPage() {
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
-    select: { checkoutShowTracking: true },
+    select: { checkoutShowTracking: true, scheduledOrdersEnabled: true },
   });
   if (!tenant) redirect("/dashboard/login");
 
@@ -23,11 +23,16 @@ export default async function CheckoutSettingsPage() {
       <header>
         <h1 className="text-2xl font-bold">הגדרות</h1>
         <p className="text-sm text-qf-mute">
-          מה הלקוח רואה אחרי שהוא משלים את ההזמנה
+          מה הלקוח רואה ויכול לעשות במסך הקופה
         </p>
       </header>
       <SettingsTabs />
-      <CheckoutSettingsForm initial={{ showTracking: tenant.checkoutShowTracking }} />
+      <CheckoutSettingsForm
+        initial={{
+          showTracking: tenant.checkoutShowTracking,
+          scheduledOrdersEnabled: tenant.scheduledOrdersEnabled,
+        }}
+      />
     </div>
   );
 }

@@ -214,6 +214,7 @@ export const TenantPatchSchema = z.object({
   cuisine_type: z.string().max(60).optional(),
   vat_number: z.string().max(20).optional(),
   checkout_show_tracking: z.boolean().optional(),
+  scheduled_orders_enabled: z.boolean().optional(),
 });
 
 export const BranchInputSchema = z.object({

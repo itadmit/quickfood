@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoChev, IcoArrowLeft, IcoBag } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
@@ -57,6 +57,11 @@ export function CustomerCheckout({
   // בשמונה"). The merchant's open hours could be enforced server-side
   // later; for now we just let the merchant decline if it's outside hours.
   const [scheduledTime, setScheduledTime] = useState<string>("");
+  // Once the user taps "תזמן" we reveal the slot row even before they pick
+  // a specific time. Without this the only signal of "schedule mode" would
+  // be a non-empty scheduledTime, so the user can't browse slots without
+  // committing to one.
+  const [showSlots, setShowSlots] = useState(false);
 
   // Coupon. couponCode is what the user typed; couponApplied is the result
   // of the last successful /coupons/validate call. They're separate so the
@@ -189,6 +194,26 @@ export function CustomerCheckout({
     setCouponApplied(null);
     setCouponError(null);
   }
+
+  // Pre-computed time slots for today, every 15 min starting from now+30min
+  // (kitchen prep buffer) up to 23:00. Computed once per mount — a checkout
+  // session is short enough that drift doesn't matter, and scheduledIso()
+  // below already pushes past-times to tomorrow as a safety net.
+  const scheduleSlots = useMemo(() => {
+    const out: string[] = [];
+    const start = new Date();
+    start.setMinutes(start.getMinutes() + 30);
+    const overshoot = start.getMinutes() % 15;
+    if (overshoot !== 0) start.setMinutes(start.getMinutes() + (15 - overshoot));
+    start.setSeconds(0, 0);
+    const end = new Date();
+    end.setHours(23, 0, 0, 0);
+    for (let t = start.getTime(); t <= end.getTime(); t += 15 * 60_000) {
+      const d = new Date(t);
+      out.push(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
+    }
+    return out;
+  }, []);
 
   /** Convert "HH:mm" to today's ISO datetime so the server gets a real
       timestamp. Returns null if the input is empty/invalid. */
@@ -621,33 +646,66 @@ export function CustomerCheckout({
           </Card>
         )}
 
-        {/* 5b. Schedule order */}
-        <Card>
-          <div className="flex items-baseline justify-between">
-            <CardTitle>זמן {method === "delivery" ? "משלוח" : "איסוף"}</CardTitle>
-            <span className="text-xs text-qf-mute">אופציונלי</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 mt-3">
-            <Pill active={!scheduledTime} onClick={() => setScheduledTime("")}>
-              בהקדם האפשרי
-            </Pill>
-            <label className={cn(
-              "rounded-2xl border px-4 py-3 text-base flex items-center justify-center gap-2 transition cursor-pointer",
-              scheduledTime
-                ? "border-(--qf-primary) bg-(--qf-primary) text-white"
-                : "border-qf-line-dash bg-white text-qf-ink2 hover:border-qf-mute",
-            )}>
-              <span className="text-sm">לזמן ספציפי</span>
-              <input
-                type="time"
-                value={scheduledTime}
-                onChange={(e) => setScheduledTime(e.target.value)}
-                className="bg-transparent outline-none text-sm tnum w-20"
-                step={900}
-              />
-            </label>
-          </div>
-        </Card>
+        {/* 5b. Schedule order. Hidden entirely when the merchant disabled
+            scheduled orders in dashboard settings — keeps fast-food queues
+            sane. */}
+        {tenant.scheduledOrdersEnabled !== false && (
+          <Card>
+            <div className="flex items-baseline justify-between">
+              <CardTitle>זמן {method === "delivery" ? "משלוח" : "איסוף"}</CardTitle>
+              <span className="text-xs text-qf-mute">אופציונלי</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-3">
+              <Pill
+                active={!showSlots && !scheduledTime}
+                onClick={() => {
+                  setScheduledTime("");
+                  setShowSlots(false);
+                }}
+              >
+                בהקדם האפשרי
+              </Pill>
+              <Pill
+                active={showSlots || !!scheduledTime}
+                onClick={() => setShowSlots(true)}
+              >
+                {scheduledTime ? `תזמן · ${scheduledTime}` : "תזמן לשעה"}
+              </Pill>
+            </div>
+            {showSlots && (
+              <div className="mt-3">
+                {scheduleSlots.length > 0 ? (
+                  <>
+                    <p className="text-xs text-qf-mute mb-2">
+                      בחר שעת {method === "delivery" ? "מסירה" : "איסוף"} להיום
+                    </p>
+                    <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 snap-x">
+                      {scheduleSlots.map((slot) => (
+                        <button
+                          key={slot}
+                          type="button"
+                          onClick={() => setScheduledTime(slot)}
+                          className={cn(
+                            "shrink-0 snap-start px-4 h-11 rounded-xl text-sm font-semibold border transition tnum active:scale-[0.98]",
+                            scheduledTime === slot
+                              ? "bg-(--qf-primary) text-white border-transparent shadow-sm shadow-(--qf-primary)/25"
+                              : "bg-white text-qf-ink2 border-qf-line hover:border-(--qf-primary)/40",
+                          )}
+                        >
+                          {slot}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm text-qf-mute mt-2">
+                    לא נותרו שעות פנויות להיום — בחר &quot;בהקדם האפשרי&quot;.
+                  </p>
+                )}
+              </div>
+            )}
+          </Card>
+        )}
 
         {/* 5c. Coupon code */}
         <Card>

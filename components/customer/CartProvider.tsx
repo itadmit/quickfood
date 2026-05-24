@@ -47,6 +47,7 @@ interface TenantInfo {
   logoLetter: string;
   themeId: string;
   businessType?: string;
+  scheduledOrdersEnabled?: boolean;
 }
 
 interface BranchInfo {

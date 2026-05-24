@@ -64,6 +64,12 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   if (!branch) throw new CartValidationError("no_branch");
   if (branch.status === "closed") throw new CartValidationError("restaurant_closed");
 
+  // If the merchant disabled scheduled orders, silently demote any
+  // scheduled_for that slipped through the client-side hide — turns the
+  // order into ASAP rather than failing the request, so an old cached
+  // client doesn't get a hard 4xx.
+  const scheduledFor = tenant.scheduledOrdersEnabled ? input.scheduledFor : null;
+
   if (input.lines.length === 0) {
     throw new CartValidationError("cart_empty");
   }
@@ -290,7 +296,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       total,
       paymentMethod: input.paymentMethod,
       paymentStatus,
-      scheduledFor: input.scheduledFor ?? null,
+      scheduledFor: scheduledFor ?? null,
       confirmedAt: initialStatus === "confirmed" ? new Date() : null,
       items: { createMany: { data: orderItemData } },
     },

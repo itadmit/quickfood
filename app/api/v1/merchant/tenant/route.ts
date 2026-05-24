@@ -31,6 +31,7 @@ export const PATCH = handler(async (req: Request) => {
       cuisineType: body.cuisine_type,
       vatNumber: body.vat_number,
       checkoutShowTracking: body.checkout_show_tracking,
+      scheduledOrdersEnabled: body.scheduled_orders_enabled,
     },
   });
   return apiJson({

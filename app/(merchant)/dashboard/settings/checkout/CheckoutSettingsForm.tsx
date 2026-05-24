@@ -7,11 +7,15 @@ import { cn } from "@/lib/cn";
 
 interface Initial {
   showTracking: boolean;
+  scheduledOrdersEnabled: boolean;
 }
 
 export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
   const router = useRouter();
   const [showTracking, setShowTracking] = useState(initial.showTracking);
+  const [scheduledOrdersEnabled, setScheduledOrdersEnabled] = useState(
+    initial.scheduledOrdersEnabled,
+  );
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -22,7 +26,10 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
       const res = await fetch("/api/v1/merchant/tenant", {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ checkout_show_tracking: showTracking }),
+        body: JSON.stringify({
+          checkout_show_tracking: showTracking,
+          scheduled_orders_enabled: scheduledOrdersEnabled,
+        }),
       });
       if (res.ok) {
         setToast("נשמר");
@@ -42,11 +49,22 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
         label="הצג מעקב הזמנה בעמוד התודה"
         description={
           showTracking
-            ? "הלקוח רואה ETA, סטטוס חי, וקו זמן של ההזמנה אחרי התשלום."
-            : "אחרי התשלום הלקוח רואה רק קבלה — כמו חנות e-commerce רגילה."
+            ? "הלקוח רואה זמן הגעה משוער, סטטוס חי, וקו זמן של ההזמנה אחרי התשלום."
+            : "אחרי התשלום הלקוח רואה רק קבלה — כמו חנות אונליין רגילה."
         }
         value={showTracking}
         onChange={setShowTracking}
+      />
+
+      <Toggle
+        label="אפשר ללקוח לתזמן הזמנה לזמן מאוחר יותר"
+        description={
+          scheduledOrdersEnabled
+            ? "הלקוח יכול לבחור שעת מסירה/איסוף ספציפית במקום 'בהקדם האפשרי'."
+            : "כל ההזמנות נכנסות מיד למטבח. שדה תזמון מוסתר מהקופה."
+        }
+        value={scheduledOrdersEnabled}
+        onChange={setScheduledOrdersEnabled}
       />
 
       <div className="flex items-center justify-between pt-3 border-t border-qf-line-soft">

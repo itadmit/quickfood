@@ -62,6 +62,7 @@ export default async function CustomerLayout({
           logoLetter: tenant.logoLetter,
           themeId: tenant.themeId,
           businessType: tenant.businessType,
+          scheduledOrdersEnabled: tenant.scheduledOrdersEnabled,
         }}
         branch={
           branch
