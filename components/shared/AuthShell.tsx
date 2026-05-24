@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { AuthHeroVideo } from "./AuthHeroVideo";
-import { AuthRotatingTagline } from "./AuthRotatingTagline";
 
 interface Props {
   /** "login" or "signup" — controls the top-bar cross-link */
@@ -70,7 +69,8 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
               has already faded the video to solid yellow → text stays
               legible without a scrim). */}
       <aside
-        className="hidden lg:flex absolute inset-y-0 w-[42%] z-1 overflow-hidden flex-col justify-end p-10"
+        aria-hidden
+        className="hidden lg:block absolute inset-y-0 w-[42%] z-1 overflow-hidden"
         style={{ right: 0, left: "auto" }}
       >
         <AuthHeroVideo />
@@ -86,18 +86,6 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
               "linear-gradient(to left, transparent 0%, rgba(248,203,30,0.4) 35%, rgba(248,203,30,0.85) 65%, #F8CB1E 90%)",
           }}
         />
-
-        {/* Marketing voice — eyebrow + rotating tagline, pinned at the
-            bottom-LEFT of the aside (`me-auto` in RTL pushes the
-            block to the visual-left), where the gradient has already
-            faded the video to solid yellow → text is legible without
-            scrim. */}
-        <div className="relative z-10 space-y-3 max-w-md me-auto">
-          <span className="inline-block bg-black text-[#F8CB1E] px-3 py-1 rounded-full text-[11px] font-black tracking-wider">
-            QUICKFOOD · ניהול
-          </span>
-          <AuthRotatingTagline />
-        </div>
       </aside>
 
       {/* ─── Top bar — brand chip + cross-link, floats above everything ─── */}
