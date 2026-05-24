@@ -443,17 +443,7 @@
   color: var(--mute);
   text-transform: uppercase;
 }
-.trustPills { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.trustPill {
-  font-family: var(--font-rubik), "Rubik", sans-serif;
-  font-weight: 700;
-  font-size: 12.5px;
-  color: var(--ink);
-  background: var(--paper);
-  padding: 5px 11px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-}
+.trustPills { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 /* Brand logo chips in the trust strip. Visa/MC/AMEX/ApplePay already
    ship as little white cards; we render them naked at a uniform height.
    Bit ships as a dark-teal app-icon square — uses .trustLogoBit so it
@@ -472,7 +462,6 @@
 /* PayBox ships as a flat cyan rectangle — round the corners so it
    matches the rounded-card silhouette of Visa/MC/AMEX/Apple Pay. */
 .trustLogoPaybox { border-radius: 5px; }
-.trustLogoGroup { display: inline-flex; align-items: center; gap: 4px; }
 .trustDivider {
   width: 1px;
   height: 22px;

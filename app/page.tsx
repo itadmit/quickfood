@@ -61,23 +61,21 @@ function TrustStrip() {
           <div className={styles.trustGroup}>
             <span className={styles.trustLabel}>תשלום</span>
             <div className={styles.trustPills}>
-              <Image
-                src="/payments/bit.webp"
-                alt="Bit"
-                width={28}
-                height={28}
-                className={`${styles.trustLogo} ${styles.trustLogoBit}`}
-              />
-              <span className={styles.trustLogoGroup} aria-label="כרטיסי אשראי">
-                <Image src="/payments/visa.webp" alt="Visa" width={204} height={136} className={styles.trustLogo} />
-                <Image src="/payments/mastercard.webp" alt="Mastercard" width={204} height={132} className={styles.trustLogo} />
-                <Image src="/payments/amex.webp" alt="American Express" width={190} height={126} className={styles.trustLogo} />
-              </span>
+              <Image src="/payments/visa.webp" alt="Visa" width={204} height={136} className={styles.trustLogo} />
+              <Image src="/payments/mastercard.webp" alt="Mastercard" width={204} height={132} className={styles.trustLogo} />
+              <Image src="/payments/amex.webp" alt="American Express" width={190} height={126} className={styles.trustLogo} />
               <Image
                 src="/payments/apple-pay.webp"
                 alt="Apple Pay"
                 width={198}
                 height={136}
+                className={styles.trustLogo}
+              />
+              <Image
+                src="/payments/google-pay.webp"
+                alt="Google Pay"
+                width={1280}
+                height={610}
                 className={styles.trustLogo}
               />
               <Image
@@ -87,7 +85,13 @@ function TrustStrip() {
                 height={836}
                 className={`${styles.trustLogo} ${styles.trustLogoPaybox}`}
               />
-              <span className={styles.trustPill}>Google Pay</span>
+              <Image
+                src="/payments/bit.webp"
+                alt="Bit"
+                width={28}
+                height={28}
+                className={`${styles.trustLogo} ${styles.trustLogoBit}`}
+              />
             </div>
           </div>
           <div className={styles.trustDivider} aria-hidden />
