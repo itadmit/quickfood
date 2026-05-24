@@ -6,7 +6,6 @@ import { Sidebar } from "@/components/merchant/Sidebar";
 import { Topbar } from "@/components/merchant/Topbar";
 import { SidebarV2 } from "@/components/merchant/v2/SidebarV2";
 import { TopbarV2 } from "@/components/merchant/v2/TopbarV2";
-import { MobileMenuV2 } from "@/components/merchant/v2/MobileMenuV2";
 import { BillingSetupBanner } from "@/components/merchant/BillingSetupBanner";
 import { TrialGate } from "@/components/merchant/TrialGate";
 import { OnboardingWelcome } from "@/components/merchant/OnboardingWelcome";
@@ -88,6 +87,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <TopbarV2
             user={user}
             tenantSlug={tenant.slug}
+            tenant={{
+              name: tenant.name,
+              logoLetter: tenant.logoLetter,
+              branchName: tenant.branches[0]?.name ?? "",
+            }}
             branch={
               tenant.branches[0]
                 ? {
@@ -110,13 +114,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
               <div className="mx-auto w-full max-w-7xl">{children}</div>
             </main>
           </div>
-          <MobileMenuV2
-            tenant={{
-              name: tenant.name,
-              logoLetter: tenant.logoLetter,
-              branchName: tenant.branches[0]?.name ?? "",
-            }}
-          />
           <TrialGate
             trialExpired={trialExpired}
             hasPaymentMethod={hasPaymentMethod}

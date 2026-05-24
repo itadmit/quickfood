@@ -47,10 +47,9 @@ export function MobileMenuV2({ tenant }: Props) {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="פתח תפריט ניווט"
-        // z above the topbar (z-30), positioned to sit on the topbar's
-        // visual-start corner (RTL = right). `lg:hidden` hides on
-        // desktop where the sidebar takes over.
-        className="lg:hidden fixed top-3 inset-s-3 z-40 w-10 h-10 rounded-xl bg-black text-[#F8CB1E] border-2 border-black shadow-[0_2px_0_#000] grid place-items-center active:translate-y-px active:shadow-[0_1px_0_#000] transition"
+        // Rendered inline inside <TopbarV2>'s flex row. `lg:hidden`
+        // hides on desktop where the sidebar takes over.
+        className="lg:hidden inline-flex w-10 h-10 rounded-xl bg-black text-[#F8CB1E] border-2 border-black shadow-[0_2px_0_#000] place-items-center justify-center active:translate-y-px active:shadow-[0_1px_0_#000] transition shrink-0"
       >
         <span aria-hidden className="block space-y-[3px]">
           <span className="block w-4 h-[2px] bg-[#F8CB1E] rounded" />

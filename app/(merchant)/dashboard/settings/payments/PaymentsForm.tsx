@@ -447,14 +447,14 @@ function Toggle({
     >
       <span
         className={
-          "w-10 h-6 rounded-full relative transition " +
+          "w-12 h-7 rounded-full relative transition " +
           (checked ? "bg-(--qf-primary)" : "bg-qf-line-dash")
         }
       >
         <span
           className={
-            "absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition " +
-            (checked ? "inset-s-[18px]" : "inset-s-0.5")
+            "absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition " +
+            (checked ? "inset-s-[22px]" : "inset-s-0.5")
           }
         />
       </span>

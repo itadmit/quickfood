@@ -11,12 +11,16 @@ import {
   IcoImport,
 } from "@/components/shared/Icons";
 import { OPEN_WELCOME_EVENT } from "@/components/merchant/OnboardingWelcome";
+import { MobileMenuV2 } from "./MobileMenuV2";
 import { cn } from "@/lib/cn";
 
 interface Props {
   user: { name: string; email: string; role: string };
   branch: { id: string; status: "open" | "busy" | "closed" } | null;
   tenantSlug: string;
+  /** Brand info for the mobile drawer header — desktop sidebar already
+   *  shows this; on mobile the hamburger drawer carries it. */
+  tenant: { name: string; logoLetter: string; branchName: string };
   /** Render the "import to a fresh store" shortcut next to the bell.
    *  V2 layout passes true when the merchant has zero menu items. */
   showImportShortcut?: boolean;
@@ -60,7 +64,7 @@ const STATUS_SWATCH: Record<Status, string> = {
  * are real, not mocked. Wear the same bold black borders + hard
  * shadow as the rest of the v2 surface.
  */
-export function TopbarV2({ user, branch, tenantSlug, showImportShortcut }: Props) {
+export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut }: Props) {
   const router = useRouter();
   const [status, setStatus] = useState<Status>(branch?.status ?? "open");
   const [statusBusy, setStatusBusy] = useState(false);
@@ -121,11 +125,11 @@ export function TopbarV2({ user, branch, tenantSlug, showImportShortcut }: Props
       className="sticky top-0 z-30 border-b-2 border-black"
       style={{ backgroundColor: "#FFF2C9" }}
     >
-      {/* `ps-16` on mobile reserves room for the fixed hamburger button
-          rendered by <MobileMenuV2> at the topbar's inline-start corner
-          (top-3 inset-s-3 = 40x40 + 12px inset). lg: returns to normal
-          padding when the hamburger is hidden and the sidebar takes over. */}
-      <div className="h-16 ps-16 pe-3 lg:px-5 flex items-center gap-2 lg:gap-3">
+      <div className="h-16 px-3 lg:px-5 flex items-center gap-2 lg:gap-3">
+        {/* Hamburger lives inside the topbar so it sits ON the header
+            (not floating over the billing banner above it). lg:hidden. */}
+        <MobileMenuV2 tenant={tenant} />
+
         <div className="ms-auto" />
 
         {/* "Updating store" loader — appears to the visual-right of

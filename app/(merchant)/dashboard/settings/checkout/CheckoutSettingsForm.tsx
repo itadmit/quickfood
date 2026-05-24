@@ -190,14 +190,14 @@ function Toggle({
         aria-checked={value}
         onClick={() => onChange(!value)}
         className={cn(
-          "mt-0.5 relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition",
+          "mt-0.5 relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition",
           value ? "bg-(--qf-primary)" : "bg-qf-line",
         )}
       >
         <span
           className={cn(
-            "inline-block h-5 w-5 transform rounded-full bg-white shadow transition",
-            value ? "translate-x-[-1.25rem]" : "translate-x-[-0.125rem]",
+            "inline-block h-6 w-6 transform rounded-full bg-white shadow transition",
+            value ? "translate-x-[-1.375rem]" : "translate-x-[-0.125rem]",
           )}
         />
       </button>
