@@ -27,7 +27,7 @@ export function AuthEmailField(props: BaseProps) {
         onChange={(e) => props.onChange(e.target.value)}
         placeholder={props.placeholder}
         dir="ltr"
-        className="flex-1 min-w-0 bg-transparent outline-none py-3 text-sm placeholder:text-qf-mute"
+        className="flex-1 min-w-0 bg-transparent outline-none py-3 text-sm font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
       />
     </FieldShell>
   );
@@ -44,7 +44,7 @@ export function AuthPasswordField(props: BaseProps) {
           type="button"
           onClick={() => setVisible((v) => !v)}
           aria-label={visible ? "הסתר סיסמה" : "הצג סיסמה"}
-          className="text-qf-mute hover:text-qf-ink p-1 -mx-1"
+          className="text-black/55 hover:text-black p-1 -mx-1"
         >
           {visible ? <EyeOffIcon /> : <EyeIcon />}
         </button>
@@ -59,7 +59,7 @@ export function AuthPasswordField(props: BaseProps) {
         onChange={(e) => props.onChange(e.target.value)}
         placeholder={props.placeholder}
         dir="ltr"
-        className="flex-1 min-w-0 bg-transparent outline-none py-3 text-sm placeholder:text-qf-mute font-mono tracking-wide"
+        className="flex-1 min-w-0 bg-transparent outline-none py-3 text-sm font-bold text-black placeholder:text-black/35 placeholder:font-normal font-mono tracking-widest"
       />
     </FieldShell>
   );
@@ -82,20 +82,20 @@ function FieldShell({
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between">
-        <label htmlFor={id} className="text-sm font-medium">
+        <label htmlFor={id} className="text-xs font-black tracking-wider text-black uppercase">
           {label}
         </label>
         {actionRight}
       </div>
       <div
         className={cn(
-          "flex items-center gap-2 bg-white border border-qf-line-dash rounded-xl px-3 transition",
-          "focus-within:border-qf-ink focus-within:ring-2 focus-within:ring-qf-ink/10",
+          "flex items-center gap-2 bg-[#FFFBEC] border-2 border-black rounded-xl px-3 transition shadow-[0_2px_0_#000]",
+          "focus-within:bg-white focus-within:shadow-[0_3px_0_#000] focus-within:-translate-y-px",
         )}
       >
         {children}
         {iconLeft && <div>{iconLeft}</div>}
-        <div className="text-qf-mute shrink-0">{iconSide}</div>
+        <div className="text-black/55 shrink-0">{iconSide}</div>
       </div>
     </div>
   );

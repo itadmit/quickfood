@@ -36,13 +36,13 @@ export default function ForgotPasswordForm() {
   if (done) {
     return (
       <div className="space-y-5">
-        <div className="bg-qf-green-soft border border-(--qf-primary)/30 text-qf-green-deep rounded-2xl px-4 py-4 text-sm">
+        <div className="bg-[#FFF2C9] border-2 border-black rounded-2xl px-4 py-4 text-sm text-black font-medium leading-relaxed shadow-[0_3px_0_#000]">
           אם הכתובת רשומה אצלנו, שלחנו אליה קישור לאיפוס סיסמה.
           הקישור תקף ל-30 דקות. בדקו גם את תיבת הספאם.
         </div>
         <Link
           href="/dashboard/login"
-          className="block w-full text-center py-3 rounded-xl bg-qf-ink hover:bg-black text-white text-sm font-medium transition"
+          className="block w-full text-center py-3.5 rounded-xl bg-[#F8CB1E] hover:bg-[#ffd84a] text-black font-black text-base border-2 border-black shadow-[0_4px_0_#000] hover:shadow-[0_5px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition"
         >
           חזרה להתחברות
         </Link>
@@ -63,7 +63,7 @@ export default function ForgotPasswordForm() {
       />
 
       {error && (
-        <div className="bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm rounded-xl px-3 py-2">
+        <div className="bg-[#FFE2DC] border-2 border-black text-black text-sm font-bold rounded-xl px-3 py-2.5 shadow-[0_2px_0_#000]">
           {error}
         </div>
       )}
@@ -71,7 +71,7 @@ export default function ForgotPasswordForm() {
       <button
         type="submit"
         disabled={busy || !email}
-        className="w-full py-3 rounded-xl bg-qf-ink hover:bg-black text-white font-medium transition disabled:opacity-70 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+        className="w-full py-3.5 rounded-xl bg-[#F8CB1E] hover:bg-[#ffd84a] text-black font-black text-base border-2 border-black shadow-[0_4px_0_#000] hover:shadow-[0_5px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
       >
         {busy ? (
           <>
@@ -81,14 +81,17 @@ export default function ForgotPasswordForm() {
         ) : (
           <>
             <span>שלח קישור איפוס</span>
-            <IcoArrowLeft c="currentColor" s={14} />
+            <IcoArrowLeft c="currentColor" s={16} />
           </>
         )}
       </button>
 
-      <p className="text-xs text-qf-mute text-center">
+      <p className="text-xs text-black/60 text-center">
         נזכרת?{" "}
-        <Link href="/dashboard/login" className="text-qf-ink underline">
+        <Link
+          href="/dashboard/login"
+          className="text-black font-black underline underline-offset-2"
+        >
           חזרה להתחברות
         </Link>
       </p>

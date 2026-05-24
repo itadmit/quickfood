@@ -62,7 +62,7 @@ export default function LoginForm() {
         actionRight={
           <Link
             href="/dashboard/forgot-password"
-            className="text-xs text-qf-mute hover:text-qf-ink"
+            className="text-xs font-bold text-black/60 hover:text-black underline underline-offset-2 decoration-black/40 hover:decoration-black"
           >
             שכחת סיסמה?
           </Link>
@@ -70,7 +70,7 @@ export default function LoginForm() {
       />
 
       {error && (
-        <div className="bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm rounded-xl px-3 py-2">
+        <div className="bg-[#FFE2DC] border-2 border-black text-black text-sm font-bold rounded-xl px-3 py-2.5 shadow-[0_2px_0_#000]">
           {error}
         </div>
       )}
@@ -78,7 +78,7 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={busy}
-        className="w-full py-3 rounded-xl bg-qf-ink hover:bg-black text-white font-medium transition disabled:opacity-70 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+        className="w-full py-3.5 rounded-xl bg-[#F8CB1E] hover:bg-[#ffd84a] text-black font-black text-base border-2 border-black shadow-[0_4px_0_#000] hover:shadow-[0_5px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
       >
         {busy ? (
           <>
@@ -88,34 +88,41 @@ export default function LoginForm() {
         ) : (
           <>
             <span>התחבר</span>
-            <IcoArrowLeft c="currentColor" s={14} />
+            <IcoArrowLeft c="currentColor" s={16} />
           </>
         )}
       </button>
 
       <div className="relative flex items-center gap-3 py-1">
-        <div className="flex-1 h-px bg-qf-line-dash" />
-        <span className="text-xs text-qf-mute">או</span>
-        <div className="flex-1 h-px bg-qf-line-dash" />
+        <div className="flex-1 h-[2px] bg-black/15" />
+        <span className="text-xs font-bold text-black/55 tracking-wider">או</span>
+        <div className="flex-1 h-[2px] bg-black/15" />
       </div>
 
       <Link
         href="/signup"
-        className="block w-full text-center py-3 rounded-xl bg-white border border-qf-line-dash hover:border-qf-ink text-sm font-medium transition"
+        className="block w-full text-center py-3 rounded-xl bg-white border-2 border-black hover:bg-[#FFFBEC] text-sm font-bold text-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition"
       >
         צור חשבון חדש
       </Link>
 
-      <p className="text-[10px] text-qf-mute text-center">
+      <p className="text-[10px] text-black/55 text-center leading-relaxed">
         בהמשך אתה מסכים ל-
-        <a href="#" className="underline">תנאי השימוש</a>
-        {" "}ו-{" "}
-        <a href="#" className="underline">מדיניות הפרטיות</a>
+        <a href="#" className="underline font-bold text-black/70">
+          תנאי השימוש
+        </a>{" "}
+        ו-{" "}
+        <a href="#" className="underline font-bold text-black/70">
+          מדיניות הפרטיות
+        </a>
       </p>
 
-      <p className="text-[10px] text-qf-mute/70 text-center">
-        Seed demo: owner@pizzeria-verde.local · verde1234
-      </p>
+      <div className="rounded-lg bg-black/[0.04] border border-dashed border-black/20 px-3 py-2 text-center">
+        <p className="text-[10px] text-black/55">
+          <span className="font-black tracking-wider text-black/70">DEMO ·</span>{" "}
+          owner@pizzeria-verde.local · verde1234
+        </p>
+      </div>
     </form>
   );
 }
