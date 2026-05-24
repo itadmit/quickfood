@@ -8,7 +8,7 @@ import { BusinessTypeSelect } from "@/components/shared/BusinessTypeSelect";
 import { ImageUploader } from "@/components/shared/ImageUploader";
 import { SmartImg } from "@/components/shared/SmartImg";
 
-import { IcoCheck, IcoCopy, IcoWhatsApp, IcoTrash } from "@/components/shared/Icons";
+import { IcoCheck, IcoCopy, IcoWhatsApp, IcoTrash, IcoQrCode, IcoClose } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 
 interface Tenant {
@@ -22,6 +22,7 @@ interface Tenant {
   about: string | null;
   slug: string;
   coverImage: string | null;
+  customDomain: string | null;
 }
 
 /**
@@ -36,7 +37,15 @@ function deriveLogoLetter(name: string): string {
   return Array.from(trimmed).slice(0, 2).join("");
 }
 
-export function BrandingForm({ tenant }: { tenant: Tenant }) {
+export function BrandingForm({
+  tenant,
+  storefrontUrl,
+  qrDataUrl,
+}: {
+  tenant: Tenant;
+  storefrontUrl: string;
+  qrDataUrl: string;
+}) {
   const router = useRouter();
   const [name, setName] = useState(tenant.name);
   const [themeId, setThemeId] = useState<ThemeId>(tenant.themeId);
@@ -269,34 +278,44 @@ export function BrandingForm({ tenant }: { tenant: Tenant }) {
           <div className="text-lg font-semibold">{name}</div>
           {cuisineType && <div className="text-sm opacity-80">{cuisineType}</div>}
         </div>
-        <ShopShareActions slug={tenant.slug} name={name} />
+        <ShopShareActions
+          slug={tenant.slug}
+          name={name}
+          storefrontUrl={storefrontUrl}
+          qrDataUrl={qrDataUrl}
+        />
       </aside>
     </div>
   );
 }
 
 /**
- * Three actions for the merchant's public storefront URL:
+ * Four actions for the merchant's public storefront URL:
  *  • view shop (opens in a new tab — primary button)
  *  • copy URL (icon, briefly flips to a check on success)
+ *  • QR code (icon, opens a modal with the QR image + download button)
  *  • share on WhatsApp (icon, opens wa.me with a pre-filled message)
  *
- * Uses NEXT_PUBLIC_APP_URL when available so the copied/shared link works
- * outside the dashboard preview tab; falls back to window.location.origin.
+ * The storefront URL + QR data URL are generated server-side in
+ * page.tsx — they account for the tenant's customDomain if one is set.
  */
-function ShopShareActions({ slug, name }: { slug: string; name: string }) {
+function ShopShareActions({
+  slug,
+  name,
+  storefrontUrl,
+  qrDataUrl,
+}: {
+  slug: string;
+  name: string;
+  storefrontUrl: string;
+  qrDataUrl: string;
+}) {
   const [copied, setCopied] = useState(false);
-
-  function shopUrl(): string {
-    const base =
-      (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "") ||
-      (typeof window !== "undefined" ? window.location.origin : "");
-    return `${base}/${slug}`;
-  }
+  const [qrOpen, setQrOpen] = useState(false);
 
   async function copy() {
     try {
-      await navigator.clipboard.writeText(shopUrl());
+      await navigator.clipboard.writeText(storefrontUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
@@ -305,42 +324,135 @@ function ShopShareActions({ slug, name }: { slug: string; name: string }) {
   }
 
   function shareWhatsApp() {
-    const text = `${name} — להזמנות אונליין: ${shopUrl()}`;
+    const text = `${name} — להזמנות אונליין: ${storefrontUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   }
 
   return (
-    <div className="flex items-stretch gap-2">
-      <a
-        href={`/${slug}`}
-        target="_blank"
-        rel="noreferrer"
-        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium transition"
-      >
-        צפה בחנות
-      </a>
-      <button
-        type="button"
-        onClick={copy}
-        aria-label="העתק כתובת אתר"
-        title={copied ? "הועתק" : "העתק כתובת אתר"}
-        className="w-10 h-10 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft grid place-items-center text-qf-ink2"
-      >
-        {copied ? (
-          <IcoCheck c="currentColor" s={16} />
-        ) : (
-          <IcoCopy c="currentColor" s={16} />
-        )}
-      </button>
-      <button
-        type="button"
-        onClick={shareWhatsApp}
-        aria-label="שתף בוואטסאפ"
-        title="שתף בוואטסאפ"
-        className="w-10 h-10 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft grid place-items-center"
-      >
-        <IcoWhatsApp s={18} />
-      </button>
+    <>
+      <div className="flex items-stretch gap-2">
+        <a
+          href={`/${slug}`}
+          target="_blank"
+          rel="noreferrer"
+          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium transition"
+        >
+          צפה בחנות
+        </a>
+        <button
+          type="button"
+          onClick={copy}
+          aria-label="העתק כתובת אתר"
+          title={copied ? "הועתק" : "העתק כתובת אתר"}
+          className="w-10 h-10 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft grid place-items-center text-qf-ink2"
+        >
+          {copied ? (
+            <IcoCheck c="currentColor" s={16} />
+          ) : (
+            <IcoCopy c="currentColor" s={16} />
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={() => setQrOpen(true)}
+          aria-label="QR code לחנות"
+          title="QR code לחנות"
+          className="w-10 h-10 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft grid place-items-center text-qf-ink2"
+        >
+          <IcoQrCode c="currentColor" s={18} />
+        </button>
+        <button
+          type="button"
+          onClick={shareWhatsApp}
+          aria-label="שתף בוואטסאפ"
+          title="שתף בוואטסאפ"
+          className="w-10 h-10 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft grid place-items-center"
+        >
+          <IcoWhatsApp s={18} />
+        </button>
+      </div>
+
+      {qrOpen && (
+        <QrModal
+          name={name}
+          slug={slug}
+          storefrontUrl={storefrontUrl}
+          qrDataUrl={qrDataUrl}
+          onClose={() => setQrOpen(false)}
+        />
+      )}
+    </>
+  );
+}
+
+/**
+ * Modal preview of the storefront QR code. Server-generated PNG data
+ * URL means no client deps and the download button is a plain anchor
+ * with `download` — works offline, no extra request.
+ */
+function QrModal({
+  name,
+  slug,
+  storefrontUrl,
+  qrDataUrl,
+  onClose,
+}: {
+  name: string;
+  slug: string;
+  storefrontUrl: string;
+  qrDataUrl: string;
+  onClose: () => void;
+}) {
+  const downloadName = `${slug || "quickfood"}-qr.png`;
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="relative w-full max-w-sm bg-white rounded-3xl border border-qf-line p-6 space-y-4">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="סגור"
+          className="absolute top-3 inset-s-3 w-9 h-9 rounded-full grid place-items-center bg-qf-line-soft hover:bg-qf-line transition"
+        >
+          <IcoClose c="currentColor" s={14} />
+        </button>
+
+        <div className="text-center space-y-1 pt-1">
+          <h3 className="font-bold text-lg">QR code לחנות</h3>
+          <p className="text-xs text-qf-ink2">
+            סרוק בטלפון או הדפס על פלאיירים, תפריטים ושלטים.
+          </p>
+        </div>
+
+        <div className="bg-white border border-qf-line rounded-2xl p-3 grid place-items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={qrDataUrl}
+            alt={`QR code לחנות ${name}`}
+            width={320}
+            height={320}
+            className="w-full max-w-[320px] h-auto"
+          />
+        </div>
+
+        <div className="text-center text-xs text-qf-ink2 break-all" dir="ltr">
+          {storefrontUrl}
+        </div>
+
+        <a
+          href={qrDataUrl}
+          download={downloadName}
+          className="block w-full text-center px-3 py-2.5 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-bold transition"
+        >
+          הורד PNG
+        </a>
+      </div>
     </div>
   );
 }

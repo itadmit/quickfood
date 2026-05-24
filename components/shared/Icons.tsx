@@ -444,6 +444,23 @@ export const IcoCopy = ({ c = "currentColor", s = 16, className }: IconProps) =>
   </svg>
 );
 
+/** QR-code glyph — three finder squares + a few data modules so it
+   reads as "QR" at small sizes without the visual noise of a real code. */
+export const IcoQrCode = ({ c = "#11231a", s = 18, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    <rect x="3" y="3" width="7" height="7" rx="1.2" stroke={c} strokeWidth="1.7" />
+    <rect x="14" y="3" width="7" height="7" rx="1.2" stroke={c} strokeWidth="1.7" />
+    <rect x="3" y="14" width="7" height="7" rx="1.2" stroke={c} strokeWidth="1.7" />
+    <rect x="5.5" y="5.5" width="2" height="2" fill={c} />
+    <rect x="16.5" y="5.5" width="2" height="2" fill={c} />
+    <rect x="5.5" y="16.5" width="2" height="2" fill={c} />
+    <rect x="14" y="14" width="2.5" height="2.5" fill={c} />
+    <rect x="18" y="14" width="2.5" height="2.5" fill={c} />
+    <rect x="14" y="18" width="2.5" height="2.5" fill={c} />
+    <rect x="18" y="18" width="2.5" height="2.5" fill={c} />
+  </svg>
+);
+
 /** WhatsApp brand glyph — single path, phone receiver as negative
    space inside the chat-bubble. Source: Simple Icons (CC0). */
 export const IcoWhatsApp = ({ s = 16, className }: IconProps) => (
