@@ -4,7 +4,7 @@ import { AuthShell } from "@/components/shared/AuthShell";
 export const metadata = {
   title: "הרשמה — QuickFood",
   description:
-    "פתח את המסעדה שלך אונליין בפחות מ-10 דקות. בלי אגרגטור, בלי עמלות פר הזמנה.",
+    "פתח את האתר של המסעדה שלך בפחות מ-5 דקות. לצד וולט - הלקוחות הקבועים שלך מזמינים ישירות אצלך, בלי 30% עמלה על כל הזמנה חוזרת.",
 };
 
 export default function SignupPage() {
