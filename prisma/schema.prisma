@@ -223,6 +223,11 @@ model Tenant {
   // spots that don't want pre-orders piling up in the queue.
   scheduledOrdersEnabled Boolean @default(true) @map("scheduled_orders_enabled")
 
+  // Stamped when the merchant clicks any choice on the first-login
+  // welcome overlay (start-from-scratch, import-from-wolt, or "later").
+  // NULL = overlay hasn't been seen yet → show it on next dashboard visit.
+  onboardingDismissedAt DateTime? @map("onboarding_dismissed_at")
+
   // Reviews configuration
   reviewsEnabled      Boolean       @default(true) @map("reviews_enabled")
   reviewsPublic       Boolean       @default(true) @map("reviews_public")

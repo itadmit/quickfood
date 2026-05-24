@@ -656,6 +656,144 @@
   max-width: 56ch; font-weight: 400;
 }
 
+/* ─── GROW PARTNER ───────────────────────────────────────────
+   Spotlight card for the Grow payments partnership. Cream-on-paper
+   with Grow's purple as accent — visually distinct from the wolt
+   feature cards above (which are white-on-cream) so it reads as a
+   separate "partnership announcement", not another feature. */
+.growCard {
+  margin-top: 48px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  padding: 36px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  position: relative;
+  overflow: hidden;
+}
+.growCard::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #6E39EE 0%, #9B6BFF 60%, transparent 100%);
+}
+.growBrandRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+.growBrand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.growMark { width: 38px; height: auto; flex-shrink: 0; }
+.growBrandName {
+  font-family: var(--font-rubik), "Rubik", sans-serif;
+  font-weight: 900;
+  font-size: 28px;
+  color: #6E39EE;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.growBrandTag {
+  font-size: 12.5px;
+  color: var(--mute);
+  margin-top: 4px;
+  letter-spacing: 0.02em;
+}
+.growLearnLink {
+  font-size: 13px;
+  font-weight: 700;
+  color: #6E39EE;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.growLearnLink:hover { text-decoration: underline; text-underline-offset: 3px; }
+.growSplit {
+  display: grid;
+  grid-template-columns: minmax(0, 280px) minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
+}
+.growPrice {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.growPriceCell { }
+.growPriceN {
+  font-family: var(--font-rubik), "Rubik", sans-serif;
+  font-weight: 900;
+  font-size: clamp(48px, 6vw, 64px);
+  line-height: 1;
+  color: var(--ink);
+  letter-spacing: -0.04em;
+}
+.growPriceL {
+  font-size: 13px;
+  color: var(--mute);
+  margin-top: 6px;
+  line-height: 1.45;
+}
+.growPriceDivider {
+  height: 1px;
+  background: var(--line);
+  margin: 4px 0;
+}
+.growPriceNote {
+  font-size: 12px;
+  color: var(--mute);
+  line-height: 1.55;
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+}
+.growList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 18px;
+}
+.growList li { display: flex; flex-direction: column; gap: 3px; }
+.growList strong {
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--ink);
+}
+.growList span {
+  font-size: 14.5px;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.growFootnote {
+  padding: 16px 20px;
+  background: var(--cream-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  font-size: 13.5px;
+  color: var(--ink-2);
+  line-height: 1.65;
+}
+.growFootnote strong { font-weight: 800; color: var(--ink); }
+@media (max-width: 900px) {
+  .growCard { padding: 28px 24px; gap: 22px; }
+  .growBrandRow { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .growSplit { grid-template-columns: 1fr; gap: 28px; }
+  .growPrice { flex-direction: row; gap: 24px; align-items: flex-start; flex-wrap: wrap; }
+  .growPriceCell { flex: 1 1 calc(50% - 12px); min-width: 120px; }
+  .growPriceDivider { display: none; }
+  .growPriceNote { flex-basis: 100%; }
+}
+
 /* ─── PROBLEM ────────────────────────────────────────────── */
 /* Three pastel cards instead of the old black block — same palette
    family as the Wolt-style stacked feature section. */

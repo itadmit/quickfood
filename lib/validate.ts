@@ -215,6 +215,9 @@ export const TenantPatchSchema = z.object({
   vat_number: z.string().max(20).optional(),
   checkout_show_tracking: z.boolean().optional(),
   scheduled_orders_enabled: z.boolean().optional(),
+  // Only setter-shape we accept: `true` = stamp now, anything else ignored.
+  // Cleared via the DB if a tenant ever needs to be re-shown.
+  onboarding_dismissed: z.literal(true).optional(),
 });
 
 export const BranchInputSchema = z.object({

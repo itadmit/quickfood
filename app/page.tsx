@@ -41,6 +41,7 @@ export default function LandingPage() {
       <HowItWorks />
       <Math />
       <Features />
+      <GrowPartner />
       <Pricing />
       <Faq />
       <FinalCta />
@@ -545,6 +546,97 @@ function MiniCell({
       <h4 className={styles.miniCellTitle}>{title}</h4>
       <p className={styles.miniCellBody}>{body}</p>
     </div>
+  );
+}
+
+/* ─── GROW PARTNER ──────────────────────────────────────────
+   Preferred-provider announcement for Grow Payments. Frames the deal
+   as a partnership benefit (better terms than going direct) while
+   making it explicit that Grow is a third party and any other
+   processor still works — we don't lock you in. */
+function GrowPartner() {
+  return (
+    <section id="grow" className={styles.section}>
+      <div className={styles.container}>
+        <div className={styles.sectionEyebrow}>חדש · ספק סליקה מועדף</div>
+        <h2 className={styles.sectionTitle}>
+          סליקה דרך Grow. <em>תנאים שלא תקבל לבד.</em>
+        </h2>
+        <p className={styles.sectionLede}>
+          חברת הסליקה <strong>Grow</strong> מנהלת תשלומים ל-100,000 עסקים בישראל. דרך QuickFood אתה מקבל תנאים מיוחדים — שלא יציעו לך אם תפנה אליהם ישירות.
+        </p>
+
+        <div className={styles.growCard}>
+          <div className={styles.growBrandRow}>
+            <div className={styles.growBrand}>
+              <Image
+                src="/brands/grow-mark.svg"
+                alt="Grow"
+                width={76}
+                height={98}
+                className={styles.growMark}
+              />
+              <div>
+                <div className={styles.growBrandName}>Grow</div>
+                <div className={styles.growBrandTag}>סליקה · חשבוניות · בנקאות עסקית</div>
+              </div>
+            </div>
+            <a
+              href="https://grow.business/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.growLearnLink}
+            >
+              למידע על Grow <IcoArrowLeft c="currentColor" s={12} />
+            </a>
+          </div>
+
+          <div className={styles.growSplit}>
+            <div className={styles.growPrice}>
+              <div className={styles.growPriceCell}>
+                <div className={styles.growPriceN}>1%</div>
+                <div className={styles.growPriceL}>עמלת סליקה לכל הזמנה</div>
+              </div>
+              <div className={styles.growPriceDivider} aria-hidden />
+              <div className={styles.growPriceCell}>
+                <div className={styles.growPriceN}>₪69</div>
+                <div className={styles.growPriceL}>חודשי. לא תלוי במחזור.</div>
+              </div>
+              <div className={styles.growPriceNote}>
+                התעריף משולם ישירות ל-Grow, לא ל-QuickFood. שני התעריפים מצטרפים לעמלות הפלטפורמה שלנו (₪299 / 0.5%).
+              </div>
+            </div>
+
+            <ul className={styles.growList}>
+              <li>
+                <strong>Bit, פייבוקס, Apple Pay, Google Pay + אשראי</strong>
+                <span>כל אמצעי התשלום בצ׳קאוט אחד, בתוך החנות שלך — בלי הפניות לדפי תשלום חיצוניים.</span>
+              </li>
+              <li>
+                <strong>חיבור בקליק אחד</strong>
+                <span>נרשמים ל-Grow מתוך הדשבורד של QuickFood. ההתאמה הראשונית מסתיימת תוך דקות. מתחיל לסלוק היום למחר.</span>
+              </li>
+              <li>
+                <strong>חשבוניות מס אוטומטיות</strong>
+                <span>על כל הזמנה Grow מנפיקה חשבונית מס תקנית, שולחת ללקוח ומגישה לרשויות המס. אתה לא נוגע בנייר ולא משלם להנהלת חשבונות עבור זה.</span>
+              </li>
+              <li>
+                <strong>חיובים, זיכויים, מעקב מלא</strong>
+                <span>החזר ללקוח, ביטול חיוב, פירוט תנועות וכספים בדרך — הכל מתוך הדשבורד שלך, בלי להתחבר למערכת חיצונית.</span>
+              </li>
+              <li>
+                <strong>כסף בחשבון תוך 24 שעות</strong>
+                <span>יום עסקים אחד מהזמנה ועד שהכסף בבנק שלך. בלי תור, בלי חודש המתנה, בלי תקרה יומית.</span>
+              </li>
+            </ul>
+          </div>
+
+          <div className={styles.growFootnote}>
+            <strong>שקיפות מלאה:</strong> Grow היא חברת סליקה עצמאית — לא חברת-בת ולא קוד שלנו. אנחנו ממליצים עליה כספק מועדף כי השגנו ללקוחות QuickFood תנאים טובים מהממוצע בשוק. אבל אתה לא נעול: <strong>אפשר לחבר כל חברת סליקה אחרת</strong> שעובדת איתך — Tranzila, CardCom, Pelecard, Isracard וכל מי שתומך ב-API סטנדרטי. הבחירה שלך.
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 

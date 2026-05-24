@@ -32,6 +32,7 @@ export const PATCH = handler(async (req: Request) => {
       vatNumber: body.vat_number,
       checkoutShowTracking: body.checkout_show_tracking,
       scheduledOrdersEnabled: body.scheduled_orders_enabled,
+      onboardingDismissedAt: body.onboarding_dismissed ? new Date() : undefined,
     },
   });
   return apiJson({

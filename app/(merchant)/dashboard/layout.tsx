@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/merchant/Sidebar";
 import { Topbar } from "@/components/merchant/Topbar";
 import { BillingSetupBanner } from "@/components/merchant/BillingSetupBanner";
 import { TrialGate } from "@/components/merchant/TrialGate";
+import { OnboardingWelcome } from "@/components/merchant/OnboardingWelcome";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -75,6 +76,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
           trialExpired={trialExpired}
           hasPaymentMethod={hasPaymentMethod}
         />
+        {!tenant.onboardingDismissedAt && (
+          <OnboardingWelcome merchantName={user.name} />
+        )}
       </div>
     </ThemeProvider>
   );
