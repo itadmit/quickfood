@@ -57,6 +57,73 @@
   --qf-line: #cfe8d8;
 }
 
+/* ─── Dashboard V2 skin (bold yellow + black, landing-page brand) ───
+   Scoped repaint of the design tokens. Every legacy utility
+   (bg-qf-bg-dash, border-qf-line-dash, text-qf-ink, …) compiles to
+   `var(--color-qf-*)`, so overriding the variables inside .dash-v2
+   recolors every inner dashboard page without touching their JSX.
+
+   Surfaces stay light (cream / white) but lines turn black, ink turns
+   black, and the green brand swaps to the bold yellow. Anything
+   bespoke under components/merchant/v2/* uses hard-coded brand hex
+   values already and is unaffected by this block. */
+.dash-v2 {
+  /* Brand: forest green → signal yellow */
+  --color-qf-green: #f8cb1e;
+  --color-qf-green-deep: #d4ad19;
+  --color-qf-green-soft: #fff2c9;
+  --color-qf-green-line: #000000;
+  --color-qf-mint: #fff2c9;
+
+  /* Surfaces */
+  --color-qf-bg: #fffbec;
+  --color-qf-bg-dash: #fffbec;
+  --color-qf-card: #ffffff;
+  --color-qf-warm: #fff2c9;
+  --color-qf-warm-dash: #fff2c9;
+
+  /* Ink */
+  --color-qf-ink: #000000;
+  --color-qf-ink2: #1a1a1a;
+  --color-qf-mute: rgba(0, 0, 0, 0.6);
+
+  /* Lines */
+  --color-qf-line: #000000;
+  --color-qf-line-dash: #000000;
+  --color-qf-line-soft: #ffe8a3;
+
+  /* Tenant-themable knobs — keep the brand button yellow/black even
+     when ThemeProvider would otherwise paint them in a tenant color. */
+  --qf-primary: #f8cb1e;
+  --qf-deep: #d4ad19;
+  --qf-soft: #fff2c9;
+  --qf-line: #000000;
+}
+
+/* Card uplift — the standard "white card with hairline" pattern
+   (rounded-2xl + bg-white) gets the V2 thick-black-border +
+   hard-offset shadow treatment. Limited to the dashboard scope and to
+   the common 2xl rounding so we don't accidentally retouch modals,
+   pills, or small chips that share bg-white. */
+.dash-v2 .bg-white.rounded-2xl,
+.dash-v2 .bg-qf-card.rounded-2xl {
+  border: 2px solid #000;
+  box-shadow: 0 3px 0 #000;
+}
+
+/* Inputs / selects inside the V2 dashboard read better with a true
+   black border instead of the converted gray. */
+.dash-v2 input,
+.dash-v2 select,
+.dash-v2 textarea {
+  border-color: #000;
+}
+
+/* Focus ring stays yellow on the V2 skin. */
+.dash-v2 :focus-visible {
+  outline-color: #000;
+}
+
 /* ─── Base ───────────────────────────────────────────────────── */
 html {
   font-family: var(--font-sans);

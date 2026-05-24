@@ -60,8 +60,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <ThemeProvider themeId={tenant.themeId}>
       {isV2 ? (
+        // `dash-v2` is the hook that retunes the design tokens (qf-bg,
+        // qf-ink, qf-line, qf-green → cream / black / yellow) for every
+        // descendant, so inner pages built with the legacy classes pick
+        // up the V2 aesthetic without code changes. The dot pattern +
+        // cream backdrop are inline because they reach through the dot
+        // grid behind the cards.
         <div
-          className="min-h-screen text-black flex flex-col overflow-x-hidden"
+          className="dash-v2 min-h-screen text-black flex flex-col overflow-x-hidden"
           style={{
             backgroundColor: "#FFFBEC",
             backgroundImage:
