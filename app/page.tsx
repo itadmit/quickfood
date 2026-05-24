@@ -15,13 +15,14 @@ import {
   Pizza,
   MapPin,
   Heart,
+  Navigation,
   type LucideIcon,
 } from "lucide-react";
 
 // Tight map for the WoltCard slots — extend here when a new section
 // needs an icon. Lucide gives consistent stroke + geometry which the
 // old hand-rolled FeatureIcon set didn't.
-type IconName = "store" | "flame" | "wallet" | "star" | "chat" | "chef" | "pizza" | "pin" | "heart";
+type IconName = "store" | "flame" | "wallet" | "star" | "chat" | "chef" | "pizza" | "pin" | "heart" | "navigation";
 const ICONS: Record<IconName, LucideIcon> = {
   store: Store,
   flame: Flame,
@@ -32,6 +33,7 @@ const ICONS: Record<IconName, LucideIcon> = {
   pizza: Pizza,
   pin: MapPin,
   heart: Heart,
+  navigation: Navigation,
 };
 import ItemCustomizerMockup from "./_components/ItemCustomizerMockup";
 import ScrollAnimations from "./_components/ScrollAnimations";
@@ -474,11 +476,19 @@ function Features() {
             body="אישור הזמנה, ׳יצא לדרך׳, בקשת ביקורת - יוצאים אוטומטית מהמספר של החנות שלך דרך iBot Chat. חבילות מ-₪39 לאלפי הודעות. מייל חינם, ללא הגבלה."
             icon="chat"
           />
+
+          <WoltCard
+            tone="mist"
+            layout="decor-end"
+            tag="שליחים"
+            heading="שליחים משלך. מסלול חי על המפה ללקוח."
+            body="יוצרים את השליחים שלכם במערכת, מקצים להם הזמנות (אוטומטית לפי אזור או ידני בלחיצה), וכל שליח מקבל אפליקציה משלו עם המסלול וההזמנות הפתוחות. הלקוח רואה את השליח על המפה בזמן אמת מבוסס GPS - עם זמן הגעה מתעדכן, בלי לרענן. אזורי משלוח עם מחיר וזמן נפרדים לכל שכונה, היסטוריית משלוחים מלאה, ושיוך/ניתוק שליח בקליק."
+            icon="navigation"
+          />
         </div>
 
         <div className={styles.miniGrid}>
           <MiniCell tag="סניפים" title="מולטי-סניף" body="שעות, דמי משלוח, עמלת שירות ומינימום הזמנה נפרדים לכל סניף." />
-          <MiniCell tag="שליחים" title="ניהול שליחים שלך" body="אזורי משלוח עם זמן משלוח לכל אזור, הקצאה אוטומטית או ידנית, היסטוריית משלוחים." />
           <MiniCell tag="קופונים" title="קופונים חכמים" body="לפי קטגוריה, סכום מינימום, מגבלת שימוש פר-לקוח, חלון תאריכים." />
           <MiniCell tag="מעקב" title="מעקב הזמנה חי" body="עדכון בזמן אמת ללקוח - בלי לרענן את המסך. אופציונלי לפי בחירה." />
           <MiniCell tag="תזמון" title="הזמנות מראש" body="הלקוח בוחר שעת מסירה או איסוף ספציפית - 'תאסוף לי בשמונה' - במקום 'בהקדם האפשרי'. אופציונלי, נשלט מהדשבורד." />
