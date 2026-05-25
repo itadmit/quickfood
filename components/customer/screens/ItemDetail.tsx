@@ -76,7 +76,7 @@ export function ItemDetail({
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
   const [flashGroupId, setFlashGroupId] = useState<string | null>(null);
-  const [added, setAdded] = useState(false);
+  const [addPhase, setAddPhase] = useState<"idle" | "loading" | "done">("idle");
 
   // Sticky top bar appears when the hero scrolls out of view
   const heroSentinelRef = useRef<HTMLDivElement | null>(null);
@@ -176,15 +176,15 @@ export function ItemDetail({
       options: selectedOpts,
       notes: notes || null,
     });
+    setAddPhase("loading");
+    window.setTimeout(() => setAddPhase("done"), 380);
     if (inModal) {
-      setAdded(true);
-      window.setTimeout(() => onClose?.(), 700);
+      window.setTimeout(() => onClose?.(), 780);
     } else {
-      setAdded(true);
       window.setTimeout(() => {
         window.scrollTo(0, 0);
         router.push(`/s/${tenantSlug}/cart`);
-      }, 700);
+      }, 780);
     }
   }
 
@@ -426,26 +426,30 @@ export function ItemDetail({
           <button
             type="button"
             onClick={addToCart}
-            disabled={added}
+            disabled={addPhase !== "idle"}
             className={cn(
               "flex-1 rounded-2xl px-5 h-14 text-base font-bold flex items-center justify-between transition-all duration-300 active:scale-[0.98]",
-              added
-                ? "bg-qf-green-deep text-white scale-[0.98] shadow-lg shadow-qf-green-deep/30"
+              addPhase !== "idle"
+                ? "bg-qf-green-deep text-white shadow-lg shadow-qf-green-deep/30"
                 : missingGroup
                   ? "bg-qf-ink2 text-white"
                   : "bg-(--qf-primary) hover:bg-(--qf-deep) text-white shadow-lg shadow-(--qf-primary)/25",
             )}
           >
-            {added ? (
-              <>
-                <IcoCheck c="#fff" s={18} />
-                <span>נוסף לסל</span>
-                <span />
-              </>
-            ) : (
+            {addPhase === "idle" ? (
               <>
                 <span>{ctaLabel}</span>
                 <span className="tnum">{formatPrice(total)}</span>
+              </>
+            ) : addPhase === "loading" ? (
+              <>
+                <span>מוסיף לסל</span>
+                <span className="qf-spinner" style={{ width: 20, height: 20, borderWidth: 2.5 }} />
+              </>
+            ) : (
+              <>
+                <span>נוסף לסל</span>
+                <IcoCheck c="#fff" s={20} className="animate-qf-check-in" />
               </>
             )}
           </button>
