@@ -37,7 +37,7 @@ export function CampaignPopup({ tenantSlug }: Props) {
     (async () => {
       try {
         const res = await fetch(
-          `/api/v1/restaurants/s/${tenantSlug}/campaigns/active?kind=popup`,
+          `/api/v1/restaurants/${tenantSlug}/campaigns/active?kind=popup`,
           { cache: "no-store" },
         );
         if (!res.ok) return;
