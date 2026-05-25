@@ -272,6 +272,49 @@ button:disabled,
   cursor: not-allowed;
 }
 
+/* ─── Press-in effect for offset-shadow buttons ───────────────
+   Any clickable element using our signature offset shadow
+   (`shadow-[0_Npx_0_...]`) should feel tactile: on :active the
+   shadow collapses and the element translates down by the same
+   amount so the bottom edge stays put — visually pressing the
+   button into the surface. The attribute selector catches every
+   variant of the utility (any shadow color, any rounded corner).
+   We force our own snappy transition so a parent `transition`
+   utility can't slow the response down. */
+button[class*="shadow-[0_"],
+a[class*="shadow-[0_"],
+[role="button"][class*="shadow-[0_"],
+summary[class*="shadow-[0_"],
+label[for][class*="shadow-[0_"] {
+  transition: transform 90ms ease-out, box-shadow 90ms ease-out;
+}
+@media (hover: hover) {
+  button[class*="shadow-[0_2px_0"]:not(:disabled):hover,
+  a[class*="shadow-[0_2px_0"]:hover,
+  [role="button"][class*="shadow-[0_2px_0"]:not([aria-disabled="true"]):hover,
+  summary[class*="shadow-[0_2px_0"]:hover,
+  label[for][class*="shadow-[0_2px_0"]:hover {
+    transform: translateY(2px) !important;
+    box-shadow: 0 0 0 0 transparent !important;
+  }
+  button[class*="shadow-[0_3px_0"]:not(:disabled):hover,
+  a[class*="shadow-[0_3px_0"]:hover,
+  [role="button"][class*="shadow-[0_3px_0"]:not([aria-disabled="true"]):hover,
+  summary[class*="shadow-[0_3px_0"]:hover,
+  label[for][class*="shadow-[0_3px_0"]:hover {
+    transform: translateY(3px) !important;
+    box-shadow: 0 0 0 0 transparent !important;
+  }
+  button[class*="shadow-[0_4px_0"]:not(:disabled):hover,
+  a[class*="shadow-[0_4px_0"]:hover,
+  [role="button"][class*="shadow-[0_4px_0"]:not([aria-disabled="true"]):hover,
+  summary[class*="shadow-[0_4px_0"]:hover,
+  label[for][class*="shadow-[0_4px_0"]:hover {
+    transform: translateY(4px) !important;
+    box-shadow: 0 0 0 0 transparent !important;
+  }
+}
+
 /* ─── iOS Safari: stop the zoom-on-focus dance ───────────────── */
 /* Safari on iOS auto-zooms a form field when its computed font-size
    is below 16px. Pin everything that takes text input to 16px on
