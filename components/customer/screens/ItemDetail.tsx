@@ -177,7 +177,7 @@ export function ItemDetail({
       notes: notes || null,
     });
     if (inModal) {
-      router.back();
+      window.dispatchEvent(new CustomEvent("qf:modal-close"));
     } else {
       window.scrollTo(0, 0);
       router.push(`/s/${tenantSlug}/cart`);

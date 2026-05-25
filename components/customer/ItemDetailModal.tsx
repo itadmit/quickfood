@@ -88,13 +88,18 @@ export function ItemDetailModal({ children }: { children: React.ReactNode }) {
     window.setTimeout(() => router.back(), CLOSE_DURATION_MS);
   }
 
-  // Esc-to-close.
+  // Esc-to-close + cart-add-to-close bridge.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") close();
     }
+    function onCartAdd() { close(); }
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    window.addEventListener("qf:modal-close", onCartAdd);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("qf:modal-close", onCartAdd);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
