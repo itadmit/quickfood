@@ -85,7 +85,7 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
               onChange={(e) => setQuery(e.target.value)}
               placeholder="חיפוש בתפריט"
               aria-label="חיפוש בתפריט"
-              className="flex-1 bg-transparent outline-none text-sm text-qf-ink placeholder:text-qf-mute"
+              className="flex-1 bg-transparent outline-none border-0 appearance-none text-sm text-qf-ink placeholder:text-qf-mute [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
             />
             {query && (
               <button

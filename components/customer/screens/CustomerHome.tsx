@@ -502,7 +502,7 @@ export function CustomerHome({
                 value={menuQuery}
                 onChange={(e) => setMenuQuery(e.target.value)}
                 placeholder="חיפוש בתפריט"
-                className="flex-1 bg-transparent outline-none text-[15px] text-qf-ink placeholder:text-qf-mute"
+                className="flex-1 bg-transparent outline-none border-0 appearance-none text-[15px] text-qf-ink placeholder:text-qf-mute [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
               />
               {menuQuery && (
                 <button
