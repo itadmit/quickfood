@@ -69,11 +69,20 @@ export function ItemDetailModal({ children }: { children: React.ReactNode }) {
       router.back();
       return;
     }
+    // The open animation (`animate-qf-sheet-in`) uses `fill-mode: both`,
+    // so its final keyframe (translateY(0)) keeps overriding our inline
+    // transform — the close looks like a pure fade because the card
+    // never actually moves. Kill the animation with !important so the
+    // inline transform wins, then trigger the slide-down.
+    card.style.setProperty("animation", "none", "important");
+    // Force layout so the browser registers the animation removal before
+    // we change transform; without this Safari occasionally collapses both
+    // writes into a single frame and skips the transition.
+    void card.offsetHeight;
     card.style.transition = CLOSE_TRANSITION;
     card.style.transform = "translate3d(0, 100%, 0)";
     backdrop.style.transition = BACKDROP_FADE;
     backdrop.style.opacity = "0";
-    // Wait for the slide-down to finish, then actually pop the route.
     // setTimeout (not transitionend) guarantees we fire even if the
     // browser swallows the event during unmount.
     window.setTimeout(() => router.back(), CLOSE_DURATION_MS);
