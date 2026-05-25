@@ -124,6 +124,7 @@ interface Props {
    *  notices are not handled here — render those above this component. */
   noticesByCategory?: Map<string, NoticeRow[]>;
   noticesByItem?: Map<string, NoticeRow[]>;
+  onItemClick?: (id: string) => void;
 }
 
 export function MenuList({
@@ -140,6 +141,7 @@ export function MenuList({
   rootId,
   noticesByCategory,
   noticesByItem,
+  onItemClick,
 }: Props) {
   const availableTags = useMemo(() => {
     const usage = new Set<string>();
@@ -324,6 +326,7 @@ export function MenuList({
                       key={item.id}
                       href={`?item=${item.id}`}
                       scroll={false}
+                      onClick={() => onItemClick?.(item.id)}
                       className="relative bg-white rounded-2xl border border-qf-line p-3 pe-3.5 flex gap-3 transition active:scale-[0.99] active:bg-qf-line-soft hover:border-(--qf-primary)/40 hover:shadow-sm"
                     >
                       <div className="relative w-24 h-24 shrink-0">

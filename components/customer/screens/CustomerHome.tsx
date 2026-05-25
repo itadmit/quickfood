@@ -115,9 +115,16 @@ export function CustomerHome({
   const [itemData, setItemData] = useState<null | { item: Record<string, unknown>; tenant: { slug: string; businessType: string } }>(null);
   const [itemLoading, setItemLoading] = useState(false);
 
+  // Sync with URL for back/forward navigation — only opens, never closes
+  // (closeModal handles closing; onItemOpen handles direct clicks)
   useEffect(() => {
-    setIsModalOpen(!!itemId);
+    if (itemId) setIsModalOpen(true);
+    else setIsModalOpen(false);
   }, [itemId]);
+
+  function onItemOpen() {
+    setIsModalOpen(true);
+  }
 
   useEffect(() => {
     if (!itemId) { setItemData(null); return; }
@@ -131,7 +138,7 @@ export function CustomerHome({
 
   function closeModal() {
     setIsModalOpen(false);
-    router.push(pathname, { scroll: false });
+    router.replace(pathname, { scroll: false });
   }
 
   // Wolt-style "select your delivery city" flow. On first visit the
@@ -480,6 +487,7 @@ export function CustomerHome({
                 key={item.id}
                 href={`?item=${item.id}`}
                 scroll={false}
+                onClick={onItemOpen}
                 className="shrink-0 w-44 bg-white rounded-2xl border border-qf-line overflow-hidden hover:border-(--qf-primary)/40 hover:shadow-sm transition lg:w-auto"
               >
                 <div className="relative aspect-square overflow-hidden">
@@ -561,6 +569,7 @@ export function CustomerHome({
               noticesByCategory={noticesByCategory}
               noticesByItem={noticesByItem}
               scrollOffset={120}
+              onItemClick={onItemOpen}
             />
           </div>
         </section>
