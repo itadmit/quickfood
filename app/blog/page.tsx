@@ -31,7 +31,7 @@ export default function BlogPage() {
       <section>
         <h2>רוצים לקבל הודעה כשעולה הפוסט הראשון?</h2>
         <p>
-          שלחו לנו מייל ל-<a href="mailto:blog@quickfood.co.il?subject=הירשם לבלוג">blog@quickfood.co.il</a>{" "}
+          שלחו לנו מייל ל-<a href="mailto:hello@quickfood.co.il?subject=הירשם לבלוג">hello@quickfood.co.il</a>{" "}
           ונוסיף אתכם לרשימת תפוצה (לא ספאם, פוסט אחד בחודש בערך).
         </p>
       </section>
@@ -41,7 +41,7 @@ export default function BlogPage() {
         <p>
           אם יש נושא שאתם רוצים שנעמיק בו - עמלות, KPI, אופטימיזציה של תפריט,
           UX של checkout, הפעלת SMS marketing - תכתבו לנו ל-
-          <a href="mailto:blog@quickfood.co.il">blog@quickfood.co.il</a>.
+          <a href="mailto:hello@quickfood.co.il">hello@quickfood.co.il</a>.
         </p>
       </section>
     </LegalShell>

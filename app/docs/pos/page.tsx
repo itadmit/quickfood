@@ -721,7 +721,7 @@ Content-Type: application/json
       <section id="support">
         <h2>13. תמיכה</h2>
         <p>
-          שאלות אינטגרציה: <a href="mailto:dev@quickfood.co.il">dev@quickfood.co.il</a>.
+          שאלות אינטגרציה: <a href="mailto:hello@quickfood.co.il">hello@quickfood.co.il</a>.
           תכללו את ה-<code>X-QuickFood-Delivery</code> או <code>order_id</code>{" "}
           הרלוונטי כדי שנוכל לעזור מהר.
         </p>

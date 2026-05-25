@@ -192,8 +192,8 @@ export default function StatusPage() {
         <h2>קבלת עדכונים</h2>
         <p>
           רוצה להתעדכן רק כשיש תקלה? שלח מייל ל-
-          <a href="mailto:status@quickfood.co.il?subject=הרשמה לעדכוני סטטוס">
-            status@quickfood.co.il
+          <a href="mailto:support@quickfood.co.il?subject=הרשמה לעדכוני סטטוס">
+            support@quickfood.co.il
           </a>{" "}
           ונוסיף אותך לרשימת ההתראות (התראה מייל אוטומטית כל פעם שמשתנה
           סטטוס של רכיב).

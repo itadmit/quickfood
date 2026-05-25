@@ -34,10 +34,10 @@ export default function CareersPage() {
         </div>
         <p>
           <a
-            href="mailto:jobs@quickfood.co.il?subject=מועמדות עתידית - QuickFood"
+            href="mailto:hello@quickfood.co.il?subject=מועמדות עתידית - QuickFood"
             className="font-black"
           >
-            jobs@quickfood.co.il
+            hello@quickfood.co.il
           </a>
         </p>
       </section>

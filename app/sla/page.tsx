@@ -158,7 +158,7 @@ export default function SlaPage() {
         </table>
         <h3>איך מקבלים זיכוי</h3>
         <ol>
-          <li>שולחים מייל ל-<a href="mailto:sla@quickfood.co.il">sla@quickfood.co.il</a> תוך 30 ימים מסוף החודש</li>
+          <li>שולחים מייל ל-<a href="mailto:support@quickfood.co.il">support@quickfood.co.il</a> תוך 30 ימים מסוף החודש</li>
           <li>מציינים את תאריכי האירועים והשעות (מהדשבורד שלכם או מ-status.quickfood.co.il)</li>
           <li>אנחנו מאמתים מול הלוגים שלנו ומחזירים תשובה תוך 5 ימי עבודה</li>
           <li>זיכוי שאושר מקוזז אוטומטית מהחיוב של החודש הבא</li>

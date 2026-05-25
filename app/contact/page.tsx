@@ -3,7 +3,7 @@ import { LegalShell } from "@/components/shared/LegalShell";
 export const metadata = {
   title: "צור קשר - QuickFood",
   description:
-    "דרכי יצירת קשר עם QuickFood - תמיכה, מכירות, אינטגרציה, חיוב, ופנייה משפטית. מענה אנושי בעברית בשעות עבודה.",
+    "דרכי יצירת קשר עם QuickFood - תמיכה למסעדנים קיימים, ופניות עסקיות. מענה אנושי בעברית בשעות עבודה.",
 };
 
 export default function ContactPage() {
@@ -23,43 +23,13 @@ export default function ContactPage() {
           </thead>
           <tbody>
             <tr>
-              <td>תמיכה למסעדנים קיימים</td>
+              <td>תמיכה למסעדנים קיימים, חיוב, חשבוניות, החזרים, SLA, פניות משפטיות (DPA, GDPR), פרטיות</td>
               <td><a href="mailto:support@quickfood.co.il">support@quickfood.co.il</a></td>
-              <td>תוך 4 שעות בימי עבודה</td>
+              <td>תוך יום עבודה</td>
             </tr>
             <tr>
-              <td>שאלות לפני רישום / מכירות</td>
+              <td>שאלות לפני רישום, מכירות, אינטגרציות (קופות, Make, Zapier), קריירה, עיתונאות</td>
               <td><a href="mailto:hello@quickfood.co.il">hello@quickfood.co.il</a></td>
-              <td>תוך יום עבודה</td>
-            </tr>
-            <tr>
-              <td>אינטגרציה (קופות, Make, Zapier)</td>
-              <td><a href="mailto:dev@quickfood.co.il">dev@quickfood.co.il</a></td>
-              <td>תוך 2 ימי עבודה</td>
-            </tr>
-            <tr>
-              <td>חיוב, חשבוניות, החזרים</td>
-              <td><a href="mailto:billing@quickfood.co.il">billing@quickfood.co.il</a></td>
-              <td>תוך יום עבודה</td>
-            </tr>
-            <tr>
-              <td>SLA / הצהרת השבתה</td>
-              <td><a href="mailto:sla@quickfood.co.il">sla@quickfood.co.il</a></td>
-              <td>5 ימי עבודה</td>
-            </tr>
-            <tr>
-              <td>פנייה משפטית, DPA, GDPR</td>
-              <td><a href="mailto:legal@quickfood.co.il">legal@quickfood.co.il</a></td>
-              <td>תוך שבוע עבודה</td>
-            </tr>
-            <tr>
-              <td>קריירה, מועמדות</td>
-              <td><a href="mailto:jobs@quickfood.co.il">jobs@quickfood.co.il</a></td>
-              <td>תוך שבוע</td>
-            </tr>
-            <tr>
-              <td>עיתונאות, בלוגרים</td>
-              <td><a href="mailto:press@quickfood.co.il">press@quickfood.co.il</a></td>
               <td>תוך 2 ימי עבודה</td>
             </tr>
           </tbody>

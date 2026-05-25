@@ -155,7 +155,7 @@ export default function PrivacyPage() {
         </ul>
         <p>
           לממש זכויות אלה ניתן בפנייה לדוא&quot;ל:{" "}
-          <a href="mailto:privacy@quickfood.co.il">privacy@quickfood.co.il</a>.
+          <a href="mailto:support@quickfood.co.il">support@quickfood.co.il</a>.
         </p>
       </section>
 
@@ -194,8 +194,7 @@ export default function PrivacyPage() {
           אבטחה — אפשר לפנות אלינו:
         </p>
         <ul>
-          <li>דוא&quot;ל: <a href="mailto:privacy@quickfood.co.il">privacy@quickfood.co.il</a></li>
-          <li>תמיכה כללית: <a href="mailto:support@quickfood.co.il">support@quickfood.co.il</a></li>
+          <li>דוא&quot;ל: <a href="mailto:support@quickfood.co.il">support@quickfood.co.il</a></li>
         </ul>
       </section>
     </LegalShell>
