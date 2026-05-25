@@ -30,7 +30,12 @@ export default async function ItemEditPage({
     prisma.modifierSet.findMany({
       where: { tenantId: session.tenantId },
       orderBy: { position: "asc" },
-      include: { options: { select: { id: true } } },
+      include: {
+        options: {
+          orderBy: { position: "asc" },
+          select: { id: true, name: true, priceDelta: true },
+        },
+      },
     }),
   ]);
 
@@ -39,6 +44,7 @@ export default async function ItemEditPage({
     name: s.name,
     type: s.type as "single" | "multi",
     optionsCount: s.options.length,
+    options: s.options.map((o) => ({ name: o.name, priceDelta: o.priceDelta })),
   }));
 
   if (isNew) {

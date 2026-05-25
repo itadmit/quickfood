@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useRouter } from "next/navigation";
-import { IcoChev, IcoPlus, IcoClose } from "@/components/shared/Icons";
+import { IcoChev, IcoPlus, IcoClose, IcoCheck } from "@/components/shared/Icons";
 import { ImageUploader } from "@/components/shared/ImageUploader";
 import { MiniImagePicker } from "@/components/shared/MiniImagePicker";
 import { DragList, DragHandle } from "@/components/shared/DragList";
@@ -51,6 +51,7 @@ export interface ModifierSetSummary {
   name: string;
   type: "single" | "multi";
   optionsCount: number;
+  options?: { name: string; priceDelta: number }[];
 }
 
 interface ItemData {
@@ -372,7 +373,7 @@ export function ItemEditor({
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-5">
         <div className="space-y-5">
           {/* Basics */}
           <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
@@ -382,7 +383,7 @@ export function ItemEditor({
                 value={data.name}
                 onChange={(e) => update("name", e.target.value)}
                 aria-required="true"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-base lg:text-sm"
               />
             </Field>
             <Field label="קטגוריה" required>
@@ -398,7 +399,7 @@ export function ItemEditor({
                   value={data.categoryId}
                   onChange={(e) => update("categoryId", e.target.value)}
                   aria-required="true"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-base lg:text-sm"
                 >
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -413,7 +414,7 @@ export function ItemEditor({
                 value={data.description}
                 onChange={(e) => update("description", e.target.value)}
                 rows={3}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-base lg:text-sm"
               />
             </Field>
             <div className="grid grid-cols-2 gap-3">
@@ -425,7 +426,7 @@ export function ItemEditor({
                     min={0}
                     value={data.basePrice}
                     onChange={(e) => update("basePrice", parseInt(e.target.value, 10) || 0)}
-                    className="flex-1 py-2.5 outline-none bg-transparent tnum"
+                    className="flex-1 py-2.5 outline-none bg-transparent tnum text-base lg:text-sm"
                   />
                 </div>
               </Field>
@@ -435,7 +436,7 @@ export function ItemEditor({
                   min={0}
                   value={data.prepMinutes}
                   onChange={(e) => update("prepMinutes", parseInt(e.target.value, 10) || 0)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum text-base lg:text-sm"
                 />
               </Field>
             </div>
@@ -457,130 +458,6 @@ export function ItemEditor({
                   )}
                 />
               </button>
-            </Field>
-          </section>
-
-          {/* Availability windowing — when does this item appear on the
-              storefront. Time + weekdays + stock. NULL on all = always. */}
-          <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
-            <header>
-              <h2 className="font-semibold">זמינות מתקדמת</h2>
-              <p className="text-xs text-qf-mute mt-0.5">
-                הצג את הפריט רק בחלון שעות מסוים (לדוגמה ארוחת בוקר עד 11:00), רק בימים מסוימים, או מוגבל ב-X מנות בלבד.
-              </p>
-            </header>
-            {/* Time-of-day window. Both ends NULL → no restriction; we show
-                an explicit pill so the merchant sees the current state at a
-                glance, plus a "אפס" link when a window is set. Native time
-                inputs on iOS Safari can look thin/empty until tapped — the
-                pill makes the intent ("zone of activity") obvious. */}
-            <div>
-              <div className="flex items-baseline justify-between mb-2">
-                <span className="text-sm font-medium">חלון שעות</span>
-                <span
-                  className={cn(
-                    "text-[11px] font-semibold px-2 py-0.5 rounded-md",
-                    data.availableFrom === null && data.availableTo === null
-                      ? "bg-qf-green-soft text-qf-green-deep"
-                      : "bg-qf-yolk-soft text-qf-ink",
-                  )}
-                >
-                  {data.availableFrom === null && data.availableTo === null
-                    ? "תמיד זמין"
-                    : `${minutesToHM(data.availableFrom) || "—"} → ${minutesToHM(data.availableTo) || "—"}`}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-2.5">
-                <label className="flex flex-col gap-1">
-                  <span className="text-[10px] text-qf-mute">משעה</span>
-                  <input
-                    type="time"
-                    value={minutesToHM(data.availableFrom)}
-                    onChange={(e) => update("availableFrom", hmToMinutes(e.target.value))}
-                    className="px-3 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-(--qf-primary) outline-none tnum text-base"
-                  />
-                </label>
-                <label className="flex flex-col gap-1">
-                  <span className="text-[10px] text-qf-mute">עד שעה</span>
-                  <input
-                    type="time"
-                    value={minutesToHM(data.availableTo)}
-                    onChange={(e) => update("availableTo", hmToMinutes(e.target.value))}
-                    className="px-3 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-(--qf-primary) outline-none tnum text-base"
-                  />
-                </label>
-              </div>
-              {(data.availableFrom !== null || data.availableTo !== null) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    update("availableFrom", null);
-                    update("availableTo", null);
-                  }}
-                  className="text-xs text-qf-mute hover:text-qf-ink underline mt-2 inline-block"
-                >
-                  אפס חלון שעות
-                </button>
-              )}
-            </div>
-            <Field label="ימים בשבוע">
-              <div className="flex gap-1.5">
-                {HEBREW_DAYS.map((label, i) => {
-                  const mask = 1 << i;
-                  // null means "every day" — treat as all on so checks reflect reality
-                  const days = data.availableDays ?? 0b1111111;
-                  const on = (days & mask) !== 0;
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => {
-                        const current = data.availableDays ?? 0b1111111;
-                        const next = on ? current & ~mask : current | mask;
-                        // Going back to "every day" = stash null so we don't bias toward saturday-only
-                        update("availableDays", next === 0b1111111 ? null : next);
-                      }}
-                      className={cn(
-                        "w-10 h-10 lg:w-9 lg:h-9 rounded-lg text-sm lg:text-xs font-bold transition shrink-0",
-                        on
-                          ? "bg-(--qf-primary) text-white"
-                          : "bg-qf-line-soft text-qf-mute hover:bg-qf-line-dash/60",
-                      )}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-              {data.availableDays !== null && (
-                <button
-                  type="button"
-                  onClick={() => update("availableDays", null)}
-                  className="text-xs text-qf-mute hover:text-qf-ink underline mt-2 inline-block"
-                >
-                  אפס לכל הימים
-                </button>
-              )}
-            </Field>
-            <Field label="מלאי נשאר (אופציונלי)">
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min={0}
-                  value={data.stockRemaining ?? ""}
-                  onChange={(e) =>
-                    update(
-                      "stockRemaining",
-                      e.target.value === "" ? null : Math.max(0, parseInt(e.target.value, 10) || 0),
-                    )
-                  }
-                  placeholder="ללא הגבלה"
-                  className="w-32 px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum"
-                />
-                <span className="text-xs text-qf-mute leading-snug">
-                  כשהמספר מגיע ל-0 הפריט יוסתר אוטומטית מהתפריט. השאר ריק אם אין הגבלת מלאי.
-                </span>
-              </div>
             </Field>
           </section>
 
@@ -799,27 +676,245 @@ export function ItemEditor({
               ))}
             </div>
           </section>
+
+          {/* Availability windowing — when does this item appear on the
+              storefront. Time + weekdays + stock. NULL on all = always. */}
+          <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
+            <header>
+              <h2 className="font-semibold">זמינות מתקדמת</h2>
+              <p className="text-xs text-qf-mute mt-0.5">
+                הצג את הפריט רק בחלון שעות מסוים (לדוגמה ארוחת בוקר עד 11:00), רק בימים מסוימים, או מוגבל ב-X מנות בלבד.
+              </p>
+            </header>
+            {/* Time-of-day window. Both ends NULL → no restriction; we show
+                an explicit pill so the merchant sees the current state at a
+                glance, plus a "אפס" link when a window is set. Native time
+                inputs on iOS Safari can look thin/empty until tapped — the
+                pill makes the intent ("zone of activity") obvious. */}
+            <div>
+              <div className="flex items-baseline justify-between mb-2">
+                <span className="text-sm font-medium">חלון שעות</span>
+                <span
+                  className={cn(
+                    "text-[11px] font-semibold px-2 py-0.5 rounded-md",
+                    data.availableFrom === null && data.availableTo === null
+                      ? "bg-qf-green-soft text-qf-green-deep"
+                      : "bg-qf-yolk-soft text-qf-ink",
+                  )}
+                >
+                  {data.availableFrom === null && data.availableTo === null
+                    ? "תמיד זמין"
+                    : `${minutesToHM(data.availableFrom) || "—"} → ${minutesToHM(data.availableTo) || "—"}`}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <label className="flex flex-col gap-1">
+                  <span className="text-[10px] text-qf-mute">משעה</span>
+                  <input
+                    type="time"
+                    value={minutesToHM(data.availableFrom)}
+                    onChange={(e) => update("availableFrom", hmToMinutes(e.target.value))}
+                    className="px-3 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-(--qf-primary) outline-none tnum text-base lg:text-sm"
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-[10px] text-qf-mute">עד שעה</span>
+                  <input
+                    type="time"
+                    value={minutesToHM(data.availableTo)}
+                    onChange={(e) => update("availableTo", hmToMinutes(e.target.value))}
+                    className="px-3 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-(--qf-primary) outline-none tnum text-base lg:text-sm"
+                  />
+                </label>
+              </div>
+              {(data.availableFrom !== null || data.availableTo !== null) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    update("availableFrom", null);
+                    update("availableTo", null);
+                  }}
+                  className="text-xs text-qf-mute hover:text-qf-ink underline mt-2 inline-block"
+                >
+                  אפס חלון שעות
+                </button>
+              )}
+            </div>
+            <Field label="ימים בשבוע">
+              <div className="flex gap-1.5">
+                {HEBREW_DAYS.map((label, i) => {
+                  const mask = 1 << i;
+                  // null means "every day" — treat as all on so checks reflect reality
+                  const days = data.availableDays ?? 0b1111111;
+                  const on = (days & mask) !== 0;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => {
+                        const current = data.availableDays ?? 0b1111111;
+                        const next = on ? current & ~mask : current | mask;
+                        // Going back to "every day" = stash null so we don't bias toward saturday-only
+                        update("availableDays", next === 0b1111111 ? null : next);
+                      }}
+                      className={cn(
+                        "w-10 h-10 lg:w-9 lg:h-9 rounded-lg text-sm lg:text-xs font-bold transition shrink-0",
+                        on
+                          ? "bg-(--qf-primary) text-white"
+                          : "bg-qf-line-soft text-qf-mute hover:bg-qf-line-dash/60",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              {data.availableDays !== null && (
+                <button
+                  type="button"
+                  onClick={() => update("availableDays", null)}
+                  className="text-xs text-qf-mute hover:text-qf-ink underline mt-2 inline-block"
+                >
+                  אפס לכל הימים
+                </button>
+              )}
+            </Field>
+            <Field label="מלאי נשאר (אופציונלי)">
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  value={data.stockRemaining ?? ""}
+                  onChange={(e) =>
+                    update(
+                      "stockRemaining",
+                      e.target.value === "" ? null : Math.max(0, parseInt(e.target.value, 10) || 0),
+                    )
+                  }
+                  placeholder="ללא הגבלה"
+                  className="w-32 px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum text-base lg:text-sm"
+                />
+                <span className="text-xs text-qf-mute leading-snug">
+                  כשהמספר מגיע ל-0 הפריט יוסתר אוטומטית מהתפריט. השאר ריק אם אין הגבלת מלאי.
+                </span>
+              </div>
+            </Field>
+          </section>
         </div>
 
         {/* Preview */}
-        <aside className="bg-white rounded-2xl border border-qf-line-dash p-4 h-fit sticky top-20">
-          <div className="text-xs text-qf-mute mb-2">תצוגה מקדימה</div>
-          <div className="aspect-square rounded-xl overflow-hidden">
-            <MenuItemImage
-              src={data.images[0]}
-              alt={data.name || "פריט"}
-              businessType={businessType}
-              size={280}
-              rounded="xl"
-              className="w-full h-full"
-            />
-          </div>
-          <div className="mt-3 space-y-1">
-            <div className="font-medium">{data.name || "ללא שם"}</div>
-            <div className="text-xs text-qf-mute line-clamp-3">{data.description || "אין תיאור"}</div>
-            <div className="font-semibold tnum mt-2">{formatPrice(data.basePrice)}</div>
-          </div>
-        </aside>
+        <div className="hidden lg:block sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto pb-4">
+          <div className="text-xs text-qf-mute mb-2 px-1">תצוגה מקדימה</div>
+          <aside className="bg-white rounded-2xl border border-qf-line-dash overflow-hidden">
+            {data.images[0] ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={data.images[0]}
+                alt={data.name || "פריט"}
+                className="w-full h-auto block"
+                loading="lazy"
+              />
+            ) : (
+              <div className="aspect-4/3">
+                <MenuItemImage
+                  src={null}
+                  alt={data.name || "פריט"}
+                  businessType={businessType}
+                  fill
+                  rounded="none"
+                  className="w-full h-full"
+                />
+              </div>
+            )}
+            <div className="px-4 pt-4 space-y-1">
+              <div className="font-semibold text-base">{data.name || "ללא שם"}</div>
+              <div className="text-xs text-qf-mute line-clamp-3">{data.description || "אין תיאור"}</div>
+              <div className="font-bold tnum text-lg mt-2">{formatPrice(data.basePrice)}</div>
+            </div>
+
+            {data.sizes.length > 0 && (
+              <div className="mt-4 px-4">
+                <div className="border-t border-qf-line-dash pt-3 pb-1">
+                  <div className="font-semibold text-sm mb-2">גודל</div>
+                  <div className="space-y-0">
+                    {data.sizes.map((s) => (
+                      <PreviewRow
+                        key={s.code}
+                        radio
+                        active={s.isDefault}
+                        label={s.name || "—"}
+                        priceLabel={
+                          s.priceDelta === 0
+                            ? null
+                            : s.priceDelta > 0
+                              ? `+${formatPrice(s.priceDelta)}`
+                              : `-${formatPrice(-s.priceDelta)}`
+                        }
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {data.optionGroups.length > 0 && (
+              <div className="px-4">
+                {data.optionGroups.map((g, gi) => {
+                  const templateSet = g.templateSetId
+                    ? modifierSets.find((m) => m.id === g.templateSetId)
+                    : null;
+                  const opts: { name: string; priceDelta: number }[] = g.templateSetId
+                    ? (templateSet?.options ?? [])
+                    : g.options.map((o) => ({ name: o.name, priceDelta: o.priceDelta }));
+                  const subtitle = g.required
+                    ? g.type === "single"
+                      ? "חובה לבחור 1"
+                      : g.minSelect === g.maxSelect
+                        ? `חובה ${g.minSelect}`
+                        : `חובה ${g.minSelect}–${g.maxSelect}`
+                    : g.type === "multi"
+                      ? g.includedFree > 0
+                        ? `${g.includedFree} הראשונים חינם · עד ${g.maxSelect}`
+                        : `אפשר לבחור עד ${g.maxSelect}`
+                      : "אופציונלי";
+                  return (
+                    <div key={gi} className="border-t border-qf-line-dash pt-3 pb-1 mt-4 first:mt-3">
+                      <div className="flex items-baseline justify-between gap-2 mb-2">
+                        <span className="font-semibold text-sm truncate">
+                          {g.name || "ללא שם"}
+                          {g.required && <span className="text-qf-tomato ms-1">*</span>}
+                        </span>
+                        <span className="text-[11px] text-qf-mute shrink-0">{subtitle}</span>
+                      </div>
+                      {opts.length > 0 ? (
+                        <div className="space-y-0">
+                          {opts.map((o, oi) => (
+                            <PreviewRow
+                              key={oi}
+                              radio={g.type === "single"}
+                              active={false}
+                              label={o.name || "—"}
+                              priceLabel={
+                                o.priceDelta === 0
+                                  ? null
+                                  : o.priceDelta > 0
+                                    ? `+${formatPrice(o.priceDelta)}`
+                                    : `-${formatPrice(-o.priceDelta)}`
+                              }
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-xs text-qf-mute py-2">אין אפשרויות עדיין</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <div className="pb-4" />
+          </aside>
+        </div>
       </div>
 
       <ConfirmDialog
@@ -855,6 +950,45 @@ export function ItemEditor({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PreviewRow({
+  radio,
+  active,
+  label,
+  priceLabel,
+}: {
+  radio?: boolean;
+  active: boolean;
+  label: string;
+  priceLabel: string | null;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-2.5 text-sm border-b border-qf-line last:border-0">
+      <div className="flex items-center gap-2.5 min-w-0">
+        <span
+          className={cn(
+            radio ? "rounded-full" : "rounded-md",
+            "w-5 h-5 border-2 grid place-items-center shrink-0",
+            active ? "border-(--qf-primary) bg-(--qf-primary)" : "border-qf-line-dash",
+          )}
+        >
+          {active &&
+            (radio ? (
+              <span className="w-2 h-2 rounded-full bg-white" />
+            ) : (
+              <IcoCheck c="#fff" s={12} />
+            ))}
+        </span>
+        <span className={cn("truncate", active ? "font-medium text-qf-ink" : "text-qf-ink")}>
+          {label}
+        </span>
+      </div>
+      {priceLabel && (
+        <span className="text-xs tnum font-medium text-qf-mute shrink-0">{priceLabel}</span>
+      )}
     </div>
   );
 }
@@ -994,7 +1128,7 @@ function GroupEditor({
               onChange={(e) =>
                 onChange({ ...group, minSelect: Math.max(0, parseInt(e.target.value, 10) || 0) })
               }
-              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
+              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum text-base lg:text-sm"
             />
           </label>
           <label className="flex flex-col gap-1">
@@ -1006,7 +1140,7 @@ function GroupEditor({
               onChange={(e) =>
                 onChange({ ...group, maxSelect: Math.max(1, parseInt(e.target.value, 10) || 1) })
               }
-              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
+              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum text-base lg:text-sm"
             />
           </label>
           <label className="flex flex-col gap-1">
@@ -1020,7 +1154,7 @@ function GroupEditor({
               onChange={(e) =>
                 onChange({ ...group, includedFree: Math.max(0, parseInt(e.target.value, 10) || 0) })
               }
-              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
+              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum text-base lg:text-sm"
             />
           </label>
         </div>
