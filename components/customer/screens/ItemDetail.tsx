@@ -51,14 +51,13 @@ export function ItemDetail({
   item,
   businessType = "general",
   inModal = false,
+  onClose,
 }: {
   tenantSlug: string;
   item: ItemData;
   businessType?: BusinessType;
-  /** When true the screen is being rendered inside the intercepting
-   *  modal — drop the lg-card chrome (the modal supplies it) and
-   *  hide the back-arrow shortcuts (the modal's X button closes). */
   inModal?: boolean;
+  onClose?: () => void;
 }) {
   const router = useRouter();
   const { add } = useCart();
@@ -177,7 +176,7 @@ export function ItemDetail({
       notes: notes || null,
     });
     if (inModal) {
-      window.dispatchEvent(new CustomEvent("qf:modal-close"));
+      onClose?.();
     } else {
       window.scrollTo(0, 0);
       router.push(`/s/${tenantSlug}/cart`);

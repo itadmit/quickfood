@@ -322,7 +322,7 @@ export function MenuList({
                   return (
                     <Link
                       key={item.id}
-                      href={`/s/${tenantSlug}/menu/${item.id}`}
+                      href={`?item=${item.id}`}
                       scroll={false}
                       className="relative bg-white rounded-2xl border border-qf-line p-3 pe-3.5 flex gap-3 transition active:scale-[0.99] active:bg-qf-line-soft hover:border-(--qf-primary)/40 hover:shadow-sm"
                     >

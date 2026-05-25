@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { IcoPin, IcoSearch, IcoClock, IcoBike, IcoUser, IcoArrowLeft, IcoStar } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
@@ -26,6 +27,9 @@ import {
   type DeliveryChoice,
 } from "@/lib/delivery-city-storage";
 import { cn } from "@/lib/cn";
+import { ItemDetailModal } from "@/components/customer/ItemDetailModal";
+import { ItemDetail } from "@/components/customer/screens/ItemDetail";
+import ItemModalSkeleton from "@/components/customer/ItemModalSkeleton";
 
 interface Props {
   tenant: {
@@ -98,10 +102,31 @@ export function CustomerHome({
   hasCustomerSession = false,
   pendingReviewOrderId = null,
 }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { method, setMethod } = useCart();
   const open = branch?.status === "open";
 
   const hasCover = Boolean(tenant.coverImage);
+
+  const itemId = searchParams.get("item");
+  const [itemData, setItemData] = useState<null | { item: Record<string, unknown>; tenant: { slug: string; businessType: string } }>(null);
+  const [itemLoading, setItemLoading] = useState(false);
+
+  useEffect(() => {
+    if (!itemId) { setItemData(null); return; }
+    setItemLoading(true);
+    fetch(`/api/v1/customer/menu-item?slug=${tenant.slug}&id=${encodeURIComponent(itemId)}`)
+      .then((r) => r.json())
+      .then((d) => { if (d.item) setItemData(d); })
+      .catch(() => {})
+      .finally(() => setItemLoading(false));
+  }, [itemId, tenant.slug]);
+
+  function closeModal() {
+    router.push(pathname, { scroll: false });
+  }
 
   // Wolt-style "select your delivery city" flow. On first visit the
   // modal opens automatically; once the customer has answered (city OR
@@ -447,7 +472,7 @@ export function CustomerHome({
             {popular.map((item) => (
               <Link
                 key={item.id}
-                href={`/s/${tenant.slug}/menu/${item.id}`}
+                href={`?item=${item.id}`}
                 scroll={false}
                 className="shrink-0 w-44 bg-white rounded-2xl border border-qf-line overflow-hidden hover:border-(--qf-primary)/40 hover:shadow-sm transition lg:w-auto"
               >
@@ -556,6 +581,22 @@ export function CustomerHome({
           onChoose={applyChoice}
           onClose={() => setPickerOpen(false)}
         />
+      )}
+
+      {itemId && (
+        <ItemDetailModal onClose={closeModal}>
+          {itemLoading || !itemData ? (
+            <ItemModalSkeleton />
+          ) : (
+            <ItemDetail
+              tenantSlug={(itemData.tenant as { slug: string }).slug}
+              businessType={(itemData.tenant as { businessType: string }).businessType as never}
+              item={itemData.item as never}
+              inModal
+              onClose={closeModal}
+            />
+          )}
+        </ItemDetailModal>
       )}
     </div>
   );
