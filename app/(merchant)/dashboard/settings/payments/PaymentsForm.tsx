@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoCash, IcoCheck, IcoClose, IcoCreditCard } from "@/components/shared/Icons";
+import { Toggle as SharedToggle } from "@/components/shared/Toggle";
 
 interface GrowState {
   is_active: boolean;
@@ -438,27 +439,9 @@ function Toggle({
   label: string;
 }) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className="inline-flex items-center gap-2 select-none"
-    >
-      <span
-        className={
-          "w-12 h-7 rounded-full relative transition " +
-          (checked ? "bg-(--qf-primary)" : "bg-qf-line-dash")
-        }
-      >
-        <span
-          className={
-            "absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition " +
-            (checked ? "inset-s-[22px]" : "inset-s-0.5")
-          }
-        />
-      </span>
+    <div className="inline-flex items-center gap-2 select-none">
+      <SharedToggle checked={checked} onChange={onChange} aria-label={label} />
       <span className="text-sm">{label}</span>
-    </button>
+    </div>
   );
 }

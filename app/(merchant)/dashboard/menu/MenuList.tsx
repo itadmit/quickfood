@@ -8,6 +8,7 @@ import { formatPrice } from "@/lib/format";
 import { IcoEye, IcoEdit, IcoTrash, IcoClose, IcoCheck, IcoMore, IcoStar } from "@/components/shared/Icons";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
+import { Toggle } from "@/components/shared/Toggle";
 import { cn } from "@/lib/cn";
 import { ItemPreviewModal } from "./ItemPreviewModal";
 import { BulkPriceModal } from "./BulkPriceModal";
@@ -284,23 +285,11 @@ export function MenuList({
             <div className="hidden lg:block text-sm tnum font-medium">{formatPrice(item.basePrice)}</div>
             <div className="hidden lg:block text-sm text-qf-ink2 tnum">{item.prepMinutes} דק&apos;</div>
             <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={item.available}
-                onClick={() => toggleAvailability(item.id, !item.available)}
-                className={cn(
-                  "relative inline-flex h-6 w-10 rounded-full transition",
-                  item.available ? "bg-(--qf-primary)" : "bg-qf-line-dash",
-                )}
-              >
-                <span
-                  className={cn(
-                    "absolute top-0.5 inline-block h-5 w-5 rounded-full bg-white shadow transition",
-                    item.available ? "inset-e-0.5" : "inset-s-0.5",
-                  )}
-                />
-              </button>
+              <Toggle
+                checked={item.available}
+                onChange={(next) => toggleAvailability(item.id, next)}
+                aria-label={item.available ? "השבת פריט" : "הפעל פריט"}
+              />
             </div>
             <div onClick={(e) => e.stopPropagation()}>
               <RowActions

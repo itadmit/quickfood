@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoCheck } from "@/components/shared/Icons";
+import { Toggle as SharedToggle } from "@/components/shared/Toggle";
 import { cn } from "@/lib/cn";
 
 interface Initial {
@@ -184,23 +185,9 @@ function Toggle({
 }) {
   return (
     <label className="flex items-start gap-3 cursor-pointer">
-      <button
-        type="button"
-        role="switch"
-        aria-checked={value}
-        onClick={() => onChange(!value)}
-        className={cn(
-          "mt-0.5 relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition",
-          value ? "bg-(--qf-primary)" : "bg-qf-line",
-        )}
-      >
-        <span
-          className={cn(
-            "inline-block h-6 w-6 transform rounded-full bg-white shadow transition",
-            value ? "translate-x-[-1.375rem]" : "translate-x-[-0.125rem]",
-          )}
-        />
-      </button>
+      <span className="mt-0.5">
+        <SharedToggle checked={value} onChange={onChange} aria-label={label} />
+      </span>
       <div className="flex-1">
         <div className="font-medium text-sm">{label}</div>
         <div className="text-xs text-qf-mute mt-0.5">{description}</div>

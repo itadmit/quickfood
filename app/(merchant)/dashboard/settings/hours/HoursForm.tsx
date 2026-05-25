@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { IcoCheck } from "@/components/shared/Icons";
+import { Toggle } from "@/components/shared/Toggle";
 
 type DayHours = { open: string; close: string; active: boolean };
 
@@ -68,23 +69,11 @@ export function HoursForm({
             >
               <div className="font-medium text-sm">{d.label}</div>
               <label className="inline-flex items-center gap-2 text-sm sm:order-last">
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={h.active}
-                  onClick={() => setDay(d.key, { active: !h.active })}
-                  className={cn(
-                    "relative inline-flex h-5 w-9 rounded-full transition",
-                    h.active ? "bg-(--qf-primary)" : "bg-qf-line-dash",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition",
-                      h.active ? "inset-e-0.5" : "inset-s-0.5",
-                    )}
-                  />
-                </button>
+                <Toggle
+                  checked={h.active}
+                  onChange={(next) => setDay(d.key, { active: next })}
+                  aria-label={`${d.label} ${h.active ? "פתוח" : "סגור"}`}
+                />
                 <span className="text-xs text-qf-mute">{h.active ? "פתוח" : "סגור"}</span>
               </label>
               <input

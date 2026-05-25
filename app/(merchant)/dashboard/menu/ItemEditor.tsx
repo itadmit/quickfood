@@ -10,6 +10,7 @@ import { MiniImagePicker } from "@/components/shared/MiniImagePicker";
 import { DragList, DragHandle } from "@/components/shared/DragList";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
+import { Toggle } from "@/components/shared/Toggle";
 import { ALL_TAG_LABELS } from "@/lib/dietary-tags";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -441,23 +442,11 @@ export function ItemEditor({
               </Field>
             </div>
             <Field label="זמינות">
-              <button
-                type="button"
-                role="switch"
-                aria-checked={data.available}
-                onClick={() => update("available", !data.available)}
-                className={cn(
-                  "relative inline-flex h-6 w-11 rounded-full transition",
-                  data.available ? "bg-(--qf-primary)" : "bg-qf-line-dash",
-                )}
-              >
-                <span
-                  className={cn(
-                    "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition",
-                    data.available ? "inset-e-0.5" : "inset-s-0.5",
-                  )}
-                />
-              </button>
+              <Toggle
+                checked={data.available}
+                onChange={(next) => update("available", next)}
+                aria-label="זמינות פריט"
+              />
             </Field>
           </section>
 
