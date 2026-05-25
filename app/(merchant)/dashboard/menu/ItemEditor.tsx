@@ -313,7 +313,7 @@ export function ItemEditor({
   }
 
   return (
-    <div className="space-y-5 max-w-3xl pb-28 lg:pb-0">
+    <div className="space-y-5 pb-28 lg:pb-0">
       {/* Header — on mobile we drop the "save" button (it lives in the
           sticky bottom bar instead) and only keep back + title + the
           destructive/secondary actions, so 3 buttons don't elbow the
