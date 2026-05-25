@@ -4,6 +4,7 @@ import { objectExists, publicUrlFor } from "@/lib/storage/r2";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 25;
 
 export const POST = handler(async (req: Request, { params }: { params: Promise<{ fileId: string }> }) => {
   await requireSession();

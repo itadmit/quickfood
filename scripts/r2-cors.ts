@@ -20,8 +20,11 @@ const ALLOWED_ORIGINS = [
   "http://localhost:3000",
   "http://localhost:3001",
   "http://localhost:3002",
+  "https://quickfood.co.il",
+  "https://www.quickfood.co.il",
+  "https://quickfoodil.vercel.app",
+  "https://*.vercel.app",
   process.env.NEXT_PUBLIC_APP_URL,
-  // Add production origin(s) here, e.g. "https://quickfood.vercel.app"
 ].filter((o): o is string => !!o);
 
 const ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
