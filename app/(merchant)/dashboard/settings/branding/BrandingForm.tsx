@@ -263,20 +263,37 @@ export function BrandingForm({
             "--qf-deep": THEMES[themeId].deep,
             "--qf-soft": THEMES[themeId].soft,
             "--qf-line": THEMES[themeId].line,
+            "--qf-on-primary": THEMES[themeId].onPrimary,
           } as React.CSSProperties
         }
       >
         <div className="text-xs text-qf-mute">תצוגה מקדימה</div>
-        <div className="rounded-2xl bg-linear-to-br from-(--qf-primary) to-(--qf-deep) p-5 text-white space-y-2">
-          {logoUrl ? (
-            <div className="w-14 h-14 rounded-full overflow-hidden bg-white grid place-items-center">
-              <SmartImg src={logoUrl} alt="" width={56} height={56} className="object-contain w-full h-full" />
-            </div>
+        <div className="rounded-2xl overflow-hidden relative h-36 text-white">
+          {coverImage ? (
+            <>
+              <SmartImg src={coverImage} alt="" fill className="absolute inset-0 object-cover" />
+              <div className="absolute inset-0 bg-linear-to-b from-black/60 to-black/80" />
+            </>
           ) : (
-            <div className="text-3xl font-bold">{logoLetter}</div>
+            <div className="absolute inset-0 bg-linear-to-b from-(--qf-primary) to-(--qf-deep)" />
           )}
-          <div className="text-lg font-semibold">{name}</div>
-          {cuisineType && <div className="text-sm opacity-80">{cuisineType}</div>}
+          <div className="absolute inset-0 flex flex-col justify-end p-4 gap-1">
+            <div className="flex items-center gap-2.5">
+              {logoUrl ? (
+                <div className="w-11 h-11 rounded-full overflow-hidden bg-white grid place-items-center shrink-0 shadow">
+                  <SmartImg src={logoUrl} alt="" width={44} height={44} className="object-contain w-full h-full" />
+                </div>
+              ) : (
+                <div className="w-11 h-11 rounded-full bg-white/20 grid place-items-center shrink-0 text-sm font-bold">
+                  {logoLetter}
+                </div>
+              )}
+              <div>
+                <div className="text-base font-semibold leading-tight drop-shadow">{name}</div>
+                {cuisineType && <div className="text-xs opacity-80 mt-0.5">{cuisineType}</div>}
+              </div>
+            </div>
+          </div>
         </div>
         <ShopShareActions
           slug={tenant.slug}

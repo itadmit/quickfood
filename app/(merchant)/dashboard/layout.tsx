@@ -110,7 +110,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
                 branchName: tenant.branches[0]?.name ?? "",
               }}
             />
-            <main className="flex-1 min-w-0 p-3 lg:p-6 pb-20 lg:pb-6 overflow-x-hidden">
+            <main className="flex-1 min-w-0 p-3 lg:p-6 pb-20 lg:pb-6 overflow-x-clip">
               <div className="mx-auto w-full max-w-7xl">{children}</div>
             </main>
           </div>
@@ -150,7 +150,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           />
           <div className="flex-1 flex">
             <Sidebar tenant={{ name: tenant.name, logoLetter: tenant.logoLetter, branchName: tenant.branches[0]?.name ?? "" }} />
-            <main className="flex-1 min-w-0 p-3 lg:p-6 pb-20 lg:pb-6 overflow-x-hidden">
+            <main className="flex-1 min-w-0 p-3 lg:p-6 pb-20 lg:pb-6 overflow-x-clip">
               <div className="mx-auto w-full max-w-7xl">{children}</div>
             </main>
           </div>
