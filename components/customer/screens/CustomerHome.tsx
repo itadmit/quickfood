@@ -111,8 +111,13 @@ export function CustomerHome({
   const hasCover = Boolean(tenant.coverImage);
 
   const itemId = searchParams.get("item");
+  const [isModalOpen, setIsModalOpen] = useState(!!itemId);
   const [itemData, setItemData] = useState<null | { item: Record<string, unknown>; tenant: { slug: string; businessType: string } }>(null);
   const [itemLoading, setItemLoading] = useState(false);
+
+  useEffect(() => {
+    setIsModalOpen(!!itemId);
+  }, [itemId]);
 
   useEffect(() => {
     if (!itemId) { setItemData(null); return; }
@@ -125,6 +130,7 @@ export function CustomerHome({
   }, [itemId, tenant.slug]);
 
   function closeModal() {
+    setIsModalOpen(false);
     router.push(pathname, { scroll: false });
   }
 
@@ -583,7 +589,7 @@ export function CustomerHome({
         />
       )}
 
-      {itemId && (
+      {isModalOpen && (
         <ItemDetailModal onClose={closeModal}>
           {itemLoading || !itemData ? (
             <ItemModalSkeleton />

@@ -76,6 +76,7 @@ export function ItemDetail({
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
   const [flashGroupId, setFlashGroupId] = useState<string | null>(null);
+  const [added, setAdded] = useState(false);
 
   // Sticky top bar appears when the hero scrolls out of view
   const heroSentinelRef = useRef<HTMLDivElement | null>(null);
@@ -176,10 +177,14 @@ export function ItemDetail({
       notes: notes || null,
     });
     if (inModal) {
-      onClose?.();
+      setAdded(true);
+      window.setTimeout(() => onClose?.(), 700);
     } else {
-      window.scrollTo(0, 0);
-      router.push(`/s/${tenantSlug}/cart`);
+      setAdded(true);
+      window.setTimeout(() => {
+        window.scrollTo(0, 0);
+        router.push(`/s/${tenantSlug}/cart`);
+      }, 700);
     }
   }
 
@@ -421,15 +426,28 @@ export function ItemDetail({
           <button
             type="button"
             onClick={addToCart}
+            disabled={added}
             className={cn(
-              "flex-1 rounded-2xl px-5 h-14 text-base font-bold flex items-center justify-between transition active:scale-[0.98]",
-              missingGroup
-                ? "bg-qf-ink2 text-white"
-                : "bg-(--qf-primary) hover:bg-(--qf-deep) text-white shadow-lg shadow-(--qf-primary)/25",
+              "flex-1 rounded-2xl px-5 h-14 text-base font-bold flex items-center justify-between transition-all duration-300 active:scale-[0.98]",
+              added
+                ? "bg-qf-green-deep text-white scale-[0.98] shadow-lg shadow-qf-green-deep/30"
+                : missingGroup
+                  ? "bg-qf-ink2 text-white"
+                  : "bg-(--qf-primary) hover:bg-(--qf-deep) text-white shadow-lg shadow-(--qf-primary)/25",
             )}
           >
-            <span>{ctaLabel}</span>
-            <span className="tnum">{formatPrice(total)}</span>
+            {added ? (
+              <>
+                <IcoCheck c="#fff" s={18} />
+                <span>נוסף לסל</span>
+                <span />
+              </>
+            ) : (
+              <>
+                <span>{ctaLabel}</span>
+                <span className="tnum">{formatPrice(total)}</span>
+              </>
+            )}
           </button>
         </div>
       </div>
