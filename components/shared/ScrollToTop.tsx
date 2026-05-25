@@ -79,10 +79,10 @@ export function ScrollToTop() {
   return null;
 }
 
-// Matches `/[tenantSlug]/menu/[itemId]` — the only route currently mounted
+// Matches `/s/[tenantSlug]/menu/[itemId]` — the only route currently mounted
 // behind an intercepting `@modal/(.)` slot. If a second modal-intercepted
 // route is added, extend this matcher.
-const ITEM_MODAL_RE = /^\/([^/]+)\/menu\/[^/]+\/?$/;
+const ITEM_MODAL_RE = /^\/s\/([^/]+)\/menu\/[^/]+\/?$/;
 
 function isInterceptedModalTransition(prev: string, next: string): boolean {
   const prevMatch = prev.match(ITEM_MODAL_RE);
