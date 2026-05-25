@@ -84,7 +84,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
         .catch(() => {});
     }
     load();
-    const id = setInterval(load, 30_000);
+    const id = setInterval(load, 60_000);
     return () => {
       alive = false;
       clearInterval(id);

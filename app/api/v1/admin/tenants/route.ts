@@ -12,6 +12,7 @@ export const GET = handler(async () => {
   await requireAdmin();
   const tenants = await prisma.tenant.findMany({
     orderBy: { createdAt: "desc" },
+    take: 200,
     include: {
       plan: { select: { name: true } },
       _count: { select: { orders: true } },

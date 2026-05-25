@@ -135,19 +135,26 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
   let oldSubtotal = 0;
   let newSubtotal = 0;
 
+  const itemIds = order.items
+    .map((it) => it.menuItemId)
+    .filter((id): id is string => id !== null);
+
+  const menuItemRows = await prisma.menuItem.findMany({
+    where: { id: { in: itemIds } },
+    include: {
+      sizes: true,
+      optionGroups: { include: { options: true } },
+    },
+  });
+  const menuItemsById = new Map(menuItemRows.map((m) => [m.id, m]));
+
   for (const it of order.items) {
     if (!it.menuItemId) {
       issues.push({ kind: "item_missing", name: it.nameSnapshot });
       continue;
     }
 
-    const menuItem = await prisma.menuItem.findUnique({
-      where: { id: it.menuItemId },
-      include: {
-        sizes: true,
-        optionGroups: { include: { options: true } },
-      },
-    });
+    const menuItem = menuItemsById.get(it.menuItemId) ?? null;
 
     if (!menuItem) {
       issues.push({ kind: "item_missing", name: it.nameSnapshot });
