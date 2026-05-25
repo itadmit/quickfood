@@ -1,3 +1,4 @@
+import { revalidateTag } from "next/cache";
 import { z } from "zod";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
@@ -25,6 +26,7 @@ export const PATCH = handler(
       data: { available: body.available },
       select: { id: true, available: true },
     });
+    revalidateTag(`menu-item-${id}`, {});
     return apiJson({ item: updated });
   },
 );

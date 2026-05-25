@@ -1,3 +1,4 @@
+import { revalidateTag } from "next/cache";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
@@ -155,6 +156,7 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
     });
   }
 
+  revalidateTag(`menu-item-${id}`, {});
   return apiJson({ item: { id } });
 });
 
@@ -166,5 +168,6 @@ export const DELETE = handler(async (_req, { params }: { params: Promise<{ id: s
   if (!existing) return apiError("not_found", "פריט לא נמצא", 404);
   if (existing.tenantId !== session.tenantId) return apiError("forbidden", "אין הרשאה", 403);
   await prisma.menuItem.delete({ where: { id } });
+  revalidateTag(`menu-item-${id}`, {});
   return apiJson({ ok: true });
 });

@@ -1,3 +1,4 @@
+import { revalidateTag } from "next/cache";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
@@ -113,6 +114,8 @@ export const POST = handler(async (req: Request) => {
       }),
     ),
   );
+
+  for (const u of real) revalidateTag(`menu-item-${u.id}`, {});
 
   return apiJson({
     updated: real.length,
