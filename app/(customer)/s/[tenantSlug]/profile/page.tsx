@@ -25,7 +25,7 @@ export default async function ProfilePage({
       <div className="min-h-screen pb-24 lg:pb-12">
         <header className="px-5 pt-5 pb-3 flex items-center gap-3 bg-white border-b border-qf-line lg:bg-transparent lg:border-0 lg:max-w-md lg:mx-auto lg:px-0 lg:pt-10 lg:pb-2">
           <Link
-            href={`/${tenantSlug}`}
+            href={`/s/${tenantSlug}`}
             className="w-9 h-9 rounded-full border border-qf-line grid place-items-center lg:hidden"
             aria-label="חזרה"
           >

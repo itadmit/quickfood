@@ -78,7 +78,7 @@ export function ProfileLoggedIn({
       <header className="bg-linear-to-b from-(--qf-primary) to-(--qf-deep) text-white px-5 pt-5 pb-7 rounded-b-3xl lg:rounded-3xl lg:px-8">
         <div className="flex items-center gap-3 mb-4">
           <Link
-            href={`/${tenantSlug}`}
+            href={`/s/${tenantSlug}`}
             className="w-9 h-9 rounded-full bg-white/15 grid place-items-center lg:hidden"
             aria-label="חזרה"
           >
@@ -144,7 +144,7 @@ export function ProfileLoggedIn({
             {orders.map((o) => (
               <Link
                 key={o.id}
-                href={`/${tenantSlug}/orders/${o.id}`}
+                href={`/s/${tenantSlug}/orders/${o.id}`}
                 className="block bg-white rounded-2xl border border-qf-line p-3 flex items-center gap-3"
               >
                 <div className="w-10 h-10 rounded-xl bg-qf-green-soft grid place-items-center">
