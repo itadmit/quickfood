@@ -10,7 +10,13 @@ import { Skeleton } from "@/components/shared/Skeleton";
  */
 export default function ItemModalLoading() {
   return (
-    <div className="pb-32 lg:pb-0">
+    // min-h locks the modal to its max-h (92dvh on mobile / 92vh on
+    // desktop) immediately. Without it the skeleton's content is
+    // shorter than a typical loaded item, so the modal opens at half
+    // height and then "grows" to full size when page.tsx resolves —
+    // a visible jump.
+    <div className="pb-32 lg:pb-0 min-h-[92dvh] lg:min-h-[92vh]">
+
       {/* Hero — inModal sizing (h-64 sm:h-80 lg:h-105) */}
       <div className="relative">
         <Skeleton className="h-64 sm:h-80 lg:h-105 rounded-none" />
