@@ -349,7 +349,7 @@ function ShopShareActions({
     <>
       <div className="flex items-stretch gap-2">
         <a
-          href={`/${slug}`}
+          href={`/s/${slug}`}
           target="_blank"
           rel="noreferrer"
           className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium transition"

@@ -28,10 +28,10 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
   const { itemCount, subtotal } = useCart();
   const { query, setQuery } = useMenuSearch();
 
-  const homePath = `/${tenantSlug}`;
+  const homePath = `/s/${tenantSlug}`;
   const onHome = path === homePath;
-  const onCartLike = path === `/${tenantSlug}/cart` || path === `/${tenantSlug}/checkout`;
-  const onProfile = path.startsWith(`/${tenantSlug}/profile`);
+  const onCartLike = path === `/s/${tenantSlug}/cart` || path === `/s/${tenantSlug}/checkout`;
+  const onProfile = path.startsWith(`/s/${tenantSlug}/profile`);
 
   const onOrderPage = /^\/[^/]+\/orders\/[^/]+/.test(path);
   if (onOrderPage) return null;
@@ -55,7 +55,7 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
     <header className="hidden lg:flex sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-qf-line">
       <div className="w-full max-w-7xl mx-auto px-6 h-16 flex items-center gap-5">
         <Link
-          href={`/${tenantSlug}`}
+          href={`/s/${tenantSlug}`}
           className="flex items-center gap-2.5 min-w-0 hover:opacity-80 transition"
         >
           {logoUrl ? (
@@ -126,7 +126,7 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
           </Link>
           {!onCartLike && (
             <Link
-              href={`/${tenantSlug}/cart`}
+              href={`/s/${tenantSlug}/cart`}
               className="relative inline-flex items-center gap-2 px-3 h-10 rounded-full text-sm font-medium text-qf-ink2 hover:bg-qf-line-soft transition"
             >
               <span className="relative">
@@ -141,7 +141,7 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
             </Link>
           )}
           <Link
-            href={`/${tenantSlug}/profile`}
+            href={`/s/${tenantSlug}/profile`}
             aria-label="אזור אישי"
             className={cn(
               "inline-flex items-center gap-2 px-3 h-10 rounded-full text-sm font-medium transition",
@@ -157,7 +157,7 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
 
         {!onCartLike && itemCount > 0 && (
           <Link
-            href={`/${tenantSlug}/cart`}
+            href={`/s/${tenantSlug}/cart`}
             className={cn(
               "bg-(--qf-primary) hover:bg-(--qf-deep) text-white rounded-full px-4 h-10 ms-2",
               "inline-flex items-center gap-2 text-sm font-semibold shadow-sm transition",

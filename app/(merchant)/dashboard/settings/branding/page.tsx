@@ -28,7 +28,7 @@ export default async function BrandingPage() {
   const base = (process.env.NEXT_PUBLIC_APP_URL ?? "https://quickfood.co.il").replace(/\/$/, "");
   const storefrontUrl = tenant.customDomain
     ? `https://${tenant.customDomain}`
-    : `${base}/${tenant.slug}`;
+    : `${base}/s/${tenant.slug}`;
 
   // Server-generated PNG data URL. 512px is enough that the modal preview
   // looks crisp and a printed flyer at A6 stays scannable.

@@ -95,7 +95,7 @@ function isInterceptedModalTransition(prev: string, next: string): boolean {
 }
 
 function isSameTenant(path: string, slug: string): boolean {
-  return path === `/${slug}` || path.startsWith(`/${slug}/`);
+  return path === `/s/${slug}` || path.startsWith(`/s/${slug}/`);
 }
 
 function jumpToTop() {

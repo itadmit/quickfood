@@ -276,7 +276,7 @@ export function CustomerCheckout({
       <div className="min-h-screen flex flex-col">
         <header className="px-5 pt-5 pb-3 flex items-center gap-3">
           <Link
-            href={`/${tenantSlug}`}
+            href={`/s/${tenantSlug}`}
             className="w-9 h-9 rounded-full bg-white border border-qf-line grid place-items-center"
             aria-label="חזרה"
           >
@@ -291,7 +291,7 @@ export function CustomerCheckout({
           <h2 className="font-semibold text-lg mb-1">הסל ריק</h2>
           <p className="text-sm text-qf-mute mb-5">הוסף פריטים מהתפריט וחזור הנה לסיום ההזמנה</p>
           <Link
-            href={`/${tenantSlug}`}
+            href={`/s/${tenantSlug}`}
             className="px-5 py-3 rounded-full bg-(--qf-primary) text-white font-medium text-sm"
           >
             לתפריט
@@ -382,7 +382,7 @@ export function CustomerCheckout({
           setPendingPayment({
             orderId,
             authCode: initData.sdk_auth_code,
-            thankYouUrl: `/${tenantSlug}/orders/${orderId}`,
+            thankYouUrl: `/s/${tenantSlug}/orders/${orderId}`,
             // Default to sandbox if the server didn't echo it back (safer
             // than assuming production).
             testMode: initData.test_mode !== false,
@@ -397,7 +397,7 @@ export function CustomerCheckout({
       // Cash flow: skip straight to tracking.
       setSubmitted(true);
       clear();
-      router.push(`/${tenantSlug}/orders/${orderId}`);
+      router.push(`/s/${tenantSlug}/orders/${orderId}`);
       // Don't fall through to `setBusy(false)` in finally — the route
       // change tears the component down anyway, and letting `busy` flip
       // back briefly would re-enable the CTA for one frame.
@@ -428,7 +428,7 @@ export function CustomerCheckout({
     <div className="pb-32 bg-qf-bg/40 min-h-screen lg:bg-transparent lg:pb-12">
       <header className="px-5 pt-5 pb-3 flex items-center gap-3 bg-white border-b border-qf-line sticky top-0 z-10 lg:static lg:bg-transparent lg:border-0 lg:max-w-6xl lg:mx-auto lg:px-6 lg:pt-6 lg:pb-2">
         <Link
-          href={`/${tenantSlug}/cart`}
+          href={`/s/${tenantSlug}/cart`}
           className="w-9 h-9 rounded-full border border-qf-line grid place-items-center lg:hidden"
           aria-label="חזרה"
         >
@@ -539,7 +539,7 @@ export function CustomerCheckout({
           <div className="flex items-baseline justify-between">
             <CardTitle>סיכום הזמנה</CardTitle>
             <Link
-              href={`/${tenantSlug}/cart`}
+              href={`/s/${tenantSlug}/cart`}
               className="text-xs text-(--qf-deep) font-medium hover:underline"
             >
               עריכת סל
@@ -985,7 +985,7 @@ export function CustomerCheckout({
       {growEnabled && (
         <GrowPaymentSdk
           testMode={pendingPayment?.testMode ?? growTestMode}
-          thankYouUrl={pendingPayment?.thankYouUrl ?? `/${tenantSlug}`}
+          thankYouUrl={pendingPayment?.thankYouUrl ?? `/s/${tenantSlug}`}
           onReady={() => setSdkReady(true)}
           onWalletChange={(state) => setWalletOpen(state === "open")}
           onError={(message) => {

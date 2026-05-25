@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { Toggle } from "@/components/shared/Toggle";
 
 type Status = "active" | "suspended" | "trial";
 
@@ -246,7 +247,7 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
         </div>
         <div className="flex gap-2 shrink-0">
           <Link
-            href={`/${t.slug}`}
+            href={`/s/${t.slug}`}
             target="_blank"
             className="px-3 py-1.5 rounded-lg border border-qf-line-dash text-sm hover:bg-qf-line-soft"
           >
@@ -345,8 +346,9 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
           </Field>
           <Field label="מקבל מזומן">
             <Toggle
-              value={t.acceptsCash}
+              checked={t.acceptsCash}
               onChange={(v) => set("acceptsCash", v)}
+              aria-label="מקבל מזומן"
             />
           </Field>
         </div>
@@ -587,30 +589,3 @@ function Select({
   );
 }
 
-function Toggle({
-  value,
-  onChange,
-}: {
-  value: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={value}
-      onClick={() => onChange(!value)}
-      className={cn(
-        "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition",
-        value ? "bg-(--qf-primary)" : "bg-qf-line",
-      )}
-    >
-      <span
-        className={cn(
-          "inline-block h-5 w-5 transform rounded-full bg-white shadow transition",
-          value ? "-translate-x-5" : "-translate-x-0.5",
-        )}
-      />
-    </button>
-  );
-}

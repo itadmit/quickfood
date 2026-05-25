@@ -225,7 +225,7 @@ export function CustomerHome({
               <span className="truncate max-w-45">{locationLabel}</span>
             </button>
             <Link
-              href={`/${tenant.slug}/profile`}
+              href={`/s/${tenant.slug}/profile`}
               aria-label="אזור אישי"
               className="w-9 h-9 rounded-full bg-white grid place-items-center"
             >
@@ -375,7 +375,7 @@ export function CustomerHome({
       {pendingReviewOrderId && (
         <section className="px-5 mt-4 lg:max-w-7xl lg:mx-auto lg:px-6">
           <Link
-            href={`/${tenant.slug}/orders/${pendingReviewOrderId}#review`}
+            href={`/s/${tenant.slug}/orders/${pendingReviewOrderId}#review`}
             className="flex items-center gap-3 bg-white border border-(--qf-primary)/30 rounded-2xl p-3 shadow-sm"
           >
             <div className="w-10 h-10 rounded-full bg-qf-yolk/20 grid place-items-center shrink-0">
@@ -447,7 +447,7 @@ export function CustomerHome({
             {popular.map((item) => (
               <Link
                 key={item.id}
-                href={`/${tenant.slug}/menu/${item.id}`}
+                href={`/s/${tenant.slug}/menu/${item.id}`}
                 scroll={false}
                 className="shrink-0 w-44 bg-white rounded-2xl border border-qf-line overflow-hidden hover:border-(--qf-primary)/40 hover:shadow-sm transition lg:w-auto"
               >

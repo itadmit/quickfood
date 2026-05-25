@@ -157,7 +157,7 @@ export function ReorderRail({
             pricing: priceChanged ? pricing : null,
           });
         } else if (lines.length > 0) {
-          router.push(`/${tenantSlug}/cart`);
+          router.push(`/s/${tenantSlug}/cart`);
         }
       } catch {
         setConfirm({
@@ -182,7 +182,7 @@ export function ReorderRail({
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-base font-semibold">הזמנות קודמות</h2>
         <Link
-          href={`/${tenantSlug}/profile`}
+          href={`/s/${tenantSlug}/profile`}
           className="text-xs text-(--qf-deep) inline-flex items-center gap-1"
         >
           כל ההזמנות
@@ -225,7 +225,7 @@ export function ReorderRail({
           onClose={() => setConfirm(null)}
           onContinue={() => {
             setConfirm(null);
-            router.push(`/${tenantSlug}/cart`);
+            router.push(`/s/${tenantSlug}/cart`);
           }}
         />
       )}
@@ -249,7 +249,7 @@ function ReorderCard({
   return (
     <div className="rounded-2xl bg-white border border-qf-line p-3 flex items-center gap-3 shadow-sm">
       <Link
-        href={`/${tenantSlug}/orders/${order.id}`}
+        href={`/s/${tenantSlug}/orders/${order.id}`}
         className="flex items-center gap-3 flex-1 min-w-0"
       >
         <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0">

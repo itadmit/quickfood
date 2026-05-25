@@ -179,7 +179,7 @@ export function ItemDetail({
     // Reset scroll BEFORE navigating so the cart opens at its hero, not at
     // the cart's bottom CTA (matches the cart → checkout fix).
     window.scrollTo(0, 0);
-    router.push(`/${tenantSlug}/cart`);
+    router.push(`/s/${tenantSlug}/cart`);
   }
 
   const ctaLabel = missingGroup ? `בחר ${missingGroup.name}` : "הוסף לסל";
@@ -209,7 +209,7 @@ export function ItemDetail({
         >
           <div className="flex items-center gap-3 px-4 py-3">
             <Link
-              href={`/${tenantSlug}`}
+              href={`/s/${tenantSlug}`}
               className="w-9 h-9 rounded-full bg-qf-line-soft grid place-items-center"
               aria-label="חזרה"
             >
@@ -244,7 +244,7 @@ export function ItemDetail({
         </div>
         {!inModal && (
           <Link
-            href={`/${tenantSlug}`}
+            href={`/s/${tenantSlug}`}
             className="lg:hidden absolute top-4 inset-s-4 w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-md grid place-items-center"
             aria-label="חזרה"
           >

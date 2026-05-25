@@ -11,12 +11,12 @@ export function BottomTabBar({ tenantSlug }: { tenantSlug: string }) {
   const path = usePathname() || "";
   const { itemCount } = useCart();
 
-  const homePath = `/${tenantSlug}`;
+  const homePath = `/s/${tenantSlug}`;
   // Menu lives inline on the home page — the "תפריט" tab is just a
   // scroll-anchor variant of the storefront route. On other pages
   // (cart, checkout, etc.) clicking it navigates back to home and the
   // browser scrolls to the anchor.
-  const menuPath = `/${tenantSlug}#menu-section`;
+  const menuPath = `/s/${tenantSlug}#menu-section`;
   const onHome = path === homePath;
 
   // When viewing the home page, watch the inline `#menu-section` band.
@@ -46,13 +46,13 @@ export function BottomTabBar({ tenantSlug }: { tenantSlug: string }) {
     { href: homePath, label: "בית", Icon: IcoHome, key: "home" as const },
     { href: menuPath, label: "תפריט", Icon: IcoMenuList, key: "menu" as const },
     {
-      href: `/${tenantSlug}/cart`,
+      href: `/s/${tenantSlug}/cart`,
       label: "הסל שלי",
       Icon: IcoBag,
       key: "cart" as const,
       badge: itemCount > 0 ? itemCount : undefined,
     },
-    { href: `/${tenantSlug}/profile`, label: "אזור אישי", Icon: IcoUser, key: "profile" as const },
+    { href: `/s/${tenantSlug}/profile`, label: "אזור אישי", Icon: IcoUser, key: "profile" as const },
   ];
 
   function isActive(key: "home" | "menu" | "cart" | "profile", href: string) {

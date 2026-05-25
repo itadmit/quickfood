@@ -247,7 +247,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
               </div>
               <hr className="border-black/10" />
               <Link
-                href={`/${tenantSlug}`}
+                href={`/s/${tenantSlug}`}
                 target="_blank"
                 rel="noopener"
                 onClick={() => setOpenMenu(null)}

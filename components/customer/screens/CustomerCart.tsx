@@ -31,7 +31,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
       <div className="min-h-screen flex flex-col pb-24">
         <header className="px-5 pt-5 pb-3 flex items-center gap-3">
           <Link
-            href={`/${tenantSlug}`}
+            href={`/s/${tenantSlug}`}
             className="w-9 h-9 rounded-full bg-white border border-qf-line grid place-items-center"
             aria-label="חזרה"
           >
@@ -46,7 +46,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
           <h2 className="font-semibold text-lg mb-1">הסל ריק</h2>
           <p className="text-sm text-qf-mute mb-5">הוסף פריטים מהתפריט וחזור הנה לסיום ההזמנה</p>
           <Link
-            href={`/${tenantSlug}`}
+            href={`/s/${tenantSlug}`}
             className="px-5 py-3 rounded-full bg-(--qf-primary) text-white font-medium text-sm"
           >
             לתפריט
@@ -61,7 +61,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
     <div className="pb-44 lg:pb-12 lg:max-w-6xl lg:mx-auto lg:px-6 lg:mt-6">
       <header className="px-5 pt-5 pb-3 flex items-center gap-3 bg-white border-b border-qf-line sticky top-0 z-10 lg:bg-transparent lg:border-0 lg:px-0 lg:pt-0 lg:pb-6 lg:static">
         <Link
-          href={`/${tenantSlug}`}
+          href={`/s/${tenantSlug}`}
           className="w-9 h-9 rounded-full border border-qf-line grid place-items-center lg:hidden"
           aria-label="חזרה"
         >
@@ -170,7 +170,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
                   // mobile Safari where streaming/layout shifts can race the
                   // global ScrollToTop.
                   window.scrollTo(0, 0);
-                  router.push(`/${tenantSlug}/checkout`);
+                  router.push(`/s/${tenantSlug}/checkout`);
                 }}
                 className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-14 text-base font-semibold flex items-center justify-between shadow-sm shadow-(--qf-primary)/25 transition"
               >
@@ -195,7 +195,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
         <button
           type="button"
           disabled={!meetsMin}
-          onClick={() => router.push(`/${tenantSlug}/checkout`)}
+          onClick={() => router.push(`/s/${tenantSlug}/checkout`)}
           className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-16 text-base font-semibold flex items-center justify-between shadow-lg shadow-(--qf-primary)/25 transition active:scale-[0.99]"
         >
           <span className="inline-flex items-center gap-2">

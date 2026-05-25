@@ -39,7 +39,7 @@ export function CustomerReviews({
       <header className="bg-linear-to-b from-(--qf-primary) to-(--qf-deep) text-white px-5 pt-5 pb-6 rounded-b-3xl">
         <div className="flex items-center gap-3 mb-3">
           <Link
-            href={`/${tenantSlug}`}
+            href={`/s/${tenantSlug}`}
             aria-label="חזרה"
             className="w-9 h-9 rounded-full bg-white/15 grid place-items-center"
           >
@@ -79,7 +79,7 @@ export function CustomerReviews({
       {pendingOrderId && (
         <section className="px-5 mt-4">
           <Link
-            href={`/${tenantSlug}/orders/${pendingOrderId}#review`}
+            href={`/s/${tenantSlug}/orders/${pendingOrderId}#review`}
             className="block bg-qf-green-soft border border-(--qf-primary)/30 rounded-2xl p-4"
           >
             <div className="font-semibold text-(--qf-deep)">רוצה לדרג את ההזמנה האחרונה?</div>

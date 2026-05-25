@@ -62,7 +62,7 @@ export const POST = handler(async (req: Request) => {
   if (!order.customer) return apiJson({ ok: true, skipped: "guest_order" });
 
   const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
-  const link = `${base}/${order.tenant.slug}/orders/${order.id}#review`;
+  const link = `${base}/s/${order.tenant.slug}/orders/${order.id}#review`;
   const hello = order.customer.firstName?.trim() || "שלום";
 
   if (order.tenant.reviewsChannel === "email") {

@@ -88,7 +88,7 @@ export function ReviewPromptModal({
 
   function openFullReview() {
     setOpen(false);
-    router.push(`/${tenantSlug}/orders/${orderId}#review`);
+    router.push(`/s/${tenantSlug}/orders/${orderId}#review`);
   }
 
   const shown = hover || rating;

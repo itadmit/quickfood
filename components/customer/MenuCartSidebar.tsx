@@ -132,11 +132,11 @@ export function MenuCartSidebar({ tenantSlug, businessType }: Props) {
               </div>
             )}
             <Link
-              href={`/${tenantSlug}/checkout`}
+              href={`/s/${tenantSlug}/checkout`}
               onClick={(e) => {
                 if (!meetsMin) {
                   e.preventDefault();
-                  router.push(`/${tenantSlug}/cart`);
+                  router.push(`/s/${tenantSlug}/cart`);
                 }
               }}
               className="block bg-(--qf-primary) hover:bg-(--qf-deep) text-white rounded-2xl px-4 h-12 text-sm font-semibold transition shadow-sm shadow-(--qf-primary)/25"

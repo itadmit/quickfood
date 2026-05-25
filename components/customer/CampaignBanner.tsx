@@ -98,7 +98,7 @@ function resolveHref(tenantSlug: string, linkUrl: string | null): string | null 
   if (!linkUrl) return null;
   if (/^https?:\/\//i.test(linkUrl)) return linkUrl;
   if (linkUrl.startsWith("/")) {
-    return linkUrl === "/" ? `/${tenantSlug}` : `/${tenantSlug}${linkUrl}`;
+    return linkUrl === "/" ? `/s/${tenantSlug}` : `/s/${tenantSlug}${linkUrl}`;
   }
   return null;
 }

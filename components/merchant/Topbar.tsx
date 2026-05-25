@@ -309,7 +309,7 @@ export function Topbar({ user, branch, tenantSlug, tenant, showImportShortcut }:
               </div>
               <hr className="border-qf-line-soft" />
               <Link
-                href={`/${tenantSlug}`}
+                href={`/s/${tenantSlug}`}
                 target="_blank"
                 rel="noopener"
                 onClick={() => setMenuOpen(false)}

@@ -135,7 +135,7 @@ export function OrderTracking({
       <header className="bg-linear-to-b from-(--qf-primary) to-(--qf-deep) text-white px-5 pt-5 pb-8 rounded-b-3xl lg:rounded-3xl lg:px-8">
         <div className="flex items-center gap-3 mb-4">
           <Link
-            href={`/${tenantSlug}`}
+            href={`/s/${tenantSlug}`}
             className="w-9 h-9 rounded-full bg-white/15 grid place-items-center lg:hidden"
             aria-label="חזרה"
           >
@@ -613,13 +613,13 @@ function ThankYouView({
       {/* Footer CTAs */}
       <section className="px-5 mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2">
         <Link
-          href={`/${tenantSlug}`}
+          href={`/s/${tenantSlug}`}
           className="text-center py-3 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white font-medium text-sm"
         >
           חזרה לחנות
         </Link>
         <Link
-          href={`/${tenantSlug}#menu-section`}
+          href={`/s/${tenantSlug}#menu-section`}
           className="text-center py-3 rounded-2xl border border-qf-line bg-white hover:bg-qf-line-soft text-qf-ink font-medium text-sm"
         >
           הזמנה נוספת
