@@ -1,4 +1,5 @@
 import { LegalShell } from "@/components/shared/LegalShell";
+import { LeadForm } from "@/components/marketing/LeadForm";
 
 export const metadata = {
   title: "צור קשר - QuickFood",
@@ -15,6 +16,15 @@ export default function ContactPage() {
       backHref="/"
       backLabel="לדף הבית"
     >
+      <section className="not-prose">
+        <LeadForm
+          source="contact"
+          heading="השאר פרטים, נחזור אליך"
+          subheading="הדרך המהירה ביותר לקבל תשובה — תוך יום עבודה. בלי בוטים, בלי שיחת מכירה."
+          submitLabel="שליחה"
+        />
+      </section>
+
       <section>
         <h2>לאיזה צורך?</h2>
         <table>

@@ -37,6 +37,7 @@ const ICONS: Record<IconName, LucideIcon> = {
 };
 import ItemCustomizerMockup from "./_components/ItemCustomizerMockup";
 import ScrollAnimations from "./_components/ScrollAnimations";
+import { LeadForm } from "@/components/marketing/LeadForm";
 import styles from "./page.module.css";
 
 const rubik = Rubik({
@@ -889,10 +890,25 @@ function FinalCta() {
             <p>
               בלי כרטיס אשראי, בלי התחייבות, בלי שיחת מכירה. תפתח חנות, תקבל הזמנה אחת, ותראה איך זה מרגיש כשהמנה הולכת ישר מהמטבח שלך ללקוח שלך - עם השם שלך בלבד.
             </p>
-            <Link href="/signup" className={`${styles.btn} ${styles.btnLg} ${styles.btnInk}`}>
-              QuickFood, תפתחו לי חנות <IcoArrowLeft c="currentColor" s={14} />
-            </Link>
+            <div className={styles.finalCtaActions}>
+              <Link href="/signup" className={`${styles.btn} ${styles.btnLg} ${styles.btnInk}`}>
+                QuickFood, תפתחו לי חנות <IcoArrowLeft c="currentColor" s={14} />
+              </Link>
+              <span className={styles.finalCtaDivider}>או</span>
+              <a href="#talk" className={`${styles.btn} ${styles.btnLg} ${styles.btnGhost} ${styles.btnGhostOutline}`}>
+                נדבר קודם <IcoArrowLeft c="currentColor" s={14} />
+              </a>
+            </div>
           </div>
+        </div>
+
+        <div id="talk" className={styles.leadFormWrap}>
+          <LeadForm
+            source="landing"
+            heading="עדיין מתלבט? נדבר."
+            subheading="השאר פרטים ונחזור אליך תוך יום עבודה. בלי שיחת מכירה אגרסיבית — שאלות, הדגמה קצרה, וזהו."
+            submitLabel="שלחו לי פרטים"
+          />
         </div>
       </div>
     </section>

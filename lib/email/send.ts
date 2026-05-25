@@ -23,6 +23,9 @@ export interface SendEmailInput {
   /** Optional pre-rendered HTML body. Must already be RTL-wrapped (see lib/email/templates.ts). */
   html?: string;
   fromName?: string;
+  /** Optional Reply-To header — used when an inbound lead/contact form should
+   *  let the recipient hit "Reply" and reach the submitter directly. */
+  replyTo?: string;
   kind?: string;
   refKind?: string;
   refId?: string;
@@ -93,6 +96,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
         subject: input.subject,
         text: input.body,
         ...(input.html ? { html: input.html } : {}),
+        ...(input.replyTo && isValidEmail(input.replyTo) ? { reply_to: input.replyTo } : {}),
       }),
     });
     const data = (await res.json().catch(() => ({}))) as {
