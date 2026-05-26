@@ -43,6 +43,7 @@ interface OptionGroup {
   maxSelect: number;
   includedFree: number;
   helpText: string | null;
+  allowHalf: boolean;
   templateSetId: string | null;
   options: Option[];
 }
@@ -170,6 +171,7 @@ export function ItemEditor({
           maxSelect: 5,
           includedFree: 0,
           helpText: null,
+          allowHalf: false,
           templateSetId: null,
           options: [],
         },
@@ -192,6 +194,7 @@ export function ItemEditor({
           maxSelect: 5,
           includedFree: 0,
           helpText: null,
+          allowHalf: false,
           templateSetId: set.id,
           options: [],
         },
@@ -243,6 +246,7 @@ export function ItemEditor({
           max_select: g.maxSelect,
           included_free: g.includedFree,
           help_text: g.helpText,
+          allow_half: g.allowHalf,
           template_set_id: g.templateSetId,
           options: g.options.map((o) => ({
             name: o.name,
@@ -1108,6 +1112,14 @@ function GroupEditor({
           single+required (effectively 1) but we keep the UI simple. */}
       {group.type === "multi" && (
         <div className="grid grid-cols-3 gap-2 text-xs">
+          <label className="col-span-3 inline-flex items-center gap-2 px-0.5 py-0.5">
+            <input
+              type="checkbox"
+              checked={group.allowHalf}
+              onChange={(e) => onChange({ ...group, allowHalf: e.target.checked })}
+            />
+            <span>חצי/חצי — לקוח יכול לבחור כל תוספת לחצי בלבד</span>
+          </label>
           <label className="flex flex-col gap-1">
             <span className="text-qf-mute">מינ׳ בחירות</span>
             <input

@@ -58,6 +58,7 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
         max_select: g.maxSelect,
         included_free: g.includedFree,
         help_text: g.helpText,
+        allow_half: g.allowHalf,
         template_set_id: g.templateSetId,
         options: g.options.map((o) => ({
           id: o.id,
@@ -140,6 +141,7 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
         maxSelect: g.max_select,
         includedFree: g.included_free,
         helpText: g.help_text ?? null,
+        allowHalf: g.allow_half,
         templateSetId: g.template_set_id ?? null,
         position: gi,
         options: {

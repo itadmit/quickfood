@@ -65,6 +65,7 @@ async function _fetch(tenantSlug: string, itemId: string) {
           maxSelect: fromSet?.maxSelect ?? g.maxSelect,
           includedFree: fromSet?.includedFree ?? g.includedFree,
           helpText: fromSet?.helpText ?? g.helpText,
+          allowHalf: g.allowHalf,
           options: opts
             .filter((o) => o.available)
             .map((o) => ({

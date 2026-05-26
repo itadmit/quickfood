@@ -337,13 +337,20 @@ export function CustomerCheckout({
           guest_first_name: firstName || undefined,
           guest_last_name: lastName || undefined,
           customer_email: email.trim() || undefined,
-          lines: lines.map((l) => ({
-            item_id: l.itemId,
-            quantity: l.quantity,
-            size_id: l.sizeId,
-            option_ids: l.options.map((o) => o.optionId),
-            notes: l.notes,
-          })),
+          lines: lines.map((l) => {
+            const placements: Record<string, "left" | "right" | "full"> = {};
+            for (const o of l.options) {
+              if (o.half) placements[o.optionId] = o.half;
+            }
+            return {
+              item_id: l.itemId,
+              quantity: l.quantity,
+              size_id: l.sizeId,
+              option_ids: l.options.map((o) => o.optionId),
+              option_placements: Object.keys(placements).length > 0 ? placements : undefined,
+              notes: l.notes,
+            };
+          }),
         }),
       });
       const data = await res.json();

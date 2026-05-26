@@ -149,6 +149,7 @@ export const ItemOptionGroupInputSchema = z.object({
   max_select: z.number().int().min(1).default(1),
   included_free: z.number().int().min(0).default(0),
   help_text: z.string().max(200).nullable().optional(),
+  allow_half: z.boolean().default(false),
   template_set_id: UuidSchema.nullable().optional(),
   options: z.array(ItemOptionInputSchema).default([]),
 });

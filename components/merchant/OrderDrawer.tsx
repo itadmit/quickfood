@@ -227,9 +227,13 @@ export function OrderDrawer({
                           <span className="truncate">{it.name}</span>
                         </div>
                         {it.size && <div className="text-xs text-qf-mute">{it.size}</div>}
-                        {Array.isArray(it.options) && (it.options as Array<{ name: string }>).length > 0 && (
+                        {Array.isArray(it.options) && (it.options as Array<{ name: string; half?: string }>).length > 0 && (
                           <div className="text-xs text-qf-mute">
-                            {(it.options as Array<{ name: string }>).map((o) => o.name).join(" · ")}
+                            {(it.options as Array<{ name: string; half?: string }>).map((o) =>
+                              o.half === "left" ? `${o.name} (חצי א׳)` :
+                              o.half === "right" ? `${o.name} (חצי ב׳)` :
+                              o.name
+                            ).join(" · ")}
                           </div>
                         )}
                         {it.notes && (

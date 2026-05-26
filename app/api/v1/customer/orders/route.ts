@@ -30,6 +30,7 @@ const CreateOrderSchema = z.object({
         quantity: z.number().int().min(1).max(20),
         size_id: z.string().uuid().nullable().optional(),
         option_ids: z.array(z.string().uuid()).default([]),
+        option_placements: z.record(z.string().uuid(), z.enum(["left", "right", "full"])).optional(),
         notes: z.string().max(200).nullable().optional(),
       }),
     )
@@ -74,6 +75,7 @@ export const POST = handler(async (req: Request) => {
         quantity: l.quantity,
         size_id: l.size_id ?? undefined,
         option_ids: l.option_ids,
+        option_placements: l.option_placements,
         notes: l.notes ?? undefined,
       })),
     });

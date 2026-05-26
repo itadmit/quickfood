@@ -23,6 +23,8 @@ interface Option {
   isDefault: boolean;
   imageUrl?: string | null;
 }
+type HalfPlacement = "left" | "right" | "full";
+
 interface OptionGroup {
   id: string;
   name: string;
@@ -32,6 +34,7 @@ interface OptionGroup {
   maxSelect: number;
   includedFree?: number;
   helpText?: string | null;
+  allowHalf?: boolean;
   options: Option[];
 }
 interface ItemData {
@@ -68,7 +71,18 @@ export function ItemDetail({
   const [picks, setPicks] = useState<Record<string, Set<string>>>(() => {
     const initial: Record<string, Set<string>> = {};
     for (const g of item.optionGroups) {
-      initial[g.id] = new Set(g.options.filter((o) => o.isDefault).map((o) => o.id));
+      if (!g.allowHalf) {
+        initial[g.id] = new Set(g.options.filter((o) => o.isDefault).map((o) => o.id));
+      }
+    }
+    return initial;
+  });
+
+  // For allowHalf groups: maps optionId → placement ("left"|"right"|"full")
+  const [halfPicks, setHalfPicks] = useState<Record<string, Record<string, HalfPlacement>>>(() => {
+    const initial: Record<string, Record<string, HalfPlacement>> = {};
+    for (const g of item.optionGroups) {
+      if (g.allowHalf) initial[g.id] = {};
     }
     return initial;
   });
@@ -97,34 +111,43 @@ export function ItemDetail({
     const sDelta = size?.priceDelta ?? 0;
     let oDelta = 0;
     for (const g of item.optionGroups) {
-      const selected = picks[g.id] ?? new Set();
-      // Free-count: the first `includedFree` selected paid options in this
-      // group cost 0; remaining ones pay their delta. We sort by ascending
-      // priceDelta so the merchant-friendliest interpretation applies
-      // (cheapest free first → customer pays more, encourages upsell). Wolt
-      // does it the same way.
-      const paidSelections = g.options
-        .filter((o) => selected.has(o.id) && o.priceDelta > 0)
-        .sort((a, b) => a.priceDelta - b.priceDelta);
-      const free = g.includedFree ?? 0;
-      for (let i = 0; i < paidSelections.length; i++) {
-        if (i >= free) oDelta += paidSelections[i].priceDelta;
-      }
-      // Negative deltas (rare; e.g., "no cheese -₪3") always apply.
-      for (const o of g.options) {
-        if (selected.has(o.id) && o.priceDelta < 0) oDelta += o.priceDelta;
+      if (g.allowHalf) {
+        const gHalf = halfPicks[g.id] ?? {};
+        for (const o of g.options) {
+          const placement = gHalf[o.id];
+          if (!placement) continue;
+          const delta = placement !== "full" ? Math.round(o.priceDelta / 2) : o.priceDelta;
+          oDelta += delta;
+        }
+      } else {
+        const selected = picks[g.id] ?? new Set();
+        const paidSelections = g.options
+          .filter((o) => selected.has(o.id) && o.priceDelta > 0)
+          .sort((a, b) => a.priceDelta - b.priceDelta);
+        const free = g.includedFree ?? 0;
+        for (let i = 0; i < paidSelections.length; i++) {
+          if (i >= free) oDelta += paidSelections[i].priceDelta;
+        }
+        for (const o of g.options) {
+          if (selected.has(o.id) && o.priceDelta < 0) oDelta += o.priceDelta;
+        }
       }
     }
     return (item.basePrice + sDelta + oDelta) * quantity;
-  }, [item, sizeId, picks, quantity]);
+  }, [item, sizeId, picks, halfPicks, quantity]);
 
   const missingGroup = useMemo(() => {
     for (const g of item.optionGroups) {
-      const sel = picks[g.id] ?? new Set();
-      if (g.required && sel.size < g.minSelect) return g;
+      if (g.allowHalf) {
+        const count = Object.keys(halfPicks[g.id] ?? {}).length;
+        if (g.required && count < g.minSelect) return g;
+      } else {
+        const sel = picks[g.id] ?? new Set();
+        if (g.required && sel.size < g.minSelect) return g;
+      }
     }
     return null;
-  }, [item.optionGroups, picks]);
+  }, [item.optionGroups, picks, halfPicks]);
 
   function toggleOption(group: OptionGroup, optionId: string) {
     setPicks((prev) => {
@@ -145,6 +168,23 @@ export function ItemDetail({
     });
   }
 
+  function toggleHalf(group: OptionGroup, optionId: string, placement: HalfPlacement) {
+    setHalfPicks((prev) => {
+      const gMap = { ...(prev[group.id] ?? {}) };
+      const count = Object.keys(gMap).length;
+      if (gMap[optionId] === placement) {
+        // tap same button → deselect
+        delete gMap[optionId];
+      } else if (!gMap[optionId] && count >= group.maxSelect) {
+        // at max, can't add more
+        return prev;
+      } else {
+        gMap[optionId] = placement;
+      }
+      return { ...prev, [group.id]: gMap };
+    });
+  }
+
   function addToCart() {
     if (missingGroup) {
       const el = document.getElementById(`group-${missingGroup.id}`);
@@ -154,12 +194,22 @@ export function ItemDetail({
       return;
     }
     const size = item.sizes.find((s) => s.id === sizeId);
-    const selectedOpts: Array<{ groupId: string; optionId: string; name: string; priceDelta: number }> = [];
+    const selectedOpts: Array<{ groupId: string; optionId: string; name: string; priceDelta: number; half?: HalfPlacement }> = [];
     for (const g of item.optionGroups) {
-      const sel = picks[g.id] ?? new Set();
-      for (const o of g.options) {
-        if (sel.has(o.id)) {
-          selectedOpts.push({ groupId: g.id, optionId: o.id, name: o.name, priceDelta: o.priceDelta });
+      if (g.allowHalf) {
+        const gHalf = halfPicks[g.id] ?? {};
+        for (const o of g.options) {
+          const placement = gHalf[o.id];
+          if (!placement) continue;
+          const effectiveDelta = placement !== "full" ? Math.round(o.priceDelta / 2) : o.priceDelta;
+          selectedOpts.push({ groupId: g.id, optionId: o.id, name: o.name, priceDelta: effectiveDelta, half: placement });
+        }
+      } else {
+        const sel = picks[g.id] ?? new Set();
+        for (const o of g.options) {
+          if (sel.has(o.id)) {
+            selectedOpts.push({ groupId: g.id, optionId: o.id, name: o.name, priceDelta: o.priceDelta });
+          }
         }
       }
     }
@@ -308,6 +358,68 @@ export function ItemDetail({
 
       {/* Option groups */}
       {item.optionGroups.map((g) => {
+        if (g.allowHalf) {
+          const gHalf = halfPicks[g.id] ?? {};
+          const selected = Object.keys(gHalf).length;
+          const atMax = selected >= g.maxSelect;
+          const subtitle = g.required
+            ? selected >= g.minSelect
+              ? `הושלם · ${selected}/${g.maxSelect}`
+              : `חובה ${g.minSelect}–${g.maxSelect} · ${selected}/${g.maxSelect}`
+            : atMax
+              ? `הגעת למקסימום · ${g.maxSelect}/${g.maxSelect}`
+              : `אפשר לבחור עד ${g.maxSelect} · כל תוספת ניתן לקבוע לחצי פיצה`;
+
+          return (
+            <Section
+              key={g.id}
+              id={`group-${g.id}`}
+              title={g.name}
+              required={g.required}
+              subtitle={subtitle}
+              counter={g.maxSelect > 1 ? { selected, max: g.maxSelect, atMax } : undefined}
+              helpText={g.helpText}
+              flash={flashGroupId === g.id}
+            >
+              {g.options.map((o) => {
+                const placement = gHalf[o.id] as HalfPlacement | undefined;
+                const blocked = !placement && atMax;
+                const halfPrice = Math.round(o.priceDelta / 2);
+                return (
+                  <div key={o.id} className={cn("flex items-center gap-2 px-4 py-3 border-b border-qf-line last:border-0", blocked && "opacity-40")}>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium">{o.name}</div>
+                      {o.priceDelta > 0 && (
+                        <div className="text-xs text-qf-ink2 mt-0.5">
+                          {`שלם +${formatPrice(o.priceDelta)} · חצי +${formatPrice(halfPrice)}`}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {(["left", "full", "right"] as HalfPlacement[]).map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          disabled={blocked && placement !== p}
+                          onClick={() => { if (!blocked || placement) toggleHalf(g, o.id, p); }}
+                          className={cn(
+                            "h-8 px-2.5 rounded-lg text-xs font-semibold border transition",
+                            placement === p
+                              ? "bg-(--qf-primary) border-(--qf-primary) text-white"
+                              : "bg-white border-qf-line text-qf-ink2 hover:border-(--qf-primary) hover:text-(--qf-primary)",
+                          )}
+                        >
+                          {p === "left" ? "חצי א׳" : p === "right" ? "חצי ב׳" : "שלם"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </Section>
+          );
+        }
+
         const free = g.includedFree ?? 0;
         const selected = picks[g.id]?.size ?? 0;
         const remaining = Math.max(0, g.maxSelect - selected);

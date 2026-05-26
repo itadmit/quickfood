@@ -15,6 +15,7 @@ export interface CartLineInput {
   quantity: number;
   size_id?: string | null;
   option_ids?: string[];
+  option_placements?: Record<string, "left" | "right" | "full">;
   notes?: string | null;
 }
 
@@ -124,9 +125,10 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       }
     }
 
-    const selectedOptions: Array<{ group_id: string; option_id: string; name: string; price_delta: number }> = [];
+    const selectedOptions: Array<{ group_id: string; option_id: string; name: string; price_delta: number; half?: string }> = [];
     let optionsDelta = 0;
     const optionIds = new Set(line.option_ids ?? []);
+    const placements = line.option_placements ?? {};
     for (const group of item.optionGroups) {
       // Resolve the effective options + config: ModifierSet overrides inline.
       const fromSet = group.templateSet;
@@ -158,23 +160,29 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
       for (let i = 0; i < paid.length; i++) {
         const o = paid[i];
-        const effectiveDelta = i < effectiveFree ? 0 : o.priceDelta;
+        const baseDelta = i < effectiveFree ? 0 : o.priceDelta;
+        const half = placements[o.id];
+        const effectiveDelta = half && half !== "full" ? Math.round(baseDelta / 2) : baseDelta;
         selectedOptions.push({
           group_id: group.id,
           option_id: o.id,
           name: o.name,
           price_delta: effectiveDelta,
+          ...(half && half !== "full" ? { half } : {}),
         });
         optionsDelta += effectiveDelta;
       }
       for (const o of [...negative, ...zero]) {
+        const half = placements[o.id];
+        const effectiveDelta = half && half !== "full" ? Math.round(o.priceDelta / 2) : o.priceDelta;
         selectedOptions.push({
           group_id: group.id,
           option_id: o.id,
           name: o.name,
-          price_delta: o.priceDelta,
+          price_delta: effectiveDelta,
+          ...(half && half !== "full" ? { half } : {}),
         });
-        optionsDelta += o.priceDelta;
+        optionsDelta += effectiveDelta;
       }
     }
 

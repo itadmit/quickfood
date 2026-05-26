@@ -14,7 +14,7 @@ export interface CartLine {
   sizeId: string | null;
   sizeName: string | null;
   sizeDelta: number;
-  options: Array<{ groupId: string; optionId: string; name: string; priceDelta: number }>;
+  options: Array<{ groupId: string; optionId: string; name: string; priceDelta: number; half?: "left" | "right" | "full" }>;
   notes: string | null;
 }
 

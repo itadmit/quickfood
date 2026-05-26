@@ -494,6 +494,7 @@ model ItemOptionGroup {
   includedFree  Int             @default(0) @map("included_free")
   helpText      String?         @map("help_text")
   position      Int             @default(0)
+  allowHalf     Boolean         @default(false) @map("allow_half")
   // When set, this group inherits its options + config from a ModifierSet.
   // Inline `options` rows are ignored when templateSetId is non-null.
   templateSetId String?         @map("template_set_id") @db.Uuid
