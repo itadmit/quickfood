@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db/client";
 import { splitDeliveryNotes, type CheckoutPrefill } from "@/lib/checkout-prefill";
+import { formatOptionDisplayName } from "@/lib/format-option-name";
 
 /** Snapshot of an option as stored on OrderItem.selectedOptions. */
 export interface StoredOption {
@@ -195,7 +196,7 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
       liveOptions.push({
         groupId: group.id,
         optionId: opt.id,
-        name: opt.name,
+        name: formatOptionDisplayName(group.name, opt.name),
         priceDelta: opt.priceDelta,
       });
     }
