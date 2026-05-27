@@ -131,6 +131,20 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
             (not floating over the billing banner above it). lg:hidden. */}
         <MobileMenuV2 tenant={tenant} />
 
+        <Link
+          href="/dashboard"
+          aria-label="QuickFood"
+          className="shrink-0 inline-flex items-center transition active:translate-y-[1px]"
+        >
+          <img
+            src="/quickfood-mark.png"
+            alt="QuickFood"
+            width={40}
+            height={40}
+            className="w-10 h-10 object-contain rounded-xl border-2 border-black shadow-[0_3px_0_#000]"
+          />
+        </Link>
+
         <div className="ms-auto" />
 
         {/* "Updating store" loader — appears to the visual-right of
@@ -214,7 +228,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
         <Link
           href="/dashboard/orders"
           aria-label="התראות"
-          className="relative w-10 h-10 rounded-xl border border-black/15 bg-white hover:border-black hover:bg-[#F8CB1E] grid place-items-center transition active:scale-95"
+          className="relative w-10 h-10 rounded-xl border-2 border-black bg-white hover:bg-[#F8CB1E] grid place-items-center transition active:scale-95 shadow-[0_2px_0_#000]"
         >
           <IcoBell c="#000" s={18} />
           {unread > 0 && (
@@ -229,7 +243,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
           <button
             type="button"
             onClick={() => setOpenMenu(openMenu === "user" ? null : "user")}
-            className="flex items-center gap-2 ps-1 pe-2.5 h-10 rounded-xl border border-black/15 bg-white hover:border-black transition"
+            className="flex items-center gap-2 ps-1 pe-2.5 h-10 rounded-xl border-2 border-black bg-white hover:bg-[#F8CB1E] transition active:scale-[0.98] shadow-[0_2px_0_#000]"
           >
             <div className="w-7 h-7 rounded-lg bg-black text-[#F8CB1E] grid place-items-center text-xs font-black">
               {user.name.slice(0, 2)}
