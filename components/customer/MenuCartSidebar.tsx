@@ -83,7 +83,7 @@ export function MenuCartSidebar({ tenantSlug, businessType }: Props) {
                       </button>
                     </div>
                     {variant && (
-                      <div className="text-[11px] text-qf-mute mt-0.5 line-clamp-1">{variant}</div>
+                      <div className="text-[11px] text-qf-mute mt-0.5 leading-relaxed">{variant}</div>
                     )}
                     <div className="flex items-center justify-between mt-1.5">
                       <div className="flex items-center bg-qf-bg rounded-full border border-qf-line">

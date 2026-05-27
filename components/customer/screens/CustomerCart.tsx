@@ -109,7 +109,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
                   </button>
                 </div>
                 {variant && (
-                  <div className="text-xs text-qf-mute mt-0.5 line-clamp-1">{variant}</div>
+                  <div className="text-xs text-qf-mute mt-0.5 leading-relaxed">{variant}</div>
                 )}
                 {l.notes && (
                   <div className="text-xs text-qf-ink2 mt-0.5">הערה: {l.notes}</div>

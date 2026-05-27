@@ -580,7 +580,7 @@ export function CustomerCheckout({
                       </div>
                     </div>
                     {variant && (
-                      <div className="text-xs text-qf-mute mt-0.5 line-clamp-1">{variant}</div>
+                      <div className="text-xs text-qf-mute mt-0.5 leading-relaxed">{variant}</div>
                     )}
                     <div className="text-xs text-qf-ink2 mt-1 tnum">× {l.quantity}</div>
                   </div>
@@ -894,7 +894,7 @@ export function CustomerCheckout({
                         <div className="text-sm tnum font-medium shrink-0">{formatPrice(lineTotal)}</div>
                       </div>
                       {variant && (
-                        <div className="text-xs text-qf-mute mt-0.5 line-clamp-1">{variant}</div>
+                        <div className="text-xs text-qf-mute mt-0.5 leading-relaxed">{variant}</div>
                       )}
                       <div className="text-xs text-qf-ink2 mt-0.5 tnum">× {l.quantity}</div>
                     </div>
