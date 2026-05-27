@@ -8,6 +8,7 @@ import { MenuSearchProvider } from "@/components/customer/MenuSearchProvider";
 import { CustomerTopNav } from "@/components/customer/CustomerTopNav";
 import { ReviewPromptModal } from "@/components/customer/ReviewPromptModal";
 import { MerchantPreviewBar } from "@/components/customer/MerchantPreviewBar";
+import { AIAdvisorFAB } from "@/components/customer/ai-advisor/AIAdvisorFAB";
 
 export async function generateMetadata({
   params,
@@ -112,6 +113,9 @@ export default async function CustomerLayout({
             )}
           </div>
           {modal}
+          {tenant.aiAdvisorEnabled && tenant.aiGeminiApiKey && (
+            <AIAdvisorFAB tenantSlug={tenant.slug} />
+          )}
           {isOwnMerchant && <MerchantPreviewBar tenantName={tenant.name} />}
         </MenuSearchProvider>
       </CartProvider>

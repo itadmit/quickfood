@@ -1,0 +1,371 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCart } from "@/components/customer/CartProvider";
+import { readRecentOrderIds } from "@/lib/recent-orders-storage";
+import { IcoClose } from "@/components/shared/Icons";
+import { AIMessageList } from "./AIMessageList";
+import { AIComposer } from "./AIComposer";
+import type { AIChatMessage, AIProposal, AIRecommendItem, AIToolCall } from "./types";
+
+interface StreamPart {
+  kind: "text" | "tool" | "done" | "error";
+  text?: string;
+  toolName?: string;
+  toolArgs?: Record<string, unknown>;
+  error?: string;
+}
+
+interface RecentOrderItem {
+  name: string;
+  quantity: number;
+}
+
+interface RecentOrderForAI {
+  orderNumber?: number;
+  createdAt: string;
+  items: RecentOrderItem[];
+}
+
+const SUGGESTIONS = [
+  "מה אתה ממליץ ליחיד?",
+  "ארוחה לזוג עד 120 ₪",
+  "משהו טבעוני",
+  "אני אוהב חריף",
+];
+
+export function AIAdvisorModal({
+  tenantSlug,
+  onClose,
+}: {
+  tenantSlug: string;
+  onClose: () => void;
+}) {
+  const cart = useCart();
+  const [messages, setMessages] = useState<AIChatMessage[]>([]);
+  const [streaming, setStreaming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [recentOrders, setRecentOrders] = useState<RecentOrderForAI[]>([]);
+  const [recommendMap, setRecommendMap] = useState<Map<string, AIRecommendItem>>(new Map());
+  const [proposalMap, setProposalMap] = useState<Map<string, AIProposal>>(new Map());
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      abortRef.current?.abort();
+    };
+  }, [onClose]);
+
+  useEffect(() => {
+    const ids = readRecentOrderIds(tenantSlug);
+    const ctrl = new AbortController();
+    const idsParam = ids.length > 0 ? `&ids=${encodeURIComponent(ids.slice(0, 5).join(","))}` : "";
+    fetch(
+      `/api/v1/customer/ai/recent-orders?tenant=${encodeURIComponent(tenantSlug)}${idsParam}`,
+      { signal: ctrl.signal },
+    )
+      .then((r) => r.json())
+      .then((data: { orders?: Array<{ number?: number; createdAt: string; items: Array<{ name: string; quantity: number }> }> }) => {
+        setRecentOrders(
+          (data.orders ?? []).map((o) => ({
+            orderNumber: o.number,
+            createdAt: o.createdAt,
+            items: o.items.map((i) => ({ name: i.name, quantity: i.quantity })),
+          })),
+        );
+      })
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [tenantSlug]);
+
+  const currentCartSnapshot = useMemo(
+    () =>
+      cart.lines.map((l) => ({
+        name: l.name,
+        quantity: l.quantity,
+        sizeName: l.sizeName,
+        options: l.options.map((o) => o.name),
+      })),
+    [cart.lines],
+  );
+
+  const handleAddProposal = useCallback(
+    (toolCallId: string) => {
+      const proposal = proposalMap.get(toolCallId);
+      if (!proposal) return;
+      cart.add({
+        itemId: proposal.itemId,
+        name: proposal.itemName,
+        basePrice: proposal.basePrice,
+        artType: null,
+        imageUrl: proposal.imageUrl,
+        quantity: proposal.quantity,
+        sizeId: proposal.sizeId,
+        sizeName: proposal.sizeName,
+        sizeDelta: proposal.sizeDelta,
+        options: proposal.options,
+        notes: proposal.notes,
+      });
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.toolCalls?.some((tc) => tc.id === toolCallId)
+            ? {
+                ...m,
+                toolCalls: m.toolCalls.map((tc) =>
+                  tc.id === toolCallId ? { ...tc, resolved: true } : tc,
+                ),
+              }
+            : m,
+        ),
+      );
+    },
+    [cart, proposalMap],
+  );
+
+  const send = useCallback(
+    async (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed || streaming) return;
+
+      setError(null);
+      const userMsg: AIChatMessage = {
+        id: crypto.randomUUID(),
+        role: "user",
+        text: trimmed,
+      };
+      const modelMsg: AIChatMessage = {
+        id: crypto.randomUUID(),
+        role: "model",
+        text: "",
+        toolCalls: [],
+        pending: true,
+      };
+      const historyForAPI = messages.map((m) => ({ role: m.role, text: m.text }));
+
+      setMessages((prev) => [...prev, userMsg, modelMsg]);
+      setStreaming(true);
+
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
+
+      try {
+        const res = await fetch("/api/v1/customer/ai/chat", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          signal: ctrl.signal,
+          body: JSON.stringify({
+            tenant_slug: tenantSlug,
+            messages: historyForAPI,
+            message: trimmed,
+            recent_orders: recentOrders,
+            current_cart: currentCartSnapshot,
+          }),
+        });
+
+        if (!res.ok || !res.body) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data?.error?.message ?? "תקלת תקשורת עם היועץ");
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = "";
+
+        const newRecommendItems = new Map(recommendMap);
+        const newProposals = new Map(proposalMap);
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split("\n\n");
+          buf = lines.pop() ?? "";
+          for (const block of lines) {
+            const line = block.split("\n").find((l) => l.startsWith("data: "));
+            if (!line) continue;
+            let parsed: StreamPart;
+            try {
+              parsed = JSON.parse(line.slice(6));
+            } catch {
+              continue;
+            }
+            if (parsed.kind === "text" && parsed.text) {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === modelMsg.id ? { ...m, text: m.text + parsed.text } : m,
+                ),
+              );
+            } else if (parsed.kind === "tool") {
+              const toolCall: AIToolCall = {
+                id: crypto.randomUUID(),
+                name: parsed.toolName ?? "",
+                args: parsed.toolArgs ?? {},
+              };
+
+              if (toolCall.name === "recommend_items") {
+                const ids = (toolCall.args.item_ids as string[] | undefined) ?? [];
+                const items = await fetchRecommendItems(tenantSlug, ids);
+                for (const it of items) newRecommendItems.set(it.id, it);
+                setRecommendMap(new Map(newRecommendItems));
+              } else if (toolCall.name === "propose_add_to_cart") {
+                const proposal = await fetchProposal(tenantSlug, toolCall.args);
+                if (proposal) {
+                  newProposals.set(toolCall.id, proposal);
+                  setProposalMap(new Map(newProposals));
+                }
+              }
+
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === modelMsg.id
+                    ? { ...m, toolCalls: [...(m.toolCalls ?? []), toolCall] }
+                    : m,
+                ),
+              );
+            } else if (parsed.kind === "error") {
+              throw new Error(parsed.error ?? "שגיאת מודל");
+            }
+          }
+        }
+
+        setMessages((prev) =>
+          prev.map((m) => (m.id === modelMsg.id ? { ...m, pending: false } : m)),
+        );
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "תקלה";
+        setError(msg);
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === modelMsg.id
+              ? { ...m, pending: false, text: m.text || "מצטער, התקלה לא אפשרה לי לענות עכשיו." }
+              : m,
+          ),
+        );
+      } finally {
+        setStreaming(false);
+        abortRef.current = null;
+      }
+    },
+    [messages, streaming, tenantSlug, recentOrders, currentCartSnapshot, recommendMap, proposalMap],
+  );
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-qf-bg flex flex-col" role="dialog" aria-modal>
+      <header className="flex items-center justify-between gap-3 px-4 py-3 border-b border-qf-line-soft bg-white">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-black text-(--qf-yolk) flex items-center justify-center">
+            <SparkleSm />
+          </div>
+          <div>
+            <div className="font-bold text-sm leading-tight">היועץ של {cart.tenant.name}</div>
+            <div className="text-xs text-qf-mute leading-tight">מבוסס Gemini · ממליץ לפי התפריט</div>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="סגור"
+          className="w-9 h-9 rounded-full hover:bg-qf-line-soft flex items-center justify-center"
+        >
+          <IcoClose s={20} />
+        </button>
+      </header>
+
+      <div className="flex-1 overflow-y-auto">
+        {messages.length === 0 ? (
+          <EmptyState
+            tenantName={cart.tenant.name}
+            onPick={(text) => send(text)}
+          />
+        ) : (
+          <AIMessageList
+            messages={messages}
+            recommendMap={recommendMap}
+            proposalMap={proposalMap}
+            onAddProposal={handleAddProposal}
+            onClose={onClose}
+          />
+        )}
+      </div>
+
+      <AIComposer
+        disabled={streaming}
+        onSend={send}
+        suggestions={messages.length === 0 ? SUGGESTIONS : []}
+        error={error}
+      />
+    </div>
+  );
+}
+
+function EmptyState({ tenantName, onPick }: { tenantName: string; onPick: (text: string) => void }) {
+  return (
+    <div className="max-w-md mx-auto px-4 py-10 flex flex-col items-center text-center">
+      <div className="w-16 h-16 rounded-full bg-black text-(--qf-yolk) flex items-center justify-center mb-4">
+        <SparkleSm s={28} />
+      </div>
+      <h2 className="text-xl font-black mb-1">היי, אני היועץ של {tenantName}</h2>
+      <p className="text-sm text-qf-mute leading-relaxed max-w-xs">
+        תגיד לי מה בא לך, על איזה תקציב או הגבלות תזונה — אני ממליץ ומרכיב לך הזמנה.
+      </p>
+      <div className="mt-6 grid grid-cols-2 gap-2 w-full">
+        {SUGGESTIONS.map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => onPick(s)}
+            className="text-right text-sm font-medium px-3 py-2.5 rounded-2xl border border-qf-line-dash hover:border-black hover:bg-white transition"
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SparkleSm({ s = 18 }: { s?: number }) {
+  return (
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z" />
+      <path d="M19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9L19 14z" opacity="0.7" />
+    </svg>
+  );
+}
+
+async function fetchRecommendItems(tenantSlug: string, ids: string[]): Promise<AIRecommendItem[]> {
+  if (ids.length === 0) return [];
+  try {
+    const res = await fetch(
+      `/api/v1/customer/ai/items?tenant=${encodeURIComponent(tenantSlug)}&ids=${encodeURIComponent(ids.join(","))}`,
+    );
+    if (!res.ok) return [];
+    const data = (await res.json()) as { items?: AIRecommendItem[] };
+    return data.items ?? [];
+  } catch {
+    return [];
+  }
+}
+
+async function fetchProposal(
+  tenantSlug: string,
+  args: Record<string, unknown>,
+): Promise<AIProposal | null> {
+  try {
+    const res = await fetch("/api/v1/customer/ai/resolve-proposal", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ tenant_slug: tenantSlug, ...args }),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { proposal?: AIProposal };
+    return data.proposal ?? null;
+  } catch {
+    return null;
+  }
+}
