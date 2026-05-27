@@ -160,10 +160,10 @@ export function AIAdvisorModal({
     [cart.lines],
   );
 
-  const handleAddProposal = useCallback(
+  const addProposalToCart = useCallback(
     (toolCallId: string) => {
       const proposal = proposalMap.get(toolCallId);
-      if (!proposal) return;
+      if (!proposal) return false;
       cart.add({
         itemId: proposal.itemId,
         name: proposal.itemName,
@@ -189,8 +189,26 @@ export function AIAdvisorModal({
             : m,
         ),
       );
+      return true;
     },
     [cart, proposalMap],
+  );
+
+  const handleAddProposal = useCallback(
+    (toolCallId: string) => {
+      addProposalToCart(toolCallId);
+    },
+    [addProposalToCart],
+  );
+
+  const handleAddProposalAndCheckout = useCallback(
+    (toolCallId: string) => {
+      if (addProposalToCart(toolCallId)) {
+        onClose();
+        window.location.href = `/s/${tenantSlug}/cart`;
+      }
+    },
+    [addProposalToCart, onClose, tenantSlug],
   );
 
   const send = useCallback(
@@ -380,6 +398,7 @@ export function AIAdvisorModal({
             recommendMap={recommendMap}
             proposalMap={proposalMap}
             onAddProposal={handleAddProposal}
+            onAddProposalAndCheckout={handleAddProposalAndCheckout}
             onClose={onClose}
           />
         )}

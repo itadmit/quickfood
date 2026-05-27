@@ -11,6 +11,7 @@ interface Props {
   recommendMap: Map<string, AIRecommendItem>;
   proposalMap: Map<string, AIProposal>;
   onAddProposal: (toolCallId: string) => void;
+  onAddProposalAndCheckout: (toolCallId: string) => void;
   onClose: () => void;
 }
 
@@ -19,6 +20,7 @@ export function AIMessageList({
   recommendMap,
   proposalMap,
   onAddProposal,
+  onAddProposalAndCheckout,
   onClose,
 }: Props) {
   const endRef = useRef<HTMLDivElement | null>(null);
@@ -36,6 +38,7 @@ export function AIMessageList({
           recommendMap={recommendMap}
           proposalMap={proposalMap}
           onAddProposal={onAddProposal}
+          onAddProposalAndCheckout={onAddProposalAndCheckout}
           onClose={onClose}
         />
       ))}
@@ -49,12 +52,14 @@ function MessageBubble({
   recommendMap,
   proposalMap,
   onAddProposal,
+  onAddProposalAndCheckout,
   onClose,
 }: {
   message: AIChatMessage;
   recommendMap: Map<string, AIRecommendItem>;
   proposalMap: Map<string, AIProposal>;
   onAddProposal: (toolCallId: string) => void;
+  onAddProposalAndCheckout: (toolCallId: string) => void;
   onClose: () => void;
 }) {
   if (message.role === "user") {
@@ -116,6 +121,7 @@ function MessageBubble({
               proposal={proposal}
               resolved={!!tc.resolved}
               onAdd={() => onAddProposal(tc.id)}
+              onAddAndCheckout={() => onAddProposalAndCheckout(tc.id)}
             />
           );
         }
@@ -152,13 +158,22 @@ function ProposalCard({
   proposal,
   resolved,
   onAdd,
+  onAddAndCheckout,
 }: {
   proposal: AIProposal;
   resolved: boolean;
   onAdd: () => void;
+  onAddAndCheckout: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const total = proposal.unitPrice * proposal.quantity;
+
+  function trigger(handler: () => void) {
+    if (resolved || busy) return;
+    setBusy(true);
+    handler();
+    setTimeout(() => setBusy(false), 400);
+  }
 
   return (
     <div className="bg-white border-2 border-black rounded-2xl overflow-hidden shadow-sm">
@@ -188,33 +203,34 @@ function ProposalCard({
         </div>
         <div className="text-sm font-bold tnum self-start">{formatPrice(total)}</div>
       </div>
-      <button
-        type="button"
-        disabled={resolved || busy}
-        onClick={() => {
-          if (resolved || busy) return;
-          setBusy(true);
-          onAdd();
-          setTimeout(() => setBusy(false), 400);
-        }}
-        className={
-          resolved
-            ? "w-full px-4 py-3 bg-qf-green-soft text-qf-green-deep font-bold text-sm flex items-center justify-center gap-1.5"
-            : "w-full px-4 py-3 bg-black text-white font-bold text-sm flex items-center justify-center gap-1.5 hover:bg-black/85 transition"
-        }
-      >
-        {resolved ? (
-          <>
-            <IcoCheck c="currentColor" s={14} />
-            נוסף לעגלה
-          </>
-        ) : (
-          <>
+      {resolved ? (
+        <div className="w-full px-4 py-3 bg-qf-green-soft text-qf-green-deep font-bold text-sm flex items-center justify-center gap-1.5">
+          <IcoCheck c="currentColor" s={14} />
+          נוסף לעגלה
+        </div>
+      ) : (
+        <div className="flex border-t border-black/10">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => trigger(onAdd)}
+            className="flex-1 px-4 py-3 bg-black text-white font-bold text-sm flex items-center justify-center gap-1.5 hover:bg-black/85 transition disabled:opacity-60"
+          >
             <IcoPlus c="currentColor" s={14} />
             הוסף לעגלה · {formatPrice(total)}
-          </>
-        )}
-      </button>
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => trigger(onAddAndCheckout)}
+            className="shrink-0 px-4 py-3 bg-(--qf-yolk) text-black font-bold text-sm hover:brightness-95 transition disabled:opacity-60 border-r border-black/10"
+            aria-label="הוסף לעגלה ועבור לתשלום"
+            title="הוסף ולתשלום"
+          >
+            לתשלום ←
+          </button>
+        </div>
+      )}
     </div>
   );
 }

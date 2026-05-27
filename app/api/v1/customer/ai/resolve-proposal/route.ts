@@ -2,6 +2,7 @@ import { z } from "zod";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
+import { formatOptionDisplayName } from "@/lib/format-option-name";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -74,11 +75,12 @@ export const POST = handler(async (req: Request) => {
       picks = picks.slice(0, maxSelect);
     }
 
+    const groupName = fromSet?.name ?? g.name;
     for (const p of picks) {
       selectedOptions.push({
         groupId: g.id,
         optionId: p.id,
-        name: p.name,
+        name: formatOptionDisplayName(groupName, p.name),
         priceDelta: p.priceDelta,
       });
     }

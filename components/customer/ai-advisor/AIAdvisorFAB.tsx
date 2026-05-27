@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { AIAdvisorModal } from "./AIAdvisorModal";
 
 const HINT_KEY = "qf:ai-advisor-hinted";
 const SCROLL_THRESHOLD = 220;
+const HIDDEN_PATH_SUFFIXES = ["/cart", "/checkout"];
 
 export function AIAdvisorFAB({
   tenantSlug,
@@ -13,6 +15,8 @@ export function AIAdvisorFAB({
   tenantSlug: string;
   suggestions?: string[];
 }) {
+  const pathname = usePathname() || "";
+  const hidden = HIDDEN_PATH_SUFFIXES.some((p) => pathname.endsWith(p));
   const [open, setOpen] = useState(false);
   const [hintPhase, setHintPhase] = useState<"idle" | "pulse" | "bubble" | "done">("idle");
 
@@ -48,6 +52,8 @@ export function AIAdvisorFAB({
 
   const showPulse = hintPhase === "pulse" || hintPhase === "bubble";
   const showBubble = hintPhase === "bubble";
+
+  if (hidden && !open) return null;
 
   return (
     <>

@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { IcoClose } from "@/components/shared/Icons";
 import { AIAdvisorModal } from "./AIAdvisorModal";
 
 const COOKIE_NAME = "qf_ai_promo_dismissed";
 const DISMISS_DAYS = 7;
 const OPEN_DELAY_MS = 1500;
+const HIDDEN_PATH_SUFFIXES = ["/cart", "/checkout"];
 
 function getCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
@@ -31,15 +33,18 @@ export function AIAdvisorPromoPopup({
   tenantName: string;
   suggestions?: string[];
 }) {
+  const pathname = usePathname() || "";
+  const hidden = HIDDEN_PATH_SUFFIXES.some((p) => pathname.endsWith(p));
   const [showPromo, setShowPromo] = useState(false);
   const [showAdvisor, setShowAdvisor] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (hidden) return;
     if (getCookie(COOKIE_NAME) === "1") return;
     const t = window.setTimeout(() => setShowPromo(true), OPEN_DELAY_MS);
     return () => window.clearTimeout(t);
-  }, []);
+  }, [hidden]);
 
   useEffect(() => {
     if (!showPromo) return;
