@@ -8,6 +8,7 @@ import {
   IcoMegaphone,
   IcoBell,
   IcoCreditCard,
+  IcoSparkle,
 } from "@/components/shared/Icons";
 
 // Shared nav config for the V2 dashboard skin — same list rendered by
@@ -18,6 +19,7 @@ export type NavItem = {
   Icon: typeof IcoHome;
   exact?: boolean;
   match?: string;
+  badge?: string;
 };
 
 export type NavSection = { title: string; items: NavItem[] };
@@ -39,6 +41,7 @@ export const NAV: NavSection[] = [
       { href: "/dashboard/coupons", label: "קופונים", Icon: IcoCreditCard },
       { href: "/dashboard/reviews", label: "ביקורות", Icon: IcoStar },
       { href: "/dashboard/sms", label: "SMS", Icon: IcoBell },
+      { href: "/dashboard/ai-advisor", label: "יועץ AI", Icon: IcoSparkle, badge: "חדש!" },
     ],
   },
   {

@@ -105,7 +105,7 @@ export function MobileMenuV2({ tenant }: Props) {
                   <div className="px-3 text-[10px] font-black uppercase tracking-wider text-black/40">
                     {section.title}
                   </div>
-                  {section.items.map(({ href, label, Icon, exact, match }) => {
+                  {section.items.map(({ href, label, Icon, exact, match, badge }) => {
                     const active = exact
                       ? pathname === href
                       : pathname.startsWith(match ?? href);
@@ -122,6 +122,11 @@ export function MobileMenuV2({ tenant }: Props) {
                       >
                         <Icon c="#000" s={19} />
                         <span>{label}</span>
+                        {badge && (
+                          <span className="text-[10px] font-black bg-white text-black border border-black rounded-md px-1.5 py-0.5 leading-none">
+                            {badge}
+                          </span>
+                        )}
                       </Link>
                     );
                   })}
