@@ -31,7 +31,8 @@ function toGeminiTools(tools: ToolSpec[]): FunctionDeclaration[] {
             type: mapType(v.type),
             description: v.description,
             ...(v.items ? { items: { type: mapType(v.items.type) } } : {}),
-          },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any,
         ]),
       ),
       required: t.parameters.required,

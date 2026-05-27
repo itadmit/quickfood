@@ -113,9 +113,11 @@ export default async function CustomerLayout({
             )}
           </div>
           {modal}
-          {tenant.aiAdvisorEnabled && tenant.aiGeminiApiKey && (
-            <AIAdvisorFAB tenantSlug={tenant.slug} />
-          )}
+          {tenant.aiAdvisorEnabled &&
+            ((tenant.aiProvider === "claude" && tenant.aiClaudeApiKey) ||
+              (tenant.aiProvider === "gemini" && tenant.aiGeminiApiKey)) && (
+              <AIAdvisorFAB tenantSlug={tenant.slug} />
+            )}
           {isOwnMerchant && <MerchantPreviewBar tenantName={tenant.name} />}
         </MenuSearchProvider>
       </CartProvider>
