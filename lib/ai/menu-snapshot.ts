@@ -88,7 +88,7 @@ export async function loadAIMenuSnapshot(tenantId: string): Promise<AIMenuSnapsh
         basePrice: item.basePrice,
         tags: item.tags,
         category: cat.name,
-        imageUrl: item.images?.[0] ?? null,
+        imageUrl: item.images?.[0] ?? item.imageUrl ?? null,
         sizes: item.sizes.map((s) => ({
           id: s.id,
           name: s.name,

@@ -24,6 +24,7 @@ export const GET = handler(async (req: Request) => {
       description: true,
       basePrice: true,
       images: true,
+      imageUrl: true,
     },
   });
 
@@ -35,7 +36,7 @@ export const GET = handler(async (req: Request) => {
       name: r.name,
       description: r.description,
       basePrice: r.basePrice,
-      imageUrl: r.images?.[0] ?? null,
+      imageUrl: r.images?.[0] ?? r.imageUrl ?? null,
       href: `/s/${slug}/menu/${r.id}`,
     }));
 

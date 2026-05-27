@@ -98,7 +98,7 @@ export const POST = handler(async (req: Request) => {
       sizeDelta,
       options: selectedOptions,
       notes: body.notes ?? null,
-      imageUrl: item.images?.[0] ?? null,
+      imageUrl: item.images?.[0] ?? item.imageUrl ?? null,
       unitPrice,
     },
   });
