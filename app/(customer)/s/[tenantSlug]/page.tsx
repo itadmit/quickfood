@@ -210,6 +210,11 @@ export default async function HomePage({
       bannerCampaign={bannerCampaign}
       hasCustomerSession={session?.type === "customer"}
       pendingReviewOrderId={pendingReview?.id ?? null}
+      aiAdvisorEnabled={
+        tenant.aiAdvisorEnabled &&
+        ((tenant.aiProvider === "claude" && !!tenant.aiClaudeApiKey) ||
+          (tenant.aiProvider === "gemini" && !!tenant.aiGeminiApiKey))
+      }
     />
   );
 }

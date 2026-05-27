@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useCart } from "@/components/customer/CartProvider";
 import { AIAdvisorModal } from "./AIAdvisorModal";
 
 const HINT_KEY = "qf:ai-advisor-hinted";
 const SCROLL_THRESHOLD = 220;
 const HIDDEN_PATH_SUFFIXES = ["/cart", "/checkout"];
+const OPEN_EVENT = "qf:open-ai-advisor";
 
 export function AIAdvisorFAB({
   tenantSlug,
@@ -16,9 +18,24 @@ export function AIAdvisorFAB({
   suggestions?: string[];
 }) {
   const pathname = usePathname() || "";
-  const hidden = HIDDEN_PATH_SUFFIXES.some((p) => pathname.endsWith(p));
+  const { itemCount, hydrated } = useCart();
+  // Hide the floating button on cart/checkout pages and once the user
+  // has already added something — at that point they've made decisions
+  // and the advisor would just be noise. We still mount the modal so
+  // an external trigger (e.g. the top-bar sparkle icon) can open it.
+  const hasItems = hydrated && itemCount > 0;
+  const hiddenByPath = HIDDEN_PATH_SUFFIXES.some((p) => pathname.endsWith(p));
+  const hidden = hiddenByPath || hasItems;
   const [open, setOpen] = useState(false);
   const [hintPhase, setHintPhase] = useState<"idle" | "pulse" | "bubble" | "done">("idle");
+
+  // Allow any other component to pop the advisor by dispatching the
+  // shared CustomEvent (top-bar icon, deep links, etc.).
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener(OPEN_EVENT, handler);
+    return () => window.removeEventListener(OPEN_EVENT, handler);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

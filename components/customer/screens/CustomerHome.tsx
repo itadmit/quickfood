@@ -30,6 +30,7 @@ import { cn } from "@/lib/cn";
 import { ItemDetailModal } from "@/components/customer/ItemDetailModal";
 import { ItemDetail } from "@/components/customer/screens/ItemDetail";
 import ItemModalSkeleton from "@/components/customer/ItemModalSkeleton";
+import { AIAdvisorTopButton } from "@/components/customer/ai-advisor/AIAdvisorTopButton";
 
 interface Props {
   tenant: {
@@ -85,6 +86,7 @@ interface Props {
   bannerCampaign?: CampaignBannerData | null;
   hasCustomerSession?: boolean;
   pendingReviewOrderId?: string | null;
+  aiAdvisorEnabled?: boolean;
 }
 
 export function CustomerHome({
@@ -101,6 +103,7 @@ export function CustomerHome({
   bannerCampaign = null,
   hasCustomerSession = false,
   pendingReviewOrderId = null,
+  aiAdvisorEnabled = false,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -262,6 +265,7 @@ export function CustomerHome({
               <IcoPin c="#fff" s={14} />
               <span className="truncate max-w-45">{locationLabel}</span>
             </button>
+            {aiAdvisorEnabled && <AIAdvisorTopButton />}
             <Link
               href={`/s/${tenant.slug}/profile`}
               aria-label="אזור אישי"
