@@ -15,6 +15,7 @@ interface ProviderState {
 
 interface Initial {
   enabled: boolean;
+  popupEnabled: boolean;
   provider: Provider;
   gemini: ProviderState;
   claude: ProviderState;
@@ -70,9 +71,10 @@ const PROVIDER_META: Record<Provider, {
   },
 };
 
-export function AIAdvisorSettingsForm({ initial }: { initial: Initial }) {
+export function AIAdvisorForm({ initial }: { initial: Initial }) {
   const router = useRouter();
   const [enabled, setEnabled] = useState(initial.enabled);
+  const [popupEnabled, setPopupEnabled] = useState(initial.popupEnabled);
   const [provider, setProvider] = useState<Provider>(initial.provider);
   const [gemini, setGemini] = useState<ProviderState>(initial.gemini);
   const [claude, setClaude] = useState<ProviderState>(initial.claude);
@@ -96,6 +98,7 @@ export function AIAdvisorSettingsForm({ initial }: { initial: Initial }) {
     try {
       const payload: Record<string, unknown> = {
         enabled,
+        popup_enabled: popupEnabled,
         provider,
       };
       if (keyInput.trim().length > 0) {
@@ -118,6 +121,7 @@ export function AIAdvisorSettingsForm({ initial }: { initial: Initial }) {
         setGemini({ hasKey: s.gemini.has_key, maskedKey: s.gemini.masked_key });
         setClaude({ hasKey: s.claude.has_key, maskedKey: s.claude.masked_key });
         setEnabled(s.enabled);
+        setPopupEnabled(!!s.popup_enabled);
       }
       setToast("נשמר");
       router.refresh();
@@ -203,6 +207,18 @@ export function AIAdvisorSettingsForm({ initial }: { initial: Initial }) {
             <div className="text-xs text-qf-mute">דורש מפתח תקין עבור הספק שנבחר ({meta.label}).</div>
           </div>
           <Toggle checked={enabled} onChange={(v) => setEnabled(v)} disabled={!canToggle} />
+        </div>
+
+        <div className="flex items-center justify-between gap-3 py-2 border-t border-qf-line-soft pt-3">
+          <div>
+            <div className="font-medium text-sm">הצג פופאפ-קידום בכניסה לחנות</div>
+            <div className="text-xs text-qf-mute">חלון קטן שמציע ללקוח להשתמש ביועץ. נסגר אוטומטית ל-7 ימים אחרי שהלקוח סוגר.</div>
+          </div>
+          <Toggle
+            checked={popupEnabled}
+            onChange={(v) => setPopupEnabled(v)}
+            disabled={!enabled}
+          />
         </div>
       </section>
 
