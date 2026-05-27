@@ -82,14 +82,15 @@ export async function POST(req: Request) {
 
   const menu = await loadAIMenuSnapshot(tenant.id);
 
-  const systemInstruction = buildSystemPrompt({
+  const { systemInstruction, idMap } = buildSystemPrompt({
     menu,
     recentOrders: body.recent_orders ?? [],
     currentCart: body.current_cart ?? [],
     customerName,
   });
 
-  const history = toGeminiHistory(body.messages);
+  const trimmedMessages = body.messages.slice(-6);
+  const history = toGeminiHistory(trimmedMessages);
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -103,6 +104,7 @@ export async function POST(req: Request) {
           systemInstruction,
           history,
           message: body.message,
+          idMap,
         })) {
           write(event);
         }

@@ -86,6 +86,19 @@ function MessageBubble({
             .map((id) => recommendMap.get(id))
             .filter((i): i is AIRecommendItem => !!i);
           if (items.length === 0) return null;
+          if (items.length >= 3) {
+            return (
+              <div key={tc.id} className="-mx-3 px-3">
+                <div className="flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-1">
+                  {items.map((it) => (
+                    <div key={it.id} className="snap-start shrink-0 w-40">
+                      <RecommendCard item={it} onClose={onClose} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          }
           return (
             <div key={tc.id} className="grid grid-cols-2 gap-2">
               {items.map((it) => (

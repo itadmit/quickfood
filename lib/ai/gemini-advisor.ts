@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI, SchemaType, type Content, type FunctionDeclaration } from "@google/generative-ai";
-import type { AIMenuSnapshot } from "./menu-snapshot";
-import { serializeMenuForPrompt } from "./menu-snapshot";
+import type { AIMenuSnapshot, ShortIdMap } from "./menu-snapshot";
+import { buildShortIdMap, serializeMenuForPrompt } from "./menu-snapshot";
 
 export interface AIRecentOrder {
   orderNumber?: string | number;
@@ -22,52 +22,52 @@ export interface BuildPromptInput {
   customerName?: string | null;
 }
 
-export function buildSystemPrompt(input: BuildPromptInput): string {
+export interface BuiltPrompt {
+  systemInstruction: string;
+  idMap: ShortIdMap;
+}
+
+export function buildSystemPrompt(input: BuildPromptInput): BuiltPrompt {
   const { menu, recentOrders, currentCart, customerName } = input;
+  const idMap = buildShortIdMap(menu);
   const parts: string[] = [];
 
   parts.push(
-    `אתה יועץ-הזמנות חכם של ${menu.tenantName}. תפקידך לעזור ללקוח לבחור מנות ולהרכיב הזמנה נכונה.`,
+    `יועץ-הזמנות של ${menu.tenantName}. עזור ללקוח לבחור מנות לפי התפריט בלבד.`,
   );
   parts.push(``);
-  parts.push(`### כללי שיחה`);
-  parts.push(`- דבר עברית, חם, ידידותי, קצר (1-3 משפטים בכל תור).`);
-  parts.push(`- אל תמציא פריטים שלא בתפריט. אם הלקוח רוצה משהו שלא קיים — תגיד.`);
-  parts.push(`- כשמתאים, השתמש בכלי \`recommend_items\` כדי להציג כרטיסי-פריט (עד 4) לבחירה ויזואלית.`);
-  parts.push(`- כשהלקוח מאשר פריט ספציפי — השתמש ב-\`propose_add_to_cart\` עם options תקפים.`);
-  parts.push(`- חובה לבחור options מקבוצות שמסומנות "חובה" (required) ולמלא את minSelect.`);
-  parts.push(`- לעולם אל תחרוג מ-maxSelect.`);
-  parts.push(`- כל id שאתה מחזיר חייב להופיע בדיוק בתפריט למטה.`);
-  parts.push(`- אם הלקוח לא הזכיר העדפות — שאל שאלה ממוקדת אחת (טבעוני? עם בשר? חריף?) לפני המלצה.`);
+  parts.push(`כללים:`);
+  parts.push(`1. עברית, קצר (משפט-שניים).`);
+  parts.push(`2. כשממליץ על 2+ פריטים — חובה לקרוא ל-recommend_items עם ה-IDs מהתפריט. אל תרשום אותם בטקסט.`);
+  parts.push(`3. פריט מוגדר → propose_add_to_cart. מילוי options חובה (סימן !) לפי minSelect, לא לעבור maxSelect.`);
+  parts.push(`4. אל תמציא — רק IDs מהתפריט. הסבר אם משהו לא קיים.`);
+  parts.push(`5. בלי markdown (אין * או **).`);
+  parts.push(``);
+  parts.push(`פורמט תפריט: x#=שם|מחיר. ! = חובה. * = ברירת מחדל. ½ = חצי-חצי. (מספר חינם) = הראשונים חינם.`);
   parts.push(``);
 
   if (customerName) {
-    parts.push(`### לקוח`);
-    parts.push(`שם הלקוח: ${customerName}`);
-    parts.push(``);
+    parts.push(`לקוח: ${customerName}`);
   }
 
   if (recentOrders.length > 0) {
-    parts.push(`### הזמנות אחרונות של הלקוח (לפי סדר זמן יורד)`);
-    for (const o of recentOrders.slice(0, 5)) {
-      const summary = o.items.map((i) => `${i.quantity}× ${i.name}`).join(", ");
-      parts.push(`- ${o.createdAt}: ${summary}`);
+    parts.push(`הזמנות קודמות:`);
+    for (const o of recentOrders.slice(0, 3)) {
+      parts.push(`${o.createdAt}: ${o.items.map((i) => `${i.quantity}×${i.name}`).join(",")}`);
     }
-    parts.push(`השתמש בזה כדי להציע "כמו בפעם הקודמת" כשמתאים.`);
-    parts.push(``);
   }
 
   if (currentCart.length > 0) {
-    parts.push(`### עגלה נוכחית`);
+    parts.push(`בעגלה:`);
     for (const l of currentCart) {
-      const opts = l.options?.length ? ` (${l.options.join(", ")})` : "";
-      parts.push(`- ${l.quantity}× ${l.name}${l.sizeName ? ` ${l.sizeName}` : ""}${opts}`);
+      const opts = l.options?.length ? `(${l.options.join(",")})` : "";
+      parts.push(`${l.quantity}×${l.name}${l.sizeName ? ` ${l.sizeName}` : ""}${opts}`);
     }
-    parts.push(``);
   }
 
-  parts.push(serializeMenuForPrompt(menu));
-  return parts.join("\n");
+  parts.push(``);
+  parts.push(serializeMenuForPrompt(menu, idMap));
+  return { systemInstruction: parts.join("\n"), idMap };
 }
 
 export const ADVISOR_TOOLS: FunctionDeclaration[] = [
@@ -139,11 +139,27 @@ export interface StreamEvent {
   error?: string;
 }
 
+function stripMarkdown(text: string): string {
+  return text.replace(/\*\*/g, "").replace(/(^|\s)\*(?=\S)/g, "$1• ").replace(/`/g, "");
+}
+
+function translateToolArgs(args: Record<string, unknown>, idMap: ShortIdMap): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...args };
+  const toReal = (v: unknown) =>
+    typeof v === "string" ? (idMap.toReal[v] ?? v) : v;
+  if (Array.isArray(out.item_ids)) out.item_ids = (out.item_ids as unknown[]).map(toReal);
+  if (Array.isArray(out.option_ids)) out.option_ids = (out.option_ids as unknown[]).map(toReal);
+  if ("item_id" in out) out.item_id = toReal(out.item_id);
+  if ("size_id" in out) out.size_id = toReal(out.size_id);
+  return out;
+}
+
 export async function* streamGeminiChat(opts: {
   apiKey: string;
   systemInstruction: string;
   history: Content[];
   message: string;
+  idMap: ShortIdMap;
 }): AsyncGenerator<StreamEvent> {
   try {
     const genAI = new GoogleGenerativeAI(opts.apiKey);
@@ -157,14 +173,15 @@ export async function* streamGeminiChat(opts: {
 
     for await (const chunk of result.stream) {
       const text = chunk.text?.();
-      if (text) yield { kind: "text", text };
+      if (text) yield { kind: "text", text: stripMarkdown(text) };
       const calls = chunk.functionCalls?.();
       if (calls && calls.length > 0) {
         for (const call of calls) {
+          const args = (call.args as Record<string, unknown>) ?? {};
           yield {
             kind: "tool",
             toolName: call.name,
-            toolArgs: (call.args as Record<string, unknown>) ?? {},
+            toolArgs: translateToolArgs(args, opts.idMap),
           };
         }
       }

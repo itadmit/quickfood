@@ -128,10 +128,38 @@ export async function loadAIMenuSnapshot(tenantId: string): Promise<AIMenuSnapsh
   };
 }
 
-export function serializeMenuForPrompt(snapshot: AIMenuSnapshot): string {
+export interface ShortIdMap {
+  toReal: Record<string, string>;
+  toShort: Record<string, string>;
+}
+
+export function buildShortIdMap(snapshot: AIMenuSnapshot): ShortIdMap {
+  const toReal: Record<string, string> = {};
+  const toShort: Record<string, string> = {};
+  let n = 0;
+  const assign = (real: string) => {
+    if (toShort[real]) return toShort[real];
+    n += 1;
+    const short = "x" + n.toString(36);
+    toReal[short] = real;
+    toShort[real] = short;
+    return short;
+  };
+  for (const item of snapshot.items) {
+    assign(item.id);
+    for (const s of item.sizes) assign(s.id);
+    for (const g of item.optionGroups) {
+      assign(g.id);
+      for (const o of g.options) assign(o.id);
+    }
+  }
+  return { toReal, toShort };
+}
+
+export function serializeMenuForPrompt(snapshot: AIMenuSnapshot, idMap: ShortIdMap): string {
   const lines: string[] = [];
   lines.push(`# תפריט ${snapshot.tenantName}`);
-  if (snapshot.businessType) lines.push(`סוג עסק: ${snapshot.businessType}`);
+  if (snapshot.businessType) lines.push(`סוג: ${snapshot.businessType}`);
   lines.push(``);
 
   const byCat = new Map<string, AIMenuItem[]>();
@@ -139,26 +167,27 @@ export function serializeMenuForPrompt(snapshot: AIMenuSnapshot): string {
     if (!byCat.has(item.category)) byCat.set(item.category, []);
     byCat.get(item.category)!.push(item);
   }
+  const m = idMap.toShort;
 
   for (const [cat, items] of byCat) {
     lines.push(`## ${cat}`);
     for (const item of items) {
       lines.push(
-        `- id=${item.id} | "${item.name}" | מחיר ${item.basePrice}₪${item.description ? ` | ${item.description.slice(0, 80)}` : ""}${item.tags.length ? ` | תגיות: ${item.tags.join(",")}` : ""}`,
+        `- ${m[item.id]}|${item.name}|${item.basePrice}₪${item.tags.length ? `|${item.tags.join(",")}` : ""}`,
       );
       if (item.sizes.length > 0) {
         const sizeText = item.sizes
-          .map((s) => `${s.name}=${s.id}(${s.priceDelta >= 0 ? "+" : ""}${s.priceDelta}₪${s.isDefault ? ",default" : ""})`)
-          .join(", ");
-        lines.push(`  מידות: ${sizeText}`);
+          .map((s) => `${m[s.id]}=${s.name}(${s.priceDelta >= 0 ? "+" : ""}${s.priceDelta}${s.isDefault ? "*" : ""})`)
+          .join(",");
+        lines.push(`  מ:${sizeText}`);
       }
       for (const g of item.optionGroups) {
-        const req = g.required ? "חובה" : "רשות";
-        const range = `min=${g.minSelect}${g.maxSelect ? `,max=${g.maxSelect}` : ""}${g.includedFree ? `,חינם=${g.includedFree}` : ""}`;
-        lines.push(`  קב' "${g.name}" [groupId=${g.id}, ${g.type}, ${req}, ${range}${g.allowHalf ? ", חצי-חצי" : ""}]`);
+        const req = g.required ? "!" : "";
+        const range = `${g.minSelect}-${g.maxSelect ?? "∞"}${g.includedFree ? `(${g.includedFree}חינם)` : ""}`;
+        lines.push(`  ${m[g.id]}=${g.name}${req}[${range}${g.allowHalf ? ",½" : ""}]`);
         for (const o of g.options) {
           lines.push(
-            `    - id=${o.id} | "${o.name}" | ${o.priceDelta >= 0 ? "+" : ""}${o.priceDelta}₪${o.isDefault ? " | default" : ""}`,
+            `    ${m[o.id]}=${o.name}${o.priceDelta ? `(${o.priceDelta >= 0 ? "+" : ""}${o.priceDelta})` : ""}${o.isDefault ? "*" : ""}`,
           );
         }
       }

@@ -34,6 +34,47 @@ const SUGGESTIONS = [
   "אני אוהב חריף",
 ];
 
+const STORAGE_PREFIX = "qf:ai-chat:";
+
+interface PersistedChat {
+  messages: AIChatMessage[];
+  recommendItems: Array<[string, AIRecommendItem]>;
+  proposals: Array<[string, AIProposal]>;
+}
+
+function loadChat(tenantSlug: string): PersistedChat | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(STORAGE_PREFIX + tenantSlug);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedChat;
+    parsed.messages = (parsed.messages ?? []).map((m) =>
+      m.pending ? { ...m, pending: false } : m,
+    );
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveChat(tenantSlug: string, data: PersistedChat) {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(STORAGE_PREFIX + tenantSlug, JSON.stringify(data));
+  } catch {
+    /* quota or disabled — ignore */
+  }
+}
+
+function clearChat(tenantSlug: string) {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem(STORAGE_PREFIX + tenantSlug);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function AIAdvisorModal({
   tenantSlug,
   onClose,
@@ -42,13 +83,35 @@ export function AIAdvisorModal({
   onClose: () => void;
 }) {
   const cart = useCart();
-  const [messages, setMessages] = useState<AIChatMessage[]>([]);
+  const [messages, setMessages] = useState<AIChatMessage[]>(() => loadChat(tenantSlug)?.messages ?? []);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrderForAI[]>([]);
-  const [recommendMap, setRecommendMap] = useState<Map<string, AIRecommendItem>>(new Map());
-  const [proposalMap, setProposalMap] = useState<Map<string, AIProposal>>(new Map());
+  const [recommendMap, setRecommendMap] = useState<Map<string, AIRecommendItem>>(
+    () => new Map(loadChat(tenantSlug)?.recommendItems ?? []),
+  );
+  const [proposalMap, setProposalMap] = useState<Map<string, AIProposal>>(
+    () => new Map(loadChat(tenantSlug)?.proposals ?? []),
+  );
   const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    saveChat(tenantSlug, {
+      messages,
+      recommendItems: Array.from(recommendMap.entries()),
+      proposals: Array.from(proposalMap.entries()),
+    });
+  }, [tenantSlug, messages, recommendMap, proposalMap]);
+
+  const startNewChat = useCallback(() => {
+    abortRef.current?.abort();
+    clearChat(tenantSlug);
+    setMessages([]);
+    setRecommendMap(new Map());
+    setProposalMap(new Map());
+    setError(null);
+    setStreaming(false);
+  }, [tenantSlug]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -266,14 +329,31 @@ export function AIAdvisorModal({
             <div className="text-xs text-qf-mute leading-tight">מבוסס Gemini · ממליץ לפי התפריט</div>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="סגור"
-          className="w-9 h-9 rounded-full hover:bg-qf-line-soft flex items-center justify-center"
-        >
-          <IcoClose s={20} />
-        </button>
+        <div className="flex items-center gap-1">
+          {messages.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                if (streaming || confirm("להתחיל שיחה חדשה? ההתכתבות הנוכחית תימחק.")) {
+                  startNewChat();
+                }
+              }}
+              aria-label="שיחה חדשה"
+              title="שיחה חדשה"
+              className="w-9 h-9 rounded-full hover:bg-qf-line-soft flex items-center justify-center"
+            >
+              <RestartIcon />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="סגור"
+            className="w-9 h-9 rounded-full hover:bg-qf-line-soft flex items-center justify-center"
+          >
+            <IcoClose s={20} />
+          </button>
+        </div>
       </header>
 
       <div className="flex-1 overflow-y-auto">
@@ -326,6 +406,15 @@ function EmptyState({ tenantName, onPick }: { tenantName: string; onPick: (text:
         ))}
       </div>
     </div>
+  );
+}
+
+function RestartIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M3 12a9 9 0 1 0 3-6.7" />
+      <path d="M3 4v5h5" />
+    </svg>
   );
 }
 
