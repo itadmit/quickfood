@@ -42,6 +42,7 @@ export function buildSystemPrompt(input: BuildPromptInput): BuiltPrompt {
   parts.push(`3. פריט מוגדר → propose_add_to_cart. מילוי options חובה (סימן !) לפי minSelect, לא לעבור maxSelect.`);
   parts.push(`4. אל תמציא — רק IDs מהתפריט. הסבר אם משהו לא קיים.`);
   parts.push(`5. בלי markdown (אין * או **).`);
+  parts.push(`6. ה-IDs (x1, x2c, x24 וכו') הם פנימיים בלבד. לעולם אל תזכיר אותם בטקסט שהלקוח רואה. כתוב את שם הפריט בעברית בלבד.`);
   parts.push(``);
   parts.push(`פורמט תפריט: x#=שם|מחיר. ! = חובה. * = ברירת מחדל. ½ = חצי-חצי. (מספר חינם) = הראשונים חינם.`);
   parts.push(``);
@@ -140,7 +141,13 @@ export interface StreamEvent {
 }
 
 function stripMarkdown(text: string): string {
-  return text.replace(/\*\*/g, "").replace(/(^|\s)\*(?=\S)/g, "$1• ").replace(/`/g, "");
+  let out = text.replace(/\*\*/g, "").replace(/(^|\s)\*(?=\S)/g, "$1• ").replace(/`/g, "");
+  // Strip internal short IDs the model occasionally leaks into prose:
+  // " (x2c)", " x2c,", "x2c ", "(x2c)" — keep punctuation intact.
+  out = out.replace(/\s*\(x[0-9a-z]+\)/gi, "");
+  out = out.replace(/\bx[0-9a-z]{1,4}\b(?=[\s,.;:!?־]|$)/gi, "");
+  out = out.replace(/[ \t]{2,}/g, " ");
+  return out;
 }
 
 function translateToolArgs(args: Record<string, unknown>, idMap: ShortIdMap): Record<string, unknown> {
