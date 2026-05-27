@@ -159,6 +159,11 @@ enum PaymentProvider {
   grow
 }
 
+enum AIProvider {
+  gemini
+  claude
+}
+
 enum NoticeScope {
   store
   category
@@ -281,8 +286,10 @@ model Tenant {
   whatsappToken      String? @map("whatsapp_token")
   whatsappInstanceId String? @map("whatsapp_instance_id")
 
-  aiAdvisorEnabled Boolean @default(false) @map("ai_advisor_enabled")
-  aiGeminiApiKey   String? @map("ai_gemini_api_key")
+  aiAdvisorEnabled Boolean    @default(false) @map("ai_advisor_enabled")
+  aiProvider       AIProvider @default(gemini) @map("ai_provider")
+  aiGeminiApiKey   String?    @map("ai_gemini_api_key")
+  aiClaudeApiKey   String?    @map("ai_claude_api_key")
 
   // Mirror IDs from the QuickBilling Hub (canonical state lives there).
   billingCustomerId       String?   @map("billing_customer_id")

@@ -5,7 +5,8 @@ import { resolveTenantBySlug } from "@/lib/slug";
 import { getSession } from "@/lib/auth/session";
 import { decryptSecret } from "@/lib/crypto/secrets";
 import { loadAIMenuSnapshot } from "@/lib/ai/menu-snapshot";
-import { buildSystemPrompt, streamGeminiChat, toGeminiHistory } from "@/lib/ai/gemini-advisor";
+import { buildSystemPrompt } from "@/lib/ai/prompt";
+import { streamAdvisorChat } from "@/lib/ai";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -59,15 +60,28 @@ export async function POST(req: Request) {
 
   const tenantRow = await prisma.tenant.findUnique({
     where: { id: tenant.id },
-    select: { aiAdvisorEnabled: true, aiGeminiApiKey: true, name: true },
+    select: {
+      aiAdvisorEnabled: true,
+      aiProvider: true,
+      aiGeminiApiKey: true,
+      aiClaudeApiKey: true,
+      name: true,
+    },
   });
-  if (!tenantRow?.aiAdvisorEnabled || !tenantRow.aiGeminiApiKey) {
+  if (!tenantRow?.aiAdvisorEnabled) {
     return apiError("ai_disabled", "היועץ אינו מופעל בחנות זו", 403);
+  }
+
+  const provider = tenantRow.aiProvider;
+  const encryptedKey =
+    provider === "claude" ? tenantRow.aiClaudeApiKey : tenantRow.aiGeminiApiKey;
+  if (!encryptedKey) {
+    return apiError("ai_disabled", "לא הוגדר מפתח לספק הנבחר", 403);
   }
 
   let apiKey: string;
   try {
-    apiKey = decryptSecret(tenantRow.aiGeminiApiKey);
+    apiKey = decryptSecret(encryptedKey);
   } catch {
     return apiError("ai_misconfigured", "מפתח שגוי בהגדרות החנות", 500);
   }
@@ -92,11 +106,8 @@ export async function POST(req: Request) {
   const trimmedMessages = body.messages
     .filter((m) => m.text.trim().length > 0)
     .slice(-6);
-  // Gemini requires history to start with a user turn.
   const firstUserIdx = trimmedMessages.findIndex((m) => m.role === "user");
-  const history = toGeminiHistory(
-    firstUserIdx === -1 ? [] : trimmedMessages.slice(firstUserIdx),
-  );
+  const conversation = firstUserIdx === -1 ? [] : trimmedMessages.slice(firstUserIdx);
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -105,10 +116,11 @@ export async function POST(req: Request) {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
       };
       try {
-        for await (const event of streamGeminiChat({
+        for await (const event of streamAdvisorChat({
+          provider,
           apiKey,
           systemInstruction,
-          history,
+          messages: conversation,
           message: body.message,
           idMap,
         })) {

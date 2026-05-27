@@ -7,6 +7,15 @@ import { AIAdvisorSettingsForm } from "./AIAdvisorSettingsForm";
 
 export const dynamic = "force-dynamic";
 
+function maskedFor(enc: string | null): string | null {
+  if (!enc) return null;
+  try {
+    return maskSecret(decryptSecret(enc));
+  } catch {
+    return "•••••";
+  }
+}
+
 export default async function AIAdvisorSettingsPage() {
   const session = await getSession();
   if (!session || session.type !== "merchant" || !session.tenantId) {
@@ -15,18 +24,14 @@ export default async function AIAdvisorSettingsPage() {
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
-    select: { aiAdvisorEnabled: true, aiGeminiApiKey: true },
+    select: {
+      aiAdvisorEnabled: true,
+      aiProvider: true,
+      aiGeminiApiKey: true,
+      aiClaudeApiKey: true,
+    },
   });
   if (!tenant) redirect("/dashboard/login");
-
-  let maskedKey: string | null = null;
-  if (tenant.aiGeminiApiKey) {
-    try {
-      maskedKey = maskSecret(decryptSecret(tenant.aiGeminiApiKey));
-    } catch {
-      maskedKey = "•••••";
-    }
-  }
 
   return (
     <div className="space-y-5">
@@ -34,8 +39,15 @@ export default async function AIAdvisorSettingsPage() {
       <AIAdvisorSettingsForm
         initial={{
           enabled: tenant.aiAdvisorEnabled,
-          hasKey: !!tenant.aiGeminiApiKey,
-          maskedKey,
+          provider: tenant.aiProvider,
+          gemini: {
+            hasKey: !!tenant.aiGeminiApiKey,
+            maskedKey: maskedFor(tenant.aiGeminiApiKey),
+          },
+          claude: {
+            hasKey: !!tenant.aiClaudeApiKey,
+            maskedKey: maskedFor(tenant.aiClaudeApiKey),
+          },
         }}
       />
     </div>
