@@ -331,9 +331,9 @@ function EmptyState({ tenantName, onPick }: { tenantName: string; onPick: (text:
 
 function SparkleSm({ s = 18 }: { s?: number }) {
   return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="#ffffff" aria-hidden>
       <path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z" />
-      <path d="M19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9L19 14z" opacity="0.7" />
+      <path d="M19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9L19 14z" />
     </svg>
   );
 }
