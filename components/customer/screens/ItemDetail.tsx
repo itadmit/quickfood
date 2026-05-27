@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoChev, IcoMinus, IcoPlus, IcoHeart, IcoCheck } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
-import { useCart } from "@/components/customer/CartProvider";
+import { useCart, type CartLine } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
@@ -55,24 +55,41 @@ export function ItemDetail({
   businessType = "general",
   inModal = false,
   onClose,
+  editLine,
 }: {
   tenantSlug: string;
   item: ItemData;
   businessType?: BusinessType;
   inModal?: boolean;
   onClose?: () => void;
+  editLine?: CartLine;
 }) {
   const router = useRouter();
-  const { add } = useCart();
+  const { add, updateLine } = useCart();
+  const isEditing = !!editLine;
 
   const defaultSize = item.sizes.find((s) => s.isDefault) ?? item.sizes[0] ?? null;
-  const [sizeId, setSizeId] = useState<string | null>(defaultSize?.id ?? null);
+  const [sizeId, setSizeId] = useState<string | null>(editLine?.sizeId ?? defaultSize?.id ?? null);
 
   const [picks, setPicks] = useState<Record<string, Set<string>>>(() => {
     const initial: Record<string, Set<string>> = {};
-    for (const g of item.optionGroups) {
-      if (!g.allowHalf) {
-        initial[g.id] = new Set(g.options.filter((o) => o.isDefault).map((o) => o.id));
+    if (editLine) {
+      // Pre-populate from the existing cart line. Half-and-half picks
+      // live in the `half` field, so they go in halfPicks below — here
+      // we only seed flat single/multi selections.
+      for (const g of item.optionGroups) {
+        if (g.allowHalf) continue;
+        const set = new Set<string>();
+        for (const o of editLine.options) {
+          if (o.groupId === g.id && !o.half) set.add(o.optionId);
+        }
+        initial[g.id] = set;
+      }
+    } else {
+      for (const g of item.optionGroups) {
+        if (!g.allowHalf) {
+          initial[g.id] = new Set(g.options.filter((o) => o.isDefault).map((o) => o.id));
+        }
       }
     }
     return initial;
@@ -82,13 +99,20 @@ export function ItemDetail({
   const [halfPicks, setHalfPicks] = useState<Record<string, Record<string, HalfPlacement>>>(() => {
     const initial: Record<string, Record<string, HalfPlacement>> = {};
     for (const g of item.optionGroups) {
-      if (g.allowHalf) initial[g.id] = {};
+      if (!g.allowHalf) continue;
+      const m: Record<string, HalfPlacement> = {};
+      if (editLine) {
+        for (const o of editLine.options) {
+          if (o.groupId === g.id && o.half) m[o.optionId] = o.half;
+        }
+      }
+      initial[g.id] = m;
     }
     return initial;
   });
 
-  const [quantity, setQuantity] = useState(1);
-  const [notes, setNotes] = useState("");
+  const [quantity, setQuantity] = useState(editLine?.quantity ?? 1);
+  const [notes, setNotes] = useState(editLine?.notes ?? "");
   const [flashGroupId, setFlashGroupId] = useState<string | null>(null);
   const [addPhase, setAddPhase] = useState<"idle" | "loading" | "done">("idle");
 
@@ -216,7 +240,7 @@ export function ItemDetail({
         }
       }
     }
-    add({
+    const payload = {
       itemId: item.id,
       name: item.name,
       basePrice: item.basePrice,
@@ -228,10 +252,17 @@ export function ItemDetail({
       sizeDelta: size?.priceDelta ?? 0,
       options: selectedOpts,
       notes: notes || null,
-    });
+    };
+    if (isEditing && editLine) {
+      updateLine(editLine.lineId, payload);
+    } else {
+      add(payload);
+    }
     setAddPhase("loading");
     window.setTimeout(() => setAddPhase("done"), 380);
     if (inModal) {
+      window.setTimeout(() => onClose?.(), 780);
+    } else if (isEditing) {
       window.setTimeout(() => onClose?.(), 780);
     } else {
       window.setTimeout(() => {
@@ -241,7 +272,11 @@ export function ItemDetail({
     }
   }
 
-  const ctaLabel = missingGroup ? `בחר ${missingGroup.name}` : "הוסף לסל";
+  const ctaLabel = missingGroup
+    ? `בחר ${missingGroup.name}`
+    : isEditing
+      ? "עדכן הזמנה"
+      : "הוסף לסל";
 
   return (
     <div
@@ -558,12 +593,12 @@ export function ItemDetail({
               </>
             ) : addPhase === "loading" ? (
               <>
-                <span>מוסיף לסל</span>
+                <span>{isEditing ? "מעדכן" : "מוסיף לסל"}</span>
                 <span className="qf-spinner" style={{ width: 20, height: 20, borderWidth: 2.5 }} />
               </>
             ) : (
               <>
-                <span>נוסף לסל</span>
+                <span>{isEditing ? "עודכן" : "נוסף לסל"}</span>
                 <IcoCheck c="#fff" s={20} className="animate-qf-check-in" />
               </>
             )}

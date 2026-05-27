@@ -1,17 +1,43 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoChev, IcoPlus, IcoMinus, IcoBag, IcoClose, IcoArrowLeft } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
-import { useCart } from "@/components/customer/CartProvider";
+import { useCart, type CartLine } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { Skeleton } from "@/components/shared/Skeleton";
+import { ItemDetailModal } from "@/components/customer/ItemDetailModal";
+import { ItemDetail } from "@/components/customer/screens/ItemDetail";
+import ItemModalSkeleton from "@/components/customer/ItemModalSkeleton";
 
 export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
   const router = useRouter();
   const { lines, updateQuantity, remove, subtotal, method, branch, tenant, hydrated } = useCart();
+
+  // Wolt-style: clicking a cart line opens the item-detail modal in
+  // edit mode (pre-filled with the line's selections; CTA flips to
+  // "עדכן הזמנה"). We fetch the menu item by its current itemId so the
+  // available options reflect the live menu, not a stale snapshot.
+  const [editing, setEditing] = useState<CartLine | null>(null);
+  const [editItem, setEditItem] = useState<null | { item: Record<string, unknown>; tenant: { slug: string; businessType: string } }>(null);
+  const [editLoading, setEditLoading] = useState(false);
+  useEffect(() => {
+    if (!editing) {
+      setEditItem(null);
+      return;
+    }
+    setEditLoading(true);
+    const ctrl = new AbortController();
+    fetch(`/api/v1/customer/menu-item?slug=${tenantSlug}&id=${encodeURIComponent(editing.itemId)}`, { signal: ctrl.signal })
+      .then((r) => r.json())
+      .then((d) => { if (d.item) setEditItem(d); })
+      .catch(() => {})
+      .finally(() => setEditLoading(false));
+    return () => ctrl.abort();
+  }, [editing, tenantSlug]);
 
   const deliveryFee = method === "delivery" ? branch?.deliveryFee ?? 0 : 0;
   const serviceFee = branch?.serviceFee ?? 0;
@@ -83,7 +109,16 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
           return (
             <div
               key={l.lineId}
-              className="bg-white rounded-2xl border border-qf-line p-3.5 flex gap-3.5 shadow-xs"
+              role="button"
+              tabIndex={0}
+              onClick={() => setEditing(l)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setEditing(l);
+                }
+              }}
+              className="bg-white rounded-2xl border border-qf-line p-3.5 flex gap-3.5 shadow-xs cursor-pointer hover:border-black/40 transition"
             >
               <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0">
                 <MenuItemImage
@@ -100,7 +135,10 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
                   <div className="font-semibold leading-tight">{l.name}</div>
                   <button
                     type="button"
-                    onClick={() => remove(l.lineId)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      remove(l.lineId);
+                    }}
                     className="w-8 h-8 rounded-full text-qf-mute hover:text-qf-tomato hover:bg-qf-tomato-soft grid place-items-center -m-1 shrink-0 transition"
                     aria-label="הסר"
                   >
@@ -125,7 +163,10 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
                   <div className="text-xs text-qf-ink2 mt-0.5">הערה: {l.notes}</div>
                 )}
                 <div className="flex items-center justify-between mt-2.5">
-                  <div className="flex items-center bg-qf-bg rounded-full border border-qf-line">
+                  <div
+                    className="flex items-center bg-qf-bg rounded-full border border-qf-line"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <button
                       type="button"
                       onClick={() => updateQuantity(l.lineId, l.quantity - 1)}
@@ -217,6 +258,23 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
       </div>
 
       <BottomTabBar tenantSlug={tenantSlug} />
+
+      {editing && (
+        <ItemDetailModal onClose={() => setEditing(null)}>
+          {editLoading || !editItem ? (
+            <ItemModalSkeleton />
+          ) : (
+            <ItemDetail
+              tenantSlug={tenantSlug}
+              businessType={(editItem.tenant as { businessType: string }).businessType as never}
+              item={editItem.item as never}
+              inModal
+              editLine={editing}
+              onClose={() => setEditing(null)}
+            />
+          )}
+        </ItemDetailModal>
+      )}
     </div>
   );
 }
