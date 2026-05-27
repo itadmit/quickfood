@@ -3,7 +3,7 @@ import type { AIMenuSnapshot } from "./menu-snapshot";
 import { serializeMenuForPrompt } from "./menu-snapshot";
 
 export interface AIRecentOrder {
-  orderNumber?: number;
+  orderNumber?: string | number;
   createdAt: string;
   items: Array<{ name: string; quantity: number }>;
 }

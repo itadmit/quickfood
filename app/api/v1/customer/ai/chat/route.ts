@@ -24,7 +24,7 @@ const Schema = z.object({
   recent_orders: z
     .array(
       z.object({
-        orderNumber: z.number().int().optional(),
+        orderNumber: z.union([z.string(), z.number()]).optional(),
         createdAt: z.string(),
         items: z.array(z.object({ name: z.string(), quantity: z.number().int() })),
       }),

@@ -22,7 +22,7 @@ interface RecentOrderItem {
 }
 
 interface RecentOrderForAI {
-  orderNumber?: number;
+  orderNumber?: string | number;
   createdAt: string;
   items: RecentOrderItem[];
 }
@@ -70,7 +70,7 @@ export function AIAdvisorModal({
       { signal: ctrl.signal },
     )
       .then((r) => r.json())
-      .then((data: { orders?: Array<{ number?: number; createdAt: string; items: Array<{ name: string; quantity: number }> }> }) => {
+      .then((data: { orders?: Array<{ number?: string | number; createdAt: string; items: Array<{ name: string; quantity: number }> }> }) => {
         setRecentOrders(
           (data.orders ?? []).map((o) => ({
             orderNumber: o.number,
