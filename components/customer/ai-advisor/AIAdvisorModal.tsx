@@ -321,7 +321,15 @@ export function AIAdvisorModal({
   );
 
   return (
-    <div className="fixed inset-0 z-[60] bg-qf-bg flex flex-col" role="dialog" aria-modal>
+    <div
+      className="fixed inset-0 z-[60] bg-black/40 grid place-items-end sm:place-items-center p-0 sm:p-4 animate-qf-modal-in"
+      role="dialog"
+      aria-modal
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-qf-bg w-full max-w-md h-[100dvh] sm:h-[85vh] sm:max-h-[700px] sm:rounded-3xl sm:border-2 sm:border-black sm:shadow-[0_4px_0_#000] overflow-hidden flex flex-col">
       <header className="flex items-center justify-between gap-3 px-4 py-3 border-b border-qf-line-soft bg-white">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-black text-(--qf-yolk) flex items-center justify-center">
@@ -329,7 +337,7 @@ export function AIAdvisorModal({
           </div>
           <div>
             <div className="font-bold text-sm leading-tight">היועץ של {cart.tenant.name}</div>
-            <div className="text-xs text-qf-mute leading-tight">מבוסס Gemini · ממליץ לפי התפריט</div>
+            <div className="text-xs text-qf-mute leading-tight">מבוסס AI · ממליץ לפי התפריט</div>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -383,6 +391,7 @@ export function AIAdvisorModal({
         suggestions={messages.length === 0 ? activeSuggestions : []}
         error={error}
       />
+      </div>
     </div>
   );
 }
