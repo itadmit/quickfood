@@ -16,7 +16,7 @@ const Schema = z.object({
     .array(
       z.object({
         role: z.enum(["user", "model"]),
-        text: z.string().min(1).max(4000),
+        text: z.string().max(4000),
       }),
     )
     .max(40),
@@ -89,8 +89,14 @@ export async function POST(req: Request) {
     customerName,
   });
 
-  const trimmedMessages = body.messages.slice(-6);
-  const history = toGeminiHistory(trimmedMessages);
+  const trimmedMessages = body.messages
+    .filter((m) => m.text.trim().length > 0)
+    .slice(-6);
+  // Gemini requires history to start with a user turn.
+  const firstUserIdx = trimmedMessages.findIndex((m) => m.role === "user");
+  const history = toGeminiHistory(
+    firstUserIdx === -1 ? [] : trimmedMessages.slice(firstUserIdx),
+  );
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
