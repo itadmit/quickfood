@@ -84,7 +84,7 @@ export function AIAdvisorPromoPopup({
     <>
       {showPromo && (
         <div
-          className="fixed inset-0 z-[55] bg-black/40 grid place-items-end sm:place-items-center px-4 pb-24 sm:pb-4 sm:p-6 animate-qf-modal-in"
+          className="fixed inset-0 z-[55] bg-black/40 grid place-items-center p-4 animate-qf-modal-in"
           role="dialog"
           aria-modal
         >
