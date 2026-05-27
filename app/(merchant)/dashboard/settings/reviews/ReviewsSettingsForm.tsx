@@ -59,7 +59,7 @@ export function ReviewsSettingsForm({ initial }: { initial: Initial }) {
   const disabled = !v.enabled;
 
   return (
-    <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-5 max-w-2xl">
+    <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-5">
       <Toggle
         label="הפעל ביקורות"
         description="כשמכובה, לקוחות לא יוכלו להגיש דירוג ולא יישלחו תזכורות"

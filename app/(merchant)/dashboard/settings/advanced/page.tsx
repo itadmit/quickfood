@@ -44,7 +44,7 @@ export default async function AdvancedSettingsPage() {
     <div className="space-y-5">
       <SettingsHeader subtitle="פעולות מתקדמות לחנות שלך" />
 
-      <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-6 max-w-3xl">
+      <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-6">
         <header className="mb-4">
           <h2 className="text-lg font-bold">ניראות הדשבורד</h2>
           <p className="text-sm text-qf-mute mt-1 leading-relaxed">
@@ -58,7 +58,7 @@ export default async function AdvancedSettingsPage() {
         />
       </section>
 
-      <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-6 max-w-3xl">
+      <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-6">
         <header className="mb-4">
           <h2 className="text-lg font-bold">ייבוא תפריט מוולט</h2>
           <p className="text-sm text-qf-mute mt-1 leading-relaxed">
@@ -81,7 +81,7 @@ export default async function AdvancedSettingsPage() {
       </section>
 
       {isOwner && (
-        <section className="bg-white rounded-2xl border border-qf-tomato/30 p-4 lg:p-6 max-w-3xl">
+        <section className="bg-white rounded-2xl border border-qf-tomato/30 p-4 lg:p-6">
           <header className="mb-4">
             <h2 className="text-lg font-bold text-qf-tomato">איזור מסוכן</h2>
             <p className="text-sm text-qf-mute mt-1 leading-relaxed">
@@ -94,7 +94,7 @@ export default async function AdvancedSettingsPage() {
       )}
 
       {isOwner && tenant?.name && (
-        <section className="bg-white rounded-2xl border border-qf-tomato/30 p-4 lg:p-6 max-w-3xl">
+        <section className="bg-white rounded-2xl border border-qf-tomato/30 p-4 lg:p-6">
           <header className="mb-4">
             <h2 className="text-lg font-bold text-qf-tomato">
               איפוס מוחלט של החנות

@@ -58,7 +58,7 @@ export function BusinessForm({ branchId, initial }: { branchId: string; initial:
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4 max-w-2xl">
+    <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="שם הסניף">
           <input

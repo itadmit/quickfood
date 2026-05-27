@@ -98,7 +98,7 @@ export function AIAdvisorSettingsForm({ initial }: { initial: Initial }) {
   const canTest = !testBusy && (keyInput.trim().length >= 10 || hasKey);
 
   return (
-    <div className="space-y-5 max-w-2xl">
+    <div className="space-y-5">
       <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div>

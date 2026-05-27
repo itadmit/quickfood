@@ -65,7 +65,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-5 max-w-2xl">
+    <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-5">
       <Toggle
         label="הצג מעקב הזמנה בעמוד התודה"
         description={
