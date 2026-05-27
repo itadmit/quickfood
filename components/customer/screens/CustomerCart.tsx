@@ -80,7 +80,6 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
           const opts = l.options.reduce((a, o) => a + o.priceDelta, 0);
           const unit = l.basePrice + l.sizeDelta + opts;
           const lineTotal = unit * l.quantity;
-          const variant = [l.sizeName, ...l.options.map((o) => o.name)].filter(Boolean).join(" · ");
           return (
             <div
               key={l.lineId}
@@ -108,9 +107,20 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
                     <IcoClose s={16} c="currentColor" />
                   </button>
                 </div>
-                {variant && (
-                  <div className="text-xs text-qf-mute mt-0.5 leading-relaxed">{variant}</div>
+                {l.sizeName && (
+                  <div className="text-xs text-qf-mute mt-0.5">{l.sizeName}</div>
                 )}
+                {l.options.map((o, i) => {
+                  const label = o.groupName ? `${o.groupName}: ${o.name}` : o.name;
+                  return (
+                    <div key={i} className="text-xs text-qf-mute mt-0.5">
+                      {label}
+                      {o.priceDelta > 0 && (
+                        <span className="text-qf-mute"> (+{formatPrice(o.priceDelta)})</span>
+                      )}
+                    </div>
+                  );
+                })}
                 {l.notes && (
                   <div className="text-xs text-qf-ink2 mt-0.5">הערה: {l.notes}</div>
                 )}

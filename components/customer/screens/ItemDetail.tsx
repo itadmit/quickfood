@@ -7,7 +7,6 @@ import { IcoChev, IcoMinus, IcoPlus, IcoHeart, IcoCheck } from "@/components/sha
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
-import { formatOptionDisplayName } from "@/lib/format-option-name";
 import { cn } from "@/lib/cn";
 
 interface Size {
@@ -195,7 +194,7 @@ export function ItemDetail({
       return;
     }
     const size = item.sizes.find((s) => s.id === sizeId);
-    const selectedOpts: Array<{ groupId: string; optionId: string; name: string; priceDelta: number; half?: HalfPlacement }> = [];
+    const selectedOpts: Array<{ groupId: string; optionId: string; name: string; groupName: string; priceDelta: number; half?: HalfPlacement }> = [];
     for (const g of item.optionGroups) {
       if (g.allowHalf) {
         const gHalf = halfPicks[g.id] ?? {};
@@ -203,14 +202,17 @@ export function ItemDetail({
           const placement = gHalf[o.id];
           if (!placement) continue;
           const effectiveDelta = placement !== "full" ? Math.round(o.priceDelta / 2) : o.priceDelta;
-          selectedOpts.push({ groupId: g.id, optionId: o.id, name: formatOptionDisplayName(g.name, o.name), priceDelta: effectiveDelta, half: placement });
+          selectedOpts.push({ groupId: g.id, optionId: o.id, name: o.name, groupName: g.name, priceDelta: effectiveDelta, half: placement });
         }
       } else {
         const sel = picks[g.id] ?? new Set();
-        for (const o of g.options) {
-          if (sel.has(o.id)) {
-            selectedOpts.push({ groupId: g.id, optionId: o.id, name: formatOptionDisplayName(g.name, o.name), priceDelta: o.priceDelta });
-          }
+        const picked = g.options.filter((o) => sel.has(o.id));
+        const free = g.includedFree ?? 0;
+        const paidSorted = picked.filter((o) => o.priceDelta > 0).sort((a, b) => a.priceDelta - b.priceDelta);
+        const freedIds = new Set(paidSorted.slice(0, free).map((o) => o.id));
+        for (const o of picked) {
+          const effectiveDelta = freedIds.has(o.id) ? 0 : o.priceDelta;
+          selectedOpts.push({ groupId: g.id, optionId: o.id, name: o.name, groupName: g.name, priceDelta: effectiveDelta });
         }
       }
     }

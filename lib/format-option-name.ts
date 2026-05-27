@@ -1,18 +1,15 @@
 /**
- * Combine an option-group name with the picked option name into a
- * cart-friendly display string.
+ * Compose a Wolt-style display string for a cart-line option.
  *
- * Generic affirmative/negative options ("כן" / "לא" / "yes" / "no")
- * carry no information by themselves — "מרגריטה · כן" tells the customer
- * nothing about what they ordered. We swap in the group name so the
- * cart row reads "מרגריטה · אקסטרה גבינה" / "ללא אקסטרה גבינה".
+ *   "תרצו אקסטרה גבינה?"  +  "כן"        →  "תרצו אקסטרה גבינה?: כן"
+ *   "בחרו תוספות לפיצה"   +  "זיתים"      →  "בחרו תוספות לפיצה: זיתים"
+ *   ""                     +  "אקסטרה"    →  "אקסטרה"
  *
- * For descriptive option names ("זיתים", "בצל", "מוצרלה") we keep the
- * option name as-is — the group name would be redundant ("תוספות: זיתים").
+ * Verbatim — we keep the merchant's exact phrasing on both sides. Older
+ * cart lines that were stored before we started capturing the group
+ * name pass `undefined` for `groupName`; in that case we just show the
+ * option name as-is.
  */
-const YES_TOKENS = new Set(["כן", "yes", "true", "v", "✓"]);
-const NO_TOKENS = new Set(["לא", "no", "false", "x", "✕"]);
-
 export function formatOptionDisplayName(
   groupName: string | null | undefined,
   optionName: string,
@@ -20,8 +17,5 @@ export function formatOptionDisplayName(
   const o = optionName.trim();
   const g = (groupName ?? "").trim();
   if (!g || g === o) return o;
-  const lower = o.toLowerCase();
-  if (YES_TOKENS.has(lower)) return g;
-  if (NO_TOKENS.has(lower)) return `ללא ${g}`;
-  return o;
+  return `${g}: ${o}`;
 }

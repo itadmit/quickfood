@@ -2,7 +2,6 @@ import { z } from "zod";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
-import { formatOptionDisplayName } from "@/lib/format-option-name";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,7 +49,7 @@ export const POST = handler(async (req: Request) => {
   }
 
   const requestedOptions = new Set(body.option_ids ?? []);
-  const selectedOptions: Array<{ groupId: string; optionId: string; name: string; priceDelta: number }> = [];
+  const selectedOptions: Array<{ groupId: string; optionId: string; name: string; groupName: string; priceDelta: number }> = [];
 
   for (const g of item.optionGroups) {
     const fromSet = g.templateSet;
@@ -58,6 +57,7 @@ export const POST = handler(async (req: Request) => {
     const required = fromSet?.required ?? g.required;
     const minSelect = fromSet?.minSelect ?? g.minSelect;
     const maxSelect = fromSet?.maxSelect ?? g.maxSelect;
+    const includedFree = fromSet?.includedFree ?? g.includedFree;
 
     const picksFromUser = opts.filter((o) => requestedOptions.has(o.id) && o.available);
     let picks = picksFromUser;
@@ -76,12 +76,16 @@ export const POST = handler(async (req: Request) => {
     }
 
     const groupName = fromSet?.name ?? g.name;
+    const paidSorted = picks.filter((o) => o.priceDelta > 0).sort((a, b) => a.priceDelta - b.priceDelta);
+    const freedIds = new Set(paidSorted.slice(0, includedFree).map((o) => o.id));
     for (const p of picks) {
+      const effectiveDelta = freedIds.has(p.id) ? 0 : p.priceDelta;
       selectedOptions.push({
         groupId: g.id,
         optionId: p.id,
-        name: formatOptionDisplayName(groupName, p.name),
-        priceDelta: p.priceDelta,
+        name: p.name,
+        groupName,
+        priceDelta: effectiveDelta,
       });
     }
   }

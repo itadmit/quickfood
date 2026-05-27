@@ -55,9 +55,6 @@ export function MenuCartSidebar({ tenantSlug, businessType }: Props) {
               const opts = l.options.reduce((a, o) => a + o.priceDelta, 0);
               const unit = l.basePrice + l.sizeDelta + opts;
               const lineTotal = unit * l.quantity;
-              const variant = [l.sizeName, ...l.options.map((o) => o.name)]
-                .filter(Boolean)
-                .join(" · ");
               return (
                 <li key={l.lineId} className="py-3 flex gap-3 items-start">
                   <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0">
@@ -82,9 +79,20 @@ export function MenuCartSidebar({ tenantSlug, businessType }: Props) {
                         <IcoClose s={12} c="currentColor" />
                       </button>
                     </div>
-                    {variant && (
-                      <div className="text-[11px] text-qf-mute mt-0.5 leading-relaxed">{variant}</div>
+                    {l.sizeName && (
+                      <div className="text-[11px] text-qf-mute mt-0.5">{l.sizeName}</div>
                     )}
+                    {l.options.map((o, i) => {
+                      const label = o.groupName ? `${o.groupName}: ${o.name}` : o.name;
+                      return (
+                        <div key={i} className="text-[11px] text-qf-mute mt-0.5">
+                          {label}
+                          {o.priceDelta > 0 && (
+                            <span> (+{formatPrice(o.priceDelta)})</span>
+                          )}
+                        </div>
+                      );
+                    })}
                     <div className="flex items-center justify-between mt-1.5">
                       <div className="flex items-center bg-qf-bg rounded-full border border-qf-line">
                         <button

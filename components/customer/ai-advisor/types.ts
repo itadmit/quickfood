@@ -30,7 +30,7 @@ export interface AIProposal {
   sizeId: string | null;
   sizeName: string | null;
   sizeDelta: number;
-  options: Array<{ groupId: string; optionId: string; name: string; priceDelta: number }>;
+  options: Array<{ groupId: string; optionId: string; name: string; groupName?: string; priceDelta: number }>;
   notes: string | null;
   imageUrl: string | null;
   unitPrice: number;

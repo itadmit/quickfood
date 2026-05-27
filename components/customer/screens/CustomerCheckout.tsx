@@ -557,9 +557,6 @@ export function CustomerCheckout({
               const opts = l.options.reduce((a, o) => a + o.priceDelta, 0);
               const unit = l.basePrice + l.sizeDelta + opts;
               const lineTotal = unit * l.quantity;
-              const variant = [l.sizeName, ...l.options.map((o) => o.name)]
-                .filter(Boolean)
-                .join(" · ");
               return (
                 <li key={l.lineId} className="py-2.5 flex gap-3 items-start">
                   <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0">
@@ -579,9 +576,18 @@ export function CustomerCheckout({
                         {formatPrice(lineTotal)}
                       </div>
                     </div>
-                    {variant && (
-                      <div className="text-xs text-qf-mute mt-0.5 leading-relaxed">{variant}</div>
+                    {l.sizeName && (
+                      <div className="text-xs text-qf-mute mt-0.5">{l.sizeName}</div>
                     )}
+                    {l.options.map((o, i) => {
+                      const label = o.groupName ? `${o.groupName}: ${o.name}` : o.name;
+                      return (
+                        <div key={i} className="text-xs text-qf-mute mt-0.5">
+                          {label}
+                          {o.priceDelta > 0 && <span> (+{formatPrice(o.priceDelta)})</span>}
+                        </div>
+                      );
+                    })}
                     <div className="text-xs text-qf-ink2 mt-1 tnum">× {l.quantity}</div>
                   </div>
                 </li>
@@ -873,9 +879,6 @@ export function CustomerCheckout({
                 const opts = l.options.reduce((a, o) => a + o.priceDelta, 0);
                 const unit = l.basePrice + l.sizeDelta + opts;
                 const lineTotal = unit * l.quantity;
-                const variant = [l.sizeName, ...l.options.map((o) => o.name)]
-                  .filter(Boolean)
-                  .join(" · ");
                 return (
                   <li key={l.lineId} className="py-2.5 flex gap-3 items-start">
                     <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0">
@@ -893,9 +896,18 @@ export function CustomerCheckout({
                         <div className="font-medium text-sm leading-tight">{l.name}</div>
                         <div className="text-sm tnum font-medium shrink-0">{formatPrice(lineTotal)}</div>
                       </div>
-                      {variant && (
-                        <div className="text-xs text-qf-mute mt-0.5 leading-relaxed">{variant}</div>
+                      {l.sizeName && (
+                        <div className="text-xs text-qf-mute mt-0.5">{l.sizeName}</div>
                       )}
+                      {l.options.map((o, i) => {
+                        const label = o.groupName ? `${o.groupName}: ${o.name}` : o.name;
+                        return (
+                          <div key={i} className="text-xs text-qf-mute mt-0.5">
+                            {label}
+                            {o.priceDelta > 0 && <span> (+{formatPrice(o.priceDelta)})</span>}
+                          </div>
+                        );
+                      })}
                       <div className="text-xs text-qf-ink2 mt-0.5 tnum">× {l.quantity}</div>
                     </div>
                   </li>

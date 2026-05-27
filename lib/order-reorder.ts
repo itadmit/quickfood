@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/db/client";
 import { splitDeliveryNotes, type CheckoutPrefill } from "@/lib/checkout-prefill";
-import { formatOptionDisplayName } from "@/lib/format-option-name";
 
 /** Snapshot of an option as stored on OrderItem.selectedOptions. */
 export interface StoredOption {
@@ -64,7 +63,7 @@ export interface RebuildLine {
   sizeId: string | null;
   sizeName: string | null;
   sizeDelta: number;
-  options: Array<{ groupId: string; optionId: string; name: string; priceDelta: number }>;
+  options: Array<{ groupId: string; optionId: string; name: string; groupName?: string; priceDelta: number }>;
   notes: string | null;
 }
 
@@ -183,7 +182,14 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
     const storedOptions = Array.isArray(it.selectedOptions)
       ? (it.selectedOptions as unknown as StoredOption[])
       : [];
-    const liveOptions: RebuildLine["options"] = [];
+    // Resolve each stored selection to its live menu definition first,
+    // then apply the includedFree allowance per group so the cheapest N
+    // picks come back free — same rule the storefront uses on first add.
+    interface Resolved {
+      group: typeof menuItem.optionGroups[number];
+      opt: typeof menuItem.optionGroups[number]["options"][number];
+    }
+    const resolved: Resolved[] = [];
     let optionsMissing = false;
     for (const stored of storedOptions) {
       const group = menuItem.optionGroups.find((g) => g.id === stored.group_id);
@@ -193,14 +199,32 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
         optionsMissing = true;
         break;
       }
-      liveOptions.push({
-        groupId: group.id,
-        optionId: opt.id,
-        name: formatOptionDisplayName(group.name, opt.name),
-        priceDelta: opt.priceDelta,
-      });
+      resolved.push({ group, opt });
     }
     if (optionsMissing) continue;
+
+    const byGroup = new Map<string, Resolved[]>();
+    for (const r of resolved) {
+      const arr = byGroup.get(r.group.id) ?? [];
+      arr.push(r);
+      byGroup.set(r.group.id, arr);
+    }
+    const freedOptIds = new Set<string>();
+    for (const arr of byGroup.values()) {
+      const free = arr[0].group.includedFree ?? 0;
+      const paidSorted = arr
+        .filter((r) => r.opt.priceDelta > 0)
+        .sort((a, b) => a.opt.priceDelta - b.opt.priceDelta);
+      for (const r of paidSorted.slice(0, free)) freedOptIds.add(r.opt.id);
+    }
+
+    const liveOptions: RebuildLine["options"] = resolved.map((r) => ({
+      groupId: r.group.id,
+      optionId: r.opt.id,
+      name: r.opt.name,
+      groupName: r.group.name,
+      priceDelta: freedOptIds.has(r.opt.id) ? 0 : r.opt.priceDelta,
+    }));
 
     lines.push({
       itemId: menuItem.id,

@@ -57,7 +57,7 @@ export function AIAdvisorFAB({
 
   return (
     <>
-      <div className="fixed bottom-24 left-4 z-40 lg:bottom-6">
+      <div className="fixed bottom-36 left-4 z-40 lg:bottom-6">
         {showBubble && (
           <button
             type="button"
