@@ -118,9 +118,16 @@ export default async function CustomerLayout({
             ((tenant.aiProvider === "claude" && tenant.aiClaudeApiKey) ||
               (tenant.aiProvider === "gemini" && tenant.aiGeminiApiKey)) && (
               <>
-                <AIAdvisorFAB tenantSlug={tenant.slug} />
+                <AIAdvisorFAB
+                  tenantSlug={tenant.slug}
+                  suggestions={tenant.aiAdvisorSuggestions}
+                />
                 {tenant.aiAdvisorPopupEnabled && (
-                  <AIAdvisorPromoPopup tenantSlug={tenant.slug} tenantName={tenant.name} />
+                  <AIAdvisorPromoPopup
+                    tenantSlug={tenant.slug}
+                    tenantName={tenant.name}
+                    suggestions={tenant.aiAdvisorSuggestions}
+                  />
                 )}
               </>
             )}

@@ -6,7 +6,13 @@ import { AIAdvisorModal } from "./AIAdvisorModal";
 const HINT_KEY = "qf:ai-advisor-hinted";
 const SCROLL_THRESHOLD = 220;
 
-export function AIAdvisorFAB({ tenantSlug }: { tenantSlug: string }) {
+export function AIAdvisorFAB({
+  tenantSlug,
+  suggestions,
+}: {
+  tenantSlug: string;
+  suggestions?: string[];
+}) {
   const [open, setOpen] = useState(false);
   const [hintPhase, setHintPhase] = useState<"idle" | "pulse" | "bubble" | "done">("idle");
 
@@ -86,7 +92,13 @@ export function AIAdvisorFAB({ tenantSlug }: { tenantSlug: string }) {
           </button>
         </div>
       </div>
-      {open && <AIAdvisorModal tenantSlug={tenantSlug} onClose={() => setOpen(false)} />}
+      {open && (
+        <AIAdvisorModal
+          tenantSlug={tenantSlug}
+          suggestions={suggestions}
+          onClose={() => setOpen(false)}
+        />
+      )}
     </>
   );
 }

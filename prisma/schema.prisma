@@ -288,6 +288,7 @@ model Tenant {
 
   aiAdvisorEnabled      Boolean    @default(false) @map("ai_advisor_enabled")
   aiAdvisorPopupEnabled Boolean    @default(false) @map("ai_advisor_popup_enabled")
+  aiAdvisorSuggestions  String[]   @default([]) @map("ai_advisor_suggestions")
   aiProvider            AIProvider @default(gemini) @map("ai_provider")
   aiGeminiApiKey        String?    @map("ai_gemini_api_key")
   aiClaudeApiKey        String?    @map("ai_claude_api_key")

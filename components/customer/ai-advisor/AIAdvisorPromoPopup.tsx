@@ -25,9 +25,11 @@ function setCookie(name: string, value: string, days: number) {
 export function AIAdvisorPromoPopup({
   tenantSlug,
   tenantName,
+  suggestions,
 }: {
   tenantSlug: string;
   tenantName: string;
+  suggestions?: string[];
 }) {
   const [showPromo, setShowPromo] = useState(false);
   const [showAdvisor, setShowAdvisor] = useState(false);
@@ -42,11 +44,11 @@ export function AIAdvisorPromoPopup({
   useEffect(() => {
     if (!showPromo) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") dismiss();
+      if (e.key === "Escape") closeWithoutCookie();
     };
     const onClick = (e: MouseEvent) => {
       if (cardRef.current && !cardRef.current.contains(e.target as Node)) {
-        dismiss();
+        closeWithoutCookie();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -58,14 +60,23 @@ export function AIAdvisorPromoPopup({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showPromo]);
 
-  function dismiss() {
+  // Soft-close: hides the popup for THIS render but doesn't set a cookie.
+  // Next page load shows it again. Used for X, Esc, outside click, and
+  // even when the user opens the advisor — none of those count as a
+  // "not interested" signal.
+  function closeWithoutCookie() {
+    setShowPromo(false);
+  }
+
+  // Hard-close: explicit "לא תודה" — write the 7-day cookie so the
+  // popup stays dismissed across visits.
+  function dismissForWeek() {
     setShowPromo(false);
     setCookie(COOKIE_NAME, "1", DISMISS_DAYS);
   }
 
   function openAdvisor() {
     setShowPromo(false);
-    setCookie(COOKIE_NAME, "1", DISMISS_DAYS);
     setShowAdvisor(true);
   }
 
@@ -83,7 +94,7 @@ export function AIAdvisorPromoPopup({
           >
             <button
               type="button"
-              onClick={dismiss}
+              onClick={closeWithoutCookie}
               aria-label="סגור"
               className="absolute top-3 left-3 w-8 h-8 rounded-full bg-white border border-qf-line-dash hover:bg-qf-line-soft grid place-items-center z-10"
             >
@@ -113,7 +124,7 @@ export function AIAdvisorPromoPopup({
               </button>
               <button
                 type="button"
-                onClick={dismiss}
+                onClick={dismissForWeek}
                 className="w-full px-4 py-2 rounded-2xl text-qf-mute hover:bg-qf-line-soft text-sm transition"
               >
                 לא תודה
@@ -123,7 +134,11 @@ export function AIAdvisorPromoPopup({
         </div>
       )}
       {showAdvisor && (
-        <AIAdvisorModal tenantSlug={tenantSlug} onClose={() => setShowAdvisor(false)} />
+        <AIAdvisorModal
+          tenantSlug={tenantSlug}
+          suggestions={suggestions}
+          onClose={() => setShowAdvisor(false)}
+        />
       )}
     </>
   );

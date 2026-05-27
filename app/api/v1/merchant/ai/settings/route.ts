@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 const Schema = z.object({
   enabled: z.boolean().optional(),
   popup_enabled: z.boolean().optional(),
+  suggestions: z.array(z.string().trim().min(1).max(80)).max(4).optional(),
   provider: z.enum(["gemini", "claude"]).optional(),
   gemini_api_key: z.string().trim().max(500).nullable().optional(),
   claude_api_key: z.string().trim().max(500).nullable().optional(),
@@ -18,6 +19,7 @@ const Schema = z.object({
 function describe(row: {
   aiAdvisorEnabled: boolean;
   aiAdvisorPopupEnabled: boolean;
+  aiAdvisorSuggestions: string[];
   aiProvider: "gemini" | "claude";
   aiGeminiApiKey: string | null;
   aiClaudeApiKey: string | null;
@@ -33,6 +35,7 @@ function describe(row: {
   return {
     enabled: row.aiAdvisorEnabled,
     popup_enabled: row.aiAdvisorPopupEnabled,
+    suggestions: row.aiAdvisorSuggestions,
     provider: row.aiProvider,
     gemini: {
       has_key: !!row.aiGeminiApiKey,
@@ -53,6 +56,7 @@ export const GET = handler(async () => {
     select: {
       aiAdvisorEnabled: true,
       aiAdvisorPopupEnabled: true,
+      aiAdvisorSuggestions: true,
       aiProvider: true,
       aiGeminiApiKey: true,
       aiClaudeApiKey: true,
@@ -70,6 +74,7 @@ export const PATCH = handler(async (req: Request) => {
   const data: {
     aiAdvisorEnabled?: boolean;
     aiAdvisorPopupEnabled?: boolean;
+    aiAdvisorSuggestions?: string[];
     aiProvider?: "gemini" | "claude";
     aiGeminiApiKey?: string | null;
     aiClaudeApiKey?: string | null;
@@ -77,6 +82,7 @@ export const PATCH = handler(async (req: Request) => {
 
   if (body.enabled !== undefined) data.aiAdvisorEnabled = body.enabled;
   if (body.popup_enabled !== undefined) data.aiAdvisorPopupEnabled = body.popup_enabled;
+  if (body.suggestions !== undefined) data.aiAdvisorSuggestions = body.suggestions;
   if (body.provider !== undefined) data.aiProvider = body.provider;
 
   if (body.gemini_api_key !== undefined) {
@@ -139,6 +145,7 @@ export const PATCH = handler(async (req: Request) => {
     select: {
       aiAdvisorEnabled: true,
       aiAdvisorPopupEnabled: true,
+      aiAdvisorSuggestions: true,
       aiProvider: true,
       aiGeminiApiKey: true,
       aiClaudeApiKey: true,

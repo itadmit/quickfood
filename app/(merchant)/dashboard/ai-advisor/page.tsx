@@ -26,6 +26,7 @@ export default async function AIAdvisorPage() {
     select: {
       aiAdvisorEnabled: true,
       aiAdvisorPopupEnabled: true,
+      aiAdvisorSuggestions: true,
       aiProvider: true,
       aiGeminiApiKey: true,
       aiClaudeApiKey: true,
@@ -67,6 +68,7 @@ export default async function AIAdvisorPage() {
         initial={{
           enabled: tenant.aiAdvisorEnabled,
           popupEnabled: tenant.aiAdvisorPopupEnabled,
+          suggestions: tenant.aiAdvisorSuggestions,
           provider: tenant.aiProvider,
           gemini: {
             hasKey: !!tenant.aiGeminiApiKey,

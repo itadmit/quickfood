@@ -2,9 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { IcoCheck } from "@/components/shared/Icons";
+import { IcoCheck, IcoClose, IcoPlus } from "@/components/shared/Icons";
 import { Toggle } from "@/components/shared/Toggle";
 import { cn } from "@/lib/cn";
+
+const DEFAULT_SUGGESTIONS = [
+  "מה אתה ממליץ ליחיד?",
+  "ארוחה לזוג עד 120 ₪",
+  "משהו טבעוני",
+  "אני אוהב חריף",
+];
+const MAX_SUGGESTIONS = 4;
 
 type Provider = "gemini" | "claude";
 
@@ -16,6 +24,7 @@ interface ProviderState {
 interface Initial {
   enabled: boolean;
   popupEnabled: boolean;
+  suggestions: string[];
   provider: Provider;
   gemini: ProviderState;
   claude: ProviderState;
@@ -75,6 +84,9 @@ export function AIAdvisorForm({ initial }: { initial: Initial }) {
   const router = useRouter();
   const [enabled, setEnabled] = useState(initial.enabled);
   const [popupEnabled, setPopupEnabled] = useState(initial.popupEnabled);
+  const [suggestions, setSuggestions] = useState<string[]>(
+    initial.suggestions.length > 0 ? initial.suggestions : DEFAULT_SUGGESTIONS,
+  );
   const [provider, setProvider] = useState<Provider>(initial.provider);
   const [gemini, setGemini] = useState<ProviderState>(initial.gemini);
   const [claude, setClaude] = useState<ProviderState>(initial.claude);
@@ -96,9 +108,14 @@ export function AIAdvisorForm({ initial }: { initial: Initial }) {
     setError(null);
     setToast(null);
     try {
+      const cleanSuggestions = suggestions
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0)
+        .slice(0, MAX_SUGGESTIONS);
       const payload: Record<string, unknown> = {
         enabled,
         popup_enabled: popupEnabled,
+        suggestions: cleanSuggestions,
         provider,
       };
       if (keyInput.trim().length > 0) {
@@ -122,6 +139,9 @@ export function AIAdvisorForm({ initial }: { initial: Initial }) {
         setClaude({ hasKey: s.claude.has_key, maskedKey: s.claude.masked_key });
         setEnabled(s.enabled);
         setPopupEnabled(!!s.popup_enabled);
+        if (Array.isArray(s.suggestions) && s.suggestions.length > 0) {
+          setSuggestions(s.suggestions);
+        }
       }
       setToast("נשמר");
       router.refresh();
@@ -219,6 +239,61 @@ export function AIAdvisorForm({ initial }: { initial: Initial }) {
             onChange={(v) => setPopupEnabled(v)}
             disabled={!enabled}
           />
+        </div>
+      </section>
+
+      <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
+        <div>
+          <h2 className="text-base lg:text-lg font-semibold">שאלות מוכנות במסך הפתיחה</h2>
+          <p className="text-xs lg:text-sm text-qf-mute mt-0.5 leading-relaxed">
+            עד {MAX_SUGGESTIONS} הצעות שיופיעו כפסים לחיצים מעל הצ׳אט הריק. לקוח שלוחץ — שולח את הטקסט ליועץ באופן מיידי.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          {suggestions.map((s, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <input
+                value={s}
+                onChange={(e) =>
+                  setSuggestions((prev) => prev.map((v, idx) => (idx === i ? e.target.value : v)))
+                }
+                placeholder={DEFAULT_SUGGESTIONS[i] ?? "טקסט הצעה..."}
+                maxLength={80}
+                className="flex-1 px-3.5 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setSuggestions((prev) => prev.filter((_, idx) => idx !== i))}
+                aria-label="מחיקת הצעה"
+                className="w-9 h-9 shrink-0 rounded-xl border border-qf-line-dash hover:border-qf-tomato hover:bg-qf-tomato-soft grid place-items-center"
+              >
+                <IcoClose s={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {suggestions.length < MAX_SUGGESTIONS && (
+            <button
+              type="button"
+              onClick={() => setSuggestions((prev) => [...prev, ""])}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 border-dashed border-qf-line-dash hover:border-black text-sm font-medium"
+            >
+              <IcoPlus c="#11231a" s={14} />
+              הוסף הצעה
+            </button>
+          )}
+          {suggestions.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setSuggestions(DEFAULT_SUGGESTIONS)}
+              className="text-xs text-qf-mute hover:text-black underline"
+            >
+              שחזר ברירת מחדל
+            </button>
+          )}
         </div>
       </section>
 

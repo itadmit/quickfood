@@ -78,10 +78,13 @@ function clearChat(tenantSlug: string) {
 export function AIAdvisorModal({
   tenantSlug,
   onClose,
+  suggestions,
 }: {
   tenantSlug: string;
   onClose: () => void;
+  suggestions?: string[];
 }) {
+  const activeSuggestions = suggestions && suggestions.length > 0 ? suggestions : SUGGESTIONS;
   const cart = useCart();
   const [messages, setMessages] = useState<AIChatMessage[]>(() => loadChat(tenantSlug)?.messages ?? []);
   const [streaming, setStreaming] = useState(false);
@@ -360,6 +363,7 @@ export function AIAdvisorModal({
         {messages.length === 0 ? (
           <EmptyState
             tenantName={cart.tenant.name}
+            suggestions={activeSuggestions}
             onPick={(text) => send(text)}
           />
         ) : (
@@ -376,14 +380,22 @@ export function AIAdvisorModal({
       <AIComposer
         disabled={streaming}
         onSend={send}
-        suggestions={messages.length === 0 ? SUGGESTIONS : []}
+        suggestions={messages.length === 0 ? activeSuggestions : []}
         error={error}
       />
     </div>
   );
 }
 
-function EmptyState({ tenantName, onPick }: { tenantName: string; onPick: (text: string) => void }) {
+function EmptyState({
+  tenantName,
+  suggestions,
+  onPick,
+}: {
+  tenantName: string;
+  suggestions: string[];
+  onPick: (text: string) => void;
+}) {
   return (
     <div className="max-w-md mx-auto px-4 py-10 flex flex-col items-center text-center">
       <div className="w-16 h-16 rounded-full bg-black text-(--qf-yolk) flex items-center justify-center mb-4">
@@ -394,12 +406,12 @@ function EmptyState({ tenantName, onPick }: { tenantName: string; onPick: (text:
         תגיד לי מה בא לך, על איזה תקציב או הגבלות תזונה — אני ממליץ ומרכיב לך הזמנה.
       </p>
       <div className="mt-6 grid grid-cols-2 gap-2 w-full">
-        {SUGGESTIONS.map((s) => (
+        {suggestions.map((s) => (
           <button
             key={s}
             type="button"
             onClick={() => onPick(s)}
-            className="text-right text-sm font-medium px-3 py-2.5 rounded-2xl border border-qf-line-dash hover:border-black hover:bg-white transition"
+            className="text-center bg-white text-sm font-medium px-3 py-2.5 rounded-2xl border border-qf-line-dash hover:border-black transition"
           >
             {s}
           </button>
