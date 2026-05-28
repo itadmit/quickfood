@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { IcoPin, IcoSearch, IcoClock, IcoBike, IcoUser, IcoArrowLeft, IcoStar } from "@/components/shared/Icons";
+import { IcoPin, IcoSearch, IcoClock, IcoBike, IcoArrowLeft, IcoStar } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
 import { CampaignPopup } from "@/components/customer/CampaignPopup";
@@ -266,13 +266,6 @@ export function CustomerHome({
               <span className="truncate max-w-45">{locationLabel}</span>
             </button>
             {aiAdvisorEnabled && <AIAdvisorTopButton />}
-            <Link
-              href={`/s/${tenant.slug}/profile`}
-              aria-label="אזור אישי"
-              className="w-9 h-9 rounded-full bg-white grid place-items-center"
-            >
-              <IcoUser c="var(--qf-deep)" s={18} />
-            </Link>
           </div>
 
           {/* Tenant name — promoted to a prominent title on desktop */}
