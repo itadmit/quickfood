@@ -16,7 +16,7 @@ export function SupportFAB({ merchantName }: { merchantName: string }) {
   const href = buildWhatsAppHref(merchantName);
 
   return (
-    <div className="fixed bottom-5 inset-s-5 z-40 flex items-center gap-2 pointer-events-none">
+    <div className="fixed bottom-5 inset-e-5 z-40 flex items-center gap-2 pointer-events-none">
       <a
         href={href}
         target="_blank"
@@ -29,7 +29,7 @@ export function SupportFAB({ merchantName }: { merchantName: string }) {
         className="pointer-events-auto group flex items-center gap-2 bg-[#25D366] hover:bg-[#1FB955] active:scale-95 text-white rounded-full transition-all duration-200 px-4 h-14 border-2 border-black"
         style={{ boxShadow: "3px 3px 0 0 #000" }}
       >
-        <IcoWhatsApp s={24} />
+        <IcoWhatsApp c="#fff" s={24} />
         <span
           className={
             "overflow-hidden whitespace-nowrap font-bold text-sm transition-[max-width,opacity,margin] duration-200 " +
