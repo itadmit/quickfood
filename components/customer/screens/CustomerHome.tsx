@@ -450,7 +450,7 @@ export function CustomerHome({
               <Link
                 key={c.id}
                 href={`#cat-${c.id}`}
-                className="shrink-0 bg-white rounded-2xl border border-qf-line px-4 py-3 min-w-22 text-center hover:border-(--qf-primary)/40 hover:shadow-sm transition lg:min-w-0"
+                className="shrink-0 w-24 bg-white rounded-2xl border border-qf-line px-2 py-3 text-center hover:border-(--qf-primary)/40 hover:shadow-sm transition lg:w-auto"
               >
                 <div
                   className="w-10 h-10 rounded-full grid place-items-center mx-auto mb-1"
@@ -458,7 +458,7 @@ export function CustomerHome({
                 >
                   <Icon size={20} color={style.fg} strokeWidth={1.8} />
                 </div>
-                <div className="text-xs font-medium">{c.name}</div>
+                <div className="text-xs font-medium line-clamp-2 leading-tight">{c.name}</div>
               </Link>
             );
           })}

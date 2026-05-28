@@ -65,7 +65,7 @@ export function EmailVerificationBanner({
               onClick={() => setShowChange(true)}
               className="qf-billing-cta-secondary inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-qf-ink/20 hover:bg-white text-qf-ink text-xs font-medium"
             >
-              שנה כתובת
+              שנה כתובת מייל
             </button>
             {phase === "sent" ? (
               <span className="qf-billing-cta inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-qf-green-soft text-qf-green-deep text-xs font-medium">

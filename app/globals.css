@@ -199,6 +199,16 @@
 .dash-v2 .qf-billing-cta:hover {
   background: #1a1a1a !important;
 }
+.dash-v2 .qf-billing-cta-secondary {
+  background: #fff !important;
+  color: #000 !important;
+  border: 2px solid #000;
+  box-shadow: 0 2px 0 #000;
+  font-weight: 700;
+}
+.dash-v2 .qf-billing-cta-secondary:hover {
+  background: #f8cb1e !important;
+}
 
 /* ─── Base ───────────────────────────────────────────────────── */
 html {

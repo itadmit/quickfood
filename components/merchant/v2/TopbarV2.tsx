@@ -237,6 +237,20 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
           )}
         </Link>
 
+        {/* View storefront — opens the customer-facing menu in a new tab.
+            Pulled out of the user dropdown so merchants can hop to the
+            live store in one click. */}
+        <Link
+          href={`/s/${tenantSlug}`}
+          target="_blank"
+          rel="noopener"
+          aria-label="צפה בחנות"
+          title="צפה בחנות"
+          className="w-10 h-10 rounded-xl border-2 border-black bg-white hover:bg-[#F8CB1E] grid place-items-center transition active:scale-95 shadow-[0_2px_0_#000]"
+        >
+          <IcoEye c="#000" s={18} />
+        </Link>
+
         {/* User */}
         <div className="relative">
           <button
@@ -259,16 +273,6 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
                 {user.email}
               </div>
               <hr className="border-black/10" />
-              <Link
-                href={`/s/${tenantSlug}`}
-                target="_blank"
-                rel="noopener"
-                onClick={() => setOpenMenu(null)}
-                className="w-full text-start px-3 py-2 rounded-lg hover:bg-black/5 flex items-center gap-2.5 font-bold"
-              >
-                <IcoEye c="#000" s={16} />
-                <span>צפה בחנות</span>
-              </Link>
               <button
                 type="button"
                 onClick={logout}
