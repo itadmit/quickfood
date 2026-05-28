@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/shared/Skeleton";
 import { ItemDetailModal } from "@/components/customer/ItemDetailModal";
 import { ItemDetail } from "@/components/customer/screens/ItemDetail";
 import ItemModalSkeleton from "@/components/customer/ItemModalSkeleton";
+import { CartUpsell } from "@/components/customer/CartUpsell";
 
 export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
   const router = useRouter();
@@ -193,6 +194,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
         })}
       </div>
 
+          <CartUpsell tenantSlug={tenantSlug} />
         </div>
 
         {/* Summary + CTA — inline card on mobile, sticky sidebar on desktop. */}

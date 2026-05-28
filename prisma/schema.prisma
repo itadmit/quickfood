@@ -396,6 +396,12 @@ model MenuCategory {
   position Int     @default(0)
   active   Boolean @default(true)
 
+  // When true, items from this category are surfaced as the cart-page
+  // upsell carousel ("מומלץ עבורך"). Merchants typically flag drinks /
+  // sides / desserts. If no category is flagged we fall back to a
+  // name-based heuristic at read time.
+  upsellInCart Boolean @default(false) @map("upsell_in_cart")
+
   // Provenance for bulk imports (Wolt / CSV / future POS sync). Lets a
   // re-import find the matching local row and update it instead of
   // creating a duplicate. NULL on either side = manually created.

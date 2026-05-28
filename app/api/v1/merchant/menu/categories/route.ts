@@ -29,6 +29,7 @@ export const GET = handler(async () => {
       color: c.color,
       position: c.position,
       active: c.active,
+      upsell_in_cart: c.upsellInCart,
     })),
   });
 });

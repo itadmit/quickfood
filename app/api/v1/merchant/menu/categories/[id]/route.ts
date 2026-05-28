@@ -12,6 +12,7 @@ const CategoryPatch = z.object({
   color: z.string().max(20).nullable().optional(),
   position: z.number().int().min(0).optional(),
   active: z.boolean().optional(),
+  upsell_in_cart: z.boolean().optional(),
 });
 
 async function loadOwn(id: string, tenantId: string) {
@@ -36,6 +37,7 @@ export const PATCH = handler(
         ...(body.color !== undefined && { color: body.color }),
         ...(body.position !== undefined && { position: body.position }),
         ...(body.active !== undefined && { active: body.active }),
+        ...(body.upsell_in_cart !== undefined && { upsellInCart: body.upsell_in_cart }),
       },
     });
     return apiJson({
@@ -46,6 +48,7 @@ export const PATCH = handler(
         color: cat.color,
         position: cat.position,
         active: cat.active,
+        upsell_in_cart: cat.upsellInCart,
       },
     });
   },

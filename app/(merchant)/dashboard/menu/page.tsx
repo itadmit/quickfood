@@ -37,6 +37,7 @@ export default async function MenuPage() {
         icon: c.icon,
         color: c.color,
         position: c.position,
+        upsellInCart: c.upsellInCart,
       }))}
       businessType={tenant?.businessType ?? "general"}
       items={items.map((i) => ({

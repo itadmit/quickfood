@@ -22,6 +22,7 @@ export interface EditableCategory {
   icon: string | null;
   color: string | null;
   position: number;
+  upsellInCart?: boolean;
 }
 
 interface Props {
@@ -36,6 +37,7 @@ type Draft = {
   icon: CategoryIconKey;
   color: CategoryColorKey;
   position: number;
+  upsellInCart: boolean;
 };
 
 const EMPTY_DRAFT: Draft = {
@@ -43,6 +45,7 @@ const EMPTY_DRAFT: Draft = {
   icon: DEFAULT_ICON,
   color: DEFAULT_COLOR,
   position: 0,
+  upsellInCart: false,
 };
 
 export function CategoryEditorModal({ open, onClose, categories }: Props) {
@@ -77,6 +80,7 @@ export function CategoryEditorModal({ open, onClose, categories }: Props) {
       icon: style.iconKey,
       color: style.colorKey,
       position: c.position,
+      upsellInCart: c.upsellInCart ?? false,
     });
   }
 
@@ -99,6 +103,7 @@ export function CategoryEditorModal({ open, onClose, categories }: Props) {
         name: editing.name.trim(),
         icon: editing.icon,
         color: editing.color,
+        upsell_in_cart: editing.upsellInCart,
         ...(isCreate && { position: editing.position }),
       }),
     });
@@ -338,6 +343,22 @@ function DraftForm({
             })}
           </div>
         </div>
+
+        {/* Upsell toggle */}
+        <label className="flex items-start justify-between gap-3 py-2 cursor-pointer">
+          <div className="min-w-0">
+            <div className="text-sm font-medium">הצע קטגוריה זו בעגלת הקניות (אפסייל)</div>
+            <div className="text-xs text-qf-mute mt-0.5 leading-relaxed">
+              הפריטים הפופולריים מהקטגוריה יופיעו כקרוסלה "מומלץ עבורך" בעגלת הלקוח. מתאים בעיקר למשקאות, תוספות וקינוחים.
+            </div>
+          </div>
+          <input
+            type="checkbox"
+            checked={draft.upsellInCart}
+            onChange={(e) => onChange({ ...draft, upsellInCart: e.target.checked })}
+            className="w-5 h-5 mt-0.5 shrink-0 accent-(--qf-primary)"
+          />
+        </label>
 
         {error && (
           <div className="text-xs bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato rounded-lg px-3 py-2">

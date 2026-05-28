@@ -24,6 +24,7 @@ interface Category {
   icon: string | null;
   color: string | null;
   position: number;
+  upsellInCart?: boolean;
 }
 interface Item {
   id: string;
@@ -350,6 +351,7 @@ export function MenuList({
           icon: c.icon,
           color: c.color,
           position: c.position,
+          upsellInCart: c.upsellInCart,
         }))}
       />
 
