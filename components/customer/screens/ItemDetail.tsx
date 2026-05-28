@@ -2,10 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { IcoChev, IcoMinus, IcoPlus, IcoHeart, IcoCheck } from "@/components/shared/Icons";
+import { IcoChev, IcoMinus, IcoPlus, IcoHeart, IcoCheck, IcoClose } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
-import { useCart, type CartLine } from "@/components/customer/CartProvider";
+import {
+  useCart,
+  type CartLine,
+  type CartLineSource,
+} from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
@@ -56,6 +61,7 @@ export function ItemDetail({
   inModal = false,
   onClose,
   editLine,
+  addSource = "menu",
 }: {
   tenantSlug: string;
   item: ItemData;
@@ -63,6 +69,10 @@ export function ItemDetail({
   inModal?: boolean;
   onClose?: () => void;
   editLine?: CartLine;
+  /** Provenance tag attached to the cart line when this detail screen
+   *  results in a new add. Defaults to "menu" — override from CartUpsell,
+   *  AI flows, reorder rails, etc. */
+  addSource?: CartLineSource;
 }) {
   const router = useRouter();
   const { add, updateLine } = useCart();
@@ -115,6 +125,45 @@ export function ItemDetail({
   const [notes, setNotes] = useState(editLine?.notes ?? "");
   const [flashGroupId, setFlashGroupId] = useState<string | null>(null);
   const [addPhase, setAddPhase] = useState<"idle" | "loading" | "done">("idle");
+  const [lightbox, setLightbox] = useState<"closed" | "open" | "closing">("closed");
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const heroImage = item.images?.[0];
+  const canZoom = !!heroImage;
+
+  const closeTimerRef = useRef<number | null>(null);
+  function openLightbox() {
+    if (!canZoom) return;
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    setLightbox("open");
+  }
+  function closeLightbox() {
+    setLightbox((prev) => {
+      if (prev !== "open") return prev;
+      closeTimerRef.current = window.setTimeout(() => {
+        setLightbox("closed");
+        closeTimerRef.current = null;
+      }, 240);
+      return "closing";
+    });
+  }
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+    };
+  }, []);
+  useEffect(() => {
+    if (lightbox === "closed") return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") closeLightbox();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [lightbox]);
 
   // Sticky top bar appears when the hero scrolls out of view
   const heroSentinelRef = useRef<HTMLDivElement | null>(null);
@@ -254,9 +303,9 @@ export function ItemDetail({
       notes: notes || null,
     };
     if (isEditing && editLine) {
-      updateLine(editLine.lineId, payload);
+      updateLine(editLine.lineId, { ...payload, source: editLine.source });
     } else {
-      add(payload);
+      add({ ...payload, source: addSource });
     }
     setAddPhase("loading");
     window.setTimeout(() => setAddPhase("done"), 380);
@@ -318,24 +367,48 @@ export function ItemDetail({
 
       {/* Hero */}
       <div className="relative">
-        <div
-          className={cn(
-            "relative overflow-hidden bg-qf-line-soft",
-            inModal
-              ? "h-64 sm:h-80 lg:h-105"
-              : "h-72 lg:h-96 rounded-b-3xl lg:rounded-none",
-          )}
-        >
-          <MenuItemImage
-            src={item.images?.[0]}
-            alt={item.name}
-            businessType={businessType}
-            size={520}
-            rounded="none"
-            fill
-          />
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-black/30 to-transparent pointer-events-none" />
-        </div>
+        {canZoom ? (
+          <button
+            type="button"
+            onClick={openLightbox}
+            aria-label="הגדל תמונה"
+            className={cn(
+              "relative overflow-hidden bg-qf-line-soft block w-full text-start cursor-zoom-in",
+              inModal
+                ? "h-64 sm:h-80 lg:h-105"
+                : "h-72 lg:h-96 rounded-b-3xl lg:rounded-none",
+            )}
+          >
+            <MenuItemImage
+              src={heroImage}
+              alt={item.name}
+              businessType={businessType}
+              size={520}
+              rounded="none"
+              fill
+            />
+            <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-black/30 to-transparent pointer-events-none" />
+          </button>
+        ) : (
+          <div
+            className={cn(
+              "relative overflow-hidden bg-qf-line-soft",
+              inModal
+                ? "h-64 sm:h-80 lg:h-105"
+                : "h-72 lg:h-96 rounded-b-3xl lg:rounded-none",
+            )}
+          >
+            <MenuItemImage
+              src={heroImage}
+              alt={item.name}
+              businessType={businessType}
+              size={520}
+              rounded="none"
+              fill
+            />
+            <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-black/30 to-transparent pointer-events-none" />
+          </div>
+        )}
         {!inModal && (
           <Link
             href={`/s/${tenantSlug}`}
@@ -605,6 +678,44 @@ export function ItemDetail({
           </button>
         </div>
       </div>
+
+      {mounted && lightbox !== "closed" && heroImage && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={item.name}
+          onClick={closeLightbox}
+          className={cn(
+            "fixed inset-0 z-[100] grid place-items-center bg-white cursor-zoom-out",
+            lightbox === "open"
+              ? "animate-qf-lightbox-fade"
+              : "animate-qf-lightbox-fade-out",
+          )}
+        >
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); closeLightbox(); }}
+            aria-label="סגור תמונה"
+            className="absolute top-4 inset-s-4 z-10 w-10 h-10 rounded-full grid place-items-center bg-qf-line-soft text-qf-ink shadow-sm hover:bg-qf-line-dash transition"
+          >
+            <IcoClose s={16} c="currentColor" />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={heroImage}
+            alt={item.name}
+            onClick={closeLightbox}
+            className={cn(
+              "max-w-full max-h-full w-auto h-auto object-contain select-none cursor-zoom-out",
+              lightbox === "open"
+                ? "animate-qf-lightbox-img-in"
+                : "animate-qf-lightbox-img-out",
+            )}
+            draggable={false}
+          />
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }

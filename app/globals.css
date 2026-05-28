@@ -411,6 +411,39 @@ label[for][class*="shadow-[0_"] {
   animation: qf-modal-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Lightbox — image pops to its natural aspect ratio over the modal.
+   Distinct keyframes per direction so swapping the class actually
+   restarts the animation (browsers won't restart if only timing or
+   direction changes on the same animation-name). */
+@keyframes qf-lightbox-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes qf-lightbox-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes qf-lightbox-img-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes qf-lightbox-img-out {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.94); }
+}
+.animate-qf-lightbox-fade {
+  animation: qf-lightbox-fade-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-qf-lightbox-img-in {
+  animation: qf-lightbox-img-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-qf-lightbox-fade-out {
+  animation: qf-lightbox-fade-out 200ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+.animate-qf-lightbox-img-out {
+  animation: qf-lightbox-img-out 220ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
 /* Quick scale bump — used on the cart CTA's count badge so every
    add-to-cart visibly nudges the counter even when the toast is
    already on screen. */
@@ -614,6 +647,10 @@ label[for][class*="shadow-[0_"] {
   .animate-qf-preview-bar-in,
   .animate-qf-bubble-in,
   .animate-qf-bump,
+  .animate-qf-lightbox-fade,
+  .animate-qf-lightbox-img-in,
+  .animate-qf-lightbox-fade-out,
+  .animate-qf-lightbox-img-out,
   .animate-tagline-roll {
     animation: none;
   }
