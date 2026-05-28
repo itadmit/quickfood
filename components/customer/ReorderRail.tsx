@@ -275,7 +275,7 @@ function ReorderCard({
             <span className="tnum">{formatPrice(order.total)}</span>
           </div>
         </div>
-        <IcoChev c="#7c8a82" s={16} />
+        <IcoChev c="#7c8a82" s={16} className="-scale-x-100" />
       </Link>
       <button
         type="button"
