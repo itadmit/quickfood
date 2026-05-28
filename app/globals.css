@@ -239,10 +239,11 @@ body {
 }
 
 /* ─── Focus visible ──────────────────────────────────────────── */
-:focus-visible {
-  outline: 2px solid var(--qf-primary);
-  outline-offset: 2px;
-  border-radius: 6px;
+@media (hover: hover) and (pointer: fine) {
+  :focus-visible {
+    outline: 2px solid var(--qf-primary);
+    outline-offset: 2px;
+  }
 }
 
 /* ─── No tap highlight on mobile ─────────────────────────────── */
