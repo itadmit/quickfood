@@ -61,11 +61,31 @@ export function ZonesView({ branchId, initial }: { branchId: string; initial: Zo
           active: true,
         }),
       });
-      if (res.ok) {
-        setAdding(false);
-        setForm({ name: "", radiusKm: 3, citiesRaw: "", deliveryFee: 14, minEta: 25, maxEta: 35 });
-        router.refresh();
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        pushToast("err", body?.error?.message ?? "יצירת האזור נכשלה");
+        return;
       }
+      const data = (await res.json()) as { zone: { id: string; name: string } };
+      const newZone: Zone = {
+        id: data.zone.id,
+        name: form.name,
+        radiusKm: form.radiusKm,
+        cities: parseCities(form.citiesRaw),
+        deliveryFee: form.deliveryFee,
+        minEta: form.minEta,
+        maxEta: form.maxEta,
+        active: true,
+      };
+      setZones((p) =>
+        [...p, newZone].sort((a, b) => a.name.localeCompare(b.name, "he-IL")),
+      );
+      setAdding(false);
+      setForm({ name: "", radiusKm: 3, citiesRaw: "", deliveryFee: 14, minEta: 25, maxEta: 35 });
+      pushToast("ok", "האזור נוצר");
+      router.refresh();
+    } catch {
+      pushToast("err", "שגיאת רשת — בדוק חיבור ונסה שוב");
     } finally {
       setBusy(false);
     }
