@@ -43,6 +43,11 @@ export default async function ItemEditPage({
     id: s.id,
     name: s.name,
     type: s.type as "single" | "multi",
+    required: s.required,
+    minSelect: s.minSelect,
+    maxSelect: s.maxSelect,
+    includedFree: s.includedFree,
+    helpText: s.helpText,
     optionsCount: s.options.length,
     options: s.options.map((o) => ({ name: o.name, priceDelta: o.priceDelta })),
   }));

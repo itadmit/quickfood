@@ -56,7 +56,7 @@ const EMPTY: NewModifierSet = {
 
 export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }) {
   const router = useRouter();
-  const [sets] = useState(initialSets);
+  const [sets, setSets] = useState(initialSets);
   const [editing, setEditing] = useState<EditingSet | null>(null);
   const [busy, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -108,6 +108,25 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
       setError(result.error?.message ?? "שמירה נכשלה");
       return;
     }
+    const savedId: string = result.set?.id ?? editing.id;
+    const savedSet: ModifierSet = {
+      id: savedId,
+      name: editing.name,
+      type: editing.type,
+      required: editing.required,
+      minSelect: editing.minSelect,
+      maxSelect: editing.maxSelect,
+      includedFree: editing.includedFree,
+      helpText: editing.helpText,
+      position: editing.position,
+      attachedCount: editing.id ? editing.attachedCount : 0,
+      options: editing.options.map((o) => ({ ...o })),
+    };
+    setSets((prev) =>
+      editing.id
+        ? prev.map((s) => (s.id === editing.id ? savedSet : s))
+        : [...prev, savedSet],
+    );
     setEditing(null);
     pushToast("ok", editing.id ? "הקטלוג עודכן" : "הקטלוג נוצר");
     startTransition(() => router.refresh());
@@ -124,13 +143,15 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
       setConfirmDelete(null);
       return;
     }
+    const deletedId = confirmDelete.id;
+    setSets((prev) => prev.filter((s) => s.id !== deletedId));
     pushToast("ok", "הקטלוג נמחק");
     setConfirmDelete(null);
     startTransition(() => router.refresh());
   }
 
   return (
-    <div className="space-y-5 max-w-3xl">
+    <div className="space-y-5">
       <PageHeader
         chip="קטלוג"
         title={
@@ -321,14 +342,14 @@ function SetEditor({
           <button
             type="button"
             onClick={onCancel}
-            className="px-3 py-1.5 rounded-lg border border-qf-line-dash text-sm"
+            className="px-4 py-2 rounded-xl bg-white border-2 border-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5"
           >
             ביטול
           </button>
           <button
             type="button"
             onClick={onSave}
-            className="px-3.5 py-1.5 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium"
+            className="px-4 py-2 rounded-xl bg-black text-[#F8CB1E] border-2 border-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/90"
           >
             שמור קטלוג
           </button>

@@ -52,6 +52,11 @@ export interface ModifierSetSummary {
   id: string;
   name: string;
   type: "single" | "multi";
+  required: boolean;
+  minSelect: number;
+  maxSelect: number;
+  includedFree: number;
+  helpText: string | null;
   optionsCount: number;
   options?: { name: string; priceDelta: number }[];
 }
@@ -189,11 +194,11 @@ export function ItemEditor({
         {
           name: set.name,
           type: set.type,
-          required: false,
-          minSelect: 0,
-          maxSelect: 5,
-          includedFree: 0,
-          helpText: null,
+          required: set.required,
+          minSelect: set.minSelect,
+          maxSelect: set.maxSelect,
+          includedFree: set.includedFree,
+          helpText: set.helpText,
           allowHalf: false,
           templateSetId: set.id,
           options: [],

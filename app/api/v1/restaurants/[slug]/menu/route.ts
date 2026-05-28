@@ -8,7 +8,12 @@ export const runtime = "nodejs";
 type ItemWithExtras = Prisma.MenuItemGetPayload<{
   include: {
     sizes: true;
-    optionGroups: { include: { options: true } };
+    optionGroups: {
+      include: {
+        options: true;
+        templateSet: { include: { options: true } };
+      };
+    };
   };
 }>;
 
@@ -29,7 +34,10 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ slug: st
         sizes: { orderBy: { position: "asc" } },
         optionGroups: {
           orderBy: { position: "asc" },
-          include: { options: { orderBy: { position: "asc" } } },
+          include: {
+            options: { orderBy: { position: "asc" } },
+            templateSet: { include: { options: { orderBy: { position: "asc" } } } },
+          },
         },
       },
     }),
@@ -67,19 +75,25 @@ function serializeItem(i: ItemWithExtras) {
       price_delta: s.priceDelta,
       is_default: s.isDefault,
     })),
-    option_groups: i.optionGroups.map((g) => ({
-      id: g.id,
-      name: g.name,
-      type: g.type,
-      required: g.required,
-      min_select: g.minSelect,
-      max_select: g.maxSelect,
-      options: g.options.map((o) => ({
-        id: o.id,
-        name: o.name,
-        price_delta: o.priceDelta,
-        is_default: o.isDefault,
-      })),
-    })),
+    option_groups: i.optionGroups.map((g) => {
+      const fromSet = g.templateSet;
+      const opts = fromSet ? fromSet.options : g.options;
+      return {
+        id: g.id,
+        name: fromSet?.name ?? g.name,
+        type: fromSet?.type ?? g.type,
+        required: fromSet?.required ?? g.required,
+        min_select: fromSet?.minSelect ?? g.minSelect,
+        max_select: fromSet?.maxSelect ?? g.maxSelect,
+        options: opts
+          .filter((o) => o.available)
+          .map((o) => ({
+            id: o.id,
+            name: o.name,
+            price_delta: o.priceDelta,
+            is_default: o.isDefault,
+          })),
+      };
+    }),
   };
 }
