@@ -46,29 +46,31 @@ export function EmailVerificationBanner({
   return (
     <>
       <div className="qf-billing-banner bg-qf-yolk-soft border-b border-qf-yolk/40">
-        <div className="px-6 py-2.5 flex items-center gap-3 text-sm text-qf-ink">
-          <div className="qf-billing-icon w-7 h-7 rounded-full bg-qf-yolk/30 grid place-items-center shrink-0">
-            <Mail size={14} color="var(--qf-deep)" strokeWidth={2.2} />
+        <div className="px-4 sm:px-6 py-2.5 flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 text-sm text-qf-ink">
+          <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+            <div className="qf-billing-icon w-7 h-7 rounded-full bg-qf-yolk/30 grid place-items-center shrink-0">
+              <Mail size={14} color="var(--qf-deep)" strokeWidth={2.2} />
+            </div>
+            <div className="flex-1 min-w-0 leading-snug">
+              <span className="font-medium">צריך לאמת את כתובת המייל.</span>{" "}
+              <span className="text-qf-ink2">
+                שלחנו אליך מייל ל-<span dir="ltr" className="font-mono break-all">{email}</span> עם כפתור הפעלה. לא הגיע? אפשר לשלוח שוב או להחליף כתובת.
+              </span>
+              {phase === "error" && errorMsg && (
+                <span className="block text-xs text-qf-tomato mt-0.5">{errorMsg}</span>
+              )}
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <span className="font-medium">צריך לאמת את כתובת המייל.</span>{" "}
-            <span className="text-qf-ink2">
-              שלחנו אליך מייל ל-<span dir="ltr" className="font-mono">{email}</span> עם כפתור הפעלה. לא הגיע? אפשר לשלוח שוב או להחליף כתובת.
-            </span>
-            {phase === "error" && errorMsg && (
-              <span className="block text-xs text-qf-tomato mt-0.5">{errorMsg}</span>
-            )}
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0 self-stretch sm:self-auto ps-10 sm:ps-0">
             <button
               type="button"
               onClick={() => setShowChange(true)}
-              className="qf-billing-cta-secondary inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-qf-ink/20 hover:bg-white text-qf-ink text-xs font-medium"
+              className="qf-billing-cta-secondary inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg border border-qf-ink/20 hover:bg-white text-qf-ink text-xs font-medium flex-1 sm:flex-none whitespace-nowrap"
             >
               שנה כתובת מייל
             </button>
             {phase === "sent" ? (
-              <span className="qf-billing-cta inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-qf-green-soft text-qf-green-deep text-xs font-medium">
+              <span className="qf-billing-cta inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-qf-green-soft text-qf-green-deep text-xs font-medium flex-1 sm:flex-none whitespace-nowrap">
                 נשלח! בדוק את תיבת המייל
               </span>
             ) : (
@@ -76,7 +78,7 @@ export function EmailVerificationBanner({
                 type="button"
                 onClick={resend}
                 disabled={phase === "sending"}
-                className="qf-billing-cta inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xs font-medium disabled:opacity-60"
+                className="qf-billing-cta inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xs font-medium disabled:opacity-60 flex-1 sm:flex-none whitespace-nowrap"
               >
                 {phase === "sending" ? "שולח..." : "שלח לי שוב"}
               </button>
