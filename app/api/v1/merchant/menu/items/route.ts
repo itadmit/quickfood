@@ -2,6 +2,7 @@ import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { MenuItemInputSchema } from "@/lib/validate";
+import { resolveGroupOptions } from "@/lib/menu-item-options";
 import type { Prisma } from "@prisma/client";
 
 export const runtime = "nodejs";
@@ -107,6 +108,8 @@ export const POST = handler(async (req: Request) => {
     return apiError("validation_error", "קטגוריה לא תקינה", 422, "category_id");
   }
 
+  const resolveOptions = await resolveGroupOptions(body.option_groups);
+
   const item = await prisma.menuItem.create({
     data: {
       tenantId: session.tenantId,
@@ -147,15 +150,8 @@ export const POST = handler(async (req: Request) => {
           templateSetId: g.template_set_id ?? null,
           position: gi,
           options: {
-            // Inline options are ignored at runtime when templateSetId is set,
-            // but we still persist them so that detaching the set later keeps
-            // the merchant's previous inline rows around.
-            create: g.options.map((o, oi) => ({
-              name: o.name,
-              priceDelta: o.price_delta,
-              isDefault: o.is_default,
-              available: o.available,
-              imageUrl: o.image_url ?? null,
+            create: resolveOptions(g).map((o, oi) => ({
+              ...o,
               position: oi,
             })),
           },

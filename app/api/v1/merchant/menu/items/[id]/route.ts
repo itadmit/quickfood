@@ -3,6 +3,7 @@ import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { MenuItemInputSchema } from "@/lib/validate";
+import { resolveGroupOptions } from "@/lib/menu-item-options";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -128,6 +129,8 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
     }),
   ]);
 
+  const resolveOptions = await resolveGroupOptions(body.option_groups);
+
   // Re-create option groups with their options
   for (let gi = 0; gi < body.option_groups.length; gi++) {
     const g = body.option_groups[gi];
@@ -145,12 +148,8 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
         templateSetId: g.template_set_id ?? null,
         position: gi,
         options: {
-          create: g.options.map((o, oi) => ({
-            name: o.name,
-            priceDelta: o.price_delta,
-            isDefault: o.is_default,
-            available: o.available,
-            imageUrl: o.image_url ?? null,
+          create: resolveOptions(g).map((o, oi) => ({
+            ...o,
             position: oi,
           })),
         },
