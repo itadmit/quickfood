@@ -52,12 +52,35 @@ export default async function CheckoutPage({
   const growEnabled = !!growConfig?.isActive;
   const growTestMode = growConfig?.testMode ?? true;
 
+  const branchId = tenant.branches[0]?.id;
+  const deliveryCities: string[] = [];
+  if (branchId) {
+    const zones = await prisma.deliveryZone.findMany({
+      where: { branchId, active: true },
+      select: { name: true, cities: true },
+    });
+    const seen = new Set<string>();
+    for (const z of zones) {
+      const list = z.cities.length > 0 ? z.cities : [z.name];
+      for (const c of list) {
+        const trimmed = c.trim();
+        if (!trimmed) continue;
+        const key = trimmed.toLocaleLowerCase("he-IL");
+        if (seen.has(key)) continue;
+        seen.add(key);
+        deliveryCities.push(trimmed);
+      }
+    }
+    deliveryCities.sort((a, b) => a.localeCompare(b, "he-IL"));
+  }
+
   return (
     <CustomerCheckout
       tenantSlug={tenantSlug}
       requireEmail={requireEmail}
       growEnabled={growEnabled}
       growTestMode={growTestMode}
+      deliveryCities={deliveryCities}
     />
   );
 }

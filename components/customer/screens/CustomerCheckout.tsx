@@ -10,6 +10,8 @@ import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { recordRecentOrder } from "@/lib/recent-orders-storage";
 import { takeCheckoutPrefill } from "@/lib/checkout-prefill";
+import { readDeliveryChoice } from "@/lib/delivery-city-storage";
+import { CitySelect } from "@/components/customer/CitySelect";
 import { GrowPaymentSdk, renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
 
 type CustomerPaymentMethod = "cash" | "card" | "bit" | "apple_pay" | "google_pay";
@@ -27,16 +29,19 @@ export function CustomerCheckout({
   requireEmail = false,
   growEnabled = false,
   growTestMode = true,
+  deliveryCities = [],
 }: {
   tenantSlug: string;
   requireEmail?: boolean;
   growEnabled?: boolean;
   growTestMode?: boolean;
+  deliveryCities?: string[];
 }) {
   const router = useRouter();
   const { lines, method, subtotal, branch, tenant, clear, setMethod, hydrated } = useCart();
 
   const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
   const [floor, setFloor] = useState("");
   const [apartment, setApartment] = useState("");
   const [phone, setPhone] = useState("");
@@ -132,6 +137,15 @@ export function CustomerCheckout({
   // on mount. takeCheckoutPrefill() clears the entry so a refresh doesn't
   // replay it. Each field is only applied if the customer hasn't already
   // typed something — we never clobber active edits.
+  useEffect(() => {
+    const choice = readDeliveryChoice(tenantSlug);
+    if (choice?.kind !== "delivery") return;
+    const match = deliveryCities.find(
+      (c) => c.toLocaleLowerCase("he-IL") === choice.city.toLocaleLowerCase("he-IL"),
+    );
+    if (match) setCity((cur) => cur || match);
+  }, [tenantSlug, deliveryCities]);
+
   useEffect(() => {
     const prefill = takeCheckoutPrefill(tenantSlug);
     if (!prefill) return;
@@ -323,9 +337,9 @@ export function CustomerCheckout({
           coupon_code: couponApplied?.code ?? undefined,
           customer_notes: customerNotes || undefined,
           delivery_notes:
-            method === "delivery" && (address || floor || apartment)
+            method === "delivery" && (address || city || floor || apartment)
               ? [
-                  address,
+                  [address, city].filter(Boolean).join(", "),
                   apartment ? `דירה ${apartment}` : "",
                   floor ? `קומה ${floor}` : "",
                   deliveryNotes,
@@ -428,7 +442,7 @@ export function CustomerCheckout({
     !!paymentMethod &&
     !!firstName &&
     !!phone &&
-    (method !== "delivery" || !!address) &&
+    (method !== "delivery" || (!!address && !!city)) &&
     (!requireEmail || emailLooksValid);
 
   return (
@@ -503,12 +517,21 @@ export function CustomerCheckout({
             <CardTitle>כתובת משלוח</CardTitle>
             <div className="grid grid-cols-2 gap-3 mt-3">
               <div className="col-span-2">
-                <Field label="כתובת" required>
+                <Field label="רחוב ומספר" required>
                   <Input
                     value={address}
                     onChange={setAddress}
-                    placeholder="רחוב, מספר, עיר"
+                    placeholder="הרצל 12"
                     autoComplete="street-address"
+                  />
+                </Field>
+              </div>
+              <div className="col-span-2">
+                <Field label="עיר" required>
+                  <CitySelect
+                    cities={deliveryCities}
+                    value={city}
+                    onChange={setCity}
                   />
                 </Field>
               </div>
@@ -538,92 +561,7 @@ export function CustomerCheckout({
           </Card>
         )}
 
-        {/* 3. Order summary — inline on mobile (between Delivery and Payment).
-            On desktop this is rendered again in the right sidebar so it stays
-            visible while scrolling through the form. */}
-        <div className="lg:hidden">
-          <Card>
-          <div className="flex items-baseline justify-between">
-            <CardTitle>סיכום הזמנה</CardTitle>
-            <Link
-              href={`/s/${tenantSlug}/cart`}
-              className="text-xs text-(--qf-deep) font-medium hover:underline"
-            >
-              עריכת סל
-            </Link>
-          </div>
-          <ul className="mt-3 divide-y divide-qf-line-soft">
-            {lines.map((l) => {
-              const opts = l.options.reduce((a, o) => a + o.priceDelta, 0);
-              const unit = l.basePrice + l.sizeDelta + opts;
-              const lineTotal = unit * l.quantity;
-              return (
-                <li key={l.lineId} className="py-2.5 flex gap-3 items-start">
-                  <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0">
-                    <MenuItemImage
-                      src={l.imageUrl ?? undefined}
-                      alt={l.name}
-                      businessType={businessType}
-                      size={56}
-                      rounded="xl"
-                      fill
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="font-medium text-sm leading-tight">{l.name}</div>
-                      <div className="text-sm tnum font-medium shrink-0">
-                        {formatPrice(lineTotal)}
-                      </div>
-                    </div>
-                    {l.sizeName && (
-                      <div className="text-xs text-qf-mute mt-0.5">{l.sizeName}</div>
-                    )}
-                    {l.options.map((o, i) => {
-                      const label = o.groupName ? `${o.groupName}: ${o.name}` : o.name;
-                      return (
-                        <div key={i} className="text-xs text-qf-mute mt-0.5">
-                          {label}
-                          {o.priceDelta > 0 && <span> (+{formatPrice(o.priceDelta)})</span>}
-                        </div>
-                      );
-                    })}
-                    <div className="text-xs text-qf-ink2 mt-1 tnum">× {l.quantity}</div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-
-          <div className="mt-3 pt-3 border-t border-qf-line-soft space-y-1.5 text-sm">
-            <SumRow label={`${itemCount} פריטים`} value={formatPrice(subtotal)} />
-            {method === "delivery" && (
-              <SumRow label="דמי משלוח" value={formatPrice(deliveryFee)} />
-            )}
-            {serviceFee > 0 && <SumRow label="דמי שירות" value={formatPrice(serviceFee)} />}
-            {cutleryFee > 0 && (
-              <SumRow
-                label={`${tenant.cutleryLabel || "סכו״ם חד״פ"} × ${cutleryCount}`}
-                value={formatPrice(cutleryFee)}
-              />
-            )}
-            {tip > 0 && <SumRow label="טיפ לשליח" value={formatPrice(tip)} />}
-            {couponApplied && (
-              <SumRow
-                label={`קופון ${couponApplied.code}`}
-                value={`−${formatPrice(couponApplied.discount)}`}
-                tone="discount"
-              />
-            )}
-            <div className="pt-2 border-t border-qf-line-soft flex items-center justify-between">
-              <div className="font-semibold">סה״כ לתשלום</div>
-              <div className="font-bold tnum text-lg">{formatPrice(total)}</div>
-            </div>
-          </div>
-          </Card>
-        </div>
-
-        {/* 4. Payment — collapsed to two top-level choices. All online methods
+        {/* Payment — collapsed to two top-level choices. All online methods
               (card / Bit / Apple Pay / Google Pay) are picked inside Grow's
               wallet when it opens, so showing them all here is noise. */}
         <Card>
@@ -861,6 +799,91 @@ export function CustomerCheckout({
             className="w-full mt-3 bg-qf-bg border border-qf-line rounded-2xl px-4 py-3 text-base outline-none focus:border-(--qf-primary) focus:bg-white resize-none transition"
           />
         </Card>
+
+        {/* Order summary — rendered LAST on mobile (just before the error +
+            footer CTA) so the customer scrolls past every input first.
+            Desktop has the same content as a sticky sidebar (below). */}
+        <div className="lg:hidden">
+          <Card>
+          <div className="flex items-baseline justify-between">
+            <CardTitle>סיכום הזמנה</CardTitle>
+            <Link
+              href={`/s/${tenantSlug}/cart`}
+              className="text-xs text-(--qf-deep) font-medium hover:underline"
+            >
+              עריכת סל
+            </Link>
+          </div>
+          <ul className="mt-3 divide-y divide-qf-line-soft">
+            {lines.map((l) => {
+              const opts = l.options.reduce((a, o) => a + o.priceDelta, 0);
+              const unit = l.basePrice + l.sizeDelta + opts;
+              const lineTotal = unit * l.quantity;
+              return (
+                <li key={l.lineId} className="py-2.5 flex gap-3 items-start">
+                  <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0">
+                    <MenuItemImage
+                      src={l.imageUrl ?? undefined}
+                      alt={l.name}
+                      businessType={businessType}
+                      size={56}
+                      rounded="xl"
+                      fill
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="font-medium text-sm leading-tight">{l.name}</div>
+                      <div className="text-sm tnum font-medium shrink-0">
+                        {formatPrice(lineTotal)}
+                      </div>
+                    </div>
+                    {l.sizeName && (
+                      <div className="text-xs text-qf-mute mt-0.5">{l.sizeName}</div>
+                    )}
+                    {l.options.map((o, i) => {
+                      const label = o.groupName ? `${o.groupName}: ${o.name}` : o.name;
+                      return (
+                        <div key={i} className="text-xs text-qf-mute mt-0.5">
+                          {label}
+                          {o.priceDelta > 0 && <span> (+{formatPrice(o.priceDelta)})</span>}
+                        </div>
+                      );
+                    })}
+                    <div className="text-xs text-qf-ink2 mt-1 tnum">× {l.quantity}</div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="mt-3 pt-3 border-t border-qf-line-soft space-y-1.5 text-sm">
+            <SumRow label={`${itemCount} פריטים`} value={formatPrice(subtotal)} />
+            {method === "delivery" && (
+              <SumRow label="דמי משלוח" value={formatPrice(deliveryFee)} />
+            )}
+            {serviceFee > 0 && <SumRow label="דמי שירות" value={formatPrice(serviceFee)} />}
+            {cutleryFee > 0 && (
+              <SumRow
+                label={`${tenant.cutleryLabel || "סכו״ם חד״פ"} × ${cutleryCount}`}
+                value={formatPrice(cutleryFee)}
+              />
+            )}
+            {tip > 0 && <SumRow label="טיפ לשליח" value={formatPrice(tip)} />}
+            {couponApplied && (
+              <SumRow
+                label={`קופון ${couponApplied.code}`}
+                value={`−${formatPrice(couponApplied.discount)}`}
+                tone="discount"
+              />
+            )}
+            <div className="pt-2 border-t border-qf-line-soft flex items-center justify-between">
+              <div className="font-semibold">סה״כ לתשלום</div>
+              <div className="font-bold tnum text-lg">{formatPrice(total)}</div>
+            </div>
+          </div>
+          </Card>
+        </div>
 
         {error && (
           <div className="bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm rounded-xl px-3 py-2">
