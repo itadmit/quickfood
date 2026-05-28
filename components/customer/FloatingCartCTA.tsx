@@ -42,7 +42,13 @@ export function FloatingCartCTA() {
 
   return (
     <div className="fixed inset-x-0 bottom-20 z-40 px-4 pointer-events-none lg:bottom-6">
-      <div className="pointer-events-auto max-w-md mx-auto flex items-stretch rounded-2xl shadow-xl shadow-black/15 overflow-hidden bg-(--qf-primary) animate-qf-toast-in">
+      <div
+        className="pointer-events-auto max-w-md mx-auto flex items-stretch rounded-2xl shadow-xl shadow-black/15 overflow-hidden animate-qf-toast-in"
+        style={{
+          backgroundColor:
+            "color-mix(in srgb, var(--qf-primary) 98%, transparent)",
+        }}
+      >
         <Link
           href={`/s/${tenant.slug}/cart`}
           className="flex-1 flex items-center justify-between gap-3 text-white px-4 py-3.5 hover:bg-(--qf-deep) active:translate-y-px transition"
