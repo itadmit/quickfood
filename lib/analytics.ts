@@ -158,3 +158,360 @@ export async function topItems(tenantId: string, range: Range, limit = 5) {
     };
   });
 }
+
+/* ─── Channel breakdown (AI / upsell / direct) ───────────────────── */
+
+export interface ChannelBucket {
+  source: "direct" | "ai_advisor" | "reorder";
+  orders: number;
+  revenue: number;
+  avgOrder: number;
+}
+
+export interface UpsellStat {
+  lineCount: number;
+  revenue: number;
+  /** Distinct orders that contained at least one upsell line. */
+  ordersTouched: number;
+}
+
+export async function channelBreakdown(tenantId: string, range: Range) {
+  const { from, to } = rangeBounds(range);
+  const orders = await prisma.order.findMany({
+    where: {
+      tenantId,
+      createdAt: { gte: from, lt: to },
+      status: { in: [...TERMINAL_STATUSES] },
+    },
+    select: { source: true, total: true },
+  });
+
+  const buckets = new Map<string, { orders: number; revenue: number }>();
+  for (const o of orders) {
+    const key = o.source;
+    const b = buckets.get(key) ?? { orders: 0, revenue: 0 };
+    b.orders += 1;
+    b.revenue += o.total;
+    buckets.set(key, b);
+  }
+
+  const out: ChannelBucket[] = (
+    ["direct", "ai_advisor", "reorder"] as const
+  ).map((s) => {
+    const b = buckets.get(s) ?? { orders: 0, revenue: 0 };
+    return {
+      source: s,
+      orders: b.orders,
+      revenue: b.revenue,
+      avgOrder: b.orders > 0 ? Math.round(b.revenue / b.orders) : 0,
+    };
+  });
+
+  // Upsell stats live at the line level — they're a per-item phenomenon
+  // and don't show up in Order.source. Group the upsell lines separately.
+  const upsellLines = await prisma.orderItem.findMany({
+    where: {
+      source: "upsell",
+      order: {
+        tenantId,
+        createdAt: { gte: from, lt: to },
+        status: { in: [...TERMINAL_STATUSES] },
+      },
+    },
+    select: { totalPrice: true, orderId: true },
+  });
+  const upsellOrderIds = new Set(upsellLines.map((l) => l.orderId));
+  const upsell: UpsellStat = {
+    lineCount: upsellLines.length,
+    revenue: upsellLines.reduce((a, l) => a + l.totalPrice, 0),
+    ordersTouched: upsellOrderIds.size,
+  };
+
+  return { channels: out, upsell };
+}
+
+/* ─── Customer segments (new vs returning) ───────────────────────── */
+
+export async function customerSegments(tenantId: string, range: Range) {
+  const { from, to } = rangeBounds(range);
+  const orders = await prisma.order.findMany({
+    where: {
+      tenantId,
+      createdAt: { gte: from, lt: to },
+      status: { in: [...TERMINAL_STATUSES] },
+    },
+    select: { customerId: true, customerPhoneSnap: true, total: true, createdAt: true },
+  });
+
+  // Group by customer identity (logged-in id beats guest phone snap).
+  type Key = string;
+  const identityKey = (o: { customerId: string | null; customerPhoneSnap: string | null }): Key =>
+    o.customerId ?? (o.customerPhoneSnap ? `phone:${o.customerPhoneSnap}` : `anon:${Math.random()}`);
+
+  const byCustomer = new Map<Key, { orders: number; revenue: number }>();
+  for (const o of orders) {
+    const k = identityKey(o);
+    const b = byCustomer.get(k) ?? { orders: 0, revenue: 0 };
+    b.orders += 1;
+    b.revenue += o.total;
+    byCustomer.set(k, b);
+  }
+
+  // Returning = had a prior order before `from`.
+  const customerIds = Array.from(
+    new Set(orders.filter((o) => o.customerId).map((o) => o.customerId!)),
+  );
+  const phones = Array.from(
+    new Set(
+      orders
+        .filter((o) => !o.customerId && o.customerPhoneSnap)
+        .map((o) => o.customerPhoneSnap!),
+    ),
+  );
+  const [priorById, priorByPhone] = await Promise.all([
+    customerIds.length > 0
+      ? prisma.order.findMany({
+          where: {
+            tenantId,
+            customerId: { in: customerIds },
+            createdAt: { lt: from },
+            status: { in: [...TERMINAL_STATUSES] },
+          },
+          select: { customerId: true },
+          distinct: ["customerId"],
+        })
+      : Promise.resolve([] as { customerId: string | null }[]),
+    phones.length > 0
+      ? prisma.order.findMany({
+          where: {
+            tenantId,
+            customerPhoneSnap: { in: phones },
+            createdAt: { lt: from },
+            status: { in: [...TERMINAL_STATUSES] },
+          },
+          select: { customerPhoneSnap: true },
+          distinct: ["customerPhoneSnap"],
+        })
+      : Promise.resolve([] as { customerPhoneSnap: string | null }[]),
+  ]);
+  const returningCustomerIds = new Set(priorById.map((r) => r.customerId).filter(Boolean));
+  const returningPhones = new Set(priorByPhone.map((r) => r.customerPhoneSnap).filter(Boolean));
+
+  let newC = 0, returningC = 0, newRev = 0, returningRev = 0, newOrders = 0, returningOrders = 0;
+  for (const o of orders) {
+    const isReturning = o.customerId
+      ? returningCustomerIds.has(o.customerId)
+      : o.customerPhoneSnap
+        ? returningPhones.has(o.customerPhoneSnap)
+        : false;
+    if (isReturning) {
+      returningOrders += 1;
+      returningRev += o.total;
+    } else {
+      newOrders += 1;
+      newRev += o.total;
+    }
+  }
+  for (const [k] of byCustomer) {
+    if (k.startsWith("phone:")) {
+      if (returningPhones.has(k.slice(6))) returningC += 1;
+      else newC += 1;
+    } else if (k.startsWith("anon:")) {
+      newC += 1; // can't link guest with no phone — count as new
+    } else {
+      if (returningCustomerIds.has(k)) returningC += 1;
+      else newC += 1;
+    }
+  }
+
+  return {
+    new: { customers: newC, orders: newOrders, revenue: newRev },
+    returning: { customers: returningC, orders: returningOrders, revenue: returningRev },
+    total: { customers: newC + returningC, orders: orders.length },
+  };
+}
+
+/* ─── Operational health (accept rate / prep time / cancel rate) ──── */
+
+export async function operationalHealth(tenantId: string, range: Range) {
+  const { from, to } = rangeBounds(range);
+  const orders = await prisma.order.findMany({
+    where: {
+      tenantId,
+      createdAt: { gte: from, lt: to },
+    },
+    select: {
+      status: true,
+      createdAt: true,
+      confirmedAt: true,
+      readyAt: true,
+      deliveredAt: true,
+      cancelledAt: true,
+    },
+  });
+
+  const total = orders.length;
+  const cancelled = orders.filter((o) => o.status === "cancelled" || o.cancelledAt).length;
+  const accepted = orders.filter((o) => o.confirmedAt).length;
+
+  const prepDurations = orders
+    .filter((o) => o.readyAt && o.confirmedAt)
+    .map((o) => (o.readyAt!.getTime() - o.confirmedAt!.getTime()) / 60_000);
+  const avgPrepMinutes =
+    prepDurations.length > 0
+      ? Math.round(prepDurations.reduce((a, b) => a + b, 0) / prepDurations.length)
+      : 0;
+
+  const acceptDurations = orders
+    .filter((o) => o.confirmedAt)
+    .map((o) => (o.confirmedAt!.getTime() - o.createdAt.getTime()) / 60_000);
+  const avgAcceptMinutes =
+    acceptDurations.length > 0
+      ? Math.round(acceptDurations.reduce((a, b) => a + b, 0) / acceptDurations.length)
+      : 0;
+
+  return {
+    total,
+    acceptRate: total > 0 ? Math.round((accepted / total) * 100) : 0,
+    cancelRate: total > 0 ? Math.round((cancelled / total) * 100) : 0,
+    avgPrepMinutes,
+    avgAcceptMinutes,
+  };
+}
+
+/* ─── Insights (narrative cards, heuristics on local data only) ───── */
+
+export interface Insight {
+  /** "strength" = positive win to celebrate. "watch" = something to act on. */
+  tone: "strength" | "watch";
+  title: string;
+  /** Detail line beneath the title; ≤ ~80 chars Hebrew. */
+  body: string;
+  /** Optional concrete number that anchors the insight ("+18%", "32%"). */
+  metric?: string;
+}
+
+export async function insights(tenantId: string, range: Range): Promise<Insight[]> {
+  const { from, to } = rangeBounds(range);
+  const [orders, channelData] = await Promise.all([
+    prisma.order.findMany({
+      where: {
+        tenantId,
+        createdAt: { gte: from, lt: to },
+        status: { in: [...TERMINAL_STATUSES] },
+      },
+      select: {
+        total: true,
+        createdAt: true,
+        source: true,
+        customerId: true,
+        customerPhoneSnap: true,
+      },
+    }),
+    channelBreakdown(tenantId, range),
+  ]);
+
+  const out: Insight[] = [];
+
+  // 1. Peak hour
+  if (orders.length >= 5) {
+    const buckets = new Array(24).fill(0);
+    for (const o of orders) buckets[o.createdAt.getHours()]++;
+    const peakHour = buckets.indexOf(Math.max(...buckets));
+    const peakShare = Math.round((buckets[peakHour] / orders.length) * 100);
+    if (peakShare >= 15) {
+      out.push({
+        tone: "strength",
+        title: `השעה הכי חמה: ${pad(peakHour)}:00`,
+        body: `מרכזת ${peakShare}% מההזמנות בטווח. כדאי להבטיח כוח אדם בשעה זו.`,
+        metric: `${peakShare}%`,
+      });
+    }
+  }
+
+  // 2. AI advisor uplift
+  const aiBucket = channelData.channels.find((c) => c.source === "ai_advisor");
+  const directBucket = channelData.channels.find((c) => c.source === "direct");
+  if (aiBucket && aiBucket.orders >= 3 && directBucket && directBucket.orders >= 3) {
+    const uplift = Math.round(((aiBucket.avgOrder - directBucket.avgOrder) / directBucket.avgOrder) * 100);
+    if (uplift > 0) {
+      out.push({
+        tone: "strength",
+        title: "היועץ AI מעלה את הסל",
+        body: `הזמנות שהתחילו עם היועץ ה-AI מציגות AOV גבוה ב-${uplift}% מהזמנות רגילות.`,
+        metric: `+${uplift}%`,
+      });
+    } else if (uplift < -10) {
+      out.push({
+        tone: "watch",
+        title: "AOV נמוך יותר ב-AI",
+        body: `הזמנות AI מציגות AOV נמוך ב-${Math.abs(uplift)}% — כדאי לבדוק את ההצעות.`,
+        metric: `${uplift}%`,
+      });
+    }
+  }
+
+  // 3. Upsell contribution
+  if (channelData.upsell.ordersTouched > 0) {
+    const upsellShare = Math.round((channelData.upsell.ordersTouched / orders.length) * 100);
+    out.push({
+      tone: "strength",
+      title: "Upsell בעגלה עובד",
+      body: `${upsellShare}% מההזמנות כוללות פריט שנוסף מקרוסלת ה-Upsell, סה"כ ${formatShekels(channelData.upsell.revenue)}.`,
+      metric: `${upsellShare}%`,
+    });
+  }
+
+  // 4. Returning customers share
+  const segs = await customerSegments(tenantId, range);
+  if (segs.total.orders >= 5 && segs.returning.orders > 0) {
+    const returningShare = Math.round((segs.returning.orders / segs.total.orders) * 100);
+    if (returningShare >= 30) {
+      out.push({
+        tone: "strength",
+        title: "לקוחות חוזרים",
+        body: `${returningShare}% מההזמנות בטווח הזה הגיעו מלקוחות שכבר הזמינו אצלך בעבר.`,
+        metric: `${returningShare}%`,
+      });
+    } else if (returningShare < 15 && segs.total.orders >= 20) {
+      out.push({
+        tone: "watch",
+        title: "אחוז חזרה נמוך",
+        body: `רק ${returningShare}% מההזמנות הן מלקוחות חוזרים. בדוק קמפיין רימרקטינג.`,
+        metric: `${returningShare}%`,
+      });
+    }
+  }
+
+  // 5. Operational excellence
+  const ops = await operationalHealth(tenantId, range);
+  if (ops.total >= 5 && ops.cancelRate <= 5 && ops.acceptRate >= 90) {
+    out.push({
+      tone: "strength",
+      title: "ביצוע תפעולי מצוין",
+      body: `${ops.acceptRate}% הזמנות מאושרות, ${ops.cancelRate}% ביטולים בלבד.`,
+      metric: `${ops.acceptRate}%`,
+    });
+  } else if (ops.cancelRate >= 15 && ops.total >= 10) {
+    out.push({
+      tone: "watch",
+      title: "אחוז ביטולים גבוה",
+      body: `${ops.cancelRate}% ביטולים בטווח הזה — בדוק זמינות פריטים וזמני שיא.`,
+      metric: `${ops.cancelRate}%`,
+    });
+  }
+
+  return out.slice(0, 6);
+}
+
+function pad(n: number) {
+  return n < 10 ? `0${n}` : String(n);
+}
+
+function formatShekels(agorot: number): string {
+  // Money fields ARE shekels in this project per the schema (not agorot).
+  // Verified in lib/orders-create.ts where deliveryFee/total are stored
+  // as plain shekel integers. Keep the variable named `agorot` only as
+  // a defensive reminder if the project ever switches.
+  return `${agorot}₪`;
+}

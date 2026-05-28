@@ -9,6 +9,7 @@ import {
   IcoBell,
   IcoCreditCard,
   IcoSparkle,
+  IcoChart,
 } from "@/components/shared/Icons";
 
 // Shared nav config for the V2 dashboard skin — same list rendered by
@@ -31,6 +32,7 @@ export const NAV: NavSection[] = [
       { href: "/dashboard", label: "דשבורד", Icon: IcoHome, exact: true },
       { href: "/dashboard/orders", label: "הזמנות", Icon: IcoOrders },
       { href: "/dashboard/menu", label: "תפריט", Icon: IcoMenu },
+      { href: "/dashboard/analytics", label: "אנליטיקס", Icon: IcoChart, badge: "חדש!" },
       { href: "/dashboard/couriers", label: "שליחים", Icon: IcoBike },
     ],
   },

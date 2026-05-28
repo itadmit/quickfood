@@ -128,7 +128,7 @@ export function BillingView({
                   : "השלמת תשלום ופתיחת מנוי (₪299 + מע״מ)"}
             </button>
             <p className="text-xs text-qf-mute mt-2">
-              ייפתח דף תשלום מאובטח של QuickBilling/PayPlus. בסיום החיוב הראשון של ₪299 + מע״מ ישמר טוקן והמנוי מתחיל אוטומטית.
+              ייפתח דף תשלום מאובטח של QuickBilling. בסיום החיוב הראשון של ₪299 + מע״מ ישמר טוקן והמנוי מתחיל אוטומטית.
             </p>
             {error && (
               <div className="mt-2 text-sm text-qf-tomato">{error}</div>
