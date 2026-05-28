@@ -141,30 +141,79 @@ export const ItemOptionInputSchema = z.object({
   image_url: z.string().url().nullable().optional(),
 });
 
-export const ItemOptionGroupInputSchema = z.object({
-  name: z.string().min(1).max(60),
-  type: z.enum(["single", "multi"]).default("single"),
-  required: z.boolean().default(false),
-  min_select: z.number().int().min(0).default(0),
-  max_select: z.number().int().min(1).default(1),
-  included_free: z.number().int().min(0).default(0),
-  help_text: z.string().max(200).nullable().optional(),
-  allow_half: z.boolean().default(false),
-  template_set_id: UuidSchema.nullable().optional(),
-  options: z.array(ItemOptionInputSchema).default([]),
-});
+const modifierConstraints = <T extends {
+  type: "single" | "multi";
+  required: boolean;
+  min_select: number;
+  max_select: number;
+  included_free: number;
+  options: { name: string }[];
+}>(d: T, ctx: z.RefinementCtx) => {
+  if (d.type === "single" && d.max_select !== 1) {
+    ctx.addIssue({
+      code: "custom",
+      message: "בבחירה יחידה — מקס׳ חייב להיות 1",
+      path: ["max_select"],
+    });
+  }
+  if (d.min_select > d.max_select) {
+    ctx.addIssue({
+      code: "custom",
+      message: "מינ׳ בחירות לא יכול להיות גדול ממקס׳",
+      path: ["min_select"],
+    });
+  }
+  if (d.included_free > d.max_select) {
+    ctx.addIssue({
+      code: "custom",
+      message: "כלולות חינם לא יכול לעלות על מקס׳ בחירות",
+      path: ["included_free"],
+    });
+  }
+  if (d.required && d.min_select < 1) {
+    ctx.addIssue({
+      code: "custom",
+      message: "קבוצת חובה חייבת לדרוש לפחות בחירה אחת",
+      path: ["min_select"],
+    });
+  }
+  if (d.required && d.options.length === 0) {
+    ctx.addIssue({
+      code: "custom",
+      message: "קבוצת חובה חייבת לכלול לפחות אפשרות אחת",
+      path: ["options"],
+    });
+  }
+};
 
-export const ModifierSetInputSchema = z.object({
-  name: z.string().min(1).max(60),
-  type: z.enum(["single", "multi"]).default("multi"),
-  required: z.boolean().default(false),
-  min_select: z.number().int().min(0).default(0),
-  max_select: z.number().int().min(1).default(5),
-  included_free: z.number().int().min(0).default(0),
-  help_text: z.string().max(200).nullable().optional(),
-  position: z.number().int().default(0),
-  options: z.array(ItemOptionInputSchema).default([]),
-});
+export const ItemOptionGroupInputSchema = z
+  .object({
+    name: z.string().min(1).max(60),
+    type: z.enum(["single", "multi"]).default("single"),
+    required: z.boolean().default(false),
+    min_select: z.number().int().min(0).default(0),
+    max_select: z.number().int().min(1).default(1),
+    included_free: z.number().int().min(0).default(0),
+    help_text: z.string().max(200).nullable().optional(),
+    allow_half: z.boolean().default(false),
+    template_set_id: UuidSchema.nullable().optional(),
+    options: z.array(ItemOptionInputSchema).default([]),
+  })
+  .superRefine(modifierConstraints);
+
+export const ModifierSetInputSchema = z
+  .object({
+    name: z.string().min(1).max(60),
+    type: z.enum(["single", "multi"]).default("multi"),
+    required: z.boolean().default(false),
+    min_select: z.number().int().min(0).default(0),
+    max_select: z.number().int().min(1).default(5),
+    included_free: z.number().int().min(0).default(0),
+    help_text: z.string().max(200).nullable().optional(),
+    position: z.number().int().default(0),
+    options: z.array(ItemOptionInputSchema).default([]),
+  })
+  .superRefine(modifierConstraints);
 
 export const MenuItemInputSchema = z.object({
   name: z.string().min(1).max(120),
