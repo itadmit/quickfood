@@ -141,21 +141,26 @@ export const ItemOptionInputSchema = z.object({
   image_url: z.string().url().nullable().optional(),
 });
 
-const modifierConstraints = <T extends {
+type ModifierShape = {
   type: "single" | "multi";
   required: boolean;
   min_select: number;
   max_select: number;
   included_free: number;
   options: { name: string }[];
-}>(d: T, ctx: z.RefinementCtx) => {
-  if (d.type === "single" && d.max_select !== 1) {
-    ctx.addIssue({
-      code: "custom",
-      message: "בבחירה יחידה — מקס׳ חייב להיות 1",
-      path: ["max_select"],
-    });
-  }
+};
+
+function coerceSingleSelection<T extends ModifierShape>(d: T): T {
+  if (d.type !== "single") return d;
+  return {
+    ...d,
+    max_select: 1,
+    included_free: 0,
+    min_select: d.required ? 1 : 0,
+  };
+}
+
+const modifierConstraints = <T extends ModifierShape>(d: T, ctx: z.RefinementCtx) => {
   if (d.min_select > d.max_select) {
     ctx.addIssue({
       code: "custom",
@@ -199,6 +204,7 @@ export const ItemOptionGroupInputSchema = z
     template_set_id: UuidSchema.nullable().optional(),
     options: z.array(ItemOptionInputSchema).default([]),
   })
+  .transform(coerceSingleSelection)
   .superRefine(modifierConstraints);
 
 export const ModifierSetInputSchema = z
@@ -213,6 +219,7 @@ export const ModifierSetInputSchema = z
     position: z.number().int().default(0),
     options: z.array(ItemOptionInputSchema).default([]),
   })
+  .transform(coerceSingleSelection)
   .superRefine(modifierConstraints);
 
 export const MenuItemInputSchema = z.object({

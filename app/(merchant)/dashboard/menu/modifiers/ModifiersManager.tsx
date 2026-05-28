@@ -225,10 +225,19 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
             >
               <header className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <h3 className="font-semibold truncate">{s.name}</h3>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <h3 className="font-semibold truncate">{s.name}</h3>
+                    {s.required && (
+                      <span
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap bg-qf-tomato text-white"
+                        title="הלקוח חייב לבחור מקבוצה זו"
+                      >
+                        חובה
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-qf-mute">
                     {s.type === "single" ? "בחירה יחידה" : `בחירה מרובה (מקס׳ ${s.maxSelect})`}
-                    {s.required && " · חובה"}
                     {s.includedFree > 0 && ` · ${s.includedFree} כלולים`}
                   </p>
                 </div>
