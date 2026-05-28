@@ -28,7 +28,7 @@ export const TAG_DEFS: DietaryTag[] = [
   // Promotion/discovery badges — shown on cards but not in the filter row,
   // since "show me popular items only" isn't a useful filter.
   { label: "פופולרי",   filterable: false, tone: "yellow"  },
-  { label: "חדש",       filterable: false, tone: "ink"     },
+  { label: "חדש",       filterable: false, tone: "green"   },
   { label: "מבצע",      filterable: false, tone: "tomato"  },
   { label: "המלצת השף", filterable: false, tone: "yellow"  },
 
