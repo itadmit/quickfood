@@ -69,6 +69,26 @@ enum PaymentStatus {
   refunded
 }
 
+/// How the order itself was initiated. `direct` is the default —
+/// customer browsed the menu and built a cart manually. Other values
+/// power the merchant analytics breakdown of channel performance.
+enum OrderSource {
+  direct
+  ai_advisor
+  reorder
+}
+
+/// How a specific line landed in the cart. A single order can mix
+/// sources — e.g. an AI-driven cart with one upsell line added later.
+/// The Order.source above is the dominant flow at order-placement
+/// time; this is per-line provenance.
+enum OrderItemSource {
+  menu
+  ai_advisor
+  upsell
+  reorder
+}
+
 enum CourierStatus {
   available
   on_delivery
@@ -647,6 +667,7 @@ model Order {
 
   status OrderStatus @default(pending)
   method OrderMethod @default(delivery)
+  source OrderSource @default(direct)
 
   deliveryAddressId String?  @map("delivery_address_id") @db.Uuid
   deliveryAddress   Address? @relation(fields: [deliveryAddressId], references: [id])
@@ -715,6 +736,8 @@ model OrderItem {
   sizeSnapshot String? @map("size_snapshot")
 
   selectedOptions Json @default("[]") @map("selected_options")
+
+  source OrderItemSource @default(menu)
 
   notes String?
 

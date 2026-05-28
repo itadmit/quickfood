@@ -10,6 +10,8 @@ import type { Prisma } from "@prisma/client";
  * the server price (the customer cannot fabricate prices).
  */
 
+export type OrderItemSourceTag = "menu" | "ai_advisor" | "upsell" | "reorder";
+
 export interface CartLineInput {
   item_id: string;
   quantity: number;
@@ -17,6 +19,7 @@ export interface CartLineInput {
   option_ids?: string[];
   option_placements?: Record<string, "left" | "right" | "full">;
   notes?: string | null;
+  source?: OrderItemSourceTag;
 }
 
 export interface CreateOrderInput {
@@ -200,6 +203,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       sizeSnapshot,
       selectedOptions: selectedOptions as unknown as Prisma.InputJsonValue,
       notes: line.notes ?? null,
+      source: line.source ?? "menu",
     });
   }
 
@@ -292,6 +296,19 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     }
   }
 
+  // Order-level source: any AI line dominates (the customer started with
+  // the AI advisor); otherwise reorder if every line came from reorder;
+  // otherwise direct. Upsell is line-only — an upsell add doesn't make
+  // the whole order an "upsell order".
+  const lineSources = orderItemData.map((d) => d.source);
+  const orderSource: "direct" | "ai_advisor" | "reorder" = lineSources.includes(
+    "ai_advisor",
+  )
+    ? "ai_advisor"
+    : lineSources.length > 0 && lineSources.every((s) => s === "reorder")
+      ? "reorder"
+      : "direct";
+
   const order = await prisma.order.create({
     data: {
       number,
@@ -300,6 +317,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       customerId: input.customerId ?? null,
       status: initialStatus,
       method: input.method,
+      source: orderSource,
       deliveryAddressId: input.addressId ?? null,
       deliveryNotes: input.deliveryNotes ?? null,
       customerNotes: input.customerNotes ?? null,

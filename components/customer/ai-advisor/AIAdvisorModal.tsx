@@ -176,6 +176,7 @@ export function AIAdvisorModal({
         sizeDelta: proposal.sizeDelta,
         options: proposal.options,
         notes: proposal.notes,
+        source: "ai_advisor",
       });
       setMessages((prev) =>
         prev.map((m) =>

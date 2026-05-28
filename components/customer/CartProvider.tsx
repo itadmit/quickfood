@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
+export type CartLineSource = "menu" | "ai_advisor" | "upsell" | "reorder";
+
 export interface CartLine {
   /** stable id of this line in the cart (uuid) */
   lineId: string;
@@ -16,6 +18,10 @@ export interface CartLine {
   sizeDelta: number;
   options: Array<{ groupId: string; optionId: string; name: string; groupName?: string; priceDelta: number; half?: "left" | "right" | "full" }>;
   notes: string | null;
+  /** How this line landed in the cart — powers the merchant analytics
+   *  breakdown of channel performance. Defaults to "menu" so old carts
+   *  in localStorage stay valid. */
+  source?: CartLineSource;
 }
 
 export interface CartState {

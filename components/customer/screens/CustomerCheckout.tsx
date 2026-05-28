@@ -363,6 +363,7 @@ export function CustomerCheckout({
               option_ids: l.options.map((o) => o.optionId),
               option_placements: Object.keys(placements).length > 0 ? placements : undefined,
               notes: l.notes,
+              source: l.source ?? "menu",
             };
           }),
         }),

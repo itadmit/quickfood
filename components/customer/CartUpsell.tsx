@@ -109,6 +109,7 @@ export function CartUpsell({ tenantSlug }: { tenantSlug: string }) {
               item={itemData.item as never}
               inModal
               onClose={() => setPickItemId(null)}
+              addSource="upsell"
             />
           )}
         </ItemDetailModal>

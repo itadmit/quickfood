@@ -138,6 +138,7 @@ export function ReorderRail({
               sizeDelta: l.sizeDelta,
               options: l.options,
               notes: l.notes,
+              source: "reorder",
             })),
           );
           // Stash the customer's previous checkout details so /checkout
