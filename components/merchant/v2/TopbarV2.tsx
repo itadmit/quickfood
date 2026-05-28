@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   IcoBell,
   IcoEye,
@@ -72,6 +72,30 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
   // exclusive — opening one auto-closes the other. Set to null to close.
   const [openMenu, setOpenMenu] = useState<"status" | "user" | null>(null);
   const [unread, setUnread] = useState(0);
+  const headerRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!openMenu) return;
+    function handlePointer(e: MouseEvent | TouchEvent) {
+      const root = headerRef.current;
+      if (!root) return;
+      const target = e.target as Node | null;
+      if (target && root.contains(target)) {
+        const el = target as HTMLElement;
+        const trigger = el.closest<HTMLElement>("[data-topbar-trigger]");
+        if (trigger?.dataset.topbarTrigger === openMenu) return;
+        const inSamePanel = el.closest<HTMLElement>(`[data-topbar-panel="${openMenu}"]`);
+        if (inSamePanel) return;
+      }
+      setOpenMenu(null);
+    }
+    document.addEventListener("mousedown", handlePointer);
+    document.addEventListener("touchstart", handlePointer);
+    return () => {
+      document.removeEventListener("mousedown", handlePointer);
+      document.removeEventListener("touchstart", handlePointer);
+    };
+  }, [openMenu]);
 
   useEffect(() => {
     let alive = true;
@@ -123,6 +147,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
 
   return (
     <header
+      ref={headerRef}
       className="sticky top-0 z-30 border-b-2 border-black"
       style={{ backgroundColor: "#FFF2C9" }}
     >
@@ -166,6 +191,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
         <div className="relative">
           <button
             type="button"
+            data-topbar-trigger="status"
             onClick={() => setOpenMenu(openMenu === "status" ? null : "status")}
             disabled={!branch || statusBusy}
             className={cn(
@@ -181,7 +207,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
             <IcoChevDown c="currentColor" s={14} />
           </button>
           {openMenu === "status" && (
-            <div className="absolute inset-e-0 mt-2 w-48 bg-white border-2 border-black rounded-2xl shadow-[0_4px_0_#000] p-1.5 z-50">
+            <div data-topbar-panel="status" className="absolute inset-e-0 mt-2 w-48 bg-white border-2 border-black rounded-2xl shadow-[0_4px_0_#000] p-1.5 z-50">
               {(["open", "busy", "closed"] as Status[]).map((s) => (
                 <button
                   key={s}
@@ -226,7 +252,8 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
         {/* Bell — single click jumps straight to orders (no dropdown in v2) */}
         <Link
           href="/dashboard/orders"
-          aria-label="התראות"
+          aria-label="צפייה בהזמנות"
+          title="צפייה בהזמנות"
           className="relative w-10 h-10 rounded-xl border-2 border-black bg-white hover:bg-[#F8CB1E] grid place-items-center transition active:scale-95 shadow-[0_2px_0_#000]"
         >
           <IcoBell c="#000" s={18} />
@@ -244,8 +271,8 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
           href={`/s/${tenantSlug}`}
           target="_blank"
           rel="noopener"
-          aria-label="צפה בחנות"
-          title="צפה בחנות"
+          aria-label="צפייה באתר"
+          title="צפייה באתר"
           className="w-10 h-10 rounded-xl border-2 border-black bg-white hover:bg-[#F8CB1E] grid place-items-center transition active:scale-95 shadow-[0_2px_0_#000]"
         >
           <IcoEye c="#000" s={18} />
@@ -255,6 +282,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
         <div className="relative">
           <button
             type="button"
+            data-topbar-trigger="user"
             onClick={() => setOpenMenu(openMenu === "user" ? null : "user")}
             className="flex items-center gap-2 ps-1 pe-2.5 h-10 rounded-xl border-2 border-black bg-white hover:bg-[#F8CB1E] transition active:scale-[0.98] shadow-[0_2px_0_#000]"
           >
@@ -268,7 +296,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
             <IcoChevDown c="currentColor" s={14} className="hidden lg:inline" />
           </button>
           {openMenu === "user" && (
-            <div className="absolute inset-e-0 mt-2 w-56 bg-white border-2 border-black rounded-2xl shadow-[0_4px_0_#000] p-1.5 text-sm z-50">
+            <div data-topbar-panel="user" className="absolute inset-e-0 mt-2 w-56 bg-white border-2 border-black rounded-2xl shadow-[0_4px_0_#000] p-1.5 text-sm z-50">
               <div className="px-3 py-2 text-xs text-black/60" dir="ltr">
                 {user.email}
               </div>
