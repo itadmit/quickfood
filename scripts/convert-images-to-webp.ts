@@ -71,6 +71,12 @@ const stats: Stats = {
   bytesOut: 0,
 };
 
+// Cache: many MenuItem rows have the same URL in both `imageUrl` and
+// `images[0]` (legacy duplication). Without this cache the second pass
+// in --apply would 404 because we just deleted the original. Map
+// the old URL to the new URL once and reuse for any later sightings.
+const converted = new Map<string, string>();
+
 function keyFromUrl(url: string): string | null {
   if (!url) return null;
   if (!url.startsWith(PUBLIC_URL + "/")) return null;
@@ -95,6 +101,14 @@ async function convertOne(url: string | null | undefined): Promise<string | null
   if (isWebP(url)) {
     stats.skipped += 1;
     return url;
+  }
+
+  // Already converted this exact URL earlier in the run — reuse the new
+  // URL so we don't try to re-download a key we just deleted.
+  const cached = converted.get(url);
+  if (cached) {
+    stats.skipped += 1;
+    return cached;
   }
 
   const oldKey = keyFromUrl(url);
@@ -125,6 +139,7 @@ async function convertOne(url: string | null | undefined): Promise<string | null
         `  [dry] ${oldKey} (${(buf.length / 1024).toFixed(0)}KB) → ${newKey} (${(webpBuf.length / 1024).toFixed(0)}KB)`,
       );
       stats.converted += 1;
+      converted.set(url, newUrl);
       return newUrl;
     }
 
@@ -149,6 +164,7 @@ async function convertOne(url: string | null | undefined): Promise<string | null
       `  ✓ ${oldKey} (${(buf.length / 1024).toFixed(0)}KB) → ${newKey} (${(webpBuf.length / 1024).toFixed(0)}KB)`,
     );
     stats.converted += 1;
+    converted.set(url, newUrl);
     return newUrl;
   } catch (e) {
     console.error(`  ✗ ${oldKey} — ${e instanceof Error ? e.message : String(e)}`);
