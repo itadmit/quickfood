@@ -10,6 +10,7 @@ import { BillingSetupBanner } from "@/components/merchant/BillingSetupBanner";
 import { EmailVerificationBanner } from "@/components/merchant/EmailVerificationBanner";
 import { TrialGate } from "@/components/merchant/TrialGate";
 import { OnboardingWelcome } from "@/components/merchant/OnboardingWelcome";
+import { SupportFAB } from "@/components/merchant/SupportFAB";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -135,6 +136,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             merchantName={user.name}
             initialOpen={!tenant.onboardingDismissedAt && hasNoMenuItems}
           />
+          <SupportFAB merchantName={user.name} />
         </div>
       ) : (
         <div className="min-h-screen bg-qf-bg-dash text-qf-ink flex flex-col overflow-x-clip">
@@ -181,6 +183,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             merchantName={user.name}
             initialOpen={!tenant.onboardingDismissedAt && hasNoMenuItems}
           />
+          <SupportFAB merchantName={user.name} />
         </div>
       )}
     </ThemeProvider>
