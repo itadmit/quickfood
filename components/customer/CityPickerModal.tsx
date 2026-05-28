@@ -99,24 +99,9 @@ export function CityPickerModal({
               className="absolute inset-0 w-full h-full object-cover"
             />
           )}
-          {/* Darkening scrim — keeps the close button + any future overlay
-              text readable on bright covers (yellow pizzas, lit dishes). */}
           {coverImage && (
-            <div aria-hidden className="absolute inset-0 bg-black/35" />
+            <div aria-hidden className="absolute inset-0 bg-black/25" />
           )}
-          {/* Soft top→bottom theme wash so the title that overlaps the
-              bottom of the image stays legible regardless of what's in
-              the photo. color-mix lets us tint with the tenant's
-              brand color at varying opacity. Soft fall-off: starts
-              later, peaks lower so the cover stays the hero. */}
-          <div
-            aria-hidden
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(180deg, color-mix(in srgb, var(--qf-primary) 0%, transparent) 50%, color-mix(in srgb, var(--qf-primary) 25%, transparent) 80%, color-mix(in srgb, var(--qf-primary) 55%, transparent) 100%)",
-            }}
-          />
 
           {!required && (
             <button
