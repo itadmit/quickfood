@@ -61,9 +61,9 @@ export default async function HomePage({
   const zonesPromise = primaryBranchId
     ? prisma.deliveryZone.findMany({
         where: { branchId: primaryBranchId, active: true },
-        select: { cities: true },
+        select: { name: true, cities: true },
       })
-    : Promise.resolve([] as { cities: string[] }[]);
+    : Promise.resolve([] as { name: string; cities: string[] }[]);
 
   const [
     allCategories,
@@ -117,11 +117,14 @@ export default async function HomePage({
   const seenCity = new Set<string>();
   const deliveryCities: string[] = [];
   for (const z of zones) {
-    for (const c of z.cities) {
-      const key = c.toLocaleLowerCase("he-IL");
+    const list = z.cities.length > 0 ? z.cities : [z.name];
+    for (const c of list) {
+      const trimmed = c.trim();
+      if (!trimmed) continue;
+      const key = trimmed.toLocaleLowerCase("he-IL");
       if (seenCity.has(key)) continue;
       seenCity.add(key);
-      deliveryCities.push(c);
+      deliveryCities.push(trimmed);
     }
   }
   deliveryCities.sort((a, b) => a.localeCompare(b, "he-IL"));

@@ -20,15 +20,18 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ slug: st
   if (branch) {
     const zones = await prisma.deliveryZone.findMany({
       where: { branchId: branch.id, active: true },
-      select: { cities: true },
+      select: { name: true, cities: true },
     });
     const seen = new Set<string>();
     for (const z of zones) {
-      for (const c of z.cities) {
-        const key = c.toLocaleLowerCase("he-IL");
+      const list = z.cities.length > 0 ? z.cities : [z.name];
+      for (const c of list) {
+        const trimmed = c.trim();
+        if (!trimmed) continue;
+        const key = trimmed.toLocaleLowerCase("he-IL");
         if (seen.has(key)) continue;
         seen.add(key);
-        deliveryCities.push(c);
+        deliveryCities.push(trimmed);
       }
     }
     deliveryCities.sort((a, b) => a.localeCompare(b, "he-IL"));
