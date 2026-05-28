@@ -9,6 +9,7 @@ import type {
   WoltItem,
   WoltMenu,
   WoltOptionGroup,
+  WoltOptionGroupRefOnItem,
   WoltVenue,
 } from "./types";
 
@@ -111,11 +112,25 @@ export async function commitImport(
   // Each option group becomes a reusable ModifierSet. Items will attach
   // via ItemOptionGroup.templateSetId in step 3 and apply their own
   // per-item min/max/includedFree overrides at attach time.
+  // Wolt stores min/max/required on the per-item ref, not on the group
+  // itself. The runtime serializer reads catalog-set values first, so
+  // we seed the set with the first item ref's config — on re-import we
+  // leave it alone, preserving any catalog edits the merchant made.
+  const firstRefByGroup = new Map<string, WoltOptionGroupRefOnItem>();
+  for (const it of menu.items) {
+    for (const ref of it.options ?? []) {
+      const groupId = ref.parent ?? ref.id;
+      if (!firstRefByGroup.has(groupId)) firstRefByGroup.set(groupId, ref);
+    }
+  }
   const setIdMap = new Map<string, string>(); // wolt option group id → QF set id
 
   for (const [idx, g] of menu.options.entries()) {
     try {
       const type = g.type === "Singlechoice" ? "single" : "multi";
+      const ref = firstRefByGroup.get(g.id);
+      const minSel = ref?.minimum_total_selections ?? 0;
+      const maxSel = ref?.maximum_total_selections ?? 5;
       const saved = await prisma.modifierSet.upsert({
         where: {
           tenantId_externalSource_externalId: {
@@ -129,6 +144,10 @@ export async function commitImport(
           name: g.name,
           type,
           position: idx,
+          required: minSel > 0,
+          minSelect: minSel,
+          maxSelect: maxSel,
+          includedFree: ref?.free_selections ?? 0,
           externalSource: SOURCE,
           externalId: g.id,
         },
