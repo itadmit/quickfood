@@ -8,7 +8,7 @@ import { AIAdvisorModal } from "./AIAdvisorModal";
 const COOKIE_NAME = "qf_ai_promo_dismissed";
 const DISMISS_DAYS = 7;
 const OPEN_DELAY_MS = 1500;
-const HIDDEN_PATH_SUFFIXES = ["/cart", "/checkout"];
+const HIDDEN_PATH_PATTERNS = ["/cart", "/checkout", "/orders"];
 
 function getCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
@@ -34,7 +34,7 @@ export function AIAdvisorPromoPopup({
   suggestions?: string[];
 }) {
   const pathname = usePathname() || "";
-  const hidden = HIDDEN_PATH_SUFFIXES.some((p) => pathname.endsWith(p));
+  const hidden = HIDDEN_PATH_PATTERNS.some((p) => pathname.includes(p));
   const [showPromo, setShowPromo] = useState(false);
   const [showAdvisor, setShowAdvisor] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
