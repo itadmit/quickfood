@@ -59,9 +59,11 @@ async function main() {
     });
 
     for (const s of sets) {
-      const isDefault =
-        s.required === false && s.minSelect === 0 && s.maxSelect === 5 && s.includedFree === 0;
-      if (!isDefault) {
+      // Protect merchant edits: if they've promoted the set to required=true
+      // in the catalog UI, never overwrite. Everything else is fair game —
+      // the buggy importer left these at semi-random values and we want
+      // them to match Wolt.
+      if (s.required === true) {
         skippedCustomized += 1;
         continue;
       }
@@ -75,8 +77,17 @@ async function main() {
       const required = minSel > 0;
       const includedFree = ref.free_selections ?? 0;
 
+      const noOp =
+        s.required === required &&
+        s.minSelect === minSel &&
+        s.maxSelect === maxSel &&
+        s.includedFree === includedFree;
+      if (noOp) continue;
+
       console.log(
-        `[${APPLY ? "apply" : "dry"}] tenant=${tenantId} set="${s.name}" → required=${required} min=${minSel} max=${maxSel} free=${includedFree}`,
+        `[${APPLY ? "apply" : "dry"}] tenant=${tenantId} set="${s.name}"  ` +
+          `required ${s.required}→${required}  min ${s.minSelect}→${minSel}  ` +
+          `max ${s.maxSelect}→${maxSel}  free ${s.includedFree}→${includedFree}`,
       );
       if (APPLY) {
         await prisma.modifierSet.update({
