@@ -7,6 +7,7 @@ import { issueTokensForMerchant, setSessionCookies } from "@/lib/auth/session";
 import { createCustomer, BillingHubError } from "@/lib/billing-hub/client";
 import { sendEmail } from "@/lib/email/send";
 import { welcomeEmail } from "@/lib/email/templates";
+import { sendVerificationEmail } from "@/lib/auth/email-verification";
 
 const TRIAL_DAYS = 7;
 
@@ -175,8 +176,22 @@ export const POST = handler(async (req: Request) => {
     });
   }
 
-  // Welcome email — fire-and-forget; signup must not fail if Resend hiccups.
+  // Verification + welcome emails — fire-and-forget; signup must not fail
+  // if Resend hiccups. Verification carries the "activate" CTA and is the
+  // main email the merchant cares about; the welcome runs alongside so
+  // existing copy keeps working until we consolidate.
   void (async () => {
+    try {
+      await sendVerificationEmail({
+        userId: owner.id,
+        email: owner.email,
+        ownerName: owner.name,
+        businessName: tenant.name,
+        tenantId: tenant.id,
+      });
+    } catch (err) {
+      console.warn("[signup] verification email failed", err);
+    }
     try {
       const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://quickfood.co.il").replace(/\/$/, "");
       const { html, text } = welcomeEmail({

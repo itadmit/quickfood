@@ -16,6 +16,8 @@ interface Props {
   label?: string;
   /** Optional hint text on the same line as the label */
   hint?: string;
+  /** When true, renders a red asterisk next to the label */
+  required?: boolean;
   className?: string;
 }
 
@@ -29,6 +31,7 @@ export function BusinessTypeSelect({
   onChange,
   label,
   hint,
+  required,
   className,
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -56,7 +59,16 @@ export function BusinessTypeSelect({
     <div className={cn("space-y-1.5", className)} ref={wrapRef}>
       {(label || hint) && (
         <div className="flex items-baseline justify-between">
-          {label && <label className="text-sm font-black text-black">{label}</label>}
+          {label && (
+            <label className="text-sm font-black text-black">
+              {label}
+              {required && (
+                <span className="text-qf-tomato ms-1" aria-hidden>
+                  *
+                </span>
+              )}
+            </label>
+          )}
           {hint && <span className="text-xs font-medium text-black/55">{hint}</span>}
         </div>
       )}

@@ -8,7 +8,7 @@ import {
   IcoEye,
   IcoLogout,
   IcoChevDown,
-  IcoImport,
+  IcoHelp,
 } from "@/components/shared/Icons";
 import { OPEN_WELCOME_EVENT } from "@/components/merchant/OnboardingWelcome";
 import { MobileMenuV2 } from "./MobileMenuV2";
@@ -207,19 +207,18 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
           )}
         </div>
 
-        {/* Import shortcut — only when the menu is empty. Same
-            yellow-pulse treatment as the V1 topbar; click re-opens
-            the welcome overlay so the merchant can choose between
-            Wolt import and starting from scratch. */}
+        {/* Help / onboarding shortcut — only when the menu is empty.
+            Click re-opens the welcome tour so the merchant can revisit
+            the system overview and pick a starting path. */}
         {showImportShortcut && (
           <button
             type="button"
-            aria-label="ייבוא לחנות חדשה"
-            title="ייבוא תפריט מ-Wolt או התחלה מאפס"
+            aria-label="סיור והכוונה"
+            title="סיור קצר במערכת + התחלת תפריט"
             onClick={() => window.dispatchEvent(new Event(OPEN_WELCOME_EVENT))}
             className="relative w-10 h-10 rounded-xl bg-[#F8CB1E] hover:bg-[#e9bd0e] border-2 border-black grid place-items-center text-black transition active:scale-95 shadow-[0_2px_0_#000]"
           >
-            <IcoImport c="#000" s={18} />
+            <IcoHelp c="#000" s={20} />
             <span className="absolute -top-1.5 -inset-e-1.5 min-w-[10px] h-[10px] rounded-full bg-[#DC2626] ring-2 ring-[#FFF2C9] pointer-events-none" />
           </button>
         )}

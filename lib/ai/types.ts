@@ -20,6 +20,11 @@ export interface BuildPromptInput {
   recentOrders: AIRecentOrder[];
   currentCart: AICartLine[];
   customerName?: string | null;
+  /** Branch minimum-order amount in shekels. 0 means no minimum. */
+  minOrder?: number;
+  /** Current cart subtotal in shekels. Used to know whether the cart
+   *  already meets the minimum, and by how much it's short. */
+  cartSubtotal?: number;
 }
 
 export interface BuiltPrompt {

@@ -347,7 +347,7 @@ function Step0({
             }}
             dir="ltr"
             placeholder="https://wolt.com/he/isr/tel-aviv/restaurant/..."
-            className="flex-1 min-w-0 px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:shadow-[0_3px_0_#000] outline-none transition font-mono text-sm text-black placeholder:text-black/35 placeholder:font-normal"
+            className="flex-1 min-w-0 px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-mono text-sm text-black placeholder:text-black/35 placeholder:font-normal"
           />
           <button
             type="button"
@@ -435,19 +435,21 @@ function Step1({
     <div className="space-y-5">
       {/* One field per row — the previous 2-column grid squeezed the
           slug widget so the validation badge clipped on narrow viewports. */}
-      <Field label="שם העסק">
+      <Field label="שם העסק" required>
         <input
           value={businessName}
           onChange={(e) => onBusinessName(e.target.value)}
           placeholder="פיצרייה ורדה"
-          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:shadow-[0_3px_0_#000] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
+          required
+          aria-required="true"
+          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
         />
       </Field>
-      <Field label="כתובת באתר" hint="אנגלית בלבד">
+      <Field label="כתובת באתר" hint="אנגלית בלבד" required>
         <div
           dir="ltr"
           className={cn(
-            "flex items-center border-2 rounded-xl bg-[#FFFBEC] hover:bg-white focus-within:bg-white focus-within:shadow-[0_3px_0_#000] transition",
+            "flex items-center border-2 rounded-xl bg-[#FFFBEC] hover:bg-white focus-within:bg-white focus-within:border-black focus-within:shadow-[0_0_0_3px_#F8CB1E] transition",
             borderColor,
           )}
         >
@@ -459,6 +461,8 @@ function Step1({
             onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
             dir="ltr"
             placeholder="my-restaurant"
+            required
+            aria-required="true"
             className="flex-1 min-w-0 py-3 pe-2 outline-none bg-transparent font-mono font-bold text-sm text-black placeholder:text-black/35 placeholder:font-normal"
           />
           <SlugStatusBadge status={slugStatus} slug={slug} />
@@ -471,6 +475,7 @@ function Step1({
         hint="קובע את הפלייסהולדרים לפריטים ללא תמונה"
         value={businessType}
         onChange={setBusinessType}
+        required
       />
 
       <Field label="סוג מטבח (אופציונלי)">
@@ -478,26 +483,31 @@ function Step1({
           value={cuisineType}
           onChange={(e) => setCuisineType(e.target.value)}
           placeholder="פיצה נפוליטנית / המבורגרים אמריקאים / סושי יפני"
-          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:shadow-[0_3px_0_#000] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
+          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
         />
       </Field>
 
-      <Field label="כתובת מלאה (הסניף הראשי)">
+      <Field label="כתובת מלאה (הסניף הראשי)" required>
         <input
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           placeholder="אלנבי 42, תל אביב"
-          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:shadow-[0_3px_0_#000] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
+          required
+          aria-required="true"
+          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
         />
       </Field>
 
-      <Field label="טלפון לסניף">
+      <Field label="טלפון לסניף" required>
         <input
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           dir="ltr"
           placeholder="03-555-1234"
-          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:shadow-[0_3px_0_#000] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
+          required
+          aria-required="true"
+          inputMode="tel"
+          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
         />
       </Field>
     </div>
@@ -571,28 +581,44 @@ function Step3({
       <p className="text-sm text-qf-ink2">
         חשבון הבעלים הראשי — תוכל להוסיף מנהלים, צוות מטבח ושליחים מאוחר יותר.
       </p>
-      <Field label="שם מלא">
+      <Field label="שם מלא" required>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:shadow-[0_3px_0_#000] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
+          required
+          aria-required="true"
+          autoComplete="name"
+          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
         />
       </Field>
-      <Field label="אימייל">
+      <Field label="אימייל" required>
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           dir="ltr"
-          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:shadow-[0_3px_0_#000] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
+          required
+          aria-required="true"
+          autoComplete="email"
+          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
         />
+        <div className="mt-1.5 flex items-start gap-2 px-3 py-2 rounded-lg bg-[#FFF6CC] border border-black/15">
+          <span aria-hidden className="text-base leading-none mt-0.5">!</span>
+          <p className="text-xs text-black/75 leading-relaxed">
+            <span className="font-bold">שים לב:</span> יש להזין כתובת דוא״ל אמיתית. נשלח לשם מייל לאימות וצריך ללחוץ עליו כדי להפעיל את החנות.
+          </p>
+        </div>
       </Field>
-      <Field label="סיסמה" hint="לפחות 8 תווים">
+      <Field label="סיסמה" hint="לפחות 8 תווים" required>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:shadow-[0_3px_0_#000] outline-none transition font-mono font-bold text-black placeholder:text-black/35 placeholder:font-normal tracking-widest"
+          required
+          aria-required="true"
+          minLength={8}
+          autoComplete="new-password"
+          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-mono font-bold text-black placeholder:text-black/35 placeholder:font-normal tracking-widest"
         />
       </Field>
     </div>
@@ -602,16 +628,25 @@ function Step3({
 function Field({
   label,
   hint,
+  required,
   children,
 }: {
   label: string;
   hint?: string;
+  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between">
-        <label className="text-sm font-black text-black">{label}</label>
+        <label className="text-sm font-black text-black">
+          {label}
+          {required && (
+            <span className="text-qf-tomato ms-1" aria-hidden>
+              *
+            </span>
+          )}
+        </label>
         {hint && <span className="text-xs font-medium text-black/55">{hint}</span>}
       </div>
       {children}

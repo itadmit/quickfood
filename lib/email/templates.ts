@@ -7,15 +7,19 @@
  * also set inline `text-align: right` / `direction: rtl` on the containers.
  */
 
+// Brand palette mirrors the V2 dashboard: bold yellow surface + cream
+// card + black ink/borders. Email-safe — no gradients, no box-shadows,
+// no rgba/CSS variables (Outlook strips them all).
 const BRAND = {
-  primary: "#2f7a3e",
-  deep: "#1f5a2a",
-  bg: "#f5f1e6",
-  card: "#ffffff",
-  ink: "#1a1f1d",
-  ink2: "#3a4a40",
-  mute: "#7c8a82",
-  line: "#e1ddd1",
+  yellow: "#F8CB1E",
+  cream: "#FFFBEC",
+  card: "#FFFBEC",
+  ink: "#000000",
+  ink2: "#1a1a1a",
+  mute: "#5a5a5a",
+  line: "#000000",
+  buttonBg: "#000000",
+  buttonText: "#F8CB1E",
 };
 
 function escape(str: string): string {
@@ -51,14 +55,17 @@ export interface RtlEmailOptions {
 
 export function renderRtlEmail(opts: RtlEmailOptions): { html: string; text: string } {
   const paragraphs = opts.paragraphs
-    .map((p) => `<p style="margin:0 0 14px;line-height:1.6;color:${BRAND.ink2};font-size:15px;">${opts.raw ? p : escape(p)}</p>`)
+    .map((p) => `<p dir="rtl" style="margin:0 0 14px;line-height:1.65;color:${BRAND.ink2};font-size:15px;direction:rtl;text-align:right;">${opts.raw ? p : escape(p)}</p>`)
     .join("");
 
+  // Black-on-yellow chunky button — matches the dashboard's V2 brand
+  // (yellow surface, black CTA with bold yellow text). Email-safe:
+  // solid background color, no gradients, no box-shadow.
   const button = opts.button
-    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0;">
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:24px auto;">
         <tr>
-          <td align="center" bgcolor="${BRAND.primary}" style="border-radius:12px;">
-            <a href="${escape(opts.button.href)}" target="_blank" rel="noopener" style="display:inline-block;padding:13px 28px;font-family:inherit;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:12px;">
+          <td align="center" bgcolor="${BRAND.buttonBg}" style="border-radius:12px;border:2px solid ${BRAND.line};">
+            <a href="${escape(opts.button.href)}" target="_blank" rel="noopener" style="display:inline-block;padding:14px 32px;font-family:inherit;font-size:15px;font-weight:800;color:${BRAND.buttonText};text-decoration:none;border-radius:10px;letter-spacing:.2px;">
               ${escape(opts.button.label)}
             </a>
           </td>
@@ -71,7 +78,7 @@ export function renderRtlEmail(opts: RtlEmailOptions): { html: string; text: str
     : "";
 
   const footerNote = opts.footerNote
-    ? `<p style="margin:18px 0 0;font-size:12px;color:${BRAND.mute};line-height:1.5;">${escape(opts.footerNote)}</p>`
+    ? `<p dir="rtl" style="margin:18px 0 0;font-size:12px;color:${BRAND.mute};line-height:1.5;direction:rtl;text-align:right;">${escape(opts.footerNote)}</p>`
     : "";
 
   const html = `<!doctype html>
@@ -81,27 +88,27 @@ export function renderRtlEmail(opts: RtlEmailOptions): { html: string; text: str
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escape(opts.subject)}</title>
 </head>
-<body dir="rtl" style="margin:0;padding:0;background:${BRAND.bg};font-family:'Segoe UI',Tahoma,Arial,'Helvetica Neue',Helvetica,sans-serif;color:${BRAND.ink};direction:rtl;text-align:right;">
+<body dir="rtl" style="margin:0;padding:0;background:${BRAND.cream};font-family:'Segoe UI',Tahoma,Arial,'Helvetica Neue',Helvetica,sans-serif;color:${BRAND.ink};direction:rtl;text-align:right;">
 ${preheader}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" style="background:${BRAND.bg};padding:24px 12px;direction:rtl;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" style="background:${BRAND.cream};padding:28px 12px;direction:rtl;">
   <tr>
     <td align="center" dir="rtl">
-      <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" dir="rtl" style="max-width:560px;width:100%;background:${BRAND.card};border:1px solid ${BRAND.line};border-radius:20px;overflow:hidden;direction:rtl;text-align:right;">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" dir="rtl" style="max-width:560px;width:100%;background:${BRAND.card};border:2px solid ${BRAND.line};border-radius:20px;overflow:hidden;direction:rtl;text-align:right;">
         <tr>
-          <td style="background:linear-gradient(135deg,${BRAND.primary},${BRAND.deep});padding:22px 28px;text-align:right;direction:rtl;">
-            <div style="font-size:13px;font-weight:600;color:#ffffff;opacity:.85;letter-spacing:.5px;">QuickFood</div>
-            <div style="font-size:22px;font-weight:700;color:#ffffff;margin-top:6px;">${escape(opts.heading)}</div>
+          <td bgcolor="${BRAND.yellow}" style="background-color:${BRAND.yellow};padding:24px 28px;text-align:right;direction:rtl;border-bottom:2px solid ${BRAND.line};">
+            <div style="font-size:12px;font-weight:900;color:${BRAND.ink};letter-spacing:1.5px;text-transform:uppercase;">QuickFood</div>
+            <div style="font-size:22px;font-weight:900;color:${BRAND.ink};margin-top:8px;line-height:1.25;">${escape(opts.heading)}</div>
           </td>
         </tr>
         <tr>
-          <td style="padding:28px;direction:rtl;text-align:right;">
+          <td bgcolor="${BRAND.card}" style="background-color:${BRAND.card};padding:28px;direction:rtl;text-align:right;">
             ${paragraphs}
             ${button}
             ${footerNote}
           </td>
         </tr>
         <tr>
-          <td style="padding:18px 28px;background:${BRAND.bg};border-top:1px solid ${BRAND.line};direction:rtl;text-align:right;">
+          <td bgcolor="${BRAND.card}" style="background-color:${BRAND.card};padding:18px 28px;border-top:2px solid ${BRAND.line};direction:rtl;text-align:right;">
             <div style="font-size:12px;color:${BRAND.mute};line-height:1.5;">
               קיבלת את המייל הזה מ-QuickFood. אם זה לא רלוונטי, אפשר פשוט להתעלם.
             </div>
@@ -168,6 +175,32 @@ export function passwordResetEmail({
     button: { href: resetUrl, label: "בחירת סיסמה חדשה" },
     footerNote:
       "לא ביקשת לאפס סיסמה? אפשר להתעלם מהמייל — הסיסמה הקיימת נשארת בתוקף.",
+  });
+}
+
+export function verifyEmailEmail({
+  ownerName,
+  businessName,
+  verifyUrl,
+  expiresInHours,
+}: {
+  ownerName: string;
+  businessName: string;
+  verifyUrl: string;
+  expiresInHours: number;
+}) {
+  return renderRtlEmail({
+    subject: `הפעלת החנות ${businessName} ב-QuickFood`,
+    preheader: "לחיצה אחת מפעילה את הגישה המלאה לחשבון.",
+    heading: `שלום ${ownerName}, נשאר רק לאמת מייל`,
+    paragraphs: [
+      `החנות של ${businessName} נוצרה ב-QuickFood, אבל לפני שתופיע כפעילה לקוחות צריך לאמת שהמייל הזה באמת שלך.`,
+      "לחיצה על הכפתור שמתחת מאמתת את הכתובת ומסירה את ההתראה מהדשבורד — לוקח שנייה.",
+      `הקישור תקף ל-${expiresInHours} שעות. אם פג תוקף, אפשר לבקש קישור חדש מהבאנר שבראש הדשבורד.`,
+    ],
+    button: { href: verifyUrl, label: "הפעל את החנות" },
+    footerNote:
+      "לא הירשמת ל-QuickFood? אפשר להתעלם מהמייל הזה — בלי אימות החשבון יישאר מסומן ולא יבוצעו בו פעולות בשמך.",
   });
 }
 

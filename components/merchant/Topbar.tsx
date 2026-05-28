@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { IcoSearch, IcoBell, IcoChevDown, Dot, IcoClose, IcoEye, IcoGear, IcoLogout, IcoImport } from "@/components/shared/Icons";
+import { IcoSearch, IcoBell, IcoChevDown, Dot, IcoClose, IcoEye, IcoGear, IcoLogout, IcoHelp } from "@/components/shared/Icons";
 import { formatPrice } from "@/lib/format";
 import { RelativeTime } from "@/components/shared/RelativeTime";
 import { MobileNav } from "@/components/merchant/MobileNav";
@@ -217,19 +217,18 @@ export function Topbar({ user, branch, tenantSlug, tenant, showImportShortcut }:
           )}
         </div>
 
-        {/* Import shortcut — only shown while the menu is empty. Uses the
-            landing-page brand yellow so it pops next to the neutral icons
-            and reads as "you have something to do here". Re-opens the
-            welcome overlay (which has the two big tiles). */}
+        {/* Help / onboarding shortcut — only shown while the menu is
+            empty. Re-opens the welcome tour so the merchant can revisit
+            the system overview and pick a starting path. */}
         {showImportShortcut && (
           <button
             type="button"
-            aria-label="ייבוא תפריט"
-            title="ייבוא תפריט מ-Wolt או התחלה מאפס"
+            aria-label="סיור והכוונה"
+            title="סיור קצר במערכת + התחלת תפריט"
             onClick={() => window.dispatchEvent(new Event(OPEN_WELCOME_EVENT))}
             className="relative w-10 h-10 rounded-xl bg-[#F8CB1E] hover:bg-[#e9bd0e] border-2 border-black grid place-items-center text-black transition active:scale-95 shadow-[0_2px_0_#000]"
           >
-            <IcoImport c="#000" s={18} />
+            <IcoHelp c="#000" s={20} />
             <span className="absolute -top-1.5 -inset-e-1.5 min-w-[10px] h-[10px] rounded-full bg-qf-tomato ring-2 ring-white pointer-events-none" />
           </button>
         )}

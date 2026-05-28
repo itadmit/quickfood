@@ -11,6 +11,17 @@ import { streamAdvisorChat } from "@/lib/ai";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// Unicode ranges for the Arabic script. Hebrew customers expect Hebrew —
+// the model occasionally slips into Arabic for cuisine-adjacent prompts
+// (falafel, shawarma) and we strip it server-side as a safety net.
+// Covers: Arabic (0600-06FF), Arabic Supplement (0750-077F),
+// Arabic Extended-A (08A0-08FF), Presentation Forms-A (FB50-FDFF),
+// Presentation Forms-B (FE70-FEFF).
+const ARABIC_RE = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/g;
+function stripArabic(s: string): string {
+  return s.replace(ARABIC_RE, "");
+}
+
 const Schema = z.object({
   tenant_slug: z.string().min(1),
   messages: z
@@ -43,6 +54,7 @@ const Schema = z.object({
     )
     .max(50)
     .optional(),
+  cart_subtotal: z.number().int().nonnegative().optional(),
 });
 
 export async function POST(req: Request) {
@@ -94,13 +106,21 @@ export async function POST(req: Request) {
           .then((c) => c?.firstName ?? null)
       : null;
 
-  const menu = await loadAIMenuSnapshot(tenant.id);
+  const [menu, primaryBranch] = await Promise.all([
+    loadAIMenuSnapshot(tenant.id),
+    prisma.branch.findFirst({
+      where: { tenantId: tenant.id, isPrimary: true },
+      select: { minOrder: true },
+    }),
+  ]);
 
   const { systemInstruction, idMap } = buildSystemPrompt({
     menu,
     recentOrders: body.recent_orders ?? [],
     currentCart: body.current_cart ?? [],
     customerName,
+    minOrder: primaryBranch?.minOrder ?? 0,
+    cartSubtotal: body.cart_subtotal,
   });
 
   const trimmedMessages = body.messages
@@ -124,7 +144,15 @@ export async function POST(req: Request) {
           message: body.message,
           idMap,
         })) {
-          write(event);
+          // Defense-in-depth: even though the system prompt forbids Arabic,
+          // strip any Arabic-script codepoints from streamed text before
+          // forwarding to the client. Covers Arabic, Arabic Supplement,
+          // Arabic Extended-A, Arabic Presentation Forms-A/B.
+          const sanitized =
+            event.kind === "text" && typeof event.text === "string"
+              ? { ...event, text: stripArabic(event.text) }
+              : event;
+          write(sanitized);
         }
       } catch (err) {
         write({

@@ -2,27 +2,28 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { IcoArrowLeft, IcoClose } from "@/components/shared/Icons";
+import {
+  IcoArrowLeft,
+  IcoArrowRight,
+  IcoClose,
+  IcoHome,
+  IcoOrders,
+  IcoMenu as IcoMenuIcon,
+  IcoChart,
+  IcoBike,
+  IcoMegaphone,
+  IcoCreditCard,
+  IcoStar,
+  IcoBell,
+  IcoSparkle,
+  IcoGear,
+  IcoCheck,
+} from "@/components/shared/Icons";
 
-/**
- * Custom event that any place in the dashboard can dispatch to re-open
- * this overlay after the initial dismiss. The Topbar "import shortcut"
- * button uses it so a merchant who skipped the welcome on first login
- * can still reach the import flow with one tap.
- */
 export const OPEN_WELCOME_EVENT = "qf:open-welcome";
 
-/**
- * First-login welcome overlay for new merchants. Full-screen, branded
- * with the landing-page yellow (#F8CB1E) + bold black energy to feel
- * like a continuation of the marketing site rather than an HR form.
- *
- * Two big choices, plus a quiet "later" escape. Auto-opens for tenants
- * whose `onboardingDismissedAt` is NULL (controlled via `initialOpen`).
- * Subsequent opens come from the OPEN_WELCOME_EVENT — dispatched by
- * the Topbar import shortcut. Every choice/dismiss stamps the field
- * server-side via PATCH /api/v1/merchant/tenant.
- */
+type Step = 1 | 2 | 3 | 4;
+
 export function OnboardingWelcome({
   merchantName,
   initialOpen,
@@ -32,20 +33,18 @@ export function OnboardingWelcome({
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(initialOpen);
+  const [step, setStep] = useState<Step>(1);
   const [busy, setBusy] = useState<"scratch" | "wolt" | "later" | null>(null);
 
   useEffect(() => {
     function onOpen() {
+      setStep(1);
       setOpen(true);
     }
     window.addEventListener(OPEN_WELCOME_EVENT, onOpen);
     return () => window.removeEventListener(OPEN_WELCOME_EVENT, onOpen);
   }, []);
 
-  // ESC closes the modal at any time. The X button does the same. We
-  // used to "trap" first-time users until they picked an option, but
-  // the modal style with a visible X already signals it's dismissable
-  // — being heavy-handed about it would feel like a dark pattern.
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
@@ -53,16 +52,11 @@ export function OnboardingWelcome({
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-    // dismissAndGo is stable enough (uses setState + router from closure)
-    // that re-binding per render is wasted; intentional empty deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   async function dismissAndGo(target: "scratch" | "wolt" | "later") {
     setBusy(target);
-    // Fire-and-forget the dismiss — we don't block navigation on a
-    // network call. If it fails (network drop) the overlay will reappear
-    // once on the next dashboard load, which is the right safe default.
     fetch("/api/v1/merchant/tenant", {
       method: "PATCH",
       headers: { "content-type": "application/json" },
@@ -90,7 +84,6 @@ export function OnboardingWelcome({
       aria-modal="true"
       aria-label="ברוך הבא ל-QuickFood"
       onClick={(e) => {
-        // Click on the backdrop (not the modal itself) dismisses as "later"
         if (e.target === e.currentTarget && busy === null) dismissAndGo("later");
       }}
     >
@@ -98,8 +91,6 @@ export function OnboardingWelcome({
         className="relative w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl"
         style={{ backgroundColor: "#F8CB1E" }}
       >
-        {/* Subtle dot pattern echo of the landing-page hero — keeps the
-            yellow surface from feeling like a flat slab of color. */}
         <div
           className="absolute inset-0 pointer-events-none opacity-[0.08]"
           style={{
@@ -110,8 +101,6 @@ export function OnboardingWelcome({
           aria-hidden
         />
 
-        {/* Close button — top-end in RTL (visual top-left), matches
-            other modals in the app (SearchPalette, ReviewPromptModal). */}
         <button
           type="button"
           onClick={() => dismissAndGo("later")}
@@ -123,64 +112,426 @@ export function OnboardingWelcome({
         </button>
 
         <div className="relative px-6 py-10 md:px-10 md:py-12 flex flex-col items-center text-center">
-          {/* Brand chip — same energy as the landing-page logo lockup */}
-          <div className="mb-6 inline-flex items-center gap-2 text-black/70 text-xs font-semibold">
-            <span className="bg-black text-[#F8CB1E] px-2 py-0.5 rounded-md text-[10px] font-black tracking-wide">
-              QuickFood
-            </span>
-            <span>ברוכים הבאים</span>
-          </div>
+          {/* Step pills — visible on every step so the merchant knows
+              how short the tour is. Step 1 also shows the brand chip. */}
+          {step === 1 ? (
+            <div className="mb-6 inline-flex items-center gap-2 text-black/70 text-xs font-semibold">
+              <span className="bg-black text-[#F8CB1E] px-2 py-0.5 rounded-md text-[10px] font-black tracking-wide">
+                QuickFood
+              </span>
+              <span>ברוכים הבאים</span>
+            </div>
+          ) : (
+            <StepPills step={step} />
+          )}
 
-          <h1 className="text-black font-black text-3xl md:text-5xl leading-[1.05] mb-3 max-w-2xl">
-            {firstName ? `היי ${firstName},` : "היי,"}
-            <br />
-            <span className="bg-black text-[#F8CB1E] px-3 py-0.5 rounded-lg inline-block mt-1.5">
-              איך נתחיל?
-            </span>
-          </h1>
-
-          <p className="text-black/70 text-sm md:text-base mb-8 max-w-md">
-            שתי דרכים להעלות את החנות שלך לאוויר. בחר את מה שעובד לך —
-            תמיד אפשר להמשיך בדרך השנייה אחר כך.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 w-full">
-            <Tile
-              variant="primary"
-              badge="חדש פה"
-              title="להתחיל מאפס"
-              body="בנה תפריט מאפס עם העורך שלנו — קטגוריות, פריטים, גדלים ותוספות. מומלץ אם זו החנות אונליין הראשונה שלך."
-              cta="נתחיל לבנות"
-              onClick={() => dismissAndGo("scratch")}
-              busy={busy === "scratch"}
-              disabled={busy !== null && busy !== "scratch"}
+          {step === 1 && (
+            <Step1Welcome
+              firstName={firstName}
+              busy={busy}
+              onScratch={() => setStep(2)}
+              onWolt={() => dismissAndGo("wolt")}
             />
+          )}
 
-            <Tile
-              variant="dark"
-              badge="כבר ב-Wolt"
-              title="לייבא תפריט מ-Wolt"
-              body="מדביקים כתובת חנות, ואנחנו מייבאים אוטומטית את הקטגוריות, הפריטים, התמונות והתוספות. חוסך שעות."
-              cta="לייבוא"
-              onClick={() => dismissAndGo("wolt")}
-              busy={busy === "wolt"}
-              disabled={busy !== null && busy !== "wolt"}
+          {step === 2 && (
+            <Step2Sidebar
+              onBack={() => setStep(1)}
+              onNext={() => setStep(3)}
+              onSkip={() => dismissAndGo("later")}
             />
-          </div>
+          )}
 
-          <button
-            type="button"
-            onClick={() => dismissAndGo("later")}
-            disabled={busy !== null}
-            className="mt-6 text-black/60 hover:text-black text-xs md:text-sm font-medium underline underline-offset-4 disabled:opacity-50"
-          >
-            {busy === "later" ? "סוגר..." : "אחר כך, קודם תני לי לסייר"}
-          </button>
+          {step === 3 && (
+            <Step3Settings
+              onBack={() => setStep(2)}
+              onNext={() => setStep(4)}
+              onSkip={() => dismissAndGo("later")}
+            />
+          )}
+
+          {step === 4 && (
+            <Step4Ready
+              busy={busy}
+              onBack={() => setStep(3)}
+              onScratch={() => dismissAndGo("scratch")}
+              onWolt={() => dismissAndGo("wolt")}
+            />
+          )}
         </div>
       </div>
     </div>
   );
 }
+
+// ─── Step pills ─────────────────────────────────────────────
+
+function StepPills({ step }: { step: Step }) {
+  const labels: Record<Step, string> = {
+    1: "ברוכים הבאים",
+    2: "תפריט הצד",
+    3: "הגדרות",
+    4: "מוכנים להתחיל",
+  };
+  return (
+    <div className="mb-6 flex items-center gap-2">
+      <span className="bg-black text-[#F8CB1E] px-2 py-0.5 rounded-md text-[10px] font-black tracking-wide">
+        QuickFood
+      </span>
+      <span className="text-black/70 text-xs font-semibold">
+        סיור · {step} מתוך 4 · {labels[step]}
+      </span>
+    </div>
+  );
+}
+
+// ─── Step 1: welcome + choice ───────────────────────────────
+
+function Step1Welcome({
+  firstName,
+  busy,
+  onScratch,
+  onWolt,
+}: {
+  firstName: string;
+  busy: "scratch" | "wolt" | "later" | null;
+  onScratch: () => void;
+  onWolt: () => void;
+}) {
+  return (
+    <>
+      <h1 className="text-black font-black text-3xl md:text-5xl leading-[1.05] mb-3 max-w-2xl">
+        {firstName ? `היי ${firstName},` : "היי,"}
+        <br />
+        <span className="bg-black text-[#F8CB1E] px-3 py-0.5 rounded-lg inline-block mt-1.5">
+          איך נתחיל?
+        </span>
+      </h1>
+
+      <p className="text-black/70 text-sm md:text-base mb-8 max-w-md">
+        שתי דרכים להעלות את החנות שלך לאוויר. בחר את מה שעובד לך —
+        תמיד אפשר להמשיך בדרך השנייה אחר כך.
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 w-full">
+        <Tile
+          variant="primary"
+          badge="חדש פה"
+          title="להתחיל מאפס"
+          body="בנה תפריט מאפס עם העורך שלנו — קטגוריות, פריטים, גדלים ותוספות. מומלץ אם זו החנות אונליין הראשונה שלך."
+          cta="נתחיל סיור קצר"
+          onClick={onScratch}
+          busy={busy === "scratch"}
+          disabled={busy !== null && busy !== "scratch"}
+        />
+
+        <Tile
+          variant="dark"
+          badge="כבר ב-Wolt"
+          title="לייבא תפריט מ-Wolt"
+          body="מדביקים כתובת חנות, ואנחנו מייבאים אוטומטית את הקטגוריות, הפריטים, התמונות והתוספות. חוסך שעות."
+          cta="לייבוא"
+          onClick={onWolt}
+          busy={busy === "wolt"}
+          disabled={busy !== null && busy !== "wolt"}
+        />
+      </div>
+    </>
+  );
+}
+
+// ─── Step 2: side menu tour ─────────────────────────────────
+
+function Step2Sidebar({
+  onBack,
+  onNext,
+  onSkip,
+}: {
+  onBack: () => void;
+  onNext: () => void;
+  onSkip: () => void;
+}) {
+  const items: Array<{
+    Icon: typeof IcoHome;
+    title: string;
+    body: string;
+    badge?: string;
+  }> = [
+    {
+      Icon: IcoHome,
+      title: "דשבורד",
+      body: "מבט-על על המכירות, ההזמנות החדשות והביקורות של היום.",
+    },
+    {
+      Icon: IcoOrders,
+      title: "הזמנות",
+      body: "כל ההזמנות בזמן אמת — קבלה, הכנה, יציאה למשלוח וסגירה.",
+    },
+    {
+      Icon: IcoMenuIcon,
+      title: "תפריט",
+      body: "קטגוריות, פריטים, גדלים ותוספות. עורך גרירה לסידור מהיר.",
+    },
+    {
+      Icon: IcoChart,
+      title: "אנליטיקס",
+      body: "ניתוח לפי ערוץ, פריטים חמים ותובנות שיווק חכמות.",
+      badge: "חדש!",
+    },
+    {
+      Icon: IcoMegaphone,
+      title: "קמפיינים",
+      body: "ניהול הצעות, קופונים ושליחה ללקוחות.",
+    },
+    {
+      Icon: IcoSparkle,
+      title: "יועץ AI",
+      body: "המלצות חכמות לאופטימיזציה של התפריט והמכירות.",
+      badge: "חדש!",
+    },
+  ];
+
+  return (
+    <>
+      <h2 className="text-black font-black text-2xl md:text-4xl leading-[1.05] mb-3 max-w-2xl">
+        <span className="bg-black text-[#F8CB1E] px-3 py-0.5 rounded-lg inline-block">
+          תפריט הצד
+        </span>{" "}
+        — הכל במרחק נגיעה
+      </h2>
+
+      <p className="text-black/70 text-sm md:text-base mb-7 max-w-md">
+        בצד הימני יש לך גישה לכל הכלים של החנות. הנה הסקירה הקצרה.
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 md:gap-3 w-full text-start">
+        {items.map(({ Icon, title, body, badge }) => (
+          <div
+            key={title}
+            className="flex items-start gap-3 bg-white border-2 border-black rounded-2xl p-3 md:p-3.5 shadow-[0_3px_0_#000]"
+          >
+            <div className="shrink-0 w-10 h-10 rounded-xl bg-[#FFF2C9] border-2 border-black grid place-items-center text-black">
+              <Icon c="currentColor" s={20} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-0.5">
+                <h3 className="font-black text-black text-sm md:text-base">
+                  {title}
+                </h3>
+                {badge && (
+                  <span className="bg-[#F8CB1E] border border-black text-black text-[10px] font-black px-1.5 py-0.5 rounded">
+                    {badge}
+                  </span>
+                )}
+              </div>
+              <p className="text-black/65 text-xs md:text-[13px] leading-snug">
+                {body}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <NavRow onBack={onBack} onNext={onNext} onSkip={onSkip} />
+    </>
+  );
+}
+
+// ─── Step 3: settings tour ──────────────────────────────────
+
+function Step3Settings({
+  onBack,
+  onNext,
+  onSkip,
+}: {
+  onBack: () => void;
+  onNext: () => void;
+  onSkip: () => void;
+}) {
+  const items: Array<{ Icon: typeof IcoGear; title: string; body: string }> = [
+    {
+      Icon: IcoSparkle,
+      title: "מותג ועיצוב",
+      body: "לוגו, צבעים, באנר ראשי וטיפוגרפיה — איך הלקוחות רואים אותך.",
+    },
+    {
+      Icon: IcoHome,
+      title: "פרטי העסק",
+      body: "שם, כתובת, טלפון וח״פ. נכנס לאוטומציות ולחשבוניות.",
+    },
+    {
+      Icon: IcoCreditCard,
+      title: "תשלומים",
+      body: "חיבור Grow Payments, הסדרי מזומן וקבלת תשלום בעמוד הלקוח.",
+    },
+    {
+      Icon: IcoBell,
+      title: "התראות",
+      body: "SMS, WhatsApp ו-Email — ערוצי תקשורת עם הלקוח אחרי הזמנה.",
+    },
+    {
+      Icon: IcoBike,
+      title: "סניפים ומשלוחים",
+      body: "אזורי משלוח, דמי משלוח, מינימום הזמנה ושעות פעילות.",
+    },
+    {
+      Icon: IcoStar,
+      title: "ביקורות",
+      body: "תזמון בקשת ביקורת, תבניות לחיוב הלקוח ומענה אוטומטי.",
+    },
+  ];
+
+  return (
+    <>
+      <h2 className="text-black font-black text-2xl md:text-4xl leading-[1.05] mb-3 max-w-2xl">
+        <span className="bg-black text-[#F8CB1E] px-3 py-0.5 rounded-lg inline-block">
+          הגדרות
+        </span>{" "}
+        — להתאים לך
+      </h2>
+
+      <p className="text-black/70 text-sm md:text-base mb-7 max-w-md">
+        בהגדרות תמצא את כל מה שצריך כדי שהחנות תרגיש שלך — מהלוגו ועד
+        אופן התשלום.
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 md:gap-3 w-full text-start">
+        {items.map(({ Icon, title, body }) => (
+          <div
+            key={title}
+            className="flex items-start gap-3 bg-white border-2 border-black rounded-2xl p-3 md:p-3.5 shadow-[0_3px_0_#000]"
+          >
+            <div className="shrink-0 w-10 h-10 rounded-xl bg-[#FFF2C9] border-2 border-black grid place-items-center text-black">
+              <Icon c="currentColor" s={20} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-black text-black text-sm md:text-base mb-0.5">
+                {title}
+              </h3>
+              <p className="text-black/65 text-xs md:text-[13px] leading-snug">
+                {body}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <NavRow onBack={onBack} onNext={onNext} onSkip={onSkip} />
+    </>
+  );
+}
+
+// ─── Step 4: ready to start ─────────────────────────────────
+
+function Step4Ready({
+  busy,
+  onBack,
+  onScratch,
+  onWolt,
+}: {
+  busy: "scratch" | "wolt" | "later" | null;
+  onBack: () => void;
+  onScratch: () => void;
+  onWolt: () => void;
+}) {
+  return (
+    <>
+      <div className="mb-4 w-14 h-14 rounded-2xl bg-black grid place-items-center shadow-[0_3px_0_#000] border-2 border-black">
+        <IcoCheck c="#F8CB1E" s={28} />
+      </div>
+
+      <h2 className="text-black font-black text-2xl md:text-4xl leading-[1.05] mb-3 max-w-2xl">
+        <span className="bg-black text-[#F8CB1E] px-3 py-0.5 rounded-lg inline-block">
+          מוכנים?
+        </span>{" "}
+        בוא נתחיל
+      </h2>
+
+      <p className="text-black/70 text-sm md:text-base mb-8 max-w-md">
+        ראית את עיקרי המערכת. הצעד הבא — להעלות את התפריט. בחר את הדרך
+        שעובדת לך:
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 w-full">
+        <Tile
+          variant="primary"
+          badge="חדש פה"
+          title="להתחיל מאפס"
+          body="בנה תפריט מאפס עם העורך שלנו — קטגוריות, פריטים, גדלים ותוספות."
+          cta="נתחיל לבנות"
+          onClick={onScratch}
+          busy={busy === "scratch"}
+          disabled={busy !== null && busy !== "scratch"}
+        />
+
+        <Tile
+          variant="dark"
+          badge="כבר ב-Wolt"
+          title="לייבא תפריט מ-Wolt"
+          body="מדביקים כתובת חנות, ואנחנו מייבאים אוטומטית את הקטגוריות, הפריטים והתמונות."
+          cta="לייבוא"
+          onClick={onWolt}
+          busy={busy === "wolt"}
+          disabled={busy !== null && busy !== "wolt"}
+        />
+      </div>
+
+      <button
+        type="button"
+        onClick={onBack}
+        disabled={busy !== null}
+        className="mt-6 text-black/70 hover:text-black text-xs md:text-sm font-bold underline underline-offset-4 inline-flex items-center gap-1.5 disabled:opacity-50"
+      >
+        <IcoArrowRight c="currentColor" s={14} />
+        חזרה לסיור
+      </button>
+    </>
+  );
+}
+
+// ─── Shared: nav row for tour steps ─────────────────────────
+
+function NavRow({
+  onBack,
+  onNext,
+  onSkip,
+}: {
+  onBack: () => void;
+  onNext: () => void;
+  onSkip: () => void;
+}) {
+  return (
+    <div className="mt-8 flex items-center justify-between gap-3 w-full">
+      <button
+        type="button"
+        onClick={onBack}
+        className="text-black/65 hover:text-black text-sm font-bold inline-flex items-center gap-1.5"
+      >
+        <IcoArrowRight c="currentColor" s={14} />
+        חזרה
+      </button>
+
+      <button
+        type="button"
+        onClick={onSkip}
+        className="text-black/55 hover:text-black text-xs font-bold underline underline-offset-4"
+      >
+        דלג על הסיור
+      </button>
+
+      <button
+        type="button"
+        onClick={onNext}
+        className="px-5 py-3 rounded-xl bg-black hover:bg-black/90 text-[#F8CB1E] text-base font-black border-2 border-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition inline-flex items-center gap-2"
+      >
+        המשך
+        <IcoArrowLeft c="currentColor" s={16} />
+      </button>
+    </div>
+  );
+}
+
+// ─── Tile (reused on step 1 + step 4) ────────────────────────
 
 function Tile({
   variant,

@@ -249,6 +249,7 @@ export function AIAdvisorModal({
             message: trimmed,
             recent_orders: recentOrders,
             current_cart: currentCartSnapshot,
+            cart_subtotal: cart.subtotal,
           }),
         });
 
@@ -336,7 +337,7 @@ export function AIAdvisorModal({
         abortRef.current = null;
       }
     },
-    [messages, streaming, tenantSlug, recentOrders, currentCartSnapshot, recommendMap, proposalMap],
+    [messages, streaming, tenantSlug, recentOrders, currentCartSnapshot, cart.subtotal, recommendMap, proposalMap],
   );
 
   return (
@@ -405,12 +406,74 @@ export function AIAdvisorModal({
         )}
       </div>
 
+      {cart.itemCount > 0 && (
+        <CartStrip
+          itemCount={cart.itemCount}
+          subtotal={cart.subtotal}
+          minOrder={cart.branch?.minOrder ?? 0}
+          onGo={() => {
+            onClose();
+            window.location.href = `/s/${tenantSlug}/cart`;
+          }}
+        />
+      )}
+
       <AIComposer
         disabled={streaming}
         onSend={send}
         suggestions={messages.length === 0 ? activeSuggestions : []}
         error={error}
       />
+      </div>
+    </div>
+  );
+}
+
+function CartStrip({
+  itemCount,
+  subtotal,
+  minOrder,
+  onGo,
+}: {
+  itemCount: number;
+  subtotal: number;
+  minOrder: number;
+  onGo: () => void;
+}) {
+  const remaining = minOrder > 0 ? Math.max(0, minOrder - subtotal) : 0;
+  const meetsMin = remaining === 0;
+  return (
+    <div className="border-t-2 border-black bg-white">
+      <div className="px-4 py-2.5 flex items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-bold text-black leading-tight">
+            {itemCount} פריטים בעגלה · ₪{subtotal.toLocaleString("he-IL")}
+          </div>
+          {minOrder > 0 && (
+            <div
+              className={
+                meetsMin
+                  ? "text-[11px] text-qf-green-deep font-medium leading-tight mt-0.5"
+                  : "text-[11px] text-qf-tomato font-medium leading-tight mt-0.5"
+              }
+            >
+              {meetsMin
+                ? `עברת את המינימום (₪${minOrder.toLocaleString("he-IL")})`
+                : `חסר ₪${remaining.toLocaleString("he-IL")} למינימום הזמנה`}
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onGo}
+          className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-black text-(--qf-yolk) text-xs font-black border-2 border-black hover:bg-[#1a1a1a] transition"
+          style={{ boxShadow: "2px 2px 0 0 #000" }}
+        >
+          מעבר לעגלה
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
       </div>
     </div>
   );

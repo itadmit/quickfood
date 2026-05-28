@@ -20,9 +20,34 @@ export async function generateMetadata({
   const { tenantSlug } = await params;
   const tenant = await resolveTenantBySlug(tenantSlug);
   if (!tenant) return { title: "QuickFood" };
+
+  const title = `${tenant.name} · הזמנות אונליין`;
+  const description =
+    tenant.about?.trim() ||
+    tenant.cuisineType ||
+    `הזמינו אונליין מ${tenant.name}`;
+  const previewImage = tenant.logoUrl || tenant.coverImage || null;
+  const url = `/s/${tenant.slug}`;
+
   return {
-    title: `${tenant.name} · הזמנות אונליין`,
-    description: tenant.cuisineType ?? "הזמנות אונליין דרך QuickFood",
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "website",
+      locale: "he_IL",
+      url,
+      siteName: tenant.name,
+      title: tenant.name,
+      description,
+      images: previewImage ? [{ url: previewImage, alt: tenant.name }] : [],
+    },
+    twitter: {
+      card: previewImage ? "summary_large_image" : "summary",
+      title: tenant.name,
+      description,
+      images: previewImage ? [previewImage] : [],
+    },
   };
 }
 

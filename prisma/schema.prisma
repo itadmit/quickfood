@@ -911,19 +911,21 @@ model ReviewItem {
 // ─── Auth ───────────────────────────────────────────────────────
 
 model MerchantUser {
-  id             String               @id @default(uuid()) @db.Uuid
-  tenantId       String?              @map("tenant_id") @db.Uuid
-  tenant         Tenant?              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  email          String               @unique
-  passwordHash   String               @map("password_hash")
-  name           String
-  role           UserRole             @default(owner)
-  branches       String[]             @default([])
-  tfaEnabled     Boolean              @default(false) @map("tfa_enabled")
-  tfaSecret      String?              @map("tfa_secret")
-  lastLoginAt    DateTime?            @map("last_login_at")
-  createdAt      DateTime             @default(now()) @map("created_at")
-  passwordResets PasswordResetToken[]
+  id                String                    @id @default(uuid()) @db.Uuid
+  tenantId          String?                   @map("tenant_id") @db.Uuid
+  tenant            Tenant?                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email             String                    @unique
+  passwordHash      String                    @map("password_hash")
+  name              String
+  role              UserRole                  @default(owner)
+  branches          String[]                  @default([])
+  tfaEnabled        Boolean                   @default(false) @map("tfa_enabled")
+  tfaSecret         String?                   @map("tfa_secret")
+  lastLoginAt       DateTime?                 @map("last_login_at")
+  emailVerifiedAt   DateTime?                 @map("email_verified_at")
+  createdAt         DateTime                  @default(now()) @map("created_at")
+  passwordResets    PasswordResetToken[]
+  emailVerifications EmailVerificationToken[]
 
   @@index([tenantId])
   @@map("merchant_users")
@@ -944,6 +946,24 @@ model PasswordResetToken {
 
   @@index([userId, createdAt(sort: Desc)])
   @@map("password_reset_tokens")
+}
+
+/// Email verification tokens. Created on signup and whenever the merchant
+/// clicks "send again" from the verification banner. We hash the token at
+/// rest (same pattern as PasswordResetToken) so a leaked DB doesn't grant
+/// account access. Tokens are single-use — `usedAt` is set on first hit
+/// to make replay impossible.
+model EmailVerificationToken {
+  id        String       @id @default(uuid()) @db.Uuid
+  userId    String       @map("user_id") @db.Uuid
+  user      MerchantUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String       @unique @map("token_hash")
+  expiresAt DateTime     @map("expires_at")
+  usedAt    DateTime?    @map("used_at")
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("email_verification_tokens")
 }
 
 model OtpCode {
