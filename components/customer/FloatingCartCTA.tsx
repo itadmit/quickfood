@@ -50,7 +50,7 @@ export function FloatingCartCTA() {
           <div className="flex items-center gap-2 min-w-0">
             <span
               key={itemCount}
-              className="bg-(--qf-yolk) text-black rounded-full min-w-7 h-7 px-2 grid place-items-center text-sm font-black tnum shrink-0 animate-qf-bump"
+              className="bg-white text-(--qf-deep) rounded-full min-w-7 h-7 px-2 grid place-items-center text-sm font-black tnum shrink-0 animate-qf-bump"
             >
               {itemCount}
             </span>
