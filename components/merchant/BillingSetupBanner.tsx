@@ -42,8 +42,8 @@ export function BillingSetupBanner({
           : `נותרו ${trialDaysLeft} ימים בתקופת הניסיון.`;
   const body =
     trialDaysLeft === null
-      ? "לא נשמר אמצעי תשלום. השלם את פרטי החיוב כדי להפעיל את המנוי."
-      : "השלם פתיחת מנוי כדי להמשיך להשתמש במערכת אחרי תום הניסיון ולפתוח רכישת חבילות SMS.";
+      ? "כדי לפתוח את כל האפשרויות במערכת יש להזין כרטיס אשראי ולהסדיר תשלום. שימו לב — לא תחויבו עדיין."
+      : "כדי לפתוח את כל האפשרויות המלאות במערכת יש להזין כרטיס אשראי ולהסדיר תשלום. שימו לב — לא תחויבו עדיין.";
 
   // The `qf-billing-banner` / `qf-billing-cta` class hooks let
   // globals.css repaint the banner under .dash-v2 with the V2 brand

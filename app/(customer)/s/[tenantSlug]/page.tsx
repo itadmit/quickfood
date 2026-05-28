@@ -8,6 +8,62 @@ import { fingerprintOrderItems } from "@/lib/order-reorder";
 
 export const dynamic = "force-dynamic";
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ tenantSlug: string }>;
+  searchParams: Promise<{ item?: string }>;
+}) {
+  const { item: itemId } = await searchParams;
+  if (!itemId || !UUID_RE.test(itemId)) return {};
+
+  const { tenantSlug } = await params;
+  const tenant = await resolveTenantBySlug(tenantSlug);
+  if (!tenant) return {};
+
+  const item = await prisma.menuItem.findFirst({
+    where: { id: itemId, tenantId: tenant.id },
+    select: { name: true, description: true, images: true, imageUrl: true },
+  });
+  if (!item) return {};
+
+  const previewImage =
+    item.images[0] ||
+    item.imageUrl ||
+    tenant.logoUrl ||
+    tenant.coverImage ||
+    null;
+  const title = `${item.name} · ${tenant.name}`;
+  const description =
+    item.description?.trim() || `הזמינו ${item.name} מ${tenant.name}`;
+  const url = `/s/${tenant.slug}?item=${itemId}`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "website",
+      locale: "he_IL",
+      url,
+      siteName: tenant.name,
+      title,
+      description,
+      images: previewImage ? [{ url: previewImage, alt: item.name }] : [],
+    },
+    twitter: {
+      card: previewImage ? "summary_large_image" : "summary",
+      title,
+      description,
+      images: previewImage ? [previewImage] : [],
+    },
+  };
+}
+
 export default async function HomePage({
   params,
 }: {
