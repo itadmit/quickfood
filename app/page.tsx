@@ -16,13 +16,15 @@ import {
   MapPin,
   Heart,
   Navigation,
+  Sparkles,
+  Leaf,
   type LucideIcon,
 } from "lucide-react";
 
 // Tight map for the WoltCard slots — extend here when a new section
 // needs an icon. Lucide gives consistent stroke + geometry which the
 // old hand-rolled FeatureIcon set didn't.
-type IconName = "store" | "flame" | "wallet" | "star" | "chat" | "chef" | "pizza" | "pin" | "heart" | "navigation";
+type IconName = "store" | "flame" | "wallet" | "star" | "chat" | "chef" | "pizza" | "pin" | "heart" | "navigation" | "sparkles" | "leaf";
 const ICONS: Record<IconName, LucideIcon> = {
   store: Store,
   flame: Flame,
@@ -34,6 +36,8 @@ const ICONS: Record<IconName, LucideIcon> = {
   pin: MapPin,
   heart: Heart,
   navigation: Navigation,
+  sparkles: Sparkles,
+  leaf: Leaf,
 };
 import ItemCustomizerMockup from "./_components/ItemCustomizerMockup";
 import ScrollAnimations from "./_components/ScrollAnimations";
@@ -296,6 +300,11 @@ function Hero() {
         />
       </div>
       <div className={styles.container}>
+        <div className={styles.eyebrow}>
+          <span className={styles.eyebrowDot}>חדש</span>
+          יועץ AI בעברית בתוך החנות שלך
+          <Sparkles size={14} strokeWidth={2.2} aria-hidden />
+        </div>
         <h1 className={styles.headline}>
           <span className={styles.stack}>הלקוחות שלך.</span>
           <span className={styles.stack}>ההזמנות שלך.</span>
@@ -434,8 +443,17 @@ function Features() {
           />
 
           <WoltCard
-            tone="mist"
+            tone="peach"
             layout="decor-start"
+            tag="יועץ AI"
+            heading="לקוח לא יודע מה להזמין? היועץ של החנות יודע."
+            body='צ׳אט AI שמכיר את כל התפריט שלך, את ההזמנות הקודמות של הלקוח ואת המגבלות התזונתיות שלו. הוא ממליץ בעברית - "ארוחה לזוג עד 120 ש״ח", "משהו טבעוני וחריף", "להזמין כמו בפעם שעברה" - ומוסיף ישירות לעגלה. אתה שולט מהדשבורד: בוחר ספק (Claude / Gemini), כותב את ההצעות הראשונות, מפעיל ומכבה את הפופאפ בכניסה לחנות.'
+            icon="sparkles"
+          />
+
+          <WoltCard
+            tone="mist"
+            layout="decor-end"
             tag="החנות"
             heading="עיצוב משלך. דומיין משלך. הלקוחות - שלך."
             body="לוגו שלך, צבעים שלך, שם שלך, דומיין משלך (domain.co.il). שעות פעילות נפרדות לכל סניף, מינימום הזמנה, אזורי משלוח עם זמן משלוח לכל שכונה. הלקוח לא רואה אותנו ולא רואה אף אחד אחר - רק אותך."
@@ -444,11 +462,20 @@ function Features() {
 
           <WoltCard
             tone="sand"
-            layout="decor-end"
+            layout="decor-start"
             tag="הקבועים"
             heading="הוא הזמין אצלך פעם. עכשיו הוא יזמין שוב - בקליק."
             body="הלקוח החוזר רואה את ההזמנה האחרונה שלו על דף הבית של החנות, מסמן פריטים כמועדפים, וחוזר על אותה הזמנה בכפתור אחד - כולל הכתובת, התוספות וההערות מהפעם הקודמת. בלי לעבור באמצע, בלי לשלם עוד 30% על אותה פיצה שהוא כבר מכיר אצלך."
             icon="heart"
+          />
+
+          <WoltCard
+            tone="lilac"
+            layout="decor-end"
+            tag="חיפוש ופילטרים"
+            heading="טבעוני? חריף? בלי גלוטן? הלקוח מוצא בקליק."
+            body="סרגל חיפוש חי בתפריט + 13 תגי תזונה מוכנים: טבעוני, צמחוני, ללא גלוטן, ללא לקטוז, כשר, חריף, ללא אגוזים, חלבי, בשרי, פרווה ועוד. אתה מתייג פריט פעם אחת בעורך, והלקוח מסנן בקליק - בלי שיתבלבל, בלי שיצטרך להתקשר ולשאול."
+            icon="leaf"
           />
 
           <WoltCard
@@ -489,6 +516,9 @@ function Features() {
         </div>
 
         <div className={styles.miniGrid}>
+          <MiniCell tag="מועדפים" title="לב על מנה - הפייבוריט נשמר" body="הלקוחות הרשומים מסמנים מנות בלב ורואים אותן ראשונות בכניסה הבאה. בלי לחפש מחדש את הפיצה שהם תמיד מזמינים." />
+          <MiniCell tag="שדרוג עגלה" title="מומלץ עבורך בצ׳קאאוט" body="קרוסלת פריטים שמשלימים את ההזמנה - מבוססים על מה שבעגלה ועל לקוחות דומים. בלי לדחוף, בלי להציע פריט שכבר נבחר." />
+          <MiniCell tag="משלוח" title="בוחר עיר/סניף בסגנון וולט" body="צ׳יפ עם שם העיר במרכז דף הבית. הלקוח לוחץ פעם אחת, בוחר משלוח או איסוף, וכל התפריט והמחירים מתעדכנים לפי האזור." />
           <MiniCell tag="סניפים" title="מולטי-סניף" body="שעות, דמי משלוח, עמלת שירות ומינימום הזמנה נפרדים לכל סניף." />
           <MiniCell tag="קופונים" title="קופונים חכמים" body="לפי קטגוריה, סכום מינימום, מגבלת שימוש פר-לקוח, חלון תאריכים." />
           <MiniCell tag="מעקב" title="מעקב הזמנה חי" body="עדכון בזמן אמת ללקוח - בלי לרענן את המסך. אופציונלי לפי בחירה." />
@@ -711,6 +741,9 @@ function GrowPartner() {
 function Pricing() {
   const features = [
     "מנות עם גדלים, אפשרויות חובה ותוספות פר-יחידה",
+    "יועץ AI בעברית (Claude / Gemini) - ממליץ ומוסיף לעגלה",
+    "חיפוש בתפריט + 13 תגי תזונה (טבעוני, ללא גלוטן, כשר ועוד)",
+    "מועדפים, הזמנה חוזרת חכמה ושדרוג עגלה אוטומטי",
     "זמן הכנה לכל פריט + זמן משוער מצרפי לכל הזמנה",
     "סטטוס מסעדה: פתוח / עומס / סגור - זמן הגעה משוער אוטומטי",
     "אתר שלם ממותג עם הדומיין שלך",
