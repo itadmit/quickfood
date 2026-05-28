@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { IcoPlus, IcoClose } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
+import { convertImageToWebP } from "@/lib/image/convert-to-webp";
 
 const ACCEPT = "image/jpeg,image/png,image/webp";
 const MAX_BYTES = 5_000_000;
@@ -28,18 +29,22 @@ export function MiniImagePicker({
   const [busy, setBusy] = useState(false);
   const [pct, setPct] = useState(0);
 
-  async function pick(file: File) {
-    if (file.size > MAX_BYTES) {
+  async function pick(original: File) {
+    if (original.size > MAX_BYTES) {
       alert("הקובץ גדול מ-5MB");
       return;
     }
-    if (!ACCEPT.split(",").includes(file.type)) {
+    if (!ACCEPT.split(",").includes(original.type)) {
       alert("סוג קובץ לא נתמך");
       return;
     }
     setBusy(true);
     setPct(0);
     try {
+      // Convert + downscale in the browser before uploading so R2 holds
+      // optimized WebP bytes. Falls back to the original on any failure.
+      const file = await convertImageToWebP(original);
+
       const initRes = await fetch("/api/v1/upload/init", {
         method: "POST",
         headers: { "content-type": "application/json" },

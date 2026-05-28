@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { IcoPlus, IcoClose, IcoArrowLeft, IcoArrowRight } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
+import { convertImageToWebP } from "@/lib/image/convert-to-webp";
 
 const ACCEPT = "image/jpeg,image/png,image/webp";
 const MAX_BYTES = 5_000_000; // 5MB
@@ -82,17 +83,22 @@ export function ImageUploader({
   }
 
   async function uploadOne(
-    file: File,
+    original: File,
     id: string,
   ): Promise<string | null> {
-    if (file.size > MAX_BYTES) {
-      setError(`קובץ ${file.name} גדול מ-5MB`);
+    if (original.size > MAX_BYTES) {
+      setError(`קובץ ${original.name} גדול מ-5MB`);
       return null;
     }
-    if (!ACCEPT.split(",").includes(file.type)) {
-      setError(`סוג קובץ לא נתמך: ${file.type}`);
+    if (!ACCEPT.split(",").includes(original.type)) {
+      setError(`סוג קובץ לא נתמך: ${original.type}`);
       return null;
     }
+
+    // Convert + downscale in the browser before uploading so R2 holds
+    // optimized WebP bytes (typically 30-50% of the original JPEG/PNG).
+    // Falls back to the original on any failure.
+    const file = await convertImageToWebP(original);
 
     // 1) init — get a presigned URL
     const initRes = await fetch("/api/v1/upload/init", {
