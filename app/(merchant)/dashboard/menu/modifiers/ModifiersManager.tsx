@@ -370,7 +370,20 @@ function SetEditor({
           <span className="text-sm font-medium">סוג בחירה</span>
           <select
             value={set.type}
-            onChange={(e) => onChange({ ...set, type: e.target.value as "single" | "multi" })}
+            onChange={(e) => {
+              const type = e.target.value as "single" | "multi";
+              if (type === "single") {
+                onChange({
+                  ...set,
+                  type,
+                  maxSelect: 1,
+                  minSelect: set.required ? 1 : 0,
+                  includedFree: 0,
+                });
+              } else {
+                onChange({ ...set, type });
+              }
+            }}
             className="px-3 py-2 rounded-xl border border-qf-line-dash bg-white focus:border-(--qf-primary) outline-none"
           >
             <option value="single">בחירה יחידה (למשל: סוג בצק)</option>
