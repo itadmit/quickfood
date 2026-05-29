@@ -211,12 +211,16 @@ export function ItemDetail({
 
   const missingGroup = useMemo(() => {
     for (const g of item.optionGroups) {
+      // A group marked חובה must always require at least one pick — even
+      // if the catalog's minSelect leaked through as 0 (a known artefact
+      // of the Wolt importer that doesn't always seed the floor).
+      const floor = g.required ? Math.max(1, g.minSelect) : g.minSelect;
       if (g.allowHalf) {
         const count = Object.keys(halfPicks[g.id] ?? {}).length;
-        if (g.required && count < g.minSelect) return g;
+        if (g.required && count < floor) return g;
       } else {
         const sel = picks[g.id] ?? new Set();
-        if (g.required && sel.size < g.minSelect) return g;
+        if (g.required && sel.size < floor) return g;
       }
     }
     return null;
@@ -473,10 +477,11 @@ export function ItemDetail({
           const gHalf = halfPicks[g.id] ?? {};
           const selected = Object.keys(gHalf).length;
           const atMax = selected >= g.maxSelect;
+          const minHalf = g.required ? Math.max(1, g.minSelect) : g.minSelect;
           const subtitle = g.required
-            ? selected >= g.minSelect
+            ? selected >= minHalf
               ? `הושלם · ${selected}/${g.maxSelect}`
-              : `חובה ${g.minSelect}–${g.maxSelect} · ${selected}/${g.maxSelect}`
+              : `חובה ${minHalf}–${g.maxSelect} · ${selected}/${g.maxSelect}`
             : atMax
               ? `הגעת למקסימום · ${g.maxSelect}/${g.maxSelect}`
               : `אפשר לבחור עד ${g.maxSelect} · כל תוספת ניתן לקבוע לחצי פיצה`;
@@ -539,11 +544,15 @@ export function ItemDetail({
 
         let subtitle: string;
         if (g.required) {
+          const effectiveMin = Math.max(1, g.minSelect);
           if (g.type === "single") {
             subtitle = selected > 0 ? "נבחר" : "חובה לבחור 1";
           } else {
-            const range = g.minSelect === g.maxSelect ? `${g.minSelect}` : `${g.minSelect}–${g.maxSelect}`;
-            subtitle = selected >= g.minSelect
+            const range =
+              effectiveMin === g.maxSelect
+                ? `${effectiveMin}`
+                : `${effectiveMin}–${g.maxSelect}`;
+            subtitle = selected >= effectiveMin
               ? `הושלם · ${selected}/${g.maxSelect}`
               : `חובה ${range} · ${selected}/${g.maxSelect}`;
           }

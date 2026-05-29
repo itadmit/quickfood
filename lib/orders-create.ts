@@ -149,7 +149,11 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       if (effectiveType === "single" && picksInGroup.length > 1) {
         throw new CartValidationError("too_many_in_single_group", group.id);
       }
-      if (effectiveRequired && picksInGroup.length < effectiveMin) {
+      // חובה group with min=0 in the catalog is still a "must pick one":
+      // the Wolt importer occasionally leaves the floor unset. Treat
+      // required as min>=1 regardless of what the row says.
+      const requiredFloor = effectiveRequired ? Math.max(1, effectiveMin) : effectiveMin;
+      if (effectiveRequired && picksInGroup.length < requiredFloor) {
         throw new CartValidationError("required_group_missing", group.id);
       }
       if (picksInGroup.length > effectiveMax) {
