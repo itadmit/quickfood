@@ -1,8 +1,10 @@
 import { z } from "zod";
+import { headers } from "next/headers";
 import bcrypt from "bcryptjs";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { prisma } from "@/lib/db/client";
 import { issueCourierSession, setCourierCookie } from "@/lib/auth/courier-session";
+import { checkRate } from "@/lib/api/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,6 +22,13 @@ function normalizeIdentifier(raw: string): { email?: string; phone?: string } {
 }
 
 export const POST = handler(async (req: Request) => {
+  const hdrs = await headers();
+  const ip =
+    hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    hdrs.get("x-real-ip") ||
+    "unknown";
+  checkRate(`courier-login:${ip}`, 20);
+
   const body = Body.parse(await req.json());
   const { email, phone } = normalizeIdentifier(body.identifier);
 

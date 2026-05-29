@@ -27,6 +27,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ orderId:
       yield { event: "not_found", data: { order_id: orderId } };
       return;
     }
+    const liveTracking =
+      initial.status === "out_for_delivery" || initial.status === "ready";
     yield {
       event: "snapshot",
       id: `${initial.id}:${initial.createdAt.getTime()}`,
@@ -36,8 +38,14 @@ export async function GET(req: Request, { params }: { params: Promise<{ orderId:
         courier_id: initial.courierId,
         courier_name: initial.courier?.name ?? null,
         courier_phone: initial.courier?.phone ?? null,
-        courier_lat: initial.courier?.currentLat ? Number(initial.courier.currentLat) : null,
-        courier_lng: initial.courier?.currentLng ? Number(initial.courier.currentLng) : null,
+        courier_lat:
+          liveTracking && initial.courier?.currentLat
+            ? Number(initial.courier.currentLat)
+            : null,
+        courier_lng:
+          liveTracking && initial.courier?.currentLng
+            ? Number(initial.courier.currentLng)
+            : null,
       },
     };
     lastEventAt = initial.createdAt;

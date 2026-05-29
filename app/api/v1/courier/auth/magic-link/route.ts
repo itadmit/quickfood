@@ -1,9 +1,11 @@
 import { z } from "zod";
+import { headers } from "next/headers";
 import { handler, apiJson } from "@/lib/api-response";
 import { prisma } from "@/lib/db/client";
 import { sendEmail } from "@/lib/email/send";
 import { courierMagicLinkEmail } from "@/lib/email/templates";
 import { generateRawToken, hashToken } from "@/lib/auth/courier-session";
+import { checkRate } from "@/lib/api/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +17,13 @@ const Body = z.object({
 const TTL_MINUTES = 15;
 
 export const POST = handler(async (req: Request) => {
+  const hdrs = await headers();
+  const ip =
+    hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    hdrs.get("x-real-ip") ||
+    "unknown";
+  checkRate(`courier-magic:${ip}`, 10);
+
   const body = Body.parse(await req.json());
   const email = body.email.trim().toLowerCase();
 

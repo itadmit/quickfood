@@ -30,6 +30,7 @@ export const GET = handler(async () => {
       name: c.name,
       phone: c.phone,
       email: c.email,
+      has_login: !!c.pinHash,
       vehicle: c.vehicle,
       status: c.status,
       current_order_id: c.currentOrderId,
@@ -51,7 +52,7 @@ export const POST = handler(async (req: Request) => {
   const phone = body.phone.replace(/[^\d]/g, "");
 
   const dup = await prisma.courier.findFirst({
-    where: { email, tenantId: session.tenantId },
+    where: { email },
     select: { id: true },
   });
   if (dup) return apiError("conflict", "כבר קיים שליח עם המייל הזה", 409, "email");

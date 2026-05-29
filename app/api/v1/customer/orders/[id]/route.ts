@@ -68,8 +68,16 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
             name: order.courier.name,
             phone: order.courier.phone,
             rating_avg: Number(order.courier.ratingAvg),
-            lat: order.courier.currentLat ? Number(order.courier.currentLat) : null,
-            lng: order.courier.currentLng ? Number(order.courier.currentLng) : null,
+            lat:
+              (order.status === "out_for_delivery" || order.status === "ready") &&
+              order.courier.currentLat
+                ? Number(order.courier.currentLat)
+                : null,
+            lng:
+              (order.status === "out_for_delivery" || order.status === "ready") &&
+              order.courier.currentLng
+                ? Number(order.courier.currentLng)
+                : null,
             last_seen_at: order.courier.lastSeenAt?.toISOString() ?? null,
           }
         : null,

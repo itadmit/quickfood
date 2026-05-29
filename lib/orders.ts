@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db/client";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
 import { scheduleReviewReminder } from "@/lib/reviews/schedule";
 import { recordOrderCommission } from "@/lib/billing-hub/commission";
-import { notifyCourierAssigned } from "@/lib/courier/notify";
+import { notifyCourierAssigned, notifyCustomerDelivered } from "@/lib/courier/notify";
 
 /**
  * Order status state machine. Defines which transitions are legal.
@@ -70,7 +70,6 @@ export async function advanceStatus(
   if (to === "ready") updates.readyAt = now;
   if (to === "out_for_delivery") {
     updates.courierAssignedAt = updates.courierAssignedAt ?? now;
-    updates.courierPickedUpAt = now;
   }
   if (to === "delivered") {
     updates.deliveredAt = now;
@@ -92,11 +91,20 @@ export async function advanceStatus(
       order.paymentMethod === "cash" && typeof options?.cashCollected === "number"
         ? options.cashCollected
         : 0;
+    const stillActive = await prisma.order.findFirst({
+      where: {
+        courierId: assignedCourierId,
+        status: "out_for_delivery",
+        NOT: { id: orderId },
+      },
+      select: { id: true },
+      orderBy: { courierAssignedAt: "asc" },
+    });
     await prisma.courier.update({
       where: { id: assignedCourierId },
       data: {
         deliveriesToday: { increment: 1 },
-        currentOrderId: null,
+        currentOrderId: stillActive?.id ?? null,
         ...(cashDelta > 0 ? { cashOnHand: { increment: cashDelta } } : {}),
       },
     });
@@ -156,6 +164,9 @@ export async function advanceStatus(
         console.error("[commission] record failed", err);
       });
     }
+    void notifyCustomerDelivered(orderId).catch((err) => {
+      console.error("[courier] notify delivered failed", err);
+    });
   }
 
   if (to === "out_for_delivery" && options?.courierId && options.courierId !== order.courierId) {

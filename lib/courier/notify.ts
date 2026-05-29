@@ -61,6 +61,7 @@ export async function notifyCourierAssigned(orderId: string, courierId: string):
     refId: orderId,
   });
   if (wa.status === "sent") return;
+  if (wa.status === "skipped_no_balance" || wa.status === "invalid_recipient") return;
 
   await sendSms({
     tenantId: courier.tenantId,
@@ -99,6 +100,7 @@ export async function notifyCustomerOnTheWay(orderId: string): Promise<void> {
     refId: orderId,
   });
   if (wa.status === "sent") return;
+  if (wa.status === "skipped_no_balance" || wa.status === "invalid_recipient") return;
 
   await sendSms({
     tenantId: order.tenantId,
@@ -133,6 +135,7 @@ export async function notifyCustomerDelivered(orderId: string): Promise<void> {
     refId: orderId,
   });
   if (wa.status === "sent") return;
+  if (wa.status === "skipped_no_balance" || wa.status === "invalid_recipient") return;
 
   await sendSms({
     tenantId: order.tenantId,

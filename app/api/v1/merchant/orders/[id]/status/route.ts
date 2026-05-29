@@ -19,6 +19,27 @@ export const PATCH = handler(
       return apiError("forbidden", "אין הרשאה", 403);
     }
 
+    if (body.courier_id) {
+      const courier = await prisma.courier.findUnique({
+        where: { id: body.courier_id },
+        select: { tenantId: true, pinHash: true, active: true },
+      });
+      if (!courier || courier.tenantId !== order.tenantId) {
+        return apiError("validation_error", "השליח אינו שייך למסעדה", 422, "courier_id");
+      }
+      if (!courier.active) {
+        return apiError("validation_error", "השליח מושבת", 422, "courier_id");
+      }
+      if (!courier.pinHash) {
+        return apiError(
+          "courier_not_configured",
+          "השליח עדיין לא הגדיר חשבון התחברות. עברו למסך השליחים והשלימו מייל + PIN.",
+          422,
+          "courier_id",
+        );
+      }
+    }
+
     try {
       const updated = await advanceStatus(id, body.status, {
         courierId: body.courier_id,

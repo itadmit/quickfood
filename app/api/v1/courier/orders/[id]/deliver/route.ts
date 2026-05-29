@@ -3,7 +3,6 @@ import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireCourier } from "@/lib/auth/courier-session";
 import { prisma } from "@/lib/db/client";
 import { advanceStatus, OrderTransitionError } from "@/lib/orders";
-import { notifyCustomerDelivered } from "@/lib/courier/notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,12 +42,18 @@ export const PATCH = handler(
       }
       throw err;
     }
+    const stillActive = await prisma.order.count({
+      where: {
+        courierId: session.courierId,
+        status: "out_for_delivery",
+      },
+    });
     await prisma.courier.update({
       where: { id: session.courierId },
-      data: { status: "available", lastSeenAt: new Date() },
-    });
-    void notifyCustomerDelivered(id).catch((err) => {
-      console.error("[courier] notify delivered failed", err);
+      data: {
+        ...(stillActive === 0 ? { status: "available" } : {}),
+        lastSeenAt: new Date(),
+      },
     });
     return apiJson({ ok: true });
   },

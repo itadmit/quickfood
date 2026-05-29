@@ -13,6 +13,7 @@ interface Courier {
   name: string;
   phone: string;
   email: string | null;
+  hasLogin: boolean;
   vehicle: string;
   status: string;
   ratingAvg: number;
@@ -47,6 +48,7 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
   const [deleting, setDeleting] = useState(false);
   const [resetPinFor, setResetPinFor] = useState<Courier | null>(null);
   const [resetPinValue, setResetPinValue] = useState("");
+  const [resetEmailValue, setResetEmailValue] = useState("");
   const [resettingPin, setResettingPin] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   function pushToast(kind: ToastKind, message: string) {
@@ -134,21 +136,46 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
       pushToast("err", "PIN חייב להיות 4-6 ספרות");
       return;
     }
-    setResettingPin(true);
-    const res = await fetch(`/api/v1/merchant/couriers/${resetPinFor.id}/reset-pin`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ pin: resetPinValue }),
-    });
-    setResettingPin(false);
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      pushToast("err", body?.error?.message ?? "איפוס PIN נכשל");
+    const needsEmail = !resetPinFor.email;
+    if (needsEmail && !resetEmailValue.trim()) {
+      pushToast("err", "נדרש מייל לשליח");
       return;
     }
-    setResetPinFor(null);
-    setResetPinValue("");
-    pushToast("ok", "PIN עודכן. כל הסשנים הקודמים נותקו.");
+    setResettingPin(true);
+    try {
+      if (needsEmail) {
+        const r = await fetch(`/api/v1/merchant/couriers/${resetPinFor.id}`, {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ email: resetEmailValue.trim() }),
+        });
+        if (!r.ok) {
+          const body = await r.json().catch(() => ({}));
+          pushToast("err", body?.error?.message ?? "עדכון מייל נכשל");
+          return;
+        }
+      }
+      const res = await fetch(`/api/v1/merchant/couriers/${resetPinFor.id}/reset-pin`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ pin: resetPinValue }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        pushToast("err", body?.error?.message ?? "איפוס PIN נכשל");
+        return;
+      }
+      setResetPinFor(null);
+      setResetPinValue("");
+      setResetEmailValue("");
+      router.refresh();
+      pushToast(
+        "ok",
+        needsEmail ? "החשבון הוגדר בהצלחה" : "PIN עודכן. כל הסשנים הקודמים נותקו.",
+      );
+    } finally {
+      setResettingPin(false);
+    }
   }
 
   return (
@@ -245,7 +272,14 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
                     <IcoBike c="#3a4a40" s={22} />
                   </div>
                   <div className="min-w-0">
-                    <div className="font-medium truncate">{c.name}</div>
+                    <div className="font-medium truncate flex items-center gap-1.5">
+                      {c.name}
+                      {!c.hasLogin && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-qf-tomato-soft text-qf-tomato font-medium">
+                          חסר חשבון
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-qf-mute">{VEHICLE_LABEL[c.vehicle]}</div>
                   </div>
                 </div>
@@ -255,10 +289,16 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
                     onClick={() => {
                       setResetPinFor(c);
                       setResetPinValue("");
+                      setResetEmailValue("");
                     }}
-                    className="text-xs text-qf-mute hover:text-qf-ink px-2 py-1 rounded-md border border-qf-line-dash"
+                    className={cn(
+                      "text-xs px-2 py-1 rounded-md border",
+                      c.hasLogin
+                        ? "text-qf-mute hover:text-qf-ink border-qf-line-dash"
+                        : "text-qf-tomato border-qf-tomato/40 font-medium hover:bg-qf-tomato-soft",
+                    )}
                   >
-                    איפוס PIN
+                    {c.hasLogin ? "איפוס PIN" : "הגדר חשבון"}
                   </button>
                   <button
                     type="button"
@@ -346,11 +386,31 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
             className="bg-white rounded-2xl p-5 w-full max-w-sm space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="font-semibold text-lg">איפוס PIN</h3>
+            <h3 className="font-semibold text-lg">
+              {resetPinFor.email ? "איפוס PIN" : "הגדרת חשבון התחברות"}
+            </h3>
             <p className="text-sm text-qf-mute">
-              איפוס ה-PIN של <span className="font-medium">{resetPinFor.name}</span>. כל הסשנים
-              הפעילים שלו יתנתקו אוטומטית, ויידרש להתחבר מחדש עם ה-PIN החדש.
+              {resetPinFor.email ? (
+                <>
+                  איפוס ה-PIN של <span className="font-medium">{resetPinFor.name}</span>. כל הסשנים
+                  הפעילים שלו יתנתקו אוטומטית, ויידרש להתחבר מחדש עם ה-PIN החדש.
+                </>
+              ) : (
+                <>
+                  הגדרת מייל ו-PIN ל-<span className="font-medium">{resetPinFor.name}</span> כדי שיוכל להתחבר לאפליקציית השליחים.
+                </>
+              )}
             </p>
+            {!resetPinFor.email && (
+              <input
+                value={resetEmailValue}
+                onChange={(e) => setResetEmailValue(e.target.value)}
+                placeholder="מייל"
+                type="email"
+                dir="ltr"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+              />
+            )}
             <input
               value={resetPinValue}
               onChange={(e) =>

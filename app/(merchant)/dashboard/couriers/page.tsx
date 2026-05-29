@@ -23,6 +23,7 @@ export default async function CouriersPage() {
         name: c.name,
         phone: c.phone,
         email: c.email,
+        hasLogin: !!c.pinHash,
         vehicle: c.vehicle,
         status: c.status,
         ratingAvg: Number(c.ratingAvg),
