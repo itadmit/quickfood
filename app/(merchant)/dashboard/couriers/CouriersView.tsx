@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoBike, IcoPhone, IcoStar } from "@/components/shared/Icons";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -37,6 +37,11 @@ const VEHICLE_LABEL: Record<string, string> = {
 export function CouriersView({ initial }: { initial: Courier[] }) {
   const router = useRouter();
   const [couriers, setCouriers] = useState(initial);
+
+  useEffect(() => {
+    setCouriers(initial);
+  }, [initial]);
+
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -89,6 +94,19 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
         pushToast("err", body?.error?.message ?? "הוספת שליח נכשלה");
         return;
       }
+      const data = await res.json().catch(() => ({}));
+      const newCourier: Courier = {
+        id: data?.courier?.id ?? crypto.randomUUID(),
+        name: name.trim(),
+        phone: phone.trim(),
+        email: email.trim(),
+        hasLogin: true,
+        vehicle,
+        status: "offline",
+        ratingAvg: 0,
+        deliveriesToday: 0,
+      };
+      setCouriers((prev) => [newCourier, ...prev]);
       router.refresh();
       resetForm();
       setAdding(false);
