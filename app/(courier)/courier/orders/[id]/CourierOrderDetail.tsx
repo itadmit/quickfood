@@ -121,9 +121,13 @@ export function CourierOrderDetail({ orderId }: { orderId: string }) {
     );
   }
 
+  // Guest / manual orders don't always have a structured Address row;
+  // the typed address lives in `delivery_notes` in that case. Fall back to
+  // it so the courier always sees a real address, not "ללא כתובת".
   const addressLine = order.address
     ? `${order.address.street}, ${order.address.city}`
-    : "ללא כתובת";
+    : order.delivery_notes?.trim() || "ללא כתובת";
+  const hasAddress = !!order.address || !!order.delivery_notes?.trim();
   const wazeHref = order.address?.lat && order.address?.lng
     ? `https://waze.com/ul?ll=${order.address.lat},${order.address.lng}&navigate=yes`
     : `https://waze.com/ul?q=${encodeURIComponent(addressLine)}&navigate=yes`;
@@ -155,19 +159,25 @@ export function CourierOrderDetail({ orderId }: { orderId: string }) {
                 .join(" · ")}
             </p>
           )}
-          {(order.address?.notes || order.delivery_notes) && (
+          {/* Don't double-print delivery_notes — it's already the address
+              line when no structured address row exists. Only surface a
+              note here when it's distinct from the line above. */}
+          {(order.address?.notes ||
+            (order.address && order.delivery_notes)) && (
             <p className="text-sm text-amber-300 mt-2">
               {order.address?.notes || order.delivery_notes}
             </p>
           )}
-          <a
-            href={wazeHref}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-3 block py-3 rounded-xl bg-emerald-500 text-[#062017] text-center font-bold"
-          >
-            ניווט ב-Waze
-          </a>
+          {hasAddress && (
+            <a
+              href={wazeHref}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 block py-3 rounded-xl bg-emerald-500 text-[#062017] text-center font-bold"
+            >
+              ניווט ב-Waze
+            </a>
+          )}
         </div>
 
         <div className="rounded-2xl bg-white/5 border border-white/10 p-4 space-y-2">

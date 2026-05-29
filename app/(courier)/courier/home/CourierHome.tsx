@@ -134,9 +134,12 @@ function Stat({ label, value }: { label: string; value: number | string }) {
 
 function OrderCard({ order }: { order: OrderRow }) {
   const isCash = order.payment_method === "cash";
+  // Guest / manual orders don't always have a structured Address row;
+  // the typed address lives in `delivery_notes` in that case. Fall back to
+  // it so the courier always sees a real address, not "ללא כתובת".
   const addressLine = order.address
     ? `${order.address.street}, ${order.address.city}`
-    : "ללא כתובת";
+    : order.delivery_notes?.trim() || "ללא כתובת";
   const wazeHref = order.address?.lat && order.address?.lng
     ? `https://waze.com/ul?ll=${order.address.lat},${order.address.lng}&navigate=yes`
     : `https://waze.com/ul?q=${encodeURIComponent(addressLine)}&navigate=yes`;
@@ -172,9 +175,15 @@ function OrderCard({ order }: { order: OrderRow }) {
               .join(" · ")}
           </p>
         )}
-        {(order.address?.notes || order.delivery_notes || order.customer_notes) && (
+        {/* Don't surface delivery_notes here when it already IS the
+            address line above (guest/manual orders). */}
+        {(order.address?.notes ||
+          (order.address && order.delivery_notes) ||
+          order.customer_notes) && (
           <p className="text-xs text-amber-300 mt-1">
-            {order.address?.notes || order.delivery_notes || order.customer_notes}
+            {order.address?.notes ||
+              (order.address ? order.delivery_notes : null) ||
+              order.customer_notes}
           </p>
         )}
       </div>
