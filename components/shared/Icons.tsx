@@ -491,20 +491,35 @@ export const IcoQrCode = ({ c = "#11231a", s = 18, className }: IconProps) => (
 /** WhatsApp brand glyph — single path, phone receiver as negative
    space inside the chat-bubble. Source: Simple Icons (CC0). */
 export const IcoRefresh = ({ c = "currentColor", s = 18, className }: IconProps) => (
-  // Single clockwise arc that breaks at ~11 o'clock with an arrow tip
-  // tucked under the top-right of the circle. Cleaner at 16-18px than
-  // the typical "two opposing arrows" refresh glyph, which renders as
-  // a tangle of crossing arrowheads at small sizes.
+  // Two opposing arcs with the L-shaped arrow corners tucked at
+  // diagonally opposite ends (top-left + bottom-right). Each arc ends
+  // well short of the other arc's arrowhead so the tips can't visually
+  // run into each other the way they did on the earlier two-tip
+  // design.
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
     <path
-      d="M20 12a8 8 0 1 1-3-6.24"
+      d="M20 11A8.1 8.1 0 0 0 4.5 9"
       stroke={c}
       strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <path
-      d="M20 4v4h-4"
+      d="M4 5v4h4"
+      stroke={c}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M4 13a8.1 8.1 0 0 0 15.5 2"
+      stroke={c}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M20 19v-4h-4"
       stroke={c}
       strokeWidth="1.8"
       strokeLinecap="round"
