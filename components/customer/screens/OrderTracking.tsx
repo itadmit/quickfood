@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { IcoChev, IcoPhone, IcoClock, IcoCheck, IcoStar } from "@/components/shared/Icons";
+import { IcoPhone, IcoClock, IcoCheck, IcoStar, IcoWhatsApp } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { formatPrice, formatTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -55,9 +55,20 @@ interface ExistingReview {
   createdAt: string;
 }
 
+export interface PublicReview {
+  id: string;
+  rating: number;
+  text: string;
+  createdAt: string;
+  authorName: string;
+}
+
 export function OrderTracking({
   tenantSlug,
   tenantName,
+  tenantLogoUrl = null,
+  tenantCoverImage = null,
+  recentReviews = [],
   order: initialOrder,
   canReview = false,
   existingReview = null,
@@ -65,6 +76,9 @@ export function OrderTracking({
 }: {
   tenantSlug: string;
   tenantName: string;
+  tenantLogoUrl?: string | null;
+  tenantCoverImage?: string | null;
+  recentReviews?: PublicReview[];
   order: OrderData;
   canReview?: boolean;
   existingReview?: ExistingReview | null;
@@ -122,6 +136,9 @@ export function OrderTracking({
       <ThankYouView
         tenantSlug={tenantSlug}
         tenantName={tenantName}
+        tenantLogoUrl={tenantLogoUrl}
+        tenantCoverImage={tenantCoverImage}
+        recentReviews={recentReviews}
         order={order}
         canReview={canReview}
         review={review}
@@ -132,46 +149,29 @@ export function OrderTracking({
 
   return (
     <div className="pb-20 lg:max-w-2xl lg:mx-auto lg:pt-6 lg:pb-12">
-      <header className="bg-linear-to-b from-(--qf-primary) to-(--qf-deep) text-white px-5 pt-5 pb-8 rounded-b-3xl lg:rounded-3xl lg:px-8">
-        <div className="flex items-center gap-3 mb-4">
-          <Link
-            href={`/s/${tenantSlug}`}
-            className="w-9 h-9 rounded-full bg-white/15 grid place-items-center lg:hidden"
-            aria-label="חזרה"
-          >
-            <IcoChev c="#fff" s={18} />
-          </Link>
-          <div className="font-mono text-sm">#{order.number}</div>
-        </div>
-        <div className="text-center">
-          {isJustPlaced ? (
-            <>
-              <div
-                className="mx-auto w-20 h-20 rounded-full bg-white grid place-items-center shadow-lg animate-qf-check-in"
-                aria-hidden
-              >
-                <IcoCheck c="#16a34a" s={44} />
-              </div>
-              <div className="text-2xl font-bold mt-4">תודה על ההזמנה!</div>
-              <div className="text-sm mt-1 opacity-90">
-                ההזמנה אצל {tenantName} — תקבל עדכון ברגע שהיא תיכנס להכנה
-              </div>
-            </>
-          ) : isDelivered ? (
-            <>
-              <div className="text-5xl font-bold tnum grid place-items-center">
-                <IcoCheck c="currentColor" s={48} />
-              </div>
-              <div className="text-sm mt-1 opacity-85">נמסר בהצלחה</div>
-            </>
-          ) : (
-            <>
-              <div className="text-5xl font-bold tnum">25–35</div>
-              <div className="text-sm mt-1 opacity-85">דקות עד להגעה משוערת</div>
-            </>
-          )}
-        </div>
-      </header>
+      <BrandedHeader
+        tenantSlug={tenantSlug}
+        tenantName={tenantName}
+        tenantLogoUrl={tenantLogoUrl}
+        tenantCoverImage={tenantCoverImage}
+        orderNumber={order.number}
+        headline={
+          isJustPlaced
+            ? "תודה על ההזמנה!"
+            : isDelivered
+              ? "נמסר בהצלחה"
+              : "25–35"
+        }
+        subhead={
+          isJustPlaced
+            ? `ההזמנה אצל ${tenantName} — תקבל עדכון ברגע שהיא תיכנס להכנה`
+            : isDelivered
+              ? null
+              : "דקות עד להגעה משוערת"
+        }
+        showCheck={isJustPlaced || isDelivered}
+        bigNumber={!isJustPlaced && !isDelivered}
+      />
 
       {/* Status card */}
       <section className="px-5 -mt-3 lg:px-0 lg:mt-6">
@@ -187,21 +187,56 @@ export function OrderTracking({
             </div>
           </div>
 
-          {/* Progress steps */}
-          <ol className="grid grid-cols-4 gap-2">
+          {/* Progress steps — circles connected by a track. The fill grows
+              across the connector when the next stage is reached, and the
+              currently-active circle gets a soft pulsing ring so the eye
+              lands on "where we are right now" without reading the labels. */}
+          <ol className="relative flex items-start">
             {STAGES.map((s, idx) => {
               const done = idx <= stage;
+              const isCurrent = idx === stage;
+              const lineDone = idx < stage;
               return (
-                <li key={s.key} className="text-center">
+                <li
+                  key={s.key}
+                  className="flex-1 flex flex-col items-center relative"
+                >
+                  {/* Connector toward the NEXT step. Anchored at the
+                      column center and stretched a full column wide so
+                      it lands on the next circle's center. */}
+                  {idx < STAGES.length - 1 && (
+                    <div className="absolute top-3.5 inset-s-1/2 w-full h-0.5 -translate-y-1/2 bg-qf-line-soft pointer-events-none overflow-hidden">
+                      <div
+                        className="h-full bg-(--qf-primary) transition-[width] duration-700 ease-out"
+                        style={{ width: lineDone ? "100%" : "0%" }}
+                      />
+                    </div>
+                  )}
+                  {/* Pulsing halo on the active stage. animate-ping fades
+                      out as it expands, so it reads as a heartbeat. */}
+                  {isCurrent && (
+                    <div className="absolute top-0 w-7 h-7 rounded-full bg-(--qf-primary)/40 animate-ping pointer-events-none" />
+                  )}
                   <div
                     className={cn(
-                      "mx-auto w-7 h-7 rounded-full grid place-items-center transition",
-                      done ? "bg-(--qf-primary) text-white" : "bg-qf-line-soft text-qf-mute",
+                      "relative z-10 w-7 h-7 rounded-full grid place-items-center transition-colors duration-500",
+                      done
+                        ? "bg-(--qf-primary) text-white shadow-md"
+                        : "bg-qf-line-soft text-qf-mute",
                     )}
                   >
-                    {done ? <IcoCheck c="#fff" s={14} /> : <span className="text-xs">{idx + 1}</span>}
+                    {done ? (
+                      <IcoCheck c="#fff" s={14} />
+                    ) : (
+                      <span className="text-xs">{idx + 1}</span>
+                    )}
                   </div>
-                  <div className={cn("text-[10px] mt-1", done ? "text-qf-ink" : "text-qf-mute")}>
+                  <div
+                    className={cn(
+                      "text-[10px] mt-1 transition-colors",
+                      done ? "text-qf-ink font-medium" : "text-qf-mute",
+                    )}
+                  >
                     {s.label}
                   </div>
                 </li>
@@ -261,14 +296,33 @@ export function OrderTracking({
         <h2 className="font-semibold mb-2">פירוט ההזמנה</h2>
         <div className="bg-white rounded-2xl border border-qf-line divide-y divide-qf-line-soft">
           {order.items.map((it) => (
-            <div key={it.id} className="px-4 py-3 flex items-center justify-between gap-3 text-sm">
-              <div className="min-w-0">
-                <div className="font-medium truncate">{it.name}</div>
-                {it.size && <div className="text-xs text-qf-mute">{it.size}</div>}
+            <div
+              key={it.id}
+              className="px-4 py-3 flex items-center gap-3 text-sm"
+            >
+              <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
+                <MenuItemImage
+                  src={it.imageUrl ?? null}
+                  alt={it.name}
+                  businessType={order.businessType}
+                  size={40}
+                  rounded="xl"
+                  className="w-full h-full"
+                />
               </div>
-              <div className="flex items-center gap-3">
-                <div className="text-qf-mute text-xs tnum">×{it.quantity}</div>
-                <div className="font-medium tnum">{formatPrice(it.total)}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="font-medium truncate">{it.name}</div>
+                  <div className="text-qf-mute text-xs tnum shrink-0">
+                    ×{it.quantity}
+                  </div>
+                </div>
+                {it.size && (
+                  <div className="text-xs text-qf-mute">{it.size}</div>
+                )}
+              </div>
+              <div className="font-medium tnum shrink-0">
+                {formatPrice(it.total)}
               </div>
             </div>
           ))}
@@ -277,6 +331,45 @@ export function OrderTracking({
             <div className="tnum">{formatPrice(order.total)}</div>
           </div>
         </div>
+      </section>
+
+      {/* Share + social proof — surface even on the live-tracking view so
+          the customer can forward the link to whoever's picking up. */}
+      {!isDelivered && (
+        <section className="px-5 mt-4 lg:px-0">
+          <ShareCTA
+            tenantName={tenantName}
+            orderNumber={order.number}
+            method={order.method}
+          />
+        </section>
+      )}
+
+      {recentReviews.length > 0 && (
+        <section className="px-5 mt-4 lg:px-0">
+          <ReviewsTeaser
+            tenantName={tenantName}
+            reviews={recentReviews}
+          />
+        </section>
+      )}
+
+      {/* Footer — same shape as the ThankYouView so customers always have
+          an obvious "back to the menu" exit, no matter which mode the
+          merchant runs (lite thank-you vs. live tracking). */}
+      <section className="px-5 mt-6 lg:px-0 grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <Link
+          href={`/s/${tenantSlug}`}
+          className="text-center py-3 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white font-medium text-sm"
+        >
+          חזרה לחנות
+        </Link>
+        <Link
+          href={`/s/${tenantSlug}#menu-section`}
+          className="text-center py-3 rounded-2xl border border-qf-line bg-white hover:bg-qf-line-soft text-qf-ink font-medium text-sm"
+        >
+          הזמנה נוספת
+        </Link>
       </section>
     </div>
   );
@@ -509,6 +602,9 @@ function ReviewCard({
 function ThankYouView({
   tenantSlug,
   tenantName,
+  tenantLogoUrl,
+  tenantCoverImage,
+  recentReviews,
   order,
   canReview,
   review,
@@ -516,87 +612,94 @@ function ThankYouView({
 }: {
   tenantSlug: string;
   tenantName: string;
+  tenantLogoUrl: string | null;
+  tenantCoverImage: string | null;
+  recentReviews: PublicReview[];
   order: OrderData;
   canReview: boolean;
   review: ExistingReview | null;
   onReviewSubmitted: (r: ExistingReview) => void;
 }) {
   return (
-    <div className="pb-20 lg:pb-12 lg:max-w-2xl lg:mx-auto pt-14 lg:pt-12">
-      <section className="px-5 text-center">
-        <div
-          className="mx-auto w-20 h-20 rounded-full bg-qf-green-soft grid place-items-center shadow-sm animate-qf-check-in"
-          aria-hidden
-        >
-          <IcoCheck c="var(--qf-primary)" s={44} />
-        </div>
-        <h1 className="text-2xl font-bold mt-5">תודה על ההזמנה!</h1>
-        <p className="text-sm text-qf-mute mt-1">
-          קיבלנו את ההזמנה שלך אצל {tenantName}.
-        </p>
-        <div className="mt-4 inline-flex items-baseline gap-2 bg-white border border-qf-line rounded-full px-4 py-2">
-          <span className="text-xs text-qf-mute">מספר הזמנה</span>
-          {/* In RTL `#PV-5037` reads with the # next to the end of the
-              token. Render the number first, then a leading # before it,
-              so it sits on the visually-leading side of the code. */}
-          <span className="font-bold tnum text-sm" dir="ltr">
-            #{order.number}
+    <div className="pb-20 lg:pb-12 lg:max-w-2xl lg:mx-auto">
+      <BrandedHeader
+        tenantSlug={tenantSlug}
+        tenantName={tenantName}
+        tenantLogoUrl={tenantLogoUrl}
+        tenantCoverImage={tenantCoverImage}
+        orderNumber={order.number}
+        headline="תודה על ההזמנה!"
+        subhead={`קיבלנו את ההזמנה שלך אצל ${tenantName}`}
+        showCheck
+        bigNumber={false}
+      />
+
+      {/* Items — same compact layout as the live-tracking view so the
+          two modes read as the same template, minus the status block. */}
+      <section className="px-5 mt-6 lg:px-0">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="font-semibold">פירוט ההזמנה</h2>
+          <span className="text-xs text-qf-mute">
+            {order.method === "delivery" ? "משלוח" : "איסוף"}
           </span>
+        </div>
+        <div className="bg-white rounded-2xl border border-qf-line divide-y divide-qf-line-soft">
+          {order.items.map((it) => (
+            <div
+              key={it.id}
+              className="px-4 py-3 flex items-center gap-3 text-sm"
+            >
+              <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
+                <MenuItemImage
+                  src={it.imageUrl ?? null}
+                  alt={it.name}
+                  businessType={order.businessType}
+                  size={40}
+                  rounded="xl"
+                  className="w-full h-full"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="font-medium truncate">{it.name}</div>
+                  <div className="text-qf-mute text-xs tnum shrink-0">
+                    ×{it.quantity}
+                  </div>
+                </div>
+                {it.size && (
+                  <div className="text-xs text-qf-mute">{it.size}</div>
+                )}
+              </div>
+              <div className="font-medium tnum shrink-0">
+                {formatPrice(it.total)}
+              </div>
+            </div>
+          ))}
+          <div className="px-4 py-3 flex items-center justify-between text-sm font-semibold">
+            <div>סה״כ ששולם</div>
+            <div className="tnum">{formatPrice(order.total)}</div>
+          </div>
         </div>
       </section>
 
-      {/* Receipt */}
-      <section className="px-5 mt-6">
-        <div className="bg-white rounded-2xl border border-qf-line overflow-hidden">
-          <header className="px-4 py-3 flex items-center justify-between border-b border-qf-line-soft">
-            <h2 className="font-semibold text-sm">פירוט ההזמנה</h2>
-            <span className="text-xs text-qf-mute">
-              {order.method === "delivery" ? "משלוח" : "איסוף"}
-            </span>
-          </header>
-          {/* Column labels — small caps, dimmed, only here to anchor the
-              right-hand numbers (כמות + מחיר) the user expected. */}
-          <div className="px-4 pt-3 pb-1 flex items-center gap-3 text-[10px] uppercase tracking-wide text-qf-mute">
-            <div className="w-14 shrink-0" />
-            <div className="flex-1">מוצר</div>
-            <div className="w-12 text-center">כמות</div>
-            <div className="w-16 text-end">מחיר</div>
-          </div>
-          <ul className="divide-y divide-qf-line-soft">
-            {order.items.map((it) => (
-              <li
-                key={it.id}
-                className="px-4 py-3 flex items-center gap-3 text-sm"
-              >
-                <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0">
-                  <MenuItemImage
-                    src={it.imageUrl ?? null}
-                    alt={it.name}
-                    businessType={order.businessType}
-                    size={56}
-                    rounded="xl"
-                    className="w-full h-full"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate">{it.name}</div>
-                  {it.size && <div className="text-xs text-qf-mute">{it.size}</div>}
-                </div>
-                <div className="w-12 text-center text-qf-mute text-xs tnum">
-                  ×{it.quantity}
-                </div>
-                <div className="w-16 text-end font-medium tnum">
-                  {formatPrice(it.total)}
-                </div>
-              </li>
-            ))}
-          </ul>
-          <div className="px-4 py-3 border-t border-qf-line-soft flex items-center justify-between text-sm font-semibold">
-            <div>סה״כ ששולם</div>
-            <div className="tnum text-base">{formatPrice(order.total)}</div>
-          </div>
-        </div>
-      </section>
+      {/* Share — surface above the review prompt because most customers
+          hit this page right after paying, well before delivery. */}
+      {order.status !== "delivered" && (
+        <section className="px-5 mt-4">
+          <ShareCTA
+            tenantName={tenantName}
+            orderNumber={order.number}
+            method={order.method}
+          />
+        </section>
+      )}
+
+      {/* Social proof — recent positive reviews from other customers. */}
+      {recentReviews.length > 0 && (
+        <section className="px-5 mt-4">
+          <ReviewsTeaser tenantName={tenantName} reviews={recentReviews} />
+        </section>
+      )}
 
       {/* Review prompt — exact same component as the tracking view */}
       {order.status === "delivered" && canReview && (
@@ -625,6 +728,246 @@ function ThankYouView({
           הזמנה נוספת
         </Link>
       </section>
+    </div>
+  );
+}
+
+/**
+ * Hero block at the top of the order page — cover image as the background
+ * (with a dim gradient so foreground text stays readable), the tenant's
+ * logo as a floating circular badge bottom-overlapping the next block, and
+ * the business name + order number stamped under it. Falls back to the
+ * brand gradient if no cover image is set.
+ */
+function BrandedHeader({
+  tenantSlug,
+  tenantName,
+  tenantLogoUrl,
+  tenantCoverImage,
+  orderNumber,
+  headline,
+  subhead,
+  showCheck,
+  bigNumber,
+}: {
+  tenantSlug: string;
+  tenantName: string;
+  tenantLogoUrl: string | null;
+  tenantCoverImage: string | null;
+  orderNumber: string;
+  headline: string;
+  subhead: string | null;
+  showCheck: boolean;
+  bigNumber: boolean;
+}) {
+  const initial = tenantName.slice(0, 1);
+
+  return (
+    <header className="relative">
+      <div
+        className="relative px-5 pt-5 pb-16 text-white overflow-hidden lg:rounded-3xl lg:mx-0"
+        style={
+          tenantCoverImage
+            ? {
+                backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.80) 100%), url(${tenantCoverImage})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : undefined
+        }
+      >
+        {/* Fallback gradient when no cover is set — same brand wash the
+            page used before this refactor. */}
+        {!tenantCoverImage && (
+          <div
+            className="absolute inset-0 bg-linear-to-b from-(--qf-primary) to-(--qf-deep)"
+            aria-hidden
+          />
+        )}
+
+        <div className="relative flex items-center justify-start mb-6 h-9">
+          <div
+            className="font-mono text-sm bg-black/25 backdrop-blur-sm rounded-full px-3 py-1"
+            dir="ltr"
+          >
+            #{orderNumber}
+          </div>
+        </div>
+
+        <div className="relative text-center">
+          {showCheck && (
+            <div
+              className="mx-auto w-20 h-20 rounded-full bg-white grid place-items-center shadow-lg animate-qf-check-in mb-4"
+              aria-hidden
+            >
+              <IcoCheck c="#16a34a" s={44} />
+            </div>
+          )}
+          {bigNumber ? (
+            <div className="text-5xl font-bold tnum">{headline}</div>
+          ) : (
+            <div className="text-2xl font-bold">{headline}</div>
+          )}
+          {subhead && (
+            <div className="text-sm mt-1 opacity-90">{subhead}</div>
+          )}
+        </div>
+      </div>
+
+      {/* Floating logo + business name strip — sits at the seam between the
+          cover and the content below, so the cover frames a clear identity
+          chip instead of bleeding straight into a generic receipt. */}
+      <div className="relative -mt-8 px-5 lg:px-0">
+        <div className="bg-white rounded-2xl border border-qf-line shadow-sm px-4 py-3 flex items-center gap-3">
+          <div
+            className="w-14 h-14 rounded-full border-2 border-white overflow-hidden grid place-items-center shrink-0 shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
+            style={{ backgroundColor: "var(--qf-primary)" }}
+          >
+            {tenantLogoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={tenantLogoUrl}
+                alt={tenantName}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-white font-bold text-lg">{initial}</span>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="font-semibold truncate">{tenantName}</div>
+            <Link
+              href={`/s/${tenantSlug}`}
+              className="text-xs text-qf-mute hover:text-(--qf-deep) underline-offset-2 hover:underline"
+            >
+              לחנות
+            </Link>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+/**
+ * "Share with whoever's picking up" — WhatsApp deep-link plus native Web
+ * Share fallback for iOS/Android. The text the receiver gets is short and
+ * carries the tracking link so they can follow status without logging in.
+ */
+function ShareCTA({
+  tenantName,
+  orderNumber,
+  method,
+}: {
+  tenantName: string;
+  orderNumber: string;
+  method: "delivery" | "pickup";
+}) {
+  function currentUrl(): string {
+    if (typeof window === "undefined") return "";
+    return window.location.href;
+  }
+
+  function shareMessage(): string {
+    return `הזמנתי מ-${tenantName} (הזמנה #${orderNumber}). אפשר לעקוב אחרי הסטטוס פה: ${currentUrl()}`;
+  }
+
+  function onWhatsApp() {
+    const text = encodeURIComponent(shareMessage());
+    window.open(`https://wa.me/?text=${text}`, "_blank", "noopener");
+  }
+
+  async function onNativeShare() {
+    if (typeof navigator === "undefined" || !navigator.share) {
+      onWhatsApp();
+      return;
+    }
+    try {
+      await navigator.share({
+        title: `הזמנה אצל ${tenantName}`,
+        text: shareMessage(),
+        url: currentUrl(),
+      });
+    } catch {
+      /* user dismissed the sheet — nothing to do */
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-qf-line p-4">
+      <div className="font-semibold text-sm">
+        {method === "delivery"
+          ? "עוד מישהו מחכה להזמנה?"
+          : "מישהו אחר צריך לאסוף את ההזמנה?"}
+      </div>
+      <p className="text-xs text-qf-mute mt-0.5 mb-3">
+        שתפו אותו בקלות בסטטוס ההזמנה.
+      </p>
+      <div className="flex flex-col sm:flex-row gap-2">
+        <button
+          type="button"
+          onClick={onWhatsApp}
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1FB955] text-white font-medium text-sm transition"
+        >
+          <IcoWhatsApp c="#fff" s={18} />
+          <span>שיתוף בוואטסאפ</span>
+        </button>
+        <button
+          type="button"
+          onClick={onNativeShare}
+          className="flex-1 py-2.5 rounded-xl border border-qf-line bg-white hover:bg-qf-line-soft text-qf-ink font-medium text-sm transition"
+        >
+          שיתוף אחר
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Carousel of the latest visible reviews (≥4 stars, with a body) so the
+ * customer who just paid sees other satisfied buyers as the order is on
+ * its way. Read-only — submitting goes through ReviewCard below.
+ */
+function ReviewsTeaser({
+  tenantName,
+  reviews,
+}: {
+  tenantName: string;
+  reviews: PublicReview[];
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-qf-line p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div className="font-semibold text-sm">מה אומרים על {tenantName}</div>
+      </div>
+      <div className="space-y-3">
+        {reviews.map((r) => (
+          <div
+            key={r.id}
+            className="rounded-xl bg-qf-bg/60 border border-qf-line-soft px-3 py-2.5"
+          >
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <div className="text-xs font-medium text-qf-ink truncate">
+                {r.authorName}
+              </div>
+              <div className="flex items-center gap-0.5 shrink-0">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <IcoStar
+                    key={n}
+                    s={12}
+                    c={n <= r.rating ? "#f5a524" : "#d4d4d4"}
+                    fill={n <= r.rating ? "#f5a524" : "none"}
+                  />
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-qf-ink2 leading-relaxed line-clamp-3">
+              {r.text}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

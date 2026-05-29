@@ -32,6 +32,26 @@ export default async function OrderTrackingPage({
   });
   if (!order) notFound();
 
+  // Last 3 visible reviews (with text) for the social-proof teaser. Kept
+  // to ≥4 stars + non-empty body so the section actually says something.
+  const recentReviews = await prisma.review.findMany({
+    where: {
+      tenantId: tenant.id,
+      status: "visible",
+      rating: { gte: 4 },
+      text: { not: null },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 3,
+    select: {
+      id: true,
+      rating: true,
+      text: true,
+      createdAt: true,
+      customer: { select: { firstName: true, lastName: true } },
+    },
+  });
+
   // Review eligibility: only the logged-in customer who owns the order can
   // review. We surface (a) whether the form should show at all and (b) any
   // existing review so the UI can switch into a "thank you" state.
@@ -53,6 +73,19 @@ export default async function OrderTrackingPage({
     <OrderTracking
       tenantSlug={tenant.slug}
       tenantName={tenant.name}
+      tenantLogoUrl={tenant.logoUrl}
+      tenantCoverImage={tenant.coverImage}
+      recentReviews={recentReviews.map((r) => ({
+        id: r.id,
+        rating: r.rating,
+        text: r.text ?? "",
+        createdAt: r.createdAt.toISOString(),
+        authorName:
+          [r.customer.firstName, r.customer.lastName]
+            .filter(Boolean)
+            .join(" ")
+            .trim() || "לקוח/ה",
+      }))}
       order={{
         id: order.id,
         number: order.number,
