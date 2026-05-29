@@ -28,6 +28,7 @@ export default async function CouriersPage() {
         status: c.status,
         ratingAvg: Number(c.ratingAvg),
         deliveriesToday: c.deliveriesToday,
+        cashOnHand: c.cashOnHand,
       }))}
     />
   );

@@ -337,6 +337,7 @@ model Tenant {
   subscription     Subscription?
   orders           Order[]
   couriers         Courier[]
+  cashSettlements  CashSettlement[]
   reviews          Review[]
   webhookEndpoints WebhookEndpoint[]
   apiKeys          ApiKey[]
@@ -824,9 +825,27 @@ model Courier {
   orders   Order[]
   sessions CourierSession[]
   magicLinks CourierMagicLinkToken[]
+  cashSettlements CashSettlement[]
 
   @@index([branchId, status])
   @@map("couriers")
+}
+
+model CashSettlement {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  courierId   String   @map("courier_id") @db.Uuid
+  courier     Courier  @relation(fields: [courierId], references: [id], onDelete: Cascade)
+  amount      Int
+  settledBy   String   @map("settled_by")
+  settledById String?  @map("settled_by_id") @db.Uuid
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([courierId, createdAt(sort: Desc)])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@map("cash_settlements")
 }
 
 model CourierSession {

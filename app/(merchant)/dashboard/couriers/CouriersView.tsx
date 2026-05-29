@@ -19,6 +19,7 @@ interface Courier {
   status: string;
   ratingAvg: number;
   deliveriesToday: number;
+  cashOnHand: number;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -57,7 +58,15 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
   const [resetEmailValue, setResetEmailValue] = useState("");
   const [resettingPin, setResettingPin] = useState(false);
   const [qrFor, setQrFor] = useState<Courier | null>(null);
+  const [settleFor, setSettleFor] = useState<Courier | null>(null);
+  const [settleAmount, setSettleAmount] = useState("");
+  const [settling, setSettling] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
+
+  useEffect(() => {
+    if (settleFor) setSettleAmount(String(settleFor.cashOnHand));
+  }, [settleFor]);
+
   function pushToast(kind: ToastKind, message: string) {
     setToast({ id: Date.now(), kind, message });
   }
@@ -107,6 +116,7 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
         status: "offline",
         ratingAvg: 0,
         deliveriesToday: 0,
+        cashOnHand: 0,
       };
       setCouriers((prev) => [newCourier, ...prev]);
       router.refresh();
@@ -149,6 +159,39 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
       return;
     }
     pushToast("ok", "השליח הוסר");
+  }
+
+  async function confirmSettle() {
+    if (!settleFor) return;
+    const amount = Number(settleAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      pushToast("err", "סכום לא תקין");
+      return;
+    }
+    setSettling(true);
+    try {
+      const res = await fetch(`/api/v1/merchant/couriers/${settleFor.id}/cash-settle`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ amount }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        pushToast("err", body?.error?.message ?? "סגירת קופה נכשלה");
+        return;
+      }
+      const data = await res.json();
+      setCouriers((prev) =>
+        prev.map((c) =>
+          c.id === settleFor.id ? { ...c, cashOnHand: data.cash_on_hand ?? 0 } : c,
+        ),
+      );
+      setSettleFor(null);
+      setSettleAmount("");
+      pushToast("ok", `נסגרה קופה של ${amount} ש"ח`);
+    } finally {
+      setSettling(false);
+    }
   }
 
   async function confirmResetPin() {
@@ -369,6 +412,22 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
                 <span className="tnum">{c.deliveriesToday} משלוחים היום</span>
               </div>
 
+              {c.cashOnHand > 0 && (
+                <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-qf-yolk-soft border border-qf-yolk/40">
+                  <div className="text-xs">
+                    <span className="text-qf-mute">מזומן ביד: </span>
+                    <span className="font-bold tnum text-qf-ink">{c.cashOnHand} ש&quot;ח</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSettleFor(c)}
+                    className="text-xs px-2.5 py-1 rounded-md bg-black text-[#F8CB1E] font-medium hover:bg-black/90"
+                  >
+                    סגירת קופה
+                  </button>
+                </div>
+              )}
+
               <div className="grid grid-cols-4 gap-1.5 text-xs">
                 {(["available", "on_delivery", "break_time", "offline"] as const).map((s) => (
                   <button
@@ -469,6 +528,62 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
                 className="px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm disabled:opacity-60"
               >
                 {resettingPin ? "מאפס..." : "אפס"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {settleFor && (
+        <div
+          className="fixed inset-0 bg-black/40 z-50 grid place-items-center p-4"
+          onClick={() => !settling && setSettleFor(null)}
+        >
+          <div
+            className="bg-white rounded-2xl p-5 w-full max-w-sm space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <header>
+              <h3 className="font-semibold text-lg">סגירת קופה</h3>
+              <p className="text-sm text-qf-mute">
+                {settleFor.name} · המערכת ספרה{" "}
+                <span className="font-medium tnum">{settleFor.cashOnHand} ש&quot;ח</span>
+              </p>
+            </header>
+            <div>
+              <label className="text-xs text-qf-mute">סכום שקיבלת בפועל</label>
+              <div className="mt-1 relative">
+                <input
+                  value={settleAmount}
+                  onChange={(e) => setSettleAmount(e.target.value.replace(/[^\d.]/g, ""))}
+                  dir="ltr"
+                  inputMode="decimal"
+                  className="w-full px-4 py-3 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum text-2xl font-bold text-center"
+                />
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-qf-mute text-xs">
+                  ש&quot;ח
+                </span>
+              </div>
+            </div>
+            <p className="text-[11px] text-qf-mute">
+              לאחר אישור הקופה תאופס. כל הסגירות נשמרות בלוג היסטוריה.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setSettleFor(null)}
+                disabled={settling}
+                className="px-4 py-2 rounded-xl border border-qf-line-dash text-sm"
+              >
+                ביטול
+              </button>
+              <button
+                type="button"
+                onClick={confirmSettle}
+                disabled={settling || Number(settleAmount) <= 0}
+                className="px-4 py-2 rounded-xl bg-black text-[#F8CB1E] text-sm font-bold disabled:opacity-60"
+              >
+                {settling ? "סוגר..." : "סגירה ואיפוס"}
               </button>
             </div>
           </div>

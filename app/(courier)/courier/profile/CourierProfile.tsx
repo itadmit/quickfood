@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CourierBottomNav } from "@/components/courier/CourierBottomNav";
+import { CashSettleSheet } from "@/components/courier/CashSettleSheet";
 
 interface Me {
   id: string;
@@ -28,11 +29,16 @@ export function CourierProfile() {
   const router = useRouter();
   const [me, setMe] = useState<Me | null>(null);
   const [busy, setBusy] = useState(false);
+  const [settleOpen, setSettleOpen] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/v1/courier/me")
+  function loadMe() {
+    return fetch("/api/v1/courier/me")
       .then((r) => r.json())
       .then((data) => setMe(data.courier));
+  }
+
+  useEffect(() => {
+    void loadMe();
   }, []);
 
   async function logout() {
@@ -87,6 +93,16 @@ export function CourierProfile() {
           />
         </div>
 
+        {(me?.cash_on_hand ?? 0) > 0 && (
+          <button
+            type="button"
+            onClick={() => setSettleOpen(true)}
+            className="w-full py-3.5 rounded-2xl bg-amber-500 text-[#1a1300] font-bold"
+          >
+            מסור קופה למנהל · {me?.cash_on_hand} ש&quot;ח
+          </button>
+        )}
+
         <button
           type="button"
           onClick={logout}
@@ -96,6 +112,17 @@ export function CourierProfile() {
           התנתקות
         </button>
       </section>
+
+      {settleOpen && me && (
+        <CashSettleSheet
+          currentAmount={me.cash_on_hand}
+          onClose={() => setSettleOpen(false)}
+          onDone={async () => {
+            setSettleOpen(false);
+            await loadMe();
+          }}
+        />
+      )}
 
       <CourierBottomNav active="profile" />
     </main>
