@@ -296,7 +296,7 @@ export function reviewReminderEmail({
     for (let n = 1; n <= 5; n++) {
       const href = `${path}${sep}rating=${n}${hash ? `#${hash}` : ""}`;
       cells.push(
-        `<td style="padding:0 4px;"><a href="${escape(href)}" target="_blank" rel="noopener" aria-label="${n} כוכבים" style="text-decoration:none;display:inline-block;line-height:0;"><img src="${EMAIL_ASSETS_BASE}/img/star-yellow.png" width="32" height="32" alt="${n}" style="display:block;border:0;"></a></td>`,
+        `<td align="center" style="padding:0 4px;text-align:center;"><a href="${escape(href)}" target="_blank" rel="noopener" aria-label="${n} כוכבים" style="text-decoration:none;display:inline-block;color:${BRAND.mute};"><img src="${EMAIL_ASSETS_BASE}/img/star-yellow.png" width="32" height="32" alt="${n}" style="display:block;border:0;margin:0 auto;"><div style="font-size:11px;font-weight:700;color:${BRAND.mute};line-height:1;margin-top:4px;">${n}</div></a></td>`,
       );
     }
     return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" dir="ltr" style="margin:8px auto 0;direction:ltr;"><tr>${cells.join("")}</tr></table>`;
