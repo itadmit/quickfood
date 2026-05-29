@@ -39,6 +39,8 @@ export const GET = handler(async () => {
       current_order_id: c.currentOrderId,
       max_concurrent: c.maxConcurrent,
       cash_on_hand: c.cashOnHand,
+      tips_on_hand: c.tipsOnHand,
+      tips_owed: c.tipsOwed,
       last_seen_at: c.lastSeenAt?.toISOString() ?? null,
       rating_avg: Number(c.ratingAvg),
       deliveries_today: c.deliveriesToday,

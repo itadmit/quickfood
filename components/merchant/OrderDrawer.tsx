@@ -271,7 +271,9 @@ export function OrderDrawer({
                     value={order.cutlery_fee > 0 ? formatPrice(order.cutlery_fee) : "חינם"}
                   />
                 )}
-                {order.tip > 0 && <SumRow label="טיפ" value={formatPrice(order.tip)} />}
+                {order.tip > 0 && (
+                  <SumRow label="טיפ לשליח" value={formatPrice(order.tip)} />
+                )}
                 {order.discount > 0 && (
                   <SumRow label="הנחה" value={`-${formatPrice(order.discount)}`} />
                 )}

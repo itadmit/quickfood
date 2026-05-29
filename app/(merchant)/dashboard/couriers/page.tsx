@@ -29,6 +29,8 @@ export default async function CouriersPage() {
         ratingAvg: Number(c.ratingAvg),
         deliveriesToday: c.deliveriesToday,
         cashOnHand: c.cashOnHand,
+        tipsOnHand: c.tipsOnHand,
+        tipsOwed: c.tipsOwed,
       }))}
     />
   );

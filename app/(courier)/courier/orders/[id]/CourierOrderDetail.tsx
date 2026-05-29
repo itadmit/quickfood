@@ -207,6 +207,16 @@ export function CourierOrderDetail({ orderId }: { orderId: string }) {
             <p className="text-xs text-white/50">תשלום</p>
             <p className="font-bold tnum">{order.total} ש&quot;ח</p>
           </div>
+          {order.tip > 0 && (
+            <div className="flex items-center justify-between text-sm border-t border-white/10 pt-2">
+              <span className="text-emerald-300">
+                {isCash ? "מתוכם טיפ שלך" : "טיפ שמגיע לך (כרטיס)"}
+              </span>
+              <span className="tnum font-bold text-emerald-300">
+                {order.tip} ש&quot;ח
+              </span>
+            </div>
+          )}
           <p
             className={
               isCash
@@ -216,6 +226,11 @@ export function CourierOrderDetail({ orderId }: { orderId: string }) {
           >
             {isCash ? "לגבות במזומן" : "שולם מראש"}
           </p>
+          {order.tip > 0 && !isCash && (
+            <p className="text-[11px] text-white/60">
+              הטיפ שולם בכרטיס וירשם כחוב של בעל העסק כלפיך — לבקש בקופה.
+            </p>
+          )}
         </div>
 
         <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
@@ -267,6 +282,7 @@ export function CourierOrderDetail({ orderId }: { orderId: string }) {
         <DeliverSheet
           orderId={order.id}
           total={order.total}
+          tip={order.tip}
           requireCash={isCash}
           onClose={() => setDeliverOpen(false)}
           onSubmit={deliver}

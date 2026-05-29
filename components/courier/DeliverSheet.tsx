@@ -5,16 +5,19 @@ import { useRef, useState } from "react";
 export function DeliverSheet({
   orderId,
   total,
+  tip,
   requireCash,
   onSubmit,
   onClose,
 }: {
   orderId: string;
   total: number;
+  tip: number;
   requireCash: boolean;
   onSubmit: (payload: { cash_collected?: number; proof_photo_url?: string }) => Promise<void> | void;
   onClose: () => void;
 }) {
+  const orderPortion = Math.max(0, total - tip);
   const [cashStr, setCashStr] = useState(requireCash ? String(total) : "");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -80,19 +83,43 @@ export function DeliverSheet({
         <h3 className="text-lg font-bold text-center">אישור מסירה</h3>
 
         {requireCash && (
-          <div>
-            <label className="text-xs text-white/60">סכום מזומן שנגבה</label>
-            <div className="mt-1 relative">
-              <input
-                value={cashStr}
-                onChange={(e) => setCashStr(e.target.value.replace(/[^\d.]/g, ""))}
-                dir="ltr"
-                inputMode="decimal"
-                className="w-full px-4 py-3.5 rounded-xl bg-white/5 border border-white/15 text-white text-2xl font-bold tnum text-center focus:border-white/50 outline-none"
-              />
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 text-sm">
-                ש&quot;ח
-              </span>
+          <div className="space-y-3">
+            {tip > 0 && (
+              <div className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-3 space-y-1.5">
+                <p className="text-[11px] text-emerald-200/80 uppercase tracking-wide">
+                  פירוט הגבייה
+                </p>
+                <div className="flex justify-between text-sm text-white/80">
+                  <span>סכום ההזמנה</span>
+                  <span className="tnum font-medium">{orderPortion} ש&quot;ח</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-emerald-200">טיפ שלך</span>
+                  <span className="tnum font-bold text-emerald-200">{tip} ש&quot;ח</span>
+                </div>
+                <div className="flex justify-between text-sm pt-1.5 border-t border-emerald-400/20">
+                  <span className="text-white/90 font-medium">סה&quot;כ לגבייה</span>
+                  <span className="tnum font-bold text-white">{total} ש&quot;ח</span>
+                </div>
+                <p className="text-[11px] text-emerald-200/80 pt-1">
+                  הטיפ נשאר אצלך — לא נכלל בסגירת הקופה מול בעל העסק.
+                </p>
+              </div>
+            )}
+            <div>
+              <label className="text-xs text-white/60">סכום מזומן שנגבה</label>
+              <div className="mt-1 relative">
+                <input
+                  value={cashStr}
+                  onChange={(e) => setCashStr(e.target.value.replace(/[^\d.]/g, ""))}
+                  dir="ltr"
+                  inputMode="decimal"
+                  className="w-full px-4 py-3.5 rounded-xl bg-white/5 border border-white/15 text-white text-2xl font-bold tnum text-center focus:border-white/50 outline-none"
+                />
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 text-sm">
+                  ש&quot;ח
+                </span>
+              </div>
             </div>
           </div>
         )}

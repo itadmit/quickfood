@@ -817,6 +817,8 @@ model Courier {
   currentOrderId  String?        @map("current_order_id") @db.Uuid
   maxConcurrent   Int            @default(3) @map("max_concurrent")
   cashOnHand      Int            @default(0) @map("cash_on_hand")
+  tipsOnHand      Int            @default(0) @map("tips_on_hand")
+  tipsOwed        Int            @default(0) @map("tips_owed")
   active          Boolean        @default(true)
   lastSeenAt      DateTime?      @map("last_seen_at")
   ratingAvg       Decimal        @default(0) @map("rating_avg") @db.Decimal(3, 2)

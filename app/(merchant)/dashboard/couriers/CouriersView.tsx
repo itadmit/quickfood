@@ -20,6 +20,8 @@ interface Courier {
   ratingAvg: number;
   deliveriesToday: number;
   cashOnHand: number;
+  tipsOnHand: number;
+  tipsOwed: number;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -62,6 +64,8 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
   const [settleFor, setSettleFor] = useState<Courier | null>(null);
   const [settleAmount, setSettleAmount] = useState("");
   const [settling, setSettling] = useState(false);
+  const [tipsPayoutFor, setTipsPayoutFor] = useState<Courier | null>(null);
+  const [payingTips, setPayingTips] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
 
   useEffect(() => {
@@ -118,6 +122,8 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
         ratingAvg: 0,
         deliveriesToday: 0,
         cashOnHand: 0,
+        tipsOnHand: 0,
+        tipsOwed: 0,
       };
       setCouriers((prev) => [newCourier, ...prev]);
       router.refresh();
@@ -192,6 +198,32 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
       pushToast("ok", `נסגרה קופה של ${amount} ש"ח`);
     } finally {
       setSettling(false);
+    }
+  }
+
+  async function confirmTipsPayout() {
+    if (!tipsPayoutFor) return;
+    setPayingTips(true);
+    try {
+      const res = await fetch(
+        `/api/v1/merchant/couriers/${tipsPayoutFor.id}/tips-payout`,
+        { method: "POST" },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        pushToast("err", body?.error?.message ?? "אישור תשלום הטיפים נכשל");
+        return;
+      }
+      const data = await res.json();
+      setCouriers((prev) =>
+        prev.map((c) =>
+          c.id === tipsPayoutFor.id ? { ...c, tipsOwed: data.tips_owed ?? 0 } : c,
+        ),
+      );
+      pushToast("ok", `סומן ששילמת ${tipsPayoutFor.tipsOwed} ש"ח טיפים`);
+      setTipsPayoutFor(null);
+    } finally {
+      setPayingTips(false);
     }
   }
 
@@ -461,9 +493,16 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
 
               {c.cashOnHand > 0 && (
                 <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-qf-yolk-soft border border-qf-yolk/40">
-                  <div className="text-xs">
-                    <span className="text-qf-mute">מזומן ביד: </span>
-                    <span className="font-bold tnum text-qf-ink">{c.cashOnHand} ש&quot;ח</span>
+                  <div className="text-xs leading-tight">
+                    <div>
+                      <span className="text-qf-mute">לקופה (שלך): </span>
+                      <span className="font-bold tnum text-qf-ink">{c.cashOnHand} ש&quot;ח</span>
+                    </div>
+                    {c.tipsOnHand > 0 && (
+                      <div className="text-qf-mute mt-0.5">
+                        טיפים של השליח: <span className="tnum">{c.tipsOnHand} ש&quot;ח</span>
+                      </div>
+                    )}
                   </div>
                   <button
                     type="button"
@@ -471,6 +510,32 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
                     className="text-xs px-2.5 py-1 rounded-md bg-black text-[#F8CB1E] font-medium hover:bg-black/90"
                   >
                     סגירת קופה
+                  </button>
+                </div>
+              )}
+
+              {c.cashOnHand === 0 && c.tipsOnHand > 0 && (
+                <div className="px-3 py-2 rounded-lg bg-qf-green-soft border border-(--qf-primary)/30 text-xs">
+                  <span className="text-qf-mute">טיפים אצל השליח: </span>
+                  <span className="font-bold tnum text-qf-green-deep">{c.tipsOnHand} ש&quot;ח</span>
+                </div>
+              )}
+
+              {c.tipsOwed > 0 && (
+                <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-qf-tomato-soft border border-qf-tomato/40">
+                  <div className="text-xs leading-tight">
+                    <div className="text-qf-tomato font-medium">חוב טיפים לשליח</div>
+                    <div className="text-qf-mute mt-0.5">
+                      <span className="font-bold tnum text-qf-ink">{c.tipsOwed} ש&quot;ח</span>
+                      <span> · נגבו בכרטיס אשראי, להחזיר במזומן</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setTipsPayoutFor(c)}
+                    className="text-xs px-2.5 py-1 rounded-md border border-qf-tomato/60 text-qf-tomato font-medium hover:bg-qf-tomato/10"
+                  >
+                    שילמתי
                   </button>
                 </div>
               )}
@@ -636,6 +701,24 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!tipsPayoutFor}
+        title="תשלום טיפים לשליח"
+        message={
+          <>
+            לאשר שמסרת לשליח{" "}
+            <span className="font-semibold">{tipsPayoutFor?.name}</span>{" "}
+            <span className="font-bold tnum">{tipsPayoutFor?.tipsOwed} ש&quot;ח</span>{" "}
+            טיפים שנגבו בכרטיס אשראי? החוב יאופס.
+          </>
+        }
+        confirmLabel="שילמתי"
+        cancelLabel="ביטול"
+        busy={payingTips}
+        onConfirm={confirmTipsPayout}
+        onCancel={() => setTipsPayoutFor(null)}
+      />
 
       {qrFor && (
         <CourierQRModal

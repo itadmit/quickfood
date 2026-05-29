@@ -89,10 +89,23 @@ export async function advanceStatus(
 
   const assignedCourierId = (updates.courierId as string | undefined) ?? order.courierId ?? null;
   if (to === "delivered" && assignedCourierId) {
-    const cashDelta =
-      order.paymentMethod === "cash" && typeof options?.cashCollected === "number"
-        ? options.cashCollected
-        : 0;
+    // Tip belongs to the courier, never to the merchant — split it out of
+    // the cash bucket so settling the drawer doesn't sweep the tip away.
+    // Cash orders: courier collected tip + order; pull the tip into
+    // tipsOnHand, the rest is the merchant's cashOnHand.
+    // Card orders with tip: merchant already received the tip via Grow
+    // (it ships as a synthetic invoice line), so they owe it to the
+    // courier — surface that as tipsOwed.
+    let cashDelta = 0;
+    let tipsOnHandDelta = 0;
+    let tipsOwedDelta = 0;
+    if (order.paymentMethod === "cash" && typeof options?.cashCollected === "number") {
+      const collected = options.cashCollected;
+      tipsOnHandDelta = Math.min(order.tip, collected);
+      cashDelta = Math.max(0, collected - order.tip);
+    } else if (order.paymentMethod !== "cash" && order.tip > 0) {
+      tipsOwedDelta = order.tip;
+    }
     const stillActive = await prisma.order.findFirst({
       where: {
         courierId: assignedCourierId,
@@ -108,6 +121,8 @@ export async function advanceStatus(
         deliveriesToday: { increment: 1 },
         currentOrderId: stillActive?.id ?? null,
         ...(cashDelta > 0 ? { cashOnHand: { increment: cashDelta } } : {}),
+        ...(tipsOnHandDelta > 0 ? { tipsOnHand: { increment: tipsOnHandDelta } } : {}),
+        ...(tipsOwedDelta > 0 ? { tipsOwed: { increment: tipsOwedDelta } } : {}),
       },
     });
   }
