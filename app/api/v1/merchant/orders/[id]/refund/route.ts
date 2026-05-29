@@ -46,6 +46,9 @@ export const POST = handler(
         paymentStatus: true,
         paymentMethod: true,
         total: true,
+        tip: true,
+        cashCollected: true,
+        courierId: true,
       },
     });
     if (!order) return apiError("not_found", "הזמנה לא נמצאה", 404);
@@ -54,25 +57,59 @@ export const POST = handler(
       return apiError("conflict", "ההזמנה כבר סומנה כהוחזרה", 409);
     }
 
-    await prisma.order.update({
-      where: { id },
-      data: {
-        status: "refunded",
-        paymentStatus: "refunded",
-        cancelledAt: body.cancel_workflow ? new Date() : undefined,
-      },
-    });
+    // If we're refunding an already-delivered order, the courier's
+    // wallet got credited at delivery time — reverse exactly what
+    // advanceStatus() added so the merchant doesn't pay the courier
+    // for money the customer got back.
+    let cashReverse = 0;
+    let tipsOnHandReverse = 0;
+    let tipsOwedReverse = 0;
+    if (order.status === "delivered" && order.courierId) {
+      if (order.paymentMethod === "cash") {
+        const collected = order.cashCollected ?? order.total;
+        tipsOnHandReverse = Math.min(order.tip, collected);
+        cashReverse = Math.max(0, collected - order.tip);
+      } else if (order.tip > 0) {
+        tipsOwedReverse = order.tip;
+      }
+    }
 
-    await prisma.orderEvent.create({
-      data: {
-        orderId: id,
-        type: "refunded",
-        payload: {
-          reason: body.reason ?? null,
-          payment_method: order.paymentMethod,
-          amount: order.total,
-        } as unknown as Prisma.InputJsonValue,
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.order.update({
+        where: { id },
+        data: {
+          status: "refunded",
+          paymentStatus: "refunded",
+          cancelledAt: body.cancel_workflow ? new Date() : undefined,
+        },
+      });
+
+      if (order.courierId && (cashReverse || tipsOnHandReverse || tipsOwedReverse)) {
+        await tx.courier.update({
+          where: { id: order.courierId },
+          data: {
+            ...(cashReverse > 0 ? { cashOnHand: { decrement: cashReverse } } : {}),
+            ...(tipsOnHandReverse > 0 ? { tipsOnHand: { decrement: tipsOnHandReverse } } : {}),
+            ...(tipsOwedReverse > 0 ? { tipsOwed: { decrement: tipsOwedReverse } } : {}),
+          },
+        });
+      }
+
+      await tx.orderEvent.create({
+        data: {
+          orderId: id,
+          type: "refunded",
+          payload: {
+            reason: body.reason ?? null,
+            payment_method: order.paymentMethod,
+            amount: order.total,
+            previous_status: order.status,
+            courier_cash_reversed: cashReverse,
+            courier_tips_on_hand_reversed: tipsOnHandReverse,
+            courier_tips_owed_reversed: tipsOwedReverse,
+          } as unknown as Prisma.InputJsonValue,
+        },
+      });
     });
 
     void dispatchWebhook({
