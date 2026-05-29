@@ -1,5 +1,6 @@
 import { createSseStream, wait, type SseEvent } from "@/lib/realtime/sse";
 import { prisma } from "@/lib/db/client";
+import { getSession } from "@/lib/auth/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,12 +20,28 @@ export async function GET(req: Request, { params }: { params: Promise<{ orderId:
         id: true,
         status: true,
         courierId: true,
+        customerId: true,
         createdAt: true,
         courier: { select: { name: true, phone: true, currentLat: true, currentLng: true } },
       },
     });
     if (!initial) {
       yield { event: "not_found", data: { order_id: orderId } };
+      return;
+    }
+
+    // Visibility matches GET /api/v1/customer/orders/[id]: a logged-in
+    // customer must own the order; guest orders stay public-by-UUID
+    // (MVP — the receipt link is the auth token). The SSE used to skip
+    // this check entirely, leaking live courier GPS + phone to anyone
+    // who knew the order UUID.
+    const session = await getSession();
+    if (
+      session?.type === "customer" &&
+      initial.customerId &&
+      initial.customerId !== session.userId
+    ) {
+      yield { event: "forbidden", data: { order_id: orderId } };
       return;
     }
     const liveTracking =
