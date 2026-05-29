@@ -3,6 +3,8 @@ export type WebhookEventType =
   | "order.status_changed"
   | "order.cancelled"
   | "order.refunded"
+  | "order.items_edited"
+  | "order.details_edited"
   | "order.ready_for_print";
 
 export const ALL_WEBHOOK_EVENTS: WebhookEventType[] = [
@@ -10,6 +12,8 @@ export const ALL_WEBHOOK_EVENTS: WebhookEventType[] = [
   "order.status_changed",
   "order.cancelled",
   "order.refunded",
+  "order.items_edited",
+  "order.details_edited",
   "order.ready_for_print",
 ];
 

@@ -349,9 +349,64 @@ label[for][class*="shadow-[0_"] {
 }
 
 /* ─── Print (Order Drawer) ───────────────────────────────────── */
+/* The print path renders only the .qf-print-receipt block — everything
+   else is force-hidden. The receipt itself is mounted in the React
+   tree but display:none until print. This keeps the UX simple
+   (window.print() from the existing button "just works") without the
+   merchant seeing a ghost receipt on screen. */
+.qf-print-receipt {
+  display: none;
+}
 @media print {
+  @page {
+    size: auto;
+    margin: 8mm;
+  }
   body {
     background: white;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .qf-print-receipt,
+  .qf-print-receipt * {
+    visibility: visible;
+  }
+  .qf-print-receipt {
+    display: block;
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 80mm;
+    margin: 0;
+    padding: 0;
+    color: #000;
+    background: #fff;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 11pt;
+    line-height: 1.35;
+    direction: rtl;
+  }
+  .qf-print-receipt h1 {
+    font-size: 16pt;
+    font-weight: 800;
+    text-align: center;
+    margin: 0 0 4pt;
+  }
+  .qf-print-receipt .qf-pr-rule {
+    border-top: 1px dashed #000;
+    margin: 4pt 0;
+  }
+  .qf-print-receipt .qf-pr-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 4pt;
+  }
+  .qf-print-receipt .qf-pr-muted {
+    font-size: 9pt;
+  }
+  .qf-print-receipt .qf-pr-total {
+    font-size: 14pt;
+    font-weight: 800;
   }
   .no-print {
     display: none !important;
