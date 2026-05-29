@@ -21,11 +21,11 @@ const BodySchema = z.object({
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Stay well under Vercel's default 60s ceiling — the importer's image
-// loop respects a parallelism cap so a 50-item menu typically finishes
-// in 20-30s. Larger catalogs that exceed this should be re-architected
-// onto QStash; not in scope for v1.
-export const maxDuration = 60;
+// Vercel Pro lets functions run up to 300s. A 48-item Wolt menu lands
+// in ~50s end-to-end (DB writes + parallel image downloads), so 300s
+// covers anything realistic for a single venue. Past ~250 items the
+// QStash route is the right move; tracked separately.
+export const maxDuration = 300;
 
 export const POST = handler(
   async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
