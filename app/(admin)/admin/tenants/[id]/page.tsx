@@ -31,6 +31,7 @@ export default async function TenantDetailPage({
           name: true,
           role: true,
           lastLoginAt: true,
+          emailVerifiedAt: true,
           createdAt: true,
         },
         orderBy: { createdAt: "asc" },
@@ -74,6 +75,7 @@ export default async function TenantDetailPage({
           name: u.name,
           role: u.role,
           lastLoginAt: u.lastLoginAt?.toISOString() ?? null,
+          emailVerifiedAt: u.emailVerifiedAt?.toISOString() ?? null,
           createdAt: u.createdAt.toISOString(),
         })),
       }}

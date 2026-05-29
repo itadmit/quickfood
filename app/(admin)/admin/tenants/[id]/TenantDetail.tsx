@@ -15,6 +15,7 @@ interface TenantUser {
   name: string;
   role: string;
   lastLoginAt: string | null;
+  emailVerifiedAt: string | null;
   createdAt: string;
 }
 
@@ -208,6 +209,57 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
       } else {
         const data = await res.json().catch(() => ({}));
         setError(data?.error?.message ?? "איפוס נכשל");
+      }
+    } catch {
+      setError("שגיאת רשת");
+    }
+  }
+
+  async function verifyEmail(userId: string, userName: string) {
+    if (!window.confirm(`לאמת את המייל של ${userName} ידנית? באנר ה"אמת חשבון" יוסתר.`)) return;
+    try {
+      const res = await fetch(
+        `/api/v1/admin/tenants/${t.id}/users/${userId}/verify-email`,
+        { method: "POST" },
+      );
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const stamp =
+          (data?.verified_at as string | undefined) ?? new Date().toISOString();
+        setT((prev) => ({
+          ...prev,
+          users: prev.users.map((u) =>
+            u.id === userId ? { ...u, emailVerifiedAt: stamp } : u,
+          ),
+        }));
+        flash(`המייל של ${userName} אומת`);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data?.error?.message ?? "אימות נכשל");
+      }
+    } catch {
+      setError("שגיאת רשת");
+    }
+  }
+
+  async function unverifyEmail(userId: string, userName: string) {
+    if (!window.confirm(`לבטל את אימות המייל של ${userName}? באנר ה"אמת חשבון" יחזור.`)) return;
+    try {
+      const res = await fetch(
+        `/api/v1/admin/tenants/${t.id}/users/${userId}/verify-email`,
+        { method: "DELETE" },
+      );
+      if (res.ok) {
+        setT((prev) => ({
+          ...prev,
+          users: prev.users.map((u) =>
+            u.id === userId ? { ...u, emailVerifiedAt: null } : u,
+          ),
+        }));
+        flash(`אימות בוטל עבור ${userName}`);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data?.error?.message ?? "ביטול נכשל");
       }
     } catch {
       setError("שגיאת רשת");
@@ -425,7 +477,18 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
               className="py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4"
             >
               <div className="flex-1 min-w-0">
-                <div className="font-medium">{u.name}</div>
+                <div className="font-medium flex items-center gap-1.5">
+                  {u.name}
+                  {u.emailVerifiedAt ? (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-qf-green-soft text-qf-green-deep font-medium">
+                      מאומת
+                    </span>
+                  ) : (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-qf-tomato-soft text-qf-tomato font-medium">
+                      לא מאומת
+                    </span>
+                  )}
+                </div>
                 <div className="text-xs text-qf-mute" dir="ltr">
                   {u.email}
                 </div>
@@ -438,13 +501,32 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
                   ? `כניסה אחרונה ${formatDate(u.lastLoginAt)}`
                   : "טרם נכנס"}
               </div>
-              <button
-                type="button"
-                onClick={() => resetPassword(u.id, u.name)}
-                className="px-3 py-1.5 rounded-lg border border-qf-line-dash text-xs hover:bg-qf-line-soft"
-              >
-                איפוס סיסמה
-              </button>
+              <div className="flex items-center gap-1.5">
+                {u.emailVerifiedAt ? (
+                  <button
+                    type="button"
+                    onClick={() => unverifyEmail(u.id, u.name)}
+                    className="px-3 py-1.5 rounded-lg border border-qf-line-dash text-xs hover:bg-qf-line-soft"
+                  >
+                    ביטול אימות
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => verifyEmail(u.id, u.name)}
+                    className="px-3 py-1.5 rounded-lg bg-qf-green-soft text-qf-green-deep text-xs font-medium hover:bg-qf-green-soft/80"
+                  >
+                    אמת מייל
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => resetPassword(u.id, u.name)}
+                  className="px-3 py-1.5 rounded-lg border border-qf-line-dash text-xs hover:bg-qf-line-soft"
+                >
+                  איפוס סיסמה
+                </button>
+              </div>
             </div>
           ))}
           {t.users.length === 0 && (

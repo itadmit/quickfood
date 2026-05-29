@@ -48,19 +48,32 @@ interface OrderData {
   businessType: BusinessType;
 }
 
-const STAGES: Array<{ key: string; label: string }> = [
+const COMMON_STAGES = [
   { key: "received", label: "התקבלה" },
   { key: "preparing", label: "בהכנה" },
   { key: "ready", label: "מוכנה" },
+] as const;
+const DELIVERY_TAIL = [
   { key: "delivering", label: "בדרך" },
-];
+  { key: "delivered", label: "נמסר" },
+] as const;
+const PICKUP_TAIL = [{ key: "delivered", label: "נאסף" }] as const;
 
-function stageOf(status: string): number {
+function stagesFor(method: "delivery" | "pickup"): Array<{ key: string; label: string }> {
+  return [...COMMON_STAGES, ...(method === "delivery" ? DELIVERY_TAIL : PICKUP_TAIL)];
+}
+
+function stageOf(status: string, method: "delivery" | "pickup"): number {
   if (["pending", "confirmed"].includes(status)) return 0;
   if (["preparing", "in_oven"].includes(status)) return 1;
   if (status === "ready") return 2;
-  if (status === "out_for_delivery") return 3;
-  if (status === "delivered") return 3;
+  if (method === "delivery") {
+    if (status === "out_for_delivery") return 3;
+    if (status === "delivered") return 4;
+  } else {
+    // Pickup skips out_for_delivery entirely.
+    if (status === "delivered") return 3;
+  }
   return 0;
 }
 
@@ -104,7 +117,8 @@ export function OrderTracking({
   const router = useRouter();
   const [order, setOrder] = useState(initialOrder);
   const [review, setReview] = useState<ExistingReview | null>(existingReview);
-  const stage = stageOf(order.status);
+  const stages = stagesFor(order.method);
+  const stage = stageOf(order.status, order.method);
   const isDelivered = order.status === "delivered";
   // "Just placed" — the customer just landed on this page. Render the
   // celebratory green-check confirmation instead of the ETA so they
@@ -252,7 +266,7 @@ export function OrderTracking({
       <section className="px-5 -mt-3 lg:px-0 lg:mt-6">
         <div className="bg-white rounded-2xl border border-qf-line p-4 space-y-4 shadow-sm">
           <div>
-            <div className="font-semibold">{STAGES[stage]?.label}</div>
+            <div className="font-semibold">{stages[stage]?.label}</div>
             <div className="text-xs text-qf-mute">
               {order.status === "preparing" && "המסעדה התחילה להכין את ההזמנה שלך"}
               {order.status === "ready" &&
@@ -267,7 +281,7 @@ export function OrderTracking({
               currently-active circle gets a soft pulsing ring so the eye
               lands on "where we are right now" without reading the labels. */}
           <ol className="relative flex items-start">
-            {STAGES.map((s, idx) => {
+            {stages.map((s, idx) => {
               const done = idx <= stage;
               const isCurrent = idx === stage;
               const lineDone = idx < stage;
@@ -279,7 +293,7 @@ export function OrderTracking({
                   {/* Connector toward the NEXT step. Anchored at the
                       column center and stretched a full column wide so
                       it lands on the next circle's center. */}
-                  {idx < STAGES.length - 1 && (
+                  {idx < stages.length - 1 && (
                     <div className="absolute top-3.5 inset-s-1/2 w-full h-0.5 -translate-y-1/2 bg-qf-line-soft pointer-events-none overflow-hidden">
                       <div
                         className="h-full bg-(--qf-primary) transition-[width] duration-700 ease-out"

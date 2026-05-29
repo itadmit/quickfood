@@ -304,7 +304,14 @@ function Column({
               key={o.id}
               order={o}
               next={next}
-              actionLabel={actionLabel}
+              // Pickup orders skip the "out for delivery" step — when
+              // advancing them from "ready", the action is "hand to
+              // customer", not "hand to courier".
+              actionLabel={
+                o.status === "ready" && o.method === "pickup"
+                  ? "נמסר ללקוח"
+                  : actionLabel
+              }
               now={now}
               onAdvance={onAdvance}
               onSelect={onSelect}

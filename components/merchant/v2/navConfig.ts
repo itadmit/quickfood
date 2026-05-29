@@ -31,6 +31,7 @@ export const NAV: NavSection[] = [
     items: [
       { href: "/dashboard", label: "דשבורד", Icon: IcoHome, exact: true },
       { href: "/dashboard/orders", label: "הזמנות", Icon: IcoOrders },
+      { href: "/dashboard/orders/history", label: "היסטוריית הזמנות", Icon: IcoOrders },
       { href: "/dashboard/menu", label: "תפריט", Icon: IcoMenu },
       { href: "/dashboard/analytics", label: "אנליטיקס", Icon: IcoChart, badge: "חדש!" },
       { href: "/dashboard/couriers", label: "שליחים", Icon: IcoBike },
