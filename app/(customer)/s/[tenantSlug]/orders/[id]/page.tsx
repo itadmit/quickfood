@@ -90,7 +90,14 @@ export default async function OrderTrackingPage({
   const existingReview = canReview
     ? await prisma.review.findUnique({
         where: { orderId: order.id },
-        select: { id: true, rating: true, text: true, createdAt: true },
+        select: {
+          id: true,
+          rating: true,
+          text: true,
+          createdAt: true,
+          replyText: true,
+          replyAt: true,
+        },
       })
     : null;
 
@@ -153,6 +160,8 @@ export default async function OrderTrackingPage({
               rating: existingReview.rating,
               text: existingReview.text,
               createdAt: existingReview.createdAt.toISOString(),
+              replyText: existingReview.replyText,
+              replyAt: existingReview.replyAt?.toISOString() ?? null,
             }
           : null
       }

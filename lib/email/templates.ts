@@ -342,6 +342,61 @@ export function reviewReminderEmail({
   });
 }
 
+export function reviewReplyEmail({
+  hello,
+  businessName,
+  customerRating,
+  customerText,
+  replyText,
+  viewUrl,
+}: {
+  hello: string;
+  businessName: string;
+  customerRating: number;
+  customerText: string | null;
+  replyText: string;
+  viewUrl: string;
+}) {
+  // Render the customer's original review (stars + their text, if any) as a
+  // quoted block, then the merchant's reply as a highlighted card so the
+  // recipient sees the conversation in context.
+  const stars = (() => {
+    const cells: string[] = [];
+    for (let n = 1; n <= 5; n++) {
+      const filled = n <= customerRating;
+      cells.push(
+        `<td style="padding:0 1px;"><img src="${EMAIL_ASSETS_BASE}/img/star-yellow.png" width="18" height="18" alt="" style="display:block;border:0;${filled ? "" : "opacity:0.25;"}"></td>`,
+      );
+    }
+    return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="right" dir="ltr" style="direction:ltr;margin-bottom:6px;"><tr>${cells.join("")}</tr></table>`;
+  })();
+
+  const yourReviewBlock = `<div style="background:${BRAND.cream};border:1px solid ${BRAND.line};border-radius:10px;padding:12px 14px;margin-top:8px;text-align:right;direction:rtl;">
+    <div style="font-size:12px;font-weight:700;color:${BRAND.mute};margin-bottom:4px;">הביקורת שלך</div>
+    ${stars}
+    ${customerText ? `<div style="font-size:14px;color:${BRAND.ink2};line-height:1.5;">${escape(customerText)}</div>` : ""}
+  </div>`;
+
+  const replyBlock = `<div style="background:${BRAND.yellow};border:2px solid ${BRAND.line};border-radius:10px;padding:12px 14px;margin-top:12px;text-align:right;direction:rtl;">
+    <div style="font-size:12px;font-weight:700;color:${BRAND.ink};margin-bottom:4px;">תשובת ${escape(businessName)}</div>
+    <div style="font-size:14px;color:${BRAND.ink};line-height:1.5;">${escape(replyText)}</div>
+  </div>`;
+
+  return renderRtlEmail({
+    subject: `${businessName} השיב/ה לדירוג שלך`,
+    preheader: "המסעדה הגיבה לביקורת שכתבת.",
+    heading: `${hello}, יש לך תשובה מהמסעדה`,
+    raw: true,
+    paragraphs: [
+      `<strong>${escape(businessName)}</strong> ראה/תה את הביקורת שלך והגיב/ה.`,
+      yourReviewBlock,
+      replyBlock,
+    ],
+    button: { href: viewUrl, label: "צפו בביקורת" },
+    footerNote: "תודה שעזרת למסעדה להשתפר.",
+  });
+}
+
 export function leadEmail({
   name,
   restaurant,

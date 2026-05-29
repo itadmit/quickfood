@@ -68,6 +68,8 @@ interface ExistingReview {
   rating: number;
   text: string | null;
   createdAt: string;
+  replyText: string | null;
+  replyAt: string | null;
 }
 
 export interface PublicReview {
@@ -506,7 +508,9 @@ function ReviewCard({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Already reviewed → read-only thank-you state.
+  // Already reviewed → read-only thank-you state. If the merchant replied,
+  // surface their response in a highlighted block — same shape as the
+  // public reviews page.
   if (review) {
     return (
       <div className="bg-white rounded-2xl border border-qf-line p-4">
@@ -523,6 +527,12 @@ function ReviewCard({
         </div>
         {review.text && (
           <p className="text-sm text-qf-ink2 leading-relaxed">{review.text}</p>
+        )}
+        {review.replyText && (
+          <div className="mt-3 bg-qf-green-soft border-s-4 border-(--qf-primary) rounded-e-lg ps-3 py-2 text-sm">
+            <div className="text-xs text-qf-green-deep font-medium">תשובת המסעדה</div>
+            <div className="mt-0.5 text-qf-ink2 leading-relaxed">{review.replyText}</div>
+          </div>
         )}
       </div>
     );
@@ -564,6 +574,8 @@ function ReviewCard({
         rating: data.review.rating,
         text: data.review.text,
         createdAt: data.review.created_at,
+        replyText: data.review.reply_text ?? null,
+        replyAt: data.review.reply_at ?? null,
       });
     } catch {
       setError("שגיאה בשליחת הדירוג");
