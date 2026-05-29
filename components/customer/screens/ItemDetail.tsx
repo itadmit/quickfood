@@ -186,10 +186,19 @@ export function ItemDetail({
     for (const g of item.optionGroups) {
       if (g.allowHalf) {
         const gHalf = halfPicks[g.id] ?? {};
-        for (const o of g.options) {
+        const picked = g.options.filter((o) => gHalf[o.id]);
+        // Mirror server: free slots applied to the cheapest PAID picks
+        // (by full priceDelta), then any survivor gets halved if its
+        // placement is not "full".
+        const paidSorted = picked
+          .filter((o) => o.priceDelta > 0)
+          .sort((a, b) => a.priceDelta - b.priceDelta);
+        const free = g.includedFree ?? 0;
+        const freedIds = new Set(paidSorted.slice(0, free).map((o) => o.id));
+        for (const o of picked) {
           const placement = gHalf[o.id];
-          if (!placement) continue;
-          const delta = placement !== "full" ? Math.round(o.priceDelta / 2) : o.priceDelta;
+          const baseDelta = freedIds.has(o.id) ? 0 : o.priceDelta;
+          const delta = placement !== "full" ? Math.round(baseDelta / 2) : baseDelta;
           oDelta += delta;
         }
       } else {
@@ -275,10 +284,16 @@ export function ItemDetail({
     for (const g of item.optionGroups) {
       if (g.allowHalf) {
         const gHalf = halfPicks[g.id] ?? {};
-        for (const o of g.options) {
-          const placement = gHalf[o.id];
-          if (!placement) continue;
-          const effectiveDelta = placement !== "full" ? Math.round(o.priceDelta / 2) : o.priceDelta;
+        const picked = g.options.filter((o) => gHalf[o.id]);
+        const paidSorted = picked
+          .filter((o) => o.priceDelta > 0)
+          .sort((a, b) => a.priceDelta - b.priceDelta);
+        const free = g.includedFree ?? 0;
+        const freedIds = new Set(paidSorted.slice(0, free).map((o) => o.id));
+        for (const o of picked) {
+          const placement = gHalf[o.id]!;
+          const baseDelta = freedIds.has(o.id) ? 0 : o.priceDelta;
+          const effectiveDelta = placement !== "full" ? Math.round(baseDelta / 2) : baseDelta;
           selectedOpts.push({ groupId: g.id, optionId: o.id, name: o.name, groupName: g.name, priceDelta: effectiveDelta, half: placement });
         }
       } else {
