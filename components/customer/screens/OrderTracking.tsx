@@ -645,6 +645,96 @@ function ThankYouView({
   review: ExistingReview | null;
   onReviewSubmitted: (r: ExistingReview) => void;
 }) {
+  // Same URL serves three intents — pick the framing that fits.
+  //  - "review": delivered + can rate + hasn't yet → the review form is the
+  //    protagonist (this is what email-reminder lands on)
+  //  - "thanks_for_review": delivered + already rated → quiet acknowledgment
+  //  - "thank_you": just placed (or anything not delivered) → celebratory
+  const mode: "review" | "thanks_for_review" | "thank_you" =
+    order.status === "delivered" && canReview
+      ? review
+        ? "thanks_for_review"
+        : "review"
+      : "thank_you";
+
+  const headerProps =
+    mode === "review"
+      ? {
+          headline: "איך הייתה ההזמנה?",
+          subhead: `נשמח לשמוע איך היה אצל ${tenantName}`,
+          showCheck: false,
+        }
+      : mode === "thanks_for_review"
+      ? {
+          headline: "תודה על הדירוג!",
+          subhead: `הרושם שלך עוזר ל${tenantName} להשתפר`,
+          showCheck: true,
+        }
+      : {
+          headline: "תודה על ההזמנה!",
+          subhead: `קיבלנו את ההזמנה שלך אצל ${tenantName}`,
+          showCheck: true,
+        };
+
+  const reviewSection = order.status === "delivered" && canReview && (
+    <section className="px-5 mt-6 lg:px-0" id="review">
+      <ReviewCard
+        orderId={order.id}
+        items={order.items}
+        review={review}
+        onSubmitted={onReviewSubmitted}
+      />
+    </section>
+  );
+
+  const itemsSection = (
+    <section className="px-5 mt-4 lg:px-0">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="font-semibold">פירוט ההזמנה</h2>
+        <span className="text-xs text-qf-mute">
+          {order.method === "delivery" ? "משלוח" : "איסוף"}
+        </span>
+      </div>
+      <div className="bg-white rounded-2xl border border-qf-line divide-y divide-qf-line-soft">
+        {order.items.map((it) => (
+          <div
+            key={it.id}
+            className="px-4 py-3 flex items-center gap-3 text-sm"
+          >
+            <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
+              <MenuItemImage
+                src={it.imageUrl ?? null}
+                alt={it.name}
+                businessType={order.businessType}
+                size={40}
+                rounded="xl"
+                className="w-full h-full"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="font-medium truncate">{it.name}</div>
+                <div className="text-qf-mute text-xs tnum shrink-0">
+                  ×{it.quantity}
+                </div>
+              </div>
+              {it.size && (
+                <div className="text-xs text-qf-mute">{it.size}</div>
+              )}
+            </div>
+            <div className="font-medium tnum shrink-0">
+              {formatPrice(it.total)}
+            </div>
+          </div>
+        ))}
+        <div className="px-4 py-3 flex items-center justify-between text-sm font-semibold">
+          <div>סה״כ ששולם</div>
+          <div className="tnum">{formatPrice(order.total)}</div>
+        </div>
+      </div>
+    </section>
+  );
+
   return (
     <div className="pb-20 lg:pb-12 lg:max-w-2xl lg:mx-auto">
       <BrandedHeader
@@ -653,92 +743,50 @@ function ThankYouView({
         tenantLogoUrl={tenantLogoUrl}
         tenantCoverImage={tenantCoverImage}
         orderNumber={order.number}
-        headline="תודה על ההזמנה!"
-        subhead={`קיבלנו את ההזמנה שלך אצל ${tenantName}`}
-        showCheck
         bigNumber={false}
+        {...headerProps}
       />
 
-      {/* Items — same compact layout as the live-tracking view so the
-          two modes read as the same template, minus the status block. */}
-      <section className="px-5 mt-6 lg:px-0">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="font-semibold">פירוט ההזמנה</h2>
-          <span className="text-xs text-qf-mute">
-            {order.method === "delivery" ? "משלוח" : "איסוף"}
-          </span>
-        </div>
-        <div className="bg-white rounded-2xl border border-qf-line divide-y divide-qf-line-soft">
-          {order.items.map((it) => (
-            <div
-              key={it.id}
-              className="px-4 py-3 flex items-center gap-3 text-sm"
-            >
-              <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
-                <MenuItemImage
-                  src={it.imageUrl ?? null}
-                  alt={it.name}
-                  businessType={order.businessType}
-                  size={40}
-                  rounded="xl"
-                  className="w-full h-full"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="font-medium truncate">{it.name}</div>
-                  <div className="text-qf-mute text-xs tnum shrink-0">
-                    ×{it.quantity}
-                  </div>
-                </div>
-                {it.size && (
-                  <div className="text-xs text-qf-mute">{it.size}</div>
-                )}
-              </div>
-              <div className="font-medium tnum shrink-0">
-                {formatPrice(it.total)}
-              </div>
-            </div>
-          ))}
-          <div className="px-4 py-3 flex items-center justify-between text-sm font-semibold">
-            <div>סה״כ ששולם</div>
-            <div className="tnum">{formatPrice(order.total)}</div>
-          </div>
-        </div>
-      </section>
+      {/* In review mode, the rating form is the reason the customer is
+          here — surface it directly under the header, push the receipt
+          down as reference, and drop the social-proof noise. */}
+      {mode === "review" ? (
+        <>
+          {reviewSection}
+          {itemsSection}
+        </>
+      ) : mode === "thanks_for_review" ? (
+        <>
+          {reviewSection}
+          {itemsSection}
+        </>
+      ) : (
+        <>
+          {itemsSection}
 
-      {/* Share — surface above the review prompt because most customers
-          hit this page right after paying, well before delivery. */}
-      {order.status !== "delivered" && (
-        <section className="px-5 mt-4">
-          <ShareCTA
-            tenantName={tenantName}
-            orderNumber={order.number}
-            method={order.method}
-          />
-        </section>
+          {/* Share — surface above the review prompt because most customers
+              hit this page right after paying, well before delivery. */}
+          {order.status !== "delivered" && (
+            <section className="px-5 mt-4">
+              <ShareCTA
+                tenantName={tenantName}
+                orderNumber={order.number}
+                method={order.method}
+              />
+            </section>
+          )}
+
+          {/* Social proof — recent positive reviews from other customers.
+              Only when we're NOT in review-mode (it's noise on a page
+              whose whole point is the customer's own rating). */}
+          {recentReviews.length > 0 && (
+            <section className="px-5 mt-4">
+              <ReviewsTeaser tenantName={tenantName} reviews={recentReviews} />
+            </section>
+          )}
+        </>
       )}
 
-      {/* Social proof — recent positive reviews from other customers. */}
-      {recentReviews.length > 0 && (
-        <section className="px-5 mt-4">
-          <ReviewsTeaser tenantName={tenantName} reviews={recentReviews} />
-        </section>
-      )}
-
-      {/* Review prompt — exact same component as the tracking view */}
-      {order.status === "delivered" && canReview && (
-        <section className="px-5 mt-4" id="review">
-          <ReviewCard
-            orderId={order.id}
-            items={order.items}
-            review={review}
-            onSubmitted={onReviewSubmitted}
-          />
-        </section>
-      )}
-
-      {/* Footer CTAs */}
       <section className="px-5 mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2">
         <Link
           href={`/s/${tenantSlug}`}
