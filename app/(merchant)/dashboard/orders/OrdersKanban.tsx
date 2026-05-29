@@ -72,12 +72,13 @@ const COLUMNS: Array<{
 
 const SLA_MINUTES_BEFORE_LATE = 15;
 
-// Reverse map for the "חזרה שלב" undo button on each card. Only kitchen
-// states walk back — once an order is out_for_delivery / delivered /
-// refunded there's money / a courier route tied to it, so the merchant
-// has to use the explicit refund/cancel flow instead of a one-tap undo.
+// Reverse map for the "חזרה שלב" undo button on each card. Only states
+// past the "new orders" column have a meaningful previous — going from
+// confirmed back to pending just un-accepts the order, which the merchant
+// can do via cancel + recreate; not worth a one-tap arrow that clutters
+// every new card. Past out_for_delivery stays locked too — courier
+// wallet/route is tied to it, use refund/cancel instead.
 const PREVIOUS_STATUS: Partial<Record<Status, Status>> = {
-  confirmed: "pending",
   preparing: "confirmed",
   in_oven: "preparing",
   ready: "preparing",
@@ -97,12 +98,22 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
     return () => clearInterval(id);
   }, []);
 
+  // Track orders the user just optimistically advanced. When the SSE
+  // fires "order.status_changed" we refresh — but the new list often
+  // hasn't yet caught the PATCH we just sent (write-then-read on Neon
+  // can lag a few hundred ms), so without this the card visibly jumps
+  // back to the old column then forward again. expiresAt acts as a
+  // fallback in case the PATCH silently fails: after 3s the optimistic
+  // mark is dropped and the next refresh shows the real server state.
+  const pendingAdvancesRef =
+    useRef<Map<string, { target: Status | "delivered"; expiresAt: number }>>(new Map());
+
   const refresh = useCallback(async () => {
     try {
       const res = await fetch("/api/v1/merchant/orders?status=active", { credentials: "include" });
       if (!res.ok) return;
       const data = await res.json();
-      const next: OrderRow[] = (data.orders as Array<Record<string, unknown>>).map((o) => ({
+      const fresh: OrderRow[] = (data.orders as Array<Record<string, unknown>>).map((o) => ({
         id: o.id as string,
         number: o.number as string,
         status: o.status as Status,
@@ -125,6 +136,25 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
           size: (it.size as string | null) ?? null,
         })),
       }));
+      const pending = pendingAdvancesRef.current;
+      const now = Date.now();
+      for (const [id, entry] of pending) {
+        if (entry.expiresAt < now) pending.delete(id);
+      }
+      const next = fresh
+        .map((o) => {
+          const entry = pending.get(o.id);
+          if (!entry) return o;
+          if (o.status === entry.target) {
+            pending.delete(o.id);
+            return o;
+          }
+          if (entry.target !== "delivered") {
+            return { ...o, status: entry.target };
+          }
+          return o;
+        })
+        .filter((o) => pending.get(o.id)?.target !== "delivered");
       setOrders(next);
     } catch {
       /* ignore */
@@ -208,6 +238,10 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
   }, [refresh]);
 
   async function advance(orderId: string, to: Status | "delivered", courierId?: string) {
+    pendingAdvancesRef.current.set(orderId, {
+      target: to,
+      expiresAt: Date.now() + 3000,
+    });
     setOrders((prev) =>
       prev
         .map((o) => (o.id === orderId ? { ...o, status: to === "delivered" ? "out_for_delivery" : (to as Status) } : o))
@@ -222,10 +256,12 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         pushToast("err", body?.error?.message ?? "עדכון הסטטוס נכשל");
+        pendingAdvancesRef.current.delete(orderId);
         await refresh();
       }
     } catch {
       pushToast("err", "אין חיבור לשרת — מנסה לסנכרן");
+      pendingAdvancesRef.current.delete(orderId);
       await refresh();
     }
   }
