@@ -12,7 +12,7 @@ export default async function CouriersPage() {
   }
 
   const couriers = await prisma.courier.findMany({
-    where: { tenantId: session.tenantId },
+    where: { tenantId: session.tenantId, active: true },
     orderBy: { createdAt: "desc" },
   });
 
@@ -22,6 +22,7 @@ export default async function CouriersPage() {
         id: c.id,
         name: c.name,
         phone: c.phone,
+        email: c.email,
         vehicle: c.vehicle,
         status: c.status,
         ratingAvg: Number(c.ratingAvg),

@@ -238,6 +238,31 @@ export function passwordResetEmail({
   });
 }
 
+export function courierMagicLinkEmail({
+  courierName,
+  businessName,
+  loginUrl,
+  expiresInMinutes,
+}: {
+  courierName: string;
+  businessName: string;
+  loginUrl: string;
+  expiresInMinutes: number;
+}) {
+  return renderRtlEmail({
+    subject: `התחברות לאפליקציית השליחים של ${businessName}`,
+    preheader: "לחיצה אחת מחברת אותך לאפליקציה.",
+    heading: `שלום ${courierName}`,
+    paragraphs: [
+      `קיבלת קישור התחברות לאפליקציית השליחים של ${businessName}.`,
+      `הקישור תקף ל-${expiresInMinutes} דקות. אחרי הלחיצה תוכנס ישירות לאפליקציה ותראה את ההזמנות שלך.`,
+    ],
+    button: { href: loginUrl, label: "התחבר עכשיו" },
+    footerNote:
+      "לא ביקשת להתחבר? אפשר להתעלם מהמייל. הקישור פג בעצמו אחרי דקות ספורות.",
+  });
+}
+
 export function verifyEmailEmail({
   ownerName,
   businessName,

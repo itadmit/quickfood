@@ -7,6 +7,7 @@ import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { OrderDrawer } from "@/components/merchant/OrderDrawer";
 import { ManualOrderModal } from "@/components/merchant/ManualOrderModal";
+import { AssignCourierModal } from "@/components/merchant/AssignCourierModal";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
 
 type Status =
@@ -130,8 +131,7 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
     };
   }, [refresh]);
 
-  async function advance(orderId: string, to: Status | "delivered") {
-    // optimistic update
+  async function advance(orderId: string, to: Status | "delivered", courierId?: string) {
     setOrders((prev) =>
       prev
         .map((o) => (o.id === orderId ? { ...o, status: to === "delivered" ? "out_for_delivery" : (to as Status) } : o))
@@ -141,7 +141,7 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
       const res = await fetch(`/api/v1/merchant/orders/${orderId}/status`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ status: to }),
+        body: JSON.stringify({ status: to, ...(courierId ? { courier_id: courierId } : {}) }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -154,6 +154,19 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
     }
   }
 
+  function handleAdvance(orderId: string, to: Status | "delivered") {
+    if (to === "out_for_delivery") {
+      const o = orders.find((x) => x.id === orderId);
+      if (o?.method === "pickup") {
+        void advance(orderId, "delivered");
+        return;
+      }
+      setAssignFor({ orderId, orderNumber: o?.number ?? "" });
+      return;
+    }
+    void advance(orderId, to);
+  }
+
   const byColumn = useMemo(() => {
     return COLUMNS.map((col) => ({
       ...col,
@@ -163,6 +176,7 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
 
   const [drawerOrderId, setDrawerOrderId] = useState<string | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
+  const [assignFor, setAssignFor] = useState<{ orderId: string; orderNumber: string } | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
   function pushToast(kind: ToastKind, message: string) {
     setToast({ id: Date.now(), kind, message });
@@ -209,7 +223,7 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
             key={col.title}
             {...col}
             now={now}
-            onAdvance={advance}
+            onAdvance={handleAdvance}
             onSelect={(id) => setDrawerOrderId(id)}
           />
         ))}
@@ -222,7 +236,7 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
           onAdvance={(id) => {
             const o = orders.find((x) => x.id === id);
             if (o) {
-              advance(id, nextStatusFor(o));
+              handleAdvance(id, nextStatusFor(o));
               setDrawerOrderId(null);
             }
           }}
@@ -230,6 +244,17 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
       )}
 
       {manualOpen && <ManualOrderModal onClose={() => setManualOpen(false)} />}
+
+      {assignFor && (
+        <AssignCourierModal
+          orderNumber={assignFor.orderNumber}
+          onAssign={async (courierId) => {
+            await advance(assignFor.orderId, "out_for_delivery", courierId);
+          }}
+          onClose={() => setAssignFor(null)}
+        />
+      )}
+
       <Toast toast={toast} onDismiss={() => setToast(null)} />
     </div>
   );

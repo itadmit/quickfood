@@ -14,7 +14,17 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
       tenant: { select: { id: true, slug: true, name: true, themeId: true, logoLetter: true } },
       branch: { select: { name: true, address: true, phone: true } },
       deliveryAddress: true,
-      courier: { select: { id: true, name: true, phone: true, ratingAvg: true } },
+      courier: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          ratingAvg: true,
+          currentLat: true,
+          currentLng: true,
+          lastSeenAt: true,
+        },
+      },
     },
   });
   if (!order) return apiError("not_found", "הזמנה לא נמצאה", 404);
@@ -52,7 +62,17 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
       tenant: order.tenant,
       branch: order.branch,
       delivery_address: order.deliveryAddress,
-      courier: order.courier,
+      courier: order.courier
+        ? {
+            id: order.courier.id,
+            name: order.courier.name,
+            phone: order.courier.phone,
+            rating_avg: Number(order.courier.ratingAvg),
+            lat: order.courier.currentLat ? Number(order.courier.currentLat) : null,
+            lng: order.courier.currentLng ? Number(order.courier.currentLng) : null,
+            last_seen_at: order.courier.lastSeenAt?.toISOString() ?? null,
+          }
+        : null,
       items: order.items.map((it) => ({
         id: it.id,
         name: it.nameSnapshot,

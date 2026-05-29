@@ -699,11 +699,16 @@ model Order {
   estimatedReadyAt    DateTime? @map("estimated_ready_at")
   estimatedDeliveryAt DateTime? @map("estimated_delivery_at")
 
-  createdAt   DateTime  @default(now()) @map("created_at")
-  confirmedAt DateTime? @map("confirmed_at")
-  readyAt     DateTime? @map("ready_at")
-  deliveredAt DateTime? @map("delivered_at")
-  cancelledAt DateTime? @map("cancelled_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  confirmedAt         DateTime? @map("confirmed_at")
+  readyAt             DateTime? @map("ready_at")
+  courierAssignedAt   DateTime? @map("courier_assigned_at")
+  courierPickedUpAt   DateTime? @map("courier_picked_up_at")
+  deliveredAt         DateTime? @map("delivered_at")
+  cancelledAt         DateTime? @map("cancelled_at")
+
+  cashCollected  Int?    @map("cash_collected")
+  proofPhotoUrl  String? @map("proof_photo_url")
 
   rating                  Int?
   reviewText              String?   @map("review_text")
@@ -801,19 +806,55 @@ model Courier {
   branch          Branch?        @relation(fields: [branchId], references: [id])
   name            String
   phone           String
+  email           String?        @unique
+  pinHash         String?        @map("pin_hash")
   vehicle         CourierVehicle @default(scooter)
   status          CourierStatus  @default(offline)
   currentLat      Decimal?       @map("current_lat") @db.Decimal(10, 7)
   currentLng      Decimal?       @map("current_lng") @db.Decimal(10, 7)
   currentOrderId  String?        @map("current_order_id") @db.Uuid
+  maxConcurrent   Int            @default(3) @map("max_concurrent")
+  cashOnHand      Int            @default(0) @map("cash_on_hand")
+  active          Boolean        @default(true)
+  lastSeenAt      DateTime?      @map("last_seen_at")
   ratingAvg       Decimal        @default(0) @map("rating_avg") @db.Decimal(3, 2)
   deliveriesToday Int            @default(0) @map("deliveries_today")
   createdAt       DateTime       @default(now()) @map("created_at")
 
-  orders Order[]
+  orders   Order[]
+  sessions CourierSession[]
+  magicLinks CourierMagicLinkToken[]
 
   @@index([branchId, status])
   @@map("couriers")
+}
+
+model CourierSession {
+  id        String    @id @default(uuid()) @db.Uuid
+  courierId String    @map("courier_id") @db.Uuid
+  courier   Courier   @relation(fields: [courierId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique @map("token_hash")
+  device    String?
+  ip        String?
+  expiresAt DateTime  @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  revokedAt DateTime? @map("revoked_at")
+
+  @@index([courierId, createdAt(sort: Desc)])
+  @@map("courier_sessions")
+}
+
+model CourierMagicLinkToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  courierId String    @map("courier_id") @db.Uuid
+  courier   Courier   @relation(fields: [courierId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([courierId, createdAt(sort: Desc)])
+  @@map("courier_magic_link_tokens")
 }
 
 model Review {

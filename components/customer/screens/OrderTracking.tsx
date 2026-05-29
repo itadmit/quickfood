@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoPhone, IcoClock, IcoCheck, IcoStar, IcoWhatsApp } from "@/components/shared/Icons";
@@ -8,6 +9,11 @@ import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemIm
 import { formatPrice, formatTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { readOrderToken } from "@/lib/order-access-storage";
+
+const CourierMap = dynamic(
+  () => import("@/components/customer/CourierMap").then((m) => m.CourierMap),
+  { ssr: false, loading: () => null },
+);
 
 interface OrderItemRow {
   id: string;
@@ -31,6 +37,13 @@ interface OrderData {
   readyAt: string | null;
   deliveredAt: string | null;
   branch: { phone: string; address: string } | null;
+  deliveryLocation: { lat: number; lng: number } | null;
+  courier: {
+    name: string;
+    phone: string;
+    lat: number | null;
+    lng: number | null;
+  } | null;
   items: OrderItemRow[];
   businessType: BusinessType;
 }
@@ -120,8 +133,41 @@ export function OrderTracking({
     const es = new EventSource(`/api/v1/realtime/orders/${order.id}`);
     es.addEventListener("snapshot", (e) => {
       try {
-        const d = JSON.parse((e as MessageEvent).data) as { status: string };
-        setOrder((prev) => ({ ...prev, status: d.status }));
+        const d = JSON.parse((e as MessageEvent).data) as {
+          status: string;
+          courier_name?: string | null;
+          courier_phone?: string | null;
+          courier_lat?: number | null;
+          courier_lng?: number | null;
+        };
+        setOrder((prev) => ({
+          ...prev,
+          status: d.status,
+          courier:
+            d.courier_name || prev.courier
+              ? {
+                  name: d.courier_name ?? prev.courier?.name ?? "",
+                  phone: d.courier_phone ?? prev.courier?.phone ?? "",
+                  lat: d.courier_lat ?? prev.courier?.lat ?? null,
+                  lng: d.courier_lng ?? prev.courier?.lng ?? null,
+                }
+              : prev.courier,
+        }));
+      } catch {
+        /* ignore */
+      }
+    });
+    es.addEventListener("courier_location", (e) => {
+      try {
+        const d = JSON.parse((e as MessageEvent).data) as {
+          lat: number | null;
+          lng: number | null;
+        };
+        setOrder((prev) =>
+          prev.courier
+            ? { ...prev, courier: { ...prev.courier, lat: d.lat, lng: d.lng } }
+            : prev,
+        );
       } catch {
         /* ignore */
       }
@@ -138,6 +184,14 @@ export function OrderTracking({
               readyAt: o.ready_at,
               deliveredAt: o.delivered_at,
               confirmedAt: o.confirmed_at,
+              courier: o.courier
+                ? {
+                    name: o.courier.name,
+                    phone: o.courier.phone,
+                    lat: o.courier.lat ?? null,
+                    lng: o.courier.lng ?? null,
+                  }
+                : prev.courier,
             }));
           }
         })
@@ -274,6 +328,42 @@ export function OrderTracking({
           </div>
         </div>
       </section>
+
+      {/* Courier card + live map */}
+      {order.courier &&
+        (order.status === "out_for_delivery" || order.status === "ready") && (
+          <section className="px-5 mt-4 lg:px-0 space-y-3">
+            <div className="bg-white rounded-2xl border border-qf-line p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-qf-green-soft grid place-items-center text-(--qf-deep) font-bold text-base">
+                {order.courier.name.slice(0, 1)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-sm">{order.courier.name}</div>
+                <div className="text-xs text-qf-mute">השליח שלך</div>
+              </div>
+              {order.courier.phone && (
+                <a
+                  href={`tel:${order.courier.phone}`}
+                  className="px-3 py-1.5 rounded-full bg-qf-green-soft text-(--qf-deep) text-xs font-medium flex items-center gap-1.5"
+                  dir="ltr"
+                >
+                  <IcoPhone c="var(--qf-deep)" s={12} />
+                  <span>{order.courier.phone}</span>
+                </a>
+              )}
+            </div>
+            {(order.courier.lat || order.deliveryLocation) && (
+              <CourierMap
+                courier={
+                  order.courier.lat && order.courier.lng
+                    ? { lat: order.courier.lat, lng: order.courier.lng }
+                    : null
+                }
+                customer={order.deliveryLocation}
+              />
+            )}
+          </section>
+        )}
 
       {/* Branch contact */}
       {order.branch && (

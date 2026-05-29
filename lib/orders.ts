@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/client";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
 import { scheduleReviewReminder } from "@/lib/reviews/schedule";
 import { recordOrderCommission } from "@/lib/billing-hub/commission";
+import { notifyCourierAssigned } from "@/lib/courier/notify";
 
 /**
  * Order status state machine. Defines which transitions are legal.
@@ -44,7 +45,13 @@ export class OrderTransitionError extends Error {
 export async function advanceStatus(
   orderId: string,
   to: OrderStatus,
-  options?: { courierId?: string; reason?: string; changedBy?: string },
+  options?: {
+    courierId?: string;
+    reason?: string;
+    changedBy?: string;
+    cashCollected?: number;
+    proofPhotoUrl?: string;
+  },
 ) {
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order) throw new Error("order_not_found");
@@ -57,21 +64,67 @@ export async function advanceStatus(
   const updates: Record<string, unknown> = { status: to };
   if (options?.courierId) updates.courierId = options.courierId;
   if (to === "confirmed") updates.confirmedAt = now;
-  // If we're leaving "pending" for anything other than cancelled (i.e. the
-  // merchant fast-forwarded straight to preparing), still record the moment
-  // the order became "confirmed" — without this the confirmedAt column
-  // would stay NULL and break commission accrual / SLA timers downstream.
   if (order.status === "pending" && to !== "cancelled" && to !== "confirmed") {
     updates.confirmedAt = now;
   }
   if (to === "ready") updates.readyAt = now;
-  if (to === "delivered") updates.deliveredAt = now;
+  if (to === "out_for_delivery") {
+    updates.courierAssignedAt = updates.courierAssignedAt ?? now;
+    updates.courierPickedUpAt = now;
+  }
+  if (to === "delivered") {
+    updates.deliveredAt = now;
+    if (typeof options?.cashCollected === "number") {
+      updates.cashCollected = options.cashCollected;
+    }
+    if (options?.proofPhotoUrl) updates.proofPhotoUrl = options.proofPhotoUrl;
+  }
   if (to === "cancelled") updates.cancelledAt = now;
 
   const updated = await prisma.order.update({
     where: { id: orderId },
     data: updates,
   });
+
+  const assignedCourierId = (updates.courierId as string | undefined) ?? order.courierId ?? null;
+  if (to === "delivered" && assignedCourierId) {
+    const cashDelta =
+      order.paymentMethod === "cash" && typeof options?.cashCollected === "number"
+        ? options.cashCollected
+        : 0;
+    await prisma.courier.update({
+      where: { id: assignedCourierId },
+      data: {
+        deliveriesToday: { increment: 1 },
+        currentOrderId: null,
+        ...(cashDelta > 0 ? { cashOnHand: { increment: cashDelta } } : {}),
+      },
+    });
+  }
+  if (to === "out_for_delivery" && assignedCourierId) {
+    await prisma.courier.update({
+      where: { id: assignedCourierId },
+      data: {
+        status: "on_delivery",
+        currentOrderId: orderId,
+      },
+    });
+  }
+  if (to === "cancelled" && order.courierId) {
+    const stillActive = await prisma.order.count({
+      where: {
+        courierId: order.courierId,
+        status: { in: ["out_for_delivery"] },
+        NOT: { id: orderId },
+      },
+    });
+    if (stillActive === 0) {
+      await prisma.courier.update({
+        where: { id: order.courierId },
+        data: { currentOrderId: null },
+      });
+    }
+  }
 
   await prisma.orderEvent.create({
     data: {
@@ -103,6 +156,12 @@ export async function advanceStatus(
         console.error("[commission] record failed", err);
       });
     }
+  }
+
+  if (to === "out_for_delivery" && options?.courierId && options.courierId !== order.courierId) {
+    void notifyCourierAssigned(orderId, options.courierId).catch((err) => {
+      console.error("[courier] assign notify failed", err);
+    });
   }
 
   // Fire webhooks (best-effort, non-blocking)

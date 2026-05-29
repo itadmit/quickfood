@@ -33,6 +33,16 @@ export default async function OrderTrackingPage({
     include: {
       items: { include: { menuItem: { select: { images: true } } } },
       branch: { select: { phone: true, address: true } },
+      deliveryAddress: { select: { lat: true, lng: true, street: true, city: true } },
+      courier: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          currentLat: true,
+          currentLng: true,
+        },
+      },
     },
   });
   if (!order) notFound();
@@ -114,6 +124,18 @@ export default async function OrderTrackingPage({
         readyAt: order.readyAt?.toISOString() ?? null,
         deliveredAt: order.deliveredAt?.toISOString() ?? null,
         branch: order.branch,
+        deliveryLocation:
+          order.deliveryAddress?.lat && order.deliveryAddress?.lng
+            ? { lat: Number(order.deliveryAddress.lat), lng: Number(order.deliveryAddress.lng) }
+            : null,
+        courier: order.courier
+          ? {
+              name: order.courier.name,
+              phone: order.courier.phone,
+              lat: order.courier.currentLat ? Number(order.courier.currentLat) : null,
+              lng: order.courier.currentLng ? Number(order.courier.currentLng) : null,
+            }
+          : null,
         items: order.items.map((it) => ({
           id: it.id,
           name: it.nameSnapshot,

@@ -12,6 +12,7 @@ interface Courier {
   id: string;
   name: string;
   phone: string;
+  email: string | null;
   vehicle: string;
   status: string;
   ratingAvg: number;
@@ -38,10 +39,15 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [pin, setPin] = useState("");
   const [vehicle, setVehicle] = useState<"scooter" | "bike" | "car" | "walking">("scooter");
   const [busy, setBusy] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Courier | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [resetPinFor, setResetPinFor] = useState<Courier | null>(null);
+  const [resetPinValue, setResetPinValue] = useState("");
+  const [resettingPin, setResettingPin] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   function pushToast(kind: ToastKind, message: string) {
     setToast({ id: Date.now(), kind, message });
@@ -50,9 +56,17 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
   const onShift = couriers.filter((c) => c.status !== "offline").length;
   const onDelivery = couriers.filter((c) => c.status === "on_delivery").length;
 
+  function resetForm() {
+    setName("");
+    setPhone("");
+    setEmail("");
+    setPin("");
+    setVehicle("scooter");
+  }
+
   async function addCourier() {
-    if (!name.trim() || !phone.trim()) {
-      pushToast("err", "שם וטלפון נדרשים");
+    if (!name.trim() || !phone.trim() || !email.trim() || !/^\d{4,6}$/.test(pin)) {
+      pushToast("err", "מלאו שם, טלפון, מייל ו-PIN בן 4-6 ספרות");
       return;
     }
     setBusy(true);
@@ -60,7 +74,13 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
       const res = await fetch("/api/v1/merchant/couriers", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), phone: phone.trim(), vehicle }),
+        body: JSON.stringify({
+          name: name.trim(),
+          phone: phone.trim(),
+          email: email.trim(),
+          pin,
+          vehicle,
+        }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -68,10 +88,9 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
         return;
       }
       router.refresh();
-      setName("");
-      setPhone("");
+      resetForm();
       setAdding(false);
-      pushToast("ok", "השליח נוסף");
+      pushToast("ok", "השליח נוסף. אפשר להעביר לו את הטלפון/מייל וה-PIN.");
     } finally {
       setBusy(false);
     }
@@ -109,6 +128,29 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
     pushToast("ok", "השליח הוסר");
   }
 
+  async function confirmResetPin() {
+    if (!resetPinFor) return;
+    if (!/^\d{4,6}$/.test(resetPinValue)) {
+      pushToast("err", "PIN חייב להיות 4-6 ספרות");
+      return;
+    }
+    setResettingPin(true);
+    const res = await fetch(`/api/v1/merchant/couriers/${resetPinFor.id}/reset-pin`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ pin: resetPinValue }),
+    });
+    setResettingPin(false);
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      pushToast("err", body?.error?.message ?? "איפוס PIN נכשל");
+      return;
+    }
+    setResetPinFor(null);
+    setResetPinValue("");
+    pushToast("ok", "PIN עודכן. כל הסשנים הקודמים נותקו.");
+  }
+
   return (
     <div className="space-y-4 lg:space-y-5">
       <PageHeader
@@ -128,7 +170,7 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
 
       {adding && (
         <div className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -142,6 +184,23 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
               dir="ltr"
               className="px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
             />
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="מייל"
+              type="email"
+              dir="ltr"
+              className="px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+            />
+            <input
+              value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="PIN (4-6 ספרות)"
+              dir="ltr"
+              inputMode="numeric"
+              maxLength={6}
+              className="px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum"
+            />
             <select
               value={vehicle}
               onChange={(e) => setVehicle(e.target.value as typeof vehicle)}
@@ -153,11 +212,14 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
               <option value="walking">רגלית</option>
             </select>
           </div>
+          <p className="text-xs text-qf-mute">
+            השליח יתחבר ב-/courier עם הטלפון או המייל וה-PIN שתבחר. אפשר גם לבקש קישור התחברות במייל בכל זמן.
+          </p>
           <div className="flex justify-end">
             <button
               type="button"
               onClick={addCourier}
-              disabled={!name || !phone || busy}
+              disabled={!name || !phone || !email || !pin || busy}
               className="px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm disabled:opacity-60"
             >
               {busy ? "מוסיף..." : "הוסף"}
@@ -187,18 +249,30 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
                     <div className="text-xs text-qf-mute">{VEHICLE_LABEL[c.vehicle]}</div>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setPendingDelete(c)}
-                  className="text-qf-mute hover:text-qf-tomato text-xl leading-none"
-                  aria-label="הסר שליח"
-                  title="הסר שליח"
-                >
-                  ×
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResetPinFor(c);
+                      setResetPinValue("");
+                    }}
+                    className="text-xs text-qf-mute hover:text-qf-ink px-2 py-1 rounded-md border border-qf-line-dash"
+                  >
+                    איפוס PIN
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPendingDelete(c)}
+                    className="text-qf-mute hover:text-qf-tomato text-xl leading-none px-1"
+                    aria-label="הסר שליח"
+                    title="הסר שליח"
+                  >
+                    ×
+                  </button>
+                </div>
               </header>
 
-              <div className="flex items-center gap-3 text-xs text-qf-mute">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-qf-mute">
                 <a
                   href={`tel:${c.phone}`}
                   className="inline-flex items-center gap-1.5 hover:text-qf-ink"
@@ -207,6 +281,14 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
                   <IcoPhone c="#7c8a82" s={12} />
                   {c.phone}
                 </a>
+                {c.email && (
+                  <>
+                    <span>·</span>
+                    <span dir="ltr" className="truncate max-w-[180px]">
+                      {c.email}
+                    </span>
+                  </>
+                )}
                 <span>·</span>
                 <span className="inline-flex items-center gap-1 tnum">
                   <IcoStar c="#e8a93b" fill="#e8a93b" s={12} />
@@ -244,7 +326,7 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
         message={
           <>
             השליח <span className="font-semibold">&quot;{pendingDelete?.name}&quot;</span> יוסר.
-            ההיסטוריה שלו נשמרת, אבל הוא לא יוצג יותר ברשימה.
+            ההיסטוריה שלו נשמרת, אבל הוא לא יוצג יותר ברשימה ולא יוכל להתחבר.
           </>
         }
         confirmLabel="הסר"
@@ -254,6 +336,54 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
         onConfirm={confirmDelete}
         onCancel={() => setPendingDelete(null)}
       />
+
+      {resetPinFor && (
+        <div
+          className="fixed inset-0 bg-black/40 z-50 grid place-items-center p-4"
+          onClick={() => !resettingPin && setResetPinFor(null)}
+        >
+          <div
+            className="bg-white rounded-2xl p-5 w-full max-w-sm space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-semibold text-lg">איפוס PIN</h3>
+            <p className="text-sm text-qf-mute">
+              איפוס ה-PIN של <span className="font-medium">{resetPinFor.name}</span>. כל הסשנים
+              הפעילים שלו יתנתקו אוטומטית, ויידרש להתחבר מחדש עם ה-PIN החדש.
+            </p>
+            <input
+              value={resetPinValue}
+              onChange={(e) =>
+                setResetPinValue(e.target.value.replace(/\D/g, "").slice(0, 6))
+              }
+              placeholder="PIN חדש"
+              dir="ltr"
+              inputMode="numeric"
+              maxLength={6}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum text-center text-2xl tracking-widest"
+            />
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setResetPinFor(null)}
+                disabled={resettingPin}
+                className="px-4 py-2 rounded-xl border border-qf-line-dash text-sm"
+              >
+                ביטול
+              </button>
+              <button
+                type="button"
+                onClick={confirmResetPin}
+                disabled={resettingPin || !/^\d{4,6}$/.test(resetPinValue)}
+                className="px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm disabled:opacity-60"
+              >
+                {resettingPin ? "מאפס..." : "אפס"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Toast toast={toast} onDismiss={() => setToast(null)} />
     </div>
   );
