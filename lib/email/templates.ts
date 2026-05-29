@@ -195,7 +195,7 @@ export function welcomeEmail({
     heading: `שלום ${ownerName}, ברוכים הבאים!`,
     raw: true,
     paragraphs: [
-      `החנות <span style="color:${BRAND.mute};">של</span> <strong>${escape(businessName)}</strong> נוצרה בהצלחה ב-QuickFood.`,
+      `החנות <strong>${escape(businessName)}</strong> נוצרה בהצלחה ב-QuickFood.`,
       "התחלת תקופת ניסיון של 7 ימים - בלי כרטיס אשראי, גישה מלאה לכל הפיצ׳רים.",
       `צעדים מומלצים ראשונים (אם לא ייבאת עדיין תפריט מוולט):
        <ul dir="rtl" style="margin:8px 0 0;padding:0 22px 0 0;line-height:1.7;color:${BRAND.ink2};font-size:15px;direction:rtl;text-align:right;list-style-position:outside;">
@@ -255,7 +255,7 @@ export function verifyEmailEmail({
     heading: `שלום ${ownerName}, נשאר רק לאמת מייל`,
     raw: true,
     paragraphs: [
-      `החנות <span style="color:${BRAND.mute};">של</span> <strong>${escape(businessName)}</strong> נוצרה ב-QuickFood, אבל לפני שתופיע כפעילה ללקוחות צריך לאמת שהמייל הזה באמת שלך.`,
+      `החנות <strong>${escape(businessName)}</strong> נוצרה ב-QuickFood, אבל לפני שתופיע כפעילה ללקוחות צריך לאמת שהמייל הזה באמת שלך.`,
       "לחיצה על הכפתור שמתחת מאמתת את הכתובת ומסירה את ההתראה מהדשבורד - זה לוקח שנייה.",
       `הקישור תקף ל-${expiresInHours} שעות. אם הקישור פג תוקף, אפשר לבקש קישור חדש מהכפתור שבראש הדשבורד.`,
     ],
