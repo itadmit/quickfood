@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { IcoClock, IcoPhone, IcoPrinter, IcoFlame } from "@/components/shared/Icons";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { formatPrice } from "@/lib/format";
@@ -199,6 +200,12 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
         subtitle={`${totalActive} הזמנות פעילות · עדכון אוטומטי`}
         actions={
           <>
+            <Link
+              href="/dashboard/orders/history"
+              className="hidden sm:inline-flex px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm items-center gap-2 shadow-[0_2px_0_#000] hover:bg-black/5"
+            >
+              היסטוריה
+            </Link>
             <button
               type="button"
               className="hidden sm:inline-flex px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm items-center gap-2 shadow-[0_2px_0_#000] hover:bg-black/5"
