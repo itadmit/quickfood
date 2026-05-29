@@ -2,7 +2,7 @@
   "name": "QuickFood — דשבורד",
   "short_name": "QuickFood",
   "description": "ניהול הזמנות, תפריט ושליחים",
-  "start_url": "/dashboard",
+  "start_url": "/dashboard/orders",
   "scope": "/dashboard/",
   "display": "standalone",
   "orientation": "any",

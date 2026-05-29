@@ -21,6 +21,10 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "QuickFood",
   },
+  other: {
+    "apple-mobile-web-app-capable": "yes",
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
