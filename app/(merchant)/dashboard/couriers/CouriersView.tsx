@@ -7,6 +7,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { cn } from "@/lib/cn";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
+import { CourierQRModal } from "@/components/merchant/CourierQRModal";
 
 interface Courier {
   id: string;
@@ -55,6 +56,7 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
   const [resetPinValue, setResetPinValue] = useState("");
   const [resetEmailValue, setResetEmailValue] = useState("");
   const [resettingPin, setResettingPin] = useState(false);
+  const [qrFor, setQrFor] = useState<Courier | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
   function pushToast(kind: ToastKind, message: string) {
     setToast({ id: Date.now(), kind, message });
@@ -110,7 +112,8 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
       router.refresh();
       resetForm();
       setAdding(false);
-      pushToast("ok", "השליח נוסף. אפשר להעביר לו את הטלפון/מייל וה-PIN.");
+      setQrFor(newCourier);
+      pushToast("ok", "השליח נוסף. הצג לו את ה-QR או שלח לו את הקישור.");
     } finally {
       setBusy(false);
     }
@@ -302,6 +305,16 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
+                  {c.hasLogin && (
+                    <button
+                      type="button"
+                      onClick={() => setQrFor(c)}
+                      className="text-xs px-2 py-1 rounded-md border border-qf-line-dash text-qf-mute hover:text-qf-ink"
+                      title="קישור התחברות מהיר"
+                    >
+                      QR
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => {
@@ -460,6 +473,14 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
             </div>
           </div>
         </div>
+      )}
+
+      {qrFor && (
+        <CourierQRModal
+          courierId={qrFor.id}
+          courierName={qrFor.name}
+          onClose={() => setQrFor(null)}
+        />
       )}
 
       <Toast toast={toast} onDismiss={() => setToast(null)} />
