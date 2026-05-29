@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoStar, IcoClose } from "@/components/shared/Icons";
+import { readOrderToken } from "@/lib/order-access-storage";
 
 const SHOWN_KEY = "qf:review-modal-shown";
 
@@ -46,12 +47,20 @@ export function ReviewPromptModal({
 
   if (!open) return null;
 
+  function accessQs(): string {
+    const urlToken = new URLSearchParams(
+      typeof window !== "undefined" ? window.location.search : "",
+    ).get("t");
+    const token = urlToken ?? readOrderToken(tenantSlug, orderId);
+    return token ? `?t=${encodeURIComponent(token)}` : "";
+  }
+
   async function send() {
     if (rating < 1) return;
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(`/api/v1/customer/orders/${orderId}/review`, {
+      const res = await fetch(`/api/v1/customer/orders/${orderId}/review${accessQs()}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ rating, text: text.trim() || null }),
@@ -71,7 +80,7 @@ export function ReviewPromptModal({
   async function skip() {
     setBusy(true);
     try {
-      await fetch(`/api/v1/customer/orders/${orderId}/review/dismiss`, {
+      await fetch(`/api/v1/customer/orders/${orderId}/review/dismiss${accessQs()}`, {
         method: "POST",
       });
     } catch {
@@ -88,7 +97,8 @@ export function ReviewPromptModal({
 
   function openFullReview() {
     setOpen(false);
-    router.push(`/s/${tenantSlug}/orders/${orderId}#review`);
+    const qs = accessQs();
+    router.push(`/s/${tenantSlug}/orders/${orderId}${qs}#review`);
   }
 
   const shown = hover || rating;

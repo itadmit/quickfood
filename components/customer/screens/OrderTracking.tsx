@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { IcoPhone, IcoClock, IcoCheck, IcoStar, IcoWhatsApp } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { formatPrice, formatTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { readOrderToken } from "@/lib/order-access-storage";
 
 interface OrderItemRow {
   id: string;
@@ -84,6 +86,7 @@ export function OrderTracking({
   existingReview?: ExistingReview | null;
   showTracking?: boolean;
 }) {
+  const router = useRouter();
   const [order, setOrder] = useState(initialOrder);
   const [review, setReview] = useState<ExistingReview | null>(existingReview);
   const stage = stageOf(order.status);
@@ -92,6 +95,22 @@ export function OrderTracking({
   // celebratory green-check confirmation instead of the ETA so they
   // know the order went through.
   const isJustPlaced = order.status === "pending";
+
+  // Same-device review unlock: if the server said "no review form for you"
+  // but we stored a token at checkout, re-navigate with ?t= so the page
+  // re-renders server-side with canReview=true (and with any existingReview
+  // properly hydrated). No-op if the URL already has ?t= or if we have no
+  // stored token.
+  useEffect(() => {
+    if (canReview) return;
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("t")) return;
+    const stored = readOrderToken(tenantSlug, order.id);
+    if (!stored) return;
+    params.set("t", stored);
+    router.replace(`${window.location.pathname}?${params.toString()}${window.location.hash}`);
+  }, [canReview, order.id, tenantSlug, router]);
 
   // SSE updates — only relevant when the merchant opted into live tracking.
   // For the lite thank-you screen, the page never refreshes (less work, less
@@ -439,7 +458,13 @@ function ReviewCard({
           rating: r,
           text: itemTexts[order_item_id]?.trim() || null,
         }));
-      const res = await fetch(`/api/v1/customer/orders/${orderId}/review`, {
+      // Forward the access token (from email link or localStorage flip) so
+      // a customer without an OTP session can still submit their rating.
+      const urlToken = new URLSearchParams(
+        typeof window !== "undefined" ? window.location.search : "",
+      ).get("t");
+      const qs = urlToken ? `?t=${encodeURIComponent(urlToken)}` : "";
+      const res = await fetch(`/api/v1/customer/orders/${orderId}/review${qs}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({

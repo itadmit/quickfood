@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { createOrder, CartValidationError } from "@/lib/orders-create";
 import { toE164 } from "@/lib/format";
+import { signReviewToken } from "@/lib/reviews/token";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -92,6 +93,11 @@ export const POST = handler(async (req: Request) => {
           payment_method: result.paymentMethod,
           payment_status: result.order.paymentStatus,
         },
+        // HMAC token the client persists alongside the orderId. Used as
+        // proof-of-ownership for the review form when the customer doesn't
+        // have an OTP session (same-device return visit, or click from the
+        // review-reminder email).
+        review_token: signReviewToken(result.order.id),
         // For card payments, client should now call /pay/initiate
         needs_payment: result.paymentMethod !== "cash",
       },

@@ -3,15 +3,20 @@ import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { getSession } from "@/lib/auth/session";
 import { OrderTracking } from "@/components/customer/screens/OrderTracking";
+import { verifyReviewToken } from "@/lib/reviews/token";
 
 export const dynamic = "force-dynamic";
 
 export default async function OrderTrackingPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ tenantSlug: string; id: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { tenantSlug, id } = await params;
+  const sp = (await searchParams) ?? {};
+  const rawToken = Array.isArray(sp.t) ? sp.t[0] : sp.t;
   const tenant = await resolveTenantBySlug(tenantSlug);
   if (!tenant) notFound();
 
@@ -52,15 +57,25 @@ export default async function OrderTrackingPage({
     },
   });
 
-  // Review eligibility: only the logged-in customer who owns the order can
-  // review. We surface (a) whether the form should show at all and (b) any
-  // existing review so the UI can switch into a "thank you" state.
+  // Review eligibility: three independent proofs of ownership, any one of
+  // which unlocks the form.
+  //  1. Cookie session whose customerId matches (logged-in customer).
+  //  2. Signed HMAC token in the URL (?t=…) — used by the review-reminder
+  //     email and by the same-device localStorage path (the page re-loads
+  //     itself with ?t= when it finds a stored token for this order).
+  //  3. (client-only) localStorage holds a stored token from checkout —
+  //     handled by OrderTracking.tsx on mount.
   const session = await getSession();
-  const canReview =
+  const sessionMatches =
     !!session &&
     session.type === "customer" &&
     !!order.customerId &&
     order.customerId === session.userId;
+  const tokenMatches = (() => {
+    const decoded = verifyReviewToken(rawToken);
+    return !!decoded && decoded.orderId === order.id;
+  })();
+  const canReview = sessionMatches || tokenMatches;
 
   const existingReview = canReview
     ? await prisma.review.findUnique({

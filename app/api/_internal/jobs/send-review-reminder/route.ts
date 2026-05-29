@@ -15,6 +15,7 @@ import { sendSms } from "@/lib/sms/send";
 import { sendWhatsApp } from "@/lib/whatsapp/send";
 import { sendEmail } from "@/lib/email/send";
 import { reviewReminderEmail } from "@/lib/email/templates";
+import { signReviewToken } from "@/lib/reviews/token";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -63,7 +64,11 @@ export const POST = handler(async (req: Request) => {
   if (!order.customer) return apiJson({ ok: true, skipped: "guest_order" });
 
   const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
-  const link = `${base}/s/${order.tenant.slug}/orders/${order.id}#review`;
+  // Signed token so the link works cross-device (email opened on a
+  // different browser than the one that placed the order) without
+  // forcing the customer through an OTP flow just to leave a rating.
+  const token = signReviewToken(order.id);
+  const link = `${base}/s/${order.tenant.slug}/orders/${order.id}?t=${encodeURIComponent(token)}#review`;
   const hello = order.customer.firstName?.trim() || "שלום";
 
   if (order.tenant.reviewsChannel === "email") {

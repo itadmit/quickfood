@@ -9,6 +9,7 @@ import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { recordRecentOrder } from "@/lib/recent-orders-storage";
+import { recordOrderToken } from "@/lib/order-access-storage";
 import { takeCheckoutPrefill } from "@/lib/checkout-prefill";
 import { readDeliveryChoice } from "@/lib/delivery-city-storage";
 import { CitySelect } from "@/components/customer/CitySelect";
@@ -378,6 +379,9 @@ export function CustomerCheckout({
       // home screen rail. Logged-in customers see the same rail
       // server-rendered from the DB, but storing the id is harmless.
       recordRecentOrder(tenantSlug, orderId);
+      if (typeof data.review_token === "string") {
+        recordOrderToken(tenantSlug, orderId, data.review_token);
+      }
 
       // For non-cash payments we need to render the Grow wallet inline
       // before navigating away. Initiate the payment and stash the

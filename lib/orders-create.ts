@@ -282,13 +282,60 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   const initialStatus = input.paymentMethod === "cash" ? "confirmed" : "pending";
   const paymentStatus = input.paymentMethod === "cash" ? "pending" : "pending";
 
-  // Persist email on the customer record for future review reminders, but
-  // don't fail the order if the update conflicts (e.g. unique constraints
-  // someone may add later). Best-effort.
-  if (input.customerEmail && input.customerId) {
+  // Resolve a real Customer row for every order that has a phone, even
+  // when the checkout was placed as a "guest". Returning callers (same
+  // phone again) get attached to their existing row; first-timers get a
+  // row created. This keeps Order.customerId non-null whenever possible
+  // so review reminders, history rails, and the customer's review
+  // eligibility all work without requiring OTP up front.
+  let effectiveCustomerId: string | null = input.customerId ?? null;
+  if (!effectiveCustomerId && input.guestPhone) {
+    const existing = await prisma.customer.findUnique({
+      where: { phone: input.guestPhone },
+      select: { id: true, firstName: true, lastName: true, email: true },
+    });
+    if (existing) {
+      effectiveCustomerId = existing.id;
+      const updates: Prisma.CustomerUpdateInput = {};
+      if (!existing.firstName && input.guestFirstName) updates.firstName = input.guestFirstName;
+      if (!existing.lastName && input.guestLastName) updates.lastName = input.guestLastName;
+      if (!existing.email && input.customerEmail) updates.email = input.customerEmail.trim();
+      if (Object.keys(updates).length > 0) {
+        try {
+          await prisma.customer.update({ where: { id: existing.id }, data: updates });
+        } catch (err) {
+          console.warn("[orders-create] couldn't backfill customer fields", err);
+        }
+      }
+    } else {
+      try {
+        const created = await prisma.customer.create({
+          data: {
+            phone: input.guestPhone,
+            firstName: input.guestFirstName ?? "",
+            lastName: input.guestLastName ?? "",
+            email: input.customerEmail?.trim() ?? null,
+          },
+          select: { id: true },
+        });
+        effectiveCustomerId = created.id;
+      } catch (err) {
+        // Race: a parallel order with the same phone just created the row.
+        // Re-read and use it; never fail the order over this.
+        console.warn("[orders-create] customer.create raced; re-reading", err);
+        const retry = await prisma.customer.findUnique({
+          where: { phone: input.guestPhone },
+          select: { id: true },
+        });
+        if (retry) effectiveCustomerId = retry.id;
+      }
+    }
+  }
+
+  if (input.customerEmail && effectiveCustomerId && effectiveCustomerId === input.customerId) {
     try {
       await prisma.customer.update({
-        where: { id: input.customerId },
+        where: { id: effectiveCustomerId },
         data: { email: input.customerEmail.trim() },
       });
     } catch (err) {
@@ -314,7 +361,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       number,
       tenantId: tenant.id,
       branchId: branch.id,
-      customerId: input.customerId ?? null,
+      customerId: effectiveCustomerId,
       status: initialStatus,
       method: input.method,
       source: orderSource,

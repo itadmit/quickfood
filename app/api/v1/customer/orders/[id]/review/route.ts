@@ -2,6 +2,7 @@ import { z } from "zod";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
+import { verifyReviewToken } from "@/lib/reviews/token";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,11 +26,20 @@ const ReviewSchema = z.object({
 
 export const POST = handler(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const session = await getSession();
-  if (!session || session.type !== "customer") {
+  const { id } = await params;
+
+  const url = new URL(req.url);
+  const rawToken = url.searchParams.get("t");
+  const tokenDecoded = verifyReviewToken(rawToken);
+  const tokenMatches = !!tokenDecoded && tokenDecoded.orderId === id;
+
+  const sessionMatchesCustomer =
+    !!session && session.type === "customer";
+
+  if (!tokenMatches && !sessionMatchesCustomer) {
     return apiError("unauthorized", "יש להתחבר כדי להשאיר ביקורת", 401);
   }
 
-  const { id } = await params;
   const body = ReviewSchema.parse(await req.json());
 
   const order = await prisma.order.findUnique({
@@ -44,9 +54,16 @@ export const POST = handler(async (req: Request, { params }: { params: Promise<{
   });
   if (!order) return apiError("not_found", "הזמנה לא נמצאה", 404);
 
-  // Only the customer who placed the order can review it. Guest orders
-  // (no customerId) can't be reviewed in MVP — Review.customerId is required.
-  if (!order.customerId || order.customerId !== session.userId) {
+  // Authorization: either the cookie session belongs to the order's
+  // customer, or the request carried a valid signed token for this order.
+  // Reviews still require a non-null customerId (Review.customerId is
+  // required by the schema) — which is now true for every phone-checkout
+  // order since we upsert the customer in orders-create.ts.
+  if (!order.customerId) {
+    return apiError("forbidden", "לא ניתן לדרג הזמנה ללא לקוח", 403);
+  }
+  const sessionOwns = sessionMatchesCustomer && session!.userId === order.customerId;
+  if (!sessionOwns && !tokenMatches) {
     return apiError("forbidden", "אין הרשאה לכתוב ביקורת על הזמנה זו", 403);
   }
 
