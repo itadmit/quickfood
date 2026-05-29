@@ -3,6 +3,7 @@ import { generateOrderNumber } from "@/lib/format";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
 import { isItemVisibleNow } from "@/lib/menu-availability";
 import { sendTenantPush } from "@/lib/merchant/push";
+import { sendOrderConfirmedEmail } from "@/lib/orders/notify-customer";
 import type { Prisma } from "@prisma/client";
 
 /**
@@ -372,6 +373,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       customerPhoneSnap: input.guestPhone ?? null,
       customerFirstNameSnap: input.guestFirstName ?? null,
       customerLastNameSnap: input.guestLastName ?? null,
+      customerEmailSnap: input.customerEmail?.trim().toLowerCase() || null,
       subtotal,
       deliveryFee,
       serviceFee,
@@ -438,6 +440,10 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       tag: `order-${order.id}`,
       requireInteraction: true,
     }).catch((err) => console.warn("[push] tenant new-order failed", err));
+
+    void sendOrderConfirmedEmail(order.id).catch((err) =>
+      console.warn("[email] order confirmed failed", err),
+    );
   }
 
   return { order, paymentMethod: input.paymentMethod, total };

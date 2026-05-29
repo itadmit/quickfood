@@ -15,6 +15,11 @@ const CourierMap = dynamic(
   { ssr: false, loading: () => null },
 );
 
+interface OrderItemOption {
+  name: string;
+  priceDelta: number;
+}
+
 interface OrderItemRow {
   id: string;
   name: string;
@@ -22,6 +27,8 @@ interface OrderItemRow {
   total: number;
   size: string | null;
   imageUrl: string | null;
+  notes: string | null;
+  options: OrderItemOption[];
 }
 
 interface OrderData {
@@ -30,6 +37,12 @@ interface OrderData {
   status: string;
   method: "delivery" | "pickup";
   total: number;
+  subtotal: number;
+  deliveryFee: number;
+  serviceFee: number;
+  cutleryFee: number;
+  tip: number;
+  discount: number;
   paymentMethod: string;
   paymentStatus: string;
   createdAt: string;
@@ -502,6 +515,27 @@ function Timestamp({ icon, label, t }: { icon?: boolean; label: string; t: strin
   );
 }
 
+function SummaryRow({
+  label,
+  value,
+  muted,
+}: {
+  label: string;
+  value: number;
+  muted?: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-center justify-between ${
+        muted ? "text-qf-mute" : "text-qf-ink2"
+      }`}
+    >
+      <div>{label}</div>
+      <div className="tnum">{formatPrice(value)}</div>
+    </div>
+  );
+}
+
 function ReviewCard({
   orderId,
   items,
@@ -807,7 +841,7 @@ function ThankYouView({
         {order.items.map((it) => (
           <div
             key={it.id}
-            className="px-4 py-3 flex items-center gap-3 text-sm"
+            className="px-4 py-3 flex items-start gap-3 text-sm"
           >
             <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
               <MenuItemImage
@@ -829,15 +863,53 @@ function ThankYouView({
               {it.size && (
                 <div className="text-xs text-qf-mute">{it.size}</div>
               )}
+              {it.options.length > 0 && (
+                <ul className="mt-1 space-y-0.5">
+                  {it.options.map((o, i) => (
+                    <li
+                      key={i}
+                      className="text-xs text-qf-mute flex items-center gap-1"
+                    >
+                      <span>+ {o.name}</span>
+                      {o.priceDelta > 0 && (
+                        <span className="tnum">({formatPrice(o.priceDelta)})</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {it.notes && (
+                <div className="mt-1 text-xs text-qf-yolk-deep">
+                  הערה: {it.notes}
+                </div>
+              )}
             </div>
             <div className="font-medium tnum shrink-0">
               {formatPrice(it.total)}
             </div>
           </div>
         ))}
-        <div className="px-4 py-3 flex items-center justify-between text-sm font-semibold">
-          <div>סה״כ ששולם</div>
-          <div className="tnum">{formatPrice(order.total)}</div>
+        <div className="px-4 py-3 space-y-1 text-sm">
+          <SummaryRow label="פריטים" value={order.subtotal} />
+          {order.deliveryFee > 0 && (
+            <SummaryRow label="דמי משלוח" value={order.deliveryFee} />
+          )}
+          {order.serviceFee > 0 && (
+            <SummaryRow label="דמי שירות" value={order.serviceFee} />
+          )}
+          {order.cutleryFee > 0 && (
+            <SummaryRow label="סכו״ם" value={order.cutleryFee} />
+          )}
+          {order.tip > 0 && (
+            <SummaryRow label="טיפ לשליח" value={order.tip} />
+          )}
+          {order.discount > 0 && (
+            <SummaryRow label="הנחה" value={-order.discount} muted />
+          )}
+          <div className="pt-1 mt-1 border-t border-qf-line-soft flex items-center justify-between font-semibold text-base">
+            <div>סה״כ ששולם</div>
+            <div className="tnum">{formatPrice(order.total)}</div>
+          </div>
         </div>
       </div>
     </section>

@@ -489,3 +489,181 @@ export function leadEmail({
     footerNote: `IP: ${ip}`,
   });
 }
+
+export interface OrderConfirmedItem {
+  name: string;
+  size?: string | null;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  notes?: string | null;
+  options?: Array<{ name: string; priceDelta: number }>;
+}
+
+function formatShekels(amount: number): string {
+  return `${amount.toLocaleString("he-IL")} ש"ח`;
+}
+
+function itemsTable(items: OrderConfirmedItem[]): string {
+  const rows = items
+    .map((it) => {
+      const optionLines = (it.options ?? [])
+        .map((o) => {
+          const price = o.priceDelta > 0 ? ` (+${formatShekels(o.priceDelta)})` : "";
+          return `<div style="font-size:12px;color:${BRAND.mute};">+ ${escape(o.name)}${price}</div>`;
+        })
+        .join("");
+      const sizeLine = it.size
+        ? `<div style="font-size:12px;color:${BRAND.mute};margin-top:2px;">${escape(it.size)}</div>`
+        : "";
+      const notesLine = it.notes
+        ? `<div style="font-size:12px;color:#9a6500;margin-top:6px;">הערה: ${escape(it.notes)}</div>`
+        : "";
+      return `<tr>
+        <td valign="top" dir="rtl" style="padding:10px 0;border-bottom:1px solid #f0e8d2;text-align:right;">
+          <div style="font-size:14px;font-weight:700;color:${BRAND.ink};">${it.quantity}× ${escape(it.name)}</div>
+          ${sizeLine}
+          ${optionLines}
+          ${notesLine}
+        </td>
+        <td valign="top" dir="ltr" style="padding:10px 0 10px 12px;border-bottom:1px solid #f0e8d2;font-size:14px;font-weight:700;color:${BRAND.ink};white-space:nowrap;text-align:left;">
+          ${escape(formatShekels(it.totalPrice))}
+        </td>
+      </tr>`;
+    })
+    .join("");
+
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" style="border-collapse:collapse;margin:6px 0 0;">
+    ${rows}
+  </table>`;
+}
+
+function summaryRow(label: string, value: string, opts: { bold?: boolean; muted?: boolean } = {}): string {
+  const weight = opts.bold ? "800" : "500";
+  const color = opts.muted ? BRAND.mute : BRAND.ink2;
+  const size = opts.bold ? "16px" : "14px";
+  return `<tr>
+    <td dir="rtl" style="padding:6px 0;font-size:${size};color:${color};font-weight:${weight};text-align:right;">${escape(label)}</td>
+    <td dir="ltr" style="padding:6px 0 6px 12px;font-size:${size};color:${color};font-weight:${weight};text-align:left;">${escape(value)}</td>
+  </tr>`;
+}
+
+export function orderConfirmedEmail({
+  customerName,
+  businessName,
+  orderNumber,
+  method,
+  paymentMethod,
+  items,
+  subtotal,
+  deliveryFee,
+  serviceFee,
+  cutleryFee,
+  tip,
+  discount,
+  total,
+  trackingUrl,
+  addressLine,
+  branchPhone,
+  whatsappLink,
+  scheduledForLabel,
+  customerNotes,
+}: {
+  customerName: string;
+  businessName: string;
+  orderNumber: string;
+  method: "delivery" | "pickup";
+  paymentMethod: string;
+  items: OrderConfirmedItem[];
+  subtotal: number;
+  deliveryFee: number;
+  serviceFee: number;
+  cutleryFee: number;
+  tip: number;
+  discount: number;
+  total: number;
+  trackingUrl: string;
+  addressLine?: string | null;
+  branchPhone?: string | null;
+  whatsappLink?: string | null;
+  scheduledForLabel?: string | null;
+  customerNotes?: string | null;
+}) {
+  const paymentLabels: Record<string, string> = {
+    cash: "מזומן",
+    card: "כרטיס אשראי",
+    bit: "ביט",
+    apple_pay: "Apple Pay",
+    google_pay: "Google Pay",
+  };
+  const paymentLabel = paymentLabels[paymentMethod] ?? paymentMethod;
+  const methodLabel = method === "delivery" ? "משלוח" : "איסוף עצמי";
+
+  const summaryRows: string[] = [summaryRow("פריטים", formatShekels(subtotal))];
+  if (deliveryFee > 0) summaryRows.push(summaryRow("דמי משלוח", formatShekels(deliveryFee)));
+  if (serviceFee > 0) summaryRows.push(summaryRow("דמי שירות", formatShekels(serviceFee)));
+  if (cutleryFee > 0) summaryRows.push(summaryRow("סכו\"ם", formatShekels(cutleryFee)));
+  if (tip > 0) summaryRows.push(summaryRow("טיפ לשליח", formatShekels(tip)));
+  if (discount > 0) summaryRows.push(summaryRow("הנחה", `-${formatShekels(discount)}`, { muted: true }));
+  summaryRows.push(summaryRow("סה\"כ לתשלום", formatShekels(total), { bold: true }));
+
+  const summaryTable = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" style="border-collapse:collapse;border-top:2px solid ${BRAND.line};margin-top:14px;padding-top:6px;">
+    ${summaryRows.join("")}
+  </table>`;
+
+  const metaTable = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" style="border-collapse:collapse;background:${BRAND.cream};border:1px solid #f0e8d2;border-radius:12px;padding:14px 16px;margin:0 0 18px;">
+    <tr>
+      <td dir="rtl" style="font-size:13px;color:${BRAND.mute};padding:3px 0;">הזמנה</td>
+      <td dir="ltr" style="font-size:13px;color:${BRAND.ink};font-weight:800;padding:3px 0 3px 12px;text-align:left;">${escape(orderNumber)}</td>
+    </tr>
+    <tr>
+      <td dir="rtl" style="font-size:13px;color:${BRAND.mute};padding:3px 0;">סוג</td>
+      <td dir="rtl" style="font-size:13px;color:${BRAND.ink2};padding:3px 0 3px 12px;text-align:left;">${escape(methodLabel)}</td>
+    </tr>
+    <tr>
+      <td dir="rtl" style="font-size:13px;color:${BRAND.mute};padding:3px 0;">תשלום</td>
+      <td dir="rtl" style="font-size:13px;color:${BRAND.ink2};padding:3px 0 3px 12px;text-align:left;">${escape(paymentLabel)}</td>
+    </tr>
+    ${
+      scheduledForLabel
+        ? `<tr><td dir="rtl" style="font-size:13px;color:${BRAND.mute};padding:3px 0;">לאספקה</td><td dir="rtl" style="font-size:13px;color:${BRAND.ink2};padding:3px 0 3px 12px;text-align:left;">${escape(scheduledForLabel)}</td></tr>`
+        : ""
+    }
+    ${
+      addressLine
+        ? `<tr><td dir="rtl" style="font-size:13px;color:${BRAND.mute};padding:3px 0;vertical-align:top;">כתובת</td><td dir="rtl" style="font-size:13px;color:${BRAND.ink2};padding:3px 0 3px 12px;text-align:left;">${escape(addressLine)}</td></tr>`
+        : ""
+    }
+    ${
+      customerNotes
+        ? `<tr><td dir="rtl" style="font-size:13px;color:${BRAND.mute};padding:3px 0;vertical-align:top;">הערה</td><td dir="rtl" style="font-size:13px;color:#9a6500;padding:3px 0 3px 12px;text-align:left;">${escape(customerNotes)}</td></tr>`
+        : ""
+    }
+    ${
+      branchPhone
+        ? `<tr><td dir="rtl" style="font-size:13px;color:${BRAND.mute};padding:3px 0;">המסעדה</td><td dir="ltr" style="font-size:13px;color:${BRAND.ink2};padding:3px 0 3px 12px;text-align:left;"><a href="tel:${escape(branchPhone)}" style="color:${BRAND.ink2};text-decoration:none;">${escape(branchPhone)}</a></td></tr>`
+        : ""
+    }
+  </table>`;
+
+  const tail =
+    metaTable +
+    `<h3 style="margin:18px 0 4px;font-size:15px;font-weight:800;color:${BRAND.ink};text-align:right;">פירוט הזמנה</h3>` +
+    itemsTable(items) +
+    summaryTable;
+
+  return renderRtlEmail({
+    subject: `תודה על ההזמנה ב-${businessName} · ${orderNumber}`,
+    preheader: `הזמנה ${orderNumber} התקבלה ב-${businessName}. סה"כ ${formatShekels(total)}.`,
+    heading: `תודה ${customerName}!`,
+    paragraphs: [
+      `קיבלנו את ההזמנה שלך ב-<strong>${escape(businessName)}</strong> והיא בדרך לרשת.`,
+      `שמרנו לך פירוט מלא כאן וגם בקישור המעקב. אם תרצה לשנות משהו — צור קשר עם המסעדה.`,
+    ],
+    raw: true,
+    button: { href: trackingUrl, label: "צפייה במעקב ההזמנה" },
+    tail,
+    whatsappButton: whatsappLink ? { href: whatsappLink, label: "צ'אט בוואטסאפ" } : undefined,
+    footerNote: `נשלח בשם ${businessName}. לכל שאלה אפשר להשיב למייל זה.`,
+  });
+}

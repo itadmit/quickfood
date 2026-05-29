@@ -5,6 +5,7 @@ import { scheduleReviewReminder } from "@/lib/reviews/schedule";
 import { recordOrderCommission } from "@/lib/billing-hub/commission";
 import { notifyCourierAssigned, notifyCustomerDelivered } from "@/lib/courier/notify";
 import { sendTenantPush } from "@/lib/merchant/push";
+import { sendOrderConfirmedEmail } from "@/lib/orders/notify-customer";
 
 /**
  * Order status state machine. Defines which transitions are legal.
@@ -184,6 +185,10 @@ export async function advanceStatus(
       tag: `order-${orderId}`,
       requireInteraction: true,
     }).catch((err) => console.warn("[push] tenant new-order failed", err));
+
+    void sendOrderConfirmedEmail(orderId).catch((err) =>
+      console.warn("[email] order confirmed failed", err),
+    );
   }
 
   // Fire webhooks (best-effort, non-blocking)

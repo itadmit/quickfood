@@ -46,6 +46,8 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
       subtotal: order.subtotal,
       delivery_fee: order.deliveryFee,
       service_fee: order.serviceFee,
+      cutlery_fee: order.cutleryFee,
+      cutlery_count: order.cutleryCount,
       tip: order.tip,
       discount: order.discount,
       total: order.total,
@@ -81,16 +83,29 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
             last_seen_at: order.courier.lastSeenAt?.toISOString() ?? null,
           }
         : null,
-      items: order.items.map((it) => ({
-        id: it.id,
-        name: it.nameSnapshot,
-        quantity: it.quantity,
-        unit_price: it.unitPrice,
-        total_price: it.totalPrice,
-        size: it.sizeSnapshot,
-        options: it.selectedOptions,
-        notes: it.notes,
-      })),
+      items: order.items.map((it) => {
+        const rawOptions = Array.isArray(it.selectedOptions)
+          ? (it.selectedOptions as Array<Record<string, unknown>>)
+          : [];
+        const options = rawOptions
+          .map((o) => {
+            const name = typeof o?.name === "string" ? o.name : null;
+            if (!name) return null;
+            const priceDelta = Number(o?.price_delta ?? 0) || 0;
+            return { name, price_delta: priceDelta };
+          })
+          .filter((o): o is { name: string; price_delta: number } => o !== null);
+        return {
+          id: it.id,
+          name: it.nameSnapshot,
+          quantity: it.quantity,
+          unit_price: it.unitPrice,
+          total_price: it.totalPrice,
+          size: it.sizeSnapshot,
+          options,
+          notes: it.notes,
+        };
+      }),
     },
   });
 });

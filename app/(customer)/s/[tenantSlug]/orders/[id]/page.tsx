@@ -124,6 +124,12 @@ export default async function OrderTrackingPage({
         status: order.status,
         method: order.method,
         total: order.total,
+        subtotal: order.subtotal,
+        deliveryFee: order.deliveryFee,
+        serviceFee: order.serviceFee,
+        cutleryFee: order.cutleryFee,
+        tip: order.tip,
+        discount: order.discount,
         paymentMethod: order.paymentMethod,
         paymentStatus: order.paymentStatus,
         createdAt: order.createdAt.toISOString(),
@@ -143,14 +149,28 @@ export default async function OrderTrackingPage({
               lng: order.courier.currentLng ? Number(order.courier.currentLng) : null,
             }
           : null,
-        items: order.items.map((it) => ({
-          id: it.id,
-          name: it.nameSnapshot,
-          quantity: it.quantity,
-          total: it.totalPrice,
-          size: it.sizeSnapshot,
-          imageUrl: it.menuItem?.images?.[0] ?? null,
-        })),
+        items: order.items.map((it) => {
+          const rawOptions = Array.isArray(it.selectedOptions)
+            ? (it.selectedOptions as Array<Record<string, unknown>>)
+            : [];
+          const options = rawOptions
+            .map((o) => {
+              const name = typeof o?.name === "string" ? o.name : null;
+              if (!name) return null;
+              return { name, priceDelta: Number(o?.price_delta ?? 0) || 0 };
+            })
+            .filter((o): o is { name: string; priceDelta: number } => o !== null);
+          return {
+            id: it.id,
+            name: it.nameSnapshot,
+            quantity: it.quantity,
+            total: it.totalPrice,
+            size: it.sizeSnapshot,
+            imageUrl: it.menuItem?.images?.[0] ?? null,
+            notes: it.notes,
+            options,
+          };
+        }),
         businessType: tenant.businessType,
       }}
       canReview={canReview}
