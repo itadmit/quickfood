@@ -397,6 +397,52 @@ export function reviewReplyEmail({
   });
 }
 
+export function courierWelcomeEmail({
+  courierName,
+  businessName,
+  loginUrl,
+  loginIdentifier,
+  pin,
+  ttlMinutes,
+  appUrl,
+}: {
+  courierName: string;
+  businessName: string;
+  /** One-shot magic-link URL — opens, signs in, expires after ttlMinutes. */
+  loginUrl: string;
+  /** The phone / email the courier types on /courier/login if the magic
+   *  link expires. We show whichever the merchant has stored. */
+  loginIdentifier: string;
+  pin: string;
+  ttlMinutes: number;
+  /** Plain `/courier/login` URL for the long-term sign-in instructions. */
+  appUrl: string;
+}) {
+  const credsBlock = `<div style="background:${BRAND.cream};border:1px solid ${BRAND.line};border-radius:10px;padding:14px 16px;margin-top:8px;text-align:right;direction:rtl;">
+    <div style="font-size:12px;font-weight:700;color:${BRAND.mute};margin-bottom:8px;">פרטי כניסה (לזכור)</div>
+    <div style="font-size:14px;color:${BRAND.ink2};line-height:1.7;">
+      <div><span style="color:${BRAND.mute};">מזהה:</span> <span dir="ltr" style="display:inline-block;font-weight:700;">${escape(loginIdentifier)}</span></div>
+      <div><span style="color:${BRAND.mute};">קוד PIN:</span> <span dir="ltr" style="display:inline-block;font-weight:700;letter-spacing:2px;font-size:18px;">${escape(pin)}</span></div>
+      <div style="margin-top:6px;"><span style="color:${BRAND.mute};">כתובת הכניסה:</span> <a href="${escape(appUrl)}" style="color:${BRAND.ink};">${escape(appUrl)}</a></div>
+    </div>
+  </div>`;
+
+  return renderRtlEmail({
+    subject: `נוצר לך חשבון שליח אצל ${businessName}`,
+    preheader: "קישור חד-פעמי להתחברות + פרטי הכניסה הקבועים.",
+    heading: `שלום ${courierName}, ברוך/ה הבא/ה`,
+    raw: true,
+    paragraphs: [
+      `<strong>${escape(businessName)}</strong> הוסיפ/ה אותך כשליח/ה במערכת QuickFood.`,
+      `לחיצה על הכפתור למטה מבצעת התחברות מיידית — הקישור תקף ${ttlMinutes} דקות והוא חד-פעמי.`,
+      credsBlock,
+      `אחרי תוקף הקישור — היכנס/י בכתובת למעלה עם המזהה וה־PIN שלך. אם איבדת את ה־PIN, בקש/י ממנהל/ת המסעדה איפוס.`,
+    ],
+    button: { href: loginUrl, label: "כניסה לאפליקציית השליחים" },
+    footerNote: "בהצלחה!",
+  });
+}
+
 export function leadEmail({
   name,
   restaurant,

@@ -58,6 +58,7 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
   const [resetEmailValue, setResetEmailValue] = useState("");
   const [resettingPin, setResettingPin] = useState(false);
   const [qrFor, setQrFor] = useState<Courier | null>(null);
+  const [copyingLinkFor, setCopyingLinkFor] = useState<string | null>(null);
   const [settleFor, setSettleFor] = useState<Courier | null>(null);
   const [settleAmount, setSettleAmount] = useState("");
   const [settling, setSettling] = useState(false);
@@ -191,6 +192,41 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
       pushToast("ok", `נסגרה קופה של ${amount} ש"ח`);
     } finally {
       setSettling(false);
+    }
+  }
+
+  async function copyLoginLink(courier: Courier) {
+    if (copyingLinkFor) return;
+    setCopyingLinkFor(courier.id);
+    try {
+      const res = await fetch(`/api/v1/merchant/couriers/${courier.id}/magic-link`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        pushToast("err", body?.error?.message ?? "יצירת קישור נכשלה");
+        return;
+      }
+      const data = await res.json();
+      const url = data?.url as string | undefined;
+      if (!url) {
+        pushToast("err", "השרת לא החזיר קישור");
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(url);
+        const ttl = typeof data.ttl_minutes === "number" ? data.ttl_minutes : null;
+        pushToast(
+          "ok",
+          ttl
+            ? `הקישור הועתק. תקף ${ttl} דקות — שלח/י ב-WhatsApp/SMS.`
+            : "הקישור הועתק. שלח/י ב-WhatsApp/SMS.",
+        );
+      } catch {
+        pushToast("err", "לא ניתן היה להעתיק. פתח/י QR והעתק/י משם.");
+      }
+    } finally {
+      setCopyingLinkFor(null);
     }
   }
 
@@ -349,14 +385,25 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
                 </div>
                 <div className="flex items-center gap-1">
                   {c.hasLogin && (
-                    <button
-                      type="button"
-                      onClick={() => setQrFor(c)}
-                      className="text-xs px-2 py-1 rounded-md border border-qf-line-dash text-qf-mute hover:text-qf-ink"
-                      title="קישור התחברות מהיר"
-                    >
-                      QR
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => copyLoginLink(c)}
+                        disabled={copyingLinkFor === c.id}
+                        className="text-xs px-2 py-1 rounded-md border border-qf-line-dash text-qf-mute hover:text-qf-ink disabled:opacity-60"
+                        title="העתקת קישור חד-פעמי לאפליקציית השליחים"
+                      >
+                        {copyingLinkFor === c.id ? "מעתיק..." : "קישור"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setQrFor(c)}
+                        className="text-xs px-2 py-1 rounded-md border border-qf-line-dash text-qf-mute hover:text-qf-ink"
+                        title="קוד QR לסריקה ושיתוף ב-WhatsApp"
+                      >
+                        QR
+                      </button>
+                    </>
                   )}
                   <button
                     type="button"

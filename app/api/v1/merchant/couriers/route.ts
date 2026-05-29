@@ -3,6 +3,9 @@ import bcrypt from "bcryptjs";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
+import { createCourierMagicLink } from "@/lib/courier-magic-link";
+import { sendEmail } from "@/lib/email/send";
+import { courierWelcomeEmail } from "@/lib/email/templates";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -81,6 +84,43 @@ export const POST = handler(async (req: Request) => {
       active: true,
     },
   });
+
+  // Best-effort welcome email — magic-link (single-click sign-in) +
+  // long-term credentials so the courier always has the PIN on file.
+  // Failures here never block courier creation.
+  if (courier.email) {
+    try {
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: session.tenantId },
+        select: { name: true },
+      });
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
+      const { url: loginUrl, ttlMinutes } = await createCourierMagicLink(courier.id, baseUrl);
+      const { html, text } = courierWelcomeEmail({
+        courierName: courier.name,
+        businessName: tenant?.name ?? "QuickFood",
+        loginUrl,
+        loginIdentifier: courier.email,
+        pin: body.pin,
+        ttlMinutes,
+        appUrl: `${baseUrl.replace(/\/$/, "")}/courier/login`,
+      });
+      await sendEmail({
+        tenantId: session.tenantId,
+        to: courier.email,
+        subject: `נוצר לך חשבון שליח אצל ${tenant?.name ?? "QuickFood"}`,
+        body: text,
+        html,
+        fromName: tenant?.name ?? "QuickFood",
+        kind: "courier_welcome",
+        refKind: "courier",
+        refId: courier.id,
+      });
+    } catch (err) {
+      console.warn("[couriers] welcome email failed", err);
+    }
+  }
+
   return apiJson(
     { courier: { id: courier.id, name: courier.name, email: courier.email, status: courier.status } },
     201,
