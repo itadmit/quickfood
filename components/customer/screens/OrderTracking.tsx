@@ -463,21 +463,13 @@ export function OrderTracking({
         </section>
       )}
 
-      {/* Footer — same shape as the ThankYouView so customers always have
-          an obvious "back to the menu" exit, no matter which mode the
-          merchant runs (lite thank-you vs. live tracking). */}
-      <section className="px-5 mt-6 lg:px-0 grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <Link
-          href={`/s/${tenantSlug}`}
-          className="text-center py-3 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white font-medium text-sm"
-        >
-          חזרה לחנות
-        </Link>
+      {/* Footer — single primary CTA, same shape as the ThankYouView. */}
+      <section className="px-5 mt-6 lg:px-0">
         <Link
           href={`/s/${tenantSlug}#menu-section`}
-          className="text-center py-3 rounded-2xl border border-qf-line bg-white hover:bg-qf-line-soft text-qf-ink font-medium text-sm"
+          className="block text-center py-3 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white font-medium text-sm"
         >
-          הזמנה נוספת
+          הזמנה חדשה
         </Link>
       </section>
     </div>
@@ -877,18 +869,12 @@ function ThankYouView({
         </>
       )}
 
-      <section className="px-5 mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <Link
-          href={`/s/${tenantSlug}`}
-          className="text-center py-3 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white font-medium text-sm"
-        >
-          חזרה לחנות
-        </Link>
+      <section className="px-5 mt-6">
         <Link
           href={`/s/${tenantSlug}#menu-section`}
-          className="text-center py-3 rounded-2xl border border-qf-line bg-white hover:bg-qf-line-soft text-qf-ink font-medium text-sm"
+          className="block text-center py-3 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white font-medium text-sm"
         >
-          הזמנה נוספת
+          הזמנה חדשה
         </Link>
       </section>
     </div>
