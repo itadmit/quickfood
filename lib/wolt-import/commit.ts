@@ -259,8 +259,13 @@ export async function commitImport(
         });
       }
 
-      if (it.image) {
-        itemsToImage.push({ qfItemId: saved.id, sourceUrl: it.image });
+      // Future-proof: Wolt's newer payloads sometimes ship `images[]`
+      // with the legacy `image` field empty. Take whichever is set,
+      // skip the item only if a usable image already lives on the
+      // QF row (re-runs of commit don't re-download every image).
+      const sourceImage = it.image || it.images?.[0] || null;
+      if (sourceImage && !saved.imageUrl) {
+        itemsToImage.push({ qfItemId: saved.id, sourceUrl: sourceImage });
       }
     } catch (err) {
       errors.push({
@@ -270,10 +275,33 @@ export async function commitImport(
     }
   }
 
+  // Mark the import committed BEFORE the image loop. A 100-image
+  // catalog plus a slow Wolt CDN can push past Vercel's per-function
+  // ceiling — if we leave the status flip for the end, a timeout
+  // strands the row at "preview" forever (catch in the route handler
+  // never fires when Vercel kills the function), even though the
+  // categories/items/modifiers all landed. Merchants then can't see
+  // their menu live and have no way to retry. Flip first; the image
+  // loop is best-effort and resumable via the skip-if-already-set
+  // gate above.
+  await prisma.woltImport.update({
+    where: { id: importId },
+    data: {
+      status: "committed",
+      categoriesImported,
+      itemsImported,
+      imagesUploaded: 0,
+      errors: errors.length > 0 ? (errors as unknown as Prisma.InputJsonValue) : Prisma.JsonNull,
+      committedAt: new Date(),
+    },
+  });
+
   // ─── 4. Images (R2) ──────────────────────────────────────────────
   // Sequential-ish with a small parallelism cap so we don't OOM the
   // Vercel function on a 100-image catalog. Each failure stays in
-  // errors[] but doesn't unwind anything.
+  // errors[] but doesn't unwind anything. If the function times out
+  // here, the merchant can re-trigger commit and only the unfinished
+  // items get re-downloaded (skip-if-already-set above).
   const PARALLEL = 4;
   let imagesUploaded = 0;
   for (let i = 0; i < itemsToImage.length; i += PARALLEL) {

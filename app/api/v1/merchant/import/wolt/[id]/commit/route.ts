@@ -43,12 +43,14 @@ export const POST = handler(
     if (!row || row.tenantId !== session.tenantId) {
       return apiError("not_found", "ייבוא לא נמצא", 404);
     }
-    if (row.status === "committed") {
-      return apiError("already_committed", "הייבוא הזה כבר בוצע", 409);
-    }
     if (row.status === "failed") {
       return apiError("failed_state", "הייבוא הזה כשל ויש לצור תצוגה חדשה", 409);
     }
+    // Re-triggering an already-committed import is now allowed — every
+    // step in commitImport is idempotent (categories/modifiers/items
+    // are upserts, ItemOptionGroups are delete+create, image loop
+    // skips items that already have a URL). Lets a merchant retry
+    // failed images without rebuilding from scratch.
 
     try {
       const result = await commitImport(id, { applyVenueInfo });
