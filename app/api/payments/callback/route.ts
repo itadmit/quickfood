@@ -188,29 +188,32 @@ export const POST = handler(async (req: Request) => {
         });
       });
 
-      // Advance the order: pending ← confirmed (fires webhooks). Only if legal.
+      // Advance the order: pending ← confirmed (fires webhooks). Only
+      // if legal. The 0.5% commission used to fire unconditionally here
+      // — including for orders the merchant had already cancelled while
+      // the callback was in flight, which billed the merchant for cash
+      // they never got. Now it only runs after a successful transition.
       const order = await prisma.order.findUnique({
         where: { id: pending.orderId },
         select: { status: true },
       });
+      let confirmed = false;
       if (order && canTransition(order.status, OrderStatus.confirmed)) {
         try {
           await advanceStatus(pending.orderId, OrderStatus.confirmed, {
             changedBy: "payment_callback",
             reason: "payment_received",
           });
+          confirmed = true;
         } catch (err) {
           console.error("[payments/callback] advanceStatus failed", err);
         }
       }
-
-      // Record the 0.5% commission as soon as the card actually paid — we
-      // can't wait for the merchant to manually mark `delivered`, since some
-      // never do. The hub dedupes by `idempotency_key: "order:<orderId>"`,
-      // so a cash order that also fires this on delivery won't double-charge.
-      void recordOrderCommission(pending.orderId).catch((err) => {
-        console.error("[payments/callback] commission record failed", err);
-      });
+      if (confirmed) {
+        void recordOrderCommission(pending.orderId).catch((err) => {
+          console.error("[payments/callback] commission record failed", err);
+        });
+      }
     }
   } else {
     if (pending.status === PendingPaymentStatus.pending) {
