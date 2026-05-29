@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { IcoClock, IcoPhone, IcoPrinter, IcoFlame } from "@/components/shared/Icons";
+import { IcoClock, IcoPhone, IcoPrinter, IcoFlame, IcoRefresh, IcoUndo } from "@/components/shared/Icons";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -72,6 +72,17 @@ const COLUMNS: Array<{
 
 const SLA_MINUTES_BEFORE_LATE = 15;
 
+// Reverse map for the "חזרה שלב" undo button on each card. Only kitchen
+// states walk back — once an order is out_for_delivery / delivered /
+// refunded there's money / a courier route tied to it, so the merchant
+// has to use the explicit refund/cancel flow instead of a one-tap undo.
+const PREVIOUS_STATUS: Partial<Record<Status, Status>> = {
+  confirmed: "pending",
+  preparing: "confirmed",
+  in_oven: "preparing",
+  ready: "preparing",
+};
+
 export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
   const [orders, setOrders] = useState<OrderRow[]>(initial);
   // `now` stays null until after mount so SSR and the first client paint
@@ -120,23 +131,79 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
     }
   }, []);
 
-  // SSE subscription to merchant tenant channel
+  const [manualRefreshing, setManualRefreshing] = useState(false);
+  async function manualRefresh() {
+    if (manualRefreshing) return;
+    setManualRefreshing(true);
+    try {
+      await refresh();
+    } finally {
+      // Tiny floor so the spin animation is visible — otherwise a sub-100ms
+      // refresh looks like the button didn't do anything.
+      setTimeout(() => setManualRefreshing(false), 350);
+    }
+  }
+
+  // SSE subscription to merchant tenant channel. The native EventSource
+  // auto-reconnect handles transient network blips, but a 5xx from the
+  // server (Vercel function timeout, deploy mid-stream) closes the
+  // connection permanently — so we re-open it with backoff. The
+  // visibilitychange listener also re-opens + immediately refreshes
+  // when the tab returns from background (mobile Safari kills the
+  // EventSource when the tab isn't focused).
+  const esRef = useRef<EventSource | null>(null);
   useEffect(() => {
-    const es = new EventSource("/api/v1/realtime/merchant");
-    es.addEventListener("order.created", () => {
-      try {
-        window.dispatchEvent(new Event("qf:new-order"));
-      } catch {
-        /* ignore */
-      }
+    let cancelled = false;
+    let backoffMs = 1000;
+    let reconnectTimer: number | null = null;
+
+    function open() {
+      if (cancelled) return;
+      const es = new EventSource("/api/v1/realtime/merchant");
+      esRef.current = es;
+      es.addEventListener("open", () => {
+        backoffMs = 1000;
+      });
+      es.addEventListener("order.created", () => {
+        try {
+          window.dispatchEvent(new Event("qf:new-order"));
+        } catch {
+          /* ignore */
+        }
+        void refresh();
+      });
+      es.addEventListener("order.status_changed", () => void refresh());
+      es.onerror = () => {
+        es.close();
+        esRef.current = null;
+        if (cancelled) return;
+        if (reconnectTimer != null) window.clearTimeout(reconnectTimer);
+        reconnectTimer = window.setTimeout(open, backoffMs);
+        backoffMs = Math.min(backoffMs * 2, 30_000);
+        // Always pull a fresh snapshot when we're disconnected so the
+        // merchant doesn't stare at a stale board while we back off.
+        void refresh();
+      };
+    }
+
+    function onVisibility() {
+      if (document.visibilityState !== "visible") return;
       void refresh();
-    });
-    es.addEventListener("order.status_changed", () => void refresh());
-    es.onerror = () => {
-      // EventSource auto-reconnects; nothing to do
-    };
+      if (!esRef.current || esRef.current.readyState === EventSource.CLOSED) {
+        if (reconnectTimer != null) window.clearTimeout(reconnectTimer);
+        backoffMs = 1000;
+        open();
+      }
+    }
+
+    open();
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
-      es.close();
+      cancelled = true;
+      if (reconnectTimer != null) window.clearTimeout(reconnectTimer);
+      document.removeEventListener("visibilitychange", onVisibility);
+      esRef.current?.close();
+      esRef.current = null;
     };
   }, [refresh]);
 
@@ -209,6 +276,19 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
         subtitle={`${totalActive} הזמנות פעילות · עדכון אוטומטי`}
         actions={
           <>
+            <button
+              type="button"
+              onClick={manualRefresh}
+              disabled={manualRefreshing}
+              title="רענון ידני של ההזמנות מהשרת"
+              aria-label="רענון ידני"
+              className="inline-flex w-10 h-10 items-center justify-center rounded-xl bg-white border-2 border-black text-black shadow-[0_2px_0_#000] hover:bg-black/5 disabled:opacity-60"
+            >
+              <IcoRefresh
+                s={16}
+                className={manualRefreshing ? "animate-spin" : ""}
+              />
+            </button>
             <Link
               href="/dashboard/orders/history"
               className="hidden sm:inline-flex px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm items-center gap-2 shadow-[0_2px_0_#000] hover:bg-black/5"
@@ -403,18 +483,35 @@ function Card({
         </div>
       )}
 
-      <footer className="flex items-center justify-between pt-1">
+      <footer className="flex items-center justify-between pt-1 gap-2">
         <div className="text-sm font-semibold tnum">{formatPrice(order.total)}</div>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAdvance(order.id, target);
-          }}
-          className="px-3 py-1.5 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xs font-medium"
-        >
-          {actionLabel}
-        </button>
+        <div className="flex items-center gap-1.5">
+          {PREVIOUS_STATUS[order.status] && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                const prev = PREVIOUS_STATUS[order.status];
+                if (prev) onAdvance(order.id, prev);
+              }}
+              title="חזרה שלב אחורה"
+              aria-label="חזרה שלב אחורה"
+              className="inline-flex w-8 h-8 items-center justify-center rounded-lg border border-qf-line-dash text-qf-mute hover:text-qf-ink hover:border-qf-ink/40 transition"
+            >
+              <IcoUndo s={14} />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAdvance(order.id, target);
+            }}
+            className="px-3 py-1.5 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xs font-medium"
+          >
+            {actionLabel}
+          </button>
+        </div>
       </footer>
 
       {order.customerPhone && (

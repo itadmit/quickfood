@@ -17,12 +17,17 @@ import { sendOrderConfirmedEmail } from "@/lib/orders/notify-customer";
  * to accept and prepare anyway. We auto-set confirmedAt when moving out
  * of pending so the timestamps stay sane.
  */
+// Kitchen states (confirmed/preparing/in_oven/ready) are reversible so the
+// merchant can undo a mis-tap — e.g. marked a pizza as ready by mistake and
+// wants to drop it back to "בהכנה". Past out_for_delivery we lock things
+// down: a courier has already been dispatched/credited, so a "back" button
+// there would silently undo wallet credits + courier assignment.
 const TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   pending: ["confirmed", "preparing", "cancelled"],
-  confirmed: ["preparing", "cancelled"],
-  preparing: ["in_oven", "ready", "cancelled"],
-  in_oven: ["ready", "cancelled"],
-  ready: ["out_for_delivery", "delivered", "cancelled"],
+  confirmed: ["pending", "preparing", "cancelled"],
+  preparing: ["confirmed", "in_oven", "ready", "cancelled"],
+  in_oven: ["preparing", "ready", "cancelled"],
+  ready: ["preparing", "in_oven", "out_for_delivery", "delivered", "cancelled"],
   out_for_delivery: ["delivered", "cancelled"],
   delivered: ["refunded"],
   cancelled: [],
