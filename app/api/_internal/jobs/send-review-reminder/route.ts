@@ -14,6 +14,7 @@ import { verifySignature } from "@/lib/qstash/client";
 import { sendSms } from "@/lib/sms/send";
 import { sendWhatsApp } from "@/lib/whatsapp/send";
 import { sendEmail } from "@/lib/email/send";
+import { reviewReminderEmail } from "@/lib/email/templates";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -69,19 +70,17 @@ export const POST = handler(async (req: Request) => {
     if (!order.customer.email) {
       return apiJson({ ok: true, skipped: "no_email_on_customer" });
     }
-    const subject = `איך הייתה ההזמנה מ-${order.tenant.name}?`;
-    const body = `${hello}, תודה שהזמנת מ-${order.tenant.name}.
-
-נשמח לשמוע איך היה — דקה אחת:
-${link}
-
-ב-תיאבון!
-${order.tenant.name}`;
+    const { html, text } = reviewReminderEmail({
+      hello,
+      businessName: order.tenant.name,
+      reviewUrl: link,
+    });
     const result = await sendEmail({
       tenantId: order.tenant.id,
       to: order.customer.email,
-      subject,
-      body,
+      subject: `איך הייתה ההזמנה מ-${order.tenant.name}?`,
+      body: text,
+      html,
       fromName: order.tenant.name,
       kind: "review_reminder",
       refKind: "order",

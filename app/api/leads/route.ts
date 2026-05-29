@@ -2,6 +2,7 @@ import { z } from "zod";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { checkRate } from "@/lib/api/rate-limit";
 import { sendEmail } from "@/lib/email/send";
+import { leadEmail } from "@/lib/email/templates";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,32 +48,21 @@ export const POST = handler(async (req: Request) => {
     return apiJson({ ok: true });
   }
 
-  const lines = [
-    `שם: ${data.name}`,
-    data.restaurant ? `מסעדה: ${data.restaurant}` : null,
-    `מייל: ${data.email}`,
-    data.phone ? `טלפון: ${data.phone}` : null,
-    data.message ? `\nהודעה:\n${data.message}` : null,
-    `\n— מקור: ${data.source} · IP: ${ip}`,
-  ].filter(Boolean) as string[];
-
-  const html = `<div dir="rtl" style="font-family:system-ui,sans-serif;font-size:15px;line-height:1.6;color:#0a0a0a">
-    <h2 style="margin:0 0 12px;font-size:18px">ליד חדש מ-${escapeHtml(data.source)}</h2>
-    <table style="border-collapse:collapse">
-      <tr><td style="padding:4px 12px 4px 0;color:#6e6e6e">שם</td><td>${escapeHtml(data.name)}</td></tr>
-      ${data.restaurant ? `<tr><td style="padding:4px 12px 4px 0;color:#6e6e6e">מסעדה</td><td>${escapeHtml(data.restaurant)}</td></tr>` : ""}
-      <tr><td style="padding:4px 12px 4px 0;color:#6e6e6e">מייל</td><td><a href="mailto:${escapeHtml(data.email)}">${escapeHtml(data.email)}</a></td></tr>
-      ${data.phone ? `<tr><td style="padding:4px 12px 4px 0;color:#6e6e6e">טלפון</td><td><a href="tel:${escapeHtml(data.phone)}">${escapeHtml(data.phone)}</a></td></tr>` : ""}
-    </table>
-    ${data.message ? `<div style="margin-top:16px;padding:12px;background:#faf8f2;border-radius:8px;white-space:pre-wrap">${escapeHtml(data.message)}</div>` : ""}
-    <p style="margin-top:20px;color:#6e6e6e;font-size:12px">IP: ${escapeHtml(ip)}</p>
-  </div>`;
+  const { html, text } = leadEmail({
+    name: data.name,
+    restaurant: data.restaurant || undefined,
+    email: data.email,
+    phone: data.phone || undefined,
+    message: data.message || undefined,
+    source: data.source,
+    ip,
+  });
 
   const result = await sendEmail({
     tenantId: null,
     to: LEAD_TO,
     subject: `ליד חדש: ${data.name}${data.restaurant ? ` · ${data.restaurant}` : ""}`,
-    body: lines.join("\n"),
+    body: text,
     html,
     replyTo: data.email,
     kind: "lead",
@@ -86,12 +76,3 @@ export const POST = handler(async (req: Request) => {
 
   return apiJson({ ok: true });
 });
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
