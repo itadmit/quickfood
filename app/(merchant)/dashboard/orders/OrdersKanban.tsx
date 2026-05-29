@@ -10,6 +10,8 @@ import { OrderDrawer } from "@/components/merchant/OrderDrawer";
 import { ManualOrderModal } from "@/components/merchant/ManualOrderModal";
 import { AssignCourierModal } from "@/components/merchant/AssignCourierModal";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
+import { MerchantPushSubscribe } from "@/components/merchant/MerchantPushSubscribe";
+import { NewOrderChime } from "@/components/merchant/NewOrderChime";
 
 type Status =
   | "pending"
@@ -122,7 +124,14 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
   // SSE subscription to merchant tenant channel
   useEffect(() => {
     const es = new EventSource("/api/v1/realtime/merchant");
-    es.addEventListener("order.created", () => void refresh());
+    es.addEventListener("order.created", () => {
+      try {
+        window.dispatchEvent(new Event("qf:new-order"));
+      } catch {
+        /* ignore */
+      }
+      void refresh();
+    });
     es.addEventListener("order.status_changed", () => void refresh());
     es.onerror = () => {
       // EventSource auto-reconnects; nothing to do
@@ -194,6 +203,8 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
 
   return (
     <div className="space-y-4 lg:space-y-5">
+      <NewOrderChime />
+      <MerchantPushSubscribe />
       <PageHeader
         chip="תפעול"
         title="הזמנות חיות"

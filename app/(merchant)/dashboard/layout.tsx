@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
@@ -11,6 +12,15 @@ import { EmailVerificationBanner } from "@/components/merchant/EmailVerification
 import { TrialGate } from "@/components/merchant/TrialGate";
 import { OnboardingWelcome } from "@/components/merchant/OnboardingWelcome";
 import { SupportFAB } from "@/components/merchant/SupportFAB";
+
+export const metadata: Metadata = {
+  manifest: "/manifest-merchant.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "QuickFood",
+  },
+};
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();

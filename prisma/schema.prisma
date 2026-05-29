@@ -826,9 +826,25 @@ model Courier {
   sessions CourierSession[]
   magicLinks CourierMagicLinkToken[]
   cashSettlements CashSettlement[]
+  pushSubscriptions CourierPushSubscription[]
 
   @@index([branchId, status])
   @@map("couriers")
+}
+
+model CourierPushSubscription {
+  id         String    @id @default(uuid()) @db.Uuid
+  courierId  String    @map("courier_id") @db.Uuid
+  courier    Courier   @relation(fields: [courierId], references: [id], onDelete: Cascade)
+  endpoint   String    @unique
+  p256dh     String
+  auth       String
+  userAgent  String?   @map("user_agent")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  lastSeenAt DateTime? @map("last_seen_at")
+
+  @@index([courierId])
+  @@map("courier_push_subscriptions")
 }
 
 model CashSettlement {
@@ -986,9 +1002,27 @@ model MerchantUser {
   createdAt         DateTime                  @default(now()) @map("created_at")
   passwordResets    PasswordResetToken[]
   emailVerifications EmailVerificationToken[]
+  pushSubscriptions  MerchantUserPushSubscription[]
 
   @@index([tenantId])
   @@map("merchant_users")
+}
+
+model MerchantUserPushSubscription {
+  id         String       @id @default(uuid()) @db.Uuid
+  userId     String       @map("user_id") @db.Uuid
+  user       MerchantUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId   String?      @map("tenant_id") @db.Uuid
+  endpoint   String       @unique
+  p256dh     String
+  auth       String
+  userAgent  String?      @map("user_agent")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  lastSeenAt DateTime?    @map("last_seen_at")
+
+  @@index([userId])
+  @@index([tenantId])
+  @@map("merchant_user_push_subscriptions")
 }
 
 /// Short-lived tokens for the "forgot password" flow. We email a one-time

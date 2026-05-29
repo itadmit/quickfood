@@ -2,6 +2,12 @@ import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
   title: "שליחים · QuickFood",
+  manifest: "/manifest-courier.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "שליח QF",
+  },
 };
 
 export const viewport: Viewport = {

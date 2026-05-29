@@ -4,6 +4,7 @@ import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
 import { scheduleReviewReminder } from "@/lib/reviews/schedule";
 import { recordOrderCommission } from "@/lib/billing-hub/commission";
 import { notifyCourierAssigned, notifyCustomerDelivered } from "@/lib/courier/notify";
+import { sendTenantPush } from "@/lib/merchant/push";
 
 /**
  * Order status state machine. Defines which transitions are legal.
@@ -173,6 +174,16 @@ export async function advanceStatus(
     void notifyCourierAssigned(orderId, options.courierId).catch((err) => {
       console.error("[courier] assign notify failed", err);
     });
+  }
+
+  if (order.status === "pending" && to === "confirmed") {
+    void sendTenantPush(order.tenantId, {
+      title: `הזמנה חדשה — ${order.number}`,
+      body: `${order.total} ש"ח · ${order.method === "delivery" ? "משלוח" : "איסוף"}`,
+      url: "/dashboard/orders",
+      tag: `order-${orderId}`,
+      requireInteraction: true,
+    }).catch((err) => console.warn("[push] tenant new-order failed", err));
   }
 
   // Fire webhooks (best-effort, non-blocking)

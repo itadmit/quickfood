@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CourierBottomNav } from "@/components/courier/CourierBottomNav";
 import { CourierStatusToggle } from "@/components/courier/CourierStatusToggle";
 import { CourierLocationTracker } from "@/components/courier/CourierLocationTracker";
+import { CourierPushSubscribe } from "@/components/courier/CourierPushSubscribe";
 
 interface OrderRow {
   id: string;
@@ -82,6 +83,10 @@ export function CourierHome() {
           status={me?.status ?? "offline"}
           onChange={(s) => setMe((p) => (p ? { ...p, status: s } : p))}
         />
+      </section>
+
+      <section className="px-5 mb-4">
+        <CourierPushSubscribe />
       </section>
 
       <section className="px-5 grid grid-cols-2 gap-3 mb-5">

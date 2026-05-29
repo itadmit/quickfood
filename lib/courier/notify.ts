@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db/client";
 import { sendWhatsApp } from "@/lib/whatsapp/send";
 import { sendSms } from "@/lib/sms/send";
+import { sendCourierPush } from "@/lib/courier/push";
 
 function formatAddress(addr: {
   street?: string | null;
@@ -51,6 +52,14 @@ export async function notifyCourierAssigned(orderId: string, courierId: string):
     order.customerNotes ? `הערות: ${order.customerNotes}` : null,
   ].filter(Boolean);
   const body = lines.join("\n");
+
+  void sendCourierPush(courierId, {
+    title: `הזמנה ${order.number} שויכה אליך`,
+    body: addressLine ? `${customerName} · ${addressLine}` : customerName,
+    url: `/courier/orders/${orderId}`,
+    tag: `order-${orderId}`,
+    requireInteraction: true,
+  }).catch((err) => console.warn("[push] courier assigned failed", err));
 
   const wa = await sendWhatsApp({
     tenantId: courier.tenantId,

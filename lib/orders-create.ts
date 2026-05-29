@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db/client";
 import { generateOrderNumber } from "@/lib/format";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
 import { isItemVisibleNow } from "@/lib/menu-availability";
+import { sendTenantPush } from "@/lib/merchant/push";
 import type { Prisma } from "@prisma/client";
 
 /**
@@ -412,7 +413,6 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     }
   }
 
-  // Fire webhook (cash orders are confirmed immediately, card orders wait until payment callback)
   if (initialStatus === "confirmed") {
     void dispatchWebhook({
       tenantId: tenant.id,
@@ -430,6 +430,14 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         })),
       },
     });
+
+    void sendTenantPush(tenant.id, {
+      title: `הזמנה חדשה — ${order.number}`,
+      body: `${total} ש"ח · ${input.method === "delivery" ? "משלוח" : "איסוף"}`,
+      url: "/dashboard/orders",
+      tag: `order-${order.id}`,
+      requireInteraction: true,
+    }).catch((err) => console.warn("[push] tenant new-order failed", err));
   }
 
   return { order, paymentMethod: input.paymentMethod, total };
