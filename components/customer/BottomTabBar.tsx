@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { IcoHome, IcoMenuList, IcoBag, IcoUser } from "@/components/shared/Icons";
+import { IcoHome, IcoMenuList, IcoBag, IcoUser, IcoStar } from "@/components/shared/Icons";
 import { useCart } from "./CartProvider";
 import { cn } from "@/lib/cn";
 
 export function BottomTabBar({ tenantSlug }: { tenantSlug: string }) {
   const path = usePathname() || "";
-  const { itemCount } = useCart();
+  const { itemCount, tenant } = useCart();
+  const showReviewsTab = !!tenant?.reviewsPublic;
 
   const homePath = `/s/${tenantSlug}`;
   // Menu lives inline on the home page — the "תפריט" tab is just a
@@ -42,20 +43,31 @@ export function BottomTabBar({ tenantSlug }: { tenantSlug: string }) {
     return () => observer.disconnect();
   }, [onHome, path]);
 
-  const tabs = [
-    { href: homePath, label: "בית", Icon: IcoHome, key: "home" as const },
-    { href: menuPath, label: "תפריט", Icon: IcoMenuList, key: "menu" as const },
+  type TabKey = "home" | "menu" | "cart" | "profile" | "reviews";
+
+  const tabs: Array<{
+    href: string;
+    label: string;
+    Icon: typeof IcoHome;
+    key: TabKey;
+    badge?: number;
+  }> = [
+    { href: homePath, label: "בית", Icon: IcoHome, key: "home" },
+    { href: menuPath, label: "תפריט", Icon: IcoMenuList, key: "menu" },
     {
       href: `/s/${tenantSlug}/cart`,
       label: "הסל שלי",
       Icon: IcoBag,
-      key: "cart" as const,
+      key: "cart",
       badge: itemCount > 0 ? itemCount : undefined,
     },
-    { href: `/s/${tenantSlug}/profile`, label: "אזור אישי", Icon: IcoUser, key: "profile" as const },
+    ...(showReviewsTab
+      ? [{ href: `/s/${tenantSlug}/reviews`, label: "ביקורות", Icon: IcoStar, key: "reviews" as TabKey }]
+      : []),
+    { href: `/s/${tenantSlug}/profile`, label: "אזור אישי", Icon: IcoUser, key: "profile" },
   ];
 
-  function isActive(key: "home" | "menu" | "cart" | "profile", href: string) {
+  function isActive(key: TabKey, href: string) {
     if (onHome) {
       if (key === "home") return !scrolledIntoMenu;
       if (key === "menu") return scrolledIntoMenu;
@@ -65,7 +77,7 @@ export function BottomTabBar({ tenantSlug }: { tenantSlug: string }) {
     return path.startsWith(href);
   }
 
-  function handleClick(key: "home" | "menu" | "cart" | "profile", e: React.MouseEvent) {
+  function handleClick(key: TabKey, e: React.MouseEvent) {
     if (!onHome) return;
     // On the home page the menu is inline — clicking "תפריט" should
     // scroll to it instead of navigating away. Same for "בית" → scroll
@@ -84,7 +96,10 @@ export function BottomTabBar({ tenantSlug }: { tenantSlug: string }) {
 
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 max-w-md mx-auto bg-white/95 backdrop-blur border-t border-qf-line">
-      <div className="grid grid-cols-4 px-2 py-2">
+      <div
+        className="grid px-2 py-2"
+        style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
+      >
         {tabs.map(({ href, label, Icon, badge, key }) => {
           const active = isActive(key, href);
           return (

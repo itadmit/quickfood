@@ -108,6 +108,7 @@ export default async function CustomerLayout({
           cutleryLabel: tenant.cutleryLabel,
           cutleryPrice: tenant.cutleryPrice,
           cutleryFreeAbove: tenant.cutleryFreeAbove,
+          reviewsPublic: tenant.reviewsEnabled && tenant.reviewsPublic,
         }}
         branch={
           branch

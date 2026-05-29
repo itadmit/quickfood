@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { IcoCheck } from "@/components/shared/Icons";
 import { Toggle as SharedToggle } from "@/components/shared/Toggle";
@@ -16,7 +17,19 @@ interface Initial {
   smsSender: string;
 }
 
-export function ReviewsSettingsForm({ initial }: { initial: Initial }) {
+export function ReviewsSettingsForm({
+  initial,
+  smsAvailable,
+  whatsappAvailable,
+  whatsappConnected,
+  smsCreditsRemaining,
+}: {
+  initial: Initial;
+  smsAvailable: boolean;
+  whatsappAvailable: boolean;
+  whatsappConnected: boolean;
+  smsCreditsRemaining: number;
+}) {
   const router = useRouter();
   const [v, setV] = useState<Initial>(initial);
   const [saving, setSaving] = useState(false);
@@ -88,26 +101,33 @@ export function ReviewsSettingsForm({ initial }: { initial: Initial }) {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {(
               [
-                { val: "off", label: "כבוי" },
-                { val: "email", label: "מייל" },
-                { val: "sms", label: "SMS" },
-                { val: "whatsapp", label: "WhatsApp" },
-              ] as Array<{ val: Channel; label: string }>
-            ).map((opt) => (
-              <button
-                key={opt.val}
-                type="button"
-                onClick={() => set("channel", opt.val)}
-                className={cn(
-                  "py-2.5 rounded-xl border text-sm font-medium transition",
-                  v.channel === opt.val
-                    ? "border-(--qf-primary) bg-qf-green-soft text-(--qf-deep)"
-                    : "border-qf-line-dash text-qf-ink2 hover:border-qf-line",
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
+                { val: "off", label: "כבוי", available: true },
+                { val: "email", label: "מייל", available: true },
+                { val: "sms", label: "SMS", available: smsAvailable },
+                { val: "whatsapp", label: "WhatsApp", available: whatsappAvailable },
+              ] as Array<{ val: Channel; label: string; available: boolean }>
+            ).map((opt) => {
+              const selected = v.channel === opt.val;
+              return (
+                <button
+                  key={opt.val}
+                  type="button"
+                  onClick={() => opt.available && set("channel", opt.val)}
+                  disabled={!opt.available}
+                  aria-disabled={!opt.available}
+                  className={cn(
+                    "py-2.5 rounded-xl border text-sm font-medium transition",
+                    selected
+                      ? "border-(--qf-primary) bg-qf-green-soft text-(--qf-deep)"
+                      : opt.available
+                      ? "border-qf-line-dash text-qf-ink2 hover:border-qf-line"
+                      : "border-qf-line-dash text-qf-mute bg-qf-bg/60 cursor-not-allowed opacity-60",
+                  )}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
           </div>
 
           {v.channel === "email" && (
@@ -115,9 +135,43 @@ export function ReviewsSettingsForm({ initial }: { initial: Initial }) {
               כשבחור מייל, שדה אימייל יהפוך לחובה בצ׳קאאוט.
             </p>
           )}
-          {v.channel === "whatsapp" && (
+          {!smsAvailable && (
             <p className="text-xs text-qf-mute mt-1">
-              דורש חיבור WhatsApp פעיל (iBot Chat) בלשונית WhatsApp.
+              SMS דורש קרדיט בתשלום.{" "}
+              <Link
+                href="/dashboard/sms"
+                className="text-(--qf-deep) underline underline-offset-2 hover:text-(--qf-primary)"
+              >
+                רכישת קרדיט
+              </Link>
+              {" "}({smsCreditsRemaining} זמינים).
+            </p>
+          )}
+          {!whatsappAvailable && (
+            <p className="text-xs text-qf-mute">
+              WhatsApp דורש{" "}
+              {!whatsappConnected ? (
+                <>
+                  חיבור פעיל ב־
+                  <Link
+                    href="/dashboard/settings/whatsapp"
+                    className="text-(--qf-deep) underline underline-offset-2 hover:text-(--qf-primary)"
+                  >
+                    הגדרות WhatsApp
+                  </Link>
+                  {smsAvailable ? "." : " וגם קרדיט בתשלום."}
+                </>
+              ) : (
+                <>
+                  קרדיט בתשלום.{" "}
+                  <Link
+                    href="/dashboard/sms"
+                    className="text-(--qf-deep) underline underline-offset-2 hover:text-(--qf-primary)"
+                  >
+                    רכישת קרדיט
+                  </Link>
+                </>
+              )}
             </p>
           )}
         </div>

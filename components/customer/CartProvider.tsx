@@ -59,6 +59,9 @@ interface TenantInfo {
   cutleryLabel?: string;
   cutleryPrice?: number;
   cutleryFreeAbove?: number | null;
+  // True when the merchant exposes /s/<slug>/reviews to customers.
+  // Drives whether the "ביקורות" tab/nav-link is visible.
+  reviewsPublic?: boolean;
 }
 
 interface BranchInfo {

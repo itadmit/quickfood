@@ -288,7 +288,7 @@ model Tenant {
   // Reviews configuration
   reviewsEnabled      Boolean       @default(true) @map("reviews_enabled")
   reviewsPublic       Boolean       @default(true) @map("reviews_public")
-  reviewsChannel      ReviewChannel @default(off) @map("reviews_channel")
+  reviewsChannel      ReviewChannel @default(email) @map("reviews_channel")
   reviewsDelayMinutes Int           @default(60) @map("reviews_delay_minutes")
   smsSender           String?       @map("sms_sender") @db.VarChar(11)
 

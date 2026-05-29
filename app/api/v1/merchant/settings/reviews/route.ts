@@ -52,6 +52,48 @@ export const PATCH = handler(async (req: Request) => {
   if (!session.tenantId) return apiError("forbidden", "no tenant", 403);
   const body = Schema.parse(await req.json());
 
+  // Defense-in-depth: even though the UI disables them, a forged PATCH
+  // must not silently switch to a paid channel the tenant can't actually
+  // use. Check credits + whatsapp config before allowing the change.
+  if (body.channel === "sms" || body.channel === "whatsapp") {
+    const [tenant, platform] = await Promise.all([
+      prisma.tenant.findUnique({
+        where: { id: session.tenantId },
+        select: {
+          smsCreditsRemaining: true,
+          whatsappToken: true,
+          whatsappInstanceId: true,
+        },
+      }),
+      prisma.platformSettings.findFirst({
+        select: { whatsappDefaultToken: true, whatsappDefaultInstanceId: true },
+      }),
+    ]);
+    if (!tenant) return apiError("not_found", "tenant not found", 404);
+    if (tenant.smsCreditsRemaining <= 0) {
+      return apiError(
+        "no_credits",
+        "אין קרדיט SMS. רכוש קרדיט כדי להפעיל את הערוץ הזה.",
+        409,
+        "channel",
+      );
+    }
+    if (body.channel === "whatsapp") {
+      const tenantConnected =
+        !!(tenant.whatsappToken && tenant.whatsappInstanceId);
+      const platformConnected =
+        !!(platform?.whatsappDefaultToken && platform?.whatsappDefaultInstanceId);
+      if (!tenantConnected && !platformConnected) {
+        return apiError(
+          "whatsapp_not_connected",
+          "WhatsApp לא מחובר. הגדר חיבור בהגדרות WhatsApp לפני בחירת הערוץ.",
+          409,
+          "channel",
+        );
+      }
+    }
+  }
+
   const updated = await prisma.tenant.update({
     where: { id: session.tenantId },
     data: {

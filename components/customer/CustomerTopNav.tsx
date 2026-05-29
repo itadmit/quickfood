@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IcoUser, IcoMenuList, IcoHome, IcoBag, IcoSearch } from "@/components/shared/Icons";
+import { IcoUser, IcoMenuList, IcoHome, IcoBag, IcoSearch, IcoStar } from "@/components/shared/Icons";
 import { useCart } from "./CartProvider";
 import { useMenuSearch } from "./MenuSearchProvider";
 import { formatPrice } from "@/lib/format";
@@ -25,13 +25,15 @@ interface Props {
  */
 export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: Props) {
   const path = usePathname() || "";
-  const { itemCount, subtotal } = useCart();
+  const { itemCount, subtotal, tenant } = useCart();
   const { query, setQuery } = useMenuSearch();
 
   const homePath = `/s/${tenantSlug}`;
   const onHome = path === homePath;
   const onCartLike = path === `/s/${tenantSlug}/cart` || path === `/s/${tenantSlug}/checkout`;
   const onProfile = path.startsWith(`/s/${tenantSlug}/profile`);
+  const onReviews = path.startsWith(`/s/${tenantSlug}/reviews`);
+  const showReviewsLink = !!tenant?.reviewsPublic;
 
   const onOrderPage = /^\/[^/]+\/orders\/[^/]+/.test(path);
   if (onOrderPage) return null;
@@ -124,6 +126,24 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
             <IcoMenuList c="#3a4a40" s={16} />
             <span>תפריט</span>
           </Link>
+          {showReviewsLink && (
+            <Link
+              href={`/s/${tenantSlug}/reviews`}
+              className={cn(
+                "inline-flex items-center gap-2 px-3 h-10 rounded-full text-sm font-medium transition",
+                onReviews
+                  ? "bg-qf-green-soft text-qf-green-deep"
+                  : "text-qf-ink2 hover:bg-qf-line-soft",
+              )}
+            >
+              <IcoStar
+                c={onReviews ? "var(--qf-primary)" : "#3a4a40"}
+                fill={onReviews ? "var(--qf-primary)" : "none"}
+                s={16}
+              />
+              <span>ביקורות</span>
+            </Link>
+          )}
           {!onCartLike && (
             <Link
               href={`/s/${tenantSlug}/cart`}
