@@ -46,9 +46,11 @@ export function CustomerCheckout({
   const [floor, setFloor] = useState("");
   const [apartment, setApartment] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneTouched, setPhoneTouched] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
   const [deliveryNotes, setDeliveryNotes] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
   const [availableMethods, setAvailableMethods] = useState<CustomerPaymentMethod[]>([]);
@@ -321,6 +323,16 @@ export function CustomerCheckout({
       setError("בחר אמצעי תשלום");
       return;
     }
+    if (!phoneLooksValid) {
+      setPhoneTouched(true);
+      setError("מספר הטלפון אינו תקין. דוגמה: 050-1234567");
+      return;
+    }
+    if (requireEmail && !emailLooksValid) {
+      setEmailTouched(true);
+      setError("כתובת המייל אינה תקינה");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -437,9 +449,24 @@ export function CustomerCheckout({
 
   const emailLooksValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
-  // Treat any in-flight payment (SDK wallet open or about to open) as
-  // "busy" so the CTA can't fire a second order while the user is still
-  // settling the first.
+  function validateIsraeliPhone(raw: string): boolean {
+    const digits = raw.replace(/[^\d+]/g, "");
+    if (/^\+?972[5][0-9]{8}$/.test(digits)) return true;
+    if (/^05[0-9]{8}$/.test(digits)) return true;
+    return false;
+  }
+  const phoneLooksValid = validateIsraeliPhone(phone);
+  const phoneError =
+    phoneTouched && phone.trim() && !phoneLooksValid
+      ? "מספר טלפון לא תקין — למשל 050-1234567"
+      : phoneTouched && !phone.trim()
+        ? "נדרש מספר טלפון"
+        : null;
+  const emailError =
+    requireEmail && emailTouched && email.trim() && !emailLooksValid
+      ? "כתובת מייל לא תקינה"
+      : null;
+
   const paymentInFlight = !!pendingPayment;
   const canPlace =
     !busy &&
@@ -447,6 +474,7 @@ export function CustomerCheckout({
     !!paymentMethod &&
     !!firstName &&
     !!phone &&
+    phoneLooksValid &&
     (method !== "delivery" || (!!address && !!city)) &&
     (!requireEmail || emailLooksValid);
 
@@ -485,27 +513,37 @@ export function CustomerCheckout({
               />
             </Field>
             <div className="col-span-2">
-              <Field label="טלפון" required>
+              <Field label="טלפון" required error={phoneError}>
                 <Input
                   value={phone}
-                  onChange={setPhone}
+                  onChange={(v) => {
+                    setPhone(v);
+                    if (!phoneTouched) setPhoneTouched(true);
+                  }}
+                  onBlur={() => setPhoneTouched(true)}
                   placeholder="050-1234567"
                   dir="ltr"
                   inputMode="tel"
                   autoComplete="tel"
+                  invalid={!!phoneError}
                 />
               </Field>
             </div>
             {requireEmail && (
               <div className="col-span-2">
-                <Field label="דוא״ל" required>
+                <Field label="דוא״ל" required error={emailError}>
                   <Input
                     value={email}
-                    onChange={setEmail}
+                    onChange={(v) => {
+                      setEmail(v);
+                      if (!emailTouched) setEmailTouched(true);
+                    }}
+                    onBlur={() => setEmailTouched(true)}
                     placeholder="you@example.com"
                     dir="ltr"
                     inputMode="email"
                     autoComplete="email"
+                    invalid={!!emailError}
                   />
                 </Field>
                 <div className="text-xs text-qf-mute mt-1">
@@ -1065,10 +1103,12 @@ function CardTitle({ children }: { children: React.ReactNode }) {
 function Field({
   label,
   required,
+  error,
   children,
 }: {
   label: string;
   required?: boolean;
+  error?: string | null;
   children: React.ReactNode;
 }) {
   return (
@@ -1078,6 +1118,11 @@ function Field({
         {required && <span className="text-qf-tomato"> *</span>}
       </div>
       {children}
+      {error && (
+        <div className="mt-1.5 text-xs font-medium text-qf-tomato" role="alert">
+          {error}
+        </div>
+      )}
     </label>
   );
 }
@@ -1085,27 +1130,38 @@ function Field({
 function Input({
   value,
   onChange,
+  onBlur,
   placeholder,
   dir,
   inputMode,
   autoComplete,
+  invalid,
 }: {
   value: string;
   onChange: (v: string) => void;
+  onBlur?: () => void;
   placeholder: string;
   dir?: "ltr" | "rtl";
   inputMode?: "tel" | "text" | "email" | "numeric";
   autoComplete?: string;
+  invalid?: boolean;
 }) {
   return (
     <input
       value={value}
       onChange={(e) => onChange(e.target.value)}
+      onBlur={onBlur}
       placeholder={placeholder}
       dir={dir}
       inputMode={inputMode}
       autoComplete={autoComplete}
-      className="w-full bg-white border border-qf-line rounded-2xl px-4 h-14 text-base outline-none focus:border-(--qf-primary) focus:ring-2 focus:ring-(--qf-primary)/15 placeholder:text-qf-mute transition"
+      aria-invalid={invalid || undefined}
+      className={
+        "w-full bg-white border rounded-2xl px-4 h-14 text-base outline-none placeholder:text-qf-mute transition " +
+        (invalid
+          ? "border-qf-tomato focus:border-qf-tomato focus:ring-2 focus:ring-qf-tomato/20"
+          : "border-qf-line focus:border-(--qf-primary) focus:ring-2 focus:ring-(--qf-primary)/15")
+      }
     />
   );
 }

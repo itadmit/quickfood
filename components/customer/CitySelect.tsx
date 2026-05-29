@@ -45,10 +45,16 @@ export function CitySelect({
   }, [open]);
 
   function pick(c: string) {
-    onChange(c);
     setOpen(false);
     setQuery("");
+    onChange(c);
   }
+
+  const prevValueRef = useRef(value);
+  useEffect(() => {
+    if (prevValueRef.current !== value && open) setOpen(false);
+    prevValueRef.current = value;
+  }, [value, open]);
 
   return (
     <div ref={wrapRef} className="relative">

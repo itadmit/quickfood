@@ -53,7 +53,19 @@ export const POST = handler(async (req: Request) => {
     return apiError("auth_required", "נדרשת התחברות או טלפון אורח", 401);
   }
 
-  const guestPhone = body.guest_phone ? (toE164(body.guest_phone) ?? undefined) : undefined;
+  let guestPhone: string | undefined;
+  if (body.guest_phone) {
+    const normalized = toE164(body.guest_phone);
+    if (!normalized) {
+      return apiError(
+        "invalid_phone",
+        "מספר הטלפון אינו תקין. דוגמה: 050-1234567",
+        422,
+        "guest_phone",
+      );
+    }
+    guestPhone = normalized;
+  }
 
   try {
     const result = await createOrder({
