@@ -82,88 +82,103 @@ export async function advanceStatus(
   }
   if (to === "cancelled") updates.cancelledAt = now;
 
-  const updated = await prisma.order.update({
-    where: { id: orderId },
-    data: updates,
-  });
-
   const assignedCourierId = (updates.courierId as string | undefined) ?? order.courierId ?? null;
-  if (to === "delivered" && assignedCourierId) {
-    // Tip belongs to the courier, never to the merchant — split it out of
-    // the cash bucket so settling the drawer doesn't sweep the tip away.
-    // Cash orders: courier collected tip + order; pull the tip into
-    // tipsOnHand, the rest is the merchant's cashOnHand.
-    // Card orders with tip: merchant already received the tip via Grow
-    // (it ships as a synthetic invoice line), so they owe it to the
-    // courier — surface that as tipsOwed.
-    let cashDelta = 0;
-    let tipsOnHandDelta = 0;
-    let tipsOwedDelta = 0;
-    if (order.paymentMethod === "cash" && typeof options?.cashCollected === "number") {
-      const collected = options.cashCollected;
-      tipsOnHandDelta = Math.min(order.tip, collected);
-      cashDelta = Math.max(0, collected - order.tip);
-    } else if (order.paymentMethod !== "cash" && order.tip > 0) {
-      tipsOwedDelta = order.tip;
+
+  // Wrap the order mutation + courier wallet + audit log in one
+  // transaction with an optimistic lock on the previous status. Two
+  // concurrent deliver calls used to both read out_for_delivery, both
+  // pass canTransition, and both increment cashOnHand. The updateMany
+  // filter on (id, status=order.status) is atomic — Postgres acquires
+  // a row lock so only one wins; the loser sees count=0 and aborts.
+  const updated = await prisma.$transaction(async (tx) => {
+    const updateRes = await tx.order.updateMany({
+      where: { id: orderId, status: order.status },
+      data: updates,
+    });
+    if (updateRes.count === 0) {
+      throw new OrderTransitionError(order.status, to);
     }
-    const stillActive = await prisma.order.findFirst({
-      where: {
-        courierId: assignedCourierId,
-        status: "out_for_delivery",
-        NOT: { id: orderId },
-      },
-      select: { id: true },
-      orderBy: { courierAssignedAt: "asc" },
-    });
-    await prisma.courier.update({
-      where: { id: assignedCourierId },
-      data: {
-        deliveriesToday: { increment: 1 },
-        currentOrderId: stillActive?.id ?? null,
-        ...(cashDelta > 0 ? { cashOnHand: { increment: cashDelta } } : {}),
-        ...(tipsOnHandDelta > 0 ? { tipsOnHand: { increment: tipsOnHandDelta } } : {}),
-        ...(tipsOwedDelta > 0 ? { tipsOwed: { increment: tipsOwedDelta } } : {}),
-      },
-    });
-  }
-  if (to === "out_for_delivery" && assignedCourierId) {
-    await prisma.courier.update({
-      where: { id: assignedCourierId },
-      data: {
-        status: "on_delivery",
-        currentOrderId: orderId,
-      },
-    });
-  }
-  if (to === "cancelled" && order.courierId) {
-    const stillActive = await prisma.order.count({
-      where: {
-        courierId: order.courierId,
-        status: { in: ["out_for_delivery"] },
-        NOT: { id: orderId },
-      },
-    });
-    if (stillActive === 0) {
-      await prisma.courier.update({
-        where: { id: order.courierId },
-        data: { currentOrderId: null },
+
+    if (to === "delivered" && assignedCourierId) {
+      // Tip belongs to the courier, never to the merchant — split it
+      // out of the cash bucket so settling the drawer doesn't sweep
+      // the tip away. Cash orders: courier collected tip + order; pull
+      // the tip into tipsOnHand, the rest is the merchant's cashOnHand.
+      // Card orders with tip: merchant already received the tip via
+      // Grow (it ships as a synthetic invoice line), so they owe it
+      // to the courier — surface that as tipsOwed.
+      let cashDelta = 0;
+      let tipsOnHandDelta = 0;
+      let tipsOwedDelta = 0;
+      if (order.paymentMethod === "cash") {
+        const collected = options?.cashCollected ?? order.total;
+        tipsOnHandDelta = Math.min(order.tip, collected);
+        cashDelta = Math.max(0, collected - order.tip);
+      } else if (order.tip > 0) {
+        tipsOwedDelta = order.tip;
+      }
+      const stillActive = await tx.order.findFirst({
+        where: {
+          courierId: assignedCourierId,
+          status: "out_for_delivery",
+          NOT: { id: orderId },
+        },
+        select: { id: true },
+        orderBy: { courierAssignedAt: "asc" },
+      });
+      await tx.courier.update({
+        where: { id: assignedCourierId },
+        data: {
+          deliveriesToday: { increment: 1 },
+          currentOrderId: stillActive?.id ?? null,
+          ...(cashDelta > 0 ? { cashOnHand: { increment: cashDelta } } : {}),
+          ...(tipsOnHandDelta > 0 ? { tipsOnHand: { increment: tipsOnHandDelta } } : {}),
+          ...(tipsOwedDelta > 0 ? { tipsOwed: { increment: tipsOwedDelta } } : {}),
+        },
       });
     }
-  }
+    if (to === "out_for_delivery" && assignedCourierId) {
+      await tx.courier.update({
+        where: { id: assignedCourierId },
+        data: {
+          status: "on_delivery",
+          currentOrderId: orderId,
+        },
+      });
+    }
+    if (to === "cancelled" && order.courierId) {
+      const stillActive = await tx.order.count({
+        where: {
+          courierId: order.courierId,
+          status: { in: ["out_for_delivery"] },
+          NOT: { id: orderId },
+        },
+      });
+      if (stillActive === 0) {
+        await tx.courier.update({
+          where: { id: order.courierId },
+          data: { currentOrderId: null },
+        });
+      }
+    }
 
-  await prisma.orderEvent.create({
-    data: {
-      orderId,
-      type: "status_changed",
-      payload: {
-        from: order.status,
-        to,
-        changed_at: now.toISOString(),
-        changed_by: options?.changedBy,
-        reason: options?.reason,
+    await tx.orderEvent.create({
+      data: {
+        orderId,
+        type: "status_changed",
+        payload: {
+          from: order.status,
+          to,
+          changed_at: now.toISOString(),
+          changed_by: options?.changedBy,
+          reason: options?.reason,
+        },
       },
-    },
+    });
+
+    return tx.order.findUnique({ where: { id: orderId } });
   });
+  if (!updated) throw new Error("order_not_found");
 
   // When the order is delivered, kick off two billing-hub side effects:
   //   (1) queue the review reminder
