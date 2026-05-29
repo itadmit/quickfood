@@ -12,6 +12,7 @@ import { EmailVerificationBanner } from "@/components/merchant/EmailVerification
 import { TrialGate } from "@/components/merchant/TrialGate";
 import { OnboardingWelcome } from "@/components/merchant/OnboardingWelcome";
 import { SupportFAB } from "@/components/merchant/SupportFAB";
+import { MerchantPushSubscribe } from "@/components/merchant/MerchantPushSubscribe";
 
 export const metadata: Metadata = {
   manifest: "/manifest-merchant.webmanifest",
@@ -135,7 +136,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
               }}
             />
             <main className="flex-1 min-w-0 p-3 lg:p-6 pb-20 lg:pb-6 overflow-x-clip">
-              <div className="mx-auto w-full max-w-7xl">{children}</div>
+              <div className="mx-auto w-full max-w-7xl space-y-3">
+                <MerchantPushSubscribe />
+                {children}
+              </div>
             </main>
           </div>
           <TrialGate
@@ -182,7 +186,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <div className="flex-1 flex">
             <Sidebar tenant={{ name: tenant.name, logoLetter: tenant.logoLetter, branchName: tenant.branches[0]?.name ?? "" }} />
             <main className="flex-1 min-w-0 p-3 lg:p-6 pb-20 lg:pb-6 overflow-x-clip">
-              <div className="mx-auto w-full max-w-7xl">{children}</div>
+              <div className="mx-auto w-full max-w-7xl space-y-3">
+                <MerchantPushSubscribe />
+                {children}
+              </div>
             </main>
           </div>
           <TrialGate

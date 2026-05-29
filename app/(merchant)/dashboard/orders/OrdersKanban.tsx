@@ -10,7 +10,6 @@ import { OrderDrawer } from "@/components/merchant/OrderDrawer";
 import { ManualOrderModal } from "@/components/merchant/ManualOrderModal";
 import { AssignCourierModal } from "@/components/merchant/AssignCourierModal";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
-import { MerchantPushSubscribe } from "@/components/merchant/MerchantPushSubscribe";
 import { NewOrderChime } from "@/components/merchant/NewOrderChime";
 
 type Status =
@@ -204,7 +203,6 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
   return (
     <div className="space-y-4 lg:space-y-5">
       <NewOrderChime />
-      <MerchantPushSubscribe />
       <PageHeader
         chip="תפעול"
         title="הזמנות חיות"
