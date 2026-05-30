@@ -20,6 +20,8 @@ type Status =
   | "ready"
   | "out_for_delivery";
 
+type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
+
 interface OrderRow {
   id: string;
   number: string;
@@ -28,6 +30,8 @@ interface OrderRow {
   customerName: string;
   customerPhone: string;
   customerNotes: string | null;
+  paymentStatus: PaymentStatus;
+  paymentMethod: string;
   total: number;
   createdAt: string;
   items: Array<{ id: string; name: string; quantity: number; size: string | null }>;
@@ -123,6 +127,8 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
         number: o.number as string,
         status: o.status as Status,
         method: o.method as "delivery" | "pickup",
+        paymentStatus: (o.payment_status as PaymentStatus) ?? "pending",
+        paymentMethod: (o.payment_method as string) ?? "cash",
         customerName:
           (o.customer as { name?: string } | null)?.name ||
           (o.customer_name as string | null) ||
@@ -498,7 +504,11 @@ function Card({
     >
       <header className="flex items-center justify-between">
         <div className="font-mono font-semibold text-sm">{order.number}</div>
-        <StatusChip status={order.status} late={isLate} />
+        <StatusChip
+          status={order.status}
+          paymentStatus={order.paymentStatus}
+          late={isLate}
+        />
       </header>
 
       <div className="text-sm font-medium">{order.customerName}</div>
@@ -574,7 +584,15 @@ function Card({
   );
 }
 
-function StatusChip({ status, late }: { status: Status; late: boolean }) {
+function StatusChip({
+  status,
+  paymentStatus,
+  late,
+}: {
+  status: Status;
+  paymentStatus: PaymentStatus;
+  late: boolean;
+}) {
   if (late) {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-qf-tomato-soft text-qf-tomato">
@@ -591,9 +609,15 @@ function StatusChip({ status, late }: { status: Status; late: boolean }) {
     ready: "מוכנה",
     out_for_delivery: "בדרך",
   };
+  // Once the customer actually paid (card via Grow callback, or
+  // cash collected at delivery), "שולמה" is what the merchant cares
+  // about — clearer than the generic "אושרה". Pending payments
+  // (cash before delivery, or unsettled card) keep the lifecycle
+  // label so we don't accidentally claim money we don't have.
+  const label = paymentStatus === "paid" ? "שולמה" : labels[status];
   return (
     <span className="inline-block text-[10px] font-medium px-2 py-1 rounded-md bg-qf-green-soft text-qf-green-deep">
-      {labels[status]}
+      {label}
     </span>
   );
 }

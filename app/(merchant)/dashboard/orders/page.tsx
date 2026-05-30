@@ -38,6 +38,8 @@ export default async function OrdersPage() {
       "אורח",
     customerPhone: o.customer?.phone || o.customerPhoneSnap || "",
     customerNotes: o.customerNotes,
+    paymentStatus: o.paymentStatus as "pending" | "paid" | "failed" | "refunded",
+    paymentMethod: o.paymentMethod,
     total: o.total,
     createdAt: o.createdAt.toISOString(),
     items: o.items.map((it) => ({
