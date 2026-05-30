@@ -122,10 +122,25 @@ export function SignupForm() {
       });
       const data = await res.json();
       if (!res.ok) {
-        const field = data.error?.field;
+        const field = data.error?.field as string | undefined;
         setError(data.error?.message ?? "ההרשמה נכשלה");
-        if (field === "slug") setStep(1);
-        if (field === "owner_email") setStep(3);
+        // Jump back to whichever step the bad field lives on, so the
+        // merchant lands on the actual input instead of staring at
+        // the owner-credentials step wondering why a Hebrew error
+        // about business name showed up.
+        const stepByField: Record<string, 1 | 2 | 3> = {
+          business_name: 1,
+          slug: 1,
+          business_type: 1,
+          cuisine_type: 1,
+          branch_address: 1,
+          branch_phone: 1,
+          theme_id: 2,
+          owner_name: 3,
+          owner_email: 3,
+          owner_password: 3,
+        };
+        if (field && stepByField[field]) setStep(stepByField[field]);
         return;
       }
       // If the merchant pasted a Wolt URL on Step 0, append it to the

@@ -14,13 +14,21 @@ const TRIAL_DAYS = 7;
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// Hebrew error messages on every constraint — the generic Zod fallback
+// ("String must contain at least 2 character(s)") used to surface raw
+// into the signup UI, and a merchant who forgot to fill business_name
+// would see that English string under the phone field with no clue
+// which input was wrong.
 const SignupSchema = z.object({
-  business_name: z.string().min(2).max(120),
+  business_name: z
+    .string({ required_error: "שם העסק חסר" })
+    .min(2, "שם העסק חייב להכיל לפחות 2 תווים")
+    .max(120, "שם העסק ארוך מדי"),
   slug: z
-    .string()
-    .min(2)
-    .max(40)
-    .regex(/^[a-z0-9-]+$/, "slug: lowercase letters, digits and hyphens only"),
+    .string({ required_error: "כתובת באתר חסרה" })
+    .min(2, "כתובת באתר חייבת להכיל לפחות 2 תווים")
+    .max(40, "כתובת באתר ארוכה מדי")
+    .regex(/^[a-z0-9-]+$/, "כתובת באתר באנגלית בלבד — אותיות קטנות, ספרות ומקפים"),
   business_type: z
     .enum([
       "pizza",
@@ -39,12 +47,26 @@ const SignupSchema = z.object({
   theme_id: z
     .enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt", "sunflower"])
     .default("fresh"),
-  cuisine_type: z.string().max(60).optional(),
-  branch_address: z.string().min(2).max(200),
-  branch_phone: z.string().min(7).max(20),
-  owner_name: z.string().min(1).max(80),
-  owner_email: z.string().email(),
-  owner_password: z.string().min(8).max(128),
+  cuisine_type: z.string().max(60, "סוג מטבח ארוך מדי").optional(),
+  branch_address: z
+    .string({ required_error: "כתובת הסניף חסרה" })
+    .min(2, "כתובת הסניף חייבת להכיל לפחות 2 תווים")
+    .max(200, "כתובת הסניף ארוכה מדי"),
+  branch_phone: z
+    .string({ required_error: "מספר טלפון חסר" })
+    .min(7, "מספר טלפון חייב להכיל לפחות 7 ספרות")
+    .max(20, "מספר טלפון ארוך מדי"),
+  owner_name: z
+    .string({ required_error: "שם הבעלים חסר" })
+    .min(1, "שם הבעלים חסר")
+    .max(80, "שם ארוך מדי"),
+  owner_email: z
+    .string({ required_error: "כתובת מייל חסרה" })
+    .email("כתובת מייל לא תקינה"),
+  owner_password: z
+    .string({ required_error: "סיסמה חסרה" })
+    .min(8, "סיסמה חייבת להכיל לפחות 8 תווים")
+    .max(128, "סיסמה ארוכה מדי"),
   client_type: z.enum(["web", "mobile"]).default("web"),
 });
 
