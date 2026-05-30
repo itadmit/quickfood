@@ -43,7 +43,12 @@ const COLUMNS: Array<{
   {
     status: ["pending", "confirmed"],
     title: "חדשות",
-    subtitle: "ממתינות לאישור",
+    // The column holds both pending (need merchant approval — usually
+    // cash orders or card orders whose Grow callback hasn't landed)
+    // AND confirmed (Grow already approved the payment, just waiting
+    // for the merchant to start cooking). Per-card actionLabel below
+    // splits the wording.
+    subtitle: "ממתינות לקבלה",
     next: "preparing",
     actionLabel: "אשר וקבל",
   },
@@ -438,11 +443,16 @@ function Column({
               next={next}
               // Pickup orders skip the "out for delivery" step — when
               // advancing them from "ready", the action is "hand to
-              // customer", not "hand to courier".
+              // customer", not "hand to courier". And a `confirmed`
+              // card lives in the "new" column but doesn't need
+              // approval (Grow already approved); merchant just kicks
+              // off the kitchen.
               actionLabel={
                 o.status === "ready" && o.method === "pickup"
                   ? "נמסר ללקוח"
-                  : actionLabel
+                  : o.status === "confirmed"
+                    ? "התחל הכנה"
+                    : actionLabel
               }
               now={now}
               onAdvance={onAdvance}
