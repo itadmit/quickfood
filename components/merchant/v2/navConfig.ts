@@ -30,7 +30,11 @@ export const NAV: NavSection[] = [
     title: "תפעול",
     items: [
       { href: "/dashboard", label: "דשבורד", Icon: IcoHome, exact: true },
-      { href: "/dashboard/orders", label: "הזמנות", Icon: IcoOrders },
+      // exact:true on the live kanban so it doesn't ALSO light up when
+      // the merchant is browsing /dashboard/orders/history — the
+      // startsWith default matched both and made the active state look
+      // doubled. History below has no subroutes so the default is fine.
+      { href: "/dashboard/orders", label: "הזמנות", Icon: IcoOrders, exact: true },
       { href: "/dashboard/orders/history", label: "היסטוריית הזמנות", Icon: IcoOrders },
       { href: "/dashboard/menu", label: "תפריט", Icon: IcoMenu },
       { href: "/dashboard/analytics", label: "אנליטיקס", Icon: IcoChart, badge: "חדש!" },
