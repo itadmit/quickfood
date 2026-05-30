@@ -20,7 +20,16 @@ export default async function OrdersPage() {
       },
     },
     include: {
-      items: { select: { id: true, nameSnapshot: true, quantity: true, sizeSnapshot: true } },
+      items: {
+        select: {
+          id: true,
+          nameSnapshot: true,
+          quantity: true,
+          sizeSnapshot: true,
+          selectedOptions: true,
+          notes: true,
+        },
+      },
       customer: { select: { id: true, firstName: true, lastName: true, phone: true } },
     },
     orderBy: { createdAt: "asc" },
@@ -42,12 +51,25 @@ export default async function OrdersPage() {
     paymentMethod: o.paymentMethod,
     total: o.total,
     createdAt: o.createdAt.toISOString(),
-    items: o.items.map((it) => ({
-      id: it.id,
-      name: it.nameSnapshot,
-      quantity: it.quantity,
-      size: it.sizeSnapshot,
-    })),
+    items: o.items.map((it) => {
+      const raw = Array.isArray(it.selectedOptions)
+        ? (it.selectedOptions as Array<Record<string, unknown>>)
+        : [];
+      const options = raw
+        .filter((o) => typeof o?.name === "string")
+        .map((o) => ({
+          name: o.name as string,
+          half: o.half as "left" | "right" | "full" | undefined,
+        }));
+      return {
+        id: it.id,
+        name: it.nameSnapshot,
+        quantity: it.quantity,
+        size: it.sizeSnapshot,
+        options,
+        notes: it.notes ?? null,
+      };
+    }),
   }));
 
   return <OrdersKanban initial={initial} />;

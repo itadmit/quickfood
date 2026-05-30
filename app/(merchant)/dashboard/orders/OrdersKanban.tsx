@@ -34,7 +34,39 @@ interface OrderRow {
   paymentMethod: string;
   total: number;
   createdAt: string;
-  items: Array<{ id: string; name: string; quantity: number; size: string | null }>;
+  items: Array<{
+    id: string;
+    name: string;
+    quantity: number;
+    size: string | null;
+    options: Array<{ name: string; half?: "left" | "right" | "full" }>;
+    notes: string | null;
+  }>;
+}
+
+// Group selected options by display key (name + half) so a topping
+// that appears in two modifier groups shows up as "עגבניה ×2" instead
+// of "עגבניה · עגבניה" — same helper as the order drawer.
+function renderItemOptions(opts: Array<{ name?: string; half?: string }>): string {
+  const groups = new Map<string, { name: string; half?: string; count: number }>();
+  for (const o of opts) {
+    if (!o?.name) continue;
+    const key = `${o.name}|${o.half ?? ""}`;
+    const existing = groups.get(key);
+    if (existing) existing.count += 1;
+    else groups.set(key, { name: o.name, half: o.half, count: 1 });
+  }
+  return Array.from(groups.values())
+    .map((g) => {
+      const base =
+        g.half === "left"
+          ? `${g.name} (חצי א׳)`
+          : g.half === "right"
+            ? `${g.name} (חצי ב׳)`
+            : g.name;
+      return g.count > 1 ? `${base} ×${g.count}` : base;
+    })
+    .join(" · ");
 }
 
 const COLUMNS: Array<{
@@ -145,6 +177,12 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
           name: it.name as string,
           quantity: it.quantity as number,
           size: (it.size as string | null) ?? null,
+          options: Array.isArray(it.options)
+            ? (it.options as Array<{ name?: string; half?: string }>)
+                .filter((o) => typeof o?.name === "string")
+                .map((o) => ({ name: o.name as string, half: o.half as "left" | "right" | "full" | undefined }))
+            : [],
+          notes: (it.notes as string | null) ?? null,
         })),
       }));
       const pending = pendingAdvancesRef.current;
@@ -518,16 +556,29 @@ function Card({
         {order.method === "delivery" ? "משלוח" : "איסוף"}
       </div>
 
-      <ul className="text-xs space-y-0.5">
-        {order.items.slice(0, 3).map((it) => (
-          <li key={it.id} className="flex gap-1.5">
-            <span className="font-medium tnum">{it.quantity}×</span>
-            <span className="text-qf-ink2 truncate">
-              {it.name}
-              {it.size ? ` · ${it.size}` : ""}
-            </span>
-          </li>
-        ))}
+      <ul className="text-xs space-y-1">
+        {order.items.slice(0, 3).map((it) => {
+          const opts = renderItemOptions(it.options);
+          return (
+            <li key={it.id} className="leading-tight">
+              <div className="flex gap-1.5">
+                <span className="font-medium tnum shrink-0">{it.quantity}×</span>
+                <span className="text-qf-ink2">
+                  {it.name}
+                  {it.size ? ` · ${it.size}` : ""}
+                </span>
+              </div>
+              {opts && (
+                <div className="ps-5 text-[11px] text-qf-mute leading-snug">{opts}</div>
+              )}
+              {it.notes && (
+                <div className="ps-5 text-[11px] text-qf-tomato leading-snug">
+                  הערה: {it.notes}
+                </div>
+              )}
+            </li>
+          );
+        })}
         {order.items.length > 3 && (
           <li className="text-qf-mute">+ {order.items.length - 3} פריטים נוספים</li>
         )}
