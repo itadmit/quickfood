@@ -14,6 +14,7 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
       tenant: { select: { id: true, slug: true, name: true, themeId: true, logoLetter: true } },
       branch: { select: { name: true, address: true, phone: true } },
       deliveryAddress: true,
+      customer: { select: { firstName: true, lastName: true, phone: true } },
       courier: {
         select: {
           id: true,
@@ -64,6 +65,24 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
       tenant: order.tenant,
       branch: order.branch,
       delivery_address: order.deliveryAddress,
+      // Customer block: prefer the live Customer row when present
+      // (logged-in customer's account), otherwise fall back to the
+      // snapshot fields stored on the order at creation time —
+      // manual / guest orders never get a Customer row but always
+      // have customerPhoneSnap + customerFirstNameSnap.
+      customer: {
+        name:
+          [order.customer?.firstName, order.customer?.lastName]
+            .filter(Boolean)
+            .join(" ")
+            .trim() ||
+          [order.customerFirstNameSnap, order.customerLastNameSnap]
+            .filter(Boolean)
+            .join(" ")
+            .trim() ||
+          null,
+        phone: order.customer?.phone ?? order.customerPhoneSnap ?? null,
+      },
       courier: order.courier
         ? {
             id: order.courier.id,

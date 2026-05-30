@@ -78,6 +78,21 @@ const STATUS_LABEL: Record<string, string> = {
   refunded: "הוחזרה",
 };
 
+const PAYMENT_METHOD_LABEL: Record<string, string> = {
+  cash: "מזומן",
+  card: "כרטיס אשראי",
+  apple_pay: "Apple Pay",
+  google_pay: "Google Pay",
+  bit: "ביט",
+};
+
+const PAYMENT_STATUS_LABEL: Record<string, string> = {
+  pending: "ממתין לתשלום",
+  paid: "שולם",
+  failed: "נכשל",
+  refunded: "הוחזר",
+};
+
 export function OrderDrawer({
   orderId,
   onClose,
@@ -390,14 +405,8 @@ export function OrderDrawer({
                             <span className="truncate">{it.name}</span>
                           </div>
                           {it.size && <div className="text-xs text-qf-mute">{it.size}</div>}
-                          {Array.isArray(it.options) && (it.options as Array<{ name: string; half?: string }>).length > 0 && (
-                            <div className="text-xs text-qf-mute">
-                              {(it.options as Array<{ name: string; half?: string }>).map((o) =>
-                                o.half === "left" ? `${o.name} (חצי א׳)` :
-                                o.half === "right" ? `${o.name} (חצי ב׳)` :
-                                o.name
-                              ).join(" · ")}
-                            </div>
+                          {Array.isArray(it.options) && (it.options as unknown[]).length > 0 && (
+                            <div className="text-xs text-qf-mute">{renderOptions(it.options)}</div>
                           )}
                           {it.notes && (
                             <div className="text-xs text-qf-yolk mt-0.5">הערה: {it.notes}</div>
@@ -491,9 +500,11 @@ export function OrderDrawer({
                 )}
                 <SumRow bold label="סה״כ" value={formatPrice(order.total)} />
                 <div className="flex items-center justify-between text-xs text-qf-mute pt-1">
-                  <span>תשלום: {order.payment_method}</span>
+                  <span>
+                    תשלום: {PAYMENT_METHOD_LABEL[order.payment_method] ?? order.payment_method}
+                  </span>
                   <span className={cn(order.payment_status === "paid" ? "text-qf-green-deep" : "text-qf-mute")}>
-                    {order.payment_status}
+                    {PAYMENT_STATUS_LABEL[order.payment_status] ?? order.payment_status}
                   </span>
                 </div>
               </section>
@@ -634,20 +645,9 @@ function PrintReceipt({ order }: { order: OrderDetail }) {
             </span>
             <span>{formatPrice(it.total_price)}</span>
           </div>
-          {Array.isArray(it.options) &&
-            (it.options as Array<{ name: string; half?: string }>).length > 0 && (
-              <div className="qf-pr-muted">
-                {(it.options as Array<{ name: string; half?: string }>)
-                  .map((o) =>
-                    o.half === "left"
-                      ? `${o.name} (חצי א׳)`
-                      : o.half === "right"
-                        ? `${o.name} (חצי ב׳)`
-                        : o.name,
-                  )
-                  .join(" · ")}
-              </div>
-            )}
+          {Array.isArray(it.options) && (it.options as unknown[]).length > 0 && (
+            <div className="qf-pr-muted">{renderOptions(it.options)}</div>
+          )}
           {it.notes && <div className="qf-pr-muted">הערה: {it.notes}</div>}
         </div>
       ))}
@@ -718,6 +718,36 @@ function TimelineRow({ label, at, done }: { label: string; at: string; done?: bo
       <span className="text-qf-mute tnum">· {formatDateTime(at)}</span>
     </li>
   );
+}
+
+// Groups option list entries by (name, half) and renders as
+// "name (חצי א׳)" with " ×N" suffix when the same selection
+// appears more than once. Without this, an item that picked the
+// same modifier in two different groups (very common with
+// Wolt-imported menus that have redundant rubrics) shows up as
+// "עגבניה · עגבניה" and looks like a glitch to the merchant.
+function renderOptions(options: unknown): string {
+  if (!Array.isArray(options)) return "";
+  const list = options as Array<{ name?: string; half?: string }>;
+  const groups = new Map<string, { name: string; half?: string; count: number }>();
+  for (const o of list) {
+    if (!o?.name) continue;
+    const key = `${o.name}|${o.half ?? ""}`;
+    const existing = groups.get(key);
+    if (existing) existing.count += 1;
+    else groups.set(key, { name: o.name, half: o.half, count: 1 });
+  }
+  return Array.from(groups.values())
+    .map((g) => {
+      const base =
+        g.half === "left"
+          ? `${g.name} (חצי א׳)`
+          : g.half === "right"
+            ? `${g.name} (חצי ב׳)`
+            : g.name;
+      return g.count > 1 ? `${base} ×${g.count}` : base;
+    })
+    .join(" · ");
 }
 
 function SumRow({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
