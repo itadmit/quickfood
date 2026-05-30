@@ -552,7 +552,7 @@ function formatRelativeTime(iso: string): string {
   if (hours < 24) return `לפני ${hours} שע׳`;
   const days = Math.floor(hours / 24);
   if (days < 30) return `לפני ${days} ימים`;
-  return date.toLocaleDateString("he-IL");
+  return date.toLocaleDateString("he-IL", { timeZone: "Asia/Jerusalem" });
 }
 
 // Class names referenced above that we lean on existing in the global

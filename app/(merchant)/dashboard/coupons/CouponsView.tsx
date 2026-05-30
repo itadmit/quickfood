@@ -251,7 +251,7 @@ export function CouponsView({
                         ? ` · ${c.usageCount}/${c.usageLimit} שימושים`
                         : ` · ${c.usageCount} שימושים`}
                       {c.validUntil
-                        ? ` · תוקף עד ${new Date(c.validUntil).toLocaleDateString("he-IL")}`
+                        ? ` · תוקף עד ${new Date(c.validUntil).toLocaleDateString("he-IL", { timeZone: "Asia/Jerusalem" })}`
                         : ""}
                     </p>
                     {c.description && (

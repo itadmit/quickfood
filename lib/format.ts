@@ -20,12 +20,20 @@ export function fullName(
   return [first ?? "", last ?? ""].map((s) => s.trim()).filter(Boolean).join(" ");
 }
 
+// Pin every display to Israel time. Vercel functions run in UTC by
+// default, so an SSR-rendered date used to come out 2-3 hours off
+// the wall clock the merchant sees. Hard-coding Asia/Jerusalem also
+// covers customers whose phones are set to another TZ — the store's
+// "scheduled for 19:00" stays the local 19:00 the merchant promised.
+const TZ = "Asia/Jerusalem";
+
 export function formatDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   return d.toLocaleDateString("he-IL", {
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: TZ,
   });
 }
 
@@ -38,6 +46,7 @@ export function formatDateTime(date: Date | string): string {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
+    timeZone: TZ,
   });
 }
 
@@ -47,6 +56,7 @@ export function formatTime(date: Date | string): string {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
+    timeZone: TZ,
   });
 }
 

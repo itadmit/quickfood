@@ -104,6 +104,7 @@ function formatDateTime(iso: string): string {
     year: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Asia/Jerusalem",
   });
 }
 
