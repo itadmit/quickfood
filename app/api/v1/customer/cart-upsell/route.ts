@@ -67,16 +67,38 @@ export const GET = handler(async (req: Request) => {
       basePrice: true,
       images: true,
       imageUrl: true,
+      // Counts let the cart-side "+" button decide whether tapping it
+      // can add to cart directly (no options, no size choice required)
+      // or has to open the picker modal first. Without this, the
+      // upsell card always opened the modal even for a Coke.
+      _count: { select: { sizes: true } },
+      optionGroups: {
+        select: { id: true, required: true, templateSet: { select: { required: true } } },
+      },
     },
   });
 
   return apiJson({
     heading: chosen.length === 1 ? chosen[0].name : "מומלץ עבורך",
-    items: items.map((i) => ({
-      id: i.id,
-      name: i.name,
-      basePrice: i.basePrice,
-      imageUrl: i.images?.[0] ?? i.imageUrl ?? null,
-    })),
+    items: items.map((i) => {
+      const hasRequiredGroup = i.optionGroups.some(
+        (g) => (g.templateSet?.required ?? g.required) === true,
+      );
+      const hasMultipleSizes = i._count.sizes > 1;
+      const hasAnyGroup = i.optionGroups.length > 0;
+      return {
+        id: i.id,
+        name: i.name,
+        basePrice: i.basePrice,
+        imageUrl: i.images?.[0] ?? i.imageUrl ?? null,
+        // True when tapping "+" has to open the picker: required
+        // modifiers OR a size choice. Optional-only groups don't
+        // force the modal — the user can still add the bare item.
+        needsConfig: hasRequiredGroup || hasMultipleSizes,
+        // Flag the "you can still customize" case so the modal CTA
+        // can hint at the alternative path.
+        hasOptionalGroups: !hasRequiredGroup && hasAnyGroup,
+      };
+    }),
   });
 });
