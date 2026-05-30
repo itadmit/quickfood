@@ -60,9 +60,56 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "QuickFood - חנות אונליין שנולדה למזון",
+  // Title bakes in (a) Hebrew brand spellings users actually type into
+  // Google ("קוויקפוד", "קוויק פוד"), (b) the dominant intent phrase
+  // "אתר הזמנות למסעדה", and (c) the most-searched verticals so
+  // long-tail like "מערכת הזמנות לפיצרייה" hits an exact match.
+  title:
+    "QuickFood · קוויקפוד — אתר הזמנות למסעדה | חנות אונליין לפיצרייה, המבורגרייה, סושייה",
   description:
-    "פיצרייה, המבורגרייה, סושייה או שווארמייה - תוספות, גדלים, סוג בצק, רטבי-צד, הערות לטבח. תפריט בשפה של המטבח, דשבורד בקצב של משמרת. ₪299 לחודש + 0.5% להזמנה.",
+    "QuickFood (קוויקפוד) — פלטפורמת הזמנות למסעדות: אתר משלך עם דומיין משלך, תפריט מלא עם תוספות, גדלים וחצי-חצי, סליקת אשראי/Bit/Apple Pay, ניהול שליחים עם מעקב חי, יועץ AI בעברית, חיבור לקופה דרך API. הקבועים שלך מזמינים ישירות בלי לשלם 30% לוולט. ₪299 לחודש מחיר קבוע + 0.5% להזמנה. 7 ימים ניסיון בלי כרטיס.",
+  keywords: [
+    "אתר הזמנות למסעדה",
+    "מערכת הזמנות למסעדה",
+    "חנות אונליין למסעדה",
+    "מערכת הזמנות לפיצרייה",
+    "מערכת הזמנות להמבורגרייה",
+    "אפליקציה למסעדה",
+    "אתר משלך למסעדה",
+    "אתר הזמנות לצד וולט",
+    "פלטפורמת הזמנות אוכל",
+    "תפריט דיגיטלי למסעדה",
+    "אתר משלוחים למסעדה",
+    "אתר משלוחים לפיצרייה",
+    "מערכת ניהול מסעדה",
+    "QuickFood",
+    "קוויקפוד",
+    "קוויק פוד",
+    "Quick Food",
+    "restaurant online ordering platform Israel",
+    "restaurant ordering website",
+    "white label restaurant website",
+    "alternative to Wolt",
+  ],
+  alternates: {
+    canonical: "https://quickfood.co.il",
+    languages: { "he-IL": "https://quickfood.co.il" },
+  },
+  openGraph: {
+    type: "website",
+    locale: "he_IL",
+    url: "https://quickfood.co.il",
+    siteName: "QuickFood",
+    title: "QuickFood (קוויקפוד) — חנות אונליין למסעדה שלך",
+    description:
+      "פלטפורמה ישראלית להקמת אתר הזמנות למסעדה ב-5 דקות. תפריט עם תוספות וחצי-חצי, סליקה ב-Bit/אשראי/Apple Pay, ניהול שליחים, AI בעברית. ₪299 לחודש קבוע.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "QuickFood (קוויקפוד) — חנות אונליין למסעדה שלך",
+    description:
+      "אתר הזמנות למסעדה ב-5 דקות. תפריט מלא, סליקה לכל אמצעי תשלום, ניהול שליחים, AI בעברית. ₪299/חודש.",
+  },
 };
 
 export default function LandingPage() {
