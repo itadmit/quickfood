@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/db/client";
-import { generateOrderNumber } from "@/lib/format";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
 import { isItemVisibleNow } from "@/lib/menu-availability";
 import { sendTenantPush } from "@/lib/merchant/push";
@@ -282,7 +281,25 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     }
   }
 
-  const number = generateOrderNumber(tenant.slug);
+  // Atomic per-tenant sequence. `increment` lets Postgres do the
+  // increment under a row lock, so two simultaneous orders for the
+  // same tenant never collide on the (tenant_id, number) unique.
+  // Number string is the human-friendly "<PREFIX>-<N>" shape; the
+  // counter itself is plain Int on the tenant row.
+  const counterTenant = await prisma.tenant.update({
+    where: { id: tenant.id },
+    data: { nextOrderNumber: { increment: 1 } },
+    select: { nextOrderNumber: true, slug: true },
+  });
+  const orderSeq = counterTenant.nextOrderNumber - 1;
+  const numberPrefix =
+    counterTenant.slug
+      .split("-")
+      .map((s) => s[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 3) || "QF";
+  const number = `${numberPrefix}-${orderSeq}`;
 
   // Determine initial state — cash auto-confirms, card waits for callback
   const initialStatus = input.paymentMethod === "cash" ? "confirmed" : "pending";

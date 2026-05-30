@@ -274,6 +274,14 @@ model Tenant {
   cutleryPrice      Int     @default(0) @map("cutlery_price")
   cutleryFreeAbove  Int?    @map("cutlery_free_above")
 
+  // Monotonic per-tenant order counter. Used by orders-create to assign
+  // sequential numbers (M-1, M-2, M-3...) instead of the legacy random
+  // 4-digit suffix, which made the Kanban look like the numbers had no
+  // relation to each other (M-1771 next to M-2575). Backfilled at
+  // migration time to (existing order count + 1) so the merchant's
+  // first new order picks up from where their history left off.
+  nextOrderNumber Int @default(1) @map("next_order_number")
+
   // Stamped when the merchant clicks any choice on the first-login
   // welcome overlay (start-from-scratch, import-from-wolt, or "later").
   // NULL = overlay hasn't been seen yet → show it on next dashboard visit.
@@ -658,7 +666,7 @@ model Address {
 
 model Order {
   id         String    @id @default(uuid()) @db.Uuid
-  number     String    @unique
+  number     String
   tenantId   String    @map("tenant_id") @db.Uuid
   tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   branchId   String    @map("branch_id") @db.Uuid
@@ -722,6 +730,7 @@ model Order {
   pendingPayments PendingPayment[]
   paymentTxns     PaymentTransaction[]
 
+  @@unique([tenantId, number])
   @@index([tenantId, status, createdAt(sort: Desc)])
   @@index([customerId, createdAt(sort: Desc)])
   @@map("orders")
