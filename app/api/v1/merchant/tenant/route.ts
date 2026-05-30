@@ -9,10 +9,25 @@ export const dynamic = "force-dynamic";
 export const GET = handler(async () => {
   const session = await requireMerchant();
   if (!session.tenantId) return apiError("forbidden", "no tenant", 403);
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: session.tenantId },
+  const [tenant, primaryBranch] = await Promise.all([
+    prisma.tenant.findUnique({ where: { id: session.tenantId } }),
+    prisma.branch.findFirst({
+      where: { tenantId: session.tenantId, isPrimary: true },
+      select: { id: true, name: true, deliveryFee: true, serviceFee: true, minOrder: true },
+    }),
+  ]);
+  return apiJson({
+    tenant,
+    primary_branch: primaryBranch
+      ? {
+          id: primaryBranch.id,
+          name: primaryBranch.name,
+          delivery_fee: primaryBranch.deliveryFee,
+          service_fee: primaryBranch.serviceFee,
+          min_order: primaryBranch.minOrder,
+        }
+      : null,
   });
-  return apiJson({ tenant });
 });
 
 export const PATCH = handler(async (req: Request) => {

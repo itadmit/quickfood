@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { IcoClose, IcoPlus, IcoMinus, IcoCheck } from "@/components/shared/Icons";
+import { IcoClose, IcoPlus, IcoMinus, IcoCheck, IcoSearch } from "@/components/shared/Icons";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
@@ -126,11 +126,21 @@ export function ManualOrderModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [method, setMethod] = useState<"pickup" | "delivery">("pickup");
-  const [address, setAddress] = useState("");
+  // Structured address fields — composed into a single delivery_notes
+  // line on submit (the manual route stores it as a guest-style
+  // address string; there's no Customer row to attach a real Address to).
+  const [addrStreet, setAddrStreet] = useState("");
+  const [addrCity, setAddrCity] = useState("");
+  const [addrApartment, setAddrApartment] = useState("");
+  const [addrFloor, setAddrFloor] = useState("");
+  const [addrEntrance, setAddrEntrance] = useState("");
+  const [addrNotes, setAddrNotes] = useState("");
   const [payment, setPayment] = useState<"cash" | "card">("cash");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [deliveryFee, setDeliveryFee] = useState(0);
 
   useEffect(() => {
     fetch("/api/v1/merchant/menu/categories")
@@ -140,6 +150,9 @@ export function ManualOrderModal({ onClose }: { onClose: () => void }) {
       .then((r) => r.json())
       .then(async (d) => {
         const slug = d.tenant?.slug;
+        if (typeof d.primary_branch?.delivery_fee === "number") {
+          setDeliveryFee(d.primary_branch.delivery_fee);
+        }
         if (!slug) return;
         const menu = await fetch(`/api/v1/restaurants/${slug}/menu`).then((r) => r.json());
         setItems(
@@ -251,14 +264,39 @@ export function ManualOrderModal({ onClose }: { onClose: () => void }) {
 
   const lines = Object.values(cart);
   const subtotal = lines.reduce((acc, l) => acc + l.qty * l.unit, 0);
+  const effectiveDeliveryFee = method === "delivery" ? deliveryFee : 0;
+  const orderTotal = subtotal + effectiveDeliveryFee;
 
   // Merchant menu endpoint doesn't expose category_id on items so we
-  // can't filter by category yet. Keep the chip UI for future support.
-  const filtered = activeCat === "all" ? items : items;
+  // can't filter by category yet (chips reserved for future). Search
+  // term filters by item name — case-insensitive substring, trimmed.
+  const q = search.trim().toLowerCase();
+  const filtered = q
+    ? items.filter((it) => it.name.toLowerCase().includes(q))
+    : activeCat === "all"
+      ? items
+      : items;
+
+  function composedAddress(): string {
+    return [
+      addrStreet.trim(),
+      addrCity.trim(),
+      addrApartment.trim() && `דירה ${addrApartment.trim()}`,
+      addrFloor.trim() && `קומה ${addrFloor.trim()}`,
+      addrEntrance.trim() && `כניסה ${addrEntrance.trim()}`,
+      addrNotes.trim(),
+    ]
+      .filter(Boolean)
+      .join(", ");
+  }
 
   async function submit() {
     if (!name || !phone || lines.length === 0) {
       setError("חובה: שם, טלפון, ולפחות פריט אחד");
+      return;
+    }
+    if (method === "delivery" && (!addrStreet.trim() || !addrCity.trim())) {
+      setError("למשלוח צריך לפחות רחוב ועיר");
       return;
     }
     setBusy(true);
@@ -271,7 +309,7 @@ export function ManualOrderModal({ onClose }: { onClose: () => void }) {
           customer_phone: phone,
           customer_name: name,
           method,
-          address: method === "delivery" ? address : undefined,
+          address: method === "delivery" ? composedAddress() : undefined,
           payment_method: payment,
           notes: notes || undefined,
           lines: lines.map((l) => ({
@@ -321,21 +359,49 @@ export function ManualOrderModal({ onClose }: { onClose: () => void }) {
         <div className="flex-1 grid grid-cols-1 md:grid-cols-[1fr_320px] overflow-hidden relative">
           {/* Items picker */}
           <div className="overflow-y-auto p-4 border-e border-qf-line-soft">
-            <div className="flex gap-1.5 overflow-x-auto no-scrollbar mb-3">
-              <Chip active={activeCat === "all"} onClick={() => setActiveCat("all")}>
-                הכל
-              </Chip>
-              {categories.map((c) => (
-                <Chip
-                  key={c.id}
-                  active={activeCat === c.id}
-                  onClick={() => setActiveCat(c.id)}
+            <div className="relative mb-3">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="חיפוש מוצר..."
+                className="w-full ps-9 pe-3 py-2 rounded-lg border border-qf-line-dash text-sm bg-white focus:border-(--qf-primary) outline-none"
+              />
+              <span className="absolute inset-s-3 top-1/2 -translate-y-1/2 text-qf-mute">
+                <IcoSearch c="#7c8a82" s={14} />
+              </span>
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute inset-e-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md hover:bg-qf-line-soft grid place-items-center text-qf-mute"
+                  aria-label="נקה חיפוש"
                 >
-                  {c.name}
-                </Chip>
-              ))}
+                  <IcoClose s={12} />
+                </button>
+              )}
             </div>
+            {!search && (
+              <div className="flex gap-1.5 overflow-x-auto no-scrollbar mb-3">
+                <Chip active={activeCat === "all"} onClick={() => setActiveCat("all")}>
+                  הכל
+                </Chip>
+                {categories.map((c) => (
+                  <Chip
+                    key={c.id}
+                    active={activeCat === c.id}
+                    onClick={() => setActiveCat(c.id)}
+                  >
+                    {c.name}
+                  </Chip>
+                ))}
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2">
+              {filtered.length === 0 && search && (
+                <div className="col-span-2 text-center text-sm text-qf-mute py-6">
+                  לא נמצאו פריטים עבור &quot;{search}&quot;
+                </div>
+              )}
               {filtered.map((it) => (
                 <button
                   key={it.id}
@@ -385,12 +451,46 @@ export function ManualOrderModal({ onClose }: { onClose: () => void }) {
                 </Pill>
               </div>
               {method === "delivery" && (
-                <input
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="כתובת"
-                  className="w-full px-3 py-2 rounded-lg border border-qf-line-dash text-sm"
-                />
+                <div className="space-y-1.5 bg-white border border-qf-line-dash rounded-lg p-2">
+                  <input
+                    value={addrStreet}
+                    onChange={(e) => setAddrStreet(e.target.value)}
+                    placeholder="רחוב + מספר"
+                    className="w-full px-3 py-2 rounded-lg border border-qf-line-dash text-sm"
+                  />
+                  <input
+                    value={addrCity}
+                    onChange={(e) => setAddrCity(e.target.value)}
+                    placeholder="עיר"
+                    className="w-full px-3 py-2 rounded-lg border border-qf-line-dash text-sm"
+                  />
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <input
+                      value={addrApartment}
+                      onChange={(e) => setAddrApartment(e.target.value)}
+                      placeholder="דירה"
+                      className="px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
+                    />
+                    <input
+                      value={addrFloor}
+                      onChange={(e) => setAddrFloor(e.target.value)}
+                      placeholder="קומה"
+                      className="px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
+                    />
+                    <input
+                      value={addrEntrance}
+                      onChange={(e) => setAddrEntrance(e.target.value)}
+                      placeholder="כניסה"
+                      className="px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
+                    />
+                  </div>
+                  <input
+                    value={addrNotes}
+                    onChange={(e) => setAddrNotes(e.target.value)}
+                    placeholder="הוראות הגעה (קוד דלת, סימן בולט...)"
+                    className="w-full px-3 py-2 rounded-lg border border-qf-line-dash text-sm"
+                  />
+                </div>
               )}
               <div className="grid grid-cols-2 gap-1.5">
                 <Pill active={payment === "cash"} onClick={() => setPayment("cash")}>
@@ -479,9 +579,23 @@ export function ManualOrderModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <footer className="px-5 py-3 border-t border-qf-line-soft flex items-center justify-between gap-3">
-          <div className="text-sm">
-            <span className="text-qf-mute">סה״כ: </span>
-            <span className="font-bold tnum">{formatPrice(subtotal)}</span>
+          <div className="text-sm leading-tight">
+            {method === "delivery" && effectiveDeliveryFee > 0 ? (
+              <>
+                <div className="text-xs text-qf-mute">
+                  ביניים {formatPrice(subtotal)} · משלוח {formatPrice(effectiveDeliveryFee)}
+                </div>
+                <div>
+                  <span className="text-qf-mute">סה״כ: </span>
+                  <span className="font-bold tnum">{formatPrice(orderTotal)}</span>
+                </div>
+              </>
+            ) : (
+              <div>
+                <span className="text-qf-mute">סה״כ: </span>
+                <span className="font-bold tnum">{formatPrice(subtotal)}</span>
+              </div>
+            )}
           </div>
           <div className="flex gap-2">
             <button
