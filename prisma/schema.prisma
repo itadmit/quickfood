@@ -378,6 +378,7 @@ model Tenant {
   branches         Branch[]
   menuCategories   MenuCategory[]
   menuItems        MenuItem[]
+  bundleOffers     BundleOffer[]
   coupons          Coupon[]
   merchantUsers    MerchantUser[]
   subscription     Subscription?
@@ -533,11 +534,74 @@ model MenuItem {
   reviewItems  ReviewItem[]
   favoritedBy  Favorite[]
   notices      Notice[]
+  bundleTriggers BundleOfferTrigger[]
+  bundleAddons   BundleOfferAddon[]
 
   @@unique([tenantId, externalSource, externalId])
   @@index([tenantId, categoryId, position])
   @@index([tenantId, available])
   @@map("menu_items")
+}
+
+/// Suggested combos. When the cart contains at least one item from
+/// `triggers` AND none of the `addons`, the customer sees an offer
+/// "add X + Y for ₪Z" — accepting injects each addon as its own cart
+/// line + an Order.discount line equal to (sum of addon basePrice -
+/// bundlePrice) so the merchant sees the savings reflected explicitly
+/// on the receipt + the kitchen sees normal items.
+///
+/// Modelled as additive (the trigger stays in the cart at full price;
+/// the bundle just opens up an extra discounted attach) — that's the
+/// simpler mental model and lets one customer combine multiple
+/// bundles. Replacing bundles (remove the trigger, add the package)
+/// were considered but rejected: too easy to surprise a customer who
+/// already configured a specific item.
+model BundleOffer {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  imageUrl    String?  @map("image_url")
+  bundlePrice Int      @map("bundle_price")
+  active      Boolean  @default(true)
+  position    Int      @default(0)
+  // Optional time window — both NULL = always active when active=true.
+  validFrom   DateTime? @map("valid_from")
+  validUntil  DateTime? @map("valid_until")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  triggers BundleOfferTrigger[]
+  addons   BundleOfferAddon[]
+
+  @@index([tenantId, active])
+  @@map("bundle_offers")
+}
+
+/// One of the items whose presence in the cart fires the offer. Cart
+/// only needs to contain ONE of these (OR-logic) — most bundles are
+/// "if you have a pizza, add chips+drink for ₪15".
+model BundleOfferTrigger {
+  bundleId String      @map("bundle_id") @db.Uuid
+  bundle   BundleOffer @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  itemId   String      @map("item_id") @db.Uuid
+  item     MenuItem    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  @@id([bundleId, itemId])
+  @@map("bundle_offer_triggers")
+}
+
+/// Items that get added when the customer accepts the offer.
+/// `qty` lets the same item appear N times in one bundle (e.g.
+/// "2 cans of Coke" — qty=2 on a single addon row).
+model BundleOfferAddon {
+  bundleId String      @map("bundle_id") @db.Uuid
+  bundle   BundleOffer @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  itemId   String      @map("item_id") @db.Uuid
+  item     MenuItem    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  qty      Int         @default(1)
+  @@id([bundleId, itemId])
+  @@map("bundle_offer_addons")
 }
 
 /// Customer "heart" on a menu item — single global favorites list per
