@@ -47,6 +47,22 @@ export function ScrollToTop() {
     };
   }, []);
 
+  // iOS Safari (and Firefox to a lesser extent) keep the page in their
+  // back-forward cache after the user leaves. When they return, the DOM
+  // is restored verbatim — no remount, so the pathname effect below
+  // never fires — and the page reads at whatever scroll position they
+  // left it in. Most often the merchant lands in the middle of the
+  // menu list with no idea how they got there. `pageshow` with
+  // `persisted=true` is the documented signal for that restore.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    function onPageShow(e: PageTransitionEvent) {
+      if (e.persisted) jumpToTop();
+    }
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   // useLayoutEffect runs synchronously after the DOM is updated but BEFORE
   // the browser paints — so the user never sees the mid-scroll frame on the
   // new route. The earlier useEffect-based version sometimes flashed the
