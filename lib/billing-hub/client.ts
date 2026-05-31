@@ -140,14 +140,20 @@ export interface PaymentMethodSetup {
 }
 
 /**
- * Generate a PayPlus tokenization URL the customer visits to save a card.
+ * Generate a Grow tokenization URL the customer visits to save a card.
  * `context_type: 'subscription_setup'` means the resulting payment method
- * will be reusable for recurring subscription charges. `amount` is the gross
- * total in shekels (incl. VAT) — we pass the first-month total so PayPlus
- * shows ₪352.82 instead of a generic verification amount.
+ * will be reusable for recurring subscription charges. `amount` is the
+ * base figure in shekels (the hub adds VAT — for ₪299 base the customer
+ * sees ₪352.82 on Grow's form).
+ *
+ * `accept` is required by the hub (Grow regulatory): the merchant must
+ * have ticked an "I authorize storing my card for future charges"
+ * checkbox in our UI before we call this endpoint. The hub persists a
+ * timestamp as the audit trail.
  */
 export function createPaymentMethodSetup(input: {
   customer_id: string;
+  accept: true;
   context_type: "subscription_setup" | "topup";
   amount: number;
   success_url: string;

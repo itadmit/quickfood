@@ -18,9 +18,22 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export const POST = handler(async () => {
+export const POST = handler(async (req: Request) => {
   const session = await requireMerchant(["owner", "manager"]);
   if (!session.tenantId) return apiError("forbidden", "no tenant", 403);
+
+  // The merchant must have ticked the "I authorize storing my card"
+  // checkbox in the UI before this call. The hub also enforces it (returns
+  // 400 if accept!=true) but rejecting here gives a clean local error
+  // instead of relying on the remote response.
+  const body = (await req.json().catch(() => ({}))) as { accept?: boolean };
+  if (body.accept !== true) {
+    return apiError(
+      "consent_required",
+      "יש לאשר את שמירת פרטי האשראי לחיוב עתידי לפני שמתחילים",
+      400,
+    );
+  }
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
@@ -67,6 +80,7 @@ export const POST = handler(async () => {
     // unlike `/charges`, the hub treats `amount` as the net pre-VAT figure.)
     const setup = await createPaymentMethodSetup({
       customer_id: billingCustomerId,
+      accept: true,
       context_type: "subscription_setup",
       amount: 299,
       success_url: `${appUrl}/dashboard/billing?setup=complete`,

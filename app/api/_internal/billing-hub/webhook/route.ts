@@ -236,12 +236,10 @@ export const POST = handler(async (req: Request) => {
     case "customer.created":
     case "customer.updated":
     case "subscription.trial_will_end":
-    case "invoice.created":
-    case "invoice.failed":
     case "invoice.refunded":
     case "charge.failed":
+    case "charge.dunning_started":
     case "charge.recovered":
-    case "payment_method.expired":
       // Currently no-op — hub handles dunning. Wire owner emails here when ready.
       break;
 

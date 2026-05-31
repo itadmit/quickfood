@@ -27,6 +27,7 @@ export function BillingView({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [consent, setConsent] = useState(false);
 
   const hasPaymentMethod = !!tenant.paymentMethodId;
   const setupComplete = !!tenant.setupCompletedAt && hasPaymentMethod;
@@ -46,10 +47,18 @@ export function BillingView({
         : "awaiting";
 
   async function startSetup() {
+    if (!consent) {
+      setError("יש לאשר את שמירת פרטי האשראי לפני המעבר להזנת כרטיס");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/merchant/billing/setup", { method: "POST" });
+      const res = await fetch("/api/v1/merchant/billing/setup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accept: true }),
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(data?.error?.message ?? "פתיחת ההגדרה נכשלה");
@@ -114,12 +123,28 @@ export function BillingView({
         </div>
 
         {!setupComplete && (
-          <div className="mt-5 border-t border-qf-line-soft pt-4">
+          <div className="mt-5 border-t border-qf-line-soft pt-4 space-y-3">
+            <label className="flex items-start gap-2 text-xs text-qf-ink2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => {
+                  setConsent(e.target.checked);
+                  if (e.target.checked) setError(null);
+                }}
+                className="mt-0.5 w-4 h-4 accent-(--qf-primary)"
+              />
+              <span>
+                אני מאשר/ת לשמור את פרטי כרטיס האשראי שלי לשם חיוב חודשי
+                אוטומטי של ₪299 + מע״מ עבור QuickFood, ולשם חיוב עמלות ההזמנות.
+                ניתן לבטל בכל עת מתוך עמוד החיוב.
+              </span>
+            </label>
             <button
               type="button"
               onClick={startSetup}
-              disabled={busy}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
+              disabled={busy || !consent}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {busy
                 ? "פותח..."
@@ -127,11 +152,12 @@ export function BillingView({
                   ? "החלפת אמצעי תשלום"
                   : "השלמת תשלום ופתיחת מנוי (₪299 + מע״מ)"}
             </button>
-            <p className="text-xs text-qf-mute mt-2">
-              ייפתח דף תשלום מאובטח של QuickBilling. בסיום החיוב הראשון של ₪299 + מע״מ ישמר טוקן והמנוי מתחיל אוטומטית.
+            <p className="text-xs text-qf-mute">
+              ייפתח דף תשלום מאובטח של QuickBilling. בסיום החיוב הראשון של
+              ₪299 + מע״מ ישמר טוקן והמנוי מתחיל אוטומטית.
             </p>
             {error && (
-              <div className="mt-2 text-sm text-qf-tomato">{error}</div>
+              <div className="text-sm text-qf-tomato">{error}</div>
             )}
           </div>
         )}
