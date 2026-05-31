@@ -37,6 +37,10 @@ export function DomainForm({
   const [busy, setBusy] = useState<"add" | "verify" | "remove" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  // Surfaces the running auto-poll to the user — both as a soft "still
+  // checking" affordance and so they don't double-click verify while a
+  // background poll is in flight.
+  const [polling, setPolling] = useState(false);
 
   // Fetch the latest server state on mount so dns_records + misconfigured
   // (which the SSR `select` didn't include) come down on the first render.
@@ -52,6 +56,58 @@ export function DomainForm({
       cancelled = true;
     };
   }, []);
+
+  // Auto-poll the verify endpoint every 8 seconds while pending. DNS +
+  // SSL provisioning is asynchronous — we don't want the merchant to
+  // sit there clicking "Verify" every 30 seconds. The poll stops as
+  // soon as the row flips to "active", or if the merchant kicks off
+  // a manual action (add/remove). Caps at 60 attempts (~8 minutes) so
+  // a permanently misconfigured DNS doesn't burn the Vercel rate limit.
+  useEffect(() => {
+    if (state.status !== "pending") {
+      setPolling(false);
+      return;
+    }
+    if (busy) return;
+    let cancelled = false;
+    let attempts = 0;
+    setPolling(true);
+
+    const tick = async () => {
+      if (cancelled) return;
+      attempts++;
+      try {
+        const res = await fetch("/api/v1/merchant/domain/verify", { method: "POST" });
+        if (cancelled) return;
+        if (res.ok) {
+          const data = (await res.json()) as { ok?: boolean };
+          const fresh = await fetch("/api/v1/merchant/domain");
+          if (cancelled) return;
+          if (fresh.ok) setState((await fresh.json()) as DomainState);
+          if (data.ok) {
+            setToast("הדומיין פעיל — החנות שלך זמינה בכתובת החדשה");
+            setTimeout(() => setToast(null), 4000);
+            router.refresh();
+            return;
+          }
+        }
+      } catch {
+        // network blips happen; keep polling.
+      }
+      if (attempts < 60 && !cancelled) {
+        setTimeout(tick, 8000);
+      } else {
+        setPolling(false);
+      }
+    };
+
+    const initial = setTimeout(tick, 5000);
+    return () => {
+      cancelled = true;
+      clearTimeout(initial);
+      setPolling(false);
+    };
+  }, [state.status, busy, router]);
 
   async function addDomain() {
     const trimmed = input.trim();
@@ -155,6 +211,7 @@ export function DomainForm({
           remove={removeCurrent}
           busyVerify={busy === "verify"}
           busyRemove={busy === "remove"}
+          polling={polling}
           error={error}
         />
       )}
@@ -229,6 +286,7 @@ function ActiveDomainCard({
   remove,
   busyVerify,
   busyRemove,
+  polling,
   error,
 }: {
   state: DomainState;
@@ -236,6 +294,7 @@ function ActiveDomainCard({
   remove: () => void;
   busyVerify: boolean;
   busyRemove: boolean;
+  polling: boolean;
   error: string | null;
 }) {
   const isActive = state.status === "active";
@@ -252,22 +311,27 @@ function ActiveDomainCard({
             {state.domain}
           </div>
         </div>
-        <StatusPill status={state.status} />
+        <StatusPill status={state.status} polling={polling && !isActive} />
       </header>
 
-      {!isActive && records.length > 0 && (
+      {!isActive && (
         <div className="p-5 lg:p-7 border-b-2 border-black bg-[#fffbea]">
-          <h3 className="text-base font-black mb-2">הגדר את ה-DNS אצל ספק הדומיין</h3>
-          <p className="text-sm text-black/70 mb-4 leading-relaxed">
-            הוסף את הרשומות הבאות בלוח הבקרה של ספק הדומיין שלך (GoDaddy / Cloudflare /
-            Namecheap וכו׳). לאחר שהרשומות התפרסמו (יכול לקחת עד שעה), חזור הנה ולחץ
-            "בדוק חיבור".
-          </p>
-          <div className="space-y-2.5">
-            {records.map((r, i) => (
-              <DnsRow key={i} record={r} />
-            ))}
-          </div>
+          <PropagationBanner polling={polling} />
+          {records.length > 0 && (
+            <>
+              <h3 className="text-base font-black mb-2 mt-4">הגדר את ה-DNS אצל ספק הדומיין</h3>
+              <p className="text-sm text-black/70 mb-4 leading-relaxed">
+                הוסף את הרשומות הבאות בלוח הבקרה של ספק הדומיין שלך (GoDaddy / Cloudflare /
+                Namecheap וכו׳). לאחר שהרשומות התפרסמו, ניתן ללחוץ "בדוק חיבור"
+                — או פשוט לחכות, אנחנו בודקים אוטומטית כל כמה שניות.
+              </p>
+              <div className="space-y-2.5">
+                {records.map((r, i) => (
+                  <DnsRow key={i} record={r} />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -326,7 +390,7 @@ function ActiveDomainCard({
   );
 }
 
-function StatusPill({ status }: { status: Status }) {
+function StatusPill({ status, polling }: { status: Status; polling: boolean }) {
   if (status === "active") {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-black bg-[#d1f5d6] px-3 py-1 text-xs font-black text-[#0a5e2a]">
@@ -339,7 +403,7 @@ function StatusPill({ status }: { status: Status }) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-black bg-[#fff3cf] px-3 py-1 text-xs font-black text-[#7a5a00]">
         <span className="w-2 h-2 rounded-full bg-[#d9a000] animate-pulse" />
-        ממתין ל-DNS
+        {polling ? "בודק..." : "ממתין ל-DNS"}
       </span>
     );
   }
@@ -348,6 +412,35 @@ function StatusPill({ status }: { status: Status }) {
       <span className="w-2 h-2 rounded-full bg-[#c2421f]" />
       שגיאה
     </span>
+  );
+}
+
+function PropagationBanner({ polling }: { polling: boolean }) {
+  return (
+    <div className="rounded-xl border-2 border-black bg-white p-3.5 flex items-start gap-3">
+      <div className="flex-shrink-0 mt-0.5">
+        {polling ? (
+          <span
+            aria-hidden
+            className="block w-5 h-5 rounded-full border-[3px] border-black/15 border-t-black animate-spin"
+          />
+        ) : (
+          <span
+            aria-hidden
+            className="block w-5 h-5 rounded-full border-2 border-black bg-[#fff3cf]"
+          />
+        )}
+      </div>
+      <div className="text-sm leading-relaxed">
+        <div className="font-black mb-0.5">בודקים את ההגדרות שלך</div>
+        <div className="text-black/70">
+          תהליך החיבור כולל אימות DNS והנפקת תעודת SSL אוטומטית ע״י Vercel. זה
+          לרוב לוקח <strong>בין דקה ל-30 דקות</strong>, ובמקרים נדירים עד שעה
+          (תלוי כמה זמן לוקח לספק הדומיין שלך לעדכן את הרשומות בעולם). אנחנו
+          בודקים אוטומטית כל כמה שניות — אפשר להישאר בדף או לחזור מאוחר יותר.
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -8,6 +8,21 @@
  * request looks identical to a slug-based visit — no other code needs to
  * change.
  *
+ * Important: this routes on ANY tenant that has a `customDomain` set,
+ * regardless of `customDomainStatus`. The "active" flag is administrative
+ * — it tells the merchant we've confirmed end-to-end via Vercel. But the
+ * domain is added to the Vercel project as soon as the merchant types it,
+ * so visits can arrive (and need to route) before they click "verify".
+ * If we filter on `active` here, visits during the pending window hit
+ * `not-found` — which Vercel's edge CDN will then cache for ~1h, leaving
+ * the merchant staring at a 404 long after we flipped them to active.
+ *
+ * Cache busting: every rewrite response carries `Cache-Control:
+ * private, no-store` and `Vary: Host` so the edge cache never holds
+ * onto a snapshot of a custom-domain response. Storefront pages are
+ * `force-dynamic` anyway, so we don't lose perf — we just lose the
+ * 404-staleness footgun.
+ *
  * Notes for Next.js 16:
  *   - This file lives at the project root and is named `proxy.ts`
  *     (formerly `middleware.ts`; the convention was renamed in 16).
@@ -37,11 +52,11 @@ function isPlatformHost(host: string): boolean {
 }
 
 // In-process memo: cache hostname → tenantSlug | null for a short window so
-// every navigation on a custom domain doesn't hit Postgres. Entries are
-// invalidated by TTL; explicit invalidation happens when the merchant
-// removes a domain (writes set status, next lookup misses cache on TTL).
+// every navigation on a custom domain doesn't hit Postgres. TTL is short
+// because a freshly-added domain needs to start routing within seconds —
+// merchants are watching the spinner.
 type CacheEntry = { slug: string | null; expiresAt: number };
-const CACHE_TTL_MS = 60_000;
+const CACHE_TTL_MS = 10_000;
 const hostCache = new Map<string, CacheEntry>();
 
 async function resolveTenantSlug(host: string): Promise<string | null> {
@@ -49,13 +64,28 @@ async function resolveTenantSlug(host: string): Promise<string | null> {
   const now = Date.now();
   if (cached && cached.expiresAt > now) return cached.slug;
 
+  // Route on `customDomain` alone — `customDomainStatus` is administrative.
+  // The status check used to live here, but it caused 404s during the
+  // pending window (between add+verify) that Vercel's edge CDN then cached.
   const tenant = await prisma.tenant.findFirst({
-    where: { customDomain: host, customDomainStatus: "active" },
+    where: { customDomain: host },
     select: { slug: true },
   });
   const slug = tenant?.slug ?? null;
   hostCache.set(host, { slug, expiresAt: now + CACHE_TTL_MS });
   return slug;
+}
+
+// Stamp every custom-domain response with headers that tell the CDN
+// "don't cache this, and if you do, key by Host." A stale 404 cached at
+// the edge during the pending window is the #1 thing that breaks the
+// "click connect → see the site" demo.
+function applyNoCacheHeaders(res: NextResponse): NextResponse {
+  res.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
+  res.headers.set("CDN-Cache-Control", "no-store");
+  res.headers.set("Vercel-CDN-Cache-Control", "no-store");
+  res.headers.set("Vary", "Host");
+  return res;
 }
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
@@ -68,9 +98,11 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   const slug = await resolveTenantSlug(host);
   if (!slug) {
-    // Unknown host → fall through to the default app. The merchant either
-    // pointed their DNS here before adding the domain, or removed it.
-    return NextResponse.next();
+    // Custom host pointing at us but no matching tenant. Fall through to
+    // the default app — but with no-cache headers so this state doesn't
+    // get baked into the CDN. (Otherwise a visit before the merchant
+    // adds the domain will poison the edge for an hour.)
+    return applyNoCacheHeaders(NextResponse.next());
   }
 
   const url = request.nextUrl.clone();
@@ -86,7 +118,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
         : `/s/${slug}${path}`;
 
   url.pathname = target;
-  return NextResponse.rewrite(url);
+  return applyNoCacheHeaders(NextResponse.rewrite(url));
 }
 
 export const config = {

@@ -18,6 +18,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+// Never let Vercel's CDN cache a 404 response — a single 404 on a custom
+// domain during the brief window after the merchant points their DNS but
+// before the proxy starts routing them would otherwise stick at the edge
+// for the better part of an hour, making the storefront look broken.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default function NotFound() {
   return (
     <div className={`${styles.root} ${rubik.variable}`}>
