@@ -88,7 +88,7 @@ function applyNoCacheHeaders(res: NextResponse): NextResponse {
   return res;
 }
 
-export async function proxy(request: NextRequest): Promise<NextResponse> {
+export async function middleware(request: NextRequest): Promise<NextResponse> {
   const host =
     request.headers.get("x-forwarded-host")?.toLowerCase().split(":")[0] ||
     request.headers.get("host")?.toLowerCase().split(":")[0] ||
