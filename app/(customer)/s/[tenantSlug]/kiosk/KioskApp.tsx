@@ -38,6 +38,7 @@ export function KioskApp({
   featuredBadgeLabel,
   categories,
   upsellCategoryIds,
+  checkoutUpsellCategoryIds,
   items,
   itemDetails,
 }: {
@@ -51,6 +52,7 @@ export function KioskApp({
   featuredBadgeLabel: string | null;
   categories: KioskCategory[];
   upsellCategoryIds: string[];
+  checkoutUpsellCategoryIds: string[];
   items: KioskItem[];
   itemDetails: Record<string, MenuItemForCustomer>;
 }) {
@@ -59,6 +61,14 @@ export function KioskApp({
   const [state, setState] = useState<"start" | "mode" | "browse" | "placing" | "thanks">("start");
   const [diningMode, setDiningMode] = useState<"dinein" | "takeaway" | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
+  // "Anything to add before you go?" interstitial — one-shot per
+  // checkout attempt. Goes true when the merchant presses "להזמין"
+  // and there are upsell candidates; the user either picks something
+  // and stays in the cart, or skips and the real placeOrder fires.
+  const [checkoutPromptOpen, setCheckoutPromptOpen] = useState(false);
+  // Latched once per cart cycle so the same prompt doesn't pop a
+  // second time after the user skipped it. Reset on `reset()`.
+  const [checkoutPromptShown, setCheckoutPromptShown] = useState(false);
   const [activeCat, setActiveCat] = useState<string>(categories[0]?.id ?? "");
   const [pickItemId, setPickItemId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -100,6 +110,8 @@ export function KioskApp({
     setState("start");
     setDiningMode(null);
     setCartOpen(false);
+    setCheckoutPromptOpen(false);
+    setCheckoutPromptShown(false);
     setPlacedOrderNumber(null);
     setPlacingError(null);
   }, [clear, categories]);
@@ -139,30 +151,38 @@ export function KioskApp({
     return list;
   }, [items, query, activeCat]);
 
-  // Upsell suggestions inside the cart sheet — drinks / desserts from
-  // the categories the merchant flagged as upsellInCart. Excludes
-  // items already in the cart so we don't pitch a drink the customer
-  // just picked, and picks the cheapest 4 so the screen stays tidy.
-  // The per-item needsConfig is computed from the preloaded item data
-  // so we can route the "+" tap straight to addToCart when there's
-  // nothing to configure.
-  const upsellSuggestions = useMemo(() => {
-    if (upsellCategoryIds.length === 0) return [] as Array<KioskItem & { needsConfig: boolean }>;
-    const inCart = new Set(lines.map((l) => l.itemId));
-    const upsellSet = new Set(upsellCategoryIds);
-    return items
-      .filter((it) => upsellSet.has(it.categoryId) && !inCart.has(it.id))
-      .map((it) => {
-        const detail = itemDetails[it.id];
-        const hasMultipleSizes = (detail?.sizes?.length ?? 0) > 1;
-        const hasRequiredGroup = (detail?.optionGroups ?? []).some(
-          (g) => g.required === true,
-        );
-        return { ...it, needsConfig: hasMultipleSizes || hasRequiredGroup };
-      })
-      .sort((a, b) => a.basePrice - b.basePrice)
-      .slice(0, 4);
-  }, [items, itemDetails, lines, upsellCategoryIds]);
+  // Helper — same logic, parameterized over the merchant's category
+  // flag (upsellInCart for the in-cart strip, upsellBeforeCheckout
+  // for the dessert prompt). Filters out anything already in the cart
+  // and caps to 4 so the screen stays tidy.
+  const buildUpsell = useCallback(
+    (categoryIds: string[]): Array<KioskItem & { needsConfig: boolean }> => {
+      if (categoryIds.length === 0) return [];
+      const inCart = new Set(lines.map((l) => l.itemId));
+      const upsellSet = new Set(categoryIds);
+      return items
+        .filter((it) => upsellSet.has(it.categoryId) && !inCart.has(it.id))
+        .map((it) => {
+          const detail = itemDetails[it.id];
+          const hasMultipleSizes = (detail?.sizes?.length ?? 0) > 1;
+          const hasRequiredGroup = (detail?.optionGroups ?? []).some(
+            (g) => g.required === true,
+          );
+          return { ...it, needsConfig: hasMultipleSizes || hasRequiredGroup };
+        })
+        .sort((a, b) => a.basePrice - b.basePrice)
+        .slice(0, 4);
+    },
+    [items, itemDetails, lines],
+  );
+  const upsellSuggestions = useMemo(
+    () => buildUpsell(upsellCategoryIds),
+    [buildUpsell, upsellCategoryIds],
+  );
+  const checkoutUpsellSuggestions = useMemo(
+    () => buildUpsell(checkoutUpsellCategoryIds),
+    [buildUpsell, checkoutUpsellCategoryIds],
+  );
 
   function quickAddUpsell(it: KioskItem & { needsConfig: boolean }) {
     if (it.needsConfig) {
@@ -186,9 +206,29 @@ export function KioskApp({
     });
   }
 
+  function startCheckout() {
+    // One-shot "anything else?" interstitial. Fires only when the
+    // merchant flagged at least one category as upsellBeforeCheckout
+    // and there are still un-cart'd items in those categories. After
+    // the customer skips or adds once, we don't bother them again on
+    // the next "להזמין" click (until they reset).
+    if (
+      !checkoutPromptShown &&
+      checkoutUpsellSuggestions.length > 0 &&
+      lines.length > 0 &&
+      state !== "placing"
+    ) {
+      setCheckoutPromptShown(true);
+      setCheckoutPromptOpen(true);
+      return;
+    }
+    void placeOrder();
+  }
+
   async function placeOrder() {
     setState("placing");
     setPlacingError(null);
+    setCheckoutPromptOpen(false);
     try {
       // Kiosk orders all run on method=pickup (no delivery). The
       // dinein/takeaway split is surfaced to the kitchen via the
@@ -658,7 +698,7 @@ export function KioskApp({
               )}
               <button
                 type="button"
-                onClick={placeOrder}
+                onClick={startCheckout}
                 disabled={lines.length === 0 || state === "placing"}
                 className="w-full py-6 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-2xl font-black disabled:opacity-50 shadow-lg active:scale-[0.98] transition"
               >
@@ -670,6 +710,67 @@ export function KioskApp({
                 className="w-full py-3 rounded-2xl border-2 border-qf-line-dash text-qf-ink text-lg font-medium"
               >
                 המשך לקנות
+              </button>
+            </footer>
+          </div>
+        </div>
+      )}
+
+      {/* "Anything to add before you go?" interstitial — last-chance
+          upsell after the customer hits "place order". Stays a sheet
+          like the cart for visual continuity. */}
+      {checkoutPromptOpen && checkoutUpsellSuggestions.length > 0 && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/55 backdrop-blur-sm">
+          <div className="w-full max-w-2xl bg-white rounded-t-3xl shadow-2xl flex flex-col max-h-[85vh] animate-qf-sheet-in">
+            <header className="px-6 py-5 border-b border-qf-line-soft text-center">
+              <h2 className="text-2xl font-black text-qf-ink">
+                להוסיף משהו לפני שמסיימים?
+              </h2>
+              <p className="text-sm text-qf-mute mt-1">המנות הכי טעימות שלנו לסגירת הארוחה</p>
+            </header>
+            <div className="flex-1 overflow-y-auto p-5">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {checkoutUpsellSuggestions.map((it) => (
+                  <button
+                    key={it.id}
+                    type="button"
+                    onClick={() => quickAddUpsell(it)}
+                    className="bg-white border-2 border-qf-line-dash rounded-2xl overflow-hidden text-right hover:border-(--qf-primary) transition active:scale-[0.98]"
+                  >
+                    <div className="aspect-square bg-qf-line-soft relative">
+                      <MenuItemImage
+                        src={it.imageUrl ?? undefined}
+                        alt={it.name}
+                        businessType={businessType}
+                        size={200}
+                        rounded="none"
+                        fill
+                      />
+                    </div>
+                    <div className="p-3">
+                      <div className="text-base font-bold leading-tight line-clamp-2 min-h-[2.4em]">
+                        {it.name}
+                      </div>
+                      <div className="text-sm text-qf-mute tnum mt-1">{formatPrice(it.basePrice)}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <footer className="px-6 py-4 border-t border-qf-line-soft grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => void placeOrder()}
+                className="py-4 rounded-2xl border-2 border-qf-line-dash text-qf-ink text-lg font-bold"
+              >
+                לא תודה, להזמין
+              </button>
+              <button
+                type="button"
+                onClick={() => setCheckoutPromptOpen(false)}
+                className="py-4 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-lg font-bold"
+              >
+                חזרה לעגלה
               </button>
             </footer>
           </div>

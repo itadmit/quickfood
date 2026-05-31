@@ -469,6 +469,14 @@ model MenuCategory {
   // name-based heuristic at read time.
   upsellInCart Boolean @default(false) @map("upsell_in_cart")
 
+  // When true, items from this category trigger the "want to add a
+  // dessert?" interstitial right before the customer hits "place
+  // order" (kiosk + storefront checkout). Distinct from upsellInCart
+  // — that one shows continuously inside the open cart sheet; this
+  // one is a one-shot last-chance prompt the customer either accepts
+  // or skips through.
+  upsellBeforeCheckout Boolean @default(false) @map("upsell_before_checkout")
+
   // Provenance for bulk imports (Wolt / CSV / future POS sync). Lets a
   // re-import find the matching local row and update it instead of
   // creating a duplicate. NULL on either side = manually created.

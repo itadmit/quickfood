@@ -50,7 +50,8 @@ export default async function KioskPage({
       orderBy: { position: "asc" },
       // upsellInCart powers the "Anything else?" carousel inside the
       // kiosk cart sheet — same flag the storefront uses.
-      select: { id: true, name: true, upsellInCart: true },
+      // upsellBeforeCheckout powers the dessert-prompt interstitial.
+      select: { id: true, name: true, upsellInCart: true, upsellBeforeCheckout: true },
     }),
     prisma.menuItem.findMany({
       where: { tenantId: tenant.id, available: true },
@@ -95,6 +96,7 @@ export default async function KioskPage({
       featuredBadgeLabel={tenant.featuredBadgeLabel}
       categories={categories.map(({ id, name }) => ({ id, name }))}
       upsellCategoryIds={categories.filter((c) => c.upsellInCart).map((c) => c.id)}
+      checkoutUpsellCategoryIds={categories.filter((c) => c.upsellBeforeCheckout).map((c) => c.id)}
       items={items.map((it) => ({
         id: it.id,
         name: it.name,

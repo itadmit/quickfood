@@ -23,6 +23,7 @@ export interface EditableCategory {
   color: string | null;
   position: number;
   upsellInCart?: boolean;
+  upsellBeforeCheckout?: boolean;
 }
 
 interface Props {
@@ -38,6 +39,7 @@ type Draft = {
   color: CategoryColorKey;
   position: number;
   upsellInCart: boolean;
+  upsellBeforeCheckout: boolean;
 };
 
 const EMPTY_DRAFT: Draft = {
@@ -46,6 +48,7 @@ const EMPTY_DRAFT: Draft = {
   color: DEFAULT_COLOR,
   position: 0,
   upsellInCart: false,
+  upsellBeforeCheckout: false,
 };
 
 export function CategoryEditorModal({ open, onClose, categories }: Props) {
@@ -81,6 +84,7 @@ export function CategoryEditorModal({ open, onClose, categories }: Props) {
       color: style.colorKey,
       position: c.position,
       upsellInCart: c.upsellInCart ?? false,
+      upsellBeforeCheckout: c.upsellBeforeCheckout ?? false,
     });
   }
 
@@ -104,6 +108,7 @@ export function CategoryEditorModal({ open, onClose, categories }: Props) {
         icon: editing.icon,
         color: editing.color,
         upsell_in_cart: editing.upsellInCart,
+        upsell_before_checkout: editing.upsellBeforeCheckout,
         ...(isCreate && { position: editing.position }),
       }),
     });
@@ -349,13 +354,29 @@ function DraftForm({
           <div className="min-w-0">
             <div className="text-sm font-medium">הצע קטגוריה זו בעגלת הקניות (אפסייל)</div>
             <div className="text-xs text-qf-mute mt-0.5 leading-relaxed">
-              הפריטים הפופולריים מהקטגוריה יופיעו כקרוסלה "מומלץ עבורך" בעגלת הלקוח. מתאים בעיקר למשקאות, תוספות וקינוחים.
+              הפריטים הפופולריים מהקטגוריה יופיעו כקרוסלה &quot;מומלץ עבורך&quot; בעגלת הלקוח. מתאים בעיקר למשקאות, תוספות וקינוחים.
             </div>
           </div>
           <input
             type="checkbox"
             checked={draft.upsellInCart}
             onChange={(e) => onChange({ ...draft, upsellInCart: e.target.checked })}
+            className="w-5 h-5 mt-0.5 shrink-0 accent-(--qf-primary)"
+          />
+        </label>
+
+        {/* Pre-checkout interstitial toggle */}
+        <label className="flex items-start justify-between gap-3 py-2 cursor-pointer">
+          <div className="min-w-0">
+            <div className="text-sm font-medium">תזכורת לפני סגירת ההזמנה</div>
+            <div className="text-xs text-qf-mute mt-0.5 leading-relaxed">
+              כשהלקוח לוחץ &quot;להזמין&quot; (בקיוסק ובחנות), יפתח חלון &quot;להוסיף עוד משהו?&quot; עם פריטים מהקטגוריה הזו. מתאים במיוחד לקינוחים — הלקוח כבר התחייב, ההמלצה האחרונה הזו ממירה.
+            </div>
+          </div>
+          <input
+            type="checkbox"
+            checked={draft.upsellBeforeCheckout}
+            onChange={(e) => onChange({ ...draft, upsellBeforeCheckout: e.target.checked })}
             className="w-5 h-5 mt-0.5 shrink-0 accent-(--qf-primary)"
           />
         </label>

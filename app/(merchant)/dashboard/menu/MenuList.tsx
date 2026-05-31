@@ -25,6 +25,7 @@ interface Category {
   color: string | null;
   position: number;
   upsellInCart?: boolean;
+  upsellBeforeCheckout?: boolean;
 }
 interface Item {
   id: string;
@@ -352,6 +353,7 @@ export function MenuList({
           color: c.color,
           position: c.position,
           upsellInCart: c.upsellInCart,
+          upsellBeforeCheckout: c.upsellBeforeCheckout,
         }))}
       />
 

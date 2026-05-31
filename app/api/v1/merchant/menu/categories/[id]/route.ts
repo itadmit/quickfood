@@ -13,6 +13,7 @@ const CategoryPatch = z.object({
   position: z.number().int().min(0).optional(),
   active: z.boolean().optional(),
   upsell_in_cart: z.boolean().optional(),
+  upsell_before_checkout: z.boolean().optional(),
 });
 
 async function loadOwn(id: string, tenantId: string) {
@@ -38,6 +39,9 @@ export const PATCH = handler(
         ...(body.position !== undefined && { position: body.position }),
         ...(body.active !== undefined && { active: body.active }),
         ...(body.upsell_in_cart !== undefined && { upsellInCart: body.upsell_in_cart }),
+        ...(body.upsell_before_checkout !== undefined && {
+          upsellBeforeCheckout: body.upsell_before_checkout,
+        }),
       },
     });
     return apiJson({
@@ -49,6 +53,7 @@ export const PATCH = handler(
         position: cat.position,
         active: cat.active,
         upsell_in_cart: cat.upsellInCart,
+        upsell_before_checkout: cat.upsellBeforeCheckout,
       },
     });
   },
