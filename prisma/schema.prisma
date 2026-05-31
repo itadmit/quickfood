@@ -20,6 +20,13 @@ enum TenantStatus {
   trial
 }
 
+enum CustomDomainStatus {
+  none
+  pending
+  active
+  error
+}
+
 enum ThemeId {
   fresh
   basil
@@ -248,6 +255,12 @@ model Tenant {
   planId               String?        @map("plan_id") @db.Uuid
   plan                 Plan?          @relation(fields: [planId], references: [id])
   customDomain         String?        @unique @map("custom_domain")
+  customDomainStatus   CustomDomainStatus @default(none) @map("custom_domain_status")
+  customDomainVerification Json?      @map("custom_domain_verification")
+  customDomainConfig   Json?          @map("custom_domain_config")
+  customDomainAddedAt  DateTime?      @map("custom_domain_added_at")
+  customDomainVerifiedAt DateTime?    @map("custom_domain_verified_at")
+  customDomainLastError String?       @map("custom_domain_last_error")
   acceptsCash          Boolean        @default(true) @map("accepts_cash")
   /// Which payment method should be pre-selected for the customer at
   /// checkout. NULL means "fall back to the platform default order"
