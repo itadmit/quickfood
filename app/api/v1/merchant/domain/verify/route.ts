@@ -20,6 +20,7 @@ import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import {
   getDomainConfig,
+  isVercelConfigured,
   verifyDomain,
   VercelApiError,
   type VercelDomainConfig,
@@ -32,6 +33,14 @@ export const dynamic = "force-dynamic";
 export const POST = handler(async () => {
   const session = await requireMerchant(["owner", "manager"]);
   if (!session.tenantId) return apiError("forbidden", "no tenant", 403);
+
+  if (!isVercelConfigured()) {
+    return apiError(
+      "not_configured",
+      "פיצ׳ר הדומיין המותאם עדיין לא הופעל אצלך. פנה אלינו לתמיכה.",
+      503,
+    );
+  }
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },

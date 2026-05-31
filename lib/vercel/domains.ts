@@ -56,6 +56,17 @@ export class VercelApiError extends Error {
   }
 }
 
+export class VercelNotConfiguredError extends Error {
+  constructor() {
+    super("VERCEL_TOKEN missing");
+    this.name = "VercelNotConfiguredError";
+  }
+}
+
+export function isVercelConfigured(): boolean {
+  return Boolean(process.env.VERCEL_TOKEN);
+}
+
 // Fallbacks resolved from `.vercel/project.json` at the time this file was
 // authored. Env vars (VERCEL_PROJECT_ID, VERCEL_TEAM_ID) override.
 const DEFAULT_PROJECT_ID = "prj_gyjQFTiFdDKDVgVnd0K8w35rgCZF";
@@ -65,7 +76,7 @@ function readEnv(): { token: string; projectId: string; teamId?: string } {
   const token = process.env.VERCEL_TOKEN;
   const projectId = process.env.VERCEL_PROJECT_ID || DEFAULT_PROJECT_ID;
   const teamId = process.env.VERCEL_TEAM_ID || DEFAULT_TEAM_ID;
-  if (!token) throw new Error("VERCEL_TOKEN missing");
+  if (!token) throw new VercelNotConfiguredError();
   return { token, projectId, teamId };
 }
 

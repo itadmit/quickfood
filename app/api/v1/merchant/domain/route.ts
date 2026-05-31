@@ -21,12 +21,17 @@ import { prisma } from "@/lib/db/client";
 import {
   addDomain,
   getDomainConfig,
+  isVercelConfigured,
   normalizeHostname,
   removeDomain,
   VercelApiError,
+  VercelNotConfiguredError,
   type VercelAddDomainResponse,
   type VercelDomainConfig,
 } from "@/lib/vercel/domains";
+
+const NOT_CONFIGURED_MSG =
+  "פיצ׳ר הדומיין המותאם עדיין לא הופעל אצלך. פנה אלינו לתמיכה.";
 import { CustomDomainStatus, Prisma } from "@prisma/client";
 
 export const runtime = "nodejs";
@@ -126,6 +131,10 @@ export const POST = handler(async (req: Request) => {
   const session = await requireMerchant(["owner", "manager"]);
   if (!session.tenantId) return apiError("forbidden", "no tenant", 403);
 
+  if (!isVercelConfigured()) {
+    return apiError("not_configured", NOT_CONFIGURED_MSG, 503);
+  }
+
   const { domain: raw } = PostSchema.parse(await req.json());
   const hostname = normalizeHostname(raw);
   if (!hostname) {
@@ -216,11 +225,13 @@ export const DELETE = handler(async () => {
   });
   if (!t) return apiError("not_found", "tenant not found", 404);
 
-  if (t.customDomain) {
+  if (t.customDomain && isVercelConfigured()) {
     try {
       await removeDomain(t.customDomain);
     } catch (err) {
-      if (!(err instanceof VercelApiError) || err.status !== 404) {
+      if (err instanceof VercelNotConfiguredError) {
+        // platform never had a token — nothing to clean up upstream
+      } else if (!(err instanceof VercelApiError) || err.status !== 404) {
         console.warn("[domain] remove failed", t.customDomain, err);
       }
     }
