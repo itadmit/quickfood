@@ -70,6 +70,14 @@ export const POST = handler(async () => {
     } catch (err) {
       verifiedOk = false;
       if (err instanceof VercelApiError) {
+        if (err.status === 401 || err.status === 403) {
+          console.error("[domain/verify] Vercel auth failed", err.message);
+          return apiError(
+            "vercel_auth_failed",
+            "בעיה בחיבור לשרת ה-DNS. צוות התמיכה כבר קיבל התראה.",
+            503,
+          );
+        }
         lastError = err.message || "אימות נכשל";
       } else {
         throw err;
@@ -82,6 +90,14 @@ export const POST = handler(async () => {
     config = await getDomainConfig(hostname);
   } catch (err) {
     if (err instanceof VercelApiError) {
+      if (err.status === 401 || err.status === 403) {
+        console.error("[domain/verify] Vercel auth failed", err.message);
+        return apiError(
+          "vercel_auth_failed",
+          "בעיה בחיבור לשרת ה-DNS. צוות התמיכה כבר קיבל התראה.",
+          503,
+        );
+      }
       lastError = lastError ?? err.message;
     } else {
       throw err;

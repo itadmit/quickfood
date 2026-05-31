@@ -169,11 +169,29 @@ export const POST = handler(async (req: Request) => {
     addRes = await addDomain(hostname);
   } catch (err) {
     if (err instanceof VercelApiError) {
+      if (err.status === 401 || err.status === 403) {
+        // Token is set but Vercel rejected it. Surface this clearly so the
+        // operator (us, not the merchant) knows to rotate the token in
+        // env. Logged loudly so it shows up in dashboards.
+        console.error("[domain] Vercel auth failed (token invalid?)", err.message);
+        return apiError(
+          "vercel_auth_failed",
+          "בעיה בחיבור לשרת ה-DNS. צוות התמיכה כבר קיבל התראה.",
+          503,
+        );
+      }
       if (err.status === 409) {
         return apiError("conflict", err.message || "הדומיין כבר תפוס ב-Vercel", 409, "domain");
       }
       if (err.status === 400) {
         return apiError("validation_error", err.message || "דומיין לא תקין", 422, "domain");
+      }
+      if (err.status === 402) {
+        return apiError(
+          "billing_required",
+          "חשבון ה-Vercel דורש עדכון אמצעי תשלום.",
+          503,
+        );
       }
     }
     throw err;
