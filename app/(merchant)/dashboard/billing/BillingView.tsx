@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
+
+const POLL_INTERVAL_MS = 2000;
+const POLL_TIMEOUT_MS = 60_000;
 
 interface TenantBilling {
   name: string;
@@ -28,9 +31,72 @@ export function BillingView({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
+  const [polling, setPolling] = useState(false);
+  const [pollTimedOut, setPollTimedOut] = useState(false);
+  const pollStartRef = useRef<number>(0);
 
   const hasPaymentMethod = !!tenant.paymentMethodId;
   const setupComplete = !!tenant.setupCompletedAt && hasPaymentMethod;
+
+  // After the merchant returns from Grow, the hub fires our webhook out of
+  // band. Until it lands the local Tenant row still shows the old "טרם
+  // הוגדר" state. Poll every 2s for up to 60s and refresh the page when the
+  // status flips, so the merchant doesn't have to refresh manually.
+  useEffect(() => {
+    if (!justReturnedFromSetup || setupComplete) return;
+    let cancelled = false;
+    pollStartRef.current = Date.now();
+    setPolling(true);
+    setPollTimedOut(false);
+
+    async function tick() {
+      try {
+        const res = await fetch("/api/v1/merchant/billing/status", {
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const data = (await res.json().catch(() => null)) as
+          | { setup_complete?: boolean; payment_method?: boolean }
+          | null;
+        if (data?.setup_complete || data?.payment_method) {
+          if (!cancelled) {
+            setPolling(false);
+            router.refresh();
+          }
+          return true;
+        }
+      } catch {
+        /* network blip — keep polling */
+      }
+      return false;
+    }
+
+    const timer = setInterval(async () => {
+      if (cancelled) return;
+      const done = await tick();
+      if (done) {
+        clearInterval(timer);
+        return;
+      }
+      if (Date.now() - pollStartRef.current > POLL_TIMEOUT_MS) {
+        clearInterval(timer);
+        if (!cancelled) {
+          setPolling(false);
+          setPollTimedOut(true);
+        }
+      }
+    }, POLL_INTERVAL_MS);
+
+    // Fire the first attempt immediately so the spinner isn't a no-op for 2s.
+    tick().then((done) => {
+      if (done) clearInterval(timer);
+    });
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [justReturnedFromSetup, setupComplete, router]);
   const trialEnd = tenant.trialEndsAt ? new Date(tenant.trialEndsAt) : null;
   const trialDaysLeft = trialEnd
     ? Math.max(0, Math.ceil((trialEnd.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
@@ -85,10 +151,21 @@ export function BillingView({
           המנוי הופעל בהצלחה. תודה!
         </div>
       )}
-      {justReturnedFromSetup && status !== "active" && (
-        <div className="bg-qf-yolk-soft border border-qf-yolk/40 rounded-2xl px-4 py-3 text-sm">
-          חזרת מהגדרת התשלום. אנחנו ממתינים לאישור הסופי מהבנק — זה עשוי לקחת
-          כמה דקות. רענן את הדף בעוד דקה.
+      {justReturnedFromSetup && status !== "active" && polling && (
+        <div className="bg-qf-yolk-soft border border-qf-yolk/40 rounded-2xl px-4 py-3 text-sm flex items-center gap-3">
+          <span
+            aria-hidden
+            className="inline-block w-4 h-4 rounded-full border-2 border-qf-ink2 border-t-transparent animate-spin"
+          />
+          <span>
+            התשלום אושר, מסיימים להפעיל את המנוי...
+          </span>
+        </div>
+      )}
+      {justReturnedFromSetup && status !== "active" && pollTimedOut && (
+        <div className="bg-qf-tomato-soft border border-qf-tomato/40 rounded-2xl px-4 py-3 text-sm text-qf-tomato">
+          התשלום בוצע אך טרם קיבלנו את האישור הסופי. אנחנו מתעדים שזה קרה
+          וננסה שוב באופן אוטומטי. נסה לרענן בעוד דקה.
         </div>
       )}
       {justReturnedFromFailure && (

@@ -24,7 +24,7 @@ interface Job {
 const JOBS: Job[] = [
   {
     scheduleId: "quickfood-webhooks-process",
-    path: "/api/_internal/webhooks/process",
+    path: "/api/internal/webhooks/process",
     cron: "* * * * *",
     description: "Process pending outbound webhook deliveries (POS / printers / Slack).",
   },

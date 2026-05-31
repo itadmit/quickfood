@@ -54,7 +54,7 @@ export async function dispatchWebhook(args: DispatchArgs): Promise<void> {
 
 /**
  * Worker entry — process pending/retryable deliveries.
- * Called from /api/_internal/webhooks/process (Vercel Cron).
+ * Called from /api/internal/webhooks/process (QStash schedule).
  */
 export async function processPending(limit = 50): Promise<{ processed: number }> {
   const due = await prisma.webhookDelivery.findMany({

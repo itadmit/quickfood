@@ -31,7 +31,7 @@ export async function scheduleReviewReminder(orderId: string): Promise<void> {
   if (reviewsChannel === "off") return;
 
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  const url = `${base.replace(/\/$/, "")}/api/_internal/jobs/send-review-reminder`;
+  const url = `${base.replace(/\/$/, "")}/api/internal/jobs/send-review-reminder`;
 
   // QStash dedupes by Upstash-Deduplication-Id within retention; pair it with
   // the order id so a re-fired "delivered" event doesn't double-schedule.
