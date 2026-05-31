@@ -14,6 +14,7 @@ const TABS = [
   { href: "/dashboard/settings/domain", label: "דומיין מותאם" },
   { href: "/dashboard/settings/reviews", label: "ביקורות" },
   { href: "/dashboard/settings/whatsapp", label: "WhatsApp" },
+  { href: "/dashboard/settings/sales", label: "מכירות ואפסיילים" },
   { href: "/dashboard/settings/kiosk", label: "קיוסק" },
   { href: "/dashboard/settings/webhooks", label: "Webhooks (POS / מדפסות)" },
   { href: "/dashboard/settings/api-keys", label: "מפתחות API" },
