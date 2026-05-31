@@ -129,6 +129,56 @@ export function ItemDetail({
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
+  // Favorite state. Asked once on mount via the existing
+  // /api/v1/customer/favorites GET (filtered to this tenant). Guest
+  // sessions return 401 and we silently leave the heart unfilled — the
+  // click handler shows the login hint then.
+  const [favorited, setFavorited] = useState(false);
+  const [favoriteFlash, setFavoriteFlash] = useState<"saved" | "auth" | null>(null);
+  const [favoriteBusy, setFavoriteBusy] = useState(false);
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetch(`/api/v1/customer/favorites?tenant_slug=${encodeURIComponent(tenantSlug)}`, {
+      signal: ctrl.signal,
+    })
+      .then(async (r) => {
+        if (!r.ok) return null;
+        return r.json() as Promise<{ favorites: Array<{ item_id: string }> }>;
+      })
+      .then((data) => {
+        if (!data) return;
+        setFavorited(data.favorites.some((f) => f.item_id === item.id));
+      })
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [tenantSlug, item.id]);
+
+  async function toggleFavorite() {
+    if (favoriteBusy) return;
+    setFavoriteBusy(true);
+    const prev = favorited;
+    setFavorited(!prev);
+    try {
+      const res = await fetch(`/api/v1/customer/favorites/${item.id}`, { method: "POST" });
+      if (res.status === 401) {
+        setFavorited(prev);
+        setFavoriteFlash("auth");
+        window.setTimeout(() => setFavoriteFlash(null), 2200);
+        return;
+      }
+      if (!res.ok) {
+        setFavorited(prev);
+        return;
+      }
+      const data = (await res.json()) as { favorited?: boolean };
+      if (typeof data.favorited === "boolean") setFavorited(data.favorited);
+      setFavoriteFlash("saved");
+      window.setTimeout(() => setFavoriteFlash(null), 1400);
+    } finally {
+      setFavoriteBusy(false);
+    }
+  }
+
   const heroImage = item.images?.[0];
   const canZoom = !!heroImage;
 
@@ -439,11 +489,30 @@ export function ItemDetail({
         )}
         <button
           type="button"
-          className="absolute top-4 inset-e-4 w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-md grid place-items-center"
-          aria-label="הוסף למועדפים"
+          onClick={toggleFavorite}
+          disabled={favoriteBusy}
+          className="absolute top-4 inset-e-4 w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-md grid place-items-center transition active:scale-95"
+          aria-label={favorited ? "הסר ממועדפים" : "הוסף למועדפים"}
+          aria-pressed={favorited}
         >
-          <IcoHeart s={18} />
+          <IcoHeart
+            s={18}
+            c={favorited ? "#dc2626" : "#11231a"}
+            fill={favorited ? "#dc2626" : "none"}
+          />
         </button>
+        {favoriteFlash && (
+          <div
+            className="absolute top-16 inset-e-4 z-10 px-3 py-1.5 rounded-lg bg-black/85 text-white text-xs font-medium shadow-lg animate-qf-slide-up"
+            role="status"
+          >
+            {favoriteFlash === "saved"
+              ? favorited
+                ? "נשמר במועדפים"
+                : "הוסר מהמועדפים"
+              : "צריך להתחבר כדי לסמן מועדפים"}
+          </div>
+        )}
         {/* Sentinel for sticky-bar toggle */}
         <div ref={heroSentinelRef} className="absolute bottom-12 inset-x-0 h-px" />
       </div>
