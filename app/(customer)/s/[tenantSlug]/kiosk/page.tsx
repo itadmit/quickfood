@@ -43,6 +43,7 @@ export default async function KioskPage({
       tenantSlug={tenant.slug}
       tenantName={tenant.name}
       logoUrl={tenant.logoUrl ?? null}
+      coverImage={tenant.coverImage ?? null}
       welcomeText={tenant.kioskWelcomeText}
       idleSeconds={tenant.kioskIdleSeconds}
       categories={categories}
