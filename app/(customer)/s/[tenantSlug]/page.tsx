@@ -142,7 +142,9 @@ export default async function HomePage({
     }),
     prisma.menuItem.findMany({
       where: { tenantId: tenant.id, available: true },
-      orderBy: [{ categoryId: "asc" }, { position: "asc" }],
+      // Featured items bubble within their category so the merchandising
+      // signal shows up where the eye lands first.
+      orderBy: [{ categoryId: "asc" }, { featured: "desc" }, { position: "asc" }],
     }),
     prisma.notice.findMany({
       where: { tenantId: tenant.id, active: true },
@@ -252,7 +254,9 @@ export default async function HomePage({
         artType: i.artType,
         images: i.images,
         tags: i.tags,
+        featured: i.featured,
       }))}
+      featuredBadgeLabel={tenant.featuredBadgeLabel}
       notices={notices.map((n) => ({
         id: n.id,
         scope: n.scope,

@@ -75,8 +75,9 @@ export function ItemDetail({
   addSource?: CartLineSource;
 }) {
   const router = useRouter();
-  const { add, updateLine } = useCart();
+  const { add, updateLine, tenant } = useCart();
   const isEditing = !!editLine;
+  const upsellSizeNudge = tenant.upsellSizeNudge !== false;
 
   const defaultSize = item.sizes.find((s) => s.isDefault) ?? item.sizes[0] ?? null;
   const [sizeId, setSizeId] = useState<string | null>(editLine?.sizeId ?? defaultSize?.id ?? null);
@@ -539,21 +540,61 @@ export function ItemDetail({
       </section>
 
       {/* Sizes (treated as required-single group) */}
-      {item.sizes.length > 0 && (
-        <Section title="גודל" required={item.sizes.length > 1}>
-          {item.sizes.map((s) => (
-            <Row
-              key={s.id}
-              active={sizeId === s.id}
-              onClick={() => setSizeId(s.id)}
-              label={s.name}
-              priceLabel={formatPrice(item.basePrice + s.priceDelta)}
-              priceTone="absolute"
-              radio
-            />
-          ))}
-        </Section>
-      )}
+      {item.sizes.length > 0 && (() => {
+        // Size-upgrade nudge: when there's a larger size than what the
+        // user has currently selected, show a bold banner above the
+        // size picker so the upsell can't be missed. "Larger" = higher
+        // priceDelta. Tap → select that size, banner hides. Opt-out
+        // per-tenant via Settings → Sales (upsell_size_nudge=false).
+        const currentSize = item.sizes.find((s) => s.id === sizeId);
+        const sorted = [...item.sizes].sort((a, b) => b.priceDelta - a.priceDelta);
+        const largest = sorted[0];
+        const upgradeTo =
+          upsellSizeNudge &&
+          item.sizes.length > 1 &&
+          currentSize &&
+          largest &&
+          largest.id !== currentSize.id &&
+          largest.priceDelta > currentSize.priceDelta
+            ? largest
+            : null;
+        const upgradeDelta = upgradeTo
+          ? upgradeTo.priceDelta - (currentSize?.priceDelta ?? 0)
+          : 0;
+        return (
+          <>
+            {upgradeTo && upgradeDelta > 0 && (
+              <button
+                type="button"
+                onClick={() => setSizeId(upgradeTo.id)}
+                className="mt-2 mx-5 lg:mx-0 block w-[calc(100%-2.5rem)] lg:w-full rounded-2xl border-2 border-(--qf-primary) bg-(--qf-soft) px-4 py-3 text-start hover:bg-(--qf-primary)/15 transition active:scale-[0.99]"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-black text-(--qf-deep)">
+                    שדרגו ל-{upgradeTo.name} ב-+{formatPrice(upgradeDelta)} בלבד
+                  </span>
+                  <span className="text-xs bg-(--qf-primary) text-white px-2 py-1 rounded-full font-bold whitespace-nowrap">
+                    שדרג
+                  </span>
+                </div>
+              </button>
+            )}
+            <Section title="גודל" required={item.sizes.length > 1}>
+              {item.sizes.map((s) => (
+                <Row
+                  key={s.id}
+                  active={sizeId === s.id}
+                  onClick={() => setSizeId(s.id)}
+                  label={s.name}
+                  priceLabel={formatPrice(item.basePrice + s.priceDelta)}
+                  priceTone="absolute"
+                  radio
+                />
+              ))}
+            </Section>
+          </>
+        );
+      })()}
 
       {/* Option groups */}
       {item.optionGroups.map((g) => {

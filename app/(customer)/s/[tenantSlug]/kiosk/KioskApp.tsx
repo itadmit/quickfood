@@ -24,6 +24,7 @@ interface KioskItem {
   imageUrl: string | null;
   tags: string[];
   categoryId: string;
+  featured: boolean;
 }
 
 export function KioskApp({
@@ -34,6 +35,7 @@ export function KioskApp({
   welcomeText,
   idleSeconds,
   businessType: businessTypeProp,
+  featuredBadgeLabel,
   categories,
   upsellCategoryIds,
   items,
@@ -46,11 +48,13 @@ export function KioskApp({
   welcomeText: string | null;
   idleSeconds: number;
   businessType: string;
+  featuredBadgeLabel: string | null;
   categories: KioskCategory[];
   upsellCategoryIds: string[];
   items: KioskItem[];
   itemDetails: Record<string, MenuItemForCustomer>;
 }) {
+  const featuredLabel = featuredBadgeLabel?.trim() || "מומלץ של השף";
   const { lines, subtotal, clear, updateQuantity, remove, add, tenant } = useCart();
   const [state, setState] = useState<"start" | "mode" | "browse" | "placing" | "thanks">("start");
   const [diningMode, setDiningMode] = useState<"dinein" | "takeaway" | null>(null);
@@ -463,8 +467,16 @@ export function KioskApp({
                   key={it.id}
                   type="button"
                   onClick={() => setPickItemId(it.id)}
-                  className="bg-white border-2 border-qf-line-dash rounded-2xl overflow-hidden text-right hover:border-(--qf-primary) transition active:scale-[0.98]"
+                  className="bg-white border-2 border-qf-line-dash rounded-2xl overflow-hidden text-right hover:border-(--qf-primary) transition active:scale-[0.98] relative"
                 >
+                  {it.featured && (
+                    <span
+                      className="absolute top-0 start-0 z-10 bg-(--qf-primary) text-white text-xs font-black px-3 py-1.5 rounded-se-2xl rounded-es-2xl shadow"
+                      aria-label={featuredLabel}
+                    >
+                      {featuredLabel}
+                    </span>
+                  )}
                   <div className="aspect-square bg-qf-line-soft relative">
                     <MenuItemImage
                       src={it.imageUrl ?? undefined}

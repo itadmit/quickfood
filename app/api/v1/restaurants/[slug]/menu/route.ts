@@ -29,7 +29,9 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ slug: st
     }),
     prisma.menuItem.findMany({
       where: { tenantId: tenant.id, available: true },
-      orderBy: { position: "asc" },
+      // Featured items bubble to the top of each category so the
+      // merchandising signal ("our pick") actually reaches the eye.
+      orderBy: [{ featured: "desc" }, { position: "asc" }],
       include: {
         sizes: { orderBy: { position: "asc" } },
         optionGroups: {
@@ -44,6 +46,9 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ slug: st
   ]);
 
   return apiJson({
+    tenant: {
+      featured_badge_label: tenant.featuredBadgeLabel,
+    },
     categories: categories.map((c) => ({
       id: c.id,
       name: c.name,
@@ -67,6 +72,7 @@ function serializeItem(i: ItemWithExtras) {
     prep_minutes: i.prepMinutes,
     tags: i.tags,
     available: i.available,
+    featured: i.featured,
     sku: i.sku,
     sizes: i.sizes.map((s) => ({
       id: s.id,

@@ -62,6 +62,9 @@ interface TenantInfo {
   // True when the merchant exposes /s/<slug>/reviews to customers.
   // Drives whether the "ביקורות" tab/nav-link is visible.
   reviewsPublic?: boolean;
+  // Show the "upgrade to XL for ₪Y" banner inside ItemDetail when
+  // a larger size exists. Toggled from Settings → Sales (default on).
+  upsellSizeNudge?: boolean;
 }
 
 interface BranchInfo {

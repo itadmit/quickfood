@@ -65,6 +65,7 @@ export default async function KioskPage({
         imageUrl: true,
         tags: true,
         categoryId: true,
+        featured: true,
       },
     }),
   ]);
@@ -91,6 +92,7 @@ export default async function KioskPage({
       welcomeText={tenant.kioskWelcomeText}
       idleSeconds={tenant.kioskIdleSeconds}
       businessType={tenant.businessType}
+      featuredBadgeLabel={tenant.featuredBadgeLabel}
       categories={categories.map(({ id, name }) => ({ id, name }))}
       upsellCategoryIds={categories.filter((c) => c.upsellInCart).map((c) => c.id)}
       items={items.map((it) => ({
@@ -102,6 +104,7 @@ export default async function KioskPage({
         imageUrl: it.images?.[0] ?? it.imageUrl ?? null,
         tags: it.tags,
         categoryId: it.categoryId,
+        featured: it.featured,
       }))}
       itemDetails={itemDataMap}
     />

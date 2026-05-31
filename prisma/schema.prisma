@@ -295,6 +295,18 @@ model Tenant {
   // first new order picks up from where their history left off.
   nextOrderNumber Int @default(1) @map("next_order_number")
 
+  // Sales / merchandising knobs.
+  //
+  // featuredBadgeLabel: text shown on the corner of menu cards that
+  // have MenuItem.featured=true. Lets each venue speak in their own
+  // voice — "מומלץ של השף" / "הכי נמכר" / "חדש" / etc. NULL falls
+  // back to the platform default in the UI.
+  featuredBadgeLabel String? @map("featured_badge_label") @db.VarChar(40)
+  // upsellSizeNudge: shows a prominent "upgrade to XL for ₪10" banner
+  // in the item picker when a larger size exists. Off → sizes render
+  // as a plain selector with no extra prompt.
+  upsellSizeNudge Boolean @default(true) @map("upsell_size_nudge")
+
   // Self-service kiosk mode (paid add-on). Toggled per-tenant from
   // the super-admin UI for now; the merchant-side settings page (welcome
   // text, idle reset) is hidden until this flag is on. The kiosk URL is

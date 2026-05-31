@@ -17,6 +17,7 @@ export interface MenuListItem {
   artType: string | null;
   images?: string[];
   tags: string[];
+  featured?: boolean;
 }
 
 export type NoticeScope = "store" | "category" | "item";
@@ -125,6 +126,9 @@ interface Props {
   noticesByCategory?: Map<string, NoticeRow[]>;
   noticesByItem?: Map<string, NoticeRow[]>;
   onItemClick?: (id: string) => void;
+  /** Label rendered on the corner of cards whose item.featured===true.
+   *  Empty / undefined → the platform default ("מומלץ של השף"). */
+  featuredBadgeLabel?: string | null;
 }
 
 export function MenuList({
@@ -142,7 +146,9 @@ export function MenuList({
   noticesByCategory,
   noticesByItem,
   onItemClick,
+  featuredBadgeLabel,
 }: Props) {
+  const featuredLabel = featuredBadgeLabel?.trim() || "מומלץ של השף";
   const availableTags = useMemo(() => {
     const usage = new Set<string>();
     for (const it of items) for (const t of it.tags) usage.add(t);
@@ -327,8 +333,16 @@ export function MenuList({
                       href={`?item=${item.id}`}
                       scroll={false}
                       onClick={() => onItemClick?.(item.id)}
-                      className="relative bg-white rounded-2xl border border-qf-line p-3 pe-3.5 flex gap-3 transition active:scale-[0.99] active:bg-qf-line-soft hover:border-(--qf-primary)/40 hover:shadow-sm"
+                      className="relative bg-white rounded-2xl border border-qf-line p-3 pe-3.5 flex gap-3 transition active:scale-[0.99] active:bg-qf-line-soft hover:border-(--qf-primary)/40 hover:shadow-sm overflow-hidden"
                     >
+                      {item.featured && (
+                        <span
+                          className="absolute top-0 start-0 bg-(--qf-primary) text-white text-[10px] font-black px-2 py-1 rounded-se-xl rounded-es-xl shadow-sm z-10"
+                          aria-label={featuredLabel}
+                        >
+                          {featuredLabel}
+                        </span>
+                      )}
                       <div className="relative w-24 h-24 shrink-0">
                         <div className="w-full h-full rounded-xl overflow-hidden">
                           <MenuItemImage

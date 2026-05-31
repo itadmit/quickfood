@@ -87,6 +87,9 @@ interface Props {
   hasCustomerSession?: boolean;
   pendingReviewOrderId?: string | null;
   aiAdvisorEnabled?: boolean;
+  /** Tenant-configurable label for the "featured" badge on menu cards.
+   *  NULL → MenuList's default ("מומלץ של השף"). */
+  featuredBadgeLabel?: string | null;
 }
 
 export function CustomerHome({
@@ -104,6 +107,7 @@ export function CustomerHome({
   hasCustomerSession = false,
   pendingReviewOrderId = null,
   aiAdvisorEnabled = false,
+  featuredBadgeLabel = null,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -566,6 +570,7 @@ export function CustomerHome({
               noticesByCategory={noticesByCategory}
               noticesByItem={noticesByItem}
               scrollOffset={120}
+              featuredBadgeLabel={featuredBadgeLabel}
               onItemClick={onItemOpen}
             />
           </div>
