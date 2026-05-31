@@ -32,7 +32,16 @@
  */
 
 import { NextResponse, type NextRequest } from "next/server";
-import { prisma } from "@/lib/db/client";
+import { neon } from "@neondatabase/serverless";
+
+// Vercel runs middleware in the Edge runtime regardless of the Next.js
+// "Node runtime default" docs for proxy.ts, and Prisma Client refuses to
+// load there. Neon's HTTP driver is a thin fetch-based SQL client that
+// runs everywhere — perfect for the one short SELECT we need on every
+// custom-domain request. Falls back to DIRECT_URL when the pooled URL is
+// the pgbouncer one (Neon HTTP doesn't work through a pgbouncer port).
+const NEON_URL = process.env.NEON_HTTP_URL || process.env.DIRECT_URL || process.env.DATABASE_URL || "";
+const sql = NEON_URL ? neon(NEON_URL) : null;
 
 const PLATFORM_HOST = "quickfood.co.il";
 
@@ -64,14 +73,15 @@ async function resolveTenantSlug(host: string): Promise<string | null> {
   const now = Date.now();
   if (cached && cached.expiresAt > now) return cached.slug;
 
+  if (!sql) return null;
+
   // Route on `customDomain` alone — `customDomainStatus` is administrative.
   // The status check used to live here, but it caused 404s during the
   // pending window (between add+verify) that Vercel's edge CDN then cached.
-  const tenant = await prisma.tenant.findFirst({
-    where: { customDomain: host },
-    select: { slug: true },
-  });
-  const slug = tenant?.slug ?? null;
+  const rows = (await sql`
+    SELECT slug FROM tenants WHERE custom_domain = ${host} LIMIT 1
+  `) as Array<{ slug: string }>;
+  const slug = rows[0]?.slug ?? null;
   hostCache.set(host, { slug, expiresAt: now + CACHE_TTL_MS });
   return slug;
 }
