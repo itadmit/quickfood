@@ -106,36 +106,26 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
   if (isPlatformHost(host)) return NextResponse.next();
 
-  let slug: string | null = null;
-  let lookupErr: string | null = null;
-  try {
-    slug = await resolveTenantSlug(host);
-  } catch (e) {
-    lookupErr = e instanceof Error ? `${e.name}:${e.message}` : String(e);
-  }
+  const slug = await resolveTenantSlug(host);
 
   if (!slug) {
     // Custom host pointing at us but no matching tenant. Fall through to
     // the default app — but with no-cache headers so this state doesn't
     // get baked into the CDN. (Otherwise a visit before the merchant
     // adds the domain will poison the edge for an hour.)
-    const fallthrough = applyNoCacheHeaders(NextResponse.next());
-    // Surface what the proxy saw so we can debug routing without logs.
-    // Remove once the custom-domain flow is proven on prod.
-    fallthrough.headers.set("x-qf-proxy-host", host);
-    fallthrough.headers.set("x-qf-proxy-slug", "null");
-    if (lookupErr) fallthrough.headers.set("x-qf-proxy-error", lookupErr.slice(0, 200));
-    return fallthrough;
+    return applyNoCacheHeaders(NextResponse.next());
   }
 
   const url = request.nextUrl.clone();
   const path = url.pathname;
 
-  // If the visitor went straight to "/" on their custom domain, send them
-  // to the menu. Otherwise prefix the existing path with /s/{slug}.
+  // Prefix the visitor's path with /s/{slug} so it lines up with the
+  // storefront's route group. The storefront index lives at
+  // /s/[tenantSlug]/page.tsx, so a visit to "/" rewrites to "/s/{slug}"
+  // (NOT "/s/{slug}/menu" — that path doesn't exist and would 404).
   const target =
     path === "/" || path === ""
-      ? `/s/${slug}/menu`
+      ? `/s/${slug}`
       : path.startsWith(`/s/${slug}`)
         ? path // already rewritten — passthrough
         : `/s/${slug}${path}`;
