@@ -27,6 +27,23 @@ interface KioskItem {
   featured: boolean;
 }
 
+interface BundleSuggestion {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  bundle_price: number;
+  full_price: number;
+  savings: number;
+  addons: Array<{
+    item_id: string;
+    name: string;
+    base_price: number;
+    image_url: string | null;
+    qty: number;
+  }>;
+}
+
 export function KioskApp({
   tenantSlug,
   tenantName,
@@ -74,6 +91,8 @@ export function KioskApp({
   const [query, setQuery] = useState("");
   const [placedOrderNumber, setPlacedOrderNumber] = useState<string | null>(null);
   const [placingError, setPlacingError] = useState<string | null>(null);
+  const [bundleSuggestions, setBundleSuggestions] = useState<BundleSuggestion[]>([]);
+  const [acceptedBundleIds, setAcceptedBundleIds] = useState<Set<string>>(new Set());
 
   // The customer layout below us renders top nav, FAB, preview bar etc.
   // Cover the lot with a full-viewport overlay so the kiosk reads as a
@@ -112,9 +131,58 @@ export function KioskApp({
     setCartOpen(false);
     setCheckoutPromptOpen(false);
     setCheckoutPromptShown(false);
+    setAcceptedBundleIds(new Set());
+    setBundleSuggestions([]);
     setPlacedOrderNumber(null);
     setPlacingError(null);
   }, [clear, categories]);
+
+  // Fetch matching bundle offers whenever the cart changes. The
+  // server filters to bundles whose triggers are present + addons
+  // not already in cart, so we only render what would actually fire.
+  useEffect(() => {
+    if (lines.length === 0) {
+      setBundleSuggestions([]);
+      return;
+    }
+    const ctrl = new AbortController();
+    const itemIds = Array.from(new Set(lines.map((l) => l.itemId))).join(",");
+    fetch(
+      `/api/v1/customer/cart-bundles?tenant=${encodeURIComponent(tenantSlug)}&items=${itemIds}`,
+      { signal: ctrl.signal },
+    )
+      .then((r) => (r.ok ? r.json() : { bundles: [] }))
+      .then((d: { bundles?: BundleSuggestion[] }) => setBundleSuggestions(d.bundles ?? []))
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [lines, tenantSlug]);
+
+  function acceptBundle(b: BundleSuggestion) {
+    for (const a of b.addons) {
+      const detail = itemDetails[a.item_id];
+      for (let i = 0; i < a.qty; i++) {
+        add({
+          itemId: a.item_id,
+          name: a.name,
+          basePrice: a.base_price,
+          artType: detail?.artType ?? null,
+          imageUrl: a.image_url,
+          quantity: 1,
+          sizeId: null,
+          sizeName: null,
+          sizeDelta: 0,
+          options: [],
+          notes: null,
+          source: "upsell",
+        });
+      }
+    }
+    setAcceptedBundleIds((prev) => {
+      const next = new Set(prev);
+      next.add(b.id);
+      return next;
+    });
+  }
 
   useEffect(() => {
     function touch() {
@@ -245,6 +313,7 @@ export function KioskApp({
           payment_method: "cash",
           source: "direct",
           customer_notes: diningNote,
+          applied_bundle_ids: Array.from(acceptedBundleIds),
           lines: lines.map((l) => ({
             item_id: l.itemId,
             quantity: l.quantity,
@@ -646,6 +715,53 @@ export function KioskApp({
                 })
               )}
             </div>
+            {bundleSuggestions.length > 0 && (
+              <div className="border-t border-qf-line-soft px-5 py-4 bg-(--qf-soft)">
+                <div className="text-sm font-black text-(--qf-deep) mb-2">מבצעים פתוחים בסל</div>
+                <div className="space-y-2">
+                  {bundleSuggestions.map((b) => {
+                    const accepted = acceptedBundleIds.has(b.id);
+                    return (
+                      <div
+                        key={b.id}
+                        className="bg-white rounded-xl border-2 border-(--qf-primary)/30 p-3 flex items-center gap-3"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-black truncate">{b.name}</div>
+                          <div className="text-xs text-qf-mute mt-0.5">
+                            {b.addons
+                              .map((a) => (a.qty > 1 ? `${a.qty}× ${a.name}` : a.name))
+                              .join(" + ")}
+                          </div>
+                          <div className="text-xs mt-1 tnum">
+                            <span className="font-bold text-(--qf-deep)">{formatPrice(b.bundle_price)}</span>
+                            {b.savings > 0 && (
+                              <>
+                                <span className="text-qf-mute line-through ms-2">{formatPrice(b.full_price)}</span>
+                                <span className="text-qf-tomato font-bold ms-2">חוסכים {formatPrice(b.savings)}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => acceptBundle(b)}
+                          disabled={accepted}
+                          className={cn(
+                            "shrink-0 px-4 py-2 rounded-lg text-sm font-bold transition",
+                            accepted
+                              ? "bg-qf-green-soft text-qf-green-deep border border-qf-green/40"
+                              : "bg-(--qf-primary) text-white hover:bg-(--qf-deep) active:scale-95",
+                          )}
+                        >
+                          {accepted ? "נוסף ✓" : "תוסיפו"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             {upsellSuggestions.length > 0 && lines.length > 0 && (
               <div className="border-t border-qf-line-soft px-5 py-4 bg-qf-line-soft/30">
                 <div className="text-sm font-bold text-qf-mute mb-2">להוסיף משהו?</div>

@@ -42,6 +42,11 @@ export interface CreateOrderInput {
   cutleryCount?: number;
   scheduledFor?: Date | null;
   couponCode?: string | null;
+  /** Bundle offers the customer accepted in the cart. Server
+   *  validates each (triggers + addons present in cart) and adds
+   *  the per-bundle savings to Order.discount so the merchant
+   *  doesn't promise something the cart doesn't deliver. */
+  appliedBundleIds?: string[];
   lines: CartLineInput[];
 }
 
@@ -264,6 +269,49 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       discount = d;
       couponToConsume = { id: coupon.id };
     }
+  }
+
+  // Bundle offers — for each accepted bundle, verify the triggers
+  // are in the cart and the addons are present at the matching qty.
+  // Add the bundle's savings (sum addon basePrice * qty − bundlePrice)
+  // to the overall discount. Bundles the cart doesn't actually
+  // satisfy are silently dropped — better than failing the order
+  // because a stale client kept a flag for a bundle the customer
+  // partially removed.
+  if (input.appliedBundleIds && input.appliedBundleIds.length > 0) {
+    const cartItemIds = input.lines.map((l) => l.item_id);
+    const cartItemCounts = new Map<string, number>();
+    for (const id of cartItemIds) {
+      cartItemCounts.set(id, (cartItemCounts.get(id) ?? 0) + 1);
+    }
+    const bundles = await prisma.bundleOffer.findMany({
+      where: {
+        id: { in: input.appliedBundleIds },
+        tenantId: tenant.id,
+        active: true,
+      },
+      include: { triggers: true, addons: true },
+    });
+    for (const b of bundles) {
+      const triggerHit = b.triggers.some((t) => cartItemCounts.has(t.itemId));
+      if (!triggerHit) continue;
+      const addonsSatisfied = b.addons.every(
+        (a) => (cartItemCounts.get(a.itemId) ?? 0) >= a.qty,
+      );
+      if (!addonsSatisfied) continue;
+      const itemRows = await prisma.menuItem.findMany({
+        where: { id: { in: b.addons.map((a) => a.itemId) } },
+        select: { id: true, basePrice: true },
+      });
+      const priceById = new Map(itemRows.map((r) => [r.id, r.basePrice]));
+      const fullPrice = b.addons.reduce(
+        (acc, a) => acc + (priceById.get(a.itemId) ?? 0) * a.qty,
+        0,
+      );
+      const savings = Math.max(0, fullPrice - b.bundlePrice);
+      discount += savings;
+    }
+    if (discount > subtotal) discount = subtotal;
   }
 
   const total = subtotal + deliveryFee + serviceFee + cutleryFee + tip - discount;

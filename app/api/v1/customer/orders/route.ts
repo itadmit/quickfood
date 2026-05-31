@@ -24,6 +24,7 @@ const CreateOrderSchema = z.object({
   guest_last_name: z.string().max(40).optional(),
   customer_email: z.string().email().optional(),
   coupon_code: z.string().min(1).max(40).optional(),
+  applied_bundle_ids: z.array(z.string().uuid()).max(10).optional(),
   lines: z
     .array(
       z.object({
@@ -84,6 +85,7 @@ export const POST = handler(async (req: Request) => {
       cutleryCount: body.cutlery_count,
       scheduledFor: body.scheduled_for ? new Date(body.scheduled_for) : null,
       couponCode: body.coupon_code ?? null,
+      appliedBundleIds: body.applied_bundle_ids,
       lines: body.lines.map((l) => ({
         item_id: l.item_id,
         quantity: l.quantity,
