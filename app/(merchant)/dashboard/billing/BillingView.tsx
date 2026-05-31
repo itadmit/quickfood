@@ -174,7 +174,13 @@ export function BillingView({
         </div>
       )}
 
-      <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5">
+      <section
+        className={cn(
+          "bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 transition-opacity",
+          polling && "opacity-60 pointer-events-none select-none",
+        )}
+        aria-busy={polling || undefined}
+      >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
           <div>
             <h2 className="text-base lg:text-lg font-semibold">מנוי פלטפורמה</h2>
