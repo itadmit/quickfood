@@ -96,13 +96,26 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   if (isPlatformHost(host)) return NextResponse.next();
 
-  const slug = await resolveTenantSlug(host);
+  let slug: string | null = null;
+  let lookupErr: string | null = null;
+  try {
+    slug = await resolveTenantSlug(host);
+  } catch (e) {
+    lookupErr = e instanceof Error ? `${e.name}:${e.message}` : String(e);
+  }
+
   if (!slug) {
     // Custom host pointing at us but no matching tenant. Fall through to
     // the default app — but with no-cache headers so this state doesn't
     // get baked into the CDN. (Otherwise a visit before the merchant
     // adds the domain will poison the edge for an hour.)
-    return applyNoCacheHeaders(NextResponse.next());
+    const fallthrough = applyNoCacheHeaders(NextResponse.next());
+    // Surface what the proxy saw so we can debug routing without logs.
+    // Remove once the custom-domain flow is proven on prod.
+    fallthrough.headers.set("x-qf-proxy-host", host);
+    fallthrough.headers.set("x-qf-proxy-slug", "null");
+    if (lookupErr) fallthrough.headers.set("x-qf-proxy-error", lookupErr.slice(0, 200));
+    return fallthrough;
   }
 
   const url = request.nextUrl.clone();
