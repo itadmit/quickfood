@@ -18,6 +18,10 @@ const EDITABLE_STATUSES = new Set(["pending", "confirmed", "preparing", "in_oven
 const PatchBody = z.object({
   quantity: z.number().int().min(1).max(20).optional(),
   notes: z.string().max(500).nullable().optional(),
+  // Kitchen prep toggle. true = stamp prepared_at=now(), false = clear.
+  // Allowed even on "post-ready" orders since cooks legitimately tick
+  // items as they re-prep on remakes.
+  prepared: z.boolean().optional(),
 });
 
 // loadAndAuthorize throws the apiError Response on any guard failure —
@@ -79,57 +83,97 @@ export const PATCH = handler(
     const { id, itemId } = await params;
 
     const body = PatchBody.parse(await req.json());
-    if (body.quantity === undefined && body.notes === undefined) {
+    if (
+      body.quantity === undefined &&
+      body.notes === undefined &&
+      body.prepared === undefined
+    ) {
       return apiError("validation_error", "אין מה לעדכן", 400);
     }
 
-    const { order, item } = await loadAndAuthorize(id, itemId, session.tenantId);
+    // The kitchen prep toggle is allowed even when the order is past
+    // "ready" (remakes happen). The qty + notes edits remain gated.
+    if (body.quantity !== undefined || body.notes !== undefined) {
+      const { order, item } = await loadAndAuthorize(id, itemId, session.tenantId);
 
-    const nextQty = body.quantity ?? item.quantity;
-    const nextItemTotal = item.unitPrice * nextQty;
-    const newSubtotal = order.items.reduce(
-      (acc, it) => acc + (it.id === itemId ? nextItemTotal : it.totalPrice),
-      0,
-    );
-    const totals = newTotals(order, newSubtotal);
+      const nextQty = body.quantity ?? item.quantity;
+      const nextItemTotal = item.unitPrice * nextQty;
+      const newSubtotal = order.items.reduce(
+        (acc, it) => acc + (it.id === itemId ? nextItemTotal : it.totalPrice),
+        0,
+      );
+      const totals = newTotals(order, newSubtotal);
 
-    await prisma.$transaction(async (tx) => {
-      await tx.orderItem.update({
+      await prisma.$transaction(async (tx) => {
+        await tx.orderItem.update({
+          where: { id: itemId },
+          data: {
+            ...(body.quantity !== undefined ? { quantity: nextQty, totalPrice: nextItemTotal } : {}),
+            ...(body.notes !== undefined ? { notes: body.notes } : {}),
+            ...(body.prepared !== undefined
+              ? { preparedAt: body.prepared ? new Date() : null }
+              : {}),
+          },
+        });
+        await tx.order.update({
+          where: { id },
+          data: { subtotal: totals.subtotal, total: totals.total },
+        });
+        await tx.orderEvent.create({
+          data: {
+            orderId: id,
+            type: "items_edited",
+            payload: {
+              edited_by: session.userId,
+              item_id: itemId,
+              item_name: item.nameSnapshot,
+              action: "update",
+              quantity: body.quantity ?? null,
+              notes_changed: body.notes !== undefined,
+              prepared: body.prepared,
+              new_subtotal: totals.subtotal,
+              new_total: totals.total,
+            } as unknown as Prisma.InputJsonValue,
+          },
+        });
+      });
+      void dispatchWebhook({
+        tenantId: order.tenantId,
+        eventType: "order.items_edited",
+        payload: { order_id: id, item_id: itemId, action: "update" },
+      });
+      return apiJson({ ok: true, subtotal: totals.subtotal, total: totals.total });
+    }
+
+    // prepared-only path — no totals recompute, no editable-state
+    // gate. Stamp / clear prepared_at and emit an OrderEvent so other
+    // KDS screens get the SSE push. Verifies tenant ownership through
+    // a lightweight lookup.
+    const owner = await prisma.orderItem.findUnique({
+      where: { id: itemId },
+      select: { nameSnapshot: true, order: { select: { tenantId: true } } },
+    });
+    if (!owner || owner.order.tenantId !== session.tenantId) {
+      return apiError("not_found", "פריט לא נמצא", 404);
+    }
+    await prisma.$transaction([
+      prisma.orderItem.update({
         where: { id: itemId },
-        data: {
-          ...(body.quantity !== undefined ? { quantity: nextQty, totalPrice: nextItemTotal } : {}),
-          ...(body.notes !== undefined ? { notes: body.notes } : {}),
-        },
-      });
-      await tx.order.update({
-        where: { id },
-        data: { subtotal: totals.subtotal, total: totals.total },
-      });
-      await tx.orderEvent.create({
+        data: { preparedAt: body.prepared ? new Date() : null },
+      }),
+      prisma.orderEvent.create({
         data: {
           orderId: id,
-          type: "items_edited",
+          type: "item_prepared",
           payload: {
-            edited_by: session.userId,
             item_id: itemId,
-            item_name: item.nameSnapshot,
-            action: "update",
-            quantity: body.quantity ?? null,
-            notes_changed: body.notes !== undefined,
-            new_subtotal: totals.subtotal,
-            new_total: totals.total,
+            item_name: owner.nameSnapshot,
+            prepared: body.prepared,
           } as unknown as Prisma.InputJsonValue,
         },
-      });
-    });
-
-    void dispatchWebhook({
-      tenantId: order.tenantId,
-      eventType: "order.items_edited",
-      payload: { order_id: id, item_id: itemId, action: "update" },
-    });
-
-    return apiJson({ ok: true, subtotal: totals.subtotal, total: totals.total });
+      }),
+    ]);
+    return apiJson({ ok: true, prepared: body.prepared });
   },
 );
 

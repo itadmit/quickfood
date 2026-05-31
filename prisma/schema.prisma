@@ -867,6 +867,13 @@ model OrderItem {
 
   notes String?
 
+  // Per-item prep toggle — the kitchen ticks off each line as it
+  // goes out (todo-list style on the Kanban card). NULL = not yet
+  // started. The order's status field is still the authoritative
+  // "ready" signal; this is just visual sub-state so the cook
+  // doesn't lose track of "what's still left on this ticket".
+  preparedAt DateTime? @map("prepared_at")
+
   reviewItems ReviewItem[]
 
   @@index([orderId])
