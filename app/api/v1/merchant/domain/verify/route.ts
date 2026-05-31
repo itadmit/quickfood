@@ -44,11 +44,22 @@ export const POST = handler(async () => {
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
-    select: { customDomain: true, customDomainStatus: true, customDomainVerification: true },
+    select: {
+      customDomain: true,
+      customDomainStatus: true,
+      customDomainVerification: true,
+      customDomainConfig: true,
+    },
   });
   if (!tenant?.customDomain) {
     return apiError("not_found", "אין דומיין מוגדר", 404);
   }
+
+  // Preserve `apexName` (and any other long-lived fields we add later)
+  // when we refresh `customDomainConfig` from Vercel below — Vercel's
+  // `/domains/{name}/config` response doesn't include apexName.
+  const previousApexName = (tenant.customDomainConfig as { apexName?: string } | null)
+    ?.apexName;
 
   const hostname = tenant.customDomain;
   const verification = (tenant.customDomainVerification ??
@@ -113,6 +124,12 @@ export const POST = handler(async () => {
       : null;
   }
 
+  const mergedConfig = config
+    ? { ...config, ...(previousApexName ? { apexName: previousApexName } : {}) }
+    : previousApexName
+      ? { apexName: previousApexName }
+      : null;
+
   const updated = await prisma.tenant.update({
     where: { id: session.tenantId },
     data: {
@@ -120,7 +137,7 @@ export const POST = handler(async () => {
         ? CustomDomainStatus.active
         : CustomDomainStatus.pending,
       customDomainVerifiedAt: fullyActive ? new Date() : null,
-      customDomainConfig: (config ?? null) as unknown as Prisma.InputJsonValue,
+      customDomainConfig: (mergedConfig ?? null) as unknown as Prisma.InputJsonValue,
       customDomainLastError: fullyActive ? null : lastError,
     },
     select: {

@@ -21,6 +21,7 @@ import { prisma } from "@/lib/db/client";
 import {
   addDomain,
   getDomainConfig,
+  isApexHostname,
   isVercelConfigured,
   normalizeHostname,
   removeDomain,
@@ -47,17 +48,27 @@ interface DnsRecord {
   value: string;
 }
 
+interface StoredConfig extends VercelDomainConfig {
+  apexName?: string;
+}
+
 function buildDnsRecords(
   hostname: string,
-  config: VercelDomainConfig | null,
+  config: StoredConfig | null,
   verification: VercelAddDomainResponse["verification"],
 ): DnsRecord[] {
   const records: DnsRecord[] = [];
-  const labels = hostname.split(".");
-  const isApex = labels.length === 2;
-  const subname = isApex ? "@" : labels.slice(0, -2).join(".");
+  // Vercel's apexName (when we have it) is the authoritative answer for
+  // "is this the zone apex?". Falls back to a multi-part TLD heuristic
+  // that handles .co.il / .co.uk / .com.au and friends.
+  const apex = isApexHostname(hostname, config?.apexName);
+  const subname = apex
+    ? "@"
+    : config?.apexName && hostname.endsWith(config.apexName)
+      ? hostname.slice(0, hostname.length - config.apexName.length - 1)
+      : hostname.split(".").slice(0, -2).join(".");
 
-  if (isApex) {
+  if (apex) {
     const ip = config?.recommendedIPv4?.[0]?.value?.[0] ?? "76.76.21.21";
     records.push({ type: "A", name: "@", value: ip });
   } else {
@@ -90,7 +101,7 @@ function serializeState(t: {
   customDomainLastError: string | null;
 }) {
   const verification = (t.customDomainVerification as VercelAddDomainResponse["verification"]) ?? null;
-  const config = (t.customDomainConfig as VercelDomainConfig | null) ?? null;
+  const config = (t.customDomainConfig as StoredConfig | null) ?? null;
   const dnsRecords = t.customDomain
     ? buildDnsRecords(t.customDomain, config, verification ?? undefined)
     : [];
@@ -208,13 +219,23 @@ export const POST = handler(async (req: Request) => {
 
   const verifiedNow = addRes.verified && !(config?.misconfigured ?? true);
 
+  // Persist `apexName` alongside the Vercel config so the DNS-records
+  // builder can choose A vs CNAME correctly for `.co.il` and other
+  // multi-part TLDs on future reads (GET / verify) — those code paths
+  // don't re-call Vercel's addDomain so apexName isn't otherwise around.
+  const storedConfig: StoredConfig | null = config
+    ? { ...config, apexName: addRes.apexName }
+    : addRes.apexName
+      ? ({ apexName: addRes.apexName } as StoredConfig)
+      : null;
+
   const updated = await prisma.tenant.update({
     where: { id: session.tenantId },
     data: {
       customDomain: hostname,
       customDomainStatus: verifiedNow ? CustomDomainStatus.active : CustomDomainStatus.pending,
       customDomainVerification: (addRes.verification ?? []) as unknown as Prisma.InputJsonValue,
-      customDomainConfig: (config ?? null) as unknown as Prisma.InputJsonValue,
+      customDomainConfig: (storedConfig ?? null) as unknown as Prisma.InputJsonValue,
       customDomainAddedAt: new Date(),
       customDomainVerifiedAt: verifiedNow ? new Date() : null,
       customDomainLastError: null,

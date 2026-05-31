@@ -161,6 +161,35 @@ export async function removeDomain(name: string): Promise<void> {
 }
 
 /**
+ * Whether the hostname is the apex of its DNS zone — needs an A record
+ * (CNAMEs are not allowed at apex per RFC 1912 §2.4 and almost every
+ * registrar rejects them outright if any other record exists).
+ *
+ * "Apex" means: not "sub.example.com", but "example.com" itself. The
+ * tricky part is multi-part TLDs like ".co.il" or ".com.au" — here
+ * "pizzaninja.co.il" looks 3-label-deep but IS the apex. We don't pull
+ * the full Public Suffix List into the bundle; instead we recognize the
+ * handful of common second-level TLDs as part of the suffix, plus we
+ * accept an authoritative `apexName` hint from Vercel's API response
+ * when it's available (most reliable signal).
+ */
+const SECOND_LEVEL_TLDS = new Set([
+  "co", "com", "net", "org", "ac", "edu", "gov", "muni", "idf", "k12",
+  "sch", "info", "biz",
+]);
+
+export function isApexHostname(hostname: string, apexHint?: string): boolean {
+  if (apexHint && hostname.toLowerCase() === apexHint.toLowerCase()) return true;
+  const labels = hostname.split(".");
+  if (labels.length === 2) return true;
+  if (labels.length === 3) {
+    const sld = labels[labels.length - 2]!;
+    if (SECOND_LEVEL_TLDS.has(sld)) return true;
+  }
+  return false;
+}
+
+/**
  * Normalize merchant input: strip protocol, path, "www.", lowercase,
  * trim. Returns null if it doesn't look like a valid hostname.
  */
