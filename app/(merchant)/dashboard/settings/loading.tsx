@@ -14,8 +14,10 @@ export default function SettingsLoading() {
           <Skeleton className="h-9 lg:h-10 w-48 bg-black/15 rounded-lg" />
         </div>
         <div className="bg-white border-t-2 border-black px-2.5 py-2 flex gap-1.5 overflow-hidden">
-          {Array.from({ length: 7 }).map((_, i) => (
-            <Skeleton key={i} className="h-9 w-24 shrink-0 rounded-lg" />
+          {[112, 80, 96, 96, 80, 80, 80, 88, 176, 96, 64].map((w, i) => (
+            <div key={i} className="shrink-0" style={{ width: `${w}px` }}>
+              <Skeleton className="h-9 w-full rounded-lg" />
+            </div>
           ))}
         </div>
       </section>
