@@ -35,6 +35,7 @@ export function KioskApp({
   idleSeconds,
   businessType: businessTypeProp,
   categories,
+  upsellCategoryIds,
   items,
   itemDetails,
 }: {
@@ -46,10 +47,11 @@ export function KioskApp({
   idleSeconds: number;
   businessType: string;
   categories: KioskCategory[];
+  upsellCategoryIds: string[];
   items: KioskItem[];
   itemDetails: Record<string, MenuItemForCustomer>;
 }) {
-  const { lines, subtotal, clear, updateQuantity, remove, tenant } = useCart();
+  const { lines, subtotal, clear, updateQuantity, remove, add, tenant } = useCart();
   const [state, setState] = useState<"start" | "mode" | "browse" | "placing" | "thanks">("start");
   const [diningMode, setDiningMode] = useState<"dinein" | "takeaway" | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -132,6 +134,53 @@ export function KioskApp({
     else if (activeCat) list = list.filter((it) => it.categoryId === activeCat);
     return list;
   }, [items, query, activeCat]);
+
+  // Upsell suggestions inside the cart sheet — drinks / desserts from
+  // the categories the merchant flagged as upsellInCart. Excludes
+  // items already in the cart so we don't pitch a drink the customer
+  // just picked, and picks the cheapest 4 so the screen stays tidy.
+  // The per-item needsConfig is computed from the preloaded item data
+  // so we can route the "+" tap straight to addToCart when there's
+  // nothing to configure.
+  const upsellSuggestions = useMemo(() => {
+    if (upsellCategoryIds.length === 0) return [] as Array<KioskItem & { needsConfig: boolean }>;
+    const inCart = new Set(lines.map((l) => l.itemId));
+    const upsellSet = new Set(upsellCategoryIds);
+    return items
+      .filter((it) => upsellSet.has(it.categoryId) && !inCart.has(it.id))
+      .map((it) => {
+        const detail = itemDetails[it.id];
+        const hasMultipleSizes = (detail?.sizes?.length ?? 0) > 1;
+        const hasRequiredGroup = (detail?.optionGroups ?? []).some(
+          (g) => g.required === true,
+        );
+        return { ...it, needsConfig: hasMultipleSizes || hasRequiredGroup };
+      })
+      .sort((a, b) => a.basePrice - b.basePrice)
+      .slice(0, 4);
+  }, [items, itemDetails, lines, upsellCategoryIds]);
+
+  function quickAddUpsell(it: KioskItem & { needsConfig: boolean }) {
+    if (it.needsConfig) {
+      setCartOpen(false);
+      setPickItemId(it.id);
+      return;
+    }
+    add({
+      itemId: it.id,
+      name: it.name,
+      basePrice: it.basePrice,
+      artType: it.artType,
+      imageUrl: it.imageUrl,
+      quantity: 1,
+      sizeId: null,
+      sizeName: null,
+      sizeDelta: 0,
+      options: [],
+      notes: null,
+      source: "upsell",
+    });
+  }
 
   async function placeOrder() {
     setState("placing");
@@ -545,6 +594,46 @@ export function KioskApp({
                 })
               )}
             </div>
+            {upsellSuggestions.length > 0 && lines.length > 0 && (
+              <div className="border-t border-qf-line-soft px-5 py-4 bg-qf-line-soft/30">
+                <div className="text-sm font-bold text-qf-mute mb-2">להוסיף משהו?</div>
+                <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                  {upsellSuggestions.map((it) => (
+                    <div
+                      key={it.id}
+                      className="shrink-0 w-32 bg-white border border-qf-line-dash rounded-xl overflow-hidden text-right relative"
+                    >
+                      <div className="aspect-square bg-qf-line-soft relative">
+                        <MenuItemImage
+                          src={it.imageUrl ?? undefined}
+                          alt={it.name}
+                          businessType={businessType}
+                          size={140}
+                          rounded="none"
+                          fill
+                        />
+                      </div>
+                      <div className="p-2">
+                        <div className="text-xs font-bold leading-tight line-clamp-2 min-h-[2.4em]">
+                          {it.name}
+                        </div>
+                        <div className="text-xs text-qf-mute tnum mt-1">
+                          {formatPrice(it.basePrice)}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => quickAddUpsell(it)}
+                        aria-label={it.needsConfig ? `הוסף ${it.name} (יש בחירות)` : `הוסף ${it.name} לסל`}
+                        className="absolute top-2 start-2 w-9 h-9 rounded-full bg-(--qf-primary) text-white shadow-md grid place-items-center hover:bg-(--qf-deep) active:scale-95 transition"
+                      >
+                        <IcoPlus c="#fff" s={18} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <footer className="px-6 py-5 border-t border-qf-line-soft space-y-3">
               <div className="flex items-baseline justify-between">
                 <span className="text-lg text-qf-mute">סה״כ</span>

@@ -48,7 +48,9 @@ export default async function KioskPage({
     prisma.menuCategory.findMany({
       where: { tenantId: tenant.id, active: true },
       orderBy: { position: "asc" },
-      select: { id: true, name: true },
+      // upsellInCart powers the "Anything else?" carousel inside the
+      // kiosk cart sheet — same flag the storefront uses.
+      select: { id: true, name: true, upsellInCart: true },
     }),
     prisma.menuItem.findMany({
       where: { tenantId: tenant.id, available: true },
@@ -89,7 +91,8 @@ export default async function KioskPage({
       welcomeText={tenant.kioskWelcomeText}
       idleSeconds={tenant.kioskIdleSeconds}
       businessType={tenant.businessType}
-      categories={categories}
+      categories={categories.map(({ id, name }) => ({ id, name }))}
+      upsellCategoryIds={categories.filter((c) => c.upsellInCart).map((c) => c.id)}
       items={items.map((it) => ({
         id: it.id,
         name: it.name,
