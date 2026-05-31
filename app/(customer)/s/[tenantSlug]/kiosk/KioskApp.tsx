@@ -4,11 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCart } from "@/components/customer/CartProvider";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { ItemDetail } from "@/components/customer/screens/ItemDetail";
-import ItemModalSkeleton from "@/components/customer/ItemModalSkeleton";
 import { IcoPlus, IcoMinus, IcoSearch, IcoClose, IcoChev } from "@/components/shared/Icons";
 import { Utensils, ShoppingBag } from "lucide-react";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import type { MenuItemForCustomer } from "@/lib/menu-item-load";
 
 interface KioskCategory {
   id: string;
@@ -33,8 +33,10 @@ export function KioskApp({
   coverImage,
   welcomeText,
   idleSeconds,
+  businessType: businessTypeProp,
   categories,
   items,
+  itemDetails,
 }: {
   tenantSlug: string;
   tenantName: string;
@@ -42,8 +44,10 @@ export function KioskApp({
   coverImage: string | null;
   welcomeText: string | null;
   idleSeconds: number;
+  businessType: string;
   categories: KioskCategory[];
   items: KioskItem[];
+  itemDetails: Record<string, MenuItemForCustomer>;
 }) {
   const { lines, subtotal, clear, updateQuantity, remove, tenant } = useCart();
   const [state, setState] = useState<"start" | "mode" | "browse" | "placing" | "thanks">("start");
@@ -51,8 +55,6 @@ export function KioskApp({
   const [cartOpen, setCartOpen] = useState(false);
   const [activeCat, setActiveCat] = useState<string>(categories[0]?.id ?? "");
   const [pickItemId, setPickItemId] = useState<string | null>(null);
-  const [itemData, setItemData] = useState<null | { item: Record<string, unknown>; tenant: { slug: string; businessType: string } }>(null);
-  const [itemLoading, setItemLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [placedOrderNumber, setPlacedOrderNumber] = useState<string | null>(null);
   const [placingError, setPlacingError] = useState<string | null>(null);
@@ -70,28 +72,13 @@ export function KioskApp({
     };
   }, []);
 
-  const businessType = (tenant.businessType as BusinessType) ?? "general";
+  const businessType =
+    (tenant.businessType as BusinessType) ?? (businessTypeProp as BusinessType) ?? "general";
 
-  // Item-detail modal: same component the storefront uses, so themed
-  // colors / RTL / option groups / half-and-half all behave identically.
-  useEffect(() => {
-    if (!pickItemId) {
-      setItemData(null);
-      return;
-    }
-    setItemLoading(true);
-    const ctrl = new AbortController();
-    fetch(`/api/v1/customer/menu-item?slug=${tenantSlug}&id=${encodeURIComponent(pickItemId)}`, {
-      signal: ctrl.signal,
-    })
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.item) setItemData(d);
-      })
-      .catch(() => {})
-      .finally(() => setItemLoading(false));
-    return () => ctrl.abort();
-  }, [pickItemId, tenantSlug]);
+  // Every item's full sizes + option groups arrived in the initial
+  // server render (itemDetails prop), so the picker opens instantly
+  // — no skeleton, no network round-trip. Kiosks have to feel native.
+  const pickedItemData = pickItemId ? itemDetails[pickItemId] : null;
 
   // Idle reset. After idleSeconds of zero touch/click/key the kiosk
   // wipes the cart, closes any open picker, and returns to the start
@@ -612,17 +599,17 @@ export function KioskApp({
             </button>
           </header>
           <div className="flex-1 overflow-y-auto">
-            {itemLoading || !itemData ? (
-              <ItemModalSkeleton />
-            ) : (
+            {pickedItemData ? (
               <ItemDetail
                 tenantSlug={tenantSlug}
-                businessType={(itemData.tenant as { businessType: string }).businessType as never}
-                item={itemData.item as never}
+                businessType={businessType as never}
+                item={pickedItemData as never}
                 inModal
                 onClose={() => setPickItemId(null)}
                 addSource="menu"
               />
+            ) : (
+              <div className="p-10 text-center text-qf-mute">פריט לא נמצא</div>
             )}
           </div>
         </div>

@@ -1,9 +1,38 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
+import { loadMenuItemForCustomer, type MenuItemForCustomer } from "@/lib/menu-item-load";
 import { KioskApp } from "./KioskApp";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ tenantSlug: string }>;
+}): Promise<Metadata> {
+  const { tenantSlug } = await params;
+  const tenant = await resolveTenantBySlug(tenantSlug);
+  const name = tenant?.name ?? "QuickFood";
+  // Link the per-tenant manifest + tell iOS/Android this page is a
+  // standalone-capable web app. When the merchant taps "Add to Home
+  // Screen" the OS reads the manifest endpoint below and uses the
+  // venue's logo + theme color for the installed shortcut.
+  return {
+    title: `${name} · קיוסק`,
+    manifest: `/s/${tenantSlug}/kiosk/manifest.webmanifest`,
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: name,
+    },
+    other: {
+      "apple-mobile-web-app-capable": "yes",
+      "mobile-web-app-capable": "yes",
+    },
+  };
+}
 
 export default async function KioskPage({
   params,
@@ -38,6 +67,19 @@ export default async function KioskPage({
     }),
   ]);
 
+  // Kiosks don't tolerate a fetch-and-skeleton flicker when the user
+  // taps an item — the experience needs to feel like a native app. So
+  // we pre-load every item's full sizes + option groups on the server
+  // and ship it down with the initial render. loadMenuItemForCustomer
+  // is `unstable_cache`d per item so this stays cheap on warm.
+  const itemDetails = await Promise.all(
+    items.map((it) => loadMenuItemForCustomer(tenant.slug, it.id)),
+  );
+  const itemDataMap: Record<string, MenuItemForCustomer> = {};
+  for (const d of itemDetails) {
+    if (d?.item) itemDataMap[d.item.id] = d.item;
+  }
+
   return (
     <KioskApp
       tenantSlug={tenant.slug}
@@ -46,6 +88,7 @@ export default async function KioskPage({
       coverImage={tenant.coverImage ?? null}
       welcomeText={tenant.kioskWelcomeText}
       idleSeconds={tenant.kioskIdleSeconds}
+      businessType={tenant.businessType}
       categories={categories}
       items={items.map((it) => ({
         id: it.id,
@@ -57,6 +100,7 @@ export default async function KioskPage({
         tags: it.tags,
         categoryId: it.categoryId,
       }))}
+      itemDetails={itemDataMap}
     />
   );
 }
