@@ -295,6 +295,19 @@ model Tenant {
   // first new order picks up from where their history left off.
   nextOrderNumber Int @default(1) @map("next_order_number")
 
+  // Self-service kiosk mode (paid add-on). Toggled per-tenant from
+  // the super-admin UI for now; the merchant-side settings page (welcome
+  // text, idle reset) is hidden until this flag is on. The kiosk URL is
+  // /s/<slug>/kiosk and 404s if false.
+  kioskEnabled     Boolean @default(false) @map("kiosk_enabled")
+  // Free-text headline shown on the kiosk's start screen above the
+  // "tap to order" CTA. NULL falls back to "ברוכים הבאים ל-<name>".
+  kioskWelcomeText String? @map("kiosk_welcome_text") @db.VarChar(160)
+  // After this many seconds of zero user input the kiosk resets the
+  // cart and goes back to the start screen, so the next customer
+  // doesn't walk up to someone else's half-built order.
+  kioskIdleSeconds Int @default(90) @map("kiosk_idle_seconds")
+
   // Stamped when the merchant clicks any choice on the first-login
   // welcome overlay (start-from-scratch, import-from-wolt, or "later").
   // NULL = overlay hasn't been seen yet → show it on next dashboard visit.

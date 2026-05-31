@@ -55,6 +55,8 @@ export const PATCH = handler(async (req: Request) => {
       cutleryFreeAbove: body.cutlery_free_above,
       onboardingDismissedAt: body.onboarding_dismissed ? new Date() : undefined,
       dashboardVersion: body.dashboard_version,
+      kioskWelcomeText: body.kiosk_welcome_text,
+      kioskIdleSeconds: body.kiosk_idle_seconds,
     },
   });
   return apiJson({

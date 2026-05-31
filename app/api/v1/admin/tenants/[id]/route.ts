@@ -44,6 +44,10 @@ const PatchSchema = z.object({
   accepts_cash: z.boolean().optional(),
   whatsapp_token: z.string().trim().max(2000).nullable().optional(),
   whatsapp_instance_id: z.string().trim().max(200).nullable().optional(),
+  // Kiosk mode is a paid add-on. Superadmin flips this; the merchant
+  // gets a settings card to tune the welcome text + idle timeout
+  // only when the flag is on.
+  kiosk_enabled: z.boolean().optional(),
 });
 
 export const GET = handler(
@@ -150,6 +154,7 @@ export const PATCH = handler(
           whatsappInstanceId:
             body.whatsapp_instance_id === "" ? null : body.whatsapp_instance_id,
         }),
+        ...(body.kiosk_enabled !== undefined && { kioskEnabled: body.kiosk_enabled }),
       },
       select: { id: true },
     });

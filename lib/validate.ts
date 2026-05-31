@@ -283,6 +283,10 @@ export const TenantPatchSchema = z.object({
   // Cleared via the DB if a tenant ever needs to be re-shown.
   onboarding_dismissed: z.literal(true).optional(),
   dashboard_version: z.enum(["v1", "v2"]).optional(),
+  // Kiosk feature settings — only the welcome text + idle reset are
+  // merchant-editable. `kiosk_enabled` itself is a superadmin gate.
+  kiosk_welcome_text: z.string().max(160).nullable().optional(),
+  kiosk_idle_seconds: z.number().int().min(15).max(600).optional(),
 });
 
 export const NoticeInputSchema = z.object({
