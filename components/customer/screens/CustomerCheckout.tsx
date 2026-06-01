@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoChev, IcoArrowLeft, IcoBag } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
@@ -104,31 +104,20 @@ export function CustomerCheckout({
     | null
   >(null);
   const [sdkReady, setSdkReady] = useState(false);
-  const [walletOpen, setWalletOpen] = useState(false);
-  // True once the customer has opened the Grow wallet and then dismissed it
-  // without paying. The CTA flips from the "פותח תשלום..." spinner to a
-  // clickable "המשך לתשלום" that re-opens the SAME wallet (reuses the
-  // existing authCode — no new order, no double-charge), instead of staying
-  // stuck on the spinner forever.
-  const [walletDismissed, setWalletDismissed] = useState(false);
-  // Mirror of "is the wallet currently open", read in the onWalletChange
-  // close branch. A ref (not the walletOpen state) so it's never a stale
-  // closure value when the SDK fires its events.
-  const walletOpenRef = useRef(false);
   useEffect(() => {
     if (pendingPayment && sdkReady) {
       renderGrowWallet(pendingPayment.authCode);
     }
   }, [pendingPayment, sdkReady]);
 
+  // Once a payment is in flight, the CTA re-opens the SAME Grow wallet
+  // (reusing the authCode — no new order, no double-charge). Grow's SDK does
+  // not reliably emit wallet open/close events, so we don't try to track
+  // visibility; the button simply lets the customer re-summon the wallet if
+  // they closed it, instead of being stuck on a dead spinner.
   function reopenOrPlace() {
-    if (pendingPayment && walletDismissed) {
-      const ok = renderGrowWallet(pendingPayment.authCode);
-      if (ok) {
-        walletOpenRef.current = true;
-        setWalletDismissed(false);
-        setWalletOpen(true);
-      }
+    if (pendingPayment) {
+      renderGrowWallet(pendingPayment.authCode);
       return;
     }
     void place();
@@ -358,7 +347,6 @@ export function CustomerCheckout({
     }
     setBusy(true);
     setError(null);
-    setWalletDismissed(false);
     try {
       const res = await fetch("/api/v1/customer/orders", {
         method: "POST",
@@ -1045,29 +1033,23 @@ export function CustomerCheckout({
             <button
               type="button"
               onClick={reopenOrPlace}
-              disabled={!canPlace && !(paymentInFlight && walletDismissed)}
+              disabled={!canPlace && !paymentInFlight}
               className="w-full mt-4 bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-14 text-base font-semibold flex items-center justify-between shadow-sm shadow-(--qf-primary)/25 transition"
             >
               <span className="inline-flex items-center gap-2">
-                {(busy || (paymentInFlight && !walletDismissed)) && (
+                {busy && (
                   <span className="qf-spinner text-white text-base" aria-hidden />
                 )}
                 <span>
                   {busy
                     ? "שולח..."
                     : paymentInFlight
-                      ? walletOpen
-                        ? "ממתין לתשלום..."
-                        : walletDismissed
-                          ? "המשך לתשלום"
-                          : "פותח תשלום..."
+                      ? "המשך לתשלום"
                       : paymentMethod === "cash"
                         ? "בצע הזמנה"
                         : "לשלם כעת"}
                 </span>
-                {!busy && (!paymentInFlight || walletDismissed) && (
-                  <IcoArrowLeft c="#fff" s={16} />
-                )}
+                {!busy && <IcoArrowLeft c="#fff" s={16} />}
               </span>
               <span className="tnum text-lg">{formatPrice(total)}</span>
             </button>
@@ -1080,25 +1062,23 @@ export function CustomerCheckout({
         <button
           type="button"
           onClick={reopenOrPlace}
-          disabled={!canPlace && !(paymentInFlight && walletDismissed)}
+          disabled={!canPlace && !paymentInFlight}
           className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-16 text-base font-semibold flex items-center justify-between shadow-lg shadow-(--qf-primary)/25 transition active:scale-[0.99]"
         >
           <span className="inline-flex items-center gap-2">
-            {(busy || paymentInFlight) && (
+            {busy && (
               <span className="qf-spinner text-white text-base" aria-hidden />
             )}
             <span>
               {busy
                 ? "שולח..."
                 : paymentInFlight
-                  ? walletOpen
-                    ? "ממתין לתשלום..."
-                    : "פותח תשלום..."
+                  ? "המשך לתשלום"
                   : paymentMethod === "cash"
                     ? "בצע הזמנה"
                     : "לשלם כעת"}
             </span>
-            {!busy && !paymentInFlight && <IcoArrowLeft c="#fff" s={16} />}
+            {!busy && <IcoArrowLeft c="#fff" s={16} />}
           </span>
           <span className="tnum text-lg">{formatPrice(total)}</span>
         </button>
@@ -1113,23 +1093,6 @@ export function CustomerCheckout({
           testMode={pendingPayment?.testMode ?? growTestMode}
           thankYouUrl={pendingPayment?.thankYouUrl ?? `/s/${tenantSlug}`}
           onReady={() => setSdkReady(true)}
-          onWalletChange={(state) => {
-            if (state === "open") {
-              walletOpenRef.current = true;
-              setWalletOpen(true);
-              setWalletDismissed(false);
-            } else {
-              // Wallet closed. If it had been open, the customer dismissed it
-              // without paying — mark it so the CTA becomes a clickable
-              // "המשך לתשלום" instead of a stuck spinner. (A close that
-              // follows success navigates away via onSuccess, so this is
-              // moot there.)
-              const wasOpen = walletOpenRef.current;
-              walletOpenRef.current = false;
-              setWalletOpen(false);
-              if (wasOpen) setWalletDismissed(true);
-            }
-          }}
           onError={(message) => {
             // Only surface the error if we actually have an in-flight
             // payment — pre-mount SDK errors (none of our business) get
