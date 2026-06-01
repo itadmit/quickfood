@@ -54,6 +54,7 @@ export async function dispatchInvoice(
     (order.invoiceNumber ? ` (חשבונית ${order.invoiceNumber})` : "") +
     `: ${order.invoiceUrl}`;
 
+
   // Phone delivery — prefer WhatsApp (cheaper + richer link preview).
   // sendWhatsApp auto-falls-back to the platform-default iBot account
   // when the tenant hasn't connected one of their own, so we always
@@ -62,6 +63,13 @@ export async function dispatchInvoice(
   // separate OrderEvent types so a successful WhatsApp doesn't block
   // a later SMS retry (and vice versa).
   if (order.customerPhoneSnap) {
+    // customerPhoneSnap is stored as E.164 (+972…), but sendSms /
+    // sendWhatsApp validate against /^05\d{8}$/ — passing E.164
+    // silently fails as invalid_recipient. Convert before handoff.
+    const localPhone = order.customerPhoneSnap.startsWith("+972")
+      ? "0" + order.customerPhoneSnap.slice(4)
+      : order.customerPhoneSnap;
+
     const waAlready = await prisma.orderEvent.findFirst({
       where: { orderId, type: WHATSAPP_EVENT },
       select: { id: true },
@@ -76,7 +84,7 @@ export async function dispatchInvoice(
       try {
         const wa = await sendWhatsApp({
           tenantId: order.tenantId,
-          to: order.customerPhoneSnap,
+          to: localPhone,
           body: bodyForPhone,
           kind: "invoice_delivery",
           refKind: "order",
@@ -114,7 +122,7 @@ export async function dispatchInvoice(
       try {
         const sms = await sendSms({
           tenantId: order.tenantId,
-          to: order.customerPhoneSnap,
+          to: localPhone,
           body: bodyForPhone,
           kind: "invoice_delivery",
           refKind: "order",

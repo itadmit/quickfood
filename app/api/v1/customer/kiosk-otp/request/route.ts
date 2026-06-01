@@ -96,6 +96,13 @@ export const POST = handler(async (req: Request) => {
     `${tenant.name} · קוד אימות: ${code}\n` +
     `הקוד תקף ל-10 דקות. אם לא ביקשת — אפשר להתעלם.`;
 
+  // sendWhatsApp + sendSms validate the recipient as local 05X via
+  // /^05\d{8}$/ — passing the E.164 form (+972…) trips
+  // invalid_recipient and silently fails BOTH channels, surfacing as a
+  // 502 here. Keep `e164` as the OtpCode key (so verify() can find it),
+  // but hand the providers the local format they actually accept.
+  const localPhone = e164.startsWith("+972") ? "0" + e164.slice(4) : e164;
+
   // Try WhatsApp first. sendWhatsApp auto-falls-back to the platform
   // default iBot account when the tenant hasn't connected their own.
   let channel: "whatsapp" | "sms" | null = null;
@@ -103,7 +110,7 @@ export const POST = handler(async (req: Request) => {
   try {
     const wa = await sendWhatsApp({
       tenantId: tenant.id,
-      to: e164,
+      to: localPhone,
       body,
       kind: "kiosk_otp",
       refKind: "phone",
@@ -122,7 +129,7 @@ export const POST = handler(async (req: Request) => {
     try {
       const sms = await sendSms({
         tenantId: tenant.id,
-        to: e164,
+        to: localPhone,
         body,
         kind: "kiosk_otp",
         refKind: "phone",
