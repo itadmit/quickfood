@@ -17,7 +17,6 @@ interface PayPageProps {
     paymentMethod: string;
     invoiceNumber: string | null;
     invoiceUrl: string | null;
-    customerPhoneMasked: string | null;
     customerEmailMasked: string | null;
   };
   growEnabled: boolean;
@@ -41,18 +40,13 @@ export function PayPage({
   const [invoiceNumber, setInvoiceNumber] = useState<string | null>(
     order.invoiceNumber,
   );
-  const [phoneMasked, setPhoneMasked] = useState<string | null>(
-    order.customerPhoneMasked,
-  );
   const [emailMasked, setEmailMasked] = useState<string | null>(
     order.customerEmailMasked,
   );
-  const [contactInput, setContactInput] = useState("");
+  const [showInvoiceForm, setShowInvoiceForm] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
   const [contactBusy, setContactBusy] = useState(false);
   const [contactError, setContactError] = useState<string | null>(null);
-  const [contactSentChannel, setContactSentChannel] = useState<
-    "email" | "sms" | null
-  >(null);
   const [authCode, setAuthCode] = useState<string | null>(null);
   const [sdkReady, setSdkReady] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -130,9 +124,7 @@ export function PayPage({
         if (nextInvoiceNumber && nextInvoiceNumber !== invoiceNumber) {
           setInvoiceNumber(nextInvoiceNumber);
         }
-        const nextPhone = data?.order?.customer_phone_masked ?? null;
         const nextEmail = data?.order?.customer_email_masked ?? null;
-        if (nextPhone !== phoneMasked) setPhoneMasked(nextPhone);
         if (nextEmail !== emailMasked) setEmailMasked(nextEmail);
       } catch {
         /* ignore */
@@ -156,12 +148,11 @@ export function PayPage({
     alreadyPaid,
     invoiceUrl,
     invoiceNumber,
-    phoneMasked,
     emailMasked,
   ]);
 
-  async function submitContact() {
-    const value = contactInput.trim();
+  async function submitInvoiceEmail() {
+    const value = emailInput.trim();
     if (!value) return;
     setContactBusy(true);
     setContactError(null);
@@ -171,7 +162,7 @@ export function PayPage({
         {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ contact: value }),
+          body: JSON.stringify({ email: value }),
         },
       );
       const data = await res.json();
@@ -183,15 +174,11 @@ export function PayPage({
         );
         return;
       }
-      const channel: "email" | "sms" =
-        data?.channel === "email" ? "email" : "sms";
-      setContactSentChannel(channel);
-      setContactInput("");
+      setEmailInput("");
       // Optimistic: stamp local state so the UI flips to the "we'll send"
-      // notice immediately. The polling loop will replace it with the
+      // notice immediately. The polling loop replaces it with the
       // server-side mask within ~3s.
-      if (channel === "email") setEmailMasked(value);
-      else setPhoneMasked(value);
+      setEmailMasked(value);
     } catch {
       setContactError("שגיאת רשת. נסו שוב.");
     } finally {
@@ -232,11 +219,10 @@ export function PayPage({
 
         {/* Invoice surface — three states:
             (1) Invoice URL ready → big download button (immediate path).
-            (2) Invoice not ready but we have a phone/email → quiet "we'll
-                send it to you" note. The dispatcher fires the moment Grow
-                ships, so the customer can safely close the tab.
-            (3) Invoice not ready AND no contact captured → inline form so
-                the customer can drop a phone or email. */}
+            (2) Email captured → quiet "we'll email it to you" note. The
+                dispatcher fires the moment Grow ships, so the customer can
+                safely close the tab.
+            (3) No email yet → opt-in button that reveals an email input. */}
         {invoiceUrl ? (
           <a
             href={invoiceUrl}
@@ -265,54 +251,45 @@ export function PayPage({
               <span className="text-xs text-white/80 tnum">#{invoiceNumber}</span>
             )}
           </a>
-        ) : phoneMasked || emailMasked ? (
+        ) : emailMasked ? (
           <div className="bg-(--qf-soft) rounded-2xl p-4 max-w-sm text-center space-y-2">
             <div className="inline-flex items-center gap-2 text-sm text-(--qf-deep)">
               <span className="qf-spinner text-(--qf-primary)" aria-hidden />
               מייצרים חשבונית…
             </div>
             <p className="text-sm text-qf-ink">
-              {phoneMasked && emailMasked
-                ? `נשלח לך באסמס ל-${phoneMasked} ובמייל ל-${emailMasked} ברגע שתהיה מוכנה.`
-                : phoneMasked
-                  ? `נשלח לך באסמס ל-${phoneMasked} ברגע שתהיה מוכנה.`
-                  : `נשלח לך במייל ל-${emailMasked} ברגע שתהיה מוכנה.`}
+              נשלח לך במייל ל-{emailMasked} ברגע שתהיה מוכנה.
             </p>
             <p className="text-xs text-qf-mute">אפשר לסגור את החלון.</p>
           </div>
-        ) : contactSentChannel ? (
-          <div className="bg-qf-green-soft rounded-2xl p-4 max-w-sm text-center space-y-1">
-            <div className="text-sm font-bold text-qf-green-deep">
-              {contactSentChannel === "email"
-                ? "נשלח במייל ברגע שתהיה מוכנה"
-                : "נשלח באסמס ברגע שתהיה מוכנה"}
-            </div>
-            <p className="text-xs text-qf-mute">אפשר לסגור את החלון.</p>
-          </div>
-        ) : (
+        ) : showInvoiceForm ? (
           <div className="w-full max-w-sm bg-white rounded-2xl border border-qf-line p-4 space-y-3">
             <div className="text-sm font-bold text-qf-ink text-center">
               לאן לשלוח את החשבונית?
             </div>
             <p className="text-xs text-qf-mute text-center">
-              טלפון לאסמס או מייל — נשלח ברגע שתהיה מוכנה.
+              נשלח את החשבונית למייל ברגע שתהיה מוכנה.
             </p>
             <div className="flex gap-2">
               <input
-                type="text"
+                type="email"
                 inputMode="email"
                 autoCapitalize="none"
                 spellCheck={false}
-                value={contactInput}
-                onChange={(e) => setContactInput(e.target.value)}
-                placeholder="050-1234567 או name@example.com"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void submitInvoiceEmail();
+                }}
+                placeholder="name@example.com"
                 dir="ltr"
+                autoFocus
                 className="flex-1 px-3 py-3 rounded-xl border-2 border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm bg-white"
               />
               <button
                 type="button"
-                onClick={submitContact}
-                disabled={contactBusy || contactInput.trim().length < 3}
+                onClick={submitInvoiceEmail}
+                disabled={contactBusy || emailInput.trim().length < 3}
                 className="px-5 py-3 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-bold disabled:opacity-50 active:scale-95 transition"
               >
                 {contactBusy ? "שולח…" : "שליחה"}
@@ -322,6 +299,30 @@ export function PayPage({
               <p className="text-xs text-qf-tomato text-center">{contactError}</p>
             )}
           </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowInvoiceForm(true)}
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border-2 border-qf-line text-(--qf-deep) text-sm font-bold hover:border-(--qf-primary) hover:bg-(--qf-soft) active:scale-[0.98] transition"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              aria-hidden
+              className="text-(--qf-primary)"
+            >
+              <path
+                d="M7 3h7l4 4v14H7V3z M14 3v4h4 M9 12h6 M9 16h6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            מעוניין בחשבונית מס? לחץ כאן
+          </button>
         )}
 
         <p className="text-sm text-qf-mute max-w-xs">

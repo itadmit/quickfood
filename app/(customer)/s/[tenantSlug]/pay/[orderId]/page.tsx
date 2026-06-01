@@ -41,19 +41,11 @@ export default async function PayRoute({
       paymentMethod: true,
       invoiceNumber: true,
       invoiceUrl: true,
-      customerPhoneSnap: true,
       customerEmailSnap: true,
     },
   });
   if (!order) notFound();
 
-  function maskPhone(phone: string | null): string | null {
-    if (!phone) return null;
-    const digits = phone.replace(/\D/g, "");
-    if (digits.length < 4) return null;
-    const prefix = digits.startsWith("972") ? `0${digits.slice(3, 5)}` : digits.slice(0, 3);
-    return `${prefix}-***-**${digits.slice(-2)}`;
-  }
   function maskEmail(email: string | null): string | null {
     if (!email) return null;
     const [local, domain] = email.split("@");
@@ -81,7 +73,6 @@ export default async function PayRoute({
         paymentMethod: order.paymentMethod,
         invoiceNumber: order.invoiceNumber,
         invoiceUrl: order.invoiceUrl,
-        customerPhoneMasked: maskPhone(order.customerPhoneSnap),
         customerEmailMasked: maskEmail(order.customerEmailSnap),
       }}
       growEnabled={!!growConfig?.isActive}
