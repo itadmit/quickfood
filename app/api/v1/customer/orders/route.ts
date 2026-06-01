@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db/client";
 import { createOrder, CartValidationError } from "@/lib/orders-create";
 import { toE164 } from "@/lib/format";
 import { signReviewToken } from "@/lib/reviews/token";
+import { initiateOrderPayment, type InitiatePaymentData } from "@/lib/payments/initiate-payment";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -113,6 +114,25 @@ export const POST = handler(async (req: Request) => {
       })),
     });
 
+    const needsPayment = result.paymentMethod !== "cash";
+
+    // Fold the payment initiation into this same request for card orders so
+    // the client skips a second round-trip (second network hop + possible
+    // cold start) — that's the bulk of the click-to-wallet latency. This is
+    // best-effort: any failure leaves `payment` null and the client falls
+    // back to POST /pay/initiate, so it can never block order creation.
+    // Kiosk orders pay later via the QR pay page (which initiates on its
+    // own), so we only fold initiation in for the regular checkout flow.
+    let payment: InitiatePaymentData | null = null;
+    if (needsPayment && !kioskAuthorized) {
+      try {
+        const init = await initiateOrderPayment(result.order.id);
+        if (init.ok) payment = init.data;
+      } catch {
+        /* fall back to /pay/initiate on the client */
+      }
+    }
+
     return apiJson(
       {
         order: {
@@ -128,8 +148,11 @@ export const POST = handler(async (req: Request) => {
         // have an OTP session (same-device return visit, or click from the
         // review-reminder email).
         review_token: signReviewToken(result.order.id),
-        // For card payments, client should now call /pay/initiate
-        needs_payment: result.paymentMethod !== "cash",
+        // For card payments, client should now call /pay/initiate — unless
+        // `payment` below is already populated (inline fast path).
+        needs_payment: needsPayment,
+        // Inline initiation result (null if it failed or wasn't needed).
+        payment,
       },
       201,
     );

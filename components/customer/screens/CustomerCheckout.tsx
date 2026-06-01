@@ -400,6 +400,19 @@ export function CustomerCheckout({
       // authCode — the SDK mount (rendered at the bottom of the form) will
       // overlay the wallet on top of the existing checkout view.
       if (data.needs_payment) {
+        // Fast path: the create response already initiated payment inline
+        // (saves a second round-trip). Use it when present.
+        const inline = data.payment;
+        if (inline?.sdk_auth_code) {
+          setPendingPayment({
+            orderId,
+            authCode: inline.sdk_auth_code,
+            thankYouUrl: `/s/${tenantSlug}/orders/${orderId}`,
+            testMode: inline.test_mode !== false,
+          });
+          return;
+        }
+        // Fallback: initiate in a second call (inline path failed/skipped).
         try {
           const initRes = await fetch(
             `/api/v1/customer/orders/${orderId}/pay/initiate`,
