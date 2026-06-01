@@ -434,19 +434,29 @@ export class GrowProvider extends BasePaymentProvider {
 
   validateWebhook(_body: unknown, headers: Record<string, string>): WebhookValidationResult {
     this.ensureConfigured();
+    const isTestMode = !!this.config!.testMode;
+    const strictlyEnforce = process.env.NODE_ENV === "production" && !isTestMode;
     const ip = this.extractClientIp(headers);
     if (!ip) {
-      if (process.env.NODE_ENV === "production") {
+      if (strictlyEnforce) {
         return { isValid: false, error: "Unable to determine source IP" };
       }
       return { isValid: true };
     }
-    const allowed = this.config!.testMode ? GROW_TEST_IPS : GROW_LIVE_IPS;
+    const allowed = isTestMode ? GROW_TEST_IPS : GROW_LIVE_IPS;
     if (!allowed.has(ip)) {
-      if (process.env.NODE_ENV === "production") {
+      // Strict enforcement is reserved for live (production + non-test)
+      // callbacks. Grow's sandbox IP pool rotates more often than we can
+      // keep the allowlist up to date — rejecting test callbacks left
+      // tenants stuck with pending payments forever (transaction never
+      // flips paid → kiosk polls forever → invoice callback never fires
+      // either). Worst case for accepting an off-list test IP is a
+      // phantom test transaction worth zero real money.
+      if (strictlyEnforce) {
+        this.logError(`Webhook rejected — IP not in live whitelist`, { ip });
         return { isValid: false, error: `IP ${ip} not in Grow whitelist` };
       }
-      this.log(`Webhook from non-whitelisted IP ${ip} (allowed in dev)`);
+      this.log(`Webhook from off-list IP ${ip} (allowed: ${isTestMode ? "testMode" : "dev"})`);
     }
     return { isValid: true };
   }
