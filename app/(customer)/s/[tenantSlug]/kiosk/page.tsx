@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { PaymentProvider } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { loadMenuItemForCustomer, type MenuItemForCustomer } from "@/lib/menu-item-load";
@@ -43,6 +44,14 @@ export default async function KioskPage({
   const tenant = await resolveTenantBySlug(tenantSlug);
   if (!tenant) notFound();
   if (!tenant.kioskEnabled) notFound();
+
+  const growConfig = await prisma.paymentProviderConfig.findUnique({
+    where: {
+      tenantId_provider: { tenantId: tenant.id, provider: PaymentProvider.grow },
+    },
+    select: { isActive: true },
+  });
+  const growEnabled = !!growConfig?.isActive;
 
   const [categories, items] = await Promise.all([
     prisma.menuCategory.findMany({
@@ -94,6 +103,7 @@ export default async function KioskPage({
       idleSeconds={tenant.kioskIdleSeconds}
       businessType={tenant.businessType}
       featuredBadgeLabel={tenant.featuredBadgeLabel}
+      growEnabled={growEnabled}
       categories={categories.map(({ id, name }) => ({ id, name }))}
       upsellCategoryIds={categories.filter((c) => c.upsellInCart).map((c) => c.id)}
       checkoutUpsellCategoryIds={categories.filter((c) => c.upsellBeforeCheckout).map((c) => c.id)}

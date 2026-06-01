@@ -25,6 +25,10 @@ const CreateOrderSchema = z.object({
   customer_email: z.string().email().optional(),
   coupon_code: z.string().min(1).max(40).optional(),
   applied_bundle_ids: z.array(z.string().uuid()).max(10).optional(),
+  // Set by the kiosk app. Bypasses the "auth or guest phone" gate after
+  // we verify the tenant actually has kioskEnabled=true on the server.
+  // Kiosk orders are anonymous pickups paid via QR (or at the counter).
+  kiosk: z.boolean().optional(),
   lines: z
     .array(
       z.object({
@@ -50,7 +54,18 @@ export const POST = handler(async (req: Request) => {
   // phone number. The previous "customer-only" gate was over-strict
   // and blocked merchants who navigated into their storefront.
   const isCustomerSession = session?.type === "customer";
-  if (!isCustomerSession && !body.guest_phone) {
+  let kioskAuthorized = false;
+  if (body.kiosk) {
+    const t = await prisma.tenant.findUnique({
+      where: { slug: body.tenant_slug },
+      select: { kioskEnabled: true },
+    });
+    if (!t?.kioskEnabled) {
+      return apiError("kiosk_disabled", "מצב קיוסק לא פעיל למסעדה זו", 403);
+    }
+    kioskAuthorized = true;
+  }
+  if (!isCustomerSession && !body.guest_phone && !kioskAuthorized) {
     return apiError("auth_required", "נדרשת התחברות או טלפון אורח", 401);
   }
 
@@ -86,6 +101,7 @@ export const POST = handler(async (req: Request) => {
       scheduledFor: body.scheduled_for ? new Date(body.scheduled_for) : null,
       couponCode: body.coupon_code ?? null,
       appliedBundleIds: body.applied_bundle_ids,
+      kiosk: kioskAuthorized,
       lines: body.lines.map((l) => ({
         item_id: l.item_id,
         quantity: l.quantity,

@@ -47,6 +47,10 @@ export interface CreateOrderInput {
    *  the per-bundle savings to Order.discount so the merchant
    *  doesn't promise something the cart doesn't deliver. */
   appliedBundleIds?: string[];
+  /** True when the order originates from the in-store kiosk. The
+   *  kiosk bypasses the branch's minOrder threshold — that floor
+   *  exists for delivery, not for someone tapping at the counter. */
+  kiosk?: boolean;
   lines: CartLineInput[];
 }
 
@@ -217,7 +221,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     });
   }
 
-  if (subtotal < branch.minOrder) {
+  if (!input.kiosk && subtotal < branch.minOrder) {
     throw new CartValidationError("min_order_not_met");
   }
 

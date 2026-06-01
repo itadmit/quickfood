@@ -456,6 +456,20 @@ label[for][class*="shadow-[0_"] {
   animation: qf-slide-up 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Ken Burns — slow zoom + drift for hero images. Used by the kiosk
+   start screen so the cover photo feels alive while the kiosk is idle.
+   Very gentle: 1.04 → 1.12 over 24s, ease-in-out alternate, infinite. */
+@keyframes qf-kenburns {
+  0%   { transform: scale(1.04) translate3d(-0.6%, -0.4%, 0); }
+  50%  { transform: scale(1.12) translate3d(0.6%, 0.5%, 0); }
+  100% { transform: scale(1.04) translate3d(-0.6%, -0.4%, 0); }
+}
+.animate-qf-kenburns {
+  animation: qf-kenburns 28s ease-in-out infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
 /* Bottom-sheet modal entrance — mobile only. Slides up from below the
    viewport with no scale/opacity flash, so the modal feels like a Wolt
    sheet rather than a "pop in" alert. */
@@ -519,6 +533,52 @@ label[for][class*="shadow-[0_"] {
 }
 .animate-qf-bump {
   animation: qf-bump 320ms cubic-bezier(0.22, 1.4, 0.4, 1) both;
+}
+
+/* Kiosk cart bar attention — fires when an item lands in the cart.
+   Subtle vertical nudge + brief halo so customers notice the bar
+   without it feeling like a popup. */
+@keyframes qf-cart-attention {
+  0%   { transform: translateY(0);    box-shadow: 0 -4px 20px rgba(0,0,0,0.15); }
+  18%  { transform: translateY(-8px); box-shadow: 0 -12px 32px rgba(0,0,0,0.22), 0 0 0 4px rgba(255,255,255,0.18) inset; }
+  46%  { transform: translateY(2px);  box-shadow: 0 -4px 20px rgba(0,0,0,0.15); }
+  72%  { transform: translateY(-3px); box-shadow: 0 -8px 24px rgba(0,0,0,0.18); }
+  100% { transform: translateY(0);    box-shadow: 0 -4px 20px rgba(0,0,0,0.15); }
+}
+.animate-qf-cart-attention {
+  animation: qf-cart-attention 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Kiosk scope — bumps ItemDetail's option rows / section titles /
+   notes input so add-on choices read at kiosk distance (60–80cm).
+   Scoped narrowly to the kiosk's ItemDetail wrapper so the customer
+   mobile/web path is untouched. */
+.kiosk-scope { font-size: 18px; }
+.kiosk-scope .text-sm   { font-size: 1.05rem;  line-height: 1.45; }
+.kiosk-scope .text-base { font-size: 1.2rem;   line-height: 1.45; }
+.kiosk-scope .text-xs   { font-size: 0.92rem;  line-height: 1.4;  }
+.kiosk-scope .text-\[10px\] { font-size: 0.85rem; }
+.kiosk-scope .text-\[11px\] { font-size: 0.92rem; }
+.kiosk-scope h2.font-semibold,
+.kiosk-scope h2.text-base { font-size: 1.5rem; font-weight: 800; }
+.kiosk-scope section.bg-white { padding: 22px 28px; }
+.kiosk-scope section.bg-white > div > div > button[type="button"] {
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+.kiosk-scope section.bg-white button > div > span.w-5.h-5 {
+  width: 26px;
+  height: 26px;
+}
+.kiosk-scope section.bg-white button img.w-9.h-9 {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+}
+.kiosk-scope textarea {
+  font-size: 1.1rem;
+  padding: 14px 16px;
+  border-radius: 14px;
 }
 
 /* AI advisor hint bubble — slides up from the FAB with a slight scale. */
