@@ -65,6 +65,14 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
   const [soundMuted, setSoundMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUnlockedRef = useRef(false);
+  // Mirror of soundMuted so playChime (reached from the memoized refresh)
+  // always reads the live value rather than a closed-over stale one.
+  const soundMutedRef = useRef(false);
+  // Every order id we've shown the kitchen. Any unseen id in a fresh
+  // snapshot rings the chime — so a new ticket sounds whether it arrived
+  // over the live SSE event or via a reconnect refresh() (Vercel closes
+  // idle SSE streams; without this the ticket appears silently).
+  const seenIdsRef = useRef<Set<string>>(new Set(initial.map((o) => o.id)));
 
   // Elapsed-minutes ticker. Throttled to 30s — Math.floor on the
   // minute counter means per-second updates would change nothing.
@@ -118,23 +126,24 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
           }),
         }));
       next.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      const hasUnseen = next.some((o) => !seenIdsRef.current.has(o.id));
+      for (const o of next) seenIdsRef.current.add(o.id);
+      if (hasUnseen && !soundMutedRef.current) {
+        const el = audioRef.current;
+        if (el) {
+          try {
+            el.currentTime = 0;
+            void el.play();
+          } catch {
+            /* ignore */
+          }
+        }
+      }
       setOrders(next);
     } finally {
       window.setTimeout(() => setRefreshing(false), 350);
     }
   }, []);
-
-  function playChime() {
-    if (soundMuted) return;
-    const el = audioRef.current;
-    if (!el) return;
-    try {
-      el.currentTime = 0;
-      void el.play();
-    } catch {
-      /* ignore */
-    }
-  }
 
   // SSE — shared with the Kanban (one EventSource per browser, since
   // the route is the same URL). Refresh the whole list on any event;
@@ -152,12 +161,8 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
         backoffMs = 1000;
       });
       es.addEventListener("order.created", () => {
-        try {
-          window.dispatchEvent(new Event("qf:new-order"));
-        } catch {
-          /* ignore */
-        }
-        playChime();
+        // refresh() detects the unseen id and rings the chime itself
+        // (see seenIdsRef) — works for both live SSE and reconnect paths.
         void refresh();
       });
       es.addEventListener("order.status_changed", () => void refresh());
@@ -202,6 +207,7 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
     if (typeof window === "undefined") return;
     const saved = localStorage.getItem("qf_kitchen_chime_muted");
     setSoundMuted(saved === "1");
+    soundMutedRef.current = saved === "1";
     const el = new Audio("/sounds/new.mp3");
     el.preload = "auto";
     audioRef.current = el;
@@ -231,6 +237,7 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
   function toggleMute() {
     const next = !soundMuted;
     setSoundMuted(next);
+    soundMutedRef.current = next;
     localStorage.setItem("qf_kitchen_chime_muted", next ? "1" : "0");
   }
 

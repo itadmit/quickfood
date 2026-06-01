@@ -149,6 +149,13 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
   const pendingAdvancesRef =
     useRef<Map<string, { target: Status | "delivered"; expiresAt: number }>>(new Map());
 
+  // Every order id we've ever shown. The new-order chime keys off this:
+  // any id in a fresh snapshot that we've never seen rings the bell — so
+  // the sound fires whether the order arrived over the live SSE event or
+  // got picked up by a refresh() (reconnect, tab refocus, SSE gap). Seeded
+  // from the server-rendered initial list so existing orders stay silent.
+  const seenIdsRef = useRef<Set<string>>(new Set(initial.map((o) => o.id)));
+
   const refresh = useCallback(async () => {
     try {
       const res = await fetch("/api/v1/merchant/orders?status=active", { credentials: "include" });
@@ -185,6 +192,20 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
           notes: (it.notes as string | null) ?? null,
         })),
       }));
+      // Ring the chime for any order we've never seen before, regardless of
+      // how it reached us. SSE order.created and a reconnect refresh() both
+      // funnel through here, so this is the single source of truth — the SSE
+      // listener no longer dispatches the event itself (would double-ring).
+      const freshUnseen = fresh.some((o) => !seenIdsRef.current.has(o.id));
+      for (const o of fresh) seenIdsRef.current.add(o.id);
+      if (freshUnseen) {
+        try {
+          window.dispatchEvent(new Event("qf:new-order"));
+        } catch {
+          /* ignore */
+        }
+      }
+
       const pending = pendingAdvancesRef.current;
       const now = Date.now();
       for (const [id, entry] of pending) {
@@ -244,11 +265,8 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
         backoffMs = 1000;
       });
       es.addEventListener("order.created", () => {
-        try {
-          window.dispatchEvent(new Event("qf:new-order"));
-        } catch {
-          /* ignore */
-        }
+        // refresh() detects the unseen id and rings the chime itself — see
+        // seenIdsRef. Dispatching here too would double-ring.
         void refresh();
       });
       es.addEventListener("order.status_changed", () => void refresh());
