@@ -807,6 +807,13 @@ model Order {
   paymentStatus   PaymentStatus @default(pending) @map("payment_status")
   paymentIntentId String?       @map("payment_intent_id")
 
+  /// Tax invoice / receipt landed via Grow's async invoice callback (the
+  /// `invoiceNotifyUrl` we pass on createPaymentProcess). Both stay NULL
+  /// for cash orders + for tenants without invoice generation enabled in
+  /// their Grow control panel — UI degrades gracefully.
+  invoiceNumber String? @map("invoice_number")
+  invoiceUrl    String? @map("invoice_url")
+
   courierId String?  @map("courier_id") @db.Uuid
   courier   Courier? @relation(fields: [courierId], references: [id])
 

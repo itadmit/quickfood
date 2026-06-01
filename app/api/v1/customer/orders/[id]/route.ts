@@ -54,6 +54,8 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
       total: order.total,
       payment_method: order.paymentMethod,
       payment_status: order.paymentStatus,
+      invoice_number: order.invoiceNumber,
+      invoice_url: order.invoiceUrl,
       customer_notes: order.customerNotes,
       delivery_notes: order.deliveryNotes,
       created_at: order.createdAt.toISOString(),

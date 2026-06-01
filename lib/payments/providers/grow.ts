@@ -294,6 +294,9 @@ export class GrowProvider extends BasePaymentProvider {
         successUrl: req.successUrl,
         cancelUrl: req.cancelUrl || req.failureUrl,
         notifyUrl: this.buildCallbackUrl(req.tenantSlug),
+        // Async invoice/receipt callback (only fires if the tenant has
+        // invoice generation enabled in their Grow control panel).
+        invoiceNotifyUrl: this.buildInvoiceCallbackUrl(req.tenantSlug),
         description,
         "pageField[fullName]": fullName,
         "pageField[phone]": phone,
@@ -618,6 +621,15 @@ export class GrowProvider extends BasePaymentProvider {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!baseUrl) throw new Error("NEXT_PUBLIC_APP_URL is not configured");
     return `${baseUrl.replace(/\/$/, "")}/api/payments/callback?provider=grow&tenant=${encodeURIComponent(tenantSlug)}`;
+  }
+
+  // Async callback Grow fires once an invoice is generated for the
+  // transaction. Body is a JSON array (note the brackets) — see
+  // grow-il.readme.io/reference/invoice-server-response.
+  private buildInvoiceCallbackUrl(tenantSlug: string): string {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!baseUrl) throw new Error("NEXT_PUBLIC_APP_URL is not configured");
+    return `${baseUrl.replace(/\/$/, "")}/api/payments/invoice-callback?provider=grow&tenant=${encodeURIComponent(tenantSlug)}`;
   }
 
   private extractClientIp(headers: Record<string, string>): string | null {
