@@ -26,6 +26,11 @@ interface OrderItemLike {
  * Includes: menuItemId, sizeId, quantity, normalized option ids, and notes.
  * Ignores: order date, totals (because prices can drift), pricing snapshots.
  */
+/** Collapse whitespace for tolerant name matching across menu edits. */
+function normalizeName(s: string): string {
+  return s.trim().replace(/\s+/g, " ");
+}
+
 export function fingerprintOrderItems(items: OrderItemLike[]): string {
   const parts = items
     .map((it) => {
@@ -192,8 +197,22 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
     const resolved: Resolved[] = [];
     let optionsMissing = false;
     for (const stored of storedOptions) {
-      const group = menuItem.optionGroups.find((g) => g.id === stored.group_id);
-      const opt = group?.options.find((o) => o.id === stored.option_id);
+      let group = menuItem.optionGroups.find((g) => g.id === stored.group_id);
+      let opt = group?.options.find((o) => o.id === stored.option_id);
+      // Fallback: option/group ids drift when the menu is edited or
+      // re-imported, which would drop an otherwise-available topping (e.g.
+      // "שרי") as "unavailable". Match by name so it still restores.
+      if (!opt && stored.name) {
+        const want = normalizeName(stored.name);
+        for (const g of menuItem.optionGroups) {
+          const byName = g.options.find((o) => normalizeName(o.name) === want);
+          if (byName) {
+            group = g;
+            opt = byName;
+            break;
+          }
+        }
+      }
       if (!opt || !group) {
         issues.push({ kind: "option_missing", name: menuItem.name });
         optionsMissing = true;
