@@ -139,10 +139,12 @@ export const POST = handler(async (req: Request) => {
     });
     matched++;
 
-    // Fire off SMS / email delivery (whichever contact the customer
-    // provided). Non-blocking so a Resend hiccup never stalls Grow's
-    // retry loop — the dispatch helper writes its own audit events.
-    void dispatchInvoice(orderId).catch((err) => {
+    // Email the invoice if the customer already gave us an address.
+    // Awaited (not fire-and-forget) so the Resend call completes inside
+    // this invocation — on Vercel, work after the response returns can be
+    // frozen mid-flight. A send failure is swallowed so we still 200 back
+    // to Grow (it would otherwise retry forever); the helper logs it.
+    await dispatchInvoice(orderId).catch((err) => {
       console.error("[payments/invoice-callback] dispatch failed", err);
     });
   }

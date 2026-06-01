@@ -49,10 +49,12 @@ export const POST = handler(
       data: { customerEmailSnap: email },
     });
 
-    // If Grow already shipped the invoice, send right away. If not, the
-    // callback's own dispatchInvoice call will catch the email when the
-    // invoice URL lands. (dispatchInvoice is a no-op without both.)
-    void dispatchInvoice(orderId).catch((err) => {
+    // If Grow already shipped the invoice, this sends it now; otherwise
+    // it's a no-op and the Grow callback's own dispatch sends it when the
+    // URL lands. Awaited so the Resend call finishes inside this request
+    // (Vercel can freeze work that outlives the response); a send failure
+    // is swallowed since the email is already stored for the callback.
+    await dispatchInvoice(orderId).catch((err) => {
       console.error("[invoice-contact] dispatch failed", err);
     });
 
