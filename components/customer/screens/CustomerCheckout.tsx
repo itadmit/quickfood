@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoChev, IcoArrowLeft, IcoBag } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
@@ -111,6 +111,10 @@ export function CustomerCheckout({
   // existing authCode — no new order, no double-charge), instead of staying
   // stuck on the spinner forever.
   const [walletDismissed, setWalletDismissed] = useState(false);
+  // Mirror of "is the wallet currently open", read in the onWalletChange
+  // close branch. A ref (not the walletOpen state) so it's never a stale
+  // closure value when the SDK fires its events.
+  const walletOpenRef = useRef(false);
   useEffect(() => {
     if (pendingPayment && sdkReady) {
       renderGrowWallet(pendingPayment.authCode);
@@ -121,6 +125,7 @@ export function CustomerCheckout({
     if (pendingPayment && walletDismissed) {
       const ok = renderGrowWallet(pendingPayment.authCode);
       if (ok) {
+        walletOpenRef.current = true;
         setWalletDismissed(false);
         setWalletOpen(true);
       }
@@ -1110,6 +1115,7 @@ export function CustomerCheckout({
           onReady={() => setSdkReady(true)}
           onWalletChange={(state) => {
             if (state === "open") {
+              walletOpenRef.current = true;
               setWalletOpen(true);
               setWalletDismissed(false);
             } else {
@@ -1118,8 +1124,10 @@ export function CustomerCheckout({
               // "המשך לתשלום" instead of a stuck spinner. (A close that
               // follows success navigates away via onSuccess, so this is
               // moot there.)
-              if (walletOpen) setWalletDismissed(true);
+              const wasOpen = walletOpenRef.current;
+              walletOpenRef.current = false;
               setWalletOpen(false);
+              if (wasOpen) setWalletDismissed(true);
             }
           }}
           onError={(message) => {
