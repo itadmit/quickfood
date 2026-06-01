@@ -20,6 +20,7 @@ export default async function KioskSettingsPage() {
       kioskEnabled: true,
       kioskWelcomeText: true,
       kioskIdleSeconds: true,
+      kioskRequirePhone: true,
     },
   });
   if (!tenant) redirect("/dashboard/login");
@@ -33,6 +34,7 @@ export default async function KioskSettingsPage() {
         initial={{
           welcomeText: tenant.kioskWelcomeText ?? "",
           idleSeconds: tenant.kioskIdleSeconds,
+          requirePhone: tenant.kioskRequirePhone,
         }}
       />
     </div>

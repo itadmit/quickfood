@@ -59,6 +59,7 @@ export function ItemDetail({
   item,
   businessType = "general",
   inModal = false,
+  kioskMode = false,
   onClose,
   editLine,
   addSource = "menu",
@@ -67,6 +68,10 @@ export function ItemDetail({
   item: ItemData;
   businessType?: BusinessType;
   inModal?: boolean;
+  /** Rendered inside the kiosk overlay — drops the mobile-narrow
+   *  max-w-md cap on the footer CTA and bumps touch targets so the
+   *  bar actually feels tappable on a 10–13" tablet in landscape. */
+  kioskMode?: boolean;
   onClose?: () => void;
   editLine?: CartLine;
   /** Provenance tag attached to the cart line when this detail screen
@@ -756,28 +761,63 @@ export function ItemDetail({
 
       {/* Footer CTA — Wolt-style chunky pill with quantity stepper on one side
           and bold add-to-cart CTA on the other. Sticks to viewport on mobile,
-          sits naturally at the bottom of the card on desktop. */}
-      <div className="fixed bottom-0 inset-x-0 z-30 max-w-md mx-auto lg:static lg:inset-auto lg:max-w-none lg:mx-0 lg:z-auto">
-        <div className="bg-white border-t border-qf-line px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center gap-3 lg:pb-4 lg:px-5">
-          <div className="flex items-center bg-qf-line-soft rounded-full">
+          sits naturally at the bottom of the card on desktop. In kioskMode
+          we drop the max-w-md cap (the kiosk tablet was getting a cramped
+          448px-wide bar centered in a 1000px viewport) and bump every
+          tap target up so a fingertip on a 10" iPad lands clean. */}
+      <div
+        className={cn(
+          "fixed bottom-0 inset-x-0 z-30 lg:static lg:inset-auto lg:mx-0 lg:z-auto",
+          kioskMode
+            ? "max-w-none mx-0 lg:max-w-none"
+            : "max-w-md mx-auto lg:max-w-none",
+        )}
+      >
+        <div
+          className={cn(
+            "bg-white border-t border-qf-line flex items-center",
+            kioskMode
+              ? "px-6 py-5 gap-5 lg:px-8 lg:py-6"
+              : "px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] gap-3 lg:pb-4 lg:px-5",
+          )}
+        >
+          <div
+            className={cn(
+              "flex items-center bg-qf-line-soft rounded-full",
+              kioskMode && "shadow-sm",
+            )}
+          >
             <button
               type="button"
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
               disabled={quantity <= 1}
-              className="w-12 h-14 grid place-items-center disabled:opacity-40 active:bg-qf-line-dash rounded-full transition"
+              className={cn(
+                "grid place-items-center disabled:opacity-40 active:bg-qf-line-dash rounded-full transition",
+                kioskMode ? "w-16 h-18" : "w-12 h-14",
+              )}
               aria-label="הפחת"
             >
-              <IcoMinus s={18} />
+              <IcoMinus s={kioskMode ? 24 : 18} />
             </button>
-            <div className="w-8 text-center font-bold tnum text-base">{quantity}</div>
+            <div
+              className={cn(
+                "text-center font-bold tnum",
+                kioskMode ? "w-12 text-2xl" : "w-8 text-base",
+              )}
+            >
+              {quantity}
+            </div>
             <button
               type="button"
               onClick={() => setQuantity((q) => Math.min(20, q + 1))}
               disabled={quantity >= 20}
-              className="w-12 h-14 grid place-items-center disabled:opacity-40 active:bg-qf-line-dash rounded-full transition"
+              className={cn(
+                "grid place-items-center disabled:opacity-40 active:bg-qf-line-dash rounded-full transition",
+                kioskMode ? "w-16 h-18" : "w-12 h-14",
+              )}
               aria-label="הוסף"
             >
-              <IcoPlus c="#11231a" s={18} />
+              <IcoPlus c="#11231a" s={kioskMode ? 24 : 18} />
             </button>
           </div>
           <button
@@ -785,7 +825,8 @@ export function ItemDetail({
             onClick={addToCart}
             disabled={addPhase !== "idle"}
             className={cn(
-              "flex-1 rounded-2xl px-5 h-14 text-base font-bold flex items-center justify-between transition-all duration-300 active:scale-[0.98]",
+              "flex-1 rounded-2xl font-bold flex items-center justify-between transition-all duration-300 active:scale-[0.98]",
+              kioskMode ? "px-8 h-18 text-2xl" : "px-5 h-14 text-base",
               addPhase !== "idle"
                 ? "bg-qf-green-deep text-white shadow-lg shadow-qf-green-deep/30"
                 : missingGroup
@@ -801,12 +842,19 @@ export function ItemDetail({
             ) : addPhase === "loading" ? (
               <>
                 <span>{isEditing ? "מעדכן" : "מוסיף לסל"}</span>
-                <span className="qf-spinner" style={{ width: 20, height: 20, borderWidth: 2.5 }} />
+                <span
+                  className="qf-spinner"
+                  style={{
+                    width: kioskMode ? 28 : 20,
+                    height: kioskMode ? 28 : 20,
+                    borderWidth: 2.5,
+                  }}
+                />
               </>
             ) : (
               <>
                 <span>{isEditing ? "עודכן" : "נוסף לסל"}</span>
-                <IcoCheck c="#fff" s={20} className="animate-qf-check-in" />
+                <IcoCheck c="#fff" s={kioskMode ? 28 : 20} className="animate-qf-check-in" />
               </>
             )}
           </button>

@@ -24,6 +24,7 @@
 import { apiError, apiJson, handler } from "@/lib/api-response";
 import { prisma } from "@/lib/db/client";
 import { getConfiguredProvider } from "@/lib/payments/factory";
+import { dispatchInvoice } from "@/lib/orders/invoice-dispatch";
 import { PaymentProvider } from "@prisma/client";
 
 export const runtime = "nodejs";
@@ -137,6 +138,13 @@ export const POST = handler(async (req: Request) => {
       },
     });
     matched++;
+
+    // Fire off SMS / email delivery (whichever contact the customer
+    // provided). Non-blocking so a Resend hiccup never stalls Grow's
+    // retry loop — the dispatch helper writes its own audit events.
+    void dispatchInvoice(orderId).catch((err) => {
+      console.error("[payments/invoice-callback] dispatch failed", err);
+    });
   }
 
   return apiJson({ received: true, matched });

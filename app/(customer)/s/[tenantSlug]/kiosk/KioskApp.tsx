@@ -101,6 +101,7 @@ export function KioskApp({
   businessType: businessTypeProp,
   featuredBadgeLabel,
   growEnabled,
+  kioskRequirePhone,
   categories,
   upsellCategoryIds,
   checkoutUpsellCategoryIds,
@@ -116,6 +117,7 @@ export function KioskApp({
   businessType: string;
   featuredBadgeLabel: string | null;
   growEnabled: boolean;
+  kioskRequirePhone: boolean;
   categories: KioskCategory[];
   upsellCategoryIds: string[];
   checkoutUpsellCategoryIds: string[];
@@ -125,10 +127,39 @@ export function KioskApp({
   const featuredLabel = featuredBadgeLabel?.trim() || "מומלץ של השף";
   const { lines, subtotal, clear, updateQuantity, remove, add, tenant } = useCart();
   const [state, setState] = useState<
-    "start" | "mode" | "browse" | "placing" | "pay-choice" | "pay-qr" | "thanks"
+    | "start"
+    | "mode"
+    | "phone-entry"
+    | "otp-verify"
+    | "browse"
+    | "name-entry"
+    | "placing"
+    | "pay-choice"
+    | "pay-qr"
+    | "thanks"
   >("start");
   const [diningMode, setDiningMode] = useState<"dinein" | "takeaway" | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
+  // Optional phone — collected before browse so we can SMS the invoice
+  // when Grow ships it. Customer can skip and it stays empty.
+  const [customerPhone, setCustomerPhone] = useState<string>("");
+  // Returning-customer name preloaded from `/kiosk-lookup` after phone
+  // confirm. Empty string means "no prior orders at this tenant" so
+  // the name-entry screen renders fresh-input mode.
+  const [customerFirstName, setCustomerFirstName] = useState<string>("");
+  const [customerLastName, setCustomerLastName] = useState<string>("");
+  // Did the lookup confirm a prior customer at this tenant? Drives the
+  // copy on the name-entry screen ("האם השם נכון?" vs "מה השם שלך?").
+  const [nameWasPrefilled, setNameWasPrefilled] = useState(false);
+  const [phoneSubmitting, setPhoneSubmitting] = useState(false);
+  // OTP flow state — only used when kioskRequirePhone=true. We track
+  // the channel the code was sent through so we can tell the customer
+  // "we WhatsApp'd you" vs "we SMS'd you" with the right copy.
+  const [otpCode, setOtpCode] = useState<string>("");
+  const [otpChannel, setOtpChannel] = useState<"whatsapp" | "sms" | null>(null);
+  const [otpSubmitting, setOtpSubmitting] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpResendIn, setOtpResendIn] = useState(0);
   // Pending payment session — set when an order was created with
   // payment_method=card and the QR is being shown. Polled until paid.
   const [pendingPayOrder, setPendingPayOrder] = useState<{
@@ -202,6 +233,16 @@ export function KioskApp({
     setCheckoutPromptOpen(false);
     setCheckoutPromptShown(false);
     setAcceptedBundleIds(new Set());
+    setCustomerPhone("");
+    setCustomerFirstName("");
+    setCustomerLastName("");
+    setNameWasPrefilled(false);
+    setPhoneSubmitting(false);
+    setOtpCode("");
+    setOtpChannel(null);
+    setOtpSubmitting(false);
+    setOtpError(null);
+    setOtpResendIn(0);
     setBundleSuggestions([]);
     setPlacedOrderNumber(null);
     setPlacingError(null);
@@ -444,16 +485,91 @@ export function KioskApp({
     advanceToPayment();
   }
 
+  // Returning-customer name lookup — same path whether we got here
+  // straight from phone-entry (kioskRequirePhone=false) or via OTP
+  // verify (kioskRequirePhone=true). Always lands the user on `browse`.
+  async function runLookupAndProceed(phoneDigits: string) {
+    try {
+      const res = await fetch("/api/v1/customer/kiosk-lookup", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ tenant_slug: tenantSlug, phone: phoneDigits }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data?.found) {
+        setCustomerFirstName(String(data.first_name ?? ""));
+        setCustomerLastName(String(data.last_name ?? ""));
+        setNameWasPrefilled(true);
+      } else {
+        setCustomerFirstName("");
+        setCustomerLastName("");
+        setNameWasPrefilled(false);
+      }
+    } catch {
+      /* lookup is non-blocking — proceed anyway */
+    }
+    setState("browse");
+  }
+
+  // Issue a fresh OTP for this phone. Used both by phone-entry's
+  // "המשך" button when kioskRequirePhone=true and by the resend
+  // button on the OTP screen. Sets otpChannel + otpResendIn so the UI
+  // can render "we WhatsApp'd you" / "resend in 28s".
+  async function issueKioskOtp(phoneDigits: string): Promise<boolean> {
+    setOtpError(null);
+    try {
+      const res = await fetch("/api/v1/customer/kiosk-otp/request", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ tenant_slug: tenantSlug, phone: phoneDigits }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setOtpError(
+          typeof data?.error?.message === "string"
+            ? data.error.message
+            : "לא הצלחנו לשלוח קוד",
+        );
+        return false;
+      }
+      if (data?.channel === "whatsapp" || data?.channel === "sms") {
+        setOtpChannel(data.channel);
+      }
+      setOtpResendIn(60);
+      return true;
+    } catch {
+      setOtpError("שגיאת רשת. נסו שוב.");
+      return false;
+    }
+  }
+
+  // Countdown timer for the "resend in Xs" hint on the OTP screen.
+  // Only ticks while otp-verify is the active state and the timer is
+  // positive — re-entering the screen restarts the countdown via
+  // issueKioskOtp's setOtpResendIn(60).
+  useEffect(() => {
+    if (state !== "otp-verify" || otpResendIn <= 0) return;
+    const t = window.setInterval(() => {
+      setOtpResendIn((s) => (s <= 1 ? 0 : s - 1));
+    }, 1000);
+    return () => window.clearInterval(t);
+  }, [state, otpResendIn]);
+
   function advanceToPayment() {
     setCheckoutPromptOpen(false);
+    setCartOpen(false);
+    // When the tenant requires phone+name, route through the name-entry
+    // screen first — the customer confirms (or types) the name we'll
+    // print on the kitchen ticket. The screen itself decides where to
+    // go next (pay-choice or straight to cash placeOrder).
+    if (kioskRequirePhone) {
+      setState("name-entry");
+      return;
+    }
     if (growEnabled) {
-      // Customer picks QR-pay or pay-at-counter on the next screen.
-      setCartOpen(false);
       setState("pay-choice");
       return;
     }
-    // No online payment configured — fall back to the legacy "pay at
-    // counter" flow (creates a cash order).
     void placeOrder("cash");
   }
 
@@ -478,6 +594,18 @@ export function KioskApp({
           kiosk: true,
           customer_notes: diningNote,
           applied_bundle_ids: Array.from(acceptedBundleIds),
+          // Only attach the phone when the customer actually typed one.
+          // Skipped phones come through as empty string, which the API
+          // rejects as "invalid phone" — guard against that here.
+          ...(customerPhone.replace(/\D/g, "").length === 10
+            ? { guest_phone: customerPhone }
+            : {}),
+          ...(customerFirstName.trim()
+            ? { guest_first_name: customerFirstName.trim() }
+            : {}),
+          ...(customerLastName.trim()
+            ? { guest_last_name: customerLastName.trim() }
+            : {}),
           lines: lines.map((l) => ({
             item_id: l.itemId,
             quantity: l.quantity,
@@ -614,7 +742,7 @@ export function KioskApp({
               subtitle="אוכל בצלחת + סכו״ם"
               onClick={() => {
                 setDiningMode("dinein");
-                setState("browse");
+                setState("phone-entry");
               }}
             />
             <ModeCard
@@ -623,10 +751,425 @@ export function KioskApp({
               subtitle="ארוז לדרך"
               onClick={() => {
                 setDiningMode("takeaway");
-                setState("browse");
+                setState("phone-entry");
               }}
             />
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Phone entry (optional) ───────────────────────────────────
+  if (state === "phone-entry") {
+    const digits = customerPhone.replace(/\D/g, "");
+    const phoneValid = /^05\d{8}$/.test(digits);
+    const formatted = digits.length > 3
+      ? `${digits.slice(0, 3)}-${digits.slice(3, 10)}`
+      : digits;
+    const pressDigit = (d: string) => {
+      if (digits.length >= 10) return;
+      setCustomerPhone(digits + d);
+    };
+    const pressBackspace = () => setCustomerPhone(digits.slice(0, -1));
+    return (
+      <div className="fixed inset-0 z-[200] bg-qf-bg flex flex-col select-none">
+        <KioskHeader logoUrl={logoUrl} tenantName={tenantName}>
+          <KioskHeaderButton onClick={reset}>ביטול</KioskHeaderButton>
+        </KioskHeader>
+        <div className="flex-1 flex flex-col items-center justify-center gap-8 p-8 text-center">
+          <div className="space-y-3 max-w-2xl">
+            <h2 className="text-4xl md:text-5xl font-black text-qf-ink">
+              טלפון לקבלת חשבונית?
+            </h2>
+            <p className="text-lg text-qf-mute">
+              נשלח לכם באסמס את החשבונית ועדכון כשההזמנה מוכנה. אופציונלי — אפשר לדלג.
+            </p>
+          </div>
+
+          <div className="w-full max-w-md bg-white border-4 border-qf-line-dash rounded-2xl px-6 py-5 shadow-md">
+            <div
+              dir="ltr"
+              className="text-4xl md:text-5xl font-black tnum text-qf-ink min-h-[1.2em] tracking-wide"
+            >
+              {formatted || (
+                <span className="text-qf-mute/50">050-0000000</span>
+              )}
+            </div>
+          </div>
+
+          {/* LTR keypad so "1" sits top-LEFT and "9" bottom-RIGHT — the
+              parent column is RTL (Hebrew), and a child grid inherits
+              that flow direction, which inverted 1/2/3 visually before. */}
+          <div dir="ltr" className="grid grid-cols-3 gap-3 w-full max-w-md">
+            {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
+              <button
+                key={d}
+                type="button"
+                onClick={() => pressDigit(d)}
+                className="h-20 rounded-2xl bg-white border-2 border-qf-line-dash text-3xl font-black text-qf-ink hover:border-(--qf-primary) active:scale-95 transition shadow-sm"
+              >
+                {d}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setCustomerPhone("")}
+              disabled={digits.length === 0}
+              className="h-20 rounded-2xl bg-white border-2 border-qf-line-dash text-base font-bold text-qf-mute hover:border-qf-tomato hover:text-qf-tomato disabled:opacity-40 active:scale-95 transition shadow-sm"
+              aria-label="נקה הכל"
+            >
+              נקה
+            </button>
+            <button
+              type="button"
+              onClick={() => pressDigit("0")}
+              className="h-20 rounded-2xl bg-white border-2 border-qf-line-dash text-3xl font-black text-qf-ink hover:border-(--qf-primary) active:scale-95 transition shadow-sm"
+            >
+              0
+            </button>
+            <button
+              type="button"
+              onClick={pressBackspace}
+              disabled={digits.length === 0}
+              className="h-20 rounded-2xl bg-white border-2 border-qf-line-dash text-2xl font-bold text-qf-mute hover:border-qf-tomato hover:text-qf-tomato disabled:opacity-40 active:scale-95 transition shadow-sm"
+              aria-label="מחק ספרה"
+            >
+              ⌫
+            </button>
+          </div>
+
+          <div
+            className={cn(
+              "grid gap-4 w-full max-w-md",
+              kioskRequirePhone ? "grid-cols-1" : "grid-cols-2",
+            )}
+          >
+            {!kioskRequirePhone && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCustomerPhone("");
+                  setState("browse");
+                }}
+                className="h-16 rounded-2xl border-2 border-qf-line-dash text-qf-ink text-xl font-bold hover:bg-qf-line-soft active:scale-[0.98] transition"
+              >
+                דלג
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={async () => {
+                if (!phoneValid || phoneSubmitting) return;
+                setCustomerPhone(digits);
+                setPhoneSubmitting(true);
+                try {
+                  if (kioskRequirePhone) {
+                    // Real-phone gate: send a WhatsApp/SMS code and
+                    // bounce to the OTP screen. The lookup runs only
+                    // AFTER verification, so a typo'd phone can't
+                    // pre-fill someone else's name.
+                    setOtpCode("");
+                    setOtpError(null);
+                    setOtpChannel(null);
+                    const ok = await issueKioskOtp(digits);
+                    if (ok) setState("otp-verify");
+                  } else {
+                    // No phone gate — go straight to lookup + browse.
+                    await runLookupAndProceed(digits);
+                  }
+                } finally {
+                  setPhoneSubmitting(false);
+                }
+              }}
+              disabled={!phoneValid || phoneSubmitting}
+              className="h-16 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xl font-black disabled:opacity-40 shadow-lg active:scale-[0.98] transition"
+            >
+              {phoneSubmitting ? "שולחים…" : "המשך"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── OTP verify (after phone-entry when kioskRequirePhone) ────
+  if (state === "otp-verify") {
+    const codeDigits = otpCode.replace(/\D/g, "");
+    const codeReady = codeDigits.length === 6;
+    const pressCode = (d: string) => {
+      if (codeDigits.length >= 6) return;
+      setOtpError(null);
+      setOtpCode(codeDigits + d);
+    };
+    const pressCodeBackspace = () => setOtpCode(codeDigits.slice(0, -1));
+    const channelLabel =
+      otpChannel === "whatsapp"
+        ? "שלחנו קוד בוואטסאפ"
+        : otpChannel === "sms"
+          ? "שלחנו קוד באסמס"
+          : "שלחנו לכם קוד";
+    const phoneDigits = customerPhone.replace(/\D/g, "");
+    const phoneFormatted =
+      phoneDigits.length > 3
+        ? `${phoneDigits.slice(0, 3)}-${phoneDigits.slice(3)}`
+        : phoneDigits;
+    const codeBoxes = Array.from({ length: 6 }, (_, i) => codeDigits[i] ?? "");
+    return (
+      <div className="fixed inset-0 z-[200] bg-qf-bg flex flex-col select-none">
+        <KioskHeader logoUrl={logoUrl} tenantName={tenantName}>
+          <KioskHeaderButton
+            onClick={() => {
+              setOtpCode("");
+              setOtpError(null);
+              setOtpChannel(null);
+              setState("phone-entry");
+            }}
+          >
+            שינוי טלפון
+          </KioskHeaderButton>
+        </KioskHeader>
+        <div className="flex-1 flex flex-col items-center justify-center gap-7 p-8 text-center">
+          <div className="space-y-3 max-w-2xl">
+            <h2 className="text-4xl md:text-5xl font-black text-qf-ink">
+              הזינו קוד אימות
+            </h2>
+            <p className="text-lg text-qf-mute">
+              {channelLabel} ל-<span dir="ltr" className="tnum font-bold">{phoneFormatted}</span>
+            </p>
+          </div>
+
+          {/* 6 boxes that render the typed code LTR. Visually the kiosk
+              user sees the same shape as iOS/Android SMS-autofill OTP. */}
+          <div dir="ltr" className="grid grid-cols-6 gap-2 w-full max-w-lg">
+            {codeBoxes.map((d, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "h-20 rounded-2xl border-2 grid place-items-center text-4xl font-black tnum bg-white transition",
+                  i === codeDigits.length && !codeReady
+                    ? "border-(--qf-primary) shadow-lg shadow-(--qf-primary)/15"
+                    : "border-qf-line-dash",
+                )}
+              >
+                {d || (i === codeDigits.length ? (
+                  <span className="w-1 h-10 bg-(--qf-primary) animate-qf-pulse" aria-hidden />
+                ) : (
+                  <span className="text-qf-line-dash">·</span>
+                ))}
+              </div>
+            ))}
+          </div>
+
+          {otpError && (
+            <div className="bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-base rounded-xl px-5 py-3 max-w-md">
+              {otpError}
+            </div>
+          )}
+
+          <div dir="ltr" className="grid grid-cols-3 gap-3 w-full max-w-md">
+            {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
+              <button
+                key={d}
+                type="button"
+                onClick={() => pressCode(d)}
+                disabled={otpSubmitting}
+                className="h-20 rounded-2xl bg-white border-2 border-qf-line-dash text-3xl font-black text-qf-ink hover:border-(--qf-primary) active:scale-95 transition shadow-sm disabled:opacity-50"
+              >
+                {d}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setOtpCode("")}
+              disabled={codeDigits.length === 0 || otpSubmitting}
+              className="h-20 rounded-2xl bg-white border-2 border-qf-line-dash text-base font-bold text-qf-mute hover:border-qf-tomato hover:text-qf-tomato disabled:opacity-40 active:scale-95 transition shadow-sm"
+              aria-label="נקה הכל"
+            >
+              נקה
+            </button>
+            <button
+              type="button"
+              onClick={() => pressCode("0")}
+              disabled={otpSubmitting}
+              className="h-20 rounded-2xl bg-white border-2 border-qf-line-dash text-3xl font-black text-qf-ink hover:border-(--qf-primary) active:scale-95 transition shadow-sm disabled:opacity-50"
+            >
+              0
+            </button>
+            <button
+              type="button"
+              onClick={pressCodeBackspace}
+              disabled={codeDigits.length === 0 || otpSubmitting}
+              className="h-20 rounded-2xl bg-white border-2 border-qf-line-dash text-2xl font-bold text-qf-mute hover:border-qf-tomato hover:text-qf-tomato disabled:opacity-40 active:scale-95 transition shadow-sm"
+              aria-label="מחק ספרה"
+            >
+              ⌫
+            </button>
+          </div>
+
+          <div className="flex flex-col items-center gap-3 w-full max-w-md">
+            <button
+              type="button"
+              onClick={async () => {
+                if (!codeReady || otpSubmitting) return;
+                setOtpSubmitting(true);
+                setOtpError(null);
+                try {
+                  const res = await fetch(
+                    "/api/v1/customer/kiosk-otp/verify",
+                    {
+                      method: "POST",
+                      headers: { "content-type": "application/json" },
+                      body: JSON.stringify({
+                        phone: customerPhone,
+                        code: codeDigits,
+                      }),
+                    },
+                  );
+                  const data = await res.json().catch(() => ({}));
+                  if (!res.ok) {
+                    setOtpError(
+                      typeof data?.error?.message === "string"
+                        ? data.error.message
+                        : "קוד שגוי",
+                    );
+                    setOtpCode("");
+                    return;
+                  }
+                  // Verified — run the existing lookup and proceed.
+                  await runLookupAndProceed(customerPhone.replace(/\D/g, ""));
+                } catch {
+                  setOtpError("שגיאת רשת. נסו שוב.");
+                } finally {
+                  setOtpSubmitting(false);
+                }
+              }}
+              disabled={!codeReady || otpSubmitting}
+              className="w-full h-16 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xl font-black disabled:opacity-40 shadow-lg active:scale-[0.98] transition"
+            >
+              {otpSubmitting ? "מאמתים…" : "אימות והמשך"}
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                if (otpResendIn > 0 || otpSubmitting) return;
+                setOtpCode("");
+                await issueKioskOtp(customerPhone.replace(/\D/g, ""));
+              }}
+              disabled={otpResendIn > 0 || otpSubmitting}
+              className="text-sm text-qf-mute hover:text-(--qf-deep) disabled:opacity-60 underline"
+            >
+              {otpResendIn > 0
+                ? `שליחה חוזרת בעוד ${otpResendIn} שניות`
+                : "שלחו לי קוד שוב"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Name entry (last step before payment) ───────────────────
+  if (state === "name-entry") {
+    const trimmedFirst = customerFirstName.trim();
+    const trimmedLast = customerLastName.trim();
+    const fullDisplay = `${trimmedFirst} ${trimmedLast}`.trim();
+    const canContinue = trimmedFirst.length >= 1;
+    return (
+      <div className="fixed inset-0 z-[200] bg-qf-bg flex flex-col select-none">
+        <KioskHeader logoUrl={logoUrl} tenantName={tenantName}>
+          <KioskHeaderButton
+            onClick={() => {
+              setState("browse");
+              setCartOpen(true);
+            }}
+          >
+            חזרה לעגלה
+          </KioskHeaderButton>
+        </KioskHeader>
+        <div className="flex-1 flex flex-col items-center justify-center gap-7 p-8 text-center">
+          <div className="space-y-3 max-w-2xl">
+            <h2 className="text-4xl md:text-5xl font-black text-qf-ink">
+              {nameWasPrefilled ? "האם השם נכון?" : "מה השם שלכם?"}
+            </h2>
+            <p className="text-lg text-qf-mute">
+              {nameWasPrefilled
+                ? `שלום ${fullDisplay || "🙂"} — נקרא לכם בשם הזה כשההזמנה מוכנה. אפשר לערוך.`
+                : "נקרא לכם בשם כשההזמנה מוכנה."}
+            </p>
+          </div>
+
+          <div className="w-full max-w-md space-y-3">
+            <div>
+              <label className="block text-sm font-bold text-qf-ink mb-1.5 text-right">
+                שם פרטי
+              </label>
+              <input
+                value={customerFirstName}
+                onChange={(e) => {
+                  setCustomerFirstName(e.target.value);
+                  if (nameWasPrefilled) setNameWasPrefilled(false);
+                }}
+                placeholder="הזינו שם"
+                maxLength={40}
+                className="w-full px-4 py-4 rounded-2xl border-2 border-qf-line-dash text-2xl bg-white focus:border-(--qf-primary) outline-none text-right"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-qf-ink mb-1.5 text-right">
+                שם משפחה (אופציונלי)
+              </label>
+              <input
+                value={customerLastName}
+                onChange={(e) => {
+                  setCustomerLastName(e.target.value);
+                  if (nameWasPrefilled) setNameWasPrefilled(false);
+                }}
+                placeholder="הזינו שם משפחה"
+                maxLength={40}
+                className="w-full px-4 py-4 rounded-2xl border-2 border-qf-line-dash text-2xl bg-white focus:border-(--qf-primary) outline-none text-right"
+              />
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (!canContinue) return;
+              if (growEnabled) {
+                setState("pay-choice");
+              } else {
+                void placeOrder("cash");
+              }
+            }}
+            disabled={!canContinue}
+            className="w-full max-w-md h-16 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xl font-black disabled:opacity-40 shadow-lg active:scale-[0.98] transition"
+          >
+            המשך לתשלום
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Submitting order (between pay-choice and pay-qr/thanks) ──
+  // Without this branch the "placing" state falls through to the
+  // browse render, so for a heartbeat between the customer tapping
+  // "תשלום בטלפון" and the QR / thanks screen mounting, the menu
+  // flashes on screen — which reads as "my order vanished".
+  if (state === "placing") {
+    return (
+      <div className="fixed inset-0 z-[200] bg-qf-bg flex flex-col items-center justify-center gap-6 p-12 text-center select-none">
+        <span
+          className="qf-spinner text-(--qf-primary)"
+          style={{ width: "4rem", height: "4rem", borderWidth: "5px" }}
+          aria-hidden
+        />
+        <div className="space-y-2">
+          <h2 className="text-3xl font-black text-qf-ink tracking-tight">
+            שולחים את ההזמנה…
+          </h2>
+          <p className="text-base text-qf-mute">רגע, מעבירים את ההזמנה למטבח</p>
         </div>
       </div>
     );
@@ -852,13 +1395,16 @@ export function KioskApp({
 
         <main className="flex-1 overflow-y-auto">
           {pickItemId ? (
-            // On lg+ (kiosk hardware), the picker lives inline so the
-            // header + category sidebar stay visible. On smaller
-            // screens (tablet portrait, phones) it escapes to a
-            // fullscreen layer — the inline layout would squeeze the
-            // ItemDetail too narrow to be usable.
-            <div className="kiosk-scope max-lg:fixed max-lg:inset-0 max-lg:z-[55] max-lg:bg-qf-bg max-lg:flex max-lg:flex-col">
-              <div className="sticky top-0 z-10 bg-qf-bg/95 backdrop-blur px-6 py-3 border-b border-qf-line-soft max-lg:static max-lg:bg-white max-lg:shrink-0">
+            // On xl+ (proper kiosk hardware, 1280px+) the picker lives
+            // inline so the header + category sidebar stay visible. On
+            // smaller screens (tablet, small monitors) the inline layout
+            // would squeeze ItemDetail too narrow — so the picker
+            // escapes the main column and covers the area BELOW the
+            // sticky header (top-[76px], where the kiosk header sits).
+            // Critically it does NOT cover the header, so the "לשבת /
+            // עזרה / התחל מחדש" buttons stay reachable.
+            <div className="kiosk-scope max-xl:fixed max-xl:top-[81px] max-xl:inset-x-0 max-xl:bottom-0 max-xl:z-[35] max-xl:bg-qf-bg max-xl:flex max-xl:flex-col">
+              <div className="sticky top-0 z-10 bg-qf-bg/95 backdrop-blur px-6 py-3 border-b border-qf-line-soft max-xl:static max-xl:bg-white max-xl:shrink-0">
                 <button
                   type="button"
                   onClick={() => setPickItemId(null)}
@@ -868,13 +1414,14 @@ export function KioskApp({
                   חזרה לתפריט
                 </button>
               </div>
-              <div className="max-lg:flex-1 max-lg:overflow-y-auto">
+              <div className="max-xl:flex-1 max-xl:overflow-y-auto">
                 {pickedItemData ? (
                   <ItemDetail
                     tenantSlug={tenantSlug}
                     businessType={businessType as never}
                     item={pickedItemData as never}
                     inModal
+                    kioskMode
                     onClose={() => setPickItemId(null)}
                     addSource="menu"
                   />
@@ -1213,10 +1760,10 @@ export function KioskApp({
                 <button
                   type="button"
                   onClick={startCheckout}
-                  disabled={lines.length === 0 || state === "placing"}
+                  disabled={lines.length === 0}
                   className="h-16 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xl font-black disabled:opacity-50 shadow-[0_6px_24px_rgba(14,122,60,0.28)] active:scale-[0.98] transition"
                 >
-                  {state === "placing" ? "שולח..." : "מעבר לתשלום"}
+                  מעבר לתשלום
                 </button>
                 <button
                   type="button"

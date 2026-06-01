@@ -17,6 +17,8 @@ interface PayPageProps {
     paymentMethod: string;
     invoiceNumber: string | null;
     invoiceUrl: string | null;
+    customerPhoneMasked: string | null;
+    customerEmailMasked: string | null;
   };
   growEnabled: boolean;
   growTestMode: boolean;
@@ -39,6 +41,18 @@ export function PayPage({
   const [invoiceNumber, setInvoiceNumber] = useState<string | null>(
     order.invoiceNumber,
   );
+  const [phoneMasked, setPhoneMasked] = useState<string | null>(
+    order.customerPhoneMasked,
+  );
+  const [emailMasked, setEmailMasked] = useState<string | null>(
+    order.customerEmailMasked,
+  );
+  const [contactInput, setContactInput] = useState("");
+  const [contactBusy, setContactBusy] = useState(false);
+  const [contactError, setContactError] = useState<string | null>(null);
+  const [contactSentChannel, setContactSentChannel] = useState<
+    "email" | "sms" | null
+  >(null);
   const [authCode, setAuthCode] = useState<string | null>(null);
   const [sdkReady, setSdkReady] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -116,6 +130,10 @@ export function PayPage({
         if (nextInvoiceNumber && nextInvoiceNumber !== invoiceNumber) {
           setInvoiceNumber(nextInvoiceNumber);
         }
+        const nextPhone = data?.order?.customer_phone_masked ?? null;
+        const nextEmail = data?.order?.customer_email_masked ?? null;
+        if (nextPhone !== phoneMasked) setPhoneMasked(nextPhone);
+        if (nextEmail !== emailMasked) setEmailMasked(nextEmail);
       } catch {
         /* ignore */
       }
@@ -132,7 +150,54 @@ export function PayPage({
       stopped = true;
       clearInterval(t);
     };
-  }, [order.id, paymentStatus, alreadyPaid, invoiceUrl, invoiceNumber]);
+  }, [
+    order.id,
+    paymentStatus,
+    alreadyPaid,
+    invoiceUrl,
+    invoiceNumber,
+    phoneMasked,
+    emailMasked,
+  ]);
+
+  async function submitContact() {
+    const value = contactInput.trim();
+    if (!value) return;
+    setContactBusy(true);
+    setContactError(null);
+    try {
+      const res = await fetch(
+        `/api/v1/customer/orders/${order.id}/invoice-contact`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ contact: value }),
+        },
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setContactError(
+          typeof data?.error?.message === "string"
+            ? data.error.message
+            : "שגיאה בשמירה",
+        );
+        return;
+      }
+      const channel: "email" | "sms" =
+        data?.channel === "email" ? "email" : "sms";
+      setContactSentChannel(channel);
+      setContactInput("");
+      // Optimistic: stamp local state so the UI flips to the "we'll send"
+      // notice immediately. The polling loop will replace it with the
+      // server-side mask within ~3s.
+      if (channel === "email") setEmailMasked(value);
+      else setPhoneMasked(value);
+    } catch {
+      setContactError("שגיאת רשת. נסו שוב.");
+    } finally {
+      setContactBusy(false);
+    }
+  }
 
   if (alreadyPaid || paymentStatus === "paid") {
     return (
@@ -165,6 +230,13 @@ export function PayPage({
           </p>
         </div>
 
+        {/* Invoice surface — three states:
+            (1) Invoice URL ready → big download button (immediate path).
+            (2) Invoice not ready but we have a phone/email → quiet "we'll
+                send it to you" note. The dispatcher fires the moment Grow
+                ships, so the customer can safely close the tab.
+            (3) Invoice not ready AND no contact captured → inline form so
+                the customer can drop a phone or email. */}
         {invoiceUrl ? (
           <a
             href={invoiceUrl}
@@ -193,10 +265,62 @@ export function PayPage({
               <span className="text-xs text-white/80 tnum">#{invoiceNumber}</span>
             )}
           </a>
+        ) : phoneMasked || emailMasked ? (
+          <div className="bg-(--qf-soft) rounded-2xl p-4 max-w-sm text-center space-y-2">
+            <div className="inline-flex items-center gap-2 text-sm text-(--qf-deep)">
+              <span className="qf-spinner text-(--qf-primary)" aria-hidden />
+              מייצרים חשבונית…
+            </div>
+            <p className="text-sm text-qf-ink">
+              {phoneMasked && emailMasked
+                ? `נשלח לך באסמס ל-${phoneMasked} ובמייל ל-${emailMasked} ברגע שתהיה מוכנה.`
+                : phoneMasked
+                  ? `נשלח לך באסמס ל-${phoneMasked} ברגע שתהיה מוכנה.`
+                  : `נשלח לך במייל ל-${emailMasked} ברגע שתהיה מוכנה.`}
+            </p>
+            <p className="text-xs text-qf-mute">אפשר לסגור את החלון.</p>
+          </div>
+        ) : contactSentChannel ? (
+          <div className="bg-qf-green-soft rounded-2xl p-4 max-w-sm text-center space-y-1">
+            <div className="text-sm font-bold text-qf-green-deep">
+              {contactSentChannel === "email"
+                ? "נשלח במייל ברגע שתהיה מוכנה"
+                : "נשלח באסמס ברגע שתהיה מוכנה"}
+            </div>
+            <p className="text-xs text-qf-mute">אפשר לסגור את החלון.</p>
+          </div>
         ) : (
-          <div className="inline-flex items-center gap-2 text-sm text-qf-mute">
-            <span className="qf-spinner text-(--qf-primary)" aria-hidden />
-            מייצרים חשבונית… (אם המסעדה הפעילה הנפקה אוטומטית)
+          <div className="w-full max-w-sm bg-white rounded-2xl border border-qf-line p-4 space-y-3">
+            <div className="text-sm font-bold text-qf-ink text-center">
+              לאן לשלוח את החשבונית?
+            </div>
+            <p className="text-xs text-qf-mute text-center">
+              טלפון לאסמס או מייל — נשלח ברגע שתהיה מוכנה.
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                inputMode="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                value={contactInput}
+                onChange={(e) => setContactInput(e.target.value)}
+                placeholder="050-1234567 או name@example.com"
+                dir="ltr"
+                className="flex-1 px-3 py-3 rounded-xl border-2 border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm bg-white"
+              />
+              <button
+                type="button"
+                onClick={submitContact}
+                disabled={contactBusy || contactInput.trim().length < 3}
+                className="px-5 py-3 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-bold disabled:opacity-50 active:scale-95 transition"
+              >
+                {contactBusy ? "שולח…" : "שליחה"}
+              </button>
+            </div>
+            {contactError && (
+              <p className="text-xs text-qf-tomato text-center">{contactError}</p>
+            )}
           </div>
         )}
 

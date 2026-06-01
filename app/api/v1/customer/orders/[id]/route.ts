@@ -5,6 +5,24 @@ import { prisma } from "@/lib/db/client";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function maskPhone(phone: string | null): string | null {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 4) return null;
+  // 050-***-**67 — leaks the prefix (so the customer recognizes it)
+  // and the last two digits (enough to confirm "yes that's mine").
+  const prefix = digits.startsWith("972") ? `0${digits.slice(3, 5)}` : digits.slice(0, 3);
+  return `${prefix}-***-**${digits.slice(-2)}`;
+}
+
+function maskEmail(email: string | null): string | null {
+  if (!email) return null;
+  const [local, domain] = email.split("@");
+  if (!local || !domain) return null;
+  const head = local.length <= 2 ? `${local[0] ?? ""}` : local.slice(0, 2);
+  return `${head}***@${domain}`;
+}
+
 export const GET = handler(async (_req, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
   const order = await prisma.order.findUnique({
@@ -56,6 +74,11 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
       payment_status: order.paymentStatus,
       invoice_number: order.invoiceNumber,
       invoice_url: order.invoiceUrl,
+      // Masked contact info so the PayPage can say "we'll SMS you at
+      // ***-***-XX67" without leaking the full number to anyone who
+      // happens to know the UUID. Empty when nothing was captured.
+      customer_phone_masked: maskPhone(order.customerPhoneSnap),
+      customer_email_masked: maskEmail(order.customerEmailSnap),
       customer_notes: order.customerNotes,
       delivery_notes: order.deliveryNotes,
       created_at: order.createdAt.toISOString(),

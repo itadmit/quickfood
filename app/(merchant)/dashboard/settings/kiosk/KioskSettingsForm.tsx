@@ -10,10 +10,11 @@ export function KioskSettingsForm({
 }: {
   slug: string;
   enabled: boolean;
-  initial: { welcomeText: string; idleSeconds: number };
+  initial: { welcomeText: string; idleSeconds: number; requirePhone: boolean };
 }) {
   const [welcomeText, setWelcomeText] = useState(initial.welcomeText);
   const [idleSeconds, setIdleSeconds] = useState(initial.idleSeconds);
+  const [requirePhone, setRequirePhone] = useState(initial.requirePhone);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   function pushToast(kind: ToastKind, message: string) {
@@ -29,6 +30,7 @@ export function KioskSettingsForm({
         body: JSON.stringify({
           kiosk_welcome_text: welcomeText.trim() || null,
           kiosk_idle_seconds: Math.max(15, Math.min(600, idleSeconds)),
+          kiosk_require_phone: requirePhone,
         }),
       });
       if (!res.ok) {
@@ -100,6 +102,22 @@ export function KioskSettingsForm({
             <p className="text-xs text-qf-mute mt-1">
               מופיע במסך הפתיחה של הקיוסק מעל הכפתור הראשי. ריק → ייכתב &quot;ברוכים הבאים ל-X&quot; אוטומטית.
             </p>
+          </div>
+
+          <div className="flex items-start gap-3 p-4 rounded-xl border border-qf-line-dash bg-qf-line-soft/30">
+            <input
+              id="kiosk-require-phone"
+              type="checkbox"
+              checked={requirePhone}
+              onChange={(e) => setRequirePhone(e.target.checked)}
+              className="mt-1 w-5 h-5 accent-(--qf-primary)"
+            />
+            <label htmlFor="kiosk-require-phone" className="flex-1 cursor-pointer">
+              <div className="text-sm font-bold">חובה למלא טלפון ושם</div>
+              <div className="text-xs text-qf-mute mt-0.5 leading-relaxed">
+                לפני הזמנה הלקוח מזין טלפון, ולפני תשלום מאשר את שמו. נשלח לו חשבונית בוואטסאפ או אסמס, ונקשר את ההזמנה ללקוח קיים אם יש (לפי הטלפון). מומלץ כשאתם רוצים לקרוא ללקוח בשם כשההזמנה מוכנה.
+              </div>
+            </label>
           </div>
 
           <div>

@@ -1,16 +1,47 @@
 "use client";
 
+import { useState } from "react";
+import { Globe } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { IcoClose } from "@/components/shared/Icons";
 
-// Standard Israeli QWERTY layout. Each row is the visual row from the
-// physical keyboard, left-to-right; we render with `dir="ltr"` on the
-// row containers so the order matches what users learned on their
-// laptops even though the rest of the kiosk is RTL.
-const ROW_1 = ["ק", "ר", "א", "ט", "ו", "ן", "ם", "פ"];
-const ROW_2 = ["ש", "ד", "ג", "כ", "ע", "י", "ח", "ל", "ך", "ף"];
-const ROW_3 = ["ז", "ס", "ב", "ה", "נ", "מ", "צ", "ת", "ץ"];
-const DIGITS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+// Standard Israeli QWERTY (he) + US QWERTY (en) flattened to a
+// 10-column grid so every key — letters, digits, punctuation,
+// backspace — renders at the exact same width (the width of one ל).
+// Missing letter slots are filled with `.` / `-` / `,` so a lone key
+// never stretches; backspace tucks in at the end of row 4 in a single
+// column. The bottom strip carries space (8 columns) + done (2
+// columns) so functional keys stay distinct from the letter grid
+// without breaking the column rhythm.
+type Lang = "he" | "en";
+
+// Both layouts render LTR — the kiosk keyboard is a physical Israeli
+// QWERTY where ק sits on the left (mapped to Q) and פ on the right
+// (mapped to P), regardless of the document direction. RTL'ing the
+// rows would put ק on the right, which is the opposite of every
+// keyboard customers have ever touched. Backspace is embedded in the
+// row arrays as the `BS` sentinel so it can sit at whatever slot the
+// layout needs — in HE we put it at the end of the top letter row
+// (where `-` used to be), in EN it stays at the end of the bottom row.
+const BS = "⌫"; // ⌫
+const LAYOUT: Record<Lang, { rows: string[][] }> = {
+  he: {
+    rows: [
+      ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+      [".", "ק", "ר", "א", "ט", "ו", "ן", "ם", "פ", BS],
+      ["ש", "ד", "ג", "כ", "ע", "י", "ח", "ל", "ך", "ף"],
+      ["ז", "ס", "ב", "ה", "נ", "מ", "צ", "ת", "ץ", "-"],
+    ],
+  },
+  en: {
+    rows: [
+      ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+      ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
+      ["a", "s", "d", "f", "g", "h", "j", "k", "l", "."],
+      ["z", "x", "c", "v", "b", "n", "m", ",", "-", BS],
+    ],
+  },
+};
 
 export function KioskKeyboard({
   value,
@@ -23,6 +54,9 @@ export function KioskKeyboard({
   onClose: () => void;
   className?: string;
 }) {
+  const [lang, setLang] = useState<Lang>("he");
+  const layout = LAYOUT[lang];
+
   function append(ch: string) {
     if (value.length >= 40) return;
     onChange(value + ch);
@@ -32,6 +66,9 @@ export function KioskKeyboard({
   }
   function clear() {
     onChange("");
+  }
+  function toggleLang() {
+    setLang((l) => (l === "he" ? "en" : "he"));
   }
 
   return (
@@ -47,6 +84,15 @@ export function KioskKeyboard({
             מקלדת
           </div>
           <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={toggleLang}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-bold text-qf-ink2 hover:bg-qf-line-soft transition"
+              aria-label={lang === "he" ? "החלף לאנגלית" : "החלף לעברית"}
+            >
+              <Globe size={16} strokeWidth={2} aria-hidden />
+              <span className="tnum">{lang === "he" ? "EN" : "עב"}</span>
+            </button>
             <button
               type="button"
               onClick={clear}
@@ -66,22 +112,36 @@ export function KioskKeyboard({
           </div>
         </div>
 
-        {/* Digits — narrow row at the top, separate from letters */}
-        <KeyRow keys={DIGITS} onPress={append} compact />
-        {/* Letters */}
-        <KeyRow keys={ROW_1} onPress={append} />
-        <KeyRow keys={ROW_2} onPress={append} />
-        <div className="flex items-center gap-1.5" dir="ltr">
-          <KeyButton wide onPress={backspace} ariaLabel="מחק">
-            <BackspaceGlyph />
-          </KeyButton>
-          {ROW_3.map((k) => (
-            <KeyButton key={k} onPress={() => append(k)}>
-              {k}
-            </KeyButton>
-          ))}
+        <div className="grid grid-cols-10 gap-1.5" dir="ltr">
+          {layout.rows.flatMap((row, ri) =>
+            row.map((k, ki) =>
+              k === BS ? (
+                <KeyButton
+                  key={`${ri}-${ki}-bs`}
+                  onPress={backspace}
+                  ariaLabel="מחק"
+                >
+                  <BackspaceGlyph />
+                </KeyButton>
+              ) : (
+                <KeyButton key={`${ri}-${ki}-${k}`} onPress={() => append(k)}>
+                  {k}
+                </KeyButton>
+              ),
+            ),
+          )}
+        </div>
+
+        <div className="grid grid-cols-10 gap-1.5">
           <KeyButton
-            wide
+            className="col-span-8 text-base font-semibold"
+            onPress={() => append(" ")}
+            ariaLabel="רווח"
+          >
+            רווח
+          </KeyButton>
+          <KeyButton
+            className="col-span-2 text-base"
             tone="primary"
             onPress={onClose}
             ariaLabel="סיים"
@@ -89,36 +149,7 @@ export function KioskKeyboard({
             סיום
           </KeyButton>
         </div>
-        <div className="flex items-center gap-1.5">
-          <KeyButton
-            extraWide
-            onPress={() => append(" ")}
-            ariaLabel="רווח"
-          >
-            רווח
-          </KeyButton>
-        </div>
       </div>
-    </div>
-  );
-}
-
-function KeyRow({
-  keys,
-  onPress,
-  compact,
-}: {
-  keys: string[];
-  onPress: (ch: string) => void;
-  compact?: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-1.5" dir="ltr">
-      {keys.map((k) => (
-        <KeyButton key={k} compact={compact} onPress={() => onPress(k)}>
-          {k}
-        </KeyButton>
-      ))}
     </div>
   );
 }
@@ -127,17 +158,13 @@ function KeyButton({
   children,
   onPress,
   ariaLabel,
-  wide,
-  extraWide,
-  compact,
+  className,
   tone = "default",
 }: {
   children: React.ReactNode;
   onPress: () => void;
   ariaLabel?: string;
-  wide?: boolean;
-  extraWide?: boolean;
-  compact?: boolean;
+  className?: string;
   tone?: "default" | "primary";
 }) {
   return (
@@ -146,13 +173,11 @@ function KeyButton({
       onClick={onPress}
       aria-label={ariaLabel}
       className={cn(
-        "flex-1 h-14 rounded-xl border text-xl font-bold transition active:scale-[0.96] active:shadow-none shadow-[0_2px_0_rgba(17,35,26,0.08)]",
-        compact && "h-11 text-lg",
-        wide && "min-w-[110px] grow-[2] text-base",
-        extraWide && "w-full text-base font-semibold",
+        "h-14 rounded-xl border text-xl font-bold transition active:scale-[0.96] active:shadow-none shadow-[0_2px_0_rgba(17,35,26,0.08)] grid place-items-center uppercase",
         tone === "primary"
           ? "bg-(--qf-primary) text-white border-(--qf-deep) hover:bg-(--qf-deep)"
           : "bg-white text-qf-ink border-qf-line-soft hover:bg-qf-line-soft",
+        className,
       )}
     >
       {children}
@@ -168,7 +193,6 @@ function BackspaceGlyph() {
       viewBox="0 0 24 24"
       fill="none"
       aria-hidden
-      className="mx-auto"
     >
       <path
         d="M9 5h11a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-7-7 7-7z"

@@ -104,6 +104,7 @@ export default async function KioskPage({
       businessType={tenant.businessType}
       featuredBadgeLabel={tenant.featuredBadgeLabel}
       growEnabled={growEnabled}
+      kioskRequirePhone={tenant.kioskRequirePhone}
       categories={categories.map(({ id, name }) => ({ id, name }))}
       upsellCategoryIds={categories.filter((c) => c.upsellInCart).map((c) => c.id)}
       checkoutUpsellCategoryIds={categories.filter((c) => c.upsellBeforeCheckout).map((c) => c.id)}

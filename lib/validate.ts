@@ -287,6 +287,7 @@ export const TenantPatchSchema = z.object({
   // merchant-editable. `kiosk_enabled` itself is a superadmin gate.
   kiosk_welcome_text: z.string().max(160).nullable().optional(),
   kiosk_idle_seconds: z.number().int().min(15).max(600).optional(),
+  kiosk_require_phone: z.boolean().optional(),
   // Merchandising knobs (shared by storefront + kiosk).
   featured_badge_label: z.string().max(40).nullable().optional(),
   upsell_size_nudge: z.boolean().optional(),
