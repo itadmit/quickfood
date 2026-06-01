@@ -105,11 +105,29 @@ export function CustomerCheckout({
   >(null);
   const [sdkReady, setSdkReady] = useState(false);
   const [walletOpen, setWalletOpen] = useState(false);
+  // True once the customer has opened the Grow wallet and then dismissed it
+  // without paying. The CTA flips from the "פותח תשלום..." spinner to a
+  // clickable "המשך לתשלום" that re-opens the SAME wallet (reuses the
+  // existing authCode — no new order, no double-charge), instead of staying
+  // stuck on the spinner forever.
+  const [walletDismissed, setWalletDismissed] = useState(false);
   useEffect(() => {
     if (pendingPayment && sdkReady) {
       renderGrowWallet(pendingPayment.authCode);
     }
   }, [pendingPayment, sdkReady]);
+
+  function reopenOrPlace() {
+    if (pendingPayment && walletDismissed) {
+      const ok = renderGrowWallet(pendingPayment.authCode);
+      if (ok) {
+        setWalletDismissed(false);
+        setWalletOpen(true);
+      }
+      return;
+    }
+    void place();
+  }
 
   // Load the restaurant's accepted payment methods. The server returns
   // them in the merchant's chosen order (defaultPaymentMethod first),
@@ -335,6 +353,7 @@ export function CustomerCheckout({
     }
     setBusy(true);
     setError(null);
+    setWalletDismissed(false);
     try {
       const res = await fetch("/api/v1/customer/orders", {
         method: "POST",
@@ -1020,12 +1039,12 @@ export function CustomerCheckout({
             </div>
             <button
               type="button"
-              onClick={place}
-              disabled={!canPlace}
+              onClick={reopenOrPlace}
+              disabled={!canPlace && !(paymentInFlight && walletDismissed)}
               className="w-full mt-4 bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-14 text-base font-semibold flex items-center justify-between shadow-sm shadow-(--qf-primary)/25 transition"
             >
               <span className="inline-flex items-center gap-2">
-                {(busy || paymentInFlight) && (
+                {(busy || (paymentInFlight && !walletDismissed)) && (
                   <span className="qf-spinner text-white text-base" aria-hidden />
                 )}
                 <span>
@@ -1034,12 +1053,16 @@ export function CustomerCheckout({
                     : paymentInFlight
                       ? walletOpen
                         ? "ממתין לתשלום..."
-                        : "פותח תשלום..."
+                        : walletDismissed
+                          ? "המשך לתשלום"
+                          : "פותח תשלום..."
                       : paymentMethod === "cash"
                         ? "בצע הזמנה"
                         : "לשלם כעת"}
                 </span>
-                {!busy && !paymentInFlight && <IcoArrowLeft c="#fff" s={16} />}
+                {!busy && (!paymentInFlight || walletDismissed) && (
+                  <IcoArrowLeft c="#fff" s={16} />
+                )}
               </span>
               <span className="tnum text-lg">{formatPrice(total)}</span>
             </button>
@@ -1051,8 +1074,8 @@ export function CustomerCheckout({
       <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 max-w-md mx-auto bg-white border-t border-qf-line px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <button
           type="button"
-          onClick={place}
-          disabled={!canPlace}
+          onClick={reopenOrPlace}
+          disabled={!canPlace && !(paymentInFlight && walletDismissed)}
           className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-16 text-base font-semibold flex items-center justify-between shadow-lg shadow-(--qf-primary)/25 transition active:scale-[0.99]"
         >
           <span className="inline-flex items-center gap-2">
@@ -1085,7 +1108,20 @@ export function CustomerCheckout({
           testMode={pendingPayment?.testMode ?? growTestMode}
           thankYouUrl={pendingPayment?.thankYouUrl ?? `/s/${tenantSlug}`}
           onReady={() => setSdkReady(true)}
-          onWalletChange={(state) => setWalletOpen(state === "open")}
+          onWalletChange={(state) => {
+            if (state === "open") {
+              setWalletOpen(true);
+              setWalletDismissed(false);
+            } else {
+              // Wallet closed. If it had been open, the customer dismissed it
+              // without paying — mark it so the CTA becomes a clickable
+              // "המשך לתשלום" instead of a stuck spinner. (A close that
+              // follows success navigates away via onSuccess, so this is
+              // moot there.)
+              if (walletOpen) setWalletDismissed(true);
+              setWalletOpen(false);
+            }
+          }}
           onError={(message) => {
             // Only surface the error if we actually have an in-flight
             // payment — pre-mount SDK errors (none of our business) get
