@@ -141,10 +141,13 @@ export interface PaymentMethodSetup {
 
 /**
  * Generate a Grow tokenization URL the customer visits to save a card.
- * `context_type: 'subscription_setup'` means the resulting payment method
- * will be reusable for recurring subscription charges. `amount` is the
- * base figure in shekels (the hub adds VAT — for ₪299 base the customer
- * sees ₪352.82 on Grow's form).
+ *
+ *  - `subscription_setup` charges the first-month total (e.g. ₪352.82
+ *     incl. VAT) — used the first time a merchant sets up billing.
+ *  - `card_update` only verifies the card with ₪1 hold (chargeType=3),
+ *     no recurring charge. Used to replace a saved card without
+ *     re-paying.
+ *  - `topup` is reserved.
  *
  * `accept` is required by the hub (Grow regulatory): the merchant must
  * have ticked an "I authorize storing my card for future charges"
@@ -154,7 +157,7 @@ export interface PaymentMethodSetup {
 export function createPaymentMethodSetup(input: {
   customer_id: string;
   accept: true;
-  context_type: "subscription_setup" | "topup";
+  context_type: "subscription_setup" | "card_update" | "topup";
   amount: number;
   success_url: string;
   failure_url: string;
@@ -199,6 +202,51 @@ export function cancelSubscription(
   return request<BillingSubscription>(
     "POST",
     `/api/v1/subscriptions/${subscriptionId}/cancel`,
+    input,
+  );
+}
+
+export interface SubscriptionDetail {
+  id: string;
+  customer_id: string;
+  product_id: string;
+  plan_id: string;
+  pending_plan_id?: string | null;
+  status: string;
+  billing_interval: string;
+  current_period_start?: string;
+  current_period_end: string;
+  trial_ends_at?: string | null;
+  payment_method_id?: string | null;
+  cancel_at_period_end: boolean;
+  cancelled_at?: string | null;
+  cancellation_reason?: string | null;
+}
+
+/** Fetch the full subscription record from the hub. */
+export function getSubscription(subscriptionId: string) {
+  return request<SubscriptionDetail>(
+    "GET",
+    `/api/v1/subscriptions/${subscriptionId}`,
+  );
+}
+
+/**
+ * PATCH a subscription. Mostly used here to undo a scheduled cancel by
+ * sending `cancel_at_period_end: false` after the merchant clicks
+ * "ביטול ביטול".
+ */
+export function patchSubscription(
+  subscriptionId: string,
+  input: {
+    cancel_at_period_end?: boolean;
+    plan_code?: string;
+    payment_method_id?: string;
+  },
+) {
+  return request<SubscriptionDetail>(
+    "PATCH",
+    `/api/v1/subscriptions/${subscriptionId}`,
     input,
   );
 }

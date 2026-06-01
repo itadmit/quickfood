@@ -26,7 +26,10 @@ export const POST = handler(async (req: Request) => {
   // checkbox in the UI before this call. The hub also enforces it (returns
   // 400 if accept!=true) but rejecting here gives a clean local error
   // instead of relying on the remote response.
-  const body = (await req.json().catch(() => ({}))) as { accept?: boolean };
+  const body = (await req.json().catch(() => ({}))) as {
+    accept?: boolean;
+    context_type?: "subscription_setup" | "card_update";
+  };
   if (body.accept !== true) {
     return apiError(
       "consent_required",
@@ -34,6 +37,8 @@ export const POST = handler(async (req: Request) => {
       400,
     );
   }
+  const contextType: "subscription_setup" | "card_update" =
+    body.context_type === "card_update" ? "card_update" : "subscription_setup";
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
@@ -75,14 +80,14 @@ export const POST = handler(async (req: Request) => {
       });
     }
 
-    // Base monthly price BEFORE VAT — the hub adds 18% VAT on top, so PayPlus
-    // ends up showing ₪352.82 to the merchant. (On `/payment-methods/setup`,
-    // unlike `/charges`, the hub treats `amount` as the net pre-VAT figure.)
+    // subscription_setup: charge the first month's ₪299 (+VAT) so the
+    // token is captured along with month 1; card_update: chargeType=3
+    // verification with ₪1 hold, no recurring billing yet.
     const setup = await createPaymentMethodSetup({
       customer_id: billingCustomerId,
       accept: true,
-      context_type: "subscription_setup",
-      amount: 299,
+      context_type: contextType,
+      amount: contextType === "card_update" ? 1 : 299,
       success_url: `${appUrl}/dashboard/billing?setup=complete`,
       failure_url: `${appUrl}/dashboard/billing?setup=failed`,
     });

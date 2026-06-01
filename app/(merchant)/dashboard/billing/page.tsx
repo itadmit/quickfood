@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
+import {
+  getSubscription,
+  BillingHubError,
+  type SubscriptionDetail,
+} from "@/lib/billing-hub/client";
 import { BillingView } from "./BillingView";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +34,20 @@ export default async function BillingPage({
   });
   if (!tenant) redirect("/dashboard/login");
 
+  // Fetch the live subscription state from the hub so the UI shows
+  // accurate cancel-at-period-end / current-period-end values without
+  // mirroring everything locally. Skip for pre-setup tenants.
+  let subscription: SubscriptionDetail | null = null;
+  if (tenant.billingSubscriptionId) {
+    try {
+      subscription = await getSubscription(tenant.billingSubscriptionId);
+    } catch (err) {
+      if (!(err instanceof BillingHubError) || err.status !== 404) {
+        console.warn("[billing] getSubscription failed", err);
+      }
+    }
+  }
+
   const sp = await searchParams;
 
   return (
@@ -42,6 +61,15 @@ export default async function BillingPage({
         trialEndsAt: tenant.trialEndsAt?.toISOString() ?? null,
         smsCreditsRemaining: tenant.smsCreditsRemaining,
       }}
+      subscription={
+        subscription
+          ? {
+              status: subscription.status,
+              cancelAtPeriodEnd: subscription.cancel_at_period_end,
+              currentPeriodEnd: subscription.current_period_end,
+            }
+          : null
+      }
       justReturnedFromSetup={sp.setup === "complete"}
       justReturnedFromFailure={sp.setup === "failed"}
     />

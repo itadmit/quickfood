@@ -18,12 +18,20 @@ interface TenantBilling {
   smsCreditsRemaining: number;
 }
 
+interface SubscriptionState {
+  status: string;
+  cancelAtPeriodEnd: boolean;
+  currentPeriodEnd: string;
+}
+
 export function BillingView({
   tenant,
+  subscription,
   justReturnedFromSetup,
   justReturnedFromFailure,
 }: {
   tenant: TenantBilling;
+  subscription: SubscriptionState | null;
   justReturnedFromSetup: boolean;
   justReturnedFromFailure: boolean;
 }) {
@@ -112,7 +120,9 @@ export function BillingView({
         ? "trial_active"
         : "awaiting";
 
-  async function startSetup() {
+  async function startSetup(
+    contextType: "subscription_setup" | "card_update" = "subscription_setup",
+  ) {
     if (!consent) {
       setError("יש לאשר את שמירת פרטי האשראי לפני המעבר להזנת כרטיס");
       return;
@@ -123,7 +133,7 @@ export function BillingView({
       const res = await fetch("/api/v1/merchant/billing/setup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accept: true }),
+        body: JSON.stringify({ accept: true, context_type: contextType }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -136,6 +146,55 @@ export function BillingView({
     } finally {
       setBusy(false);
     }
+  }
+
+  async function cancelSub() {
+    if (!confirm(
+      "המנוי יסתיים בתום תקופת החיוב הנוכחית ולא יתחדש. אתה בטוח?",
+    )) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/v1/merchant/billing/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data?.error?.message ?? "ביטול המנוי נכשל");
+        return;
+      }
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resumeSub() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/v1/merchant/billing/resume", {
+        method: "POST",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data?.error?.message ?? "ביטול הביטול נכשל");
+        return;
+      }
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function changeCard() {
+    if (!consent) {
+      setError("יש לאשר את שמירת פרטי האשראי לפני המעבר להחלפת הכרטיס");
+      return;
+    }
+    await startSetup("card_update");
   }
 
   return (
@@ -203,6 +262,13 @@ export function BillingView({
             </Row>
           )}
           <Row label="אמצעי תשלום שמור">{hasPaymentMethod ? "כן" : "לא"}</Row>
+          {setupComplete && subscription?.currentPeriodEnd && (
+            <Row label={subscription.cancelAtPeriodEnd ? "מסתיים בתאריך" : "מתחדש בתאריך"}>
+              <span className="ltr-num font-mono text-xs">
+                {subscription.currentPeriodEnd}
+              </span>
+            </Row>
+          )}
         </div>
 
         {!setupComplete && (
@@ -225,20 +291,75 @@ export function BillingView({
             </label>
             <button
               type="button"
-              onClick={startSetup}
+              onClick={() => startSetup("subscription_setup")}
               disabled={busy || !consent}
               className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {busy
                 ? "פותח..."
-                : hasPaymentMethod
-                  ? "החלפת אמצעי תשלום"
-                  : "השלמת תשלום ופתיחת מנוי (₪299 + מע״מ)"}
+                : "השלמת תשלום ופתיחת מנוי (₪299 + מע״מ)"}
             </button>
             <p className="text-xs text-qf-mute">
               ייפתח דף תשלום מאובטח של QuickBilling. בסיום החיוב הראשון של
               ₪299 + מע״מ ישמר טוקן והמנוי מתחיל אוטומטית.
             </p>
+            {error && (
+              <div className="text-sm text-qf-tomato">{error}</div>
+            )}
+          </div>
+        )}
+
+        {setupComplete && (
+          <div className="mt-5 border-t border-qf-line-soft pt-4 space-y-3">
+            {subscription?.cancelAtPeriodEnd ? (
+              <div className="bg-qf-tomato-soft border border-qf-tomato/40 rounded-xl px-3 py-2 text-xs text-qf-tomato">
+                המנוי מסומן לסיום בתום התקופה. ניתן לבטל את הביטול עד תאריך הסיום.
+              </div>
+            ) : null}
+            <label className="flex items-start gap-2 text-xs text-qf-ink2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => {
+                  setConsent(e.target.checked);
+                  if (e.target.checked) setError(null);
+                }}
+                className="mt-0.5 w-4 h-4 accent-(--qf-primary)"
+              />
+              <span>
+                אני מאשר/ת לשמור את פרטי כרטיס האשראי החדש לחיוב המנוי
+                ועמלות ההזמנות. נדרש לפני החלפת הכרטיס.
+              </span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={changeCard}
+                disabled={busy || !consent}
+                className="px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xs font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {busy ? "פותח..." : "החלפת כרטיס אשראי"}
+              </button>
+              {subscription?.cancelAtPeriodEnd ? (
+                <button
+                  type="button"
+                  onClick={resumeSub}
+                  disabled={busy}
+                  className="px-4 py-2 rounded-xl bg-white border border-qf-line-dash text-xs font-medium hover:bg-qf-bg disabled:opacity-60"
+                >
+                  ביטול הביטול (חזרה לפעיל)
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={cancelSub}
+                  disabled={busy}
+                  className="px-4 py-2 rounded-xl bg-white border border-qf-tomato/30 text-qf-tomato text-xs font-medium hover:bg-qf-tomato-soft disabled:opacity-60"
+                >
+                  ביטול המנוי בסוף התקופה
+                </button>
+              )}
+            </div>
             {error && (
               <div className="text-sm text-qf-tomato">{error}</div>
             )}
