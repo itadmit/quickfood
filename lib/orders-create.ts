@@ -353,9 +353,17 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       .slice(0, 3) || "QF";
   const number = `${numberPrefix}-${orderSeq}`;
 
-  // Determine initial state — cash auto-confirms, card waits for callback
-  const initialStatus = input.paymentMethod === "cash" ? "confirmed" : "pending";
-  const paymentStatus = input.paymentMethod === "cash" ? "pending" : "pending";
+  // Determine initial state:
+  // - Card: always `pending` — waits for the Grow callback to confirm.
+  // - Storefront cash: `confirmed` — merchant prepares immediately,
+  //   cash is collected at delivery or pickup as part of the existing
+  //   delivery flow (no separate confirmation step needed).
+  // - Kiosk cash: `pending` — the cashier at the counter has to take
+  //   the cash before the kitchen starts cooking. The merchant flips
+  //   it to confirmed via the Kanban once they've collected.
+  const initialStatus =
+    input.paymentMethod === "cash" && !input.kiosk ? "confirmed" : "pending";
+  const paymentStatus = "pending";
 
   // Resolve a real Customer row for every order that has a phone, even
   // when the checkout was placed as a "guest". Returning callers (same

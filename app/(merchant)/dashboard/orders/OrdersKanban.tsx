@@ -496,7 +496,9 @@ function Column({
                   ? "נמסר ללקוח"
                   : o.status === "confirmed"
                     ? "התחל הכנה"
-                    : actionLabel
+                    : o.status === "pending" && o.paymentMethod === "cash"
+                      ? "מזומן התקבל"
+                      : actionLabel
               }
               now={now}
               onAdvance={onAdvance}

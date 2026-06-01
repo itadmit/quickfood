@@ -84,7 +84,11 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
       const next: Order[] = raw
         .filter((o) => {
           const s = o.status as string;
-          return ["pending", "confirmed", "preparing", "in_oven", "ready"].includes(s);
+          // `pending` orders haven't been confirmed by the merchant yet
+          // (kiosk cash waiting for cashier, or card waiting for the Grow
+          // callback). The kitchen shouldn't start cooking until they
+          // flip to confirmed — that's the explicit "go" signal.
+          return ["confirmed", "preparing", "in_oven", "ready"].includes(s);
         })
         .map((o) => ({
           id: o.id as string,

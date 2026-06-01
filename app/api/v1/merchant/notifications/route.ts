@@ -21,9 +21,7 @@ export const GET = handler(async () => {
 
   const [recentOrders, failedDeliveries] = await Promise.all([
     prisma.order.findMany({
-      // `pending` = card order waiting for Grow callback — not yet a real
-      // order from the merchant's perspective, so no "new order" notification.
-      where: { tenantId: session.tenantId, status: "confirmed" },
+      where: { tenantId: session.tenantId, status: { in: ["pending", "confirmed"] } },
       orderBy: { createdAt: "desc" },
       take: 10,
       select: {

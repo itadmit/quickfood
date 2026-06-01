@@ -7,13 +7,13 @@ import { ORDER_INCLUDE, serializeOrder } from "@/lib/orders-serialize";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// `pending` is intentionally excluded. The only path that creates an
-// order in that state is a card payment that hasn't received the Grow
-// callback yet — so the order isn't real for the merchant until
-// payment confirms (callback flips it to `confirmed`). Showing it in
-// the kitchen / active list pre-payment would pre-cook unpaid orders
-// and inflate KPIs.
+// `pending` is included so the Kanban's "ממתינות לקבלה" column can
+// show orders awaiting merchant confirmation — kiosk cash orders
+// waiting for a cashier to take the cash, or card orders whose Grow
+// callback hasn't landed. The kitchen / KDS screen filters `pending`
+// out client-side so the kitchen never pre-cooks an unconfirmed order.
 const ACTIVE_STATUSES: OrderStatus[] = [
+  OrderStatus.pending,
   OrderStatus.confirmed,
   OrderStatus.preparing,
   OrderStatus.in_oven,

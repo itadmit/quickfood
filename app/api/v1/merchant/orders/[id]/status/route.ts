@@ -13,7 +13,15 @@ export const PATCH = handler(
     const { id } = await params;
     const body = OrderStatusPatchSchema.parse(await req.json());
 
-    const order = await prisma.order.findUnique({ where: { id }, select: { tenantId: true } });
+    const order = await prisma.order.findUnique({
+      where: { id },
+      select: {
+        tenantId: true,
+        status: true,
+        paymentMethod: true,
+        paymentStatus: true,
+      },
+    });
     if (!order) return apiError("not_found", "הזמנה לא נמצאה", 404);
     if (session.role !== "platform_admin" && order.tenantId !== session.tenantId) {
       return apiError("forbidden", "אין הרשאה", 403);
@@ -45,6 +53,26 @@ export const PATCH = handler(
         courierId: body.courier_id,
         changedBy: session.userId,
       });
+
+      // Implicit "cash collected" — when a cash order moves from
+      // pending → confirmed, the merchant is acknowledging they took
+      // the cash at the counter (kiosk flow). Flip paymentStatus to
+      // paid in the same call so the order surfaces as fully settled.
+      // Card-pending orders confirmed manually (Grow callback lost)
+      // are left as paymentStatus=pending — payment didn't actually
+      // happen, the merchant accepted on good faith.
+      if (
+        order.status === "pending" &&
+        body.status === "confirmed" &&
+        order.paymentMethod === "cash" &&
+        order.paymentStatus !== "paid"
+      ) {
+        await prisma.order.update({
+          where: { id },
+          data: { paymentStatus: "paid" },
+        });
+      }
+
       return apiJson({ order: { id: updated.id, status: updated.status } });
     } catch (err) {
       if (err instanceof OrderTransitionError) {
