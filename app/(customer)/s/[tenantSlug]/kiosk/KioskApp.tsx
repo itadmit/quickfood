@@ -780,10 +780,14 @@ export function KioskApp({
         <div className="flex-1 flex flex-col items-center justify-center gap-8 p-8 text-center">
           <div className="space-y-3 max-w-2xl">
             <h2 className="text-4xl md:text-5xl font-black text-qf-ink">
-              טלפון לקבלת חשבונית?
+              {kioskRequirePhone
+                ? "כדי להתחיל בהזמנה יש להזין טלפון"
+                : "טלפון לקבלת חשבונית?"}
             </h2>
             <p className="text-lg text-qf-mute">
-              נשלח לכם באסמס את החשבונית ועדכון כשההזמנה מוכנה. אופציונלי — אפשר לדלג.
+              {kioskRequirePhone
+                ? "נשלח קוד אימות לוואטסאפ. נשתמש בטלפון לקרוא לכם בשם כשההזמנה מוכנה ולשלוח חשבונית."
+                : "נשלח לכם באסמס את החשבונית ועדכון כשההזמנה מוכנה. אופציונלי — אפשר לדלג."}
             </p>
           </div>
 
