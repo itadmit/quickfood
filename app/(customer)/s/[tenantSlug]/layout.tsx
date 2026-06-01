@@ -11,6 +11,7 @@ import { MerchantPreviewBar } from "@/components/customer/MerchantPreviewBar";
 import { AIAdvisorFAB } from "@/components/customer/ai-advisor/AIAdvisorFAB";
 import { AIAdvisorPromoPopup } from "@/components/customer/ai-advisor/AIAdvisorPromoPopup";
 import { FloatingCartCTA } from "@/components/customer/FloatingCartCTA";
+import { CustomerChromeGate } from "@/components/customer/CustomerChromeGate";
 
 export async function generateMetadata({
   params,
@@ -125,42 +126,48 @@ export default async function CustomerLayout({
           {/* Mobile = phone-sized column with shadow (max-w-md).
               Desktop (lg+) = top nav appears, the wrapper widens and screens
               handle their own multi-column layouts internally. */}
-          <CustomerTopNav
-            tenantSlug={tenant.slug}
-            tenantName={tenant.name}
-            logoLetter={tenant.logoLetter}
-            logoUrl={tenant.logoUrl}
-          />
+          <CustomerChromeGate>
+            <CustomerTopNav
+              tenantSlug={tenant.slug}
+              tenantName={tenant.name}
+              logoLetter={tenant.logoLetter}
+              logoUrl={tenant.logoUrl}
+            />
+          </CustomerChromeGate>
           <div className="max-w-md mx-auto bg-qf-bg min-h-screen relative shadow-md lg:max-w-none lg:mx-0 lg:shadow-none">
             {children}
             {pendingReview && (
-              <ReviewPromptModal
-                tenantSlug={tenant.slug}
-                orderId={pendingReview.id}
-                orderNumber={pendingReview.number}
-              />
+              <CustomerChromeGate>
+                <ReviewPromptModal
+                  tenantSlug={tenant.slug}
+                  orderId={pendingReview.id}
+                  orderNumber={pendingReview.number}
+                />
+              </CustomerChromeGate>
             )}
           </div>
           {modal}
-          <FloatingCartCTA />
-          {tenant.aiAdvisorEnabled &&
-            ((tenant.aiProvider === "claude" && tenant.aiClaudeApiKey) ||
-              (tenant.aiProvider === "gemini" && tenant.aiGeminiApiKey)) && (
-              <>
-                <AIAdvisorFAB
-                  tenantSlug={tenant.slug}
-                  suggestions={tenant.aiAdvisorSuggestions}
-                />
-                {tenant.aiAdvisorPopupEnabled && (
-                  <AIAdvisorPromoPopup
+          <CustomerChromeGate>
+            <FloatingCartCTA />
+            {tenant.aiAdvisorEnabled &&
+              ((tenant.aiProvider === "claude" && tenant.aiClaudeApiKey) ||
+                (tenant.aiProvider === "gemini" && tenant.aiGeminiApiKey)) && (
+                <>
+                  <AIAdvisorFAB
                     tenantSlug={tenant.slug}
-                    tenantName={tenant.name}
                     suggestions={tenant.aiAdvisorSuggestions}
                   />
-                )}
-              </>
-            )}
-          {isOwnMerchant && <MerchantPreviewBar tenantName={tenant.name} />}
+                  {tenant.aiAdvisorPopupEnabled && (
+                    <AIAdvisorPromoPopup
+                      tenantSlug={tenant.slug}
+                      tenantName={tenant.name}
+                      suggestions={tenant.aiAdvisorSuggestions}
+                    />
+                  )}
+                </>
+              )}
+            {isOwnMerchant && <MerchantPreviewBar tenantName={tenant.name} />}
+          </CustomerChromeGate>
         </MenuSearchProvider>
       </CartProvider>
     </ThemeProvider>
