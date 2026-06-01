@@ -7,8 +7,13 @@ import { ORDER_INCLUDE, serializeOrder } from "@/lib/orders-serialize";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// `pending` is intentionally excluded. The only path that creates an
+// order in that state is a card payment that hasn't received the Grow
+// callback yet — so the order isn't real for the merchant until
+// payment confirms (callback flips it to `confirmed`). Showing it in
+// the kitchen / active list pre-payment would pre-cook unpaid orders
+// and inflate KPIs.
 const ACTIVE_STATUSES: OrderStatus[] = [
-  OrderStatus.pending,
   OrderStatus.confirmed,
   OrderStatus.preparing,
   OrderStatus.in_oven,

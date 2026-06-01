@@ -22,7 +22,9 @@ export const GET = handler(async () => {
     prisma.order.count({
       where: {
         tenantId: session.tenantId,
-        status: { in: ["pending", "confirmed", "preparing", "in_oven", "ready", "out_for_delivery"] },
+        // `pending` excluded — card order awaiting Grow callback, not a
+        // real active order until payment confirms.
+        status: { in: ["confirmed", "preparing", "in_oven", "ready", "out_for_delivery"] },
       },
     }),
     prisma.courier.findMany({
