@@ -866,22 +866,30 @@ export function KioskApp({
               onClick={async () => {
                 if (!phoneValid || phoneSubmitting) return;
                 setCustomerPhone(digits);
+                if (kioskRequirePhone) {
+                  // Optimistic flip: jump to the OTP screen the moment
+                  // the customer taps המשך — perceived latency drops
+                  // from "wait 1-2s on this screen" to "the next screen
+                  // is already painting while we send". The OTP screen
+                  // reads phoneSubmitting and shows a "שולחים קוד…"
+                  // spinner until the API returns and otpChannel flips.
+                  setOtpCode("");
+                  setOtpError(null);
+                  setOtpChannel(null);
+                  setPhoneSubmitting(true);
+                  setState("otp-verify");
+                  void issueKioskOtp(digits).finally(() =>
+                    setPhoneSubmitting(false),
+                  );
+                  return;
+                }
+                // No phone gate — lookup + go to browse. We DO await
+                // here so the user doesn't see the menu before we know
+                // their name (the lookup result drives the name-entry
+                // pre-fill).
                 setPhoneSubmitting(true);
                 try {
-                  if (kioskRequirePhone) {
-                    // Real-phone gate: send a WhatsApp/SMS code and
-                    // bounce to the OTP screen. The lookup runs only
-                    // AFTER verification, so a typo'd phone can't
-                    // pre-fill someone else's name.
-                    setOtpCode("");
-                    setOtpError(null);
-                    setOtpChannel(null);
-                    const ok = await issueKioskOtp(digits);
-                    if (ok) setState("otp-verify");
-                  } else {
-                    // No phone gate — go straight to lookup + browse.
-                    await runLookupAndProceed(digits);
-                  }
+                  await runLookupAndProceed(digits);
                 } finally {
                   setPhoneSubmitting(false);
                 }
@@ -938,8 +946,16 @@ export function KioskApp({
             <h2 className="text-4xl md:text-5xl font-black text-qf-ink">
               הזינו קוד אימות
             </h2>
-            <p className="text-lg text-qf-mute">
-              {channelLabel} ל-<span dir="ltr" className="tnum font-bold">{phoneFormatted}</span>
+            <p className="text-lg text-qf-mute inline-flex items-center justify-center gap-2 flex-wrap">
+              {phoneSubmitting && !otpChannel ? (
+                <>
+                  <span className="qf-spinner text-(--qf-primary)" aria-hidden />
+                  <span>שולחים קוד ל-</span>
+                </>
+              ) : (
+                <span>{channelLabel} ל-</span>
+              )}
+              <span dir="ltr" className="tnum font-bold">{phoneFormatted}</span>
             </p>
           </div>
 
