@@ -38,6 +38,7 @@ export function PayCheckoutPage({
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [authCode, setAuthCode] = useState<string | null>(initialAuthCode);
   const [sdkReady, setSdkReady] = useState(false);
+  const [walletOpen, setWalletOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -183,33 +184,35 @@ export function PayCheckoutPage({
         </div>
       ) : (
         <>
-          <div className="bg-(--qf-soft) rounded-2xl p-5 text-center flex flex-col items-center gap-3">
-            <svg
-              className="w-7 h-7 animate-spin text-(--qf-deep)"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden
-            >
-              <circle
-                cx="12"
-                cy="12"
-                r="9"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeOpacity="0.2"
-              />
-              <path
-                d="M21 12a9 9 0 0 0-9-9"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="text-base font-bold text-(--qf-deep)">
-              {busy ? t("payPage.openingWindow") : t("payPage.waitingForGrow")}
+          {!walletOpen && (
+            <div className="bg-(--qf-soft) rounded-2xl p-5 text-center flex flex-col items-center gap-3">
+              <svg
+                className="w-7 h-7 animate-spin text-(--qf-deep)"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="9"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeOpacity="0.2"
+                />
+                <path
+                  d="M21 12a9 9 0 0 0-9-9"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="text-base font-bold text-(--qf-deep)">
+                {busy ? t("payPage.openingWindow") : t("payPage.waitingForGrow")}
+              </div>
+              <p className="text-xs text-qf-mute">{t("payPage.securityNote")}</p>
             </div>
-            <p className="text-xs text-qf-mute">{t("payPage.securityNote")}</p>
-          </div>
+          )}
 
           {error && (
             <div className="bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato rounded-xl p-3 text-sm text-center">
@@ -232,12 +235,14 @@ export function PayCheckoutPage({
             testMode={growTestMode}
             thankYouUrl={`/s/${tenantSlug}/pay-checkout/${checkout.id}`}
             onReady={() => setSdkReady(true)}
+            onWalletChange={(state) => setWalletOpen(state === "open")}
             onError={(message) => {
               setError(
                 typeof message === "string" ? message : t("payPage.paymentFailed"),
               );
               initiatedRef.current = false;
               setAuthCode(null);
+              setWalletOpen(false);
             }}
           />
         </>
