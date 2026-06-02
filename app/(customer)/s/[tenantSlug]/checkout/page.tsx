@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import ReactDOM from "react-dom";
 import { PaymentProvider } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
@@ -45,12 +46,23 @@ export default async function CheckoutPage({
   const requireEmail =
     !!settings?.reviewsEnabled && settings.reviewsChannel === "email";
 
-  // Pre-load Grow's SDK at page mount when the tenant has it active. The SDK
-  // needs ~1s of async work after init() before it can render the wallet
-  // safely; doing it at page open avoids "SDK was not loaded as needed" when
-  // the user clicks "pay" before that work finishes.
   const growEnabled = !!growConfig?.isActive;
   const growTestMode = growConfig?.testMode ?? true;
+
+  // SSR-preconnect to Grow's CDN + preload the SDK script so the browser
+  // starts downloading gs.min.js in parallel with HTML transfer/hydration.
+  // Without this the SDK only starts downloading after GrowPaymentSdk
+  // mounts client-side — costing ~500-800ms on first paint. Mirrors the
+  // perf work on /pay-checkout/[checkoutId] and /pay/[orderId].
+  if (growEnabled) {
+    ReactDOM.preconnect("https://cdn.meshulam.co.il");
+    ReactDOM.preconnect("https://secure.meshulam.co.il");
+    ReactDOM.preconnect("https://sandbox.meshulam.co.il");
+    ReactDOM.preload("https://cdn.meshulam.co.il/sdk/gs.min.js", {
+      as: "script",
+      fetchPriority: "high",
+    });
+  }
 
   const branchId = tenant.branches[0]?.id;
   const deliveryCities: string[] = [];
