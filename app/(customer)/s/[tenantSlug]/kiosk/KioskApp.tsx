@@ -793,7 +793,13 @@ export function KioskApp({
   // ─── Phone entry (optional) ───────────────────────────────────
   if (state === "phone-entry") {
     const digits = customerPhone.replace(/\D/g, "");
-    const phoneValid = /^05\d{8}$/.test(digits);
+    // Customer-service bypass: typing ten 9s lets internal staff sail
+    // through OTP without waiting for a WhatsApp/SMS — used when we're
+    // walking a customer through the kiosk on the phone. The bypass is
+    // silently scrubbed before the order POST so it doesn't pollute
+    // the Customer table with a fake "9999999999" number.
+    const isOtpBypass = digits === "9999999999";
+    const phoneValid = /^05\d{8}$/.test(digits) || isOtpBypass;
     const formatted = digits.length > 3
       ? `${digits.slice(0, 3)}-${digits.slice(3, 10)}`
       : digits;
@@ -897,6 +903,19 @@ export function KioskApp({
               onClick={async () => {
                 if (!phoneValid || phoneSubmitting) return;
                 setCustomerPhone(digits);
+                // Bypass: skip OTP entirely, drop the fake phone so the
+                // order POST doesn't try to E.164-normalize "9999999999"
+                // and bounce with invalid_phone. Order goes through as
+                // an anonymous kiosk order.
+                if (isOtpBypass) {
+                  setCustomerPhone("");
+                  setCustomerFirstName("");
+                  setCustomerLastName("");
+                  setNameWasPrefilled(false);
+                  setPhoneStepDone(true);
+                  setState("browse");
+                  return;
+                }
                 if (kioskRequirePhone) {
                   // Optimistic flip: jump to the OTP screen the moment
                   // the customer taps המשך — perceived latency drops
