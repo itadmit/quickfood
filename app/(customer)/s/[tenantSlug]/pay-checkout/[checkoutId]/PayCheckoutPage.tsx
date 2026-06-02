@@ -115,7 +115,7 @@ export function PayCheckoutPage({
 
   if (status === "completed") {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center gap-6 p-6 text-center">
+      <div className="min-h-[80vh] max-w-md mx-auto flex flex-col items-center justify-center gap-6 p-6 text-center">
         <div className="w-20 h-20 rounded-full bg-qf-green-soft grid place-items-center">
           <svg
             viewBox="0 0 24 24"
@@ -156,7 +156,7 @@ export function PayCheckoutPage({
 
   if (status === "abandoned") {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center gap-6 p-6 text-center">
+      <div className="min-h-[80vh] max-w-md mx-auto flex flex-col items-center justify-center gap-6 p-6 text-center">
         <h1 className="text-2xl font-black text-qf-ink">התשלום בוטל</h1>
         <p className="text-sm text-qf-mute max-w-xs">חזרו לקיוסק להתחיל מחדש</p>
       </div>
@@ -164,7 +164,7 @@ export function PayCheckoutPage({
   }
 
   return (
-    <div className="min-h-[80vh] p-5 flex flex-col gap-5">
+    <div className="min-h-[80vh] max-w-md mx-auto p-5 flex flex-col gap-5">
       <header className="text-center pt-4">
         <h1 className="text-2xl font-black text-qf-ink">{t("payPage.payTitle")}</h1>
         <p className="text-sm text-qf-mute mt-1">{tenantName}</p>
@@ -183,7 +183,28 @@ export function PayCheckoutPage({
         </div>
       ) : (
         <>
-          <div className="bg-(--qf-soft) rounded-2xl p-5 text-center space-y-2">
+          <div className="bg-(--qf-soft) rounded-2xl p-5 text-center flex flex-col items-center gap-3">
+            <svg
+              className="w-7 h-7 animate-spin text-(--qf-deep)"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="9"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeOpacity="0.2"
+              />
+              <path
+                d="M21 12a9 9 0 0 0-9-9"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+            </svg>
             <div className="text-base font-bold text-(--qf-deep)">
               {busy ? t("payPage.openingWindow") : t("payPage.waitingForGrow")}
             </div>
