@@ -23,6 +23,7 @@ import {
   createSubscription,
   BillingHubError,
 } from "@/lib/billing-hub/client";
+import { REVIEWS_WHATSAPP_PLAN_CODE } from "@/lib/billing-hub/plans";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,6 +49,8 @@ async function findTenantByCustomerId(customerId: string) {
       billingSubscriptionId: true,
       billingPaymentMethodId: true,
       smsCreditsRemaining: true,
+      reviewsWhatsappSubscriptionId: true,
+      reviewsChannel: true,
     },
   });
 }
@@ -132,6 +135,11 @@ export const POST = handler(async (req: Request) => {
         await prisma.tenant.update({
           where: { id: tenant.id },
           data: { billingSubscriptionId: subId },
+        });
+      } else if (d.plan_code === REVIEWS_WHATSAPP_PLAN_CODE) {
+        await prisma.tenant.update({
+          where: { id: tenant.id },
+          data: { reviewsWhatsappSubscriptionId: subId },
         });
       }
       break;
@@ -228,6 +236,20 @@ export const POST = handler(async (req: Request) => {
         await prisma.tenant.update({
           where: { id: tenant.id },
           data: { billingSubscriptionId: null, billingSetupCompletedAt: null },
+        });
+      } else if (subId === tenant.reviewsWhatsappSubscriptionId) {
+        // Add-on ended — clear the mirror id. If the merchant had picked
+        // `whatsapp_managed` as their reviews channel, flip it off so future
+        // sends fail cleanly with `channel_off` rather than calling the
+        // platform iBot account without an active subscription.
+        await prisma.tenant.update({
+          where: { id: tenant.id },
+          data: {
+            reviewsWhatsappSubscriptionId: null,
+            ...(tenant.reviewsChannel === "whatsapp_managed" && {
+              reviewsChannel: "off",
+            }),
+          },
         });
       }
       break;

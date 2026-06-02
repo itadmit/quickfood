@@ -152,6 +152,7 @@ enum ReviewChannel {
   email
   sms
   whatsapp
+  whatsapp_managed
 }
 
 enum NotificationStatus {
@@ -373,6 +374,11 @@ model Tenant {
   billingCustomerId       String?   @map("billing_customer_id")
   // Base platform subscription (quickfood_base — ₪299/mo + VAT).
   billingSubscriptionId   String?   @map("billing_subscription_id")
+  // Managed-WhatsApp reviews add-on (quickfood_reviews_whatsapp — ₪99/mo + VAT,
+  // unlimited sends via the platform iBot account). Mirrored from the hub on
+  // subscription.created / .cancelled webhooks. When set, reviewsChannel may be
+  // `whatsapp_managed`; sends bypass the smsCreditsRemaining pool.
+  reviewsWhatsappSubscriptionId String? @map("reviews_whatsapp_subscription_id")
   billingPaymentMethodId  String?   @map("billing_payment_method_id")
   // Set when the merchant has completed billing setup (token saved). Until
   // then SMS purchases are blocked and after `trialEndsAt` the whole

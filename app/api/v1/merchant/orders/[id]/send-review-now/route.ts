@@ -25,6 +25,7 @@ const HUMAN_REASONS: Record<string, string> = {
   already_reviewed: "כבר התקבלה ביקורת על ההזמנה",
   reviews_disabled: "ביקורות לקוחות כבויות בהגדרות",
   channel_off: "ערוץ הביקורות כבוי בהגדרות",
+  whatsapp_managed_inactive: "מנוי ווטסאפ ביקורות אינו פעיל — הפעל את המנוי כדי לשלוח",
   guest_order: "אין ללקוח טלפון/חשבון — לא ניתן לשלוח",
   no_email_on_customer: "אין מייל ללקוח — בחר ערוץ SMS/וואטסאפ או בקש מייל",
   dismissed: "הלקוח דחה את הבקשה לדרג",

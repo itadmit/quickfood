@@ -34,6 +34,14 @@ export interface SendWhatsAppInput {
    * can verify their iBot connection before they buy a package.
    */
   skipCredit?: boolean;
+  /**
+   * Force the platform iBot account, ignoring any tenant-owned credentials.
+   * Used for the managed-WhatsApp reviews add-on
+   * (`quickfood_reviews_whatsapp` subscription, ₪99/mo unlimited): sends go
+   * out from QuickFood's WhatsApp number and never decrement the merchant's
+   * SMS credit pool. Implies `skipCredit: true`.
+   */
+  useManagedAccount?: boolean;
 }
 
 export interface SendWhatsAppResult {
@@ -75,11 +83,19 @@ export async function sendWhatsApp(
     throw new Error(`tenant ${input.tenantId} not found`);
   }
 
-  const token = tenant.whatsappToken ?? platform?.whatsappDefaultToken ?? null;
-  const instanceId =
-    tenant.whatsappInstanceId ?? platform?.whatsappDefaultInstanceId ?? null;
+  // Managed mode: always platform creds, ignore tenant-owned ones. Otherwise
+  // BYO wins, with a fall-through to platform default for tenants that
+  // haven't connected their own iBot account yet.
+  const skipCredit = input.skipCredit || input.useManagedAccount;
+  const token = input.useManagedAccount
+    ? platform?.whatsappDefaultToken ?? null
+    : tenant.whatsappToken ?? platform?.whatsappDefaultToken ?? null;
+  const instanceId = input.useManagedAccount
+    ? platform?.whatsappDefaultInstanceId ?? null
+    : tenant.whatsappInstanceId ?? platform?.whatsappDefaultInstanceId ?? null;
   const usingPlatformDefault =
-    !tenant.whatsappToken && !tenant.whatsappInstanceId && !!token && !!instanceId;
+    input.useManagedAccount ||
+    (!tenant.whatsappToken && !tenant.whatsappInstanceId && !!token && !!instanceId);
 
   const to = normalizePhone(input.to);
   const jid = toJid(to);
@@ -123,7 +139,7 @@ export async function sendWhatsApp(
     };
   }
 
-  if (!input.skipCredit && tenant.smsCreditsRemaining <= 0) {
+  if (!skipCredit && tenant.smsCreditsRemaining <= 0) {
     await prisma.smsLog.update({
       where: { id: log.id },
       data: { status: "skipped_no_balance" },
@@ -146,7 +162,7 @@ export async function sendWhatsApp(
         },
       }),
     ];
-    if (!input.skipCredit) {
+    if (!skipCredit) {
       ops.push(
         prisma.tenant.update({
           where: { id: input.tenantId },
@@ -183,8 +199,13 @@ export async function sendWhatsApp(
   }
 
   if (providerOk) {
-    const finalMsg = usingPlatformDefault
-      ? `${providerMsg ? providerMsg + " · " : ""}via platform default`
+    const tag = input.useManagedAccount
+      ? "via managed account"
+      : usingPlatformDefault
+        ? "via platform default"
+        : null;
+    const finalMsg = tag
+      ? `${providerMsg ? providerMsg + " · " : ""}${tag}`
       : providerMsg;
     const ops: Promise<unknown>[] = [
       prisma.smsLog.update({
@@ -192,7 +213,7 @@ export async function sendWhatsApp(
         data: { status: "sent", sentAt: new Date(), providerMsg: finalMsg },
       }),
     ];
-    if (!input.skipCredit) {
+    if (!skipCredit) {
       ops.push(
         prisma.tenant.update({
           where: { id: input.tenantId },

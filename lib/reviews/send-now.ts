@@ -19,7 +19,11 @@ import { reviewReminderEmail } from "@/lib/email/templates";
 import { signReviewToken } from "@/lib/reviews/token";
 
 export type SendReviewResult =
-  | { ok: true; channel: "email" | "sms" | "whatsapp"; providerStatus?: string }
+  | {
+      ok: true;
+      channel: "email" | "sms" | "whatsapp" | "whatsapp_managed";
+      providerStatus?: string;
+    }
   | { ok: false; reason: string };
 
 interface SendOpts {
@@ -48,6 +52,7 @@ export async function sendReviewReminderNow(
           name: true,
           reviewsEnabled: true,
           reviewsChannel: true,
+          reviewsWhatsappSubscriptionId: true,
         },
       },
       customer: {
@@ -125,6 +130,26 @@ export async function sendReviewReminderNow(
 
   const shortBody = `${hello}, איך הייתה ההזמנה מ-${order.tenant.name}?
 דקה לדרג: ${link}`;
+
+  if (order.tenant.reviewsChannel === "whatsapp_managed") {
+    if (!order.tenant.reviewsWhatsappSubscriptionId) {
+      return { ok: false, reason: "whatsapp_managed_inactive" };
+    }
+    const result = await sendWhatsApp({
+      tenantId: order.tenant.id,
+      to: order.customer.phone,
+      body: shortBody,
+      kind: "review_reminder",
+      refKind: "order",
+      refId: order.id,
+      useManagedAccount: true,
+    });
+    return {
+      ok: true,
+      channel: "whatsapp_managed",
+      providerStatus: result.status,
+    };
+  }
 
   if (order.tenant.reviewsChannel === "whatsapp") {
     const result = await sendWhatsApp({

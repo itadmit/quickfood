@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
+import { getSubscription, BillingHubError } from "@/lib/billing-hub/client";
+import { REVIEWS_WHATSAPP_BASE_PRICE } from "@/lib/billing-hub/plans";
 import { SettingsHeader } from "../SettingsHeader";
 import { ReviewsSettingsForm } from "./ReviewsSettingsForm";
 
@@ -24,6 +26,9 @@ export default async function ReviewsSettingsPage() {
         smsCreditsRemaining: true,
         whatsappToken: true,
         whatsappInstanceId: true,
+        billingCustomerId: true,
+        billingPaymentMethodId: true,
+        reviewsWhatsappSubscriptionId: true,
       },
     }),
     prisma.platformSettings.findFirst({
@@ -32,13 +37,35 @@ export default async function ReviewsSettingsPage() {
   ]);
   if (!tenant) redirect("/dashboard/login");
 
-  // SMS needs paid credits. WhatsApp needs paid credits AND a connected
+  // SMS needs paid credits. WhatsApp (BYO) needs paid credits AND a connected
   // sender (either tenant-owned or the platform default).
   const smsAvailable = tenant.smsCreditsRemaining > 0;
   const whatsappConnected =
     !!(tenant.whatsappToken && tenant.whatsappInstanceId) ||
     !!(platform?.whatsappDefaultToken && platform?.whatsappDefaultInstanceId);
   const whatsappAvailable = smsAvailable && whatsappConnected;
+
+  // Managed-WhatsApp add-on: live status from the billing hub when a sub id is
+  // mirrored locally. On hub error fall back to "active mirrored locally" so a
+  // hub outage doesn't pretend the merchant isn't paying.
+  const managed = {
+    active: !!tenant.reviewsWhatsappSubscriptionId,
+    cancelAtPeriodEnd: false,
+    currentPeriodEnd: null as string | null,
+    basePrice: REVIEWS_WHATSAPP_BASE_PRICE,
+  };
+  if (tenant.reviewsWhatsappSubscriptionId) {
+    try {
+      const detail = await getSubscription(tenant.reviewsWhatsappSubscriptionId);
+      managed.cancelAtPeriodEnd = detail.cancel_at_period_end;
+      managed.currentPeriodEnd = detail.current_period_end;
+    } catch (err) {
+      if (!(err instanceof BillingHubError)) throw err;
+    }
+  }
+  const billingReady = !!(
+    tenant.billingCustomerId && tenant.billingPaymentMethodId
+  );
 
   return (
     <div className="space-y-5">
@@ -55,6 +82,8 @@ export default async function ReviewsSettingsPage() {
         whatsappAvailable={whatsappAvailable}
         whatsappConnected={whatsappConnected}
         smsCreditsRemaining={tenant.smsCreditsRemaining}
+        managed={managed}
+        billingReady={billingReady}
       />
     </div>
   );
