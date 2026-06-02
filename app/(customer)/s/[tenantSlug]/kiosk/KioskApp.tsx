@@ -20,6 +20,10 @@ import { Utensils, ShoppingBag, Banknote } from "lucide-react";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { MenuItemForCustomer } from "@/lib/menu-item-load";
+import {
+  buildKioskT,
+  type KioskOverrides,
+} from "@/lib/i18n/kiosk-messages";
 import { KioskHeader, KioskHeaderButton } from "./KioskHeader";
 import { KioskKeyboard } from "./KioskKeyboard";
 
@@ -102,6 +106,7 @@ export function KioskApp({
   featuredBadgeLabel,
   growEnabled,
   kioskRequirePhone,
+  stringOverrides,
   categories,
   upsellCategoryIds,
   checkoutUpsellCategoryIds,
@@ -118,12 +123,17 @@ export function KioskApp({
   featuredBadgeLabel: string | null;
   growEnabled: boolean;
   kioskRequirePhone: boolean;
+  stringOverrides: KioskOverrides;
   categories: KioskCategory[];
   upsellCategoryIds: string[];
   checkoutUpsellCategoryIds: string[];
   items: KioskItem[];
   itemDetails: Record<string, MenuItemForCustomer>;
 }) {
+  // Per-tenant string lookup. The merchant edits flat dotted-key
+  // overrides in Settings → Kiosk → Custom Strings; this `t()` walks
+  // override-first, defaults-second, with `{token}` interpolation.
+  const t = useMemo(() => buildKioskT(stringOverrides), [stringOverrides]);
   const featuredLabel = featuredBadgeLabel?.trim() || "מומלץ של השף";
   const { lines, subtotal, clear, updateQuantity, remove, add, tenant } = useCart();
   const [state, setState] = useState<
@@ -731,16 +741,17 @@ export function KioskApp({
           )}
           <div className="space-y-4 max-w-2xl">
             <h1 className="text-5xl font-black leading-tight drop-shadow-lg">
-              {welcomeText?.trim() || `ברוכים הבאים ל-${tenantName}`}
+              {welcomeText?.trim() ||
+                t("start.welcomeFallback", { tenantName })}
             </h1>
             <p className={cn("text-2xl", coverImage ? "text-white/85" : "text-qf-ink2")}>
-              הקישו על המסך כדי להזמין
+              {t("start.instruction")}
             </p>
           </div>
           <span
             className="px-16 py-7 rounded-3xl bg-(--qf-primary) text-white text-3xl font-black shadow-2xl"
           >
-            הזמנה חדשה
+            {t("start.cta")}
           </span>
         </div>
       </button>
@@ -752,22 +763,24 @@ export function KioskApp({
     return (
       <div className="fixed inset-0 z-[200] bg-qf-bg flex flex-col select-none">
         <KioskHeader logoUrl={logoUrl} tenantName={tenantName}>
-          <KioskHeaderButton onClick={reset}>ביטול</KioskHeaderButton>
+          <KioskHeaderButton onClick={reset}>
+            {t("header.cancelBtn")}
+          </KioskHeaderButton>
         </KioskHeader>
         <div className="flex-1 flex flex-col items-center justify-center gap-14 p-12 text-center">
           <div className="space-y-2">
             <div className="text-sm font-bold tracking-[0.18em] text-qf-mute uppercase">
-              הזמנה חדשה
+              {t("start.cta")}
             </div>
             <h2 className="text-5xl font-black text-qf-ink tracking-tight">
-              איך נהנים מהארוחה?
+              {t("mode.heading")}
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full max-w-3xl">
             <ModeCard
               icon={<Utensils size={64} strokeWidth={1.6} aria-hidden />}
-              title="לשבת במסעדה"
-              subtitle="אוכל בצלחת + סכו״ם"
+              title={t("mode.dineInTitle")}
+              subtitle={t("mode.dineInSubtitle")}
               onClick={() => {
                 setDiningMode("dinein");
                 // Returning to the picker mid-cart shouldn't re-prompt
@@ -777,8 +790,8 @@ export function KioskApp({
             />
             <ModeCard
               icon={<ShoppingBag size={64} strokeWidth={1.6} aria-hidden />}
-              title="לקחת"
-              subtitle="ארוז לדרך"
+              title={t("mode.takeawayTitle")}
+              subtitle={t("mode.takeawaySubtitle")}
               onClick={() => {
                 setDiningMode("takeaway");
                 setState(phoneStepDone ? "browse" : "phone-entry");
@@ -811,19 +824,21 @@ export function KioskApp({
     return (
       <div className="fixed inset-0 z-[200] bg-qf-bg flex flex-col select-none">
         <KioskHeader logoUrl={logoUrl} tenantName={tenantName}>
-          <KioskHeaderButton onClick={reset}>ביטול</KioskHeaderButton>
+          <KioskHeaderButton onClick={reset}>
+            {t("header.cancelBtn")}
+          </KioskHeaderButton>
         </KioskHeader>
         <div className="flex-1 flex flex-col items-center justify-center gap-8 p-8 text-center">
           <div className="space-y-3 max-w-2xl">
             <h2 className="text-4xl md:text-5xl font-black text-qf-ink">
               {kioskRequirePhone
-                ? "כדי להתחיל בהזמנה יש להזין טלפון"
-                : "טלפון לקבלת חשבונית?"}
+                ? t("phoneEntry.headingRequired")
+                : t("phoneEntry.headingOptional")}
             </h2>
             <p className="text-lg text-qf-mute">
               {kioskRequirePhone
-                ? "נשלח קוד אימות לוואטסאפ. נשתמש בטלפון לקרוא לכם בשם כשההזמנה מוכנה ולשלוח חשבונית."
-                : "נשלח לכם באסמס את החשבונית ועדכון כשההזמנה מוכנה. אופציונלי — אפשר לדלג."}
+                ? t("phoneEntry.subtitleRequired")
+                : t("phoneEntry.subtitleOptional")}
             </p>
           </div>
 
@@ -833,7 +848,7 @@ export function KioskApp({
               className="text-4xl md:text-5xl font-black tnum text-qf-ink min-h-[1.2em] tracking-wide"
             >
               {formatted || (
-                <span className="text-qf-mute/50">050-0000000</span>
+                <span className="text-qf-mute/50">{t("phoneEntry.placeholder")}</span>
               )}
             </div>
           </div>
@@ -857,9 +872,9 @@ export function KioskApp({
               onClick={() => setCustomerPhone("")}
               disabled={digits.length === 0}
               className="h-20 rounded-2xl bg-white border-2 border-qf-line-dash text-base font-bold text-qf-mute hover:border-qf-tomato hover:text-qf-tomato disabled:opacity-40 active:scale-95 transition shadow-sm"
-              aria-label="נקה הכל"
+              aria-label={t("phoneEntry.clearAllLabel")}
             >
-              נקה
+              {t("phoneEntry.clearKey")}
             </button>
             <button
               type="button"
@@ -873,7 +888,7 @@ export function KioskApp({
               onClick={pressBackspace}
               disabled={digits.length === 0}
               className="h-20 rounded-2xl bg-white border-2 border-qf-line-dash text-2xl font-bold text-qf-mute hover:border-qf-tomato hover:text-qf-tomato disabled:opacity-40 active:scale-95 transition shadow-sm"
-              aria-label="מחק ספרה"
+              aria-label={t("phoneEntry.backspaceLabel")}
             >
               ⌫
             </button>
@@ -895,7 +910,7 @@ export function KioskApp({
                 }}
                 className="h-16 rounded-2xl border-2 border-qf-line-dash text-qf-ink text-xl font-bold hover:bg-qf-line-soft active:scale-[0.98] transition"
               >
-                דלג
+                {t("phoneEntry.skipBtn")}
               </button>
             )}
             <button
@@ -947,7 +962,7 @@ export function KioskApp({
               disabled={!phoneValid || phoneSubmitting}
               className="h-16 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xl font-black disabled:opacity-40 shadow-lg active:scale-[0.98] transition"
             >
-              {phoneSubmitting ? "שולחים…" : "המשך"}
+              {phoneSubmitting ? t("phoneEntry.sendingBtn") : t("phoneEntry.continueBtn")}
             </button>
           </div>
         </div>
@@ -967,10 +982,10 @@ export function KioskApp({
     const pressCodeBackspace = () => setOtpCode(codeDigits.slice(0, -1));
     const channelLabel =
       otpChannel === "whatsapp"
-        ? "שלחנו קוד בוואטסאפ"
+        ? t("otp.sentViaWhatsapp")
         : otpChannel === "sms"
-          ? "שלחנו קוד באסמס"
-          : "שלחנו לכם קוד";
+          ? t("otp.sentViaSms")
+          : t("otp.sentViaFallback");
     const phoneDigits = customerPhone.replace(/\D/g, "");
     const phoneFormatted =
       phoneDigits.length > 3
@@ -988,22 +1003,22 @@ export function KioskApp({
               setState("phone-entry");
             }}
           >
-            שינוי טלפון
+            {t("otp.changePhoneBtn")}
           </KioskHeaderButton>
         </KioskHeader>
         <div className="flex-1 flex flex-col items-center justify-center gap-7 p-8 text-center">
           <div className="space-y-3 max-w-2xl">
             <h2 className="text-4xl md:text-5xl font-black text-qf-ink">
-              הזינו קוד אימות
+              {t("otp.heading")}
             </h2>
             <p className="text-lg text-qf-mute inline-flex items-center justify-center gap-2 flex-wrap">
               {phoneSubmitting && !otpChannel ? (
                 <>
                   <span className="qf-spinner text-(--qf-primary)" aria-hidden />
-                  <span>שולחים קוד ל-</span>
+                  <span>{t("otp.sendingTo")}</span>
                 </>
               ) : (
-                <span>{channelLabel} ל-</span>
+                <span>{channelLabel} {t("otp.toLabel")}</span>
               )}
               <span dir="ltr" className="tnum font-bold">{phoneFormatted}</span>
             </p>
@@ -1054,9 +1069,9 @@ export function KioskApp({
               onClick={() => setOtpCode("")}
               disabled={codeDigits.length === 0 || otpSubmitting}
               className="h-20 rounded-2xl bg-white border-2 border-qf-line-dash text-base font-bold text-qf-mute hover:border-qf-tomato hover:text-qf-tomato disabled:opacity-40 active:scale-95 transition shadow-sm"
-              aria-label="נקה הכל"
+              aria-label={t("phoneEntry.clearAllLabel")}
             >
-              נקה
+              {t("phoneEntry.clearKey")}
             </button>
             <button
               type="button"
@@ -1071,7 +1086,7 @@ export function KioskApp({
               onClick={pressCodeBackspace}
               disabled={codeDigits.length === 0 || otpSubmitting}
               className="h-20 rounded-2xl bg-white border-2 border-qf-line-dash text-2xl font-bold text-qf-mute hover:border-qf-tomato hover:text-qf-tomato disabled:opacity-40 active:scale-95 transition shadow-sm"
-              aria-label="מחק ספרה"
+              aria-label={t("phoneEntry.backspaceLabel")}
             >
               ⌫
             </button>
@@ -1101,7 +1116,7 @@ export function KioskApp({
                     setOtpError(
                       typeof data?.error?.message === "string"
                         ? data.error.message
-                        : "קוד שגוי",
+                        : t("otp.invalidCode"),
                     );
                     setOtpCode("");
                     return;
@@ -1109,7 +1124,7 @@ export function KioskApp({
                   // Verified — run the existing lookup and proceed.
                   await runLookupAndProceed(customerPhone.replace(/\D/g, ""));
                 } catch {
-                  setOtpError("שגיאת רשת. נסו שוב.");
+                  setOtpError(t("otp.networkError"));
                 } finally {
                   setOtpSubmitting(false);
                 }
@@ -1117,7 +1132,7 @@ export function KioskApp({
               disabled={!codeReady || otpSubmitting}
               className="w-full h-16 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xl font-black disabled:opacity-40 shadow-lg active:scale-[0.98] transition"
             >
-              {otpSubmitting ? "מאמתים…" : "אימות והמשך"}
+              {otpSubmitting ? t("otp.verifyingBtn") : t("otp.verifyBtn")}
             </button>
             <button
               type="button"
@@ -1130,8 +1145,8 @@ export function KioskApp({
               className="text-sm text-qf-mute hover:text-(--qf-deep) disabled:opacity-60 underline"
             >
               {otpResendIn > 0
-                ? `שליחה חוזרת בעוד ${otpResendIn} שניות`
-                : "שלחו לי קוד שוב"}
+                ? t("otp.resendCountdown", { seconds: otpResendIn })
+                : t("otp.resendNow")}
             </button>
           </div>
         </div>
@@ -1154,25 +1169,29 @@ export function KioskApp({
               setCartOpen(true);
             }}
           >
-            חזרה לעגלה
+            {t("nameEntry.backToCartBtn")}
           </KioskHeaderButton>
         </KioskHeader>
         <div className="flex-1 flex flex-col items-center justify-center gap-7 p-8 text-center">
           <div className="space-y-3 max-w-2xl">
             <h2 className="text-4xl md:text-5xl font-black text-qf-ink">
-              {nameWasPrefilled ? "האם השם נכון?" : "מה השם שלכם?"}
+              {nameWasPrefilled
+                ? t("nameEntry.headingPrefilled")
+                : t("nameEntry.headingFresh")}
             </h2>
             <p className="text-lg text-qf-mute">
               {nameWasPrefilled
-                ? `שלום ${fullDisplay || "🙂"} — נקרא לכם בשם הזה כשההזמנה מוכנה. אפשר לערוך.`
-                : "נקרא לכם בשם כשההזמנה מוכנה."}
+                ? fullDisplay
+                  ? t("nameEntry.subtitlePrefilled", { name: fullDisplay })
+                  : t("nameEntry.subtitlePrefilledNoName")
+                : t("nameEntry.subtitleFresh")}
             </p>
           </div>
 
           <div className="w-full max-w-md space-y-3">
             <div>
               <label className="block text-sm font-bold text-qf-ink mb-1.5 text-right">
-                שם פרטי
+                {t("nameEntry.firstNameLabel")}
               </label>
               <input
                 value={customerFirstName}
@@ -1182,8 +1201,13 @@ export function KioskApp({
                 }}
                 onFocus={() => setKbdTarget("firstName")}
                 onClick={() => setKbdTarget("firstName")}
+                onKeyDown={(e) => e.preventDefault()}
                 inputMode="none"
-                placeholder="הזינו שם"
+                readOnly
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                placeholder={t("nameEntry.firstNamePlaceholder")}
                 maxLength={40}
                 className={cn(
                   "w-full px-4 py-4 rounded-2xl border-2 text-2xl bg-white focus:border-(--qf-primary) outline-none text-right transition",
@@ -1195,7 +1219,7 @@ export function KioskApp({
             </div>
             <div>
               <label className="block text-sm font-bold text-qf-ink mb-1.5 text-right">
-                שם משפחה (אופציונלי)
+                {t("nameEntry.lastNameLabel")}
               </label>
               <input
                 value={customerLastName}
@@ -1205,8 +1229,13 @@ export function KioskApp({
                 }}
                 onFocus={() => setKbdTarget("lastName")}
                 onClick={() => setKbdTarget("lastName")}
+                onKeyDown={(e) => e.preventDefault()}
                 inputMode="none"
-                placeholder="הזינו שם משפחה"
+                readOnly
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                placeholder={t("nameEntry.lastNamePlaceholder")}
                 maxLength={40}
                 className={cn(
                   "w-full px-4 py-4 rounded-2xl border-2 text-2xl bg-white focus:border-(--qf-primary) outline-none text-right transition",
@@ -1231,9 +1260,34 @@ export function KioskApp({
             disabled={!canContinue}
             className="w-full max-w-md h-16 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xl font-black disabled:opacity-40 shadow-lg active:scale-[0.98] transition"
           >
-            המשך לתשלום
+            {t("nameEntry.continueBtn")}
           </button>
         </div>
+
+        {/* On-screen Hebrew keyboard — rebound to whichever name input
+            the customer tapped. Browse-screen's own keyboard mount lives
+            past an early return that this branch never reaches, so we
+            mount a dedicated instance here. */}
+        {kbdTarget === "firstName" && (
+          <KioskKeyboard
+            value={customerFirstName}
+            onChange={(v) => {
+              setCustomerFirstName(v);
+              if (nameWasPrefilled) setNameWasPrefilled(false);
+            }}
+            onClose={() => setKbdTarget(null)}
+          />
+        )}
+        {kbdTarget === "lastName" && (
+          <KioskKeyboard
+            value={customerLastName}
+            onChange={(v) => {
+              setCustomerLastName(v);
+              if (nameWasPrefilled) setNameWasPrefilled(false);
+            }}
+            onClose={() => setKbdTarget(null)}
+          />
+        )}
       </div>
     );
   }
@@ -1272,31 +1326,33 @@ export function KioskApp({
               setCartOpen(true);
             }}
           >
-            חזרה לעגלה
+            {t("payChoice.backToCartBtn")}
           </KioskHeaderButton>
         </KioskHeader>
         <div className="flex-1 flex flex-col items-center justify-center gap-12 p-12 text-center">
           <div className="space-y-3">
             <div className="text-sm font-bold tracking-[0.18em] text-qf-mute uppercase">
-              סיום הזמנה
+              {t("payChoice.bumperLabel")}
             </div>
-            <h2 className="text-5xl font-black text-qf-ink tracking-tight">איך נשלם?</h2>
+            <h2 className="text-5xl font-black text-qf-ink tracking-tight">
+              {t("payChoice.heading")}
+            </h2>
             <p className="text-xl text-qf-ink2 tnum">
-              סה״כ <span className="font-bold text-qf-ink">{formatPrice(subtotal)}</span>
+              {t("payChoice.totalPrefix")} <span className="font-bold text-qf-ink">{formatPrice(subtotal)}</span>
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full max-w-3xl">
             <ModeCard
               icon={<IcoQrCode c="currentColor" s={64} />}
-              title="תשלום בטלפון"
-              subtitle="סריקת QR · אשראי / Bit / Apple Pay"
+              title={t("payChoice.phonePayTitle")}
+              subtitle={t("payChoice.phonePaySubtitle")}
               onClick={() => void placeOrder("card")}
               disabled={lines.length === 0}
             />
             <ModeCard
               icon={<Banknote size={64} strokeWidth={1.6} aria-hidden />}
-              title="תשלום בקופה"
-              subtitle="מזומן / אשראי בקופה"
+              title={t("payChoice.counterPayTitle")}
+              subtitle={t("payChoice.counterPaySubtitle")}
               onClick={() => void placeOrder("cash")}
               disabled={lines.length === 0}
             />
@@ -1316,19 +1372,21 @@ export function KioskApp({
     return (
       <div className="fixed inset-0 z-[200] bg-qf-bg flex flex-col select-none">
         <KioskHeader logoUrl={logoUrl} tenantName={tenantName}>
-          <KioskHeaderButton onClick={reset}>ביטול</KioskHeaderButton>
+          <KioskHeaderButton onClick={reset}>
+            {t("payQr.cancelBtn")}
+          </KioskHeaderButton>
         </KioskHeader>
         <div className="flex-1 grid lg:grid-cols-2 overflow-hidden">
           <section className="flex flex-col items-center justify-center gap-7 p-10 bg-white border-b lg:border-b-0 lg:border-e border-qf-line-soft">
             <div className="text-center space-y-2 max-w-sm">
               <div className="text-xs font-bold tracking-[0.18em] text-qf-mute uppercase">
-                סרקו לתשלום
+                {t("payQr.miniHeading")}
               </div>
               <h2 className="text-3xl font-black text-qf-ink tracking-tight">
-                סרקו עם הטלפון
+                {t("payQr.heading")}
               </h2>
               <p className="text-base text-qf-ink2">
-                פתחו את מצלמת הטלפון, כוונו אל הקוד והשלימו את התשלום.
+                {t("payQr.instructions")}
               </p>
             </div>
             <div className="bg-white p-5 rounded-[28px] border border-qf-line-soft shadow-[0_8px_40px_rgba(17,35,26,0.08)]">
@@ -1336,7 +1394,7 @@ export function KioskApp({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={qrDataUrl}
-                  alt="QR לתשלום"
+                  alt={t("payQr.qrAlt")}
                   className="w-72 h-72 lg:w-80 lg:h-80"
                 />
               ) : (
@@ -1347,27 +1405,27 @@ export function KioskApp({
             </div>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-(--qf-soft) text-(--qf-deep) text-sm font-semibold">
               <span className="qf-spinner text-current" aria-hidden />
-              ממתינים לתשלום…
+              {t("payQr.waiting")}
             </div>
           </section>
           <section className="flex flex-col gap-7 p-10 lg:p-14 justify-center">
             <div className="space-y-1.5">
-              <div className="text-sm text-qf-mute">סה״כ לתשלום</div>
+              <div className="text-sm text-qf-mute">{t("payQr.totalLabel")}</div>
               <div className="text-6xl lg:text-7xl font-black tnum text-qf-ink tracking-tight">
                 {formatPrice(pendingPayOrder?.total ?? subtotal)}
               </div>
               {pendingPayOrder?.orderNumber && (
                 <div className="text-base text-qf-mute tnum">
-                  הזמנה #{pendingPayOrder.orderNumber}
+                  {t("payQr.orderNumberLine", { number: pendingPayOrder.orderNumber })}
                 </div>
               )}
             </div>
             <ol className="space-y-3.5 text-lg text-qf-ink">
               {[
-                "סרקו את הקוד עם מצלמת הטלפון",
-                "בחרו אמצעי תשלום: אשראי / Bit / Apple Pay",
-                "השלימו את התשלום בטלפון",
-                "ההזמנה תועבר אוטומטית למטבח",
+                t("payQr.step1"),
+                t("payQr.step2"),
+                t("payQr.step3"),
+                t("payQr.step4"),
               ].map((step, i) => (
                 <li key={i} className="flex items-start gap-3.5">
                   <span className="w-8 h-8 shrink-0 rounded-full bg-(--qf-soft) text-(--qf-deep) grid place-items-center font-black text-base tnum">
@@ -1378,7 +1436,7 @@ export function KioskApp({
               ))}
             </ol>
             <div className="p-4 rounded-2xl bg-qf-line-soft/60 text-qf-ink2 text-sm">
-              לא מצליחים? אפשר לבטל ולשלם בקופה.
+              {t("payQr.failNote")}
             </div>
           </section>
         </div>
@@ -1402,13 +1460,17 @@ export function KioskApp({
         </div>
         <div className="space-y-3 max-w-2xl">
           <h1 className="text-5xl font-black text-qf-ink tracking-tight">
-            {paidViaQr ? "התשלום התקבל" : "ההזמנה התקבלה"}
+            {paidViaQr
+              ? t("thanks.paidViaQrHeading")
+              : t("thanks.paidAtCounterHeading")}
           </h1>
           {placedOrderNumber && (
             <p className="text-3xl font-bold tnum text-qf-ink2">#{placedOrderNumber}</p>
           )}
           <p className="text-xl text-qf-mute">
-            {paidViaQr ? "ההזמנה הועברה למטבח. בתאבון!" : "תוכלו לשלם בקופה. בתאבון!"}
+            {paidViaQr
+              ? t("thanks.paidViaQrSubtitle")
+              : t("thanks.paidAtCounterSubtitle")}
           </p>
         </div>
       </div>
@@ -1524,7 +1586,12 @@ export function KioskApp({
                   onChange={(e) => setQuery(e.target.value)}
                   onFocus={() => setKbdOpen(true)}
                   onClick={() => setKbdOpen(true)}
+                  onKeyDown={(e) => e.preventDefault()}
                   inputMode="none"
+                  readOnly
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
                   placeholder="חיפוש בתפריט"
                   className="w-full ps-14 pe-4 py-4 rounded-2xl border border-qf-line-soft text-xl bg-white focus:border-(--qf-primary) focus:shadow-[0_0_0_4px_rgba(14,122,60,0.08)] outline-none transition caret-(--qf-primary)"
                 />

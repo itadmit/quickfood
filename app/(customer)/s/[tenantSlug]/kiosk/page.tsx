@@ -4,6 +4,7 @@ import { PaymentProvider } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { loadMenuItemForCustomer, type MenuItemForCustomer } from "@/lib/menu-item-load";
+import { normalizeKioskOverrides } from "@/lib/i18n/kiosk-messages";
 import { KioskApp } from "./KioskApp";
 
 export const dynamic = "force-dynamic";
@@ -105,6 +106,7 @@ export default async function KioskPage({
       featuredBadgeLabel={tenant.featuredBadgeLabel}
       growEnabled={growEnabled}
       kioskRequirePhone={tenant.kioskRequirePhone}
+      stringOverrides={normalizeKioskOverrides(tenant.kioskStringOverrides)}
       categories={categories.map(({ id, name }) => ({ id, name }))}
       upsellCategoryIds={categories.filter((c) => c.upsellInCart).map((c) => c.id)}
       checkoutUpsellCategoryIds={categories.filter((c) => c.upsellBeforeCheckout).map((c) => c.id)}

@@ -323,6 +323,12 @@ model Tenant {
   /// at the start and a name at checkout. We then SMS/WhatsApp the
   /// invoice and link the order to the matching Customer row.
   kioskRequirePhone Boolean @default(false) @map("kiosk_require_phone")
+  /// Per-tenant string overrides for the kiosk UI. Flat dotted keys
+  /// (e.g. "thanks.paidViaQrHeading") map to custom Hebrew strings the
+  /// merchant typed in Settings → Kiosk → Custom Strings. Anything
+  /// missing falls back to the default in `lib/i18n/kiosk-messages.ts`.
+  /// Empty object = use defaults everywhere.
+  kioskStringOverrides Json @default("{}") @map("kiosk_string_overrides")
 
   // Stamped when the merchant clicks any choice on the first-login
   // welcome overlay (start-from-scratch, import-from-wolt, or "later").
