@@ -1,6 +1,7 @@
 import { createSseStream, wait, type SseEvent } from "@/lib/realtime/sse";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
+import { HIDE_UNPAID_NONCASH } from "@/lib/orders-visible";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,9 +21,13 @@ export async function GET(req: Request) {
     while (true) {
       await wait(POLL_MS);
 
-      // New orders since lastSeen
+      // New orders since lastSeen. Skip non-cash orders that are still
+      // waiting for the Grow callback — they aren't real work yet and
+      // would just trigger a noop refresh on the merchant client. When
+      // the callback flips them to confirmed, an orderEvent is written
+      // and we emit it as `order.status_change` below.
       const newOrders = await prisma.order.findMany({
-        where: { tenantId, createdAt: { gt: lastSeen } },
+        where: { tenantId, createdAt: { gt: lastSeen }, NOT: HIDE_UNPAID_NONCASH },
         orderBy: { createdAt: "asc" },
         take: 50,
         select: { id: true, number: true, status: true, createdAt: true },

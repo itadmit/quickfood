@@ -1,6 +1,7 @@
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
+import { HIDE_UNPAID_NONCASH } from "@/lib/orders-visible";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,6 +27,7 @@ export const GET = handler(async () => {
         // Hidden-from-Kanban orders shouldn't tick the "active orders"
         // KPI — they're explicitly out of the active queue.
         kanbanHiddenAt: null,
+        NOT: HIDE_UNPAID_NONCASH,
       },
     }),
     prisma.courier.findMany({

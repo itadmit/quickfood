@@ -3,6 +3,7 @@ import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { OrderStatus, OrderMethod, Prisma } from "@prisma/client";
 import { ORDER_INCLUDE, serializeOrder } from "@/lib/orders-serialize";
+import { HIDE_UNPAID_NONCASH } from "@/lib/orders-visible";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,12 +46,7 @@ export const GET = handler(async (req: Request) => {
     // payment. Cash-pending stays visible — the merchant needs to
     // see it so they can press "מזומן התקבל" once the kiosk customer
     // hands over the cash.
-    where.NOT = {
-      AND: [
-        { status: OrderStatus.pending },
-        { paymentMethod: { not: "cash" } },
-      ],
-    };
+    where.NOT = HIDE_UNPAID_NONCASH;
   } else if (status && (Object.values(OrderStatus) as string[]).includes(status)) {
     where.status = status as OrderStatus;
   }

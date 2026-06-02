@@ -2,6 +2,7 @@ import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { fullName } from "@/lib/format";
+import { HIDE_UNPAID_NONCASH } from "@/lib/orders-visible";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,9 +28,7 @@ export const GET = handler(async () => {
         // Skip card-pending orders that haven't confirmed payment yet —
         // no need to notify the merchant about an order the customer
         // may still abandon at the QR screen.
-        NOT: {
-          AND: [{ status: "pending" }, { paymentMethod: { not: "cash" } }],
-        },
+        NOT: HIDE_UNPAID_NONCASH,
       },
       orderBy: { createdAt: "desc" },
       take: 10,

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
+import { HIDE_UNPAID_NONCASH } from "@/lib/orders-visible";
 import { KitchenDisplay } from "./KitchenDisplay";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +25,9 @@ export default async function KitchenPage() {
       // Same soft-hide that the Kanban honors — if the merchant tapped
       // X on a card, the kitchen screen shouldn't keep showing it.
       kanbanHiddenAt: null,
+      // Card / wallet orders waiting on Grow's payment callback are not
+      // real work yet — keep them off the kitchen screen until paid.
+      NOT: HIDE_UNPAID_NONCASH,
     },
     orderBy: { createdAt: "asc" },
     select: {
