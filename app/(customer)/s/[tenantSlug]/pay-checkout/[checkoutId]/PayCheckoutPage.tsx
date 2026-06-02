@@ -38,7 +38,7 @@ export function PayCheckoutPage({
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [authCode, setAuthCode] = useState<string | null>(initialAuthCode);
   const [sdkReady, setSdkReady] = useState(false);
-  const [walletOpen, setWalletOpen] = useState(false);
+  const [walletOpenedOnce, setWalletOpenedOnce] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -184,8 +184,8 @@ export function PayCheckoutPage({
         </div>
       ) : (
         <>
-          {!walletOpen && (
-            <div className="bg-(--qf-soft) rounded-2xl p-5 text-center flex flex-col items-center gap-3">
+          <div className="bg-(--qf-soft) rounded-2xl p-5 text-center flex flex-col items-center gap-3">
+            {!walletOpenedOnce ? (
               <svg
                 className="w-7 h-7 animate-spin text-(--qf-deep)"
                 viewBox="0 0 24 24"
@@ -207,12 +207,36 @@ export function PayCheckoutPage({
                   strokeLinecap="round"
                 />
               </svg>
-              <div className="text-base font-bold text-(--qf-deep)">
-                {busy ? t("payPage.openingWindow") : t("payPage.waitingForGrow")}
-              </div>
-              <p className="text-xs text-qf-mute">{t("payPage.securityNote")}</p>
+            ) : null}
+            <div className="text-base font-bold text-(--qf-deep)">
+              {busy ? t("payPage.openingWindow") : t("payPage.waitingForGrow")}
             </div>
-          )}
+            <p className="text-xs text-qf-mute">{t("payPage.securityNote")}</p>
+            {walletOpenedOnce && (
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-(--qf-deep) text-white text-sm font-bold hover:opacity-90 active:scale-[0.98] transition"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  aria-hidden
+                >
+                  <path
+                    d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                רענון העמוד
+              </button>
+            )}
+          </div>
 
           {error && (
             <div className="bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato rounded-xl p-3 text-sm text-center">
@@ -235,14 +259,15 @@ export function PayCheckoutPage({
             testMode={growTestMode}
             thankYouUrl={`/s/${tenantSlug}/pay-checkout/${checkout.id}`}
             onReady={() => setSdkReady(true)}
-            onWalletChange={(state) => setWalletOpen(state === "open")}
+            onWalletChange={(state) => {
+              if (state === "open") setWalletOpenedOnce(true);
+            }}
             onError={(message) => {
               setError(
                 typeof message === "string" ? message : t("payPage.paymentFailed"),
               );
               initiatedRef.current = false;
               setAuthCode(null);
-              setWalletOpen(false);
             }}
           />
         </>
