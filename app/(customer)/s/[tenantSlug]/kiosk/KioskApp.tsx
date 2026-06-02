@@ -1669,7 +1669,7 @@ export function KioskApp({
                 <button
                   type="button"
                   onClick={() => setPickItemId(null)}
-                  className="inline-flex items-center gap-2 h-11 px-4 rounded-xl text-qf-ink2 text-base font-semibold hover:bg-qf-line-soft transition"
+                  className="inline-flex items-center gap-2 h-11 px-4 rounded-xl border border-qf-line-soft text-qf-ink2 text-base font-semibold hover:bg-qf-line-soft transition"
                 >
                   <IcoChev s={20} />
                   {t("picker.backToMenu")}
@@ -2053,7 +2053,7 @@ export function KioskApp({
                 <button
                   type="button"
                   onClick={() => setCartOpen(false)}
-                  className="h-20 px-6 rounded-2xl text-qf-ink2 text-lg font-bold hover:bg-qf-line-soft transition"
+                  className="h-20 px-6 rounded-2xl border-2 border-qf-line-soft text-qf-ink2 text-lg font-bold hover:bg-qf-line-soft transition"
                 >
                   {t("cart.continueBrowsingBtn")}
                 </button>

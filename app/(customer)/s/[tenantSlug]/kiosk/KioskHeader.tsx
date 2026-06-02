@@ -59,7 +59,7 @@ export function KioskHeaderButton({
       className={cn(
         "inline-flex items-center gap-2 px-5 h-12 rounded-xl text-base font-semibold transition",
         variant === "ghost"
-          ? "text-qf-ink2 hover:bg-qf-line-soft"
+          ? "border-2 border-qf-line-soft text-qf-ink2 hover:bg-qf-line-soft"
           : "bg-(--qf-soft) text-(--qf-deep) hover:bg-(--qf-primary)/15",
       )}
     >
