@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatPrice } from "@/lib/format";
 import { GrowPaymentSdk, renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
+import {
+  buildKioskT,
+  type KioskOverrides,
+} from "@/lib/i18n/kiosk-messages";
 
 type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
 
@@ -21,6 +25,7 @@ interface PayPageProps {
   };
   growEnabled: boolean;
   growTestMode: boolean;
+  stringOverrides: KioskOverrides;
   justPaid: boolean;
 }
 
@@ -30,8 +35,10 @@ export function PayPage({
   order,
   growEnabled,
   growTestMode,
+  stringOverrides,
   justPaid,
 }: PayPageProps) {
+  const t = useMemo(() => buildKioskT(stringOverrides), [stringOverrides]);
   const alreadyPaid = order.paymentStatus === "paid" || justPaid;
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | string>(
     order.paymentStatus,
@@ -69,14 +76,14 @@ export function PayPage({
         setError(
           typeof data?.error?.message === "string"
             ? data.error.message
-            : "לא הצלחנו לפתוח את חלון התשלום",
+            : t("payPage.openFailed"),
         );
         initiatedRef.current = false;
         return;
       }
       setAuthCode(data.sdk_auth_code);
     } catch {
-      setError("שגיאת רשת. נסו שוב.");
+      setError(t("payPage.network"));
       initiatedRef.current = false;
     } finally {
       setBusy(false);
@@ -170,7 +177,7 @@ export function PayPage({
         setContactError(
           typeof data?.error?.message === "string"
             ? data.error.message
-            : "שגיאה בשמירה",
+            : t("payPage.invoiceContactSaveError"),
         );
         return;
       }
@@ -180,7 +187,7 @@ export function PayPage({
       // server-side mask within ~3s.
       setEmailMasked(value);
     } catch {
-      setContactError("שגיאת רשת. נסו שוב.");
+      setContactError(t("payPage.network"));
     } finally {
       setContactBusy(false);
     }
@@ -208,12 +215,15 @@ export function PayPage({
           </svg>
         </div>
         <div className="space-y-2">
-          <h1 className="text-2xl font-black text-qf-ink">התשלום הושלם</h1>
+          <h1 className="text-2xl font-black text-qf-ink">
+            {t("payPage.paidHeading")}
+          </h1>
           <p className="text-base text-qf-mute">
-            הזמנה #{order.number} התקבלה ב{tenantName}.
+            {t("payPage.paidOrderLine", { number: order.number, tenantName })}
           </p>
           <p className="text-sm text-qf-mute">
-            סכום ששולם: <span className="tnum font-bold">{formatPrice(order.total)}</span>
+            {t("payPage.paidAmountLine")}{" "}
+            <span className="tnum font-bold">{formatPrice(order.total)}</span>
           </p>
         </div>
 
@@ -246,7 +256,7 @@ export function PayPage({
                 strokeLinejoin="round"
               />
             </svg>
-            הורדת חשבונית מס/קבלה
+            {t("payPage.invoiceDownload")}
             {invoiceNumber && (
               <span className="text-xs text-white/80 tnum">#{invoiceNumber}</span>
             )}
@@ -255,20 +265,20 @@ export function PayPage({
           <div className="bg-(--qf-soft) rounded-2xl p-4 max-w-sm text-center space-y-2">
             <div className="inline-flex items-center gap-2 text-sm text-(--qf-deep)">
               <span className="qf-spinner text-(--qf-primary)" aria-hidden />
-              מייצרים חשבונית…
+              {t("payPage.invoiceGenerating")}
             </div>
             <p className="text-sm text-qf-ink">
-              נשלח לך במייל ל-{emailMasked} ברגע שתהיה מוכנה.
+              {t("payPage.invoiceWillEmailUnknown", { email: emailMasked ?? "" })}
             </p>
-            <p className="text-xs text-qf-mute">אפשר לסגור את החלון.</p>
+            <p className="text-xs text-qf-mute">{t("payPage.canCloseTabShort")}</p>
           </div>
         ) : showInvoiceForm ? (
           <div className="w-full max-w-sm bg-white rounded-2xl border border-qf-line p-4 space-y-3">
             <div className="text-sm font-bold text-qf-ink text-center">
-              לאן לשלוח את החשבונית?
+              {t("payPage.invoiceContactHeading")}
             </div>
             <p className="text-xs text-qf-mute text-center">
-              נשלח את החשבונית למייל ברגע שתהיה מוכנה.
+              {t("payPage.invoiceContactSubtitle")}
             </p>
             <div className="flex gap-2">
               <input
@@ -281,7 +291,7 @@ export function PayPage({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") void submitInvoiceEmail();
                 }}
-                placeholder="name@example.com"
+                placeholder={t("payPage.invoiceContactPlaceholder")}
                 dir="ltr"
                 autoFocus
                 className="flex-1 px-3 py-3 rounded-xl border-2 border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm bg-white"
@@ -292,7 +302,9 @@ export function PayPage({
                 disabled={contactBusy || emailInput.trim().length < 3}
                 className="px-5 py-3 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-bold disabled:opacity-50 active:scale-95 transition"
               >
-                {contactBusy ? "שולח…" : "שליחה"}
+                {contactBusy
+                  ? t("payPage.invoiceContactSendingBtn")
+                  : t("payPage.invoiceContactSendBtn")}
               </button>
             </div>
             {contactError && (
@@ -321,12 +333,12 @@ export function PayPage({
                 strokeLinejoin="round"
               />
             </svg>
-            להורדת חשבונית מס
+            {t("payPage.invoiceShowFormBtn")}
           </button>
         )}
 
         <p className="text-sm text-qf-mute max-w-xs">
-          אפשר לסגור את החלון. ההזמנה כבר נשלחה למטבח.
+          {t("payPage.canCloseTab")}
         </p>
       </div>
     );
@@ -335,14 +347,14 @@ export function PayPage({
   return (
     <div className="min-h-[80vh] p-5 flex flex-col gap-5">
       <header className="text-center pt-4">
-        <h1 className="text-2xl font-black text-qf-ink">תשלום הזמנה</h1>
+        <h1 className="text-2xl font-black text-qf-ink">{t("payPage.payTitle")}</h1>
         <p className="text-sm text-qf-mute mt-1">
-          {tenantName} · הזמנה #{order.number}
+          {t("payPage.orderLine", { tenantName, number: order.number })}
         </p>
       </header>
 
       <div className="bg-white rounded-2xl border border-qf-line p-5 shadow-xs space-y-3 text-center">
-        <div className="text-sm text-qf-mute">סה״כ לתשלום</div>
+        <div className="text-sm text-qf-mute">{t("payPage.totalLabel")}</div>
         <div className="text-5xl font-black tnum text-qf-ink">
           {formatPrice(order.total)}
         </div>
@@ -350,16 +362,18 @@ export function PayPage({
 
       {!growEnabled ? (
         <div className="bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato rounded-xl p-4 text-sm text-center">
-          תשלום אונליין לא זמין כרגע למסעדה זו. נא לפנות לקופה.
+          {t("payPage.notAvailable")}
         </div>
       ) : (
         <>
           <div className="bg-(--qf-soft) rounded-2xl p-5 text-center space-y-2">
             <div className="text-base font-bold text-(--qf-deep)">
-              {busy ? "טוען את חלון התשלום..." : "ממתינים לטופס מ-Grow"}
+              {busy
+                ? t("payPage.openingWindow")
+                : t("payPage.waitingForGrow")}
             </div>
             <p className="text-xs text-qf-mute">
-              סליקה מאובטחת. אנא אל תסגרו את החלון עד סיום התשלום.
+              {t("payPage.securityNote")}
             </p>
           </div>
 
@@ -375,7 +389,7 @@ export function PayPage({
                 }}
                 className="block mx-auto mt-2 underline text-sm"
               >
-                נסה שוב
+                {t("payPage.tryAgain")}
               </button>
             </div>
           )}
@@ -385,7 +399,11 @@ export function PayPage({
             thankYouUrl={`/s/${tenantSlug}/pay/${order.id}?paid=1`}
             onReady={() => setSdkReady(true)}
             onError={(message) => {
-              setError(typeof message === "string" ? message : "התשלום נכשל");
+              setError(
+                typeof message === "string"
+                  ? message
+                  : t("payPage.paymentFailed"),
+              );
               initiatedRef.current = false;
               setAuthCode(null);
             }}

@@ -83,16 +83,30 @@ interface BundleSuggestion {
   name: string;
   description: string | null;
   image_url: string | null;
+  mode: "linked" | "legacy";
   bundle_price: number;
   full_price: number;
   savings: number;
-  addons: Array<{
+  /** Wolt-mode upgrade target — opens its own ItemDetail when the
+   *  customer accepts. Present iff mode === "linked". */
+  linked_item?: {
+    id: string;
+    name: string;
+    base_price: number;
+    image_url: string | null;
+  };
+  /** Legacy mode — addons get injected directly into the cart. */
+  addons?: Array<{
     item_id: string;
     name: string;
     base_price: number;
     image_url: string | null;
     qty: number;
   }>;
+  /** Items in cart that fired this offer — removed from cart when
+   *  the suggestion is accepted so the customer doesn't pay for the
+   *  trigger items + the combo on top. */
+  trigger_item_ids: string[];
 }
 
 export function KioskApp({
@@ -134,7 +148,8 @@ export function KioskApp({
   // overrides in Settings → Kiosk → Custom Strings; this `t()` walks
   // override-first, defaults-second, with `{token}` interpolation.
   const t = useMemo(() => buildKioskT(stringOverrides), [stringOverrides]);
-  const featuredLabel = featuredBadgeLabel?.trim() || "מומלץ של השף";
+  const featuredLabel =
+    featuredBadgeLabel?.trim() || t("featured.fallbackLabel");
   const { lines, subtotal, clear, updateQuantity, remove, add, tenant } = useCart();
   const [state, setState] = useState<
     | "start"
@@ -293,6 +308,7 @@ export function KioskApp({
     setKbdOpen(false);
     setKbdTarget(null);
     setHelpOpen(false);
+    setPendingBundleSwap(null);
   }, [clear, categories]);
 
   // Fetch matching bundle offers whenever the cart changes. The
@@ -315,8 +331,37 @@ export function KioskApp({
     return () => ctrl.abort();
   }, [lines, tenantSlug]);
 
+  // When the customer accepts a Wolt-style linked bundle we don't add
+  // anything to the cart ourselves — we open the combo's ItemDetail so
+  // they pick variants (drink choice, size, …) and add it on their own
+  // terms. Once the combo actually lands in the cart we swap the
+  // trigger items out so the cart doesn't carry the trigger pizza AND
+  // the combo that includes a pizza. baselineCount captures how many
+  // copies of the linked item were already in cart before the prompt,
+  // so the watcher only fires on the new addition (idempotent).
+  const [pendingBundleSwap, setPendingBundleSwap] = useState<{
+    bundleId: string;
+    linkedItemId: string;
+    triggerItemIds: string[];
+    baselineCount: number;
+  } | null>(null);
+
   function acceptBundle(b: BundleSuggestion) {
-    for (const a of b.addons) {
+    if (b.mode === "linked" && b.linked_item) {
+      const linkedId = b.linked_item.id;
+      const baselineCount = lines.filter((l) => l.itemId === linkedId).length;
+      setPendingBundleSwap({
+        bundleId: b.id,
+        linkedItemId: linkedId,
+        triggerItemIds: b.trigger_item_ids,
+        baselineCount,
+      });
+      setCartOpen(false);
+      setPickItemId(linkedId);
+      return;
+    }
+    // Legacy addons path — inject the configured items directly.
+    for (const a of b.addons ?? []) {
       const detail = itemDetails[a.item_id];
       for (let i = 0; i < a.qty; i++) {
         add({
@@ -341,6 +386,29 @@ export function KioskApp({
       return next;
     });
   }
+
+  // Watcher for the linked-bundle swap. Once we detect the combo
+  // landed in the cart (count exceeds the baseline captured when the
+  // customer accepted), purge the trigger items so they're not
+  // double-billed.
+  useEffect(() => {
+    if (!pendingBundleSwap) return;
+    const { linkedItemId, triggerItemIds, baselineCount, bundleId } =
+      pendingBundleSwap;
+    const currentCount = lines.filter((l) => l.itemId === linkedItemId).length;
+    if (currentCount <= baselineCount) return;
+    for (const l of lines) {
+      if (triggerItemIds.includes(l.itemId)) {
+        remove(l.lineId);
+      }
+    }
+    setPendingBundleSwap(null);
+    setAcceptedBundleIds((prev) => {
+      const next = new Set(prev);
+      next.add(bundleId);
+      return next;
+    });
+  }, [lines, pendingBundleSwap, remove]);
 
   useEffect(() => {
     function touch() {
@@ -574,7 +642,7 @@ export function KioskApp({
         setOtpError(
           typeof data?.error?.message === "string"
             ? data.error.message
-            : "לא הצלחנו לשלוח קוד",
+            : t("otp.deliveryFailed"),
         );
         return false;
       }
@@ -584,7 +652,7 @@ export function KioskApp({
       setOtpResendIn(60);
       return true;
     } catch {
-      setOtpError("שגיאת רשת. נסו שוב.");
+      setOtpError(t("errors.network"));
       return false;
     }
   }
@@ -629,7 +697,9 @@ export function KioskApp({
       // customer_notes prefix so it lands on the Kanban card and the
       // thermal receipt without a schema change.
       const diningNote =
-        diningMode === "dinein" ? "קיוסק · לשבת במסעדה" : "קיוסק · לקחת";
+        diningMode === "dinein"
+          ? t("diningNote.dineIn")
+          : t("diningNote.takeaway");
       const res = await fetch("/api/v1/customer/orders", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -662,7 +732,7 @@ export function KioskApp({
       });
       const data = await res.json();
       if (!res.ok) {
-        setPlacingError(data?.error?.message ?? "יצירת ההזמנה נכשלה");
+        setPlacingError(data?.error?.message ?? t("errors.placingFailed"));
         setState(method === "card" ? "pay-choice" : "browse");
         return;
       }
@@ -686,7 +756,7 @@ export function KioskApp({
       setPlacedOrderNumber(orderNumber ?? null);
       setState("thanks");
     } catch {
-      setPlacingError("שגיאת רשת. נסי שוב.");
+      setPlacingError(t("errors.networkFeminine"));
       setState(method === "card" ? "pay-choice" : "browse");
     }
   }
@@ -699,7 +769,7 @@ export function KioskApp({
         onClick={() => setState("mode")}
         className="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-10 p-12 text-center select-none cursor-pointer overflow-hidden isolate"
         style={coverImage ? undefined : { background: "var(--qf-bg)" }}
-        aria-label="התחל הזמנה חדשה"
+        aria-label={t("header.startBtnAria")}
       >
         {coverImage && (
           <>
@@ -1315,9 +1385,9 @@ export function KioskApp({
         />
         <div className="space-y-2">
           <h2 className="text-3xl font-black text-qf-ink tracking-tight">
-            שולחים את ההזמנה…
+            {t("placing.heading")}
           </h2>
-          <p className="text-base text-qf-mute">רגע, מעבירים את ההזמנה למטבח</p>
+          <p className="text-base text-qf-mute">{t("placing.subtitle")}</p>
         </div>
       </div>
     );
@@ -1492,7 +1562,7 @@ export function KioskApp({
         {diningMode && (
           <KioskHeaderButton
             variant="soft"
-            ariaLabel="שינוי בחירת ישיבה/לקיחה"
+            ariaLabel={t("header.modeChangeAria")}
             onClick={() => setState("mode")}
             startIcon={
               diningMode === "dinein" ? (
@@ -1502,18 +1572,22 @@ export function KioskApp({
               )
             }
           >
-            {diningMode === "dinein" ? "לשבת" : "לקחת"}
+            {diningMode === "dinein"
+              ? t("header.dineInChip")
+              : t("header.takeawayChip")}
           </KioskHeaderButton>
         )}
         <button
           type="button"
           onClick={() => setHelpOpen(true)}
-          aria-label="עזרה"
+          aria-label={t("header.helpAria")}
           className="w-12 h-12 rounded-xl text-qf-ink2 hover:bg-qf-line-soft grid place-items-center transition"
         >
           <IcoHelp c="currentColor" s={22} />
         </button>
-        <KioskHeaderButton onClick={reset}>התחל מחדש</KioskHeaderButton>
+        <KioskHeaderButton onClick={reset}>
+          {t("header.restartBtn")}
+        </KioskHeaderButton>
       </KioskHeader>
 
       <div className="flex-1 flex min-h-0 pb-28">
@@ -1567,7 +1641,7 @@ export function KioskApp({
                   className="inline-flex items-center gap-2 h-11 px-4 rounded-xl text-qf-ink2 text-base font-semibold hover:bg-qf-line-soft transition"
                 >
                   <IcoChev s={20} />
-                  חזרה לתפריט
+                  {t("picker.backToMenu")}
                 </button>
               </div>
               <div className="max-xl:flex-1 max-xl:overflow-y-auto">
@@ -1582,7 +1656,9 @@ export function KioskApp({
                     addSource="menu"
                   />
                 ) : (
-                  <div className="p-10 text-center text-qf-mute">פריט לא נמצא</div>
+                  <div className="p-10 text-center text-qf-mute">
+                    {t("picker.itemNotFound")}
+                  </div>
                 )}
               </div>
             </div>
@@ -1600,7 +1676,7 @@ export function KioskApp({
                   autoComplete="off"
                   autoCorrect="off"
                   spellCheck={false}
-                  placeholder="חיפוש בתפריט"
+                  placeholder={t("browse.searchPlaceholder")}
                   className="w-full ps-14 pe-4 py-4 rounded-2xl border border-qf-line-soft text-xl bg-white focus:border-(--qf-primary) focus:shadow-[0_0_0_4px_rgba(14,122,60,0.08)] outline-none transition caret-(--qf-primary)"
                 />
                 <span className="absolute inset-s-4 top-1/2 -translate-y-1/2 text-qf-mute">
@@ -1611,7 +1687,7 @@ export function KioskApp({
                     type="button"
                     onClick={() => setQuery("")}
                     className="absolute inset-e-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-lg hover:bg-qf-line-soft grid place-items-center text-qf-mute"
-                    aria-label="נקה חיפוש"
+                    aria-label={t("browse.clearSearchAria")}
                   >
                     <IcoClose s={18} />
                   </button>
@@ -1621,7 +1697,9 @@ export function KioskApp({
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {filtered.length === 0 && (
                   <div className="col-span-full text-center text-qf-mute text-lg py-12">
-                    {query ? `לא נמצאו פריטים עבור "${query}"` : "אין פריטים בקטגוריה הזו"}
+                    {query
+                      ? t("browse.noMatch", { query })
+                      : t("browse.emptyCategory")}
                   </div>
                 )}
                 {filtered.map((it) => (
@@ -1683,29 +1761,29 @@ export function KioskApp({
           onClick={() => itemCount > 0 && setCartOpen(true)}
           disabled={itemCount === 0}
           className={cn(
-            "pointer-events-auto w-full flex items-center justify-between gap-4 px-7 h-[88px] rounded-2xl text-white transition disabled:cursor-default shadow-[0_-4px_20px_rgba(0,0,0,0.15)]",
+            "pointer-events-auto w-full flex items-center justify-between gap-4 px-8 h-[112px] rounded-3xl text-white transition disabled:cursor-default shadow-[0_-4px_20px_rgba(0,0,0,0.15)]",
             itemCount > 0
               ? "bg-(--qf-primary) hover:bg-(--qf-deep) active:scale-[0.99] animate-qf-cart-attention"
               : "bg-qf-ink2/80",
           )}
-          aria-label={itemCount > 0 ? "פתח עגלה" : "העגלה ריקה"}
+          aria-label={itemCount > 0 ? t("cart.openAria") : t("cart.emptyAria")}
         >
           {itemCount === 0 ? (
-            <span className="w-full text-center text-xl font-semibold tracking-tight">
-              הוסיפו פריט כדי להזמין
+            <span className="w-full text-center text-2xl font-semibold tracking-tight">
+              {t("cart.emptyCta")}
             </span>
           ) : (
             <>
               <span className="inline-flex items-center gap-3.5">
-                <span className="inline-grid place-items-center w-11 h-11 rounded-full bg-white/15 text-lg font-black tnum">
+                <span className="inline-grid place-items-center w-14 h-14 rounded-full bg-white/15 text-2xl font-black tnum">
                   {itemCount}
                 </span>
-                <span className="text-xl font-bold tracking-tight">
-                  לצפייה בעגלה
+                <span className="text-2xl font-bold tracking-tight">
+                  {t("cart.viewCart")}
                 </span>
               </span>
               <span className="inline-flex items-center gap-3.5">
-                <span className="text-3xl font-black tnum">{formatPrice(subtotal)}</span>
+                <span className="text-4xl font-black tnum">{formatPrice(subtotal)}</span>
                 <IcoChev c="#fff" s={22} className="rotate-90" />
               </span>
             </>
@@ -1720,28 +1798,29 @@ export function KioskApp({
           onClick={() => setCartOpen(false)}
         >
           <div
-            className="w-full max-w-2xl bg-white rounded-t-3xl shadow-2xl flex flex-col max-h-[85vh] animate-qf-sheet-in"
+            className="w-full max-w-2xl bg-white rounded-t-3xl shadow-2xl flex flex-col min-h-[55vh] max-h-[85vh] animate-qf-sheet-in"
             onClick={(e) => e.stopPropagation()}
           >
             <header className="px-6 py-4 border-b border-qf-line-soft flex items-center justify-between">
               <div>
-                <div className="text-xs font-black text-qf-mute tracking-wider">ההזמנה שלך</div>
+                <div className="text-xs font-black text-qf-mute tracking-wider">{t("cart.sectionLabel")}</div>
                 <div className="text-2xl font-black mt-1">
-                  {itemCount} {itemCount === 1 ? "פריט" : "פריטים"}
+                  {itemCount}{" "}
+                  {itemCount === 1 ? t("cart.itemSingular") : t("cart.itemPlural")}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setCartOpen(false)}
                 className="w-12 h-12 rounded-xl hover:bg-qf-line-soft grid place-items-center"
-                aria-label="סגור"
+                aria-label={t("cart.closeAria")}
               >
                 <IcoClose s={20} />
               </button>
             </header>
             <div className="flex-1 overflow-y-auto p-5 space-y-3">
               {lines.length === 0 ? (
-                <div className="text-center text-qf-mute text-base py-10">הסל ריק</div>
+                <div className="text-center text-qf-mute text-base py-10">{t("cart.emptyState")}</div>
               ) : (
                 lines.map((l) => {
                   const lineTotal =
@@ -1778,7 +1857,7 @@ export function KioskApp({
                             type="button"
                             onClick={() => remove(l.lineId)}
                             className="w-8 h-8 rounded-full text-qf-mute hover:text-qf-tomato hover:bg-qf-tomato-soft grid place-items-center transition shrink-0"
-                            aria-label="הסר"
+                            aria-label={t("cart.removeAria")}
                           >
                             <IcoClose s={16} />
                           </button>
@@ -1790,7 +1869,7 @@ export function KioskApp({
                               onClick={() => updateQuantity(l.lineId, Math.max(1, l.quantity - 1))}
                               disabled={l.quantity <= 1}
                               className="w-10 h-10 grid place-items-center disabled:opacity-40"
-                              aria-label="הפחת"
+                              aria-label={t("cart.decrementAria")}
                             >
                               <IcoMinus s={16} />
                             </button>
@@ -1800,7 +1879,7 @@ export function KioskApp({
                               onClick={() => updateQuantity(l.lineId, Math.min(20, l.quantity + 1))}
                               disabled={l.quantity >= 20}
                               className="w-10 h-10 grid place-items-center disabled:opacity-40"
-                              aria-label="הוסף"
+                              aria-label={t("cart.incrementAria")}
                             >
                               <IcoPlus c="#11231a" s={16} />
                             </button>
@@ -1815,7 +1894,7 @@ export function KioskApp({
             </div>
             {bundleSuggestions.length > 0 && (
               <div className="border-t border-qf-line-soft px-5 py-4 bg-(--qf-soft)">
-                <div className="text-sm font-black text-(--qf-deep) mb-2">מבצעים פתוחים בסל</div>
+                <div className="text-sm font-black text-(--qf-deep) mb-2">{t("bundle.sectionTitle")}</div>
                 <div className="space-y-2">
                   {bundleSuggestions.map((b) => {
                     const accepted = acceptedBundleIds.has(b.id);
@@ -1825,18 +1904,26 @@ export function KioskApp({
                         className="bg-white rounded-2xl border border-(--qf-primary)/25 p-3.5 flex items-center gap-3 shadow-[0_2px_8px_rgba(14,122,60,0.06)]"
                       >
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-black truncate">{b.name}</div>
+                          <div className="text-sm font-black truncate">
+                            {b.mode === "linked" && b.linked_item
+                              ? b.linked_item.name
+                              : b.name}
+                          </div>
                           <div className="text-xs text-qf-mute mt-0.5">
-                            {b.addons
-                              .map((a) => (a.qty > 1 ? `${a.qty}× ${a.name}` : a.name))
-                              .join(" + ")}
+                            {b.mode === "linked"
+                              ? b.name
+                              : (b.addons ?? [])
+                                  .map((a) => (a.qty > 1 ? `${a.qty}× ${a.name}` : a.name))
+                                  .join(" + ")}
                           </div>
                           <div className="text-xs mt-1 tnum">
                             <span className="font-bold text-(--qf-deep)">{formatPrice(b.bundle_price)}</span>
                             {b.savings > 0 && (
                               <>
                                 <span className="text-qf-mute line-through ms-2">{formatPrice(b.full_price)}</span>
-                                <span className="text-qf-tomato font-bold ms-2">חוסכים {formatPrice(b.savings)}</span>
+                                <span className="text-qf-tomato font-bold ms-2">
+                                  {t("bundle.savingsLabel", { amount: formatPrice(b.savings) })}
+                                </span>
                               </>
                             )}
                           </div>
@@ -1855,10 +1942,12 @@ export function KioskApp({
                           {accepted ? (
                             <>
                               <IcoCheck c="currentColor" s={14} />
-                              נוסף
+                              {t("bundle.addedBtn")}
                             </>
+                          ) : b.mode === "linked" ? (
+                            "שדרג"
                           ) : (
-                            "תוסיפו"
+                            t("bundle.addBtn")
                           )}
                         </button>
                       </div>
@@ -1869,7 +1958,7 @@ export function KioskApp({
             )}
             {upsellSuggestions.length > 0 && lines.length > 0 && (
               <div className="border-t border-qf-line-soft px-5 py-4 bg-qf-line-soft/30">
-                <div className="text-sm font-bold text-qf-mute mb-2">להוסיף משהו?</div>
+                <div className="text-sm font-bold text-qf-mute mb-2">{t("upsell.cartSectionTitle")}</div>
                 <div className="flex gap-2.5 overflow-x-auto no-scrollbar">
                   {upsellSuggestions.map((it) => (
                     <div
@@ -1897,7 +1986,11 @@ export function KioskApp({
                       <button
                         type="button"
                         onClick={() => quickAddUpsell(it)}
-                        aria-label={it.needsConfig ? `הוסף ${it.name} (יש בחירות)` : `הוסף ${it.name} לסל`}
+                        aria-label={
+                          it.needsConfig
+                            ? t("upsell.addNeedsConfigAria", { name: it.name })
+                            : t("upsell.addAria", { name: it.name })
+                        }
                         className="absolute top-2 start-2 w-9 h-9 rounded-full bg-(--qf-primary) text-white shadow-md grid place-items-center hover:bg-(--qf-deep) active:scale-95 transition"
                       >
                         <IcoPlus c="#fff" s={18} />
@@ -1909,7 +2002,7 @@ export function KioskApp({
             )}
             <footer className="px-6 py-5 border-t border-qf-line-soft space-y-3.5 bg-white">
               <div className="flex items-baseline justify-between">
-                <span className="text-base text-qf-mute">סה״כ</span>
+                <span className="text-base text-qf-mute">{t("cart.totalLabel")}</span>
                 <span className="text-4xl font-black tnum text-qf-ink tracking-tight">{formatPrice(subtotal)}</span>
               </div>
               {placingError && (
@@ -1922,16 +2015,16 @@ export function KioskApp({
                   type="button"
                   onClick={startCheckout}
                   disabled={lines.length === 0}
-                  className="h-16 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xl font-black disabled:opacity-50 shadow-[0_6px_24px_rgba(14,122,60,0.28)] active:scale-[0.98] transition"
+                  className="h-20 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-2xl font-black disabled:opacity-50 shadow-[0_6px_24px_rgba(14,122,60,0.28)] active:scale-[0.98] transition"
                 >
-                  מעבר לתשלום
+                  {t("cart.checkoutBtn")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setCartOpen(false)}
-                  className="h-16 px-5 rounded-2xl text-qf-ink2 text-base font-bold hover:bg-qf-line-soft transition"
+                  className="h-20 px-6 rounded-2xl text-qf-ink2 text-lg font-bold hover:bg-qf-line-soft transition"
                 >
-                  המשך לקנות
+                  {t("cart.continueBrowsingBtn")}
                 </button>
               </div>
             </footer>
@@ -1947,9 +2040,9 @@ export function KioskApp({
           <div className="w-full max-w-2xl bg-white rounded-t-3xl shadow-2xl flex flex-col max-h-[85vh] animate-qf-sheet-in">
             <header className="px-6 py-5 border-b border-qf-line-soft text-center">
               <h2 className="text-2xl font-black text-qf-ink">
-                להוסיף משהו לפני שמסיימים?
+                {t("checkoutUpsell.heading")}
               </h2>
-              <p className="text-sm text-qf-mute mt-1">המנות הכי טעימות שלנו לסגירת הארוחה</p>
+              <p className="text-sm text-qf-mute mt-1">{t("checkoutUpsell.subtitle")}</p>
             </header>
             <div className="flex-1 overflow-y-auto p-5">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -1986,14 +2079,14 @@ export function KioskApp({
                 onClick={advanceToPayment}
                 className="h-14 rounded-2xl border border-qf-line-soft hover:bg-qf-line-soft text-qf-ink2 text-base font-bold transition"
               >
-                לא תודה, להזמין
+                {t("checkoutUpsell.skipBtn")}
               </button>
               <button
                 type="button"
                 onClick={() => setCheckoutPromptOpen(false)}
                 className="h-14 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-base font-bold shadow-[0_4px_16px_rgba(14,122,60,0.25)] active:scale-[0.98] transition"
               >
-                חזרה לעגלה
+                {t("checkoutUpsell.backBtn")}
               </button>
             </footer>
           </div>
@@ -2051,27 +2144,27 @@ export function KioskApp({
             <header className="px-7 pt-7 pb-4 flex items-start justify-between gap-4">
               <div>
                 <div className="text-xs font-bold tracking-[0.18em] text-qf-mute uppercase">
-                  עזרה
+                  {t("help.bumper")}
                 </div>
                 <h2 className="text-2xl font-black text-qf-ink tracking-tight mt-1">
-                  איך מזמינים בקיוסק?
+                  {t("help.heading")}
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setHelpOpen(false)}
                 className="w-11 h-11 rounded-xl hover:bg-qf-line-soft grid place-items-center text-qf-mute shrink-0"
-                aria-label="סגור"
+                aria-label={t("help.closeAria")}
               >
                 <IcoClose s={20} />
               </button>
             </header>
             <ol className="px-7 pb-5 space-y-3.5 text-base text-qf-ink">
               {[
-                "בחרו פריט מהתפריט.",
-                "בחרו תוספות וגודל אם רוצים.",
-                "פתחו את העגלה למטה ולחצו על מעבר לתשלום.",
-                "שלמו בטלפון בסריקת QR או בקופה.",
+                t("help.step1"),
+                t("help.step2"),
+                t("help.step3"),
+                t("help.step4"),
               ].map((step, i) => (
                 <li key={i} className="flex items-start gap-3">
                   <span className="w-7 h-7 shrink-0 rounded-full bg-(--qf-soft) text-(--qf-deep) grid place-items-center font-black text-sm tnum">
@@ -2083,15 +2176,14 @@ export function KioskApp({
             </ol>
             <div className="border-t border-qf-line-soft bg-qf-line-soft/30 px-7 py-5 space-y-3">
               <p className="text-sm text-qf-ink2 leading-relaxed">
-                מערכת קיוסק חכמה ל-מסעדות מ-<span className="font-bold text-qf-ink">QuickFood</span>.
-                רוצים אחת כזו אצלכם?
+                {t("help.poweredByLine")}
               </p>
               <a
                 href="tel:0542284283"
                 className="inline-flex items-center gap-2 h-11 px-4 rounded-xl bg-qf-ink text-white text-sm font-bold hover:bg-qf-ink2 transition"
               >
                 <IcoPhone c="currentColor" s={16} />
-                חייגו עכשיו · 054-228-4283
+                {t("help.callBtn")}
               </a>
             </div>
           </div>

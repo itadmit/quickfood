@@ -11,6 +11,10 @@ const Patch = z.object({
   description: z.string().max(500).nullable().optional(),
   bundle_price: z.number().int().min(1).max(10000).optional(),
   trigger_item_ids: z.array(z.string().uuid()).min(1).optional(),
+  // Wolt model: existing combo menu item the suggestion points at.
+  // Setting this to a value replaces the bundle's addon list; setting
+  // it to null reverts to the legacy addon flow.
+  linked_item_id: z.string().uuid().nullable().optional(),
   addon_items: z
     .array(
       z.object({
@@ -18,7 +22,6 @@ const Patch = z.object({
         qty: z.number().int().min(1).max(10).default(1),
       }),
     )
-    .min(1)
     .optional(),
   active: z.boolean().optional(),
   position: z.number().int().min(0).optional(),
@@ -46,6 +49,7 @@ export const PATCH = handler(
     const allNewIds = [
       ...(body.trigger_item_ids ?? []),
       ...(body.addon_items?.map((a) => a.item_id) ?? []),
+      ...(body.linked_item_id ? [body.linked_item_id] : []),
     ];
     if (allNewIds.length > 0) {
       const owned = await prisma.menuItem.count({
@@ -66,6 +70,7 @@ export const PATCH = handler(
           ...(body.bundle_price !== undefined && { bundlePrice: body.bundle_price }),
           ...(body.active !== undefined && { active: body.active }),
           ...(body.position !== undefined && { position: body.position }),
+          ...(body.linked_item_id !== undefined && { linkedItemId: body.linked_item_id }),
           ...(body.valid_from !== undefined && {
             validFrom: body.valid_from ? new Date(body.valid_from) : null,
           }),

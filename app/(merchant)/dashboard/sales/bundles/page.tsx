@@ -20,6 +20,7 @@ export default async function BundlesPage() {
         addons: {
           include: { item: { select: { id: true, name: true, basePrice: true } } },
         },
+        linkedItem: { select: { id: true, name: true, basePrice: true } },
       },
     }),
     prisma.menuItem.findMany({
@@ -38,6 +39,9 @@ export default async function BundlesPage() {
         bundlePrice: b.bundlePrice,
         active: b.active,
         triggerItemIds: b.triggers.map((t) => t.itemId),
+        linkedItemId: b.linkedItemId,
+        linkedItemName: b.linkedItem?.name ?? null,
+        linkedItemPrice: b.linkedItem?.basePrice ?? null,
         addonItems: b.addons.map((a) => ({ itemId: a.itemId, qty: a.qty })),
       }))}
       items={items}

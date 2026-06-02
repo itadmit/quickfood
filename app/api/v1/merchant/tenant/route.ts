@@ -58,6 +58,7 @@ export const PATCH = handler(async (req: Request) => {
       kioskWelcomeText: body.kiosk_welcome_text,
       kioskIdleSeconds: body.kiosk_idle_seconds,
       kioskRequirePhone: body.kiosk_require_phone,
+      kioskStringOverrides: body.kiosk_string_overrides,
       featuredBadgeLabel: body.featured_badge_label,
       upsellSizeNudge: body.upsell_size_nudge,
     },

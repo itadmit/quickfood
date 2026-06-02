@@ -6,25 +6,37 @@ import { prisma } from "@/lib/db/client";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const Input = z.object({
-  name: z.string().min(1).max(120),
-  description: z.string().max(500).optional().nullable(),
-  bundle_price: z.number().int().min(1).max(10000),
-  trigger_item_ids: z.array(z.string().uuid()).min(1),
-  addon_items: z
-    .array(
-      z.object({
-        item_id: z.string().uuid(),
-        qty: z.number().int().min(1).max(10).default(1),
-      }),
-    )
-    .min(1),
-  active: z.boolean().default(true),
-  position: z.number().int().min(0).default(0),
-  image_url: z.string().url().nullable().optional(),
-  valid_from: z.string().datetime().nullable().optional(),
-  valid_until: z.string().datetime().nullable().optional(),
-});
+// Wolt model: new bundles point at an existing combo menu item via
+// `linked_item_id` and skip `addon_items`. Legacy bundles created
+// before this migration still ship with `addon_items` populated — both
+// shapes are accepted on write, but at least one path must resolve to
+// "what gets added when the customer accepts".
+const Input = z
+  .object({
+    name: z.string().min(1).max(120),
+    description: z.string().max(500).optional().nullable(),
+    bundle_price: z.number().int().min(1).max(10000),
+    trigger_item_ids: z.array(z.string().uuid()).min(1),
+    linked_item_id: z.string().uuid().nullable().optional(),
+    addon_items: z
+      .array(
+        z.object({
+          item_id: z.string().uuid(),
+          qty: z.number().int().min(1).max(10).default(1),
+        }),
+      )
+      .optional()
+      .default([]),
+    active: z.boolean().default(true),
+    position: z.number().int().min(0).default(0),
+    image_url: z.string().url().nullable().optional(),
+    valid_from: z.string().datetime().nullable().optional(),
+    valid_until: z.string().datetime().nullable().optional(),
+  })
+  .refine((d) => !!d.linked_item_id || d.addon_items.length > 0, {
+    message: "צריך לבחור מוצר משודרג או לפחות תוספת אחת",
+    path: ["linked_item_id"],
+  });
 
 export const GET = handler(async () => {
   const session = await requireMerchant();
@@ -35,6 +47,7 @@ export const GET = handler(async () => {
     include: {
       triggers: { include: { item: { select: { id: true, name: true } } } },
       addons: { include: { item: { select: { id: true, name: true, basePrice: true } } } },
+      linkedItem: { select: { id: true, name: true, basePrice: true, imageUrl: true } },
     },
   });
   return apiJson({
@@ -49,6 +62,14 @@ export const GET = handler(async () => {
       valid_from: b.validFrom?.toISOString() ?? null,
       valid_until: b.validUntil?.toISOString() ?? null,
       trigger_items: b.triggers.map((t) => ({ id: t.itemId, name: t.item.name })),
+      linked_item: b.linkedItem
+        ? {
+            id: b.linkedItem.id,
+            name: b.linkedItem.name,
+            base_price: b.linkedItem.basePrice,
+            image_url: b.linkedItem.imageUrl,
+          }
+        : null,
       addon_items: b.addons.map((a) => ({
         id: a.itemId,
         name: a.item.name,
@@ -70,6 +91,7 @@ export const POST = handler(async (req: Request) => {
   const allIds = [
     ...body.trigger_item_ids,
     ...body.addon_items.map((a) => a.item_id),
+    ...(body.linked_item_id ? [body.linked_item_id] : []),
   ];
   const owned = await prisma.menuItem.count({
     where: { id: { in: allIds }, tenantId: session.tenantId },
@@ -89,6 +111,7 @@ export const POST = handler(async (req: Request) => {
       position: body.position,
       validFrom: body.valid_from ? new Date(body.valid_from) : null,
       validUntil: body.valid_until ? new Date(body.valid_until) : null,
+      linkedItemId: body.linked_item_id ?? null,
       triggers: {
         create: body.trigger_item_ids.map((itemId) => ({ itemId })),
       },

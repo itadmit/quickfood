@@ -146,6 +146,24 @@ export function KioskSettingsForm({
             </button>
           </div>
         </div>
+
+        <a
+          href="/dashboard/settings/kiosk/strings"
+          className="block bg-white border border-qf-line-dash hover:border-(--qf-primary)/40 rounded-2xl p-5 transition group"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="font-bold text-qf-ink">טקסטים מותאמים</div>
+              <div className="text-sm text-qf-mute mt-0.5 leading-relaxed">
+                שינוי המלל בקיוסק — כותרות, הוראות, כפתורים. ברירת המחדל
+                נשמרת כשהשדה נשאר ריק.
+              </div>
+            </div>
+            <span className="text-(--qf-primary) text-sm font-bold whitespace-nowrap group-hover:translate-x-[-3px] transition">
+              עריכה ←
+            </span>
+          </div>
+        </a>
       </div>
 
       <Toast toast={toast} onDismiss={() => setToast(null)} />

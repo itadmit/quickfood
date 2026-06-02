@@ -546,6 +546,7 @@ model MenuItem {
   notices      Notice[]
   bundleTriggers BundleOfferTrigger[]
   bundleAddons   BundleOfferAddon[]
+  bundleLinkedFor BundleOffer[] @relation("BundleLinkedItem")
 
   @@unique([tenantId, externalSource, externalId])
   @@index([tenantId, categoryId, position])
@@ -581,6 +582,18 @@ model BundleOffer {
   validUntil  DateTime? @map("valid_until")
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  /// Wolt-style upgrade target: the existing combo menu item the
+  /// suggestion points at. When the customer's cart contains a trigger
+  /// item, the offer surfaces as "שדרג ל-{linkedItem.name}, חוסכים X₪"
+  /// and tapping opens the combo's normal ItemDetail (with its own
+  /// modifier groups — drink choice, size, etc.). On accept the
+  /// customer-side flow swaps the trigger items out for the combo so
+  /// the cart doesn't double up. Nullable for backward compatibility
+  /// with legacy bundles that pre-pick addons via the `addons` relation;
+  /// new bundles must set this and skip the addon list.
+  linkedItemId String?    @map("linked_item_id") @db.Uuid
+  linkedItem   MenuItem?  @relation("BundleLinkedItem", fields: [linkedItemId], references: [id], onDelete: SetNull)
 
   triggers BundleOfferTrigger[]
   addons   BundleOfferAddon[]

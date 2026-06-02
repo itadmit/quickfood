@@ -288,6 +288,16 @@ export const TenantPatchSchema = z.object({
   kiosk_welcome_text: z.string().max(160).nullable().optional(),
   kiosk_idle_seconds: z.number().int().min(15).max(600).optional(),
   kiosk_require_phone: z.boolean().optional(),
+  // Flat dotted-key → custom-string dict. Defaults to {} in the schema.
+  // Persisted as-is; the kiosk runtime merges over `lib/i18n/kiosk-messages`
+  // defaults at render time. Capped at 200 keys × 400 chars each so a
+  // single tenant can't blow up the row.
+  kiosk_string_overrides: z
+    .record(z.string().min(1).max(120), z.string().max(400))
+    .refine((v) => Object.keys(v).length <= 200, {
+      message: "יותר מדי טקסטים מותאמים",
+    })
+    .optional(),
   // Merchandising knobs (shared by storefront + kiosk).
   featured_badge_label: z.string().max(40).nullable().optional(),
   upsell_size_nudge: z.boolean().optional(),

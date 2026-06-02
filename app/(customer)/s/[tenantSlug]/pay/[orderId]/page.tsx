@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { PaymentProvider } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
+import { normalizeKioskOverrides } from "@/lib/i18n/kiosk-messages";
 import { PayPage } from "./PayPage";
 
 export const dynamic = "force-dynamic";
@@ -61,6 +62,15 @@ export default async function PayRoute({
     select: { testMode: true, isActive: true },
   });
 
+  // PayPage shares the merchant's per-tenant string overrides with the
+  // kiosk — same Tenant.kioskStringOverrides field, so when the merchant
+  // customizes "התשלום הושלם" once in Settings → Kiosk → Custom Strings
+  // it lands on the customer's phone too.
+  const tenantStrings = await prisma.tenant.findUnique({
+    where: { id: tenant.id },
+    select: { kioskStringOverrides: true },
+  });
+
   return (
     <PayPage
       tenantSlug={tenantSlug}
@@ -77,6 +87,9 @@ export default async function PayRoute({
       }}
       growEnabled={!!growConfig?.isActive}
       growTestMode={growConfig?.testMode ?? true}
+      stringOverrides={normalizeKioskOverrides(
+        tenantStrings?.kioskStringOverrides,
+      )}
       justPaid={justPaid}
     />
   );
