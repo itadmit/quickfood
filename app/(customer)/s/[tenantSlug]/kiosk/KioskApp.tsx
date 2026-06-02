@@ -2167,7 +2167,7 @@ export function KioskApp({
           item. */}
       {bundlePopup && !pickItemId && bundlePopup.linked_item && (
         <div className="fixed inset-0 z-[65] flex items-center justify-center bg-black/55 backdrop-blur-sm p-6">
-          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-qf-modal-in">
+          <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden animate-qf-modal-in">
             {bundlePopup.linked_item.image_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -2178,31 +2178,25 @@ export function KioskApp({
             ) : (
               <div className="w-full h-32 bg-(--qf-soft)" />
             )}
-            <div className="p-6 space-y-4 text-center">
+            <div className="p-7 space-y-5 text-center">
               <div>
-                <div className="text-xs font-bold tracking-[0.18em] text-(--qf-primary) uppercase">
-                  הצעת שדרוג
+                <div className="text-sm font-bold text-(--qf-primary)">
+                  {bundlePopup.savings > 0
+                    ? `תרצה לשדרג ולחסוך ${formatPrice(bundlePopup.savings)}?`
+                    : "תרצה לשדרג?"}
                 </div>
-                <h2 className="text-3xl font-black text-qf-ink tracking-tight mt-2">
+                <h2 className="text-3xl font-black text-qf-ink tracking-tight mt-2 whitespace-nowrap">
                   {bundlePopup.linked_item.name}
                 </h2>
-                <p className="text-base text-qf-ink2 mt-1">
-                  {bundlePopup.name}
-                </p>
               </div>
               <div className="flex items-baseline justify-center gap-3 tnum">
                 <span className="text-4xl font-black text-(--qf-primary)">
                   {formatPrice(bundlePopup.bundle_price)}
                 </span>
                 {bundlePopup.savings > 0 && (
-                  <>
-                    <span className="text-lg text-qf-mute line-through">
-                      {formatPrice(bundlePopup.full_price)}
-                    </span>
-                    <span className="text-sm font-bold text-qf-tomato bg-qf-tomato-soft px-2.5 py-1 rounded-full">
-                      חוסכים {formatPrice(bundlePopup.savings)}
-                    </span>
-                  </>
+                  <span className="text-lg text-qf-mute line-through">
+                    {formatPrice(bundlePopup.full_price)}
+                  </span>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-3 pt-2">
