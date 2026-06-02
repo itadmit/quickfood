@@ -121,6 +121,12 @@ type GrowCallbackRaw = Record<string, string | undefined> & {
   };
 };
 
+import {
+  GROW_SHARED_TEST_USER_ID,
+  GROW_SHARED_TEST_API_KEY,
+  GROW_SHARED_TEST_PAGE_CODE,
+} from "./grow-test-creds";
+
 // ─── Provider ─────────────────────────────────────────────────
 
 export class GrowProvider extends BasePaymentProvider {
@@ -131,6 +137,12 @@ export class GrowProvider extends BasePaymentProvider {
   private static readonly PRODUCTION_URL = "https://secure.meshulam.co.il/api/light/server/1.0";
 
   protected validateConfig(config: ProviderConfig): void {
+    // Sandbox short-circuits validation: we'll plug in our shared
+    // sandbox userId / apiKey / pageCode from grow-test-creds.ts
+    // regardless of what the merchant typed in the form. Flipping
+    // "Sandbox" on at /dashboard/settings/payments is meant to JUST
+    // WORK without any credentials of their own.
+    if (config.testMode) return;
     if (!config.credentials.userId) {
       throw new Error("Grow: credentials.userId is required");
     }
@@ -150,15 +162,20 @@ export class GrowProvider extends BasePaymentProvider {
     return this.config!.testMode ? GrowProvider.SANDBOX_URL : GrowProvider.PRODUCTION_URL;
   }
 
+  // In sandbox we hand back the shared test creds regardless of what
+  // the merchant set — see grow-test-creds.ts for the rationale.
   private get apiKey(): string {
+    if (this.config!.testMode) return GROW_SHARED_TEST_API_KEY;
     return process.env.GROW_API_KEY!;
   }
 
   private get pageCode(): string {
+    if (this.config!.testMode) return GROW_SHARED_TEST_PAGE_CODE;
     return this.config!.credentials.pageCode || process.env.GROW_PAGE_CODE!;
   }
 
   private get userId(): string {
+    if (this.config!.testMode) return GROW_SHARED_TEST_USER_ID;
     return this.config!.credentials.userId!;
   }
 

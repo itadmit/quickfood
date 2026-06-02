@@ -231,7 +231,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field
               label="מצב טסט (Sandbox)"
-              hint="כל עוד פעיל — Grow לא יחייב כרטיסים אמיתיים"
+              hint="כל עוד פעיל — Grow לא יחייב כרטיסים אמיתיים. משתמש בחשבון הסנדבוקס המשותף שלנו, אין צורך להזין מזהה/מפתח אחר."
             >
               <Toggle
                 checked={v.grow.test_mode}
