@@ -321,7 +321,7 @@ export function PayPage({
                 strokeLinejoin="round"
               />
             </svg>
-            מעוניין בחשבונית מס? לחץ כאן
+            להורדת חשבונית מס
           </button>
         )}
 
