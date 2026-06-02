@@ -1613,7 +1613,7 @@ export function KioskApp({
     return (
       <div className="fixed inset-0 z-[200] bg-qf-bg flex flex-col select-none">
         <KioskHeader logoUrl={logoUrl} tenantName={tenantName}>
-          <KioskHeaderButton onClick={reset}>
+          <KioskHeaderButton variant="danger" onClick={reset}>
             {t("payQr.cancelBtn")}
           </KioskHeaderButton>
         </KioskHeader>
@@ -1721,7 +1721,20 @@ export function KioskApp({
   // ─── Browse + cart ─────────────────────────────────────────────
   return (
     <div className="fixed inset-0 z-[200] bg-qf-bg flex flex-col select-none">
-      <KioskHeader logoUrl={logoUrl} tenantName={tenantName}>
+      <KioskHeader
+        logoUrl={logoUrl}
+        tenantName={tenantName}
+        startAction={
+          pickItemId ? (
+            <KioskHeaderButton
+              onClick={() => setPickItemId(null)}
+              startIcon={<IcoChev s={18} />}
+            >
+              {t("picker.backToMenu")}
+            </KioskHeaderButton>
+          ) : null
+        }
+      >
         {diningMode && (
           <KioskHeaderButton
             variant="soft"
@@ -1797,16 +1810,6 @@ export function KioskApp({
             // Critically it does NOT cover the header, so the "לשבת /
             // עזרה / התחל מחדש" buttons stay reachable.
             <div className="kiosk-scope max-xl:fixed max-xl:top-[81px] max-xl:inset-x-0 max-xl:bottom-0 max-xl:z-[35] max-xl:bg-qf-bg max-xl:flex max-xl:flex-col">
-              <div className="sticky top-0 z-10 bg-qf-bg/95 backdrop-blur px-6 py-3 border-b border-qf-line-soft max-xl:static max-xl:bg-white max-xl:shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setPickItemId(null)}
-                  className="inline-flex items-center gap-2 h-11 px-4 rounded-xl border border-qf-line-soft text-qf-ink2 text-base font-semibold hover:bg-qf-line-soft transition"
-                >
-                  <IcoChev s={20} />
-                  {t("picker.backToMenu")}
-                </button>
-              </div>
               <div className="max-xl:flex-1 max-xl:overflow-y-auto">
                 {pickedItemData ? (
                   <ItemDetail
