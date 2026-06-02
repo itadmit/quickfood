@@ -40,29 +40,35 @@ export function Toast({ toast, onDismiss, duration = 2500 }: Props) {
 
   if (!toast) return null;
 
-  const palette =
+  // Chunky "card-style" toast matching the v2 dashboard's offset-shadow
+  // + thick black border language. The status colour lives in the icon
+  // chip so the surface stays neutral (white) and the message reads
+  // strongly against either cream or white surrounding surfaces.
+  const chip =
     toast.kind === "ok"
-      ? "bg-qf-green-deep text-white"
+      ? "bg-qf-green-soft text-qf-green-deep border-qf-green-deep"
       : toast.kind === "err"
-        ? "bg-qf-tomato text-white"
-        : "bg-qf-ink text-white";
+        ? "bg-qf-tomato-soft text-qf-tomato border-qf-tomato"
+        : "bg-qf-yolk-soft text-qf-ink border-qf-ink";
 
   return (
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-5 inset-s-5 z-[100] pointer-events-none"
+      className="fixed bottom-6 inset-s-6 z-[100] pointer-events-none animate-qf-toast-in"
     >
-      <div
-        className={cn(
-          "pointer-events-auto inline-flex items-center gap-2 rounded-xl shadow-lg px-4 py-2.5 text-sm",
-          palette,
-        )}
-      >
-        {toast.kind === "ok" && <IcoCheck c="currentColor" s={16} />}
-        {toast.kind === "err" && <IcoClose c="currentColor" s={16} />}
-        {toast.kind === "info" && <IcoWarning c="currentColor" s={16} />}
-        <span>{toast.message}</span>
+      <div className="pointer-events-auto inline-flex items-center gap-3 bg-white text-qf-ink rounded-2xl border-2 border-qf-ink px-4 py-3 shadow-[0_4px_0_rgba(17,35,26,0.95)]">
+        <span
+          className={cn(
+            "inline-grid place-items-center w-8 h-8 rounded-full border-2 shrink-0",
+            chip,
+          )}
+        >
+          {toast.kind === "ok" && <IcoCheck c="currentColor" s={16} />}
+          {toast.kind === "err" && <IcoClose c="currentColor" s={16} />}
+          {toast.kind === "info" && <IcoWarning c="currentColor" s={16} />}
+        </span>
+        <span className="text-base font-bold pe-1">{toast.message}</span>
       </div>
     </div>
   );
