@@ -227,6 +227,14 @@ export function KioskApp({
       setKbdTarget(null);
     }
   }, [state, kbdTarget]);
+  // Auto-open the keyboard on the first-name field the moment the
+  // name-entry screen mounts — saves a tap. Skip if a field is already
+  // bound (e.g. bounced back from pay-choice with lastName still latched).
+  useEffect(() => {
+    if (state === "name-entry" && kbdTarget === null) {
+      setKbdTarget("firstName");
+    }
+  }, [state, kbdTarget]);
 
   // The customer layout below us renders top nav, FAB, preview bar etc.
   // Cover the lot with a full-viewport overlay so the kiosk reads as a

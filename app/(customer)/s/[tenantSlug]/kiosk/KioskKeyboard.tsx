@@ -78,7 +78,7 @@ export function KioskKeyboard({
         className,
       )}
     >
-      <div className="max-w-3xl mx-auto px-4 py-4 space-y-2">
+      <div className="max-w-4xl mx-auto px-5 py-5 space-y-2.5">
         <div className="flex items-center justify-between gap-3 pb-1">
           <div className="text-xs font-bold tracking-[0.18em] text-qf-mute uppercase">
             מקלדת
@@ -112,7 +112,7 @@ export function KioskKeyboard({
           </div>
         </div>
 
-        <div className="grid grid-cols-10 gap-1.5" dir="ltr">
+        <div className="grid grid-cols-10 gap-2" dir="ltr">
           {layout.rows.flatMap((row, ri) =>
             row.map((k, ki) =>
               k === BS ? (
@@ -132,16 +132,16 @@ export function KioskKeyboard({
           )}
         </div>
 
-        <div className="grid grid-cols-10 gap-1.5">
+        <div className="grid grid-cols-10 gap-2">
           <KeyButton
-            className="col-span-8 text-base font-semibold"
+            className="col-span-8 text-lg font-semibold"
             onPress={() => append(" ")}
             ariaLabel="רווח"
           >
             רווח
           </KeyButton>
           <KeyButton
-            className="col-span-2 text-base"
+            className="col-span-2 text-lg"
             tone="primary"
             onPress={onClose}
             ariaLabel="סיים"
@@ -173,7 +173,7 @@ function KeyButton({
       onClick={onPress}
       aria-label={ariaLabel}
       className={cn(
-        "h-14 rounded-xl border text-xl font-bold transition active:scale-[0.96] active:shadow-none shadow-[0_2px_0_rgba(17,35,26,0.08)] grid place-items-center uppercase",
+        "h-16 rounded-xl border text-2xl font-bold transition active:scale-[0.96] active:shadow-none shadow-[0_2px_0_rgba(17,35,26,0.08)] grid place-items-center uppercase",
         tone === "primary"
           ? "bg-(--qf-primary) text-white border-(--qf-deep) hover:bg-(--qf-deep)"
           : "bg-white text-qf-ink border-qf-line-soft hover:bg-qf-line-soft",
