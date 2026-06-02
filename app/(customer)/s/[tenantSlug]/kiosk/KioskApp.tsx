@@ -152,6 +152,12 @@ export function KioskApp({
   // copy on the name-entry screen ("האם השם נכון?" vs "מה השם שלך?").
   const [nameWasPrefilled, setNameWasPrefilled] = useState(false);
   const [phoneSubmitting, setPhoneSubmitting] = useState(false);
+  // Latched true once the customer has completed phone-entry for this
+  // session — either by skipping (non-required mode), entering+lookup
+  // (non-required), or entering+OTP (required). Lets the mode picker
+  // skip phone+OTP on a back-and-forth between dine-in / takeaway and
+  // the menu. Reset on full session reset only.
+  const [phoneStepDone, setPhoneStepDone] = useState(false);
   // OTP flow state — only used when kioskRequirePhone=true. We track
   // the channel the code was sent through so we can tell the customer
   // "we WhatsApp'd you" vs "we SMS'd you" with the right copy.
@@ -255,6 +261,7 @@ export function KioskApp({
     setCustomerLastName("");
     setNameWasPrefilled(false);
     setPhoneSubmitting(false);
+    setPhoneStepDone(false);
     setOtpCode("");
     setOtpChannel(null);
     setOtpSubmitting(false);
@@ -526,6 +533,9 @@ export function KioskApp({
     } catch {
       /* lookup is non-blocking — proceed anyway */
     }
+    // Latch "phone step is done" so a back-and-forth through mode-picker
+    // doesn't re-prompt phone+OTP — only a full session reset clears it.
+    setPhoneStepDone(true);
     setState("browse");
   }
 
@@ -760,7 +770,9 @@ export function KioskApp({
               subtitle="אוכל בצלחת + סכו״ם"
               onClick={() => {
                 setDiningMode("dinein");
-                setState("phone-entry");
+                // Returning to the picker mid-cart shouldn't re-prompt
+                // phone+OTP — only ask once per session.
+                setState(phoneStepDone ? "browse" : "phone-entry");
               }}
             />
             <ModeCard
@@ -769,7 +781,7 @@ export function KioskApp({
               subtitle="ארוז לדרך"
               onClick={() => {
                 setDiningMode("takeaway");
-                setState("phone-entry");
+                setState(phoneStepDone ? "browse" : "phone-entry");
               }}
             />
           </div>
@@ -872,6 +884,7 @@ export function KioskApp({
                 type="button"
                 onClick={() => {
                   setCustomerPhone("");
+                  setPhoneStepDone(true);
                   setState("browse");
                 }}
                 className="h-16 rounded-2xl border-2 border-qf-line-dash text-qf-ink text-xl font-bold hover:bg-qf-line-soft active:scale-[0.98] transition"
