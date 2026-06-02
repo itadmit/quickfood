@@ -40,6 +40,10 @@ export const GET = handler(async (req: Request) => {
 
   if (status === "active") {
     where.status = { in: ACTIVE_STATUSES };
+    // Soft-hide: the X icon on a Kanban card stamps kanbanHiddenAt.
+    // The Kanban (status=active) excludes those rows; History shows
+    // them anyway so the order is recoverable.
+    where.kanbanHiddenAt = null;
   } else if (status && (Object.values(OrderStatus) as string[]).includes(status)) {
     where.status = status as OrderStatus;
   }

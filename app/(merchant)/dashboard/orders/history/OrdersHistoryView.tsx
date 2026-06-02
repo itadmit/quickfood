@@ -33,6 +33,7 @@ interface OrderRow {
   created_at: string;
   has_review: boolean;
   review_reminder_sent: boolean;
+  kanban_hidden_at: string | null;
 }
 
 interface Meta {
@@ -131,6 +132,45 @@ export function OrdersHistoryView() {
   const [rowStatus, setRowStatus] = useState<
     Record<string, { tone: "ok" | "err"; message: string }>
   >({});
+
+  async function restoreToKanban(orderId: string) {
+    if (sendingId) return;
+    try {
+      const res = await fetch(
+        `/api/v1/merchant/orders/${orderId}/kanban-hide`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        setRowStatus((prev) => ({
+          ...prev,
+          [orderId]: { tone: "err", message: "שחזור נכשל" },
+        }));
+        return;
+      }
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === orderId ? { ...o, kanban_hidden_at: null } : o,
+        ),
+      );
+      setRowStatus((prev) => ({
+        ...prev,
+        [orderId]: { tone: "ok", message: "הוחזר לקאנבן" },
+      }));
+      window.setTimeout(() => {
+        setRowStatus((prev) => {
+          if (!prev[orderId]) return prev;
+          const next = { ...prev };
+          delete next[orderId];
+          return next;
+        });
+      }, 3000);
+    } catch {
+      setRowStatus((prev) => ({
+        ...prev,
+        [orderId]: { tone: "err", message: "שגיאת רשת" },
+      }));
+    }
+  }
 
   async function sendReviewNow(orderId: string) {
     if (sendingId) return;
@@ -344,7 +384,21 @@ export function OrdersHistoryView() {
                       key={o.id}
                       className="border-t border-qf-line-soft hover:bg-qf-line-soft/30"
                     >
-                      <td className="px-3 py-2 font-mono font-semibold">{o.number}</td>
+                      <td className="px-3 py-2 font-mono font-semibold">
+                        <div className="flex items-center gap-2">
+                          <span>{o.number}</span>
+                          {o.kanban_hidden_at && (
+                            <button
+                              type="button"
+                              onClick={() => restoreToKanban(o.id)}
+                              title="הזמנה זו הוסתרה מהקאנבן — לחץ לשחזור"
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-qf-yolk-soft text-qf-ink2 text-[10px] font-medium hover:bg-qf-yolk-soft/80"
+                            >
+                              מוסתרת · החזר
+                            </button>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-3 py-2 text-qf-mute tnum whitespace-nowrap">
                         {formatDateTime(o.created_at)}
                       </td>

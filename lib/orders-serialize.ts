@@ -49,6 +49,7 @@ export function serializeOrder(o: OrderWithIncludes) {
     payment_status: o.paymentStatus,
     customer_notes: o.customerNotes,
     has_review: !!o.review,
+    kanban_hidden_at: o.kanbanHiddenAt?.toISOString() ?? null,
     created_at: o.createdAt.toISOString(),
     confirmed_at: o.confirmedAt?.toISOString() ?? null,
     items: o.items.map((it) => ({

@@ -837,6 +837,13 @@ model Order {
   invoiceNumber String? @map("invoice_number")
   invoiceUrl    String? @map("invoice_url")
 
+  /// Set when the merchant taps the X icon on a Kanban card. The order
+  /// stays in the DB + History view + still bills the customer
+  /// normally — this only hides it from the active-orders board so the
+  /// kitchen stops staring at a card that's gone stale ("חורג" timeout,
+  /// duplicate, customer walked off, …). NULL = visible on the Kanban.
+  kanbanHiddenAt DateTime? @map("kanban_hidden_at")
+
   courierId String?  @map("courier_id") @db.Uuid
   courier   Courier? @relation(fields: [courierId], references: [id])
 

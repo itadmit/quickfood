@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { IcoClock, IcoPhone, IcoPrinter, IcoFlame, IcoRefresh, IcoUndo } from "@/components/shared/Icons";
+import { IcoClock, IcoPhone, IcoPrinter, IcoFlame, IcoRefresh, IcoUndo, IcoClose } from "@/components/shared/Icons";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -333,6 +333,32 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
     }
   }
 
+  async function hideFromKanban(orderId: string) {
+    const ok = window.confirm(
+      "להסיר את ההזמנה מהקאנבן? היא תישמר בהיסטוריה ואפשר לשחזר משם.",
+    );
+    if (!ok) return;
+    // Optimistic: yank the card from local state before the server
+    // confirms. If the API errors we re-fetch and the card reappears.
+    setOrders((prev) => prev.filter((o) => o.id !== orderId));
+    try {
+      const res = await fetch(
+        `/api/v1/merchant/orders/${orderId}/kanban-hide`,
+        { method: "POST" },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        pushToast("err", body?.error?.message ?? "ההסרה נכשלה");
+        await refresh();
+        return;
+      }
+      pushToast("ok", "ההזמנה הוסרה מהקאנבן");
+    } catch {
+      pushToast("err", "אין חיבור לשרת — מנסה לסנכרן");
+      await refresh();
+    }
+  }
+
   function handleAdvance(orderId: string, to: Status | "delivered") {
     if (to === "out_for_delivery") {
       const o = orders.find((x) => x.id === orderId);
@@ -424,6 +450,7 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
             now={now}
             onAdvance={handleAdvance}
             onSelect={(id) => setDrawerOrderId(id)}
+            onHide={hideFromKanban}
           />
         ))}
       </div>
@@ -468,6 +495,7 @@ function Column({
   now,
   onAdvance,
   onSelect,
+  onHide,
 }: {
   title: string;
   subtitle: string;
@@ -478,6 +506,7 @@ function Column({
   now: number | null;
   onAdvance: (id: string, to: Status | "delivered") => void;
   onSelect: (id: string) => void;
+  onHide: (id: string) => void;
 }) {
   return (
     <section className="bg-white rounded-2xl border border-qf-line-dash p-3 min-h-[40vh] md:min-h-[60vh] flex flex-col">
@@ -521,6 +550,7 @@ function Column({
               now={now}
               onAdvance={onAdvance}
               onSelect={onSelect}
+              onHide={onHide}
             />
           ))
         )}
@@ -536,6 +566,7 @@ function Card({
   now,
   onAdvance,
   onSelect,
+  onHide,
 }: {
   order: OrderRow;
   next: Status;
@@ -544,6 +575,7 @@ function Card({
   now: number | null;
   onAdvance: (id: string, to: Status | "delivered") => void;
   onSelect: (id: string) => void;
+  onHide: (id: string) => void;
 }) {
   const elapsedMin =
     now != null ? Math.floor((now - new Date(order.createdAt).getTime()) / 60_000) : null;
@@ -560,13 +592,27 @@ function Card({
         isLate ? "border-qf-tomato/60 ring-1 ring-qf-tomato/30" : "border-qf-line-dash",
       )}
     >
-      <header className="flex items-center justify-between">
+      <header className="flex items-center justify-between gap-2">
         <div className="font-mono font-semibold text-sm">{order.number}</div>
-        <StatusChip
-          status={order.status}
-          paymentStatus={order.paymentStatus}
-          late={isLate}
-        />
+        <div className="flex items-center gap-1.5">
+          <StatusChip
+            status={order.status}
+            paymentStatus={order.paymentStatus}
+            late={isLate}
+          />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onHide(order.id);
+            }}
+            title="הסר מהקאנבן"
+            aria-label="הסר מהקאנבן"
+            className="w-6 h-6 grid place-items-center rounded-md text-qf-mute hover:text-qf-tomato hover:bg-qf-tomato-soft transition"
+          >
+            <IcoClose s={12} c="currentColor" />
+          </button>
+        </div>
       </header>
 
       <div className="text-sm font-medium">{order.customerName}</div>
