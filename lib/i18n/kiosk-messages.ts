@@ -205,7 +205,7 @@ export const KIOSK_DEFAULTS_HE = {
     orderLine: "{tenantName} · הזמנה #{number}",
     totalLabel: "סה״כ לתשלום",
     openingWindow: "טוען את חלון התשלום...",
-    waitingForGrow: "ממתינים לטופס מ-Grow",
+    waitingForGrow: "ממתינים לחברת האשראי",
     securityNote: "סליקה מאובטחת. אנא אל תסגרו את החלון עד סיום התשלום.",
     notAvailable: "תשלום אונליין לא זמין כרגע למסעדה זו. נא לפנות לקופה.",
     openFailed: "לא הצלחנו לפתוח את חלון התשלום",
