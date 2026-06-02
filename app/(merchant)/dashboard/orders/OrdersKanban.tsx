@@ -158,7 +158,13 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/merchant/orders?status=active", { credentials: "include" });
+      // cache:"no-store" so a service worker or browser intermediate
+      // never serves a stale active-orders list that still includes a
+      // card the merchant just hid via the X icon.
+      const res = await fetch("/api/v1/merchant/orders?status=active", {
+        credentials: "include",
+        cache: "no-store",
+      });
       if (!res.ok) return;
       const data = await res.json();
       const fresh: OrderRow[] = (data.orders as Array<Record<string, unknown>>).map((o) => ({
