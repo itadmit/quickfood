@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { PaymentProvider } from "@prisma/client";
+import ReactDOM from "react-dom";
+import { PaymentMethod, PaymentProvider, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { normalizeKioskOverrides } from "@/lib/i18n/kiosk-messages";
+import { initiateOrderPayment } from "@/lib/payments/initiate-payment";
 import { PayPage } from "./PayPage";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +20,14 @@ export async function generateMetadata({
   return { title: `${tenant?.name ?? "QuickFood"} · תשלום` };
 }
 
+function maskEmail(email: string | null): string | null {
+  if (!email) return null;
+  const [local, domain] = email.split("@");
+  if (!local || !domain) return null;
+  const head = local.length <= 2 ? `${local[0] ?? ""}` : local.slice(0, 2);
+  return `${head}***@${domain}`;
+}
+
 export default async function PayRoute({
   params,
   searchParams,
@@ -29,47 +39,65 @@ export default async function PayRoute({
   const sp = (await searchParams) ?? {};
   const justPaid = sp.paid === "1";
 
+  ReactDOM.preconnect("https://cdn.meshulam.co.il");
+  ReactDOM.preconnect("https://secure.meshulam.co.il");
+  ReactDOM.preconnect("https://sandbox.meshulam.co.il");
+  ReactDOM.preload("https://cdn.meshulam.co.il/sdk/gs.min.js", {
+    as: "script",
+    fetchPriority: "high",
+  });
+
   const tenant = await resolveTenantBySlug(tenantSlug);
   if (!tenant) notFound();
 
-  const order = await prisma.order.findFirst({
-    where: { id: orderId, tenantId: tenant.id },
-    select: {
-      id: true,
-      number: true,
-      total: true,
-      paymentStatus: true,
-      paymentMethod: true,
-      invoiceNumber: true,
-      invoiceUrl: true,
-      customerEmailSnap: true,
-    },
-  });
+  const [order, growConfig] = await Promise.all([
+    prisma.order.findFirst({
+      where: { id: orderId, tenantId: tenant.id },
+      select: {
+        id: true,
+        number: true,
+        total: true,
+        paymentStatus: true,
+        paymentMethod: true,
+        invoiceNumber: true,
+        invoiceUrl: true,
+        customerEmailSnap: true,
+      },
+    }),
+    prisma.paymentProviderConfig.findUnique({
+      where: {
+        tenantId_provider: { tenantId: tenant.id, provider: PaymentProvider.grow },
+      },
+      select: { testMode: true, isActive: true },
+    }),
+  ]);
   if (!order) notFound();
 
-  function maskEmail(email: string | null): string | null {
-    if (!email) return null;
-    const [local, domain] = email.split("@");
-    if (!local || !domain) return null;
-    const head = local.length <= 2 ? `${local[0] ?? ""}` : local.slice(0, 2);
-    return `${head}***@${domain}`;
+  const growEnabled = !!growConfig?.isActive;
+  const isOpenForPayment =
+    !justPaid &&
+    order.paymentStatus !== PaymentStatus.paid &&
+    order.paymentStatus !== PaymentStatus.refunded &&
+    order.paymentMethod !== PaymentMethod.cash;
+
+  let initialAuthCode: string | null = null;
+  if (growEnabled && isOpenForPayment) {
+    try {
+      const initResult = await initiateOrderPayment(order.id);
+      if (initResult.ok) {
+        initialAuthCode = initResult.data.sdk_auth_code;
+      } else {
+        // eslint-disable-next-line no-console
+        console.warn("[pay] ssr initiate failed", {
+          code: initResult.code,
+          message: initResult.message,
+        });
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("[pay] ssr initiate threw", err);
+    }
   }
-
-  const growConfig = await prisma.paymentProviderConfig.findUnique({
-    where: {
-      tenantId_provider: { tenantId: tenant.id, provider: PaymentProvider.grow },
-    },
-    select: { testMode: true, isActive: true },
-  });
-
-  // PayPage shares the merchant's per-tenant string overrides with the
-  // kiosk — same Tenant.kioskStringOverrides field, so when the merchant
-  // customizes "התשלום הושלם" once in Settings → Kiosk → Custom Strings
-  // it lands on the customer's phone too.
-  const tenantStrings = await prisma.tenant.findUnique({
-    where: { id: tenant.id },
-    select: { kioskStringOverrides: true },
-  });
 
   return (
     <PayPage
@@ -85,11 +113,10 @@ export default async function PayRoute({
         invoiceUrl: order.invoiceUrl,
         customerEmailMasked: maskEmail(order.customerEmailSnap),
       }}
-      growEnabled={!!growConfig?.isActive}
+      growEnabled={growEnabled}
       growTestMode={growConfig?.testMode ?? true}
-      stringOverrides={normalizeKioskOverrides(
-        tenantStrings?.kioskStringOverrides,
-      )}
+      initialAuthCode={initialAuthCode}
+      stringOverrides={normalizeKioskOverrides(tenant.kioskStringOverrides)}
       justPaid={justPaid}
     />
   );

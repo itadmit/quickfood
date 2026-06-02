@@ -25,6 +25,7 @@ interface PayPageProps {
   };
   growEnabled: boolean;
   growTestMode: boolean;
+  initialAuthCode: string | null;
   stringOverrides: KioskOverrides;
   justPaid: boolean;
 }
@@ -35,6 +36,7 @@ export function PayPage({
   order,
   growEnabled,
   growTestMode,
+  initialAuthCode,
   stringOverrides,
   justPaid,
 }: PayPageProps) {
@@ -50,12 +52,12 @@ export function PayPage({
   const [emailMasked, setEmailMasked] = useState<string | null>(
     order.customerEmailMasked,
   );
-  const [authCode, setAuthCode] = useState<string | null>(null);
+  const [authCode, setAuthCode] = useState<string | null>(initialAuthCode);
   const [sdkReady, setSdkReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const initiatedRef = useRef(false);
+  const initiatedRef = useRef(!!initialAuthCode);
 
   async function startPayment() {
     if (initiatedRef.current) return;
@@ -87,7 +89,7 @@ export function PayPage({
   }
 
   useEffect(() => {
-    if (!alreadyPaid && growEnabled) {
+    if (!alreadyPaid && growEnabled && !authCode) {
       void startPayment();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
