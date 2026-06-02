@@ -33,7 +33,7 @@ export const KIOSK_DEFAULTS_HE = {
     cta: "הזמנה חדשה",
   },
   mode: {
-    heading: "איך נהנים מהארוחה?",
+    heading: "איך תרצו לקבל את ההזמנה?",
     dineInTitle: "לשבת במסעדה",
     dineInSubtitle: "אוכל בצלחת + סכו״ם",
     takeawayTitle: "לקחת",
