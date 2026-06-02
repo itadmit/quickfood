@@ -7,7 +7,10 @@ import { IcoCheck } from "@/components/shared/Icons";
 import { Toggle as SharedToggle } from "@/components/shared/Toggle";
 import { cn } from "@/lib/cn";
 
-type Channel = "off" | "email" | "sms" | "whatsapp";
+// `whatsapp_managed` matches the new Prisma enum value the WhatsApp
+// add-on flow uses — keep the union exhaustive so the page-level
+// type-check passes while that feature lands separately.
+type Channel = "off" | "email" | "sms" | "whatsapp" | "whatsapp_managed";
 
 interface Initial {
   enabled: boolean;

@@ -18,6 +18,10 @@ export default async function OrdersPage() {
       status: {
         in: ["pending", "confirmed", "preparing", "in_oven", "ready", "out_for_delivery"],
       },
+      // Soft-hide matches the /api/v1/merchant/orders?status=active
+      // filter — without this the SSR seeds the Kanban with hidden
+      // cards on every full page reload, undoing the X click.
+      kanbanHiddenAt: null,
     },
     include: {
       items: {

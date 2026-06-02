@@ -23,6 +23,9 @@ export const GET = handler(async () => {
       where: {
         tenantId: session.tenantId,
         status: { in: ["pending", "confirmed", "preparing", "in_oven", "ready", "out_for_delivery"] },
+        // Hidden-from-Kanban orders shouldn't tick the "active orders"
+        // KPI — they're explicitly out of the active queue.
+        kanbanHiddenAt: null,
       },
     }),
     prisma.courier.findMany({

@@ -21,6 +21,9 @@ export default async function KitchenPage() {
     where: {
       tenantId: session.tenantId,
       status: { in: [...KITCHEN_STATUSES] },
+      // Same soft-hide that the Kanban honors — if the merchant tapped
+      // X on a card, the kitchen screen shouldn't keep showing it.
+      kanbanHiddenAt: null,
     },
     orderBy: { createdAt: "asc" },
     select: {
