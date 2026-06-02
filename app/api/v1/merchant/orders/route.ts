@@ -40,10 +40,17 @@ export const GET = handler(async (req: Request) => {
 
   if (status === "active") {
     where.status = { in: ACTIVE_STATUSES };
-    // Soft-hide: the X icon on a Kanban card stamps kanbanHiddenAt.
-    // The Kanban (status=active) excludes those rows; History shows
-    // them anyway so the order is recoverable.
     where.kanbanHiddenAt = null;
+    // Hide card orders that are still waiting for Grow to confirm
+    // payment. Cash-pending stays visible — the merchant needs to
+    // see it so they can press "מזומן התקבל" once the kiosk customer
+    // hands over the cash.
+    where.NOT = {
+      AND: [
+        { status: OrderStatus.pending },
+        { paymentMethod: { not: "cash" } },
+      ],
+    };
   } else if (status && (Object.values(OrderStatus) as string[]).includes(status)) {
     where.status = status as OrderStatus;
   }

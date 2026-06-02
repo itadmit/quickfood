@@ -407,6 +407,7 @@ model Tenant {
   idempotencyRecords IdempotencyRecord[]
   paymentConfigs   PaymentProviderConfig[]
   pendingPayments  PendingPayment[]
+  kioskCheckouts   KioskPendingCheckout[]
   paymentTxns      PaymentTransaction[]
   campaigns        Campaign[]
   notices          Notice[]
@@ -1478,6 +1479,40 @@ model PendingPayment {
   @@index([providerRequestId])
   @@index([tenantId, status, createdAt(sort: Desc)])
   @@map("pending_payments")
+}
+
+// Kiosk-card pre-checkout. Holds the cart snapshot while Grow processes
+// the payment so the Order row only materializes once payment confirms.
+// Avoids the "zombie order" problem where unpaid kiosk attempts leave
+// stale rows in the orders table. Cash kiosk orders skip this — they
+// go straight into Order at status=pending and the cashier confirms.
+model KioskPendingCheckout {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Snapshot of the full create-order input so the callback can replay
+  // it verbatim through createOrder() on payment success.
+  cartData     Json     @map("cart_data")
+  // Pre-computed total in agorot for the Grow initiate-payment call.
+  // Locked in at create time so a price change between create and
+  // materialize doesn't cause a charge/order mismatch.
+  amount       Int
+
+  // The Order row the callback materialized once payment confirmed.
+  orderId      String?  @map("order_id") @db.Uuid
+
+  status       String   @default("pending") // pending | completed | abandoned
+  growProcessId String? @map("grow_process_id")
+  authCode     String?  @map("auth_code")
+  providerResponse Json? @map("provider_response")
+
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt       @map("updated_at")
+  expiresAt    DateTime @map("expires_at")
+
+  @@index([tenantId, status])
+  @@map("kiosk_pending_checkouts")
 }
 
 /// Final transaction record after a successful S2S callback. Stores the

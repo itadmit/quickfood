@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
-import { useCart } from "@/components/customer/CartProvider";
+import { useCart, type CartLine } from "@/components/customer/CartProvider";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { ItemDetail } from "@/components/customer/screens/ItemDetail";
 import {
@@ -15,6 +15,7 @@ import {
   IcoQrCode,
   IcoHelp,
   IcoPhone,
+  IcoEdit,
 } from "@/components/shared/Icons";
 import { Utensils, ShoppingBag, Banknote } from "lucide-react";
 import { formatPrice } from "@/lib/format";
@@ -202,10 +203,11 @@ export function KioskApp({
   const [otpSubmitting, setOtpSubmitting] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
   const [otpResendIn, setOtpResendIn] = useState(0);
-  // Pending payment session — set when an order was created with
-  // payment_method=card and the QR is being shown. Polled until paid.
+  // QR-pay session for kiosk card payments. Holds the checkoutId
+  // (NOT an Order id — the Order materializes only after Grow confirms
+  // payment). orderNumber is null until materialization.
   const [pendingPayOrder, setPendingPayOrder] = useState<{
-    orderId: string;
+    checkoutId: string;
     orderNumber: string;
     total: number;
   } | null>(null);
@@ -220,21 +222,26 @@ export function KioskApp({
   const [checkoutPromptShown, setCheckoutPromptShown] = useState(false);
   const [activeCat, setActiveCat] = useState<string>(categories[0]?.id ?? "");
   const [pickItemId, setPickItemId] = useState<string | null>(null);
+  // Pencil-icon edit from cart. Stash the line, open ItemDetail in edit mode.
+  const [editingLine, setEditingLine] = useState<CartLine | null>(null);
+  // Free-text notes keyboard binding inside the item picker.
+  const [notesBinding, setNotesBinding] = useState<{
+    value: string;
+    set: (v: string) => void;
+  } | null>(null);
   const [query, setQuery] = useState("");
   const [placedOrderNumber, setPlacedOrderNumber] = useState<string | null>(null);
   const [placingError, setPlacingError] = useState<string | null>(null);
   const [bundleSuggestions, setBundleSuggestions] = useState<BundleSuggestion[]>([]);
   const [acceptedBundleIds, setAcceptedBundleIds] = useState<Set<string>>(new Set());
-  // Bundles the customer waved off with "אני מוותר". We don't pester
-  // them with the same suggestion again the rest of the session — that
-  // crosses from "helpful upsell" into "nag". Cleared on reset().
-  const [dismissedBundleIds, setDismissedBundleIds] = useState<Set<string>>(new Set());
-  // The Wolt-style upgrade popup that fires the instant a fresh add
-  // matches a linked bundle. promptedBundleIdsRef tracks which
-  // bundles we've already surfaced as a popup so we don't re-prompt
-  // when the customer keeps adding items that trigger the same offer.
+  // The Wolt-style upgrade popup. Re-fires on every fresh trigger
+  // add — if a customer dismisses then adds another מלווח, they get
+  // prompted again. popupArmedRef is the "an add just happened, look
+  // for a bundle to surface on the next suggestion fetch" flag. It
+  // gets armed when cart count grows and disarms the moment the popup
+  // mounts (so we don't re-arm on the same fetch).
   const [bundlePopup, setBundlePopup] = useState<BundleSuggestion | null>(null);
-  const promptedBundleIdsRef = useRef<Set<string>>(new Set());
+  const popupArmedRef = useRef(false);
   // Cart-attention pulse: bumps the bottom bar each time the cart
   // count grows so customers register that the cart lives down there
   // and is tappable. Keyed by an incrementing token (not booleans) so
@@ -252,7 +259,7 @@ export function KioskApp({
   // `null` keeps the keyboard hidden — search has its own bool above
   // for backwards compatibility with the existing wiring.
   const [kbdTarget, setKbdTarget] = useState<
-    "search" | "firstName" | "lastName" | "email" | null
+    "search" | "firstName" | "lastName" | "email" | "notes" | null
   >(null);
   // Drop any name-input keyboard binding when the customer navigates
   // away from name-entry — without this the next visit briefly opens
@@ -313,9 +320,9 @@ export function KioskApp({
     setCheckoutPromptOpen(false);
     setCheckoutPromptShown(false);
     setAcceptedBundleIds(new Set());
-    setDismissedBundleIds(new Set());
     setBundlePopup(null);
-    promptedBundleIdsRef.current.clear();
+    popupArmedRef.current = false;
+    setEditingLine(null);
     setCustomerPhone("");
     setCustomerFirstName("");
     setCustomerLastName("");
@@ -440,23 +447,37 @@ export function KioskApp({
     });
   }, [lines, pendingBundleSwap, remove]);
 
-  // Wolt-style upgrade popup: the moment a fresh add lands a linked
-  // bundle in the suggestion list, surface it as a modal so the
-  // customer doesn't miss the offer. Once they decide (שדרג or אני
-  // מוותר) we mark the bundle as prompted/dismissed so the same offer
-  // never pops twice in one session.
+  // Wolt-style upgrade popup. Re-fires on every fresh trigger add:
+  // when a new add arms popupArmedRef (cart count grew) and the
+  // resulting bundleSuggestions fetch returns a linked bundle, the
+  // popup mounts. Disarm the moment we set it so we don't double-mount
+  // off the same fetch. The popup itself is gated on !pickItemId +
+  // !pendingBundleSwap so it never stacks over the ItemDetail
+  // closing-animation or an in-progress trigger swap.
   useEffect(() => {
+    if (!popupArmedRef.current) return;
     if (bundlePopup) return;
-    for (const b of bundleSuggestions) {
-      if (b.mode !== "linked") continue;
-      if (acceptedBundleIds.has(b.id)) continue;
-      if (dismissedBundleIds.has(b.id)) continue;
-      if (promptedBundleIdsRef.current.has(b.id)) continue;
-      promptedBundleIdsRef.current.add(b.id);
-      setBundlePopup(b);
-      break;
+    if (pickItemId) return;
+    if (pendingBundleSwap) return;
+    const linked = bundleSuggestions.find((b) => b.mode === "linked");
+    if (!linked) return;
+    popupArmedRef.current = false;
+    setBundlePopup(linked);
+  }, [bundleSuggestions, bundlePopup, pickItemId, pendingBundleSwap]);
+
+  // If the customer opened the combo (acceptBundle → setPickItemId)
+  // but backed out without adding it, clear pendingBundleSwap so the
+  // popup can fire again on the next trigger. Without this, a single
+  // back-out would suppress the popup for the rest of the session.
+  useEffect(() => {
+    if (pickItemId) return;
+    if (!pendingBundleSwap) return;
+    const { linkedItemId, baselineCount } = pendingBundleSwap;
+    const currentCount = lines.filter((l) => l.itemId === linkedItemId).length;
+    if (currentCount <= baselineCount) {
+      setPendingBundleSwap(null);
     }
-  }, [bundleSuggestions, acceptedBundleIds, dismissedBundleIds, bundlePopup]);
+  }, [pickItemId, pendingBundleSwap, lines]);
 
   useEffect(() => {
     function touch() {
@@ -475,8 +496,13 @@ export function KioskApp({
   // the cart bar exists and is tappable.
   const itemCount = lines.reduce((acc, l) => acc + l.quantity, 0);
   useEffect(() => {
-    if (itemCount > prevItemCountRef.current && !cartOpen) {
-      setCartPulseKey((k) => k + 1);
+    const grew = itemCount > prevItemCountRef.current;
+    if (grew) {
+      if (!cartOpen) setCartPulseKey((k) => k + 1);
+      // Arm the bundle popup for the next suggestions fetch so a fresh
+      // add always re-prompts (even for a bundle the customer dismissed
+      // a moment ago). Disarmed when the popup actually mounts.
+      popupArmedRef.current = true;
     }
     prevItemCountRef.current = itemCount;
   }, [itemCount, cartOpen]);
@@ -505,7 +531,7 @@ export function KioskApp({
     }
     const origin =
       typeof window !== "undefined" ? window.location.origin : "";
-    const url = `${origin}/s/${tenantSlug}/pay/${pendingPayOrder.orderId}`;
+    const url = `${origin}/s/${tenantSlug}/pay-checkout/${pendingPayOrder.checkoutId}`;
     let cancelled = false;
     QRCode.toDataURL(url, {
       width: 640,
@@ -524,9 +550,9 @@ export function KioskApp({
     };
   }, [state, pendingPayOrder, tenantSlug]);
 
-  // Poll the order's payment_status while the QR is shown. When the Grow
-  // callback flips paymentStatus → paid (and the order to confirmed), the
-  // kiosk jumps to its existing "תודה" screen.
+  // Poll the checkout. When Grow's callback materializes the order, the
+  // checkout flips to status=completed with order_id populated — at that
+  // point we know the customer paid and the kitchen has the ticket.
   useEffect(() => {
     if (state !== "pay-qr" || !pendingPayOrder) return;
     let stopped = false;
@@ -534,17 +560,21 @@ export function KioskApp({
       if (stopped) return;
       try {
         const res = await fetch(
-          `/api/v1/customer/orders/${pendingPayOrder.orderId}`,
+          `/api/v1/customer/kiosk-checkout/${pendingPayOrder.checkoutId}`,
           { credentials: "include" },
         );
         if (!res.ok) return;
         const data = await res.json();
-        if (data?.order?.payment_status === "paid") {
+        if (data?.checkout?.status === "completed" && data?.order?.number) {
           stopped = true;
+          setPlacedOrderNumber(data.order.number);
+          setPendingPayOrder((prev) =>
+            prev ? { ...prev, orderNumber: data.order.number } : prev,
+          );
           setState("thanks");
         }
       } catch {
-        /* network blip — keep polling */
+        /* keep polling */
       }
     };
     void tick();
@@ -788,79 +818,75 @@ export function KioskApp({
     setState("placing");
     setPlacingError(null);
     setCheckoutPromptOpen(false);
-    try {
-      // Kiosk orders all run on method=pickup (no delivery). The
-      // dinein/takeaway split is surfaced to the kitchen via the
-      // customer_notes prefix so it lands on the Kanban card and the
-      // thermal receipt without a schema change.
-      const diningNote =
-        diningMode === "dinein"
-          ? t("diningNote.dineIn")
-          : t("diningNote.takeaway");
-      const res = await fetch("/api/v1/customer/orders", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          tenant_slug: tenantSlug,
-          method: "pickup",
-          payment_method: method,
-          kiosk: true,
-          customer_notes: diningNote,
-          applied_bundle_ids: Array.from(acceptedBundleIds),
-          // Only attach the phone when the customer actually typed one.
-          // Skipped phones come through as empty string, which the API
-          // rejects as "invalid phone" — guard against that here.
-          ...(customerPhone.replace(/\D/g, "").length === 10
-            ? { guest_phone: customerPhone }
-            : {}),
-          ...(customerFirstName.trim()
-            ? { guest_first_name: customerFirstName.trim() }
-            : {}),
-          ...(customerLastName.trim()
-            ? { guest_last_name: customerLastName.trim() }
-            : {}),
-          // Email captured on the name-entry screen when the customer
-          // ticked "אני רוצה לקבל חשבונית למייל". Powers tax-invoice
-          // dispatch + review-reminder email without a second prompt.
-          ...(wantsInvoice && /^\S+@\S+\.\S+$/.test(customerEmail.trim())
-            ? { customer_email: customerEmail.trim() }
-            : {}),
-          // Explicit marketing opt-in checkbox. Only sent when true —
-          // never silently flips an existing yes back to no on the
-          // Customer record.
-          ...(marketingConsent ? { marketing_consent: true } : {}),
-          lines: lines.map((l) => ({
-            item_id: l.itemId,
-            quantity: l.quantity,
-            size_id: l.sizeId,
-            option_ids: l.options.map((o) => o.optionId),
-          })),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setPlacingError(data?.error?.message ?? t("errors.placingFailed"));
-        setState(method === "card" ? "pay-choice" : "browse");
-        return;
-      }
-      const orderId: string | undefined = data?.order?.id;
-      const orderNumber: string | undefined = data?.order?.number;
-      const orderTotal: number = data?.order?.total ?? subtotal;
+    const diningNote =
+      diningMode === "dinein"
+        ? t("diningNote.dineIn")
+        : t("diningNote.takeaway");
+    const sharedBody = {
+      tenant_slug: tenantSlug,
+      method: "pickup",
+      kiosk: true,
+      customer_notes: diningNote,
+      applied_bundle_ids: Array.from(acceptedBundleIds),
+      ...(customerPhone.replace(/\D/g, "").length === 10
+        ? { guest_phone: customerPhone }
+        : {}),
+      ...(customerFirstName.trim()
+        ? { guest_first_name: customerFirstName.trim() }
+        : {}),
+      ...(customerLastName.trim()
+        ? { guest_last_name: customerLastName.trim() }
+        : {}),
+      ...(wantsInvoice && /^\S+@\S+\.\S+$/.test(customerEmail.trim())
+        ? { customer_email: customerEmail.trim() }
+        : {}),
+      ...(marketingConsent ? { marketing_consent: true } : {}),
+      lines: lines.map((l) => ({
+        item_id: l.itemId,
+        quantity: l.quantity,
+        size_id: l.sizeId,
+        option_ids: l.options.map((o) => o.optionId),
+      })),
+    };
 
-      if (method === "card" && orderId) {
-        // Non-cash order is now in DB as `pending` — the kitchen
-        // won't see it until the Grow callback flips it to `confirmed`.
-        setPendingPayOrder({
-          orderId,
-          orderNumber: orderNumber ?? "",
-          total: orderTotal,
+    try {
+      if (method === "card") {
+        // Kiosk card flow: create a KioskPendingCheckout (cart snapshot).
+        // The Order itself materializes only when Grow confirms payment.
+        const res = await fetch("/api/v1/customer/kiosk-checkout", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ ...sharedBody, payment_method: "card" }),
         });
-        setPlacedOrderNumber(orderNumber ?? null);
+        const data = await res.json();
+        if (!res.ok || !data?.checkout?.id) {
+          setPlacingError(data?.error?.message ?? t("errors.placingFailed"));
+          setState("pay-choice");
+          return;
+        }
+        setPendingPayOrder({
+          checkoutId: data.checkout.id,
+          orderNumber: "",
+          total: data.checkout.amount ?? subtotal,
+        });
         setState("pay-qr");
         return;
       }
 
-      setPlacedOrderNumber(orderNumber ?? null);
+      // Cash: existing flow — Order created immediately at status=pending,
+      // cashier confirms via "מזומן התקבל" in the Kanban.
+      const res = await fetch("/api/v1/customer/orders", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ...sharedBody, payment_method: "cash" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPlacingError(data?.error?.message ?? t("errors.placingFailed"));
+        setState("browse");
+        return;
+      }
+      setPlacedOrderNumber(data?.order?.number ?? null);
       setState("thanks");
     } catch {
       setPlacingError(t("errors.networkFeminine"));
@@ -1727,10 +1753,13 @@ export function KioskApp({
         startAction={
           pickItemId ? (
             <KioskHeaderButton
-              onClick={() => setPickItemId(null)}
+              onClick={() => {
+                setPickItemId(null);
+                setEditingLine(null);
+              }}
               startIcon={<IcoChev s={18} />}
             >
-              {t("picker.backToMenu")}
+              {editingLine ? "חזרה לעגלה" : t("picker.backToMenu")}
             </KioskHeaderButton>
           ) : null
         }
@@ -1818,7 +1847,18 @@ export function KioskApp({
                     item={pickedItemData as never}
                     inModal
                     kioskMode
-                    onClose={() => setPickItemId(null)}
+                    editLine={editingLine ?? undefined}
+                    onNotesKeyboard={(value, set) => {
+                      setNotesBinding({ value, set });
+                      setKbdTarget("notes");
+                    }}
+                    onClose={() => {
+                      setPickItemId(null);
+                      setEditingLine(null);
+                      setNotesBinding(null);
+                      if (kbdTarget === "notes") setKbdTarget(null);
+                      if (editingLine) setCartOpen(true);
+                    }}
                     addSource="menu"
                   />
                 ) : (
@@ -2018,36 +2058,55 @@ export function KioskApp({
                                 {l.options.map((o) => o.name).join(" · ")}
                               </div>
                             )}
+                            {l.notes && (
+                              <div className="text-xs text-qf-ink2 leading-snug mt-1 italic">
+                                {l.notes}
+                              </div>
+                            )}
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => remove(l.lineId)}
-                            className="w-8 h-8 rounded-full text-qf-mute hover:text-qf-tomato hover:bg-qf-tomato-soft grid place-items-center transition shrink-0"
-                            aria-label={t("cart.removeAria")}
-                          >
-                            <IcoClose s={16} />
-                          </button>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingLine(l);
+                                setPickItemId(l.itemId);
+                                setCartOpen(false);
+                              }}
+                              className="w-10 h-10 rounded-full bg-white border border-qf-line-soft text-qf-ink2 hover:text-qf-ink hover:border-qf-line grid place-items-center shadow-[0_1px_2px_rgba(17,35,26,0.06)] transition"
+                              aria-label="ערוך"
+                            >
+                              <IcoEdit s={18} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => remove(l.lineId)}
+                              className="w-10 h-10 rounded-full bg-white border border-qf-line-soft text-qf-mute hover:text-qf-tomato hover:border-qf-tomato/40 grid place-items-center shadow-[0_1px_2px_rgba(17,35,26,0.06)] transition"
+                              aria-label={t("cart.removeAria")}
+                            >
+                              <IcoClose s={18} />
+                            </button>
+                          </div>
                         </div>
                         <div className="flex items-center justify-between gap-2">
-                          <div className="inline-flex items-center bg-white rounded-full border border-qf-line-soft shadow-[0_1px_2px_rgba(17,35,26,0.04)]">
+                          <div className="inline-flex items-center bg-white rounded-full border border-qf-line-soft shadow-[0_1px_2px_rgba(17,35,26,0.06)]">
                             <button
                               type="button"
                               onClick={() => updateQuantity(l.lineId, Math.max(1, l.quantity - 1))}
                               disabled={l.quantity <= 1}
-                              className="w-10 h-10 grid place-items-center disabled:opacity-40"
+                              className="w-12 h-12 grid place-items-center disabled:opacity-40"
                               aria-label={t("cart.decrementAria")}
                             >
-                              <IcoMinus s={16} />
+                              <IcoMinus s={20} />
                             </button>
-                            <div className="w-8 text-center text-base font-bold tnum">{l.quantity}</div>
+                            <div className="w-8 text-center text-lg font-bold tnum">{l.quantity}</div>
                             <button
                               type="button"
                               onClick={() => updateQuantity(l.lineId, Math.min(20, l.quantity + 1))}
                               disabled={l.quantity >= 20}
-                              className="w-10 h-10 grid place-items-center disabled:opacity-40"
+                              className="w-12 h-12 grid place-items-center disabled:opacity-40"
                               aria-label={t("cart.incrementAria")}
                             >
-                              <IcoPlus c="#11231a" s={16} />
+                              <IcoPlus c="#11231a" s={20} />
                             </button>
                           </div>
                           <div className="text-lg font-black tnum text-qf-ink">{formatPrice(lineTotal)}</div>
@@ -2259,14 +2318,27 @@ export function KioskApp({
         </div>
       )}
 
-      {/* On-screen Hebrew keyboard for the search field. Mounts only
-          when the search input has focus, so the rest of the menu
-          stays clean. */}
       {kbdOpen && !pickItemId && (
         <KioskKeyboard
           value={query}
           onChange={setQuery}
           onClose={() => setKbdOpen(false)}
+        />
+      )}
+
+      {kbdTarget === "notes" && notesBinding && (
+        <KioskKeyboard
+          value={notesBinding.value}
+          onChange={(v) => {
+            notesBinding.set(v);
+            setNotesBinding({ value: v, set: notesBinding.set });
+          }}
+          onClose={() => {
+            setKbdTarget(null);
+            setNotesBinding(null);
+          }}
+          placeholder="הקלידו הערה — לדוגמה: בלי בצל, חתוך ל-8"
+          maxLength={200}
         />
       )}
 
@@ -2320,41 +2392,32 @@ export function KioskApp({
             ) : (
               <div className="w-full h-32 bg-(--qf-soft)" />
             )}
-            <div className="p-10 space-y-7 text-center">
-              <div className="space-y-3">
-                <div className="text-lg font-bold text-(--qf-primary)">
+            <div className="p-8 space-y-6 text-center">
+              <div className="space-y-2.5">
+                <div className="text-base font-bold text-(--qf-primary)">
                   {bundlePopup.savings > 0
                     ? `תרצה לשדרג ולחסוך ${formatPrice(bundlePopup.savings)}?`
                     : "תרצה לשדרג?"}
                 </div>
-                <h2 className="text-5xl font-black text-qf-ink tracking-tight whitespace-nowrap">
+                <h2 className="text-2xl md:text-3xl font-black text-qf-ink tracking-tight leading-tight break-words px-2">
                   {bundlePopup.linked_item.name}
                 </h2>
               </div>
-              <div className="flex items-baseline justify-center gap-4 tnum">
-                <span className="text-6xl font-black text-(--qf-primary)">
+              <div className="flex items-baseline justify-center gap-3 tnum">
+                <span className="text-5xl font-black text-(--qf-primary)">
                   {formatPrice(bundlePopup.bundle_price)}
                 </span>
                 {bundlePopup.savings > 0 && (
-                  <span className="text-2xl text-qf-mute line-through">
+                  <span className="text-xl text-qf-mute line-through">
                     {formatPrice(bundlePopup.full_price)}
                   </span>
                 )}
               </div>
-              <div className="grid grid-cols-[1fr_1.5fr] gap-3 pt-2">
+              <div className="grid grid-cols-[1fr_1.5fr] gap-3 pt-1">
                 <button
                   type="button"
-                  onClick={() => {
-                    if (bundlePopup) {
-                      setDismissedBundleIds((prev) => {
-                        const next = new Set(prev);
-                        next.add(bundlePopup.id);
-                        return next;
-                      });
-                    }
-                    setBundlePopup(null);
-                  }}
-                  className="h-20 rounded-2xl border-2 border-qf-line-soft hover:bg-qf-line-soft text-qf-ink2 text-xl font-bold transition"
+                  onClick={() => setBundlePopup(null)}
+                  className="h-16 rounded-2xl border-2 border-qf-line-soft hover:bg-qf-line-soft text-qf-ink2 text-lg font-bold transition"
                 >
                   אני מוותר
                 </button>
@@ -2365,7 +2428,7 @@ export function KioskApp({
                     setBundlePopup(null);
                     if (b) acceptBundle(b);
                   }}
-                  className="h-20 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-2xl font-black shadow-[0_8px_28px_rgba(14,122,60,0.35)] active:scale-[0.98] transition"
+                  className="h-16 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xl font-black shadow-[0_8px_28px_rgba(14,122,60,0.35)] active:scale-[0.98] transition"
                 >
                   שדרג
                 </button>

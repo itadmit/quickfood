@@ -17,6 +17,10 @@
 import { apiError, apiJson, handler } from "@/lib/api-response";
 import { prisma } from "@/lib/db/client";
 import { advanceStatus, canTransition } from "@/lib/orders";
+import {
+  checkoutRefToId,
+  materializeKioskCheckout,
+} from "@/lib/orders/kiosk-checkout";
 import { recordOrderCommission } from "@/lib/billing-hub/commission";
 import { getConfiguredProvider } from "@/lib/payments/factory";
 import {
@@ -92,6 +96,77 @@ export const POST = handler(async (req: Request) => {
   }
 
   const parsed = provider.parseCallback(body);
+
+  // Kiosk-card pre-checkout branch. If the reference Grow echoed back is
+  // a checkout ref (KCO- prefix) the Order doesn't exist yet — we
+  // materialize it from the cart snapshot here, then run the normal
+  // pending-payment finalization path against the freshly-created order.
+  const checkoutId = checkoutRefToId(parsed.orderReference);
+  if (checkoutId) {
+    const checkout = await prisma.kioskPendingCheckout.findUnique({
+      where: { id: checkoutId },
+      select: { id: true, tenantId: true, amount: true, status: true, orderId: true },
+    });
+    if (!checkout || checkout.tenantId !== tenant.id) {
+      console.warn("[payments/callback] kiosk checkout not found", { checkoutId });
+      return apiJson({ received: true, matched: false });
+    }
+
+    if (Math.abs(parsed.amount - checkout.amount) > 0.01) {
+      console.error("[payments/callback] kiosk checkout amount mismatch", {
+        expected: checkout.amount,
+        received: parsed.amount,
+      });
+      return apiJson({ received: true, error: "amount_mismatch" }, 200);
+    }
+
+    if (parsed.success) {
+      const result = await materializeKioskCheckout(checkoutId);
+      if (!result.ok) {
+        console.error("[payments/callback] materialize failed", result.code);
+        return apiJson({ received: true, materialized: false }, 200);
+      }
+      await prisma.order.update({
+        where: { id: result.orderId },
+        data: {
+          paymentStatus: PaymentStatus.paid,
+          paymentIntentId: parsed.providerTransactionId,
+        },
+      });
+      const order = await prisma.order.findUnique({
+        where: { id: result.orderId },
+        select: { status: true },
+      });
+      let confirmed = false;
+      if (order && canTransition(order.status, OrderStatus.confirmed)) {
+        try {
+          await advanceStatus(result.orderId, OrderStatus.confirmed, {
+            changedBy: "payment_callback",
+            reason: "payment_received",
+          });
+          confirmed = true;
+        } catch (err) {
+          console.error("[payments/callback] kiosk advanceStatus failed", err);
+        }
+      }
+      if (confirmed) {
+        void recordOrderCommission(result.orderId).catch((err) => {
+          console.error("[payments/callback] kiosk commission failed", err);
+        });
+      }
+    } else {
+      await prisma.kioskPendingCheckout.update({
+        where: { id: checkoutId },
+        data: { status: "abandoned", providerResponse: parsed.rawData as object },
+      });
+    }
+
+    void provider
+      .acknowledgeCallback(parsed)
+      .catch((err) => console.error("[payments/callback] kiosk ack threw", err));
+
+    return apiJson({ received: true, matched: true, kiosk: true, status: parsed.status });
+  }
 
   // Locate the pending payment. Match by providerRequestId (Grow processId)
   // first; fall back to orderReference (Grow cField1 ← our Order.number).

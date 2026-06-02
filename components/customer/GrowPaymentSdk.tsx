@@ -197,17 +197,14 @@ export function GrowPaymentSdk({
           },
         });
         initializedRef.current = true;
-        // The SDK's init() is synchronous but it kicks off async work
-        // (loading sub-frames, registering Apple Pay handlers, etc.).
-        // Calling renderPaymentOptions before that finishes throws
-        // "SDK was not loaded as needed". A short buffer lets the SDK
-        // settle before we tell our parent it's safe to render.
-        setTimeout(() => {
-          if (cancelled) return;
-          // eslint-disable-next-line no-console
-          console.info("[grow-sdk] ready");
-          onReady?.();
-        }, 800);
+        // The SDK's init() is synchronous but kicks off async sub-frame
+        // loading. We used to wait a fixed 800ms here "to be safe", which
+        // added ~700ms to every kiosk QR-pay open. Instead, signal ready
+        // immediately — `renderGrowWallet` below now retries with backoff
+        // if the SDK throws "SDK was not loaded as needed".
+        // eslint-disable-next-line no-console
+        console.info("[grow-sdk] ready");
+        onReady?.();
       })
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : "Failed to load payment SDK";
@@ -227,19 +224,41 @@ export function GrowPaymentSdk({
 
 /**
  * Trigger the wallet to render with the authCode from /pay/initiate.
- * Returns true if the SDK is ready, false otherwise.
+ * Retries internally if the SDK's async sub-frame loading hasn't finished
+ * yet (it throws "SDK was not loaded as needed" until then). Backs off
+ * every 60ms up to ~1.5s — typical real-world settle is <200ms.
  */
 export function renderGrowWallet(authCode: string): boolean {
-  if (typeof window === "undefined" || !window.growPayment) {
+  if (typeof window === "undefined") return false;
+  if (!window.growPayment) {
     // eslint-disable-next-line no-console
-    console.error("[grow-sdk] renderGrowWallet called but SDK not loaded yet", {
-      hasWindow: typeof window !== "undefined",
-      hasGrowPayment: typeof window !== "undefined" && !!window.growPayment,
-    });
+    console.error("[grow-sdk] renderGrowWallet called but SDK not loaded yet");
     return false;
   }
-  // eslint-disable-next-line no-console
-  console.info("[grow-sdk] renderPaymentOptions", { authCode });
-  window.growPayment.renderPaymentOptions(authCode);
+
+  const startedAt = Date.now();
+  const MAX_WAIT_MS = 1500;
+  const RETRY_MS = 60;
+
+  const attempt = (): void => {
+    if (!window.growPayment) return;
+    try {
+      window.growPayment.renderPaymentOptions(authCode);
+      // eslint-disable-next-line no-console
+      console.info("[grow-sdk] renderPaymentOptions ok", {
+        waitedMs: Date.now() - startedAt,
+      });
+    } catch (err) {
+      const elapsed = Date.now() - startedAt;
+      if (elapsed >= MAX_WAIT_MS) {
+        // eslint-disable-next-line no-console
+        console.error("[grow-sdk] renderPaymentOptions gave up", { elapsed, err });
+        return;
+      }
+      setTimeout(attempt, RETRY_MS);
+    }
+  };
+
+  attempt();
   return true;
 }

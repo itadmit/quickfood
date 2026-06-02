@@ -48,17 +48,21 @@ export function KioskKeyboard({
   onChange,
   onClose,
   className,
+  placeholder,
+  maxLength = 40,
 }: {
   value: string;
   onChange: (next: string) => void;
   onClose: () => void;
   className?: string;
+  placeholder?: string;
+  maxLength?: number;
 }) {
   const [lang, setLang] = useState<Lang>("he");
   const layout = LAYOUT[lang];
 
   function append(ch: string) {
-    if (value.length >= 40) return;
+    if (value.length >= maxLength) return;
     onChange(value + ch);
   }
   function backspace() {
@@ -111,6 +115,23 @@ export function KioskKeyboard({
             </button>
           </div>
         </div>
+
+        {placeholder !== undefined && (
+          <div
+            dir="auto"
+            className="min-h-12 px-4 py-2.5 rounded-xl bg-qf-line-soft/50 border border-qf-line-soft text-lg text-qf-ink leading-snug break-words"
+          >
+            {value || (
+              <span className="text-qf-mute">{placeholder}</span>
+            )}
+            {value && value.length < maxLength && (
+              <span
+                className="inline-block w-[2px] h-[1.1em] align-middle bg-(--qf-primary) ms-1 animate-qf-pulse"
+                aria-hidden
+              />
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-10 gap-2" dir="ltr">
           {layout.rows.flatMap((row, ri) =>

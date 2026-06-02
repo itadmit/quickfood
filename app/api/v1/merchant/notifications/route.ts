@@ -21,7 +21,16 @@ export const GET = handler(async () => {
 
   const [recentOrders, failedDeliveries] = await Promise.all([
     prisma.order.findMany({
-      where: { tenantId: session.tenantId, status: { in: ["pending", "confirmed"] } },
+      where: {
+        tenantId: session.tenantId,
+        status: { in: ["pending", "confirmed"] },
+        // Skip card-pending orders that haven't confirmed payment yet —
+        // no need to notify the merchant about an order the customer
+        // may still abandon at the QR screen.
+        NOT: {
+          AND: [{ status: "pending" }, { paymentMethod: { not: "cash" } }],
+        },
+      },
       orderBy: { createdAt: "desc" },
       take: 10,
       select: {
