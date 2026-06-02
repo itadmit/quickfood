@@ -194,6 +194,23 @@ export function KioskApp({
   // pointer-tap; the input itself carries inputMode=none so the
   // device's native keyboard never tries to mount.
   const [kbdOpen, setKbdOpen] = useState(false);
+  // Which input the on-screen Hebrew keyboard is currently bound to.
+  // Each input that opts in sets this on focus/click; the KioskKeyboard
+  // at the bottom of the tree reads/writes the matching state slot.
+  // `null` keeps the keyboard hidden — search has its own bool above
+  // for backwards compatibility with the existing wiring.
+  const [kbdTarget, setKbdTarget] = useState<
+    "search" | "firstName" | "lastName" | null
+  >(null);
+  // Drop any name-input keyboard binding when the customer navigates
+  // away from name-entry — without this the next visit briefly opens
+  // with the wrong target latched in (e.g. coming back from pay-choice
+  // would still target "lastName" until they tap an input again).
+  useEffect(() => {
+    if (state !== "name-entry" && (kbdTarget === "firstName" || kbdTarget === "lastName")) {
+      setKbdTarget(null);
+    }
+  }, [state, kbdTarget]);
 
   // The customer layout below us renders top nav, FAB, preview bar etc.
   // Cover the lot with a full-viewport overlay so the kiosk reads as a
@@ -249,6 +266,7 @@ export function KioskApp({
     setPendingPayOrder(null);
     setQrDataUrl(null);
     setKbdOpen(false);
+    setKbdTarget(null);
     setHelpOpen(false);
   }, [clear, categories]);
 
@@ -1130,9 +1148,17 @@ export function KioskApp({
                   setCustomerFirstName(e.target.value);
                   if (nameWasPrefilled) setNameWasPrefilled(false);
                 }}
+                onFocus={() => setKbdTarget("firstName")}
+                onClick={() => setKbdTarget("firstName")}
+                inputMode="none"
                 placeholder="הזינו שם"
                 maxLength={40}
-                className="w-full px-4 py-4 rounded-2xl border-2 border-qf-line-dash text-2xl bg-white focus:border-(--qf-primary) outline-none text-right"
+                className={cn(
+                  "w-full px-4 py-4 rounded-2xl border-2 text-2xl bg-white focus:border-(--qf-primary) outline-none text-right transition",
+                  kbdTarget === "firstName"
+                    ? "border-(--qf-primary) shadow-[0_0_0_4px_rgba(14,122,60,0.08)]"
+                    : "border-qf-line-dash",
+                )}
               />
             </div>
             <div>
@@ -1145,9 +1171,17 @@ export function KioskApp({
                   setCustomerLastName(e.target.value);
                   if (nameWasPrefilled) setNameWasPrefilled(false);
                 }}
+                onFocus={() => setKbdTarget("lastName")}
+                onClick={() => setKbdTarget("lastName")}
+                inputMode="none"
                 placeholder="הזינו שם משפחה"
                 maxLength={40}
-                className="w-full px-4 py-4 rounded-2xl border-2 border-qf-line-dash text-2xl bg-white focus:border-(--qf-primary) outline-none text-right"
+                className={cn(
+                  "w-full px-4 py-4 rounded-2xl border-2 text-2xl bg-white focus:border-(--qf-primary) outline-none text-right transition",
+                  kbdTarget === "lastName"
+                    ? "border-(--qf-primary) shadow-[0_0_0_4px_rgba(14,122,60,0.08)]"
+                    : "border-qf-line-dash",
+                )}
               />
             </div>
           </div>
@@ -1867,6 +1901,31 @@ export function KioskApp({
           value={query}
           onChange={setQuery}
           onClose={() => setKbdOpen(false)}
+        />
+      )}
+
+      {/* Same keyboard, re-bound to whichever name input the customer
+          tapped on the name-entry screen. The target state decides
+          which slot it writes to so a single instance handles both
+          first/last name without flicker between fields. */}
+      {kbdTarget === "firstName" && (
+        <KioskKeyboard
+          value={customerFirstName}
+          onChange={(v) => {
+            setCustomerFirstName(v);
+            if (nameWasPrefilled) setNameWasPrefilled(false);
+          }}
+          onClose={() => setKbdTarget(null)}
+        />
+      )}
+      {kbdTarget === "lastName" && (
+        <KioskKeyboard
+          value={customerLastName}
+          onChange={(v) => {
+            setCustomerLastName(v);
+            if (nameWasPrefilled) setNameWasPrefilled(false);
+          }}
+          onClose={() => setKbdTarget(null)}
         />
       )}
 
