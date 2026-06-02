@@ -198,13 +198,19 @@ export function GrowPaymentSdk({
         });
         initializedRef.current = true;
         // The SDK's init() is synchronous but kicks off async sub-frame
-        // loading. We used to wait a fixed 800ms here "to be safe", which
-        // added ~700ms to every kiosk QR-pay open. Instead, signal ready
-        // immediately — `renderGrowWallet` below now retries with backoff
-        // if the SDK throws "SDK was not loaded as needed".
-        // eslint-disable-next-line no-console
-        console.info("[grow-sdk] ready");
-        onReady?.();
+        // loading. Calling renderPaymentOptions before those iframes are
+        // ready makes the SDK render its own "SDK was not loaded as needed"
+        // error message into the wallet div — and (in current versions) it
+        // does NOT throw, so our retry-on-catch in renderGrowWallet won't
+        // fire. So we still wait a baseline before signalling ready, just
+        // shorter than the original 800ms now that preload+SSR-initiate
+        // have already moved the script into cache by this point.
+        setTimeout(() => {
+          if (cancelled) return;
+          // eslint-disable-next-line no-console
+          console.info("[grow-sdk] ready");
+          onReady?.();
+        }, 400);
       })
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : "Failed to load payment SDK";
