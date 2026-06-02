@@ -777,7 +777,7 @@ export function ItemDetail({
           className={cn(
             "bg-white border-t border-qf-line flex items-center",
             kioskMode
-              ? "px-6 py-5 gap-5 lg:px-8 lg:py-6"
+              ? "px-6 py-6 gap-5 lg:px-8 lg:py-7"
               : "px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] gap-3 lg:pb-4 lg:px-5",
           )}
         >
@@ -793,16 +793,16 @@ export function ItemDetail({
               disabled={quantity <= 1}
               className={cn(
                 "grid place-items-center disabled:opacity-40 active:bg-qf-line-dash rounded-full transition",
-                kioskMode ? "w-16 h-18" : "w-12 h-14",
+                kioskMode ? "w-20 h-24" : "w-12 h-14",
               )}
               aria-label="הפחת"
             >
-              <IcoMinus s={kioskMode ? 24 : 18} />
+              <IcoMinus s={kioskMode ? 28 : 18} />
             </button>
             <div
               className={cn(
                 "text-center font-bold tnum",
-                kioskMode ? "w-12 text-2xl" : "w-8 text-base",
+                kioskMode ? "w-14 text-3xl" : "w-8 text-base",
               )}
             >
               {quantity}
@@ -813,11 +813,11 @@ export function ItemDetail({
               disabled={quantity >= 20}
               className={cn(
                 "grid place-items-center disabled:opacity-40 active:bg-qf-line-dash rounded-full transition",
-                kioskMode ? "w-16 h-18" : "w-12 h-14",
+                kioskMode ? "w-20 h-24" : "w-12 h-14",
               )}
               aria-label="הוסף"
             >
-              <IcoPlus c="#11231a" s={kioskMode ? 24 : 18} />
+              <IcoPlus c="#11231a" s={kioskMode ? 28 : 18} />
             </button>
           </div>
           <button
@@ -825,8 +825,10 @@ export function ItemDetail({
             onClick={addToCart}
             disabled={addPhase !== "idle"}
             className={cn(
-              "flex-1 rounded-2xl font-bold flex items-center justify-between transition-all duration-300 active:scale-[0.98]",
-              kioskMode ? "px-8 h-18 text-2xl" : "px-5 h-14 text-base",
+              "flex-1 font-bold flex items-center justify-between transition-all duration-300 active:scale-[0.98]",
+              kioskMode
+                ? "px-8 h-24 text-3xl rounded-3xl"
+                : "px-5 h-14 text-base rounded-2xl",
               addPhase !== "idle"
                 ? "bg-qf-green-deep text-white shadow-lg shadow-qf-green-deep/30"
                 : missingGroup
@@ -845,8 +847,8 @@ export function ItemDetail({
                 <span
                   className="qf-spinner"
                   style={{
-                    width: kioskMode ? 28 : 20,
-                    height: kioskMode ? 28 : 20,
+                    width: kioskMode ? 32 : 20,
+                    height: kioskMode ? 32 : 20,
                     borderWidth: 2.5,
                   }}
                 />
@@ -854,7 +856,7 @@ export function ItemDetail({
             ) : (
               <>
                 <span>{isEditing ? "עודכן" : "נוסף לסל"}</span>
-                <IcoCheck c="#fff" s={kioskMode ? 28 : 20} className="animate-qf-check-in" />
+                <IcoCheck c="#fff" s={kioskMode ? 32 : 20} className="animate-qf-check-in" />
               </>
             )}
           </button>

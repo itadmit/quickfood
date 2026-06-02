@@ -214,6 +214,16 @@ export function KioskApp({
   const [placingError, setPlacingError] = useState<string | null>(null);
   const [bundleSuggestions, setBundleSuggestions] = useState<BundleSuggestion[]>([]);
   const [acceptedBundleIds, setAcceptedBundleIds] = useState<Set<string>>(new Set());
+  // Bundles the customer waved off with "אני מוותר". We don't pester
+  // them with the same suggestion again the rest of the session — that
+  // crosses from "helpful upsell" into "nag". Cleared on reset().
+  const [dismissedBundleIds, setDismissedBundleIds] = useState<Set<string>>(new Set());
+  // The Wolt-style upgrade popup that fires the instant a fresh add
+  // matches a linked bundle. promptedBundleIdsRef tracks which
+  // bundles we've already surfaced as a popup so we don't re-prompt
+  // when the customer keeps adding items that trigger the same offer.
+  const [bundlePopup, setBundlePopup] = useState<BundleSuggestion | null>(null);
+  const promptedBundleIdsRef = useRef<Set<string>>(new Set());
   // Cart-attention pulse: bumps the bottom bar each time the cart
   // count grows so customers register that the cart lives down there
   // and is tappable. Keyed by an incrementing token (not booleans) so
@@ -289,6 +299,9 @@ export function KioskApp({
     setCheckoutPromptOpen(false);
     setCheckoutPromptShown(false);
     setAcceptedBundleIds(new Set());
+    setDismissedBundleIds(new Set());
+    setBundlePopup(null);
+    promptedBundleIdsRef.current.clear();
     setCustomerPhone("");
     setCustomerFirstName("");
     setCustomerLastName("");
@@ -409,6 +422,24 @@ export function KioskApp({
       return next;
     });
   }, [lines, pendingBundleSwap, remove]);
+
+  // Wolt-style upgrade popup: the moment a fresh add lands a linked
+  // bundle in the suggestion list, surface it as a modal so the
+  // customer doesn't miss the offer. Once they decide (שדרג or אני
+  // מוותר) we mark the bundle as prompted/dismissed so the same offer
+  // never pops twice in one session.
+  useEffect(() => {
+    if (bundlePopup) return;
+    for (const b of bundleSuggestions) {
+      if (b.mode !== "linked") continue;
+      if (acceptedBundleIds.has(b.id)) continue;
+      if (dismissedBundleIds.has(b.id)) continue;
+      if (promptedBundleIdsRef.current.has(b.id)) continue;
+      promptedBundleIdsRef.current.add(b.id);
+      setBundlePopup(b);
+      break;
+    }
+  }, [bundleSuggestions, acceptedBundleIds, dismissedBundleIds, bundlePopup]);
 
   useEffect(() => {
     function touch() {
@@ -1798,7 +1829,7 @@ export function KioskApp({
           onClick={() => setCartOpen(false)}
         >
           <div
-            className="w-full max-w-2xl bg-white rounded-t-3xl shadow-2xl flex flex-col min-h-[55vh] max-h-[85vh] animate-qf-sheet-in"
+            className="w-full max-w-2xl bg-white rounded-t-3xl shadow-2xl flex flex-col min-h-[30vh] max-h-[85vh] animate-qf-sheet-in"
             onClick={(e) => e.stopPropagation()}
           >
             <header className="px-6 py-4 border-b border-qf-line-soft flex items-center justify-between">
@@ -2127,6 +2158,85 @@ export function KioskApp({
           }}
           onClose={() => setKbdTarget(null)}
         />
+      )}
+
+      {/* Bundle upgrade popup — fires the moment a fresh add lands a
+          linked bundle in the suggestion list. Gated on !pickItemId
+          so it doesn't stack on top of the ItemDetail modal that's
+          mid-closing-animation when the customer adds the trigger
+          item. */}
+      {bundlePopup && !pickItemId && bundlePopup.linked_item && (
+        <div className="fixed inset-0 z-[65] flex items-center justify-center bg-black/55 backdrop-blur-sm p-6">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-qf-modal-in">
+            {bundlePopup.linked_item.image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={bundlePopup.linked_item.image_url}
+                alt={bundlePopup.linked_item.name}
+                className="w-full h-56 object-cover"
+              />
+            ) : (
+              <div className="w-full h-32 bg-(--qf-soft)" />
+            )}
+            <div className="p-6 space-y-4 text-center">
+              <div>
+                <div className="text-xs font-bold tracking-[0.18em] text-(--qf-primary) uppercase">
+                  הצעת שדרוג
+                </div>
+                <h2 className="text-3xl font-black text-qf-ink tracking-tight mt-2">
+                  {bundlePopup.linked_item.name}
+                </h2>
+                <p className="text-base text-qf-ink2 mt-1">
+                  {bundlePopup.name}
+                </p>
+              </div>
+              <div className="flex items-baseline justify-center gap-3 tnum">
+                <span className="text-4xl font-black text-(--qf-primary)">
+                  {formatPrice(bundlePopup.bundle_price)}
+                </span>
+                {bundlePopup.savings > 0 && (
+                  <>
+                    <span className="text-lg text-qf-mute line-through">
+                      {formatPrice(bundlePopup.full_price)}
+                    </span>
+                    <span className="text-sm font-bold text-qf-tomato bg-qf-tomato-soft px-2.5 py-1 rounded-full">
+                      חוסכים {formatPrice(bundlePopup.savings)}
+                    </span>
+                  </>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (bundlePopup) {
+                      setDismissedBundleIds((prev) => {
+                        const next = new Set(prev);
+                        next.add(bundlePopup.id);
+                        return next;
+                      });
+                    }
+                    setBundlePopup(null);
+                  }}
+                  className="h-14 rounded-2xl border border-qf-line-soft hover:bg-qf-line-soft text-qf-ink2 text-base font-bold transition"
+                >
+                  אני מוותר
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const b = bundlePopup;
+                    setBundlePopup(null);
+                    if (b) acceptBundle(b);
+                  }}
+                  className="h-14 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-base font-black shadow-[0_6px_24px_rgba(14,122,60,0.28)] active:scale-[0.98] transition"
+                >
+                  שדרג
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Help modal — short flow recap + tiny "powered by QuickFood"
