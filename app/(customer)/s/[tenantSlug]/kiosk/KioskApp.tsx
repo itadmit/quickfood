@@ -173,6 +173,17 @@ export function KioskApp({
   // the name-entry screen renders fresh-input mode.
   const [customerFirstName, setCustomerFirstName] = useState<string>("");
   const [customerLastName, setCustomerLastName] = useState<string>("");
+  // Optional email captured on the name-entry screen — when the
+  // customer ticks "אני רוצה לקבל חשבונית למייל" we collect their
+  // address here so the tax invoice + review-reminder email both go
+  // straight to them without a second prompt on the pay page.
+  const [wantsInvoice, setWantsInvoice] = useState<boolean>(false);
+  const [customerEmail, setCustomerEmail] = useState<string>("");
+  // Marketing opt-in checkbox on the name-entry screen. Default off
+  // (explicit opt-in only); flows through to Customer.marketingConsent
+  // on order create — never writes false, so we never accidentally
+  // un-opt-in a customer who said yes on a previous visit.
+  const [marketingConsent, setMarketingConsent] = useState<boolean>(false);
   // Did the lookup confirm a prior customer at this tenant? Drives the
   // copy on the name-entry screen ("האם השם נכון?" vs "מה השם שלך?").
   const [nameWasPrefilled, setNameWasPrefilled] = useState(false);
@@ -241,14 +252,17 @@ export function KioskApp({
   // `null` keeps the keyboard hidden — search has its own bool above
   // for backwards compatibility with the existing wiring.
   const [kbdTarget, setKbdTarget] = useState<
-    "search" | "firstName" | "lastName" | null
+    "search" | "firstName" | "lastName" | "email" | null
   >(null);
   // Drop any name-input keyboard binding when the customer navigates
   // away from name-entry — without this the next visit briefly opens
   // with the wrong target latched in (e.g. coming back from pay-choice
   // would still target "lastName" until they tap an input again).
   useEffect(() => {
-    if (state !== "name-entry" && (kbdTarget === "firstName" || kbdTarget === "lastName")) {
+    if (
+      state !== "name-entry" &&
+      (kbdTarget === "firstName" || kbdTarget === "lastName" || kbdTarget === "email")
+    ) {
       setKbdTarget(null);
     }
   }, [state, kbdTarget]);
@@ -305,6 +319,9 @@ export function KioskApp({
     setCustomerPhone("");
     setCustomerFirstName("");
     setCustomerLastName("");
+    setWantsInvoice(false);
+    setCustomerEmail("");
+    setMarketingConsent(false);
     setNameWasPrefilled(false);
     setPhoneSubmitting(false);
     setPhoneStepDone(false);
@@ -630,6 +647,55 @@ export function KioskApp({
   // Returning-customer name lookup — same path whether we got here
   // straight from phone-entry (kioskRequirePhone=false) or via OTP
   // verify (kioskRequirePhone=true). Always lands the user on `browse`.
+  // Hoisted so both the manual "verify" button AND the auto-submit
+  // effect that fires when the 6th digit lands can reuse it. Standard
+  // OTP UX is "no submit button needed — typing the last digit just
+  // verifies"; the button stays as a fallback for accessibility +
+  // retry-after-error.
+  const verifyKioskOtp = useCallback(
+    async (code: string) => {
+      if (otpSubmitting) return;
+      if (code.length !== 6) return;
+      setOtpSubmitting(true);
+      setOtpError(null);
+      try {
+        const res = await fetch("/api/v1/customer/kiosk-otp/verify", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ phone: customerPhone, code }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setOtpError(
+            typeof data?.error?.message === "string"
+              ? data.error.message
+              : t("otp.invalidCode"),
+          );
+          setOtpCode("");
+          return;
+        }
+        await runLookupAndProceed(customerPhone.replace(/\D/g, ""));
+      } catch {
+        setOtpError(t("otp.networkError"));
+      } finally {
+        setOtpSubmitting(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [customerPhone, otpSubmitting, t],
+  );
+
+  // Auto-submit OTP when the 6th digit lands. Mirrors iOS + every bank
+  // OTP screen — typing the last char should just verify, no extra
+  // tap required.
+  useEffect(() => {
+    if (state !== "otp-verify") return;
+    const digits = otpCode.replace(/\D/g, "");
+    if (digits.length !== 6) return;
+    if (otpSubmitting) return;
+    void verifyKioskOtp(digits);
+  }, [otpCode, state, otpSubmitting, verifyKioskOtp]);
+
   async function runLookupAndProceed(phoneDigits: string) {
     try {
       const res = await fetch("/api/v1/customer/kiosk-lookup", {
@@ -753,6 +819,16 @@ export function KioskApp({
           ...(customerLastName.trim()
             ? { guest_last_name: customerLastName.trim() }
             : {}),
+          // Email captured on the name-entry screen when the customer
+          // ticked "אני רוצה לקבל חשבונית למייל". Powers tax-invoice
+          // dispatch + review-reminder email without a second prompt.
+          ...(wantsInvoice && /^\S+@\S+\.\S+$/.test(customerEmail.trim())
+            ? { customer_email: customerEmail.trim() }
+            : {}),
+          // Explicit marketing opt-in checkbox. Only sent when true —
+          // never silently flips an existing yes back to no on the
+          // Customer record.
+          ...(marketingConsent ? { marketing_consent: true } : {}),
           lines: lines.map((l) => ({
             item_id: l.itemId,
             quantity: l.quantity,
@@ -1204,40 +1280,7 @@ export function KioskApp({
           <div className="flex flex-col items-center gap-3 w-full max-w-md">
             <button
               type="button"
-              onClick={async () => {
-                if (!codeReady || otpSubmitting) return;
-                setOtpSubmitting(true);
-                setOtpError(null);
-                try {
-                  const res = await fetch(
-                    "/api/v1/customer/kiosk-otp/verify",
-                    {
-                      method: "POST",
-                      headers: { "content-type": "application/json" },
-                      body: JSON.stringify({
-                        phone: customerPhone,
-                        code: codeDigits,
-                      }),
-                    },
-                  );
-                  const data = await res.json().catch(() => ({}));
-                  if (!res.ok) {
-                    setOtpError(
-                      typeof data?.error?.message === "string"
-                        ? data.error.message
-                        : t("otp.invalidCode"),
-                    );
-                    setOtpCode("");
-                    return;
-                  }
-                  // Verified — run the existing lookup and proceed.
-                  await runLookupAndProceed(customerPhone.replace(/\D/g, ""));
-                } catch {
-                  setOtpError(t("otp.networkError"));
-                } finally {
-                  setOtpSubmitting(false);
-                }
-              }}
+              onClick={() => void verifyKioskOtp(codeDigits)}
               disabled={!codeReady || otpSubmitting}
               className="w-full h-16 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xl font-black disabled:opacity-40 shadow-lg active:scale-[0.98] transition"
             >
@@ -1354,12 +1397,94 @@ export function KioskApp({
                 )}
               />
             </div>
+
+            {/* One unified card for the invoice opt-in. Header row is
+                always visible; ticking it expands the card to reveal
+                the email field + the nested marketing consent. Closing
+                the card resets the email and the marketing tick, so a
+                customer who toggles off doesn't accidentally leave
+                stale opt-ins behind. */}
+            <div
+              className={cn(
+                "rounded-2xl border-2 bg-white transition overflow-hidden",
+                wantsInvoice
+                  ? "border-(--qf-primary) shadow-[0_0_0_4px_rgba(14,122,60,0.08)]"
+                  : "border-qf-line-dash",
+              )}
+            >
+              <label className="flex items-center gap-3 px-4 py-3.5 cursor-pointer text-right">
+                <input
+                  type="checkbox"
+                  checked={wantsInvoice}
+                  onChange={(e) => {
+                    const v = e.target.checked;
+                    setWantsInvoice(v);
+                    if (!v) {
+                      setCustomerEmail("");
+                      setMarketingConsent(false);
+                      if (kbdTarget === "email") setKbdTarget(null);
+                    }
+                  }}
+                  className="w-6 h-6 accent-(--qf-primary) shrink-0 cursor-pointer"
+                />
+                <span className="text-base text-qf-ink flex-1">
+                  אני רוצה לקבל חשבונית מס למייל
+                </span>
+              </label>
+
+              {wantsInvoice && (
+                <div className="px-4 pb-4 pt-1 space-y-3 border-t border-qf-line-soft mt-1">
+                  <input
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    onFocus={() => setKbdTarget("email")}
+                    onClick={() => setKbdTarget("email")}
+                    onKeyDown={(e) => e.preventDefault()}
+                    inputMode="none"
+                    readOnly
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    placeholder="name@example.com"
+                    maxLength={120}
+                    dir="ltr"
+                    className={cn(
+                      "w-full mt-3 px-4 py-3.5 rounded-xl border-2 text-xl bg-white focus:border-(--qf-primary) outline-none text-left transition tnum",
+                      kbdTarget === "email"
+                        ? "border-(--qf-primary) shadow-[0_0_0_3px_rgba(14,122,60,0.08)]"
+                        : "border-qf-line-dash",
+                    )}
+                  />
+
+                  <label className="flex items-start gap-3 cursor-pointer text-right pt-1">
+                    <input
+                      type="checkbox"
+                      checked={marketingConsent}
+                      onChange={(e) => setMarketingConsent(e.target.checked)}
+                      className="w-5 h-5 accent-(--qf-primary) shrink-0 cursor-pointer mt-0.5"
+                    />
+                    <span className="text-sm text-qf-ink2 flex-1 leading-snug">
+                      אני מאשר/ת לשלוח לי תוכן שיווקי/פרסומי אודות ההזמנות שלי
+                  
+                    </span>
+                  </label>
+                </div>
+              )}
+            </div>
           </div>
 
           <button
             type="button"
             onClick={() => {
               if (!canContinue) return;
+              // Require a syntactically valid email if the customer
+              // opted into the invoice — otherwise the upstream order
+              // create silently drops the bad address and they think
+              // they'll get an invoice that never comes.
+              if (wantsInvoice && !/^\S+@\S+\.\S+$/.test(customerEmail.trim())) {
+                setKbdTarget("email");
+                return;
+              }
               if (growEnabled) {
                 setState("pay-choice");
               } else {
@@ -1394,6 +1519,13 @@ export function KioskApp({
               setCustomerLastName(v);
               if (nameWasPrefilled) setNameWasPrefilled(false);
             }}
+            onClose={() => setKbdTarget(null)}
+          />
+        )}
+        {kbdTarget === "email" && (
+          <KioskKeyboard
+            value={customerEmail}
+            onChange={setCustomerEmail}
             onClose={() => setKbdTarget(null)}
           />
         )}
@@ -2167,39 +2299,46 @@ export function KioskApp({
           item. */}
       {bundlePopup && !pickItemId && bundlePopup.linked_item && (
         <div className="fixed inset-0 z-[65] flex items-center justify-center bg-black/55 backdrop-blur-sm p-6">
-          <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden animate-qf-modal-in">
+          <div className="w-full max-w-2xl bg-white rounded-[28px] shadow-2xl overflow-hidden animate-qf-modal-in">
             {bundlePopup.linked_item.image_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={bundlePopup.linked_item.image_url}
-                alt={bundlePopup.linked_item.name}
-                className="w-full h-56 object-cover"
-              />
+              <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={bundlePopup.linked_item.image_url}
+                  alt={bundlePopup.linked_item.name}
+                  className="w-full h-80 object-cover"
+                />
+                {bundlePopup.savings > 0 && (
+                  <div className="absolute top-4 start-4 bg-qf-tomato text-white text-base font-black px-4 py-1.5 rounded-full shadow-[0_4px_16px_rgba(194,66,31,0.4)] tnum">
+                    חוסכים {formatPrice(bundlePopup.savings)}
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="w-full h-32 bg-(--qf-soft)" />
             )}
-            <div className="p-7 space-y-5 text-center">
-              <div>
-                <div className="text-sm font-bold text-(--qf-primary)">
+            <div className="p-10 space-y-7 text-center">
+              <div className="space-y-3">
+                <div className="text-lg font-bold text-(--qf-primary)">
                   {bundlePopup.savings > 0
                     ? `תרצה לשדרג ולחסוך ${formatPrice(bundlePopup.savings)}?`
                     : "תרצה לשדרג?"}
                 </div>
-                <h2 className="text-3xl font-black text-qf-ink tracking-tight mt-2 whitespace-nowrap">
+                <h2 className="text-5xl font-black text-qf-ink tracking-tight whitespace-nowrap">
                   {bundlePopup.linked_item.name}
                 </h2>
               </div>
-              <div className="flex items-baseline justify-center gap-3 tnum">
-                <span className="text-4xl font-black text-(--qf-primary)">
+              <div className="flex items-baseline justify-center gap-4 tnum">
+                <span className="text-6xl font-black text-(--qf-primary)">
                   {formatPrice(bundlePopup.bundle_price)}
                 </span>
                 {bundlePopup.savings > 0 && (
-                  <span className="text-lg text-qf-mute line-through">
+                  <span className="text-2xl text-qf-mute line-through">
                     {formatPrice(bundlePopup.full_price)}
                   </span>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="grid grid-cols-[1fr_1.5fr] gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -2212,7 +2351,7 @@ export function KioskApp({
                     }
                     setBundlePopup(null);
                   }}
-                  className="h-14 rounded-2xl border border-qf-line-soft hover:bg-qf-line-soft text-qf-ink2 text-base font-bold transition"
+                  className="h-20 rounded-2xl border-2 border-qf-line-soft hover:bg-qf-line-soft text-qf-ink2 text-xl font-bold transition"
                 >
                   אני מוותר
                 </button>
@@ -2223,7 +2362,7 @@ export function KioskApp({
                     setBundlePopup(null);
                     if (b) acceptBundle(b);
                   }}
-                  className="h-14 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-base font-black shadow-[0_6px_24px_rgba(14,122,60,0.28)] active:scale-[0.98] transition"
+                  className="h-20 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-2xl font-black shadow-[0_8px_28px_rgba(14,122,60,0.35)] active:scale-[0.98] transition"
                 >
                   שדרג
                 </button>

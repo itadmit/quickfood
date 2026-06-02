@@ -24,6 +24,9 @@ const CreateOrderSchema = z.object({
   guest_first_name: z.string().min(1).max(40).optional(),
   guest_last_name: z.string().max(40).optional(),
   customer_email: z.string().email().optional(),
+  // Explicit opt-in to marketing/promotional comms — only persisted
+  // when true; never silently flips an existing yes back to no.
+  marketing_consent: z.boolean().optional(),
   coupon_code: z.string().min(1).max(40).optional(),
   applied_bundle_ids: z.array(z.string().uuid()).max(10).optional(),
   // Set by the kiosk app. Bypasses the "auth or guest phone" gate after
@@ -92,6 +95,7 @@ export const POST = handler(async (req: Request) => {
       guestFirstName: body.guest_first_name,
       guestLastName: body.guest_last_name,
       customerEmail: body.customer_email,
+      marketingConsent: body.marketing_consent,
       method: body.method,
       addressId: body.address_id ?? null,
       deliveryNotes: body.delivery_notes ?? null,

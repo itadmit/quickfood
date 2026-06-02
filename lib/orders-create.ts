@@ -33,6 +33,11 @@ export interface CreateOrderInput {
   // the order is placed by a logged-in customer. Required when the tenant's
   // reviewsChannel === 'email' (enforced one layer up).
   customerEmail?: string;
+  /// Explicit opt-in to marketing/promotional comms (email + SMS).
+  /// Captured per-order — only ever flipped to TRUE, never silently to
+  /// false on subsequent orders (a customer who opted in once stays
+  /// opted in until they explicitly unsubscribe).
+  marketingConsent?: boolean;
   method: "delivery" | "pickup";
   addressId?: string | null;
   deliveryNotes?: string | null;
@@ -383,6 +388,12 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       if (!existing.firstName && input.guestFirstName) updates.firstName = input.guestFirstName;
       if (!existing.lastName && input.guestLastName) updates.lastName = input.guestLastName;
       if (!existing.email && input.customerEmail) updates.email = input.customerEmail.trim();
+      // Marketing consent is sticky-true: any explicit yes flips it on
+      // and stays on. We never write `false` here so a customer who
+      // unticked the box on a later order doesn't accidentally lose
+      // their earlier explicit opt-in (that's what the unsubscribe
+      // flow is for).
+      if (input.marketingConsent === true) updates.marketingConsent = true;
       if (Object.keys(updates).length > 0) {
         try {
           await prisma.customer.update({ where: { id: existing.id }, data: updates });
@@ -398,6 +409,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
             firstName: input.guestFirstName ?? "",
             lastName: input.guestLastName ?? "",
             email: input.customerEmail?.trim() ?? null,
+            marketingConsent: input.marketingConsent === true,
           },
           select: { id: true },
         });

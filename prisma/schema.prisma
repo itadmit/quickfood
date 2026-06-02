@@ -767,6 +767,11 @@ model Customer {
   firstName  String   @default("") @map("first_name")
   lastName   String   @default("") @map("last_name")
   anonymized Boolean  @default(false)
+  /// Explicit opt-in to marketing/promotional content (email or SMS).
+  /// Defaults to false — the customer has to actively tick the consent
+  /// checkbox during checkout / kiosk capture. Stays false unless the
+  /// customer says yes; later opt-outs flip it back to false.
+  marketingConsent Boolean @default(false) @map("marketing_consent")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
   lastSeenAt DateTime @default(now()) @map("last_seen_at")

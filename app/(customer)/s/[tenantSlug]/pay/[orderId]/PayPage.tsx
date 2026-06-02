@@ -50,10 +50,6 @@ export function PayPage({
   const [emailMasked, setEmailMasked] = useState<string | null>(
     order.customerEmailMasked,
   );
-  const [showInvoiceForm, setShowInvoiceForm] = useState(false);
-  const [emailInput, setEmailInput] = useState("");
-  const [contactBusy, setContactBusy] = useState(false);
-  const [contactError, setContactError] = useState<string | null>(null);
   const [authCode, setAuthCode] = useState<string | null>(null);
   const [sdkReady, setSdkReady] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -158,40 +154,6 @@ export function PayPage({
     emailMasked,
   ]);
 
-  async function submitInvoiceEmail() {
-    const value = emailInput.trim();
-    if (!value) return;
-    setContactBusy(true);
-    setContactError(null);
-    try {
-      const res = await fetch(
-        `/api/v1/customer/orders/${order.id}/invoice-contact`,
-        {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ email: value }),
-        },
-      );
-      const data = await res.json();
-      if (!res.ok) {
-        setContactError(
-          typeof data?.error?.message === "string"
-            ? data.error.message
-            : t("payPage.invoiceContactSaveError"),
-        );
-        return;
-      }
-      setEmailInput("");
-      // Optimistic: stamp local state so the UI flips to the "we'll send"
-      // notice immediately. The polling loop replaces it with the
-      // server-side mask within ~3s.
-      setEmailMasked(value);
-    } catch {
-      setContactError(t("payPage.network"));
-    } finally {
-      setContactBusy(false);
-    }
-  }
 
   if (alreadyPaid || paymentStatus === "paid") {
     return (
@@ -227,12 +189,12 @@ export function PayPage({
           </p>
         </div>
 
-        {/* Invoice surface — three states:
-            (1) Invoice URL ready → big download button (immediate path).
-            (2) Email captured → quiet "we'll email it to you" note. The
-                dispatcher fires the moment Grow ships, so the customer can
-                safely close the tab.
-            (3) No email yet → opt-in button that reveals an email input. */}
+        {/* Invoice surface — two states only. The customer captures their
+            email upfront on the kiosk name-entry screen now, so the
+            phone pay page never asks for it. Render the download
+            button as soon as Grow ships the invoice URL; otherwise show
+            the quiet "we'll email it to you" note when the order
+            carries a captured email. */}
         {invoiceUrl ? (
           <a
             href={invoiceUrl}
@@ -272,70 +234,7 @@ export function PayPage({
             </p>
             <p className="text-xs text-qf-mute">{t("payPage.canCloseTabShort")}</p>
           </div>
-        ) : showInvoiceForm ? (
-          <div className="w-full max-w-sm bg-white rounded-2xl border border-qf-line p-4 space-y-3">
-            <div className="text-sm font-bold text-qf-ink text-center">
-              {t("payPage.invoiceContactHeading")}
-            </div>
-            <p className="text-xs text-qf-mute text-center">
-              {t("payPage.invoiceContactSubtitle")}
-            </p>
-            <div className="flex gap-2">
-              <input
-                type="email"
-                inputMode="email"
-                autoCapitalize="none"
-                spellCheck={false}
-                value={emailInput}
-                onChange={(e) => setEmailInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") void submitInvoiceEmail();
-                }}
-                placeholder={t("payPage.invoiceContactPlaceholder")}
-                dir="ltr"
-                autoFocus
-                className="flex-1 px-3 py-3 rounded-xl border-2 border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm bg-white"
-              />
-              <button
-                type="button"
-                onClick={submitInvoiceEmail}
-                disabled={contactBusy || emailInput.trim().length < 3}
-                className="px-5 py-3 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-bold disabled:opacity-50 active:scale-95 transition"
-              >
-                {contactBusy
-                  ? t("payPage.invoiceContactSendingBtn")
-                  : t("payPage.invoiceContactSendBtn")}
-              </button>
-            </div>
-            {contactError && (
-              <p className="text-xs text-qf-tomato text-center">{contactError}</p>
-            )}
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setShowInvoiceForm(true)}
-            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border-2 border-qf-line text-(--qf-deep) text-sm font-bold hover:border-(--qf-primary) hover:bg-(--qf-soft) active:scale-[0.98] transition"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width="18"
-              height="18"
-              fill="none"
-              aria-hidden
-              className="text-(--qf-primary)"
-            >
-              <path
-                d="M7 3h7l4 4v14H7V3z M14 3v4h4 M9 12h6 M9 16h6"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            {t("payPage.invoiceShowFormBtn")}
-          </button>
-        )}
+        ) : null}
 
         <p className="text-sm text-qf-mute max-w-xs">
           {t("payPage.canCloseTab")}
