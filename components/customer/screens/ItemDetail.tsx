@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { IcoChev, IcoMinus, IcoPlus, IcoHeart, IcoCheck, IcoClose } from "@/components/shared/Icons";
+import { IcoChev, IcoMinus, IcoPlus, IcoHeart, IcoCheck, IcoClose, IcoEdit } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import {
   useCart,
@@ -13,6 +13,15 @@ import {
 } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
+
+const KIOSK_NOTE_PRESETS = [
+  "בלי בצל",
+  "אפשר בלי פטרוזיליה?",
+  "ללא גלוטן",
+  "לחתוך ל-2",
+  "עוד רוטב",
+  "שיהיה קריספי",
+];
 
 interface Size {
   id: string;
@@ -60,6 +69,7 @@ export function ItemDetail({
   businessType = "general",
   inModal = false,
   kioskMode = false,
+  onNotesKeyboard,
   onClose,
   editLine,
   addSource = "menu",
@@ -72,6 +82,9 @@ export function ItemDetail({
    *  max-w-md cap on the footer CTA and bumps touch targets so the
    *  bar actually feels tappable on a 10–13" tablet in landscape. */
   kioskMode?: boolean;
+  // Kiosk: invoked when "כתבו הערה חופשית" is tapped so the parent can
+  // mount its on-screen Hebrew keyboard bound to the notes value.
+  onNotesKeyboard?: (current: string, set: (next: string) => void) => void;
   onClose?: () => void;
   editLine?: CartLine;
   /** Provenance tag attached to the cart line when this detail screen
@@ -719,7 +732,12 @@ export function ItemDetail({
           >
             {g.options.map((o) => {
               const checked = picks[g.id]?.has(o.id) ?? false;
-              const blocked = !checked && atMax;
+              // `atMax` only blocks new picks for MULTI groups. For
+              // single-select (radio) the new tap always replaces the
+              // current selection, so blocking the row would leave the
+              // customer stuck on their first choice with no way back —
+              // exactly the "selected one, can't switch" bug.
+              const blocked = g.type === "multi" && !checked && atMax;
               return (
                 <Row
                   key={o.id}
@@ -747,16 +765,66 @@ export function ItemDetail({
         );
       })}
 
-      {/* Notes */}
-      <Section title="הערות לפיצרייה" subtitle="אופציונלי">
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={2}
-          maxLength={200}
-          placeholder="למשל: בלי בצל, חתוך ל-8"
-          className="w-full bg-qf-bg border border-qf-line rounded-xl px-3 py-2.5 text-sm outline-none focus:border-(--qf-primary) focus:bg-white resize-none"
-        />
+      {/* Kiosk: preset chips + on-screen keyboard. Web: plain textarea. */}
+      <Section title="הערות" subtitle="אופציונלי">
+        {kioskMode ? (
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {KIOSK_NOTE_PRESETS.map((preset) => {
+                const isActive = notes
+                  .split(/\s*·\s*|\n/)
+                  .map((s) => s.trim())
+                  .includes(preset);
+                return (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => {
+                      const tokens = notes
+                        .split(/\s*·\s*|\n/)
+                        .map((s) => s.trim())
+                        .filter(Boolean);
+                      const idx = tokens.indexOf(preset);
+                      if (idx >= 0) tokens.splice(idx, 1);
+                      else tokens.push(preset);
+                      setNotes(tokens.join(" · "));
+                    }}
+                    className={cn(
+                      "px-4 h-11 rounded-full text-base font-bold border-2 transition active:scale-95",
+                      isActive
+                        ? "bg-(--qf-primary) text-white border-(--qf-deep) shadow-[0_4px_14px_rgba(14,122,60,0.25)]"
+                        : "bg-white text-qf-ink border-qf-line-soft hover:border-(--qf-primary)/40",
+                    )}
+                  >
+                    {preset}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => onNotesKeyboard?.(notes, setNotes)}
+                className="inline-flex items-center gap-1.5 px-4 h-11 rounded-full text-base font-bold bg-white text-(--qf-deep) border-2 border-(--qf-primary)/40 hover:bg-(--qf-soft) transition active:scale-95"
+              >
+                <IcoEdit c="currentColor" s={16} />
+                כתבו הערה חופשית
+              </button>
+            </div>
+            {notes && (
+              <div className="bg-qf-line-soft/50 rounded-xl px-4 py-3 text-base text-qf-ink leading-relaxed">
+                {notes}
+              </div>
+            )}
+          </div>
+        ) : (
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            maxLength={200}
+            placeholder="למשל: בלי בצל, חתוך ל-8"
+            className="w-full bg-qf-bg border border-qf-line rounded-xl px-3 py-2.5 text-sm outline-none focus:border-(--qf-primary) focus:bg-white resize-none"
+          />
+        )}
       </Section>
 
       {/* Footer CTA — Wolt-style chunky pill with quantity stepper on one side
