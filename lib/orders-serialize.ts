@@ -5,12 +5,17 @@ export type OrderWithIncludes = Prisma.OrderGetPayload<{
   include: {
     items: true;
     customer: { select: { id: true; firstName: true; lastName: true; phone: true } };
+    review: { select: { id: true } };
   };
 }>;
 
 export const ORDER_INCLUDE = {
   items: true,
   customer: { select: { id: true, firstName: true, lastName: true, phone: true } },
+  // 1:1 — null when the customer hasn't rated yet. Drives the
+  // "send review now" button on the merchant's Orders History page
+  // (button hidden when a review row already exists).
+  review: { select: { id: true } },
 } satisfies Prisma.OrderInclude;
 
 export function serializeOrder(o: OrderWithIncludes) {
@@ -43,6 +48,7 @@ export function serializeOrder(o: OrderWithIncludes) {
     payment_method: o.paymentMethod,
     payment_status: o.paymentStatus,
     customer_notes: o.customerNotes,
+    has_review: !!o.review,
     created_at: o.createdAt.toISOString(),
     confirmed_at: o.confirmedAt?.toISOString() ?? null,
     items: o.items.map((it) => ({

@@ -96,8 +96,44 @@ export const GET = handler(async (req: Request) => {
     prisma.order.count({ where }),
   ]);
 
+  // One sweep across both audit logs to mark which orders already had a
+  // review reminder delivered — drives the "שלח ביקורת עכשיו" button on
+  // the history row. Cheaper than N+1 per-order lookups.
+  const orderIds = orders.map((o) => o.id);
+  const [smsSent, emailSent] = orderIds.length
+    ? await Promise.all([
+        prisma.smsLog.findMany({
+          where: {
+            tenantId: session.tenantId,
+            kind: "review_reminder",
+            refKind: "order",
+            refId: { in: orderIds },
+            status: "sent",
+          },
+          select: { refId: true },
+        }),
+        prisma.emailLog.findMany({
+          where: {
+            tenantId: session.tenantId,
+            kind: "review_reminder",
+            refKind: "order",
+            refId: { in: orderIds },
+            status: "sent",
+          },
+          select: { refId: true },
+        }),
+      ])
+    : [[], []];
+  const remindedIds = new Set<string>([
+    ...smsSent.map((s) => s.refId).filter((v): v is string => !!v),
+    ...emailSent.map((s) => s.refId).filter((v): v is string => !!v),
+  ]);
+
   return apiJson({
-    orders: orders.map(serializeOrder),
+    orders: orders.map((o) => ({
+      ...serializeOrder(o),
+      review_reminder_sent: remindedIds.has(o.id),
+    })),
     meta: {
       total,
       page,

@@ -31,6 +31,8 @@ interface OrderRow {
   payment_method: string;
   payment_status: string;
   created_at: string;
+  has_review: boolean;
+  review_reminder_sent: boolean;
 }
 
 interface Meta {
@@ -122,6 +124,68 @@ export function OrdersHistoryView() {
   const [meta, setMeta] = useState<Meta>({ total: 0, page: 1, per_page: perPage, total_pages: 1 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Order ids currently mid-POST + a short-lived per-id status message
+  // for the row chip — fades after 4s. Keeps the button localized to
+  // the row the merchant clicked without blocking the rest of the list.
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const [rowStatus, setRowStatus] = useState<
+    Record<string, { tone: "ok" | "err"; message: string }>
+  >({});
+
+  async function sendReviewNow(orderId: string) {
+    if (sendingId) return;
+    setSendingId(orderId);
+    try {
+      const res = await fetch(
+        `/api/v1/merchant/orders/${orderId}/send-review-now`,
+        { method: "POST" },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg =
+          typeof data?.error?.message === "string"
+            ? data.error.message
+            : "שליחה נכשלה";
+        setRowStatus((prev) => ({ ...prev, [orderId]: { tone: "err", message: msg } }));
+        return;
+      }
+      // Optimistic flip so the button hides for this row immediately —
+      // the next refresh confirms via review_reminder_sent.
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === orderId ? { ...o, review_reminder_sent: true } : o,
+        ),
+      );
+      const channel: string = data?.channel ?? "sms";
+      setRowStatus((prev) => ({
+        ...prev,
+        [orderId]: {
+          tone: "ok",
+          message:
+            channel === "email"
+              ? "נשלח במייל"
+              : channel === "whatsapp"
+                ? "נשלח בוואטסאפ"
+                : "נשלח באסמס",
+        },
+      }));
+    } catch {
+      setRowStatus((prev) => ({
+        ...prev,
+        [orderId]: { tone: "err", message: "שגיאת רשת" },
+      }));
+    } finally {
+      setSendingId(null);
+      window.setTimeout(() => {
+        setRowStatus((prev) => {
+          if (!prev[orderId]) return prev;
+          const next = { ...prev };
+          delete next[orderId];
+          return next;
+        });
+      }, 4000);
+    }
+  }
 
   // Debounce the search input so we don't fire a request per keystroke.
   useEffect(() => {
@@ -252,18 +316,19 @@ export function OrdersHistoryView() {
                 <th className="px-3 py-2 font-medium">סטטוס</th>
                 <th className="px-3 py-2 font-medium">תשלום</th>
                 <th className="px-3 py-2 font-medium tnum text-end">סכום</th>
+                <th className="px-3 py-2 font-medium">ביקורת</th>
               </tr>
             </thead>
             <tbody>
               {loading && orders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-3 py-6 text-center text-qf-mute">
+                  <td colSpan={8} className="px-3 py-6 text-center text-qf-mute">
                     טוען...
                   </td>
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-3 py-10 text-center text-qf-mute">
+                  <td colSpan={8} className="px-3 py-10 text-center text-qf-mute">
                     אין הזמנות בטווח שבחרת
                   </td>
                 </tr>
@@ -306,6 +371,14 @@ export function OrdersHistoryView() {
                       <td className="px-3 py-2 tnum font-medium text-end">
                         {formatPrice(o.total)}
                       </td>
+                      <td className="px-3 py-2">
+                        <ReviewCell
+                          order={o}
+                          rowStatus={rowStatus[o.id]}
+                          sending={sendingId === o.id}
+                          onSend={() => sendReviewNow(o.id)}
+                        />
+                      </td>
                     </tr>
                   );
                 })
@@ -341,6 +414,66 @@ export function OrdersHistoryView() {
         )}
       </div>
     </div>
+  );
+}
+
+function ReviewCell({
+  order,
+  rowStatus,
+  sending,
+  onSend,
+}: {
+  order: OrderRow;
+  rowStatus?: { tone: "ok" | "err"; message: string };
+  sending: boolean;
+  onSend: () => void;
+}) {
+  // Short-lived per-row toast — wins over any other state so the
+  // merchant always sees the result of their click.
+  if (rowStatus) {
+    return (
+      <span
+        className={cn(
+          "inline-block px-2 py-0.5 rounded-md text-xs font-medium whitespace-nowrap",
+          rowStatus.tone === "ok"
+            ? "bg-qf-green-soft text-qf-green-deep"
+            : "bg-qf-tomato-soft text-qf-tomato",
+        )}
+      >
+        {rowStatus.message}
+      </span>
+    );
+  }
+  if (order.has_review) {
+    return (
+      <span className="inline-block px-2 py-0.5 rounded-md text-xs font-medium bg-qf-green-soft text-qf-green-deep whitespace-nowrap">
+        דורגה
+      </span>
+    );
+  }
+  if (order.review_reminder_sent) {
+    return (
+      <span className="inline-block px-2 py-0.5 rounded-md text-xs font-medium bg-qf-line-soft text-qf-mute whitespace-nowrap">
+        בקשה נשלחה
+      </span>
+    );
+  }
+  // Only offer the button when there's a real customer attached AND the
+  // order has actually been handed off — sending a review prompt before
+  // the customer ate their food would be weird, and a guest-phone-less
+  // kiosk order has nobody to send to.
+  if (order.status !== "delivered" || !order.customer) {
+    return <span className="text-xs text-qf-mute">—</span>;
+  }
+  return (
+    <button
+      type="button"
+      onClick={onSend}
+      disabled={sending}
+      className="px-3 py-1 rounded-lg bg-(--qf-primary) text-white text-xs font-bold hover:bg-(--qf-deep) disabled:opacity-50 whitespace-nowrap"
+    >
+      {sending ? "שולח..." : "שלח ביקורת"}
+    </button>
   );
 }
 
