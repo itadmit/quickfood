@@ -17,6 +17,18 @@ import { CategoryEditorModal, type EditableCategory } from "./CategoryEditorModa
 import { resolveCategoryStyle } from "@/lib/category-style";
 import { IcoGear } from "@/components/shared/Icons";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
+import { DragList } from "@/components/shared/DragList";
+
+/** Three-bar drag grip — matches the "סדר" affordance merchants expect. */
+function ReorderGrip() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden className="text-qf-mute">
+      <rect x="2" y="3.5" width="12" height="1.6" rx="0.8" fill="currentColor" />
+      <rect x="2" y="7.2" width="12" height="1.6" rx="0.8" fill="currentColor" />
+      <rect x="2" y="10.9" width="12" height="1.6" rx="0.8" fill="currentColor" />
+    </svg>
+  );
+}
 
 interface Category {
   id: string;
@@ -64,6 +76,14 @@ export function MenuList({
   const [bulkPriceOpen, setBulkPriceOpen] = useState(false);
   const [categoryEditorOpen, setCategoryEditorOpen] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
+
+  // Drag-to-reorder. Scoped to a single category (storefront orders items
+  // by [categoryId, position], so reordering across categories is
+  // meaningless). orderDraft is the working copy the DragList mutates;
+  // it's committed to the server + localItems on save.
+  const [reorderMode, setReorderMode] = useState(false);
+  const [orderDraft, setOrderDraft] = useState<Item[]>([]);
+  const [savingOrder, setSavingOrder] = useState(false);
 
   function pushToast(kind: ToastKind, message: string) {
     setToast({ id: Date.now(), kind, message });
@@ -124,6 +144,43 @@ export function MenuList({
     router.refresh();
   }
 
+  function startReorder() {
+    if (activeCat === "all") {
+      pushToast("err", "בחר קטגוריה ספציפית כדי לסדר את הפריטים שלה");
+      return;
+    }
+    setOrderDraft(filtered);
+    setReorderMode(true);
+  }
+
+  function cancelReorder() {
+    setReorderMode(false);
+    setOrderDraft([]);
+  }
+
+  async function saveOrder() {
+    const ids = orderDraft.map((i) => i.id);
+    setSavingOrder(true);
+    const res = await fetch("/api/v1/merchant/menu/items/reorder", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ item_ids: ids }),
+    });
+    setSavingOrder(false);
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      pushToast("err", body?.error?.message ?? "שמירת הסדר נכשלה");
+      return;
+    }
+    // Reflect the new order locally before the SSR refresh lands.
+    const draftIds = new Set(ids);
+    setLocalItems((prev) => [...orderDraft, ...prev.filter((i) => !draftIds.has(i.id))]);
+    setReorderMode(false);
+    setOrderDraft([]);
+    pushToast("ok", "הסדר נשמר");
+    router.refresh();
+  }
+
   const catMap = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c.name])), [categories]);
 
   return (
@@ -155,6 +212,14 @@ export function MenuList({
             </button>
             <button
               type="button"
+              onClick={startReorder}
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5"
+            >
+              <ReorderGrip />
+              סדר פריטים
+            </button>
+            <button
+              type="button"
               onClick={() => setImportOpen(true)}
               className="hidden sm:inline-flex px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5"
             >
@@ -170,7 +235,7 @@ export function MenuList({
         }
       />
 
-      <div className="flex items-center gap-2">
+      <div className={cn("flex items-center gap-2", reorderMode && "opacity-40 pointer-events-none")}>
         <div className="flex gap-2 overflow-x-auto no-scrollbar flex-1 min-w-0">
           <CategoryChip active={activeCat === "all"} onClick={() => setActiveCat("all")}>
             הכל ({localItems.length})
@@ -209,8 +274,35 @@ export function MenuList({
         </button>
       </div>
 
+      {reorderMode && (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border-2 border-(--qf-primary) bg-(--qf-soft)">
+          <div className="text-sm font-bold text-(--qf-deep)">
+            גרירה לסידור — {catMap[activeCat as string] ?? "קטגוריה"}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={cancelReorder}
+              disabled={savingOrder}
+              className="px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5 disabled:opacity-50"
+            >
+              ביטול
+            </button>
+            <button
+              type="button"
+              onClick={saveOrder}
+              disabled={savingOrder}
+              className="px-4 py-2 rounded-xl bg-black text-[#F8CB1E] border-2 border-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/90 disabled:opacity-50"
+            >
+              {savingOrder ? "שומר…" : "שמור סדר"}
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl border border-qf-line-dash overflow-hidden">
         {/* Table header — desktop only. Mobile rows are self-explanatory cards. */}
+        {!reorderMode && (
         <div className="hidden lg:grid grid-cols-[60px_44px_1fr_140px_100px_120px_100px_60px] gap-3 px-4 py-2.5 text-xs font-medium text-qf-mute border-b border-qf-line-dash bg-qf-line-soft/60">
           <div></div>
           <div className="text-center">מומלץ</div>
@@ -221,7 +313,38 @@ export function MenuList({
           <div>זמינות</div>
           <div></div>
         </div>
-        {filtered.map((item) => (
+        )}
+        {reorderMode && (
+          <DragList
+            items={orderDraft}
+            onReorder={setOrderDraft}
+            getKey={(i) => i.id}
+          >
+            {(item, _i, drag) => (
+              <div className="flex items-center gap-3 px-3 lg:px-4 py-3 border-b border-qf-line-soft last:border-b-0 bg-white">
+                <span
+                  {...drag.handleProps}
+                  className="shrink-0 grid place-items-center w-9 h-9 rounded-lg hover:bg-qf-line-soft active:bg-qf-line-soft"
+                >
+                  <ReorderGrip />
+                </span>
+                <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
+                  <MenuItemImage
+                    src={item.images?.[0]}
+                    alt={item.name}
+                    businessType={businessType}
+                    size={40}
+                    rounded="xl"
+                    fill
+                  />
+                </div>
+                <div className="flex-1 min-w-0 font-medium truncate">{item.name}</div>
+                <div className="shrink-0 text-sm tnum text-qf-mute">{formatPrice(item.basePrice)}</div>
+              </div>
+            )}
+          </DragList>
+        )}
+        {!reorderMode && filtered.map((item) => (
           <div
             key={item.id}
             onClick={() => router.push(`/dashboard/menu/${item.id}`)}
