@@ -290,7 +290,7 @@ export function MenuList({
       {reorderMode && (
         <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border-2 border-(--qf-primary) bg-(--qf-soft)">
           <div className="text-sm font-bold text-(--qf-deep)">
-            גרירה לסידור — {catMap[activeCat as string] ?? "קטגוריה"}
+            סידור פריטים — {catMap[activeCat as string] ?? "קטגוריה"}
           </div>
           <div className="flex items-center gap-2">
             <button
