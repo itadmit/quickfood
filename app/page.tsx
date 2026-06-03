@@ -18,13 +18,14 @@ import {
   Navigation,
   Sparkles,
   Leaf,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 
 // Tight map for the WoltCard slots — extend here when a new section
 // needs an icon. Lucide gives consistent stroke + geometry which the
 // old hand-rolled FeatureIcon set didn't.
-type IconName = "store" | "flame" | "wallet" | "star" | "chat" | "chef" | "pizza" | "pin" | "heart" | "navigation" | "sparkles" | "leaf";
+type IconName = "store" | "flame" | "wallet" | "star" | "chat" | "chef" | "pizza" | "pin" | "heart" | "navigation" | "sparkles" | "leaf" | "users";
 const ICONS: Record<IconName, LucideIcon> = {
   store: Store,
   flame: Flame,
@@ -38,6 +39,7 @@ const ICONS: Record<IconName, LucideIcon> = {
   navigation: Navigation,
   sparkles: Sparkles,
   leaf: Leaf,
+  users: Users,
 };
 import ItemCustomizerMockup from "./_components/ItemCustomizerMockup";
 import ScrollAnimations from "./_components/ScrollAnimations";
@@ -562,6 +564,15 @@ function Features() {
             body="יוצרים את השליחים שלכם במערכת, מקצים להם הזמנות (אוטומטית לפי אזור או ידני בלחיצה), וכל שליח מקבל אפליקציה משלו עם המסלול וההזמנות הפתוחות. הלקוח רואה את השליח על המפה בזמן אמת מבוסס GPS - עם זמן הגעה מתעדכן, בלי לרענן. אזורי משלוח עם מחיר וזמן נפרדים לכל שכונה, היסטוריית משלוחים מלאה, ושיוך/ניתוק שליח בקליק."
             icon="navigation"
           />
+
+          <WoltCard
+            tone="sand"
+            layout="decor-start"
+            tag="צוות והרשאות"
+            heading="לכל עובד יוזר משלו. כל אחד רואה רק את מה שצריך."
+            body="פותחים משתמש לכל עובד עם תפקיד - מטבח, מנהל, שילוח או בעלים. עובד המטבח מתחבר עם המייל והסיסמה שלו ונוחת ישר על מסך המטבח, בלי גישה לתפריט, להגדרות או לפיננסים. מנהל מקבל הכל חוץ מהחיוב והמנוי. בעלים שולט בכל. אתה פותח, עורך ומוחק משתמשים מהדשבורד בכמה קליקים - בלי לשתף את הסיסמה שלך עם אף אחד."
+            icon="users"
+          />
         </div>
 
         <div className={styles.miniGrid}>
@@ -575,7 +586,6 @@ function Features() {
           <MiniCell tag="אנליטיקה" title="נתונים אמיתיים" body="שעות שיא, פריטים מובילים, AOV, אחוז חזרה של לקוחות." />
           <MiniCell tag="חיבורים" title="Webhooks + REST" body="זפייר, Make, קופות רושמות וכל מערכת חיצונית שמדברת HTTP - מתחברות בלי כאב ראש." />
           <MiniCell tag="ייבוא" title="תפריט מ-Wolt - הכל בקליק" body="מדביקים כתובת חנות בוולט, ואנחנו מייבאים את הכל: קטגוריות (כולל תתי-קטגוריות), פריטים, תמונות מוצר, לוגו, תמונת נושא, שעות פעילות, כתובת, טלפון, וכל קבוצת תוספות עם המינימום, המקסימום, ה׳כמות חינם׳ וההגדרות שלה. אפשר גם להדביק את הכתובת בהרשמה - והטופס מתמלא מעצמו." />
-          <MiniCell tag="הרשאות" title="תפקידים נפרדים" body="בעלים, מנהל, מטבח, שילוח. כל אחד רואה רק את מה שהוא צריך - בלי גישה לפיננסים או לסיסמאות." />
           <MiniCell tag="סכו״ם" title="סכו״ם חד-פעמי בקופה" body="הלקוח בוחר כמה סכו״ם הוא רוצה בקופה - אתה קובע מחיר ליחידה ומגדיר מעל איזה סכום זה חינם. אופציונלי, נשלט מהדשבורד." />
           <MiniCell tag="הודעות" title="הודעות חנות + אלרגנים" body="׳חסר היום: גבינת בופלו׳, ׳כל המוצרים כשרים פרווה׳, התראת אלרגן על פריט מסוים - מנוהל מההגדרות ומופיע בחנות, בלי שתצטרך לפתוח פריט מזויף בשביל זה." />
           <MiniCell tag="קמפיינים" title="פופאפ מבצע לחנות" body="מעלים תמונה + לינק, נפתח ללקוח ברגע שנכנס לחנות. דחיפה לליל שישי, מבצע חמישי-שישי, השקת פריט חדש - בלי לערוך תפריט." />
