@@ -158,6 +158,19 @@ export function MenuList({
     setOrderDraft([]);
   }
 
+  // Touch-friendly fallback for reordering: HTML5 drag-and-drop doesn't fire
+  // on touch devices, so the up/down buttons work everywhere (phone + desktop)
+  // alongside the drag handle.
+  function moveDraft(from: number, to: number) {
+    if (to < 0 || to >= orderDraft.length) return;
+    setOrderDraft((prev) => {
+      const next = [...prev];
+      const [m] = next.splice(from, 1);
+      next.splice(to, 0, m);
+      return next;
+    });
+  }
+
   async function saveOrder() {
     const ids = orderDraft.map((i) => i.id);
     setSavingOrder(true);
@@ -213,7 +226,7 @@ export function MenuList({
             <button
               type="button"
               onClick={startReorder}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5"
             >
               <ReorderGrip />
               סדר פריטים
@@ -320,14 +333,37 @@ export function MenuList({
             onReorder={setOrderDraft}
             getKey={(i) => i.id}
           >
-            {(item, _i, drag) => (
-              <div className="flex items-center gap-3 px-3 lg:px-4 py-3 border-b border-qf-line-soft last:border-b-0 bg-white">
+            {(item, i, drag) => (
+              <div className="flex items-center gap-2 sm:gap-3 px-3 lg:px-4 py-3 border-b border-qf-line-soft last:border-b-0 bg-white">
+                {/* Drag handle — works on desktop (mouse). */}
                 <span
                   {...drag.handleProps}
-                  className="shrink-0 grid place-items-center w-9 h-9 rounded-lg hover:bg-qf-line-soft active:bg-qf-line-soft"
+                  className="hidden sm:grid shrink-0 place-items-center w-9 h-9 rounded-lg hover:bg-qf-line-soft active:bg-qf-line-soft"
                 >
                   <ReorderGrip />
                 </span>
+                {/* Up/down — the touch-friendly path (drag-and-drop doesn't
+                    fire on phones). */}
+                <div className="shrink-0 flex flex-col">
+                  <button
+                    type="button"
+                    aria-label="הזז למעלה"
+                    disabled={i === 0}
+                    onClick={() => moveDraft(i, i - 1)}
+                    className="w-8 h-7 grid place-items-center rounded-md text-qf-ink2 hover:bg-qf-line-soft disabled:opacity-30"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden><path d="M8 4l4 5H4z" fill="currentColor" /></svg>
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="הזז למטה"
+                    disabled={i === orderDraft.length - 1}
+                    onClick={() => moveDraft(i, i + 1)}
+                    className="w-8 h-7 grid place-items-center rounded-md text-qf-ink2 hover:bg-qf-line-soft disabled:opacity-30"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden><path d="M8 12L4 7h8z" fill="currentColor" /></svg>
+                  </button>
+                </div>
                 <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
                   <MenuItemImage
                     src={item.images?.[0]}
