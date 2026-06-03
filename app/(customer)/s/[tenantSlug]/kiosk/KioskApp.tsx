@@ -120,6 +120,7 @@ export function KioskApp({
   businessType: businessTypeProp,
   featuredBadgeLabel,
   growEnabled,
+  kioskCollectPhone,
   kioskRequirePhone,
   stringOverrides,
   categories,
@@ -137,6 +138,7 @@ export function KioskApp({
   businessType: string;
   featuredBadgeLabel: string | null;
   growEnabled: boolean;
+  kioskCollectPhone: boolean;
   kioskRequirePhone: boolean;
   stringOverrides: KioskOverrides;
   categories: KioskCategory[];
@@ -995,8 +997,11 @@ export function KioskApp({
               onClick={() => {
                 setDiningMode("dinein");
                 // Returning to the picker mid-cart shouldn't re-prompt
-                // phone+OTP — only ask once per session.
-                setState(phoneStepDone ? "browse" : "phone-entry");
+                // phone+OTP — only ask once per session. Merchants who
+                // turned phone collection off skip the screen entirely.
+                setState(
+                  !kioskCollectPhone || phoneStepDone ? "browse" : "phone-entry",
+                );
               }}
             />
             <ModeCard
@@ -1005,7 +1010,9 @@ export function KioskApp({
               subtitle={t("mode.takeawaySubtitle")}
               onClick={() => {
                 setDiningMode("takeaway");
-                setState(phoneStepDone ? "browse" : "phone-entry");
+                setState(
+                  !kioskCollectPhone || phoneStepDone ? "browse" : "phone-entry",
+                );
               }}
             />
           </div>

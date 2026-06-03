@@ -287,6 +287,7 @@ export const TenantPatchSchema = z.object({
   // merchant-editable. `kiosk_enabled` itself is a superadmin gate.
   kiosk_welcome_text: z.string().max(160).nullable().optional(),
   kiosk_idle_seconds: z.number().int().min(15).max(600).optional(),
+  kiosk_collect_phone: z.boolean().optional(),
   kiosk_require_phone: z.boolean().optional(),
   // Flat dotted-key → custom-string dict. Defaults to {} in the schema.
   // Persisted as-is; the kiosk runtime merges over `lib/i18n/kiosk-messages`

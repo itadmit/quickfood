@@ -20,6 +20,7 @@ export default async function KioskSettingsPage() {
       kioskEnabled: true,
       kioskWelcomeText: true,
       kioskIdleSeconds: true,
+      kioskCollectPhone: true,
       kioskRequirePhone: true,
     },
   });
@@ -34,6 +35,7 @@ export default async function KioskSettingsPage() {
         initial={{
           welcomeText: tenant.kioskWelcomeText ?? "",
           idleSeconds: tenant.kioskIdleSeconds,
+          collectPhone: tenant.kioskCollectPhone,
           requirePhone: tenant.kioskRequirePhone,
         }}
       />

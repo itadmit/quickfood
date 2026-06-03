@@ -320,9 +320,15 @@ model Tenant {
   // cart and goes back to the start screen, so the next customer
   // doesn't walk up to someone else's half-built order.
   kioskIdleSeconds Int @default(90) @map("kiosk_idle_seconds")
+  /// When false, the kiosk skips the phone-entry screen entirely —
+  /// customer goes straight from mode pick to the menu, no OTP, no
+  /// invoice prompt. Useful for fast-counter setups where the merchant
+  /// doesn't want to slow customers down with a contact field.
+  kioskCollectPhone Boolean @default(true) @map("kiosk_collect_phone")
   /// When true, the kiosk requires the customer to enter a phone number
   /// at the start and a name at checkout. We then SMS/WhatsApp the
   /// invoice and link the order to the matching Customer row.
+  /// Only meaningful when kioskCollectPhone is true.
   kioskRequirePhone Boolean @default(false) @map("kiosk_require_phone")
   /// Per-tenant string overrides for the kiosk UI. Flat dotted keys
   /// (e.g. "thanks.paidViaQrHeading") map to custom Hebrew strings the

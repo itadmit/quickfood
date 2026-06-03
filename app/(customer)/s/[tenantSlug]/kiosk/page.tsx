@@ -105,6 +105,7 @@ export default async function KioskPage({
       businessType={tenant.businessType}
       featuredBadgeLabel={tenant.featuredBadgeLabel}
       growEnabled={growEnabled}
+      kioskCollectPhone={tenant.kioskCollectPhone}
       kioskRequirePhone={tenant.kioskRequirePhone}
       stringOverrides={normalizeKioskOverrides(tenant.kioskStringOverrides)}
       categories={categories.map(({ id, name }) => ({ id, name }))}

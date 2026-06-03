@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { cn } from "@/lib/cn";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 
 export function KioskSettingsForm({
@@ -10,10 +11,16 @@ export function KioskSettingsForm({
 }: {
   slug: string;
   enabled: boolean;
-  initial: { welcomeText: string; idleSeconds: number; requirePhone: boolean };
+  initial: {
+    welcomeText: string;
+    idleSeconds: number;
+    collectPhone: boolean;
+    requirePhone: boolean;
+  };
 }) {
   const [welcomeText, setWelcomeText] = useState(initial.welcomeText);
   const [idleSeconds, setIdleSeconds] = useState(initial.idleSeconds);
+  const [collectPhone, setCollectPhone] = useState(initial.collectPhone);
   const [requirePhone, setRequirePhone] = useState(initial.requirePhone);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -30,7 +37,8 @@ export function KioskSettingsForm({
         body: JSON.stringify({
           kiosk_welcome_text: welcomeText.trim() || null,
           kiosk_idle_seconds: Math.max(15, Math.min(600, idleSeconds)),
-          kiosk_require_phone: requirePhone,
+          kiosk_collect_phone: collectPhone,
+          kiosk_require_phone: collectPhone ? requirePhone : false,
         }),
       });
       if (!res.ok) {
@@ -106,9 +114,31 @@ export function KioskSettingsForm({
 
           <div className="flex items-start gap-3 p-4 rounded-xl border border-qf-line-dash bg-qf-line-soft/30">
             <input
+              id="kiosk-collect-phone"
+              type="checkbox"
+              checked={collectPhone}
+              onChange={(e) => setCollectPhone(e.target.checked)}
+              className="mt-1 w-5 h-5 accent-(--qf-primary)"
+            />
+            <label htmlFor="kiosk-collect-phone" className="flex-1 cursor-pointer">
+              <div className="text-sm font-bold">לבקש טלפון לחשבונית</div>
+              <div className="text-xs text-qf-mute mt-0.5 leading-relaxed">
+                לפני התפריט הלקוח רואה מסך שמבקש טלפון לשליחת חשבונית. אם כבוי — הלקוח קופץ ישר לתפריט, בלי מסך טלפון ובלי OTP. מומלץ לעסקים שרוצים מינימום חיכוך והחשבונית מודפסת על דלפק.
+              </div>
+            </label>
+          </div>
+
+          <div
+            className={cn(
+              "flex items-start gap-3 p-4 rounded-xl border border-qf-line-dash bg-qf-line-soft/30 transition",
+              !collectPhone && "opacity-50 pointer-events-none",
+            )}
+          >
+            <input
               id="kiosk-require-phone"
               type="checkbox"
-              checked={requirePhone}
+              checked={collectPhone && requirePhone}
+              disabled={!collectPhone}
               onChange={(e) => setRequirePhone(e.target.checked)}
               className="mt-1 w-5 h-5 accent-(--qf-primary)"
             />
