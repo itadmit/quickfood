@@ -111,6 +111,14 @@ export function SignupForm() {
   const [slug, setSlug] = useState("");
   const [slugStatus, setSlugStatus] = useState<SlugStatus>("idle");
 
+  // Scroll back to the top whenever the wizard advances/retreats — otherwise
+  // the user lands on the next step at whatever scroll position the previous
+  // one ended on, which hides the heading + step indicator above.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step, woltStage]);
+
   // Live slug availability check (debounced 350ms)
   useEffect(() => {
     if (!slug || slug.length < 2) {
