@@ -14,6 +14,21 @@ const TRIAL_DAYS = 7;
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const DayHoursSchema = z.object({
+  open: z.string().regex(/^\d{2}:\d{2}$/),
+  close: z.string().regex(/^\d{2}:\d{2}$/),
+  active: z.boolean(),
+});
+const HoursMapSchema = z.object({
+  sunday: DayHoursSchema,
+  monday: DayHoursSchema,
+  tuesday: DayHoursSchema,
+  wednesday: DayHoursSchema,
+  thursday: DayHoursSchema,
+  friday: DayHoursSchema,
+  saturday: DayHoursSchema,
+});
+
 // Hebrew error messages on every constraint — the generic Zod fallback
 // ("String must contain at least 2 character(s)") used to surface raw
 // into the signup UI, and a merchant who forgot to fill business_name
@@ -68,6 +83,15 @@ const SignupSchema = z.object({
     .min(8, "סיסמה חייבת להכיל לפחות 8 תווים")
     .max(128, "סיסמה ארוכה מדי"),
   client_type: z.enum(["web", "mobile"]).default("web"),
+
+  // Optional fields populated by the signup wizard's Wolt pre-step.
+  // Each field is opt-in (the mapping UI lets the merchant tick which
+  // fields to keep from Wolt) — anything omitted falls back to either
+  // an empty value or the signup default (e.g. default hours).
+  logo_url: z.string().url().optional().nullable(),
+  cover_image_url: z.string().url().optional().nullable(),
+  about: z.string().max(2000).optional().nullable(),
+  hours: HoursMapSchema.optional().nullable(),
 });
 
 const RESERVED_SLUGS = new Set([
@@ -110,11 +134,24 @@ export const POST = handler(async (req: Request) => {
   const passwordHash = await bcrypt.hash(body.owner_password, 10);
   const logoLetter = body.business_name.trim().slice(0, 1);
 
+  const branchHours = body.hours ?? {
+    sunday: { open: "11:00", close: "23:00", active: true },
+    monday: { open: "11:00", close: "23:00", active: true },
+    tuesday: { open: "11:00", close: "23:00", active: true },
+    wednesday: { open: "11:00", close: "23:00", active: true },
+    thursday: { open: "11:00", close: "00:00", active: true },
+    friday: { open: "11:00", close: "16:00", active: true },
+    saturday: { open: "20:00", close: "01:00", active: true },
+  };
+
   const tenant = await prisma.tenant.create({
     data: {
       slug: body.slug,
       name: body.business_name,
       logoLetter,
+      logoUrl: body.logo_url ?? undefined,
+      coverImage: body.cover_image_url ?? undefined,
+      about: body.about ?? undefined,
       themeId: body.theme_id,
       businessType: body.business_type,
       cuisineType: body.cuisine_type,
@@ -126,16 +163,8 @@ export const POST = handler(async (req: Request) => {
             address: body.branch_address,
             phone: body.branch_phone,
             isPrimary: true,
-            status: "closed", // start closed until they finish setup
-            hours: {
-              sunday: { open: "11:00", close: "23:00", active: true },
-              monday: { open: "11:00", close: "23:00", active: true },
-              tuesday: { open: "11:00", close: "23:00", active: true },
-              wednesday: { open: "11:00", close: "23:00", active: true },
-              thursday: { open: "11:00", close: "00:00", active: true },
-              friday: { open: "11:00", close: "16:00", active: true },
-              saturday: { open: "20:00", close: "01:00", active: true },
-            },
+            status: "closed",
+            hours: branchHours,
             minOrder: 60,
             deliveryFee: 14,
             serviceFee: 0,

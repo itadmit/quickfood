@@ -41,6 +41,7 @@ const ICONS: Record<IconName, LucideIcon> = {
 };
 import ItemCustomizerMockup from "./_components/ItemCustomizerMockup";
 import ScrollAnimations from "./_components/ScrollAnimations";
+import WoltTeaser from "./_components/WoltTeaser";
 import { LeadForm } from "@/components/marketing/LeadForm";
 import styles from "./page.module.css";
 
@@ -121,6 +122,7 @@ export default function LandingPage() {
       <TrustStrip />
       <SuitedFor />
       <HowItWorks />
+      <WoltTeaser />
       <Math />
       <Features />
       <GrowPartner />

@@ -9,11 +9,19 @@ import { ResetStore } from "./ResetStore";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdvancedSettingsPage() {
+export default async function AdvancedSettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const session = await getSession();
   if (!session || session.type !== "merchant" || !session.tenantId) {
     redirect("/dashboard/login");
   }
+  const params = await searchParams;
+  const woltParam = typeof params.wolt === "string" ? params.wolt : undefined;
+  const ackParam = params.ack === "1";
+  const autoStartParam = params.autostart === "1";
 
   const [lastImport, tenant, itemCount] = await Promise.all([
     prisma.woltImport.findFirst({
@@ -77,6 +85,9 @@ export default async function AdvancedSettingsPage() {
                 }
               : null
           }
+          initialUrl={woltParam}
+          initialAck={ackParam}
+          autoStart={autoStartParam}
         />
       </section>
 
