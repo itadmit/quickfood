@@ -31,7 +31,13 @@ export default function LoginForm() {
         return;
       }
       const role = "user" in data ? data.user.role : "";
-      router.push(role === "platform_admin" ? "/admin" : "/dashboard");
+      router.push(
+        role === "platform_admin"
+          ? "/admin"
+          : role === "kitchen"
+            ? "/dashboard/kitchen"
+            : "/dashboard",
+      );
       router.refresh();
     } catch {
       setError("שגיאת רשת");
