@@ -154,7 +154,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
       <div className="h-16 px-3 lg:px-5 flex items-center gap-2 lg:gap-3">
         {/* Hamburger lives inside the topbar so it sits ON the header
             (not floating over the billing banner above it). lg:hidden. */}
-        <MobileMenuV2 tenant={tenant} />
+        <MobileMenuV2 tenant={tenant} role={user.role} />
 
         <Link
           href="/dashboard"

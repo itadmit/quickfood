@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { IcoOrders, IcoMenu, IcoHome, IcoStar, IcoBike, IcoGear, IcoFlame, IcoMegaphone, IcoBell, IcoCreditCard, IcoChart } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
+import { canAccessDashboard } from "@/lib/auth/merchant-access";
 
 type NavItem = {
   href: string;
@@ -27,8 +28,9 @@ const NAV: NavItem[] = [
   { href: "/dashboard/settings/branding", label: "הגדרות", Icon: IcoGear, match: "/dashboard/settings" },
 ];
 
-export function Sidebar({ tenant }: { tenant: { name: string; logoLetter: string; branchName: string } }) {
+export function Sidebar({ tenant, role }: { tenant: { name: string; logoLetter: string; branchName: string }; role?: string }) {
   const pathname = usePathname() || "";
+  const items = NAV.filter((it) => canAccessDashboard(role, it.href));
   return (
     <aside className="hidden lg:flex w-64 shrink-0 border-e border-qf-line-dash bg-white p-5 flex-col gap-6 sticky top-16 h-[calc(100vh-4rem)] self-start overflow-y-auto">
       <div className="flex items-center gap-3">
@@ -45,7 +47,7 @@ export function Sidebar({ tenant }: { tenant: { name: string; logoLetter: string
       </div>
 
       <nav className="-mx-1 space-y-0.5">
-        {NAV.map(({ href, label, Icon, match, exact }) => {
+        {items.map(({ href, label, Icon, match, exact }) => {
           const active = exact ? pathname === href : pathname.startsWith(match ?? href);
           return (
             <Link

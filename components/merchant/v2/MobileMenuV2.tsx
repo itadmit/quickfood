@@ -6,9 +6,11 @@ import { useEffect, useState } from "react";
 import { IcoClose } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 import { NAV } from "./navConfig";
+import { canAccessDashboard } from "@/lib/auth/merchant-access";
 
 interface Props {
   tenant: { name: string; logoLetter: string; branchName: string };
+  role?: string;
 }
 
 /**
@@ -20,9 +22,13 @@ interface Props {
  * Auto-closes on route change so tapping a nav item navigates and
  * dismisses the drawer in the same motion.
  */
-export function MobileMenuV2({ tenant }: Props) {
+export function MobileMenuV2({ tenant, role }: Props) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname() || "";
+  const sections = NAV.map((s) => ({
+    ...s,
+    items: s.items.filter((it) => canAccessDashboard(role, it.href)),
+  })).filter((s) => s.items.length > 0);
 
   // Close on route change — without this the drawer stays open while
   // the new page loads behind it.
@@ -100,7 +106,7 @@ export function MobileMenuV2({ tenant }: Props) {
             </div>
 
             <nav className="space-y-4">
-              {NAV.map((section) => (
+              {sections.map((section) => (
                 <div key={section.title} className="space-y-1">
                   <div className="px-3 text-[10px] font-black uppercase tracking-wider text-black/40">
                     {section.title}

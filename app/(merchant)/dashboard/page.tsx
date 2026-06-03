@@ -5,6 +5,7 @@ import { summary, hourly, topItems, type Range } from "@/lib/analytics";
 import { fullName } from "@/lib/format";
 import { DashboardView } from "./DashboardView";
 import { DashboardViewV2 } from "@/components/merchant/v2/DashboardViewV2";
+import { roleHome } from "@/lib/auth/merchant-access";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,10 @@ export default async function DashboardPage({
   if (!session || session.type !== "merchant" || !session.tenantId) {
     redirect("/dashboard/login");
   }
+  // Kitchen / courier roles don't get the analytics home — send them to
+  // their own landing (kitchen screen / orders).
+  const home = roleHome(session.role);
+  if (home !== "/dashboard") redirect(home);
 
   const raw = (await searchParams).range;
   const allowed = ["today", "yesterday", "7d", "30d"] as const;

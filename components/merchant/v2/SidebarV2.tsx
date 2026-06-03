@@ -5,13 +5,22 @@ import { usePathname } from "next/navigation";
 import { IcoFlame } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 import { NAV } from "./navConfig";
+import { canAccessDashboard } from "@/lib/auth/merchant-access";
 
 export function SidebarV2({
   tenant,
+  role,
 }: {
   tenant: { name: string; logoLetter: string; branchName: string };
+  role?: string;
 }) {
   const pathname = usePathname() || "";
+  // Hide sections/items the current role can't open (kitchen sees only
+  // orders + kitchen, etc.). Empty sections drop out entirely.
+  const sections = NAV.map((s) => ({
+    ...s,
+    items: s.items.filter((it) => canAccessDashboard(role, it.href)),
+  })).filter((s) => s.items.length > 0);
 
   return (
     <aside
@@ -33,7 +42,7 @@ export function SidebarV2({
       </Link>
 
       <nav className="space-y-4">
-        {NAV.map((section) => (
+        {sections.map((section) => (
           <div key={section.title} className="space-y-1">
             <div className="px-3 text-[10px] font-black uppercase tracking-wider text-black/40">
               {section.title}
