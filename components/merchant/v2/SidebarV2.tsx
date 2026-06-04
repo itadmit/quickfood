@@ -81,8 +81,7 @@ export function SidebarV2({
           language: warm yellow tile with 2px black border + hard
           shadow, flame icon in tomato red. */}
       <div
-        className="mt-auto flex items-start gap-2.5 rounded-2xl border-2 border-black px-3 py-3 text-xs shadow-[0_3px_0_#000]"
-        style={{ backgroundColor: "#FFF2C9" }}
+        className="mt-auto flex items-start gap-2.5 rounded-2xl border-2 border-black px-3 py-3 text-xs shadow-[0_3px_0_#000] bg-white"
       >
         <IcoFlame c="#c2421f" s={16} className="mt-0.5 shrink-0" />
         <div className="min-w-0">
