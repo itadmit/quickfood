@@ -6,6 +6,7 @@ import { PosCartProvider } from "@/components/pos/PosCartProvider";
 import { PosTopBar } from "@/components/pos/PosTopBar";
 import { PosShiftOpenModal } from "@/components/pos/PosShiftOpenModal";
 import { PosShiftCloseSummary } from "@/components/pos/PosShiftCloseSummary";
+import { GrowPaymentSdk } from "@/components/customer/GrowPaymentSdk";
 
 export interface PosShellProps {
   cashier: { id: string; name: string; role: string };
@@ -47,6 +48,21 @@ export function PosShell({ cashier, tenant, branch, shift: initialShift, childre
             }}
           />
         )}
+        {/* Mount the Grow SDK once at the shell so it preloads while the
+            cashier interacts with the register — by the time they tap
+            'אשראי' the iframes are ready and renderGrowWallet() resolves
+            immediately. Same pattern as CustomerCheckout. */}
+        <GrowPaymentSdk
+          testMode
+          thankYouUrl="/pos"
+          onWalletChange={(state) => {
+            if (state === "close") {
+              // Fire a synthetic event so the payment sheet (if open)
+              // can react. Cleanest cross-component channel here.
+              window.dispatchEvent(new CustomEvent("qf:pos:wallet-close"));
+            }
+          }}
+        />
       </PosCartProvider>
     </PosContextProvider>
   );

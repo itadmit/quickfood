@@ -11,6 +11,9 @@ const ManualSaleSchema = z.object({
   shift_id: z.string().uuid(),
   customer_id: z.string().uuid().nullable().optional(),
   notes: z.string().max(500).optional(),
+  // Cashier picks cash/card in the payment sheet before the order is
+  // created. Defaults to cash so pre-payment-sheet callers keep working.
+  payment_method: z.enum(["cash", "card"]).default("cash"),
 });
 
 /**
@@ -57,7 +60,7 @@ export const POST = handler(async (req: Request) => {
       status: "pending",
       method: "pickup",
       source: "pos",
-      paymentMethod: "cash",
+      paymentMethod: body.payment_method,
       paymentStatus: "pending",
       subtotal: body.amount,
       total: body.amount,
@@ -78,6 +81,16 @@ export const POST = handler(async (req: Request) => {
       },
     },
     select: { id: true, number: true, total: true },
+  });
+
+  // Mirror createOrder()'s "created" event so SSE / analytics see a
+  // consistent trail for every order regardless of which surface rang it.
+  await prisma.orderEvent.create({
+    data: {
+      orderId: order.id,
+      type: "created",
+      payload: { status: "pending", total: order.total, source: "pos" },
+    },
   });
 
   return apiJson({ order }, 201);

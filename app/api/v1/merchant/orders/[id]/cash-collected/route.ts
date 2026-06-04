@@ -28,7 +28,7 @@ export const POST = handler(async (
 
   const order = await prisma.order.findUnique({
     where: { id },
-    select: { id: true, tenantId: true, total: true, paymentStatus: true },
+    select: { id: true, tenantId: true, total: true, paymentStatus: true, status: true },
   });
   if (!order || order.tenantId !== session.tenantId) {
     return apiError("not_found", "הזמנה לא נמצאה", 404);
@@ -52,19 +52,38 @@ export const POST = handler(async (
     shiftId = open?.id ?? null;
   }
 
-  await prisma.order.update({
-    where: { id },
-    data: {
-      paymentStatus: "paid",
-      status: "confirmed",
-      confirmedAt: new Date(),
-      paymentMethod: "cash",
-      cashCollected: body.amount,
-      cashChange: body.change,
-      cashierId: session.userId,
-      posShiftId: shiftId,
-    },
-  });
+  await prisma.$transaction([
+    prisma.order.update({
+      where: { id },
+      data: {
+        paymentStatus: "paid",
+        status: "confirmed",
+        confirmedAt: new Date(),
+        paymentMethod: "cash",
+        cashCollected: body.amount,
+        cashChange: body.change,
+        cashierId: session.userId,
+        posShiftId: shiftId,
+      },
+    }),
+    // Event drives the kitchen kanban + KDS realtime so they see the
+    // order pop into the "preparing" lane the moment the cashier
+    // confirms cash.
+    prisma.orderEvent.create({
+      data: {
+        orderId: id,
+        type: "status_changed",
+        payload: {
+          from: order.status,
+          to: "confirmed",
+          changed_by: "cashier",
+          payment_method: "cash",
+          cash_collected: body.amount,
+          cash_change: body.change,
+        },
+      },
+    }),
+  ]);
 
   return apiJson({ ok: true });
 });

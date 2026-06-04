@@ -33,6 +33,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!session || session.type !== "merchant") {
     redirect("/dashboard/login");
   }
+  // Cashier role is locked to /pos at the route level too — bouncing
+  // here avoids a wasted SSR render before the client guard kicks in.
+  if (session.role === "cashier") {
+    redirect("/pos");
+  }
 
   const tenant = session.tenantId
     ? await prisma.tenant.findUnique({

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePos } from "@/components/pos/PosContext";
 import { usePosCart } from "@/components/pos/PosCartProvider";
 import { PosCashKeypadModal } from "@/components/pos/PosNumericKeypad";
-import { GrowPaymentSdk, renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
+import { renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
@@ -30,7 +30,22 @@ export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, on
   const [method, setMethod] = useState<Method | null>(null);
   const [cardOpen, setCardOpen] = useState(false);
 
-  async function createOrCarryOrderId(): Promise<string | null> {
+  // The Grow wallet is mounted at the shell level. We listen for the
+  // shell-emitted "wallet closed" event so the sheet can clear itself
+  // once the wallet UI goes away — payment status update comes from the
+  // Grow S2S callback, not from the front-end close event.
+  useEffect(() => {
+    function onWalletClose() {
+      if (cardOpen) {
+        setCardOpen(false);
+        onPaid();
+      }
+    }
+    window.addEventListener("qf:pos:wallet-close", onWalletClose);
+    return () => window.removeEventListener("qf:pos:wallet-close", onWalletClose);
+  }, [cardOpen, onPaid]);
+
+  async function createOrCarryOrderId(paymentMethod: Method): Promise<string | null> {
     if (existingOrderId) return existingOrderId;
     setBusy(true);
     try {
@@ -38,11 +53,18 @@ export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, on
         ? "/api/v1/merchant/pos/manual-sale"
         : "/api/v1/merchant/pos/sale";
       const body = isManual
-        ? { amount, shift_id: shift?.id, customer_id: customer?.id ?? null, notes: notes || undefined }
+        ? {
+            amount,
+            shift_id: shift?.id,
+            customer_id: customer?.id ?? null,
+            notes: notes || undefined,
+            payment_method: paymentMethod,
+          }
         : {
             shift_id: shift?.id,
             customer_id: customer?.id ?? null,
             notes: notes || undefined,
+            payment_method: paymentMethod,
             lines: lines.map((l) => ({
               item_id: l.itemId,
               quantity: l.quantity,
@@ -79,13 +101,24 @@ export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, on
   async function chooseCard() {
     setError(null);
     setMethod("card");
-    const orderId = await createOrCarryOrderId();
+    const orderId = await createOrCarryOrderId("card");
     if (!orderId) {
       setMethod(null);
       return;
     }
     setBusy(true);
     try {
+      // For queue orders the existing record was created as cash by the
+      // kiosk; flip it to card before initiating so pay/initiate doesn't
+      // reject. Fresh POS-created orders already get the right method.
+      if (existingOrderId) {
+        await fetch(`/api/v1/merchant/orders/${orderId}/payment-method`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ payment_method: "card" }),
+        });
+      }
       const res = await fetch(`/api/v1/customer/orders/${orderId}/pay/initiate`, {
         method: "POST",
         credentials: "include",
@@ -107,7 +140,7 @@ export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, on
 
   async function confirmCash(received: number, change: number) {
     setError(null);
-    const orderId = await createOrCarryOrderId();
+    const orderId = await createOrCarryOrderId("cash");
     if (!orderId) return;
     setBusy(true);
     try {
@@ -197,19 +230,6 @@ export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, on
           </p>
         )}
       </div>
-      <GrowPaymentSdk
-        testMode
-        thankYouUrl={`/pos`}
-        onWalletChange={(state) => {
-          if (state === "close" && cardOpen) {
-            setCardOpen(false);
-            // The Grow callback flips the order to paid asynchronously; we
-            // close the sheet so the cashier can keep ringing while the
-            // webhook lands. The day-end report will reconcile.
-            onPaid();
-          }
-        }}
-      />
     </div>
   );
 }

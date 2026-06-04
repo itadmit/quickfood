@@ -11,6 +11,7 @@ const SaleSchema = z.object({
   shift_id: z.string().uuid(),
   customer_id: z.string().uuid().nullable().optional(),
   notes: z.string().max(500).optional(),
+  payment_method: z.enum(["cash", "card"]).default("cash"),
   lines: z
     .array(
       z.object({
@@ -74,7 +75,7 @@ export const POST = handler(async (req: Request) => {
       guestLastName: customerLastName,
       method: "pickup",
       customerNotes: body.notes ?? null,
-      paymentMethod: "cash",
+      paymentMethod: body.payment_method,
       kiosk: true, // bypass minOrder — counter sale, not delivery
       sourceOverride: "pos",
       cashierId: session.userId,
