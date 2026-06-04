@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoClose, IcoEdit, IcoTrash, IcoPlus, IcoCheck } from "@/components/shared/Icons";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
+import { DragList, DragHandle } from "@/components/shared/DragList";
 import {
   CATEGORY_ICONS,
   CATEGORY_COLORS,
@@ -60,8 +61,33 @@ export function CategoryEditorModal({ open, onClose, categories }: Props) {
   const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
 
+  // Local draft of category order so the DragList can rearrange without
+  // waiting for the SSR refresh to round-trip. Sync from props every time
+  // the parent re-renders with a new list.
+  const [orderedCategories, setOrderedCategories] = useState(categories);
+  useEffect(() => {
+    setOrderedCategories(categories);
+  }, [categories]);
+
   function pushToast(kind: ToastKind, message: string) {
     setToast({ id: Date.now(), kind, message });
+  }
+
+  async function persistOrder(next: EditableCategory[]) {
+    const prev = orderedCategories;
+    setOrderedCategories(next);
+    const res = await fetch("/api/v1/merchant/menu/categories/reorder", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ category_ids: next.map((c) => c.id) }),
+    });
+    if (!res.ok) {
+      setOrderedCategories(prev);
+      const body = await res.json().catch(() => ({}));
+      pushToast("err", body?.error?.message ?? "שמירת הסדר נכשלה");
+      return;
+    }
+    router.refresh();
   }
 
   if (!open) return null;
@@ -70,7 +96,7 @@ export function CategoryEditorModal({ open, onClose, categories }: Props) {
     setError(null);
     setEditing({
       ...EMPTY_DRAFT,
-      position: categories.length,
+      position: orderedCategories.length,
     });
   }
 
@@ -175,45 +201,59 @@ export function CategoryEditorModal({ open, onClose, categories }: Props) {
           />
         ) : (
           <div className="flex-1 overflow-y-auto p-3">
-            <ul className="space-y-1">
-              {categories.map((c) => {
-                const style = resolveCategoryStyle(c.icon, c.color);
-                const Icon = style.Icon;
-                return (
-                  <li
-                    key={c.id}
-                    className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-qf-line-soft/60"
-                  >
+            {orderedCategories.length === 0 ? (
+              <p className="text-center text-sm text-qf-mute py-8">אין קטגוריות עדיין</p>
+            ) : (
+              <DragList
+                items={orderedCategories}
+                onReorder={persistOrder}
+                getKey={(c) => c.id}
+                className="space-y-1"
+              >
+                {(c, _i, drag) => {
+                  const style = resolveCategoryStyle(c.icon, c.color);
+                  const Icon = style.Icon;
+                  return (
                     <div
-                      className="w-10 h-10 rounded-full grid place-items-center shrink-0"
-                      style={{ backgroundColor: style.bg }}
+                      className={cn(
+                        "flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-qf-line-soft/60",
+                        drag.isDragging && "opacity-50",
+                      )}
                     >
-                      <Icon size={18} color={style.fg} strokeWidth={1.8} />
+                      <span
+                        {...drag.handleProps}
+                        className="grid place-items-center w-5 h-8 rounded-md hover:bg-qf-line-soft cursor-grab active:cursor-grabbing shrink-0 text-qf-mute"
+                      >
+                        <DragHandle />
+                      </span>
+                      <div
+                        className="w-10 h-10 rounded-full grid place-items-center shrink-0"
+                        style={{ backgroundColor: style.bg }}
+                      >
+                        <Icon size={18} color={style.fg} strokeWidth={1.8} />
+                      </div>
+                      <div className="flex-1 min-w-0 text-sm font-medium truncate">{c.name}</div>
+                      <button
+                        type="button"
+                        onClick={() => openEdit(c)}
+                        className="w-8 h-8 rounded-lg hover:bg-white grid place-items-center"
+                        aria-label="ערוך"
+                      >
+                        <IcoEdit s={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => startDelete(c)}
+                        className="w-8 h-8 rounded-lg hover:bg-qf-tomato-soft grid place-items-center"
+                        aria-label="מחק"
+                      >
+                        <IcoTrash c="#c2421f" s={15} />
+                      </button>
                     </div>
-                    <div className="flex-1 min-w-0 text-sm font-medium truncate">{c.name}</div>
-                    <button
-                      type="button"
-                      onClick={() => openEdit(c)}
-                      className="w-8 h-8 rounded-lg hover:bg-white grid place-items-center"
-                      aria-label="ערוך"
-                    >
-                      <IcoEdit s={15} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => startDelete(c)}
-                      className="w-8 h-8 rounded-lg hover:bg-qf-tomato-soft grid place-items-center"
-                      aria-label="מחק"
-                    >
-                      <IcoTrash c="#c2421f" s={15} />
-                    </button>
-                  </li>
-                );
-              })}
-              {categories.length === 0 && (
-                <li className="text-center text-sm text-qf-mute py-8">אין קטגוריות עדיין</li>
-              )}
-            </ul>
+                  );
+                }}
+              </DragList>
+            )}
             <button
               type="button"
               onClick={openNew}
