@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { IcoClose, IcoStar, IcoPhone, IcoPin, IcoClock, IcoBike } from "@/components/shared/Icons";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -48,15 +48,27 @@ export function RestaurantInfoModal({
   deliveryEta,
   onClose,
 }: Props) {
+  useLayoutEffect(() => {
+    const html = document.documentElement;
+    const prevOverflow = html.style.overflow;
+    const prevPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - html.clientWidth;
+    html.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+    return () => {
+      html.style.overflow = prevOverflow;
+      document.body.style.paddingRight = prevPaddingRight;
+    };
+  }, []);
+
   useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
     };
   }, [onClose]);
