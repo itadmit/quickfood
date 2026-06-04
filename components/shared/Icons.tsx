@@ -459,6 +459,14 @@ export const IcoHelp = ({ c = "currentColor", s = 18, className }: IconProps) =>
   </svg>
 );
 
+export const IcoInfo = ({ c = "currentColor", s = 16, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    <circle cx="12" cy="12" r="9" stroke={c} strokeWidth="1.8" />
+    <circle cx="12" cy="8" r="1" fill={c} />
+    <path d="M12 11v6" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
+  </svg>
+);
+
 export const IcoCopy = ({ c = "currentColor", s = 16, className }: IconProps) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
     <rect x="9" y="9" width="11" height="11" rx="2" stroke={c} strokeWidth="1.6" />

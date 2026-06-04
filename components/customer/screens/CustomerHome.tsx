@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { IcoPin, IcoSearch, IcoClock, IcoBike, IcoArrowLeft, IcoStar } from "@/components/shared/Icons";
+import { IcoPin, IcoSearch, IcoClock, IcoBike, IcoArrowLeft, IcoStar, IcoInfo } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
 import { CampaignPopup } from "@/components/customer/CampaignPopup";
@@ -450,12 +450,12 @@ export function CustomerHome({
       </header>
 
       {/* Wolt-style info strip — pulled up so it straddles the seam
-          between the cover image and the body. Wraps to two lines on
-          narrow screens; on lg+ it shows a single horizontal row plus
-          a "פרטי המסעדה" link that opens the full info modal. */}
+          between the cover image and the body. Single centered row on
+          all sizes; on mobile the "פרטי המסעדה" link collapses to a
+          single 'i' chip to keep everything on one line. */}
       <section className="px-5 -mt-6 relative z-10 lg:max-w-7xl lg:mx-auto lg:px-6 lg:-mt-7">
-        <div className="bg-white border border-qf-line rounded-3xl lg:rounded-full shadow-sm px-4 py-3 lg:px-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 lg:gap-4 text-sm lg:max-w-4xl lg:mx-auto">
-          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-3 gap-y-1.5">
+        <div className="bg-white border border-qf-line rounded-3xl lg:rounded-full shadow-sm px-4 py-3 lg:px-5 text-sm lg:max-w-4xl lg:mx-auto">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
             <span
               className={cn(
                 "inline-flex items-center gap-1.5 font-medium",
@@ -506,16 +506,21 @@ export function CustomerHome({
                 </Link>
               </>
             )}
+            {branch && (
+              <>
+                <span className="text-qf-line hidden sm:inline">·</span>
+                <button
+                  type="button"
+                  onClick={() => setInfoOpen(true)}
+                  aria-label="פרטי המסעדה"
+                  className="inline-flex items-center gap-1.5 text-(--qf-deep) hover:underline whitespace-nowrap"
+                >
+                  <IcoInfo s={15} c="currentColor" />
+                  <span className="hidden lg:inline text-xs font-bold">פרטי המסעדה</span>
+                </button>
+              </>
+            )}
           </div>
-          {branch && (
-            <button
-              type="button"
-              onClick={() => setInfoOpen(true)}
-              className="text-xs font-bold text-(--qf-deep) hover:underline whitespace-nowrap self-center lg:self-auto"
-            >
-              פרטי המסעדה ←
-            </button>
-          )}
         </div>
       </section>
 
