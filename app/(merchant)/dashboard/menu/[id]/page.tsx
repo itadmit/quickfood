@@ -48,6 +48,8 @@ export default async function ItemEditPage({
     maxSelect: s.maxSelect,
     includedFree: s.includedFree,
     helpText: s.helpText,
+    allowHalf: s.allowHalf,
+    maxPerSide: s.maxPerSide,
     optionsCount: s.options.length,
     options: s.options.map((o) => ({ name: o.name, priceDelta: o.priceDelta })),
   }));

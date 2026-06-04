@@ -217,6 +217,7 @@ export const ModifierSetInputSchema = z
     max_select: z.number().int().min(1).default(5),
     included_free: z.number().int().min(0).default(0),
     help_text: z.string().max(200).nullable().optional(),
+    allow_half: z.boolean().default(false),
     max_per_side: z.number().int().min(1).nullable().optional(),
     position: z.number().int().default(0),
     options: z.array(ItemOptionInputSchema).default([]),

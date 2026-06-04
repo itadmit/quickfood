@@ -28,6 +28,8 @@ interface ModifierSet {
   maxSelect: number;
   includedFree: number;
   helpText: string | null;
+  allowHalf: boolean;
+  maxPerSide: number | null;
   position: number;
   attachedCount: number;
   options: SetOption[];
@@ -49,6 +51,8 @@ const EMPTY: NewModifierSet = {
   maxSelect: 5,
   includedFree: 0,
   helpText: null,
+  allowHalf: false,
+  maxPerSide: null,
   position: 0,
   attachedCount: 0,
   options: [],
@@ -85,6 +89,8 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
       max_select: editing.maxSelect,
       included_free: editing.includedFree,
       help_text: editing.helpText,
+      allow_half: editing.allowHalf,
+      max_per_side: editing.maxPerSide,
       position: editing.position,
       options: editing.options.map((o) => ({
         name: o.name,
@@ -118,6 +124,8 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
       maxSelect: editing.maxSelect,
       includedFree: editing.includedFree,
       helpText: editing.helpText,
+      allowHalf: editing.allowHalf,
+      maxPerSide: editing.maxPerSide,
       position: editing.position,
       attachedCount: editing.id ? editing.attachedCount : 0,
       options: editing.options.map((o) => ({ ...o })),
@@ -388,6 +396,8 @@ function SetEditor({
                   maxSelect: 1,
                   minSelect: set.required ? 1 : 0,
                   includedFree: 0,
+                  allowHalf: false,
+                  maxPerSide: null,
                 });
               } else {
                 onChange({ ...set, type });
@@ -450,6 +460,49 @@ function SetEditor({
               className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
             />
           </label>
+        </div>
+      )}
+
+      {isMulti && (
+        <div className="rounded-xl bg-qf-line-soft/40 border border-qf-line-dash p-3 space-y-2">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={set.allowHalf}
+              onChange={(e) =>
+                onChange({
+                  ...set,
+                  allowHalf: e.target.checked,
+                  maxPerSide: e.target.checked ? set.maxPerSide : null,
+                })
+              }
+            />
+            <span>חצי/חצי — לקוח יכול לבחור כל תוספת לחצי בלבד (פיצה ועוד)</span>
+          </label>
+          {set.allowHalf && (
+            <label className="flex flex-col gap-1 text-xs max-w-xs">
+              <span className="text-qf-mute" title="כמה תוספות מותר לבחור על כל חצי. 'שלם' נספרת בשני הצדדים. ריק = ללא הגבלה לפי צד.">
+                מקסימום תוספות לצד (אופציונלי)
+              </span>
+              <input
+                type="number"
+                min={1}
+                placeholder="ללא הגבלה לפי צד"
+                value={set.maxPerSide ?? ""}
+                onChange={(e) => {
+                  const raw = e.target.value.trim();
+                  const parsed = raw === "" ? null : Math.max(1, parseInt(raw, 10) || 1);
+                  onChange({ ...set, maxPerSide: parsed });
+                }}
+                className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
+              />
+            </label>
+          )}
+          {set.attachedCount > 0 && (
+            <p className="text-[11px] text-qf-mute">
+              שינוי כאן יחול אוטומטית על {set.attachedCount} הפריטים שמחוברים לקטלוג.
+            </p>
+          )}
         </div>
       )}
 

@@ -31,6 +31,8 @@ export default async function ModifiersPage() {
         maxSelect: s.maxSelect,
         includedFree: s.includedFree,
         helpText: s.helpText,
+        allowHalf: s.allowHalf,
+        maxPerSide: s.maxPerSide,
         position: s.position,
         attachedCount: s._count.attachedTo,
         options: s.options.map((o) => ({

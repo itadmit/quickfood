@@ -29,6 +29,7 @@ export const GET = handler(async () => {
       max_select: s.maxSelect,
       included_free: s.includedFree,
       help_text: s.helpText,
+      allow_half: s.allowHalf,
       max_per_side: s.maxPerSide,
       position: s.position,
       attached_count: s._count.attachedTo,
@@ -60,6 +61,7 @@ export const POST = handler(async (req: Request) => {
       maxSelect: body.max_select,
       includedFree: body.included_free,
       helpText: body.help_text ?? null,
+      allowHalf: body.allow_half,
       maxPerSide: body.max_per_side ?? null,
       position: body.position,
       options: {

@@ -735,6 +735,9 @@ model ModifierSet {
   includedFree Int             @default(0) @map("included_free")
   helpText     String?         @map("help_text")
   position     Int             @default(0)
+  // Catalog-level default for the half-and-half behavior. Propagated to
+  // attached ItemOptionGroups on save. See ItemOptionGroup.allowHalf.
+  allowHalf    Boolean         @default(false) @map("allow_half")
   // Per-side cap inherited by attached ItemOptionGroups (when they don't
   // override). See ItemOptionGroup.maxPerSide for semantics.
   maxPerSide   Int?            @map("max_per_side")

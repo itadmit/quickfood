@@ -58,6 +58,8 @@ export interface ModifierSetSummary {
   maxSelect: number;
   includedFree: number;
   helpText: string | null;
+  allowHalf: boolean;
+  maxPerSide: number | null;
   optionsCount: number;
   options?: { name: string; priceDelta: number }[];
 }
@@ -201,8 +203,8 @@ export function ItemEditor({
           maxSelect: set.maxSelect,
           includedFree: set.includedFree,
           helpText: set.helpText,
-          allowHalf: false,
-          maxPerSide: null,
+          allowHalf: set.allowHalf,
+          maxPerSide: set.maxPerSide,
           templateSetId: set.id,
           options: [],
         },
