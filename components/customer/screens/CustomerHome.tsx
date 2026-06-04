@@ -128,6 +128,35 @@ export function CustomerHome({
   const busy = branch?.status === "busy";
   const closed = branch?.status === "closed";
   const busyBoost = branch?.busyEtaBoostMinutes ?? 15;
+  const [infoOpen, setInfoOpen] = useState(false);
+
+  // "פתוח עד 23:30" / "סגור · נפתח..." — uses branch.hours when present;
+  // falls back to the merchant's manual "open/busy/closed" status flag.
+  const hoursStatus = branch?.hours
+    ? getOpenStatus(branch.hours as BranchHours)
+    : null;
+  let openLabel: string = "סגור";
+  let openLabelTone: "open" | "busy" | "closed" = "closed";
+  if (closed) {
+    openLabel = "סגור";
+    openLabelTone = "closed";
+  } else if (busy) {
+    openLabel = "עומס";
+    openLabelTone = "busy";
+  } else if (open && hoursStatus?.open && hoursStatus.closesAt) {
+    openLabel = `פתוח עד ${hoursStatus.closesAt}`;
+    openLabelTone = "open";
+  } else if (open) {
+    openLabel = "פתוח";
+    openLabelTone = "open";
+  } else if (hoursStatus && !hoursStatus.open && hoursStatus.nextOpen) {
+    openLabel = `סגור · נפתח ${hoursStatus.nextOpen.dayLabel} ${hoursStatus.nextOpen.time}`;
+    openLabelTone = "closed";
+  }
+  const baseEta = deliveryEta ?? { min: 25, max: 35 };
+  const etaLabel = busy
+    ? `${baseEta.min + busyBoost}–${baseEta.max + busyBoost} דק'`
+    : `${baseEta.min}–${baseEta.max} דק'`;
 
   // Entry alerts. Busy is once-per-day, dismissable; closed shows every
   // entry until the merchant flips status back. Keys mirror CampaignPopup
@@ -433,7 +462,6 @@ export function CustomerHome({
                 openLabelTone === "open" && "text-qf-green-deep",
                 openLabelTone === "busy" && "text-qf-yolk",
                 openLabelTone === "closed" && "text-qf-tomato",
-                openLabelTone === "neutral" && "text-qf-ink2",
               )}
             >
               <span
@@ -442,7 +470,6 @@ export function CustomerHome({
                   openLabelTone === "open" && "bg-qf-green-deep",
                   openLabelTone === "busy" && "bg-qf-yolk",
                   openLabelTone === "closed" && "bg-qf-tomato",
-                  openLabelTone === "neutral" && "bg-qf-mute",
                 )}
               />
               {openLabel}
@@ -705,6 +732,23 @@ export function CustomerHome({
       )}
       {closedAlertOpen && (
         <ClosedAlertModal onClose={() => setClosedAlertOpen(false)} />
+      )}
+      {infoOpen && branch && (
+        <RestaurantInfoModal
+          tenantName={tenant.name}
+          tenantSlug={tenant.slug}
+          cuisineType={tenant.cuisineType}
+          about={tenant.about ?? null}
+          address={branch.address}
+          phone={branch.phone ?? ""}
+          hours={(branch.hours ?? {}) as BranchHours}
+          minOrder={branch.minOrder}
+          deliveryFee={branch.deliveryFee}
+          serviceFee={branch.serviceFee ?? 0}
+          rating={ratingSummary}
+          deliveryEta={deliveryEta}
+          onClose={() => setInfoOpen(false)}
+        />
       )}
     </div>
   );
