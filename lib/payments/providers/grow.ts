@@ -141,17 +141,22 @@ export class GrowProvider extends BasePaymentProvider {
     // sandbox userId / apiKey / pageCode from grow-test-creds.ts
     // regardless of what the merchant typed in the form. Flipping
     // "Sandbox" on at /dashboard/settings/payments is meant to JUST
-    // WORK without any credentials of their own.
+    // WORK without any credentials of their own (no Vercel env vars
+    // required either — sandbox is fully self-contained).
     if (config.testMode) return;
+    // Production: per-tenant credentials are the source of truth. The
+    // env vars are kept ONLY as a backwards-compat safety net for
+    // tenants whose row predates the per-tenant apiKey field.
     if (!config.credentials.userId) {
       throw new Error("Grow: credentials.userId is required");
     }
-    if (!process.env.GROW_API_KEY) {
-      throw new Error("Grow: GROW_API_KEY env var is required");
+    const apiKey = config.credentials.apiKey || process.env.GROW_API_KEY;
+    if (!apiKey) {
+      throw new Error("Grow: credentials.apiKey (or GROW_API_KEY env) is required");
     }
     const pageCode = config.credentials.pageCode || process.env.GROW_PAGE_CODE;
     if (!pageCode) {
-      throw new Error("Grow: GROW_PAGE_CODE env var or credentials.pageCode is required");
+      throw new Error("Grow: credentials.pageCode (or GROW_PAGE_CODE env) is required");
     }
   }
 

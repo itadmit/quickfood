@@ -144,14 +144,21 @@ export const PATCH = handler(async (req: Request) => {
       nextSettings.maxInstallments = body.grow.max_installments;
     }
 
-    // user_id is mandatory before enabling Grow
-    if (body.grow.is_active && !nextCreds.userId) {
-      return apiError(
-        "validation_error",
-        "יש למלא User ID לפני הפעלת Grow",
-        422,
-        "user_id",
-      );
+    // Production needs all 3 credentials filled before the wallet can
+    // open; sandbox uses shared QuickFood test creds, so flipping the
+    // toggle on is enough.
+    const willBeActive = body.grow.is_active;
+    const willBeProduction = body.grow.test_mode === false;
+    if (willBeActive && willBeProduction) {
+      if (!nextCreds.userId) {
+        return apiError("validation_error", "Production: יש למלא User ID", 422, "user_id");
+      }
+      if (!nextCreds.apiKey) {
+        return apiError("validation_error", "Production: יש למלא API Key", 422, "api_key");
+      }
+      if (!nextCreds.pageCode) {
+        return apiError("validation_error", "Production: יש למלא Page Code", 422, "page_code");
+      }
     }
 
     const applePayUpdate =

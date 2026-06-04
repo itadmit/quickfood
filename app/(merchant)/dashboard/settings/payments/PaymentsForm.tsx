@@ -216,24 +216,14 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
             </p>
           </div>
 
-          <Field
-            label="User ID"
-            hint="מזהה הסוחר שלך אצל Grow (לדוגמה: 814d52344861c4a3)"
-          >
-            <input
-              value={v.grow.user_id}
-              onChange={(e) => setGrow("user_id", e.target.value.trim())}
-              dir="ltr"
-              autoComplete="off"
-              spellCheck={false}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
-            />
-          </Field>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field
-              label="מצב טסט (Sandbox)"
-              hint="כל עוד פעיל — Grow לא יחייב כרטיסים אמיתיים. משתמש בחשבון הסנדבוקס המשותף שלנו, אין צורך להזין מזהה/מפתח אחר."
+              label="מצב פעולה"
+              hint={
+                v.grow.test_mode
+                  ? "Sandbox = בדיקות בלבד. משתמש בקרדנציאלים המשותפים של QuickFood — אין צורך למלא כלום נוסף."
+                  : "Production = חיוב כרטיסים אמיתיים. חובה למלא User ID + API Key + Page Code שמגיעים ממייל האישור של Grow."
+              }
             >
               <Toggle
                 checked={v.grow.test_mode}
@@ -261,41 +251,74 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
             </Field>
           </div>
 
-          {!v.grow.test_mode && (
-            <Field
-              label="API Key"
-              hint="המפתח שמגיע מ-Grow במייל אחרי אישור לחיוב לייב. חובה למצב Production — בלעדיו ארנק התשלום ידחה את ההזמנות."
-            >
-              <input
-                value={v.grow.api_key}
-                onChange={(e) => setGrow("api_key", e.target.value.trim())}
-                dir="ltr"
-                autoComplete="off"
-                spellCheck={false}
-                placeholder="4655b5e3bb4f"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
-              />
-            </Field>
-          )}
+          {v.grow.test_mode ? (
+            <div className="rounded-xl bg-qf-green-soft/40 border border-qf-green-deep/20 px-4 py-3 text-sm space-y-1">
+              <div className="font-bold text-qf-green-deep">
+                Sandbox פעיל — אין צורך במילוי
+              </div>
+              <p className="text-qf-ink2 leading-relaxed">
+                QuickFood משתמשת בקרדנציאלים המשותפים של Grow לסנדבוקס.
+                כרטיסי בדיקה ש-Grow ספקה: <span dir="ltr" className="tnum">4580 4580 4580 4580</span> (כרטיס תקין),
+                <span dir="ltr" className="tnum">4580 1111 1111 1121</span> (לבדיקת כשלון).
+                כשתעבור ל-Production תצטרך למלא User ID + API Key + Page Code מהמייל של Grow.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="rounded-xl bg-qf-yolk-soft/60 border border-qf-yolk/30 px-4 py-3 text-sm">
+                <div className="font-bold mb-1">Production — מילוי 3 השדות הבאים חובה</div>
+                <p className="text-qf-ink2 leading-relaxed">
+                  הפרטים מגיעים במייל אישור החיוב לייב של Grow לעסק שלך,
+                  בכותרת &quot;מצ&quot;ב הפרטים ל-API לייב&quot;.
+                </p>
+              </div>
 
-          <details className="rounded-xl border border-qf-line-soft">
-            <summary className="px-3.5 py-2.5 text-sm cursor-pointer select-none">
-              הגדרות מתקדמות (לרוב לא דרושות)
-            </summary>
-            <div className="px-3.5 pb-3.5 pt-1 space-y-3">
               <Field
-                label="Page Code override"
-                hint="השאר ריק כדי להשתמש ב-pageCode הפלטפורמתי. הגדר רק אם Grow הקצה לך pageCode ייעודי."
+                label="User ID"
+                hint="המזהה הראשי שלך אצל Grow. דוגמה: f31a894ee5522c02"
+              >
+                <input
+                  value={v.grow.user_id}
+                  onChange={(e) => setGrow("user_id", e.target.value.trim())}
+                  dir="ltr"
+                  autoComplete="off"
+                  spellCheck={false}
+                  placeholder="f31a894ee5522c02"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
+                />
+              </Field>
+
+              <Field
+                label="API Key"
+                hint="המפתח שנשלח כל קריאה ל-Grow. דוגמה: 4655b5e3bb4f. בלי זה הארנק ידחה את כל הקריאות."
+              >
+                <input
+                  value={v.grow.api_key}
+                  onChange={(e) => setGrow("api_key", e.target.value.trim())}
+                  dir="ltr"
+                  autoComplete="off"
+                  spellCheck={false}
+                  placeholder="4655b5e3bb4f"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
+                />
+              </Field>
+
+              <Field
+                label="Page Code (קוד ארנק)"
+                hint="המזהה של דף התשלום שלך ב-Grow. דוגמה: 52b79f4c427f."
               >
                 <input
                   value={v.grow.page_code}
                   onChange={(e) => setGrow("page_code", e.target.value.trim())}
                   dir="ltr"
+                  autoComplete="off"
+                  spellCheck={false}
+                  placeholder="52b79f4c427f"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
                 />
               </Field>
-            </div>
-          </details>
+            </>
+          )}
         </div>
       )}
 
