@@ -268,7 +268,7 @@ export function ItemDetail({
         for (const o of picked) {
           const placement = gHalf[o.id];
           const baseDelta = freedIds.has(o.id) ? 0 : o.priceDelta;
-          const delta = placement !== "full" ? Math.round(baseDelta / 2) : baseDelta;
+          const delta = placement !== "full" ? baseDelta / 2 : baseDelta;
           oDelta += delta;
         }
       } else {
@@ -375,7 +375,7 @@ export function ItemDetail({
         for (const o of picked) {
           const placement = gHalf[o.id]!;
           const baseDelta = freedIds.has(o.id) ? 0 : o.priceDelta;
-          const effectiveDelta = placement !== "full" ? Math.round(baseDelta / 2) : baseDelta;
+          const effectiveDelta = placement !== "full" ? baseDelta / 2 : baseDelta;
           selectedOpts.push({ groupId: g.id, optionId: o.id, name: o.name, groupName: g.name, priceDelta: effectiveDelta, half: placement });
         }
       } else {
@@ -681,7 +681,7 @@ export function ItemDetail({
             >
               {g.options.map((o) => {
                 const placement = gHalf[o.id] as HalfPlacement | undefined;
-                const halfPrice = Math.round(o.priceDelta / 2);
+                const halfPrice = o.priceDelta / 2;
 
                 const wouldExceed = (p: HalfPlacement) => {
                   if (cap == null) return false;
@@ -1048,10 +1048,10 @@ function HalfIcon({ side }: { side: HalfPlacement }) {
       <circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
       {side === "full" && <circle cx="8" cy="8" r="6.5" fill="currentColor" />}
       {side === "left" && (
-        <path d="M 8 1.5 A 6.5 6.5 0 0 0 8 14.5 Z" fill="currentColor" />
+        <path d="M 8 1.5 A 6.5 6.5 0 0 1 8 14.5 Z" fill="currentColor" />
       )}
       {side === "right" && (
-        <path d="M 8 1.5 A 6.5 6.5 0 0 1 8 14.5 Z" fill="currentColor" />
+        <path d="M 8 1.5 A 6.5 6.5 0 0 0 8 14.5 Z" fill="currentColor" />
       )}
     </svg>
   );

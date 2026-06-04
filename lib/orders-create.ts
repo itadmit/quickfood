@@ -184,7 +184,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         const o = paid[i];
         const baseDelta = i < effectiveFree ? 0 : o.priceDelta;
         const half = placements[o.id];
-        const effectiveDelta = half && half !== "full" ? Math.round(baseDelta / 2) : baseDelta;
+        const effectiveDelta = half && half !== "full" ? baseDelta / 2 : baseDelta;
         selectedOptions.push({
           group_id: group.id,
           option_id: o.id,
@@ -196,7 +196,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       }
       for (const o of [...negative, ...zero]) {
         const half = placements[o.id];
-        const effectiveDelta = half && half !== "full" ? Math.round(o.priceDelta / 2) : o.priceDelta;
+        const effectiveDelta = half && half !== "full" ? o.priceDelta / 2 : o.priceDelta;
         selectedOptions.push({
           group_id: group.id,
           option_id: o.id,
@@ -208,8 +208,10 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       }
     }
 
-    const unitPrice = item.basePrice + sizeDelta + optionsDelta;
-    const totalPrice = unitPrice * line.quantity;
+    const unitPriceExact = item.basePrice + sizeDelta + optionsDelta;
+    const totalPriceExact = unitPriceExact * line.quantity;
+    const unitPrice = Math.round(unitPriceExact);
+    const totalPrice = Math.round(totalPriceExact);
     subtotal += totalPrice;
 
     orderItemData.push({
