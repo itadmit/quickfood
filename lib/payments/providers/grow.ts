@@ -330,7 +330,7 @@ export class GrowProvider extends BasePaymentProvider {
         // only after confirming Grow has fixed the validator.
       };
 
-      if (maxInstallments > 1) body.maxPaymentNum = Math.min(maxInstallments, 12);
+      body.maxPaymentNum = Math.min(Math.max(maxInstallments, 1), 12);
 
       const commission = process.env.GROW_COMPANY_COMMISSION;
       if (commission && Number(commission) > 0) body.companyCommission = Number(commission);
