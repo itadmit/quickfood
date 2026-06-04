@@ -22,10 +22,13 @@ export interface PosItem {
   artType: string | null;
   imageUrl: string | null;
   defaultSize: { id: string; name: string; priceDelta: number; isDefault: boolean } | null;
-  /** True when the menu item has at least one required option group. The
-   *  picker quick-adds with the default size + no options; required-option
-   *  items still go through (so the cashier doesn't get stuck) but get a
-   *  visual hint that they should re-edit the line in the ticket. */
+  sizeCount: number;
+  /** True when the item has any option groups (required or optional). The
+   *  picker opens the config modal so the cashier can choose, instead of
+   *  quick-adding with defaults that may fail order-create validation. */
+  hasOptions: boolean;
+  /** True when at least one option group is marked required. Used only
+   *  for the small "+" badge on the tile. */
   hasRequiredOptions: boolean;
 }
 
@@ -34,9 +37,14 @@ const ALL_KEY = "__all";
 export function PosMenuPicker({
   categories,
   items,
+  onConfigureItem,
 }: {
   categories: PosCategory[];
   items: PosItem[];
+  /** Called when the cashier taps an item that needs configuration
+   *  (multiple sizes or any option groups). The register opens the config
+   *  modal in response. */
+  onConfigureItem: (itemId: string) => void;
 }) {
   const { add } = usePosCart();
   const [activeCat, setActiveCat] = useState<string>(ALL_KEY);
@@ -52,7 +60,14 @@ export function PosMenuPicker({
     });
   }, [items, activeCat, query]);
 
-  function quickAdd(it: PosItem) {
+  function handleTap(it: PosItem) {
+    // Items with options OR multiple sizes go through the config modal so
+    // the cashier picks them explicitly. A drink with one price + no
+    // options is a direct add — fastest path for the bulk of the menu.
+    if (it.hasOptions || it.sizeCount > 1) {
+      onConfigureItem(it.id);
+      return;
+    }
     const sizeDelta = it.defaultSize?.priceDelta ?? 0;
     add({
       itemId: it.id,
@@ -144,7 +159,7 @@ export function PosMenuPicker({
               <button
                 key={it.id}
                 type="button"
-                onClick={() => quickAdd(it)}
+                onClick={() => handleTap(it)}
                 className={cn(
                   "aspect-square text-start rounded-2xl border-2 border-black bg-white shadow-[0_2px_0_#000] hover:bg-qf-bg active:translate-y-0.5 transition flex flex-col overflow-hidden",
                   flashId === it.id && "ring-4 ring-(--qf-primary)",

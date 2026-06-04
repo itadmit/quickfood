@@ -8,6 +8,35 @@ import { renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
+// Server error codes that come back in Hebrew error.message most of the
+// time, but occasionally as raw code strings (validation errors thrown
+// from createOrder/Zod). Map the ones that the cashier will actually
+// see to clear copy.
+const ERROR_CODE_HEBREW: Record<string, string> = {
+  required_group_missing: "חסרה בחירת תוספות חובה. ערוך את השורה ובחר את הקבוצה.",
+  required_group_min: "מספר התוספות שנבחר נמוך מהמינימום הנדרש.",
+  size_invalid: "הגודל לא תקין לפריט.",
+  cart_empty: "הכרטיסייה ריקה.",
+  restaurant_closed: "המסעדה סגורה כרגע.",
+  branch_not_found: "סניף לא נמצא.",
+  no_branch: "אין סניף משויך לקופאי.",
+  no_open_shift: "אין משמרת פתוחה.",
+  insufficient: "סכום המזומן נמוך מהחיוב.",
+  already_paid: "ההזמנה כבר שולמה.",
+  invalid_items: "פריט מההזמנה כבר אינו זמין.",
+  amount_zero: "הסכום חייב להיות גדול מ-0.",
+};
+
+function translateError(payload: { code?: string; message?: string } | undefined): string {
+  if (!payload) return "פעולה נכשלה";
+  const fromMap = payload.code ? ERROR_CODE_HEBREW[payload.code] : undefined;
+  if (fromMap) return fromMap;
+  // Server messages are mostly already in Hebrew. Fall back to the raw
+  // code when the message looks like a passed-through code (no spaces).
+  if (payload.message && !/^[a-z_]+$/.test(payload.message)) return payload.message;
+  return fromMap ?? payload.message ?? "פעולה נכשלה";
+}
+
 interface Props {
   amount: number;
   /** True for manual-amount sales (the "מספרים" button). False for ticket
@@ -84,7 +113,7 @@ export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, on
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data?.error?.message ?? "יצירת ההזמנה נכשלה");
+        setError(translateError(data?.error) || "יצירת ההזמנה נכשלה");
         return null;
       }
       return data.order.id as string;
@@ -125,7 +154,7 @@ export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, on
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data?.error?.message ?? "פתיחת תשלום אשראי נכשלה");
+        setError(translateError(data?.error) || "פתיחת תשלום אשראי נכשלה");
         return;
       }
       setCardOpen(true);
@@ -152,7 +181,7 @@ export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, on
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data?.error?.message ?? "שמירת המזומן נכשלה");
+        setError(translateError(data?.error) || "שמירת המזומן נכשלה");
         return;
       }
       onPaid();

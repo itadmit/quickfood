@@ -7,8 +7,9 @@ import { IcoUser, IcoPlus, IcoMinus, IcoClose } from "@/components/shared/Icons"
 import { cn } from "@/lib/cn";
 import { PosNumericKeypadModal } from "@/components/pos/PosNumericKeypad";
 import { PosPaymentSheet } from "@/components/pos/PosPaymentSheet";
+import type { CartLine } from "@/components/customer/CartProvider";
 
-export function PosTicket() {
+export function PosTicket({ onEditLine }: { onEditLine?: (line: CartLine) => void }) {
   const { lines, subtotal, updateQuantity, remove, customer, setCustomer, clear } =
     usePosCart();
   const [manualOpen, setManualOpen] = useState(false);
@@ -47,49 +48,84 @@ export function PosTicket() {
 
       <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-2">
         {hasContent ? (
-          lines.map((l) => (
-            <article
-              key={l.lineId}
-              className="rounded-xl border border-qf-line bg-white px-3 py-2 flex items-center gap-2"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-sm truncate">{l.name}</div>
-                {l.sizeName && (
-                  <div className="text-[11px] text-qf-mute">{l.sizeName}</div>
-                )}
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => updateQuantity(l.lineId, l.quantity - 1)}
-                  className="w-8 h-8 rounded-lg bg-qf-line-soft grid place-items-center"
-                  aria-label="הפחת"
-                >
-                  <IcoMinus s={14} c="#11231a" />
-                </button>
-                <span className="w-6 text-center tnum text-sm font-bold">{l.quantity}</span>
-                <button
-                  type="button"
-                  onClick={() => updateQuantity(l.lineId, l.quantity + 1)}
-                  className="w-8 h-8 rounded-lg bg-qf-line-soft grid place-items-center"
-                  aria-label="הוסף"
-                >
-                  <IcoPlus s={14} c="#11231a" />
-                </button>
-              </div>
-              <div className="w-20 text-end tnum text-sm font-semibold">
-                {formatPrice((l.basePrice + l.sizeDelta) * l.quantity)}
-              </div>
-              <button
-                type="button"
-                onClick={() => remove(l.lineId)}
-                className="w-7 h-7 rounded-md grid place-items-center text-qf-mute hover:bg-qf-tomato-soft hover:text-qf-tomato"
-                aria-label="מחק"
+          lines.map((l) => {
+            const optionsDelta = l.options.reduce(
+              (s, o) => s + (o.half && o.half !== "full" ? o.priceDelta / 2 : o.priceDelta),
+              0,
+            );
+            const lineTotal = (l.basePrice + l.sizeDelta + optionsDelta) * l.quantity;
+            const optsSummary = l.options
+              .map((o) => {
+                const sideTag =
+                  o.half === "left" ? " (חצי א׳)" : o.half === "right" ? " (חצי ב׳)" : "";
+                return `${o.name}${sideTag}`;
+              })
+              .join(" · ");
+            return (
+              <article
+                key={l.lineId}
+                className="rounded-xl border border-qf-line bg-white px-3 py-2"
               >
-                <IcoClose s={12} />
-              </button>
-            </article>
-          ))
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onEditLine?.(l)}
+                    className="flex-1 min-w-0 text-start hover:bg-qf-line-soft/40 rounded-md -mx-1 px-1 py-0.5 transition"
+                    title="ערוך שורה"
+                  >
+                    <div className="font-semibold text-sm truncate">{l.name}</div>
+                    {l.sizeName && (
+                      <div className="text-[11px] text-qf-mute">{l.sizeName}</div>
+                    )}
+                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => updateQuantity(l.lineId, l.quantity - 1)}
+                      className="w-8 h-8 rounded-lg bg-qf-line-soft grid place-items-center"
+                      aria-label="הפחת"
+                    >
+                      <IcoMinus s={14} c="#11231a" />
+                    </button>
+                    <span className="w-6 text-center tnum text-sm font-bold">{l.quantity}</span>
+                    <button
+                      type="button"
+                      onClick={() => updateQuantity(l.lineId, l.quantity + 1)}
+                      className="w-8 h-8 rounded-lg bg-qf-line-soft grid place-items-center"
+                      aria-label="הוסף"
+                    >
+                      <IcoPlus s={14} c="#11231a" />
+                    </button>
+                  </div>
+                  <div className="w-20 text-end tnum text-sm font-semibold">
+                    {formatPrice(lineTotal)}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => remove(l.lineId)}
+                    className="w-7 h-7 rounded-md grid place-items-center text-qf-mute hover:bg-qf-tomato-soft hover:text-qf-tomato"
+                    aria-label="מחק"
+                  >
+                    <IcoClose s={12} />
+                  </button>
+                </div>
+                {optsSummary && (
+                  <button
+                    type="button"
+                    onClick={() => onEditLine?.(l)}
+                    className="block text-start mt-1 text-[11px] text-qf-ink2 truncate w-full hover:underline"
+                  >
+                    {optsSummary}
+                  </button>
+                )}
+                {l.notes && (
+                  <div className="mt-1 text-[11px] text-qf-mute italic truncate">
+                    הערה: {l.notes}
+                  </div>
+                )}
+              </article>
+            );
+          })
         ) : (
           <div className="h-full grid place-items-center text-qf-mute text-sm py-12">
             כרטיסייה ריקה — בחרו פריט מהתפריט או הקליקו &quot;מספרים&quot;.

@@ -31,11 +31,13 @@ export default async function PosRegisterPage() {
           orderBy: { position: "asc" },
           select: { id: true, name: true, priceDelta: true, isDefault: true },
         },
-        // Telling the picker whether the item has required option groups
-        // lets us flag complex items so the cashier knows to use the
-        // option picker once we wire it up — for now everything adds with
-        // defaults and the cashier can edit the line in the ticket.
-        optionGroups: { select: { required: true }, take: 1, where: { required: true } },
+        // Two flags drive picker behavior:
+        // - hasOptions: any option group → open the config modal so the
+        //   cashier can pick toppings (required or not).
+        // - hasRequiredOptions: visual hint on the tile that this item
+        //   has must-pick groups.
+        _count: { select: { optionGroups: true } },
+        optionGroups: { select: { id: true }, take: 1, where: { required: true } },
       },
     }),
   ]);
@@ -57,6 +59,8 @@ export default async function PosRegisterPage() {
         imageUrl: i.images?.[0] ?? null,
         defaultSize:
           i.sizes.find((s) => s.isDefault) ?? i.sizes[0] ?? null,
+        sizeCount: i.sizes.length,
+        hasOptions: i._count.optionGroups > 0,
         hasRequiredOptions: i.optionGroups.length > 0,
       }))}
     />
