@@ -15,11 +15,16 @@ export interface PosShellProps {
   cashier: { id: string; name: string; role: string };
   tenant: { id: string; slug: string; name: string; logoLetter: string };
   branch: { id: string; name: string };
+  /** Tenant's Grow sandbox flag. The SDK must agree with the server's
+   *  payment provider; passing the wrong value rejects the auth code
+   *  with "הלינק שנשלח אינו תקין". Defaults to true (sandbox) only as a
+   *  safety net for tenants without Grow configured. */
+  growTestMode: boolean;
   shift: { id: string; openedAt: string; openingFloat: number } | null;
   children: React.ReactNode;
 }
 
-export function PosShell({ cashier, tenant, branch, shift: initialShift, children }: PosShellProps) {
+export function PosShell({ cashier, tenant, branch, growTestMode, shift: initialShift, children }: PosShellProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [shift, setShift] = useState(initialShift);
@@ -76,7 +81,7 @@ export function PosShell({ cashier, tenant, branch, shift: initialShift, childre
             'אשראי' the iframes are ready and renderGrowWallet() resolves
             immediately. Same pattern as CustomerCheckout. */}
         <GrowPaymentSdk
-          testMode
+          testMode={growTestMode}
           thankYouUrl="/pos?paid=1"
           onWalletChange={(state) => {
             if (state === "close") {

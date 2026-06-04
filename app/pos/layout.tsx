@@ -38,7 +38,7 @@ export default async function PosLayout({
   if (!branchId) branchId = primaryBranch?.id ?? null;
   if (!branchId) redirect("/dashboard");
 
-  const [branch, tenant] = await Promise.all([
+  const [branch, tenant, growConfig] = await Promise.all([
     prisma.branch.findUnique({
       where: { id: branchId },
       select: { id: true, name: true, tenantId: true },
@@ -46,6 +46,16 @@ export default async function PosLayout({
     prisma.tenant.findUnique({
       where: { id: session.tenantId },
       select: { id: true, name: true, slug: true, themeId: true, logoLetter: true },
+    }),
+    // The cashier's Grow SDK must agree with the server's authCode env:
+    // a sandbox SDK rejects a prod authCode with "הלינק שנשלח אינו תקין"
+    // and vice versa. Pull the tenant's actual test_mode and pass it
+    // through to the shell.
+    prisma.paymentProviderConfig.findUnique({
+      where: {
+        tenantId_provider: { tenantId: session.tenantId, provider: "grow" },
+      },
+      select: { testMode: true, isActive: true },
     }),
   ]);
   if (!branch || !tenant || branch.tenantId !== tenant.id) redirect("/dashboard");
@@ -67,6 +77,7 @@ export default async function PosLayout({
         cashier={{ id: user.id, name: user.name, role: user.role }}
         tenant={{ id: tenant.id, slug: tenant.slug, name: tenant.name, logoLetter: tenant.logoLetter }}
         branch={{ id: branch.id, name: branch.name }}
+        growTestMode={growConfig?.testMode ?? true}
         shift={
           openShift
             ? {
