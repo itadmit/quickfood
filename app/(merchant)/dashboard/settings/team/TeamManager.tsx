@@ -6,7 +6,7 @@ import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 
-type Role = "owner" | "manager" | "kitchen" | "courier_dispatch";
+type Role = "owner" | "manager" | "kitchen" | "courier_dispatch" | "cashier";
 
 interface TeamUser {
   id: string;
@@ -16,6 +16,7 @@ interface TeamUser {
   last_login_at: string | null;
   created_at: string;
   is_me: boolean;
+  branch_id?: string | null;
 }
 
 const ROLE_LABEL: Record<Role, string> = {
@@ -23,6 +24,7 @@ const ROLE_LABEL: Record<Role, string> = {
   manager: "מנהל",
   kitchen: "מטבח",
   courier_dispatch: "מוקד שליחים",
+  cashier: "קופאי",
 };
 
 const ROLE_DESCRIPTION: Record<Role, string> = {
@@ -30,9 +32,10 @@ const ROLE_DESCRIPTION: Record<Role, string> = {
   manager: "ניהול תפריט, הזמנות, הגדרות — אבל לא ניהול צוות.",
   kitchen: "מסך מטבח בלבד. לא רואה תפריט, מכירות או חיוב.",
   courier_dispatch: "ניהול שליחים והקצאה — לא כולל ניהול עסק.",
+  cashier: "מסך קופה (POS) בלבד. סוגר הזמנות מקיוסק ומחייב לקוחות.",
 };
 
-const ROLE_OPTIONS: Role[] = ["owner", "manager", "kitchen", "courier_dispatch"];
+const ROLE_OPTIONS: Role[] = ["owner", "manager", "kitchen", "courier_dispatch", "cashier"];
 
 function isRole(v: string): v is Role {
   return (ROLE_OPTIONS as readonly string[]).includes(v);
