@@ -598,7 +598,7 @@ export function ItemDetail({
               <button
                 type="button"
                 onClick={() => setSizeId(upgradeTo.id)}
-                className="mt-2 mx-5 lg:mx-0 block w-[calc(100%-2.5rem)] lg:w-full rounded-2xl border-2 border-(--qf-primary) bg-(--qf-soft) p-4 text-start hover:bg-(--qf-primary)/15 transition active:scale-[0.99]"
+                className="mt-2 mx-5 block w-[calc(100%-2.5rem)] rounded-2xl border-2 border-(--qf-primary) bg-(--qf-soft) p-4 text-start hover:bg-(--qf-primary)/15 transition active:scale-[0.99]"
               >
                 <div className="flex items-center gap-3">
                   {heroImage && (
@@ -720,21 +720,24 @@ export function ItemDetail({
                         const buttonBlocked = rowBlocked
                           ? placement !== p
                           : wouldExceed(p);
+                        const label = p === "left" ? "חצי א׳" : p === "right" ? "חצי ב׳" : "שלם";
                         return (
                           <button
                             key={p}
                             type="button"
                             disabled={buttonBlocked}
                             onClick={() => { if (!buttonBlocked) toggleHalf(g, o.id, p); }}
+                            aria-label={label}
+                            title={label}
                             className={cn(
-                              "h-8 px-2.5 rounded-lg text-xs font-semibold border transition",
+                              "w-9 h-9 rounded-full border-2 transition grid place-items-center",
                               placement === p
-                                ? "bg-(--qf-primary) border-(--qf-primary) text-white"
-                                : "bg-white border-qf-line text-qf-ink2 hover:border-(--qf-primary) hover:text-(--qf-primary)",
+                                ? "border-(--qf-primary) text-(--qf-primary) bg-(--qf-soft)"
+                                : "border-qf-line-dash text-qf-ink2 bg-white hover:border-(--qf-primary)",
                               buttonBlocked && "opacity-40 cursor-not-allowed",
                             )}
                           >
-                            {p === "left" ? "חצי א׳" : p === "right" ? "חצי ב׳" : "שלם"}
+                            <HalfIcon side={p} />
                           </button>
                         );
                       })}
@@ -1036,6 +1039,21 @@ export function ItemDetail({
         document.body,
       )}
     </div>
+  );
+}
+
+function HalfIcon({ side }: { side: HalfPlacement }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true">
+      <circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      {side === "full" && <circle cx="8" cy="8" r="6.5" fill="currentColor" />}
+      {side === "left" && (
+        <path d="M 8 1.5 A 6.5 6.5 0 0 0 8 14.5 Z" fill="currentColor" />
+      )}
+      {side === "right" && (
+        <path d="M 8 1.5 A 6.5 6.5 0 0 1 8 14.5 Z" fill="currentColor" />
+      )}
+    </svg>
   );
 }
 

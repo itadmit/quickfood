@@ -651,7 +651,7 @@ function SetEditor({
                       options: set.options.filter((_, i) => i !== oi),
                     })
                   }
-                  className="w-8 h-8 rounded-lg hover:bg-qf-tomato-soft text-qf-mute hover:text-qf-tomato shrink-0"
+                  className="w-8 h-8 rounded-lg hover:bg-qf-tomato-soft text-qf-mute hover:text-qf-tomato grid place-items-center shrink-0"
                   aria-label="הסר"
                 >
                   <IcoClose s={12} />
