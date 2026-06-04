@@ -12,6 +12,11 @@ const SaleSchema = z.object({
   customer_id: z.string().uuid().nullable().optional(),
   notes: z.string().max(500).optional(),
   payment_method: z.enum(["cash", "card"]).default("cash"),
+  // Walk-in details collected by the cashier when no Customer row is
+  // attached. Used as the order snapshot so Grow PROD wallets accept
+  // the auth code (placeholder "Customer" gets rejected).
+  guest_name: z.string().min(2).max(60).optional(),
+  guest_phone: z.string().min(7).max(20).optional(),
   lines: z
     .array(
       z.object({
@@ -73,9 +78,19 @@ export const POST = handler(async (req: Request) => {
       customerEmail = c.email ?? undefined;
     }
   }
-  // No customer attached → seed real merchant defaults so Grow's
-  // production validator accepts the wallet setup. Falling back to a
-  // hard-coded "0500000000" + "Customer" gets the wallet rejected.
+  // Walk-in details from the cashier (only present when the operator
+  // filled them in — required for card payments, optional for cash).
+  if (!customerFirstName && body.guest_name) {
+    // Grow PROD requires fullName to have at least two tokens; the wire-
+    // side helper adds a "." anyway, but splitting on the first space is
+    // friendlier for invoices.
+    const [first, ...rest] = body.guest_name.trim().split(/\s+/);
+    customerFirstName = first;
+    if (rest.length > 0) customerLastName = rest.join(" ");
+  }
+  if (!customerPhone && body.guest_phone) customerPhone = body.guest_phone;
+  // Last resort — merchant fallbacks so the wallet doesn't reject on
+  // empty fields. Cash flow ignores this since Grow isn't called.
   if (!customerPhone && branch?.phone) customerPhone = branch.phone;
   if (!customerFirstName) customerFirstName = tenant.name;
   if (!customerLastName) customerLastName = "(קופה)";

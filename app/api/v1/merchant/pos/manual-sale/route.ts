@@ -14,6 +14,9 @@ const ManualSaleSchema = z.object({
   // Cashier picks cash/card in the payment sheet before the order is
   // created. Defaults to cash so pre-payment-sheet callers keep working.
   payment_method: z.enum(["cash", "card"]).default("cash"),
+  // Walk-in details — required for card (Grow PROD), optional for cash.
+  guest_name: z.string().min(2).max(60).optional(),
+  guest_phone: z.string().min(7).max(20).optional(),
 });
 
 /**
@@ -65,9 +68,21 @@ export const POST = handler(async (req: Request) => {
       .slice(0, 3) || "QF";
   const number = `${prefix}-${orderSeq}`;
 
-  const customerPhoneSnap = customer?.phone ?? branch?.phone ?? null;
-  const customerFirstNameSnap = customer?.firstName ?? counterTenant.name;
-  const customerLastNameSnap = customer?.lastName ?? "(קופה)";
+  // Walk-in details from the cashier override the merchant fallback
+  // (which is only there for the wallet to accept the auth code at all).
+  let walkInFirst: string | undefined;
+  let walkInLast: string | undefined;
+  if (body.guest_name) {
+    const [first, ...rest] = body.guest_name.trim().split(/\s+/);
+    walkInFirst = first;
+    walkInLast = rest.length > 0 ? rest.join(" ") : undefined;
+  }
+  const customerPhoneSnap =
+    customer?.phone ?? body.guest_phone ?? branch?.phone ?? null;
+  const customerFirstNameSnap =
+    customer?.firstName ?? walkInFirst ?? counterTenant.name;
+  const customerLastNameSnap =
+    customer?.lastName ?? walkInLast ?? "(קופה)";
   const customerEmailSnap = customer?.email ?? branch?.email ?? null;
 
   const order = await prisma.order.create({

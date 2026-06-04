@@ -8,6 +8,7 @@ import { renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { IcoCheck } from "@/components/shared/Icons";
+import { PosWalkInPromptModal } from "@/components/pos/PosWalkInPromptModal";
 
 // Server error codes that come back in Hebrew error.message most of the
 // time, but occasionally as raw code strings (validation errors thrown
@@ -60,6 +61,11 @@ export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, on
   const [method, setMethod] = useState<Method | null>(null);
   const [cardOpen, setCardOpen] = useState(false);
   const [success, setSuccess] = useState<{ title: string; sub?: string } | null>(null);
+  // Card payments need a real walk-in name (Grow PROD rejects placeholder
+  // fullName). Cashier can fill it once per ticket; we remember it so a
+  // retry after a Grow error doesn't re-prompt.
+  const [walkIn, setWalkIn] = useState<{ name: string; phone?: string } | null>(null);
+  const [walkInOpen, setWalkInOpen] = useState(false);
 
   // The Grow wallet is mounted at the shell level. We listen for the
   // shell-emitted "wallet closed" event so the sheet can clear itself
@@ -87,6 +93,10 @@ export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, on
       const endpoint = isManual
         ? "/api/v1/merchant/pos/manual-sale"
         : "/api/v1/merchant/pos/sale";
+      // Pass walk-in details when the cashier filled them in (card path).
+      // Cash sales don't need this and the body omits them.
+      const guestName = walkIn?.name;
+      const guestPhone = walkIn?.phone;
       const body = isManual
         ? {
             amount,
@@ -94,12 +104,16 @@ export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, on
             customer_id: customer?.id ?? null,
             notes: notes || undefined,
             payment_method: paymentMethod,
+            guest_name: guestName,
+            guest_phone: guestPhone,
           }
         : {
             shift_id: shift?.id,
             customer_id: customer?.id ?? null,
             notes: notes || undefined,
             payment_method: paymentMethod,
+            guest_name: guestName,
+            guest_phone: guestPhone,
             lines: lines.map((l) => ({
               item_id: l.itemId,
               quantity: l.quantity,
@@ -135,6 +149,18 @@ export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, on
 
   async function chooseCard() {
     setError(null);
+    // Walk-in name is required for card payment (Grow PROD requirement).
+    // Queue orders already have a customer snapshot from the kiosk, and
+    // attached customers obviously already have one — both bypass the
+    // prompt. Otherwise we collect once and remember for retries.
+    if (!existingOrderId && !customer && !walkIn) {
+      setWalkInOpen(true);
+      return;
+    }
+    await runCardCharge();
+  }
+
+  async function runCardCharge() {
     setMethod("card");
     const orderId = await createOrCarryOrderId("card");
     if (!orderId) {
@@ -224,6 +250,22 @@ export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, on
           )}
         </div>
       </div>
+    );
+  }
+
+  // Walk-in customer prompt — only when card is chosen and there's
+  // nobody attached yet. Cash skips this entirely.
+  if (walkInOpen) {
+    return (
+      <PosWalkInPromptModal
+        amountLabel={formatPrice(amount)}
+        onCancel={() => setWalkInOpen(false)}
+        onConfirm={(data) => {
+          setWalkIn(data);
+          setWalkInOpen(false);
+          void runCardCharge();
+        }}
+      />
     );
   }
 
