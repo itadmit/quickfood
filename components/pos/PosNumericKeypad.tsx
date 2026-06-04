@@ -104,7 +104,7 @@ export function PosNumericKeypadModal({
         </div>
 
         {quickAmounts.length > 0 && (
-          <div className="grid grid-cols-3 gap-2 mb-3">
+          <div dir="ltr" className="grid grid-cols-3 gap-2 mb-3">
             {quickAmounts.map((amt) => (
               <button
                 key={amt}
@@ -118,18 +118,22 @@ export function PosNumericKeypadModal({
           </div>
         )}
 
-        <div className="grid grid-cols-3 gap-2">
+        {/* dir=ltr so 1-2-3 reads left-to-right like a calculator/phone
+            even though the surrounding page is RTL. Backspace lives on
+            the left next to 0, clear on the right — keeps muscle-memory
+            from common POS terminals. */}
+        <div dir="ltr" className="grid grid-cols-3 gap-2">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
             <KeyButton key={d} onClick={() => press(d)}>
               {d}
             </KeyButton>
           ))}
-          <KeyButton onClick={pressClear} tone="warn">
-            C
-          </KeyButton>
-          <KeyButton onClick={() => press(0)}>0</KeyButton>
           <KeyButton onClick={pressBack} tone="warn">
             ←
+          </KeyButton>
+          <KeyButton onClick={() => press(0)}>0</KeyButton>
+          <KeyButton onClick={pressClear} tone="warn">
+            C
           </KeyButton>
         </div>
 
