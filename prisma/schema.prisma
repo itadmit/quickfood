@@ -83,6 +83,8 @@ enum OrderSource {
   direct
   ai_advisor
   reorder
+  kiosk
+  pos
 }
 
 /// How a specific line landed in the cart. A single order can mix
@@ -116,6 +118,7 @@ enum UserRole {
   kitchen
   courier_dispatch
   platform_admin
+  cashier
 }
 
 enum SubscriptionStatus {
@@ -421,6 +424,7 @@ model Tenant {
   emailLogs        EmailLog[]
   modifierSets     ModifierSet[]
   woltImports      WoltImport[]
+  posShifts        PosShift[]
 
   @@index([slug])
   @@map("tenants")
@@ -452,6 +456,8 @@ model Branch {
   zones    DeliveryZone[]
   couriers Courier[]
   orders   Order[]
+  cashiers MerchantUser[] @relation("MerchantUserBranch")
+  posShifts PosShift[]
 
   @@index([tenantId])
   @@map("branches")
@@ -897,7 +903,19 @@ model Order {
   cancelledAt         DateTime? @map("cancelled_at")
 
   cashCollected  Int?    @map("cash_collected")
+  /// Change handed back to the customer on a cash sale. Independent of
+  /// cashCollected so day-end can reconcile "drawer received - drawer paid out".
+  cashChange     Int?    @map("cash_change")
   proofPhotoUrl  String? @map("proof_photo_url")
+
+  /// Cashier who rang or settled this order (POS sales + counter-paid kiosk).
+  /// NULL for direct/online flows. Drives the shift report.
+  cashierId String?       @map("cashier_id") @db.Uuid
+  cashier   MerchantUser? @relation("OrderCashier", fields: [cashierId], references: [id], onDelete: SetNull)
+  /// Open POS shift that this order belongs to. Set the moment the cashier
+  /// touches it (ring-up or cash-collected). NULL for non-POS orders.
+  posShiftId String?   @map("pos_shift_id") @db.Uuid
+  posShift   PosShift? @relation(fields: [posShiftId], references: [id], onDelete: SetNull)
 
   rating                  Int?
   reviewText              String?   @map("review_text")
@@ -912,7 +930,42 @@ model Order {
   @@unique([tenantId, number])
   @@index([tenantId, status, createdAt(sort: Desc)])
   @@index([customerId, createdAt(sort: Desc)])
+  @@index([posShiftId])
   @@map("orders")
+}
+
+/// One cashier × one branch × one day = one shift. Opens with a cash
+/// "float" (the drawer's starting balance), accumulates every paid-cash
+/// order, optionally records mid-shift drawer drops in `cashOutNotes`,
+/// closes with a counted `closingFloat` and a computed `expectedCash`
+/// — the variance is the day-end report.
+model PosShift {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId     String   @map("branch_id") @db.Uuid
+  branch       Branch   @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  cashierId    String   @map("cashier_id") @db.Uuid
+  cashier      MerchantUser @relation(fields: [cashierId], references: [id], onDelete: Restrict)
+
+  openedAt     DateTime @default(now()) @map("opened_at")
+  closedAt     DateTime? @map("closed_at")
+
+  openingFloat Int      @map("opening_float")
+  closingFloat Int?     @map("closing_float")
+  /// Computed at close: openingFloat + Σ(paid-cash sales) − Σ(cashOut). Persisted
+  /// so the day-end summary survives later edits to underlying orders.
+  expectedCash Int?     @map("expected_cash")
+  /// Array of `{ ts, amount, reason }` entries written by `cash-out`. Each
+  /// entry is also reflected in `expectedCash` at close time.
+  cashOutNotes Json     @default("[]") @map("cash_out_notes")
+
+  orders       Order[]
+
+  @@unique([cashierId, openedAt])
+  @@index([tenantId, branchId, openedAt(sort: Desc)])
+  @@index([cashierId, closedAt])
+  @@map("pos_shifts")
 }
 
 model OrderItem {
@@ -1193,6 +1246,10 @@ model MerchantUser {
   name              String
   role              UserRole                  @default(owner)
   branches          String[]                  @default([])
+  // Cashier users are pinned to one branch (their POS terminal). For other
+  // roles this is informational only — gating is via `branches` above.
+  branchId          String?                   @map("branch_id") @db.Uuid
+  branch            Branch?                   @relation("MerchantUserBranch", fields: [branchId], references: [id], onDelete: SetNull)
   tfaEnabled        Boolean                   @default(false) @map("tfa_enabled")
   tfaSecret         String?                   @map("tfa_secret")
   lastLoginAt       DateTime?                 @map("last_login_at")
@@ -1201,8 +1258,11 @@ model MerchantUser {
   passwordResets    PasswordResetToken[]
   emailVerifications EmailVerificationToken[]
   pushSubscriptions  MerchantUserPushSubscription[]
+  posShifts         PosShift[]
+  ordersAsCashier   Order[] @relation("OrderCashier")
 
   @@index([tenantId])
+  @@index([branchId])
   @@map("merchant_users")
 }
 

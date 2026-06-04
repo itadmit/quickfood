@@ -36,7 +36,9 @@ export default function LoginForm() {
           ? "/admin"
           : role === "kitchen"
             ? "/dashboard/kitchen"
-            : "/dashboard",
+            : role === "cashier"
+              ? "/pos"
+              : "/dashboard",
       );
       router.refresh();
     } catch {

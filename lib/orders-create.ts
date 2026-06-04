@@ -56,6 +56,14 @@ export interface CreateOrderInput {
    *  kiosk bypasses the branch's minOrder threshold — that floor
    *  exists for delivery, not for someone tapping at the counter. */
   kiosk?: boolean;
+  /** Explicit Order.source override. POS sales pass "pos", kiosk cash-at-
+   *  counter passes "kiosk". When omitted, source is inferred from the
+   *  cart lines (ai_advisor / reorder / direct). */
+  sourceOverride?: "direct" | "ai_advisor" | "reorder" | "kiosk" | "pos";
+  /** Cashier ringing this sale. Set on POS and counter-paid kiosk orders. */
+  cashierId?: string;
+  /** Shift this sale belongs to. Set together with cashierId. */
+  posShiftId?: string;
   lines: CartLineInput[];
 }
 
@@ -445,13 +453,14 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   // otherwise direct. Upsell is line-only — an upsell add doesn't make
   // the whole order an "upsell order".
   const lineSources = orderItemData.map((d) => d.source);
-  const orderSource: "direct" | "ai_advisor" | "reorder" = lineSources.includes(
+  const inferredSource: "direct" | "ai_advisor" | "reorder" = lineSources.includes(
     "ai_advisor",
   )
     ? "ai_advisor"
     : lineSources.length > 0 && lineSources.every((s) => s === "reorder")
       ? "reorder"
       : "direct";
+  const orderSource = input.sourceOverride ?? inferredSource;
 
   const order = await prisma.order.create({
     data: {
@@ -462,6 +471,8 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       status: initialStatus,
       method: input.method,
       source: orderSource,
+      cashierId: input.cashierId ?? null,
+      posShiftId: input.posShiftId ?? null,
       deliveryAddressId: input.addressId ?? null,
       deliveryNotes: input.deliveryNotes ?? null,
       customerNotes: input.customerNotes ?? null,

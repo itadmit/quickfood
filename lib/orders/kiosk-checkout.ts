@@ -200,7 +200,9 @@ export async function materializeKioskCheckout(
 
   try {
     const input = checkout.cartData as unknown as CreateOrderInput;
-    const result = await createOrder(input);
+    // Stamp the source so the POS queue + analytics know the order came
+    // through the kiosk even when the cart was hydrated from JSON.
+    const result = await createOrder({ ...input, sourceOverride: "kiosk" });
 
     await prisma.kioskPendingCheckout.update({
       where: { id: checkoutId },

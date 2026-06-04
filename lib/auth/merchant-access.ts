@@ -11,6 +11,7 @@
  *                      keep their own owner-only page guards)
  *   kitchen          → orders + kitchen screen only
  *   courier_dispatch → orders + couriers only
+ *   cashier          → POS only (no /dashboard access)
  */
 
 export type MerchantRole =
@@ -19,6 +20,7 @@ export type MerchantRole =
   | "kitchen"
   | "courier_dispatch"
   | "platform_admin"
+  | "cashier"
   | "api"
   | string;
 
@@ -31,9 +33,17 @@ function normalize(pathname: string): string {
 /** Whether `role` may open a dashboard route. */
 export function canAccessDashboard(role: string | undefined, pathname: string): boolean {
   if (!role) return false;
-  if (role === "owner" || role === "platform_admin") return true;
 
   const p = normalize(pathname);
+  const inPos = p === "/pos" || p.startsWith("/pos/");
+  if (role === "cashier") return inPos;
+  if (inPos) {
+    // Owners and managers may train/debug on the POS. Other roles can't.
+    return role === "owner" || role === "manager" || role === "platform_admin";
+  }
+
+  if (role === "owner" || role === "platform_admin") return true;
+
   const inOrders = p === "/dashboard/orders" || p.startsWith("/dashboard/orders/");
   const inKitchen = p === "/dashboard/kitchen" || p.startsWith("/dashboard/kitchen/");
   const inCouriers = p === "/dashboard/couriers" || p.startsWith("/dashboard/couriers/");
@@ -48,6 +58,7 @@ export function canAccessDashboard(role: string | undefined, pathname: string): 
 
 /** Where to send a role when it lands on (or is bounced from) a page it can't see. */
 export function roleHome(role: string | undefined): string {
+  if (role === "cashier") return "/pos";
   if (role === "kitchen") return "/dashboard/kitchen";
   if (role === "courier_dispatch") return "/dashboard/orders";
   return "/dashboard";
