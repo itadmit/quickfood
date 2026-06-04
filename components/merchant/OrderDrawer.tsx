@@ -574,6 +574,10 @@ export function OrderDrawer({
                 הבקרה של Grow Payments. הסטטוס במערכת רק מסמן שזה קרה.
               </p>
             )}
+            <p className="text-xs bg-qf-tomato-soft border border-qf-tomato/40 text-qf-ink rounded-lg px-3 py-2">
+              <strong>הלקוח יקבל מייל ביטול</strong> עם פרטי ההזמנה וסיבת הביטול (אם נכתבה).
+              ביטולים תכופים פוגעים באמון הלקוחות במסעדה.
+            </p>
             <label className="block">
               <span className="text-xs font-medium block mb-1">סיבה (אופציונלי)</span>
               <textarea

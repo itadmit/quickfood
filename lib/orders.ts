@@ -5,7 +5,7 @@ import { scheduleReviewReminder } from "@/lib/reviews/schedule";
 import { recordOrderCommission } from "@/lib/billing-hub/commission";
 import { notifyCourierAssigned, notifyCustomerDelivered } from "@/lib/courier/notify";
 import { sendTenantPush } from "@/lib/merchant/push";
-import { sendOrderConfirmedEmail } from "@/lib/orders/notify-customer";
+import { sendOrderConfirmedEmail, sendOrderCancelledEmail } from "@/lib/orders/notify-customer";
 
 /**
  * Order status state machine. Defines which transitions are legal.
@@ -185,22 +185,28 @@ export async function advanceStatus(
   });
   if (!updated) throw new Error("order_not_found");
 
-  // When the order is delivered, kick off two billing-hub side effects:
-  //   (1) queue the review reminder
-  //   (2) record the 0.5% commission, but ONLY for cash orders. Card
-  //       orders already fire the commission from the payment callback the
-  //       moment Grow confirms (so a lazy merchant who never marks
-  //       "delivered" doesn't cost us the cut). The hub dedupes on
-  //       `idempotency_key: "order:<orderId>"` if both paths somehow fire.
+  // Cash commission fires the moment the merchant accepts the order
+  // (= leaves pending toward any active status). Card orders already
+  // record commission from the payment callback when Grow confirms.
+  // The hub dedupes on `idempotency_key: "order:<orderId>"` so retries
+  // or double-paths are safe. Cancellations don't reverse — known
+  // trade-off; merchants are deterred via a cancellation email to the
+  // customer (see refund route).
+  if (
+    order.paymentMethod === "cash" &&
+    order.status === "pending" &&
+    to !== "pending" &&
+    to !== "cancelled"
+  ) {
+    void recordOrderCommission(orderId).catch((err) => {
+      console.error("[commission] record failed", err);
+    });
+  }
+
   if (to === "delivered") {
     void scheduleReviewReminder(orderId).catch((err) => {
       console.error("[reviews] schedule failed", err);
     });
-    if (order.paymentMethod === "cash") {
-      void recordOrderCommission(orderId).catch((err) => {
-        console.error("[commission] record failed", err);
-      });
-    }
     void notifyCustomerDelivered(orderId).catch((err) => {
       console.error("[courier] notify delivered failed", err);
     });
@@ -237,6 +243,9 @@ export async function advanceStatus(
         cancelled_at: now.toISOString(),
       },
     });
+    void sendOrderCancelledEmail(orderId, { reason: options?.reason ?? null }).catch(
+      (err) => console.warn("[email] order cancelled failed", err),
+    );
   } else {
     void dispatchWebhook({
       tenantId: order.tenantId,

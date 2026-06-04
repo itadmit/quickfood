@@ -2,6 +2,7 @@ import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
+import { sendOrderCancelledEmail } from "@/lib/orders/notify-customer";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 
@@ -123,6 +124,10 @@ export const POST = handler(
         reason: body.reason ?? null,
       },
     });
+
+    void sendOrderCancelledEmail(order.id, { reason: body.reason ?? null }).catch((err) =>
+      console.warn("[email] order cancelled failed", err),
+    );
 
     return apiJson({
       ok: true,

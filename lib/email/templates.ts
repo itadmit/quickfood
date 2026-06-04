@@ -667,3 +667,76 @@ export function orderConfirmedEmail({
     footerNote: `נשלח בשם ${businessName}. לכל שאלה אפשר להשיב למייל זה.`,
   });
 }
+
+export function orderCancelledEmail({
+  customerName,
+  businessName,
+  orderNumber,
+  total,
+  paymentMethod,
+  reason,
+  branchPhone,
+  whatsappLink,
+}: {
+  customerName: string;
+  businessName: string;
+  orderNumber: string;
+  total: number;
+  paymentMethod: string;
+  reason?: string | null;
+  branchPhone?: string | null;
+  whatsappLink?: string | null;
+}) {
+  const paymentLabels: Record<string, string> = {
+    cash: "מזומן",
+    card: "כרטיס אשראי",
+    bit: "ביט",
+    apple_pay: "Apple Pay",
+    google_pay: "Google Pay",
+  };
+  const paymentLabel = paymentLabels[paymentMethod] ?? paymentMethod;
+  const refundLine =
+    paymentMethod === "cash"
+      ? "התשלום הוא במזומן ולכן לא בוצע חיוב בפועל."
+      : "אם בוצע חיוב, ההחזר יזוכה אוטומטית לאמצעי התשלום תוך מספר ימי עסקים. אם לא מופיע אצלך זיכוי תוך 7 ימי עסקים, צרו קשר עם המסעדה.";
+
+  const reasonBlock = reason
+    ? `<p dir="rtl" style="margin:0 0 14px;line-height:1.65;color:${BRAND.ink2};font-size:15px;direction:rtl;text-align:right;background:${BRAND.cream};border:1px solid #f0e8d2;border-radius:12px;padding:12px 14px;"><strong>סיבת הביטול:</strong><br/>${escape(reason)}</p>`
+    : "";
+
+  const contactTable = branchPhone
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" style="border-collapse:collapse;background:${BRAND.cream};border:1px solid #f0e8d2;border-radius:12px;padding:14px 16px;margin:6px 0 0;">
+        <tr>
+          <td dir="rtl" style="font-size:13px;color:${BRAND.mute};padding:3px 0;">הזמנה</td>
+          <td dir="ltr" style="font-size:13px;color:${BRAND.ink};font-weight:800;padding:3px 0 3px 12px;text-align:left;">${escape(orderNumber)}</td>
+        </tr>
+        <tr>
+          <td dir="rtl" style="font-size:13px;color:${BRAND.mute};padding:3px 0;">סכום</td>
+          <td dir="ltr" style="font-size:13px;color:${BRAND.ink2};padding:3px 0 3px 12px;text-align:left;">${escape(formatShekels(total))}</td>
+        </tr>
+        <tr>
+          <td dir="rtl" style="font-size:13px;color:${BRAND.mute};padding:3px 0;">תשלום</td>
+          <td dir="rtl" style="font-size:13px;color:${BRAND.ink2};padding:3px 0 3px 12px;text-align:left;">${escape(paymentLabel)}</td>
+        </tr>
+        <tr>
+          <td dir="rtl" style="font-size:13px;color:${BRAND.mute};padding:3px 0;">המסעדה</td>
+          <td dir="ltr" style="font-size:13px;color:${BRAND.ink2};padding:3px 0 3px 12px;text-align:left;"><a href="tel:${escape(branchPhone)}" style="color:${BRAND.ink2};text-decoration:none;">${escape(branchPhone)}</a></td>
+        </tr>
+      </table>`
+    : "";
+
+  return renderRtlEmail({
+    subject: `הזמנה ${orderNumber} בוטלה · ${businessName}`,
+    preheader: `המסעדה ${businessName} ביטלה את הזמנה ${orderNumber}.`,
+    heading: `שלום ${customerName}, ההזמנה בוטלה`,
+    paragraphs: [
+      `המסעדה <strong>${escape(businessName)}</strong> ביטלה את הזמנה <strong>${escape(orderNumber)}</strong>.`,
+      refundLine,
+      reasonBlock,
+      contactTable,
+    ].filter(Boolean),
+    raw: true,
+    whatsappButton: whatsappLink ? { href: whatsappLink, label: "צ'אט עם המסעדה" } : undefined,
+    footerNote: `נשלח בשם ${businessName}. לכל שאלה אפשר להשיב למייל זה.`,
+  });
+}

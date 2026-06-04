@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/db/client";
 import { sendEmail } from "@/lib/email/send";
-import { orderConfirmedEmail, type OrderConfirmedItem } from "@/lib/email/templates";
+import {
+  orderConfirmedEmail,
+  orderCancelledEmail,
+  type OrderConfirmedItem,
+} from "@/lib/email/templates";
 
 interface OptionShape {
   name?: string;
@@ -138,6 +142,58 @@ export async function sendOrderConfirmedEmail(orderId: string): Promise<void> {
     html,
     fromName: businessName,
     kind: "order_confirmed",
+    refKind: "order",
+    refId: order.id,
+  });
+}
+
+export async function sendOrderCancelledEmail(
+  orderId: string,
+  options?: { reason?: string | null },
+): Promise<void> {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      tenant: { select: { name: true } },
+      branch: { select: { phone: true } },
+      customer: { select: { email: true } },
+    },
+  });
+  if (!order) return;
+
+  const to = order.customerEmailSnap?.trim() || order.customer?.email?.trim() || null;
+  if (!to) return;
+
+  const customerName =
+    order.customerFirstNameSnap?.trim() ||
+    [order.customerFirstNameSnap, order.customerLastNameSnap].filter(Boolean).join(" ").trim() ||
+    "לקוח";
+  const businessName = order.tenant.name ?? "QuickFood";
+  const branchPhone = order.branch?.phone ?? null;
+  const waNumber = normalizeIsraeliPhoneForWa(branchPhone);
+  const whatsappLink = waNumber
+    ? `https://wa.me/${waNumber}?text=${encodeURIComponent(`שלום, ההזמנה שלי ${order.number} בוטלה`)}`
+    : null;
+
+  const { html, text } = orderCancelledEmail({
+    customerName,
+    businessName,
+    orderNumber: order.number,
+    total: order.total,
+    paymentMethod: order.paymentMethod,
+    reason: options?.reason ?? null,
+    branchPhone,
+    whatsappLink,
+  });
+
+  await sendEmail({
+    tenantId: order.tenantId,
+    to,
+    subject: `הזמנה ${order.number} בוטלה · ${businessName}`,
+    body: text,
+    html,
+    fromName: businessName,
+    kind: "order_cancelled",
     refKind: "order",
     refId: order.id,
   });
