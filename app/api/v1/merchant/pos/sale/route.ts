@@ -45,26 +45,41 @@ export const POST = handler(async (req: Request) => {
   });
   if (!shift) return apiError("no_open_shift", "אין משמרת פתוחה תואמת", 404);
 
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: session.tenantId },
-    select: { slug: true },
-  });
+  const [tenant, branch] = await Promise.all([
+    prisma.tenant.findUnique({
+      where: { id: session.tenantId },
+      select: { slug: true, name: true },
+    }),
+    prisma.branch.findUnique({
+      where: { id: shift.branchId },
+      select: { phone: true, email: true },
+    }),
+  ]);
   if (!tenant) return apiError("not_found", "tenant", 404);
 
   let customerPhone: string | undefined;
   let customerFirstName: string | undefined;
   let customerLastName: string | undefined;
+  let customerEmail: string | undefined;
   if (body.customer_id) {
     const c = await prisma.customer.findUnique({
       where: { id: body.customer_id },
-      select: { phone: true, firstName: true, lastName: true },
+      select: { phone: true, firstName: true, lastName: true, email: true },
     });
     if (c) {
       customerPhone = c.phone;
       customerFirstName = c.firstName;
       customerLastName = c.lastName;
+      customerEmail = c.email ?? undefined;
     }
   }
+  // No customer attached → seed real merchant defaults so Grow's
+  // production validator accepts the wallet setup. Falling back to a
+  // hard-coded "0500000000" + "Customer" gets the wallet rejected.
+  if (!customerPhone && branch?.phone) customerPhone = branch.phone;
+  if (!customerFirstName) customerFirstName = tenant.name;
+  if (!customerLastName) customerLastName = "(קופה)";
+  if (!customerEmail && branch?.email) customerEmail = branch.email;
 
   try {
     const result = await createOrder({
@@ -73,6 +88,11 @@ export const POST = handler(async (req: Request) => {
       guestPhone: customerPhone,
       guestFirstName: customerFirstName,
       guestLastName: customerLastName,
+      customerEmail,
+      // Don't auto-create a Customer row for an unattached POS walk-in:
+      // the snapshot phone/name above is the merchant's fallback so Grow
+      // accepts the wallet, not real customer data.
+      linkGuestCustomer: !!body.customer_id,
       method: "pickup",
       customerNotes: body.notes ?? null,
       paymentMethod: body.payment_method,

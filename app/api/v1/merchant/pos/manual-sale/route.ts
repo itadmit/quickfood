@@ -34,13 +34,27 @@ export const POST = handler(async (req: Request) => {
   });
   if (!shift) return apiError("no_open_shift", "אין משמרת פתוחה תואמת", 404);
 
-  // Order number generator mirrors lib/orders-create.ts — keeps the
-  // VR-1234 sequence stable across POS + storefront.
-  const counterTenant = await prisma.tenant.update({
-    where: { id: session.tenantId },
-    data: { nextOrderNumber: { increment: 1 } },
-    select: { nextOrderNumber: true, slug: true },
-  });
+  // Snapshot the customer (if attached) or fall back to the tenant's
+  // own contact info — Grow's production validator rejects placeholder
+  // names ("Customer ."), placeholder phones ("0500000000"), and empty
+  // emails, even when the wallet would otherwise succeed.
+  const [counterTenant, branch, customer] = await Promise.all([
+    prisma.tenant.update({
+      where: { id: session.tenantId },
+      data: { nextOrderNumber: { increment: 1 } },
+      select: { nextOrderNumber: true, slug: true, name: true },
+    }),
+    prisma.branch.findUnique({
+      where: { id: shift.branchId },
+      select: { phone: true, email: true },
+    }),
+    body.customer_id
+      ? prisma.customer.findUnique({
+          where: { id: body.customer_id },
+          select: { phone: true, firstName: true, lastName: true, email: true },
+        })
+      : Promise.resolve(null),
+  ]);
   const orderSeq = counterTenant.nextOrderNumber - 1;
   const prefix =
     counterTenant.slug
@@ -50,6 +64,11 @@ export const POST = handler(async (req: Request) => {
       .toUpperCase()
       .slice(0, 3) || "QF";
   const number = `${prefix}-${orderSeq}`;
+
+  const customerPhoneSnap = customer?.phone ?? branch?.phone ?? null;
+  const customerFirstNameSnap = customer?.firstName ?? counterTenant.name;
+  const customerLastNameSnap = customer?.lastName ?? "(קופה)";
+  const customerEmailSnap = customer?.email ?? branch?.email ?? null;
 
   const order = await prisma.order.create({
     data: {
@@ -65,6 +84,10 @@ export const POST = handler(async (req: Request) => {
       subtotal: body.amount,
       total: body.amount,
       customerNotes: body.notes ?? null,
+      customerPhoneSnap,
+      customerFirstNameSnap,
+      customerLastNameSnap,
+      customerEmailSnap,
       cashierId: session.userId,
       posShiftId: shift.id,
       items: {

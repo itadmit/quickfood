@@ -64,6 +64,13 @@ export interface CreateOrderInput {
   cashierId?: string;
   /** Shift this sale belongs to. Set together with cashierId. */
   posShiftId?: string;
+  /** When false, the guestPhone is used ONLY for the order snapshot — no
+   *  Customer row is found or created. POS uses this to seed merchant
+   *  fallback phone/name into the order snapshot (so Grow's production
+   *  wallet accepts the auth code) without polluting the Customer table
+   *  with a row that's really the merchant's own contact info. Default
+   *  true preserves the legacy storefront flow. */
+  linkGuestCustomer?: boolean;
   lines: CartLineInput[];
 }
 
@@ -387,7 +394,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   // so review reminders, history rails, and the customer's review
   // eligibility all work without requiring OTP up front.
   let effectiveCustomerId: string | null = input.customerId ?? null;
-  if (!effectiveCustomerId && input.guestPhone) {
+  if (!effectiveCustomerId && input.guestPhone && input.linkGuestCustomer !== false) {
     const existing = await prisma.customer.findUnique({
       where: { phone: input.guestPhone },
       select: { id: true, firstName: true, lastName: true, email: true },
