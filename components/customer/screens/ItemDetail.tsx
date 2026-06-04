@@ -49,6 +49,7 @@ interface OptionGroup {
   includedFree?: number;
   helpText?: string | null;
   allowHalf?: boolean;
+  maxPerSide?: number | null;
   options: Option[];
 }
 interface ItemData {
@@ -326,14 +327,26 @@ export function ItemDetail({
   function toggleHalf(group: OptionGroup, optionId: string, placement: HalfPlacement) {
     setHalfPicks((prev) => {
       const gMap = { ...(prev[group.id] ?? {}) };
-      const count = Object.keys(gMap).length;
+      const cap = group.maxPerSide ?? null;
+
       if (gMap[optionId] === placement) {
-        // tap same button → deselect
         delete gMap[optionId];
-      } else if (!gMap[optionId] && count >= group.maxSelect) {
-        // at max, can't add more
-        return prev;
+        return { ...prev, [group.id]: gMap };
+      }
+
+      if (cap != null) {
+        const nextMap = { ...gMap, [optionId]: placement };
+        let left = 0;
+        let right = 0;
+        for (const p of Object.values(nextMap)) {
+          if (p === "left" || p === "full") left += 1;
+          if (p === "right" || p === "full") right += 1;
+        }
+        if (left > cap || right > cap) return prev;
+        gMap[optionId] = placement;
       } else {
+        const count = Object.keys(gMap).length;
+        if (!gMap[optionId] && count >= group.maxSelect) return prev;
         gMap[optionId] = placement;
       }
       return { ...prev, [group.id]: gMap };
@@ -585,15 +598,24 @@ export function ItemDetail({
               <button
                 type="button"
                 onClick={() => setSizeId(upgradeTo.id)}
-                className="mt-2 mx-5 lg:mx-0 block w-[calc(100%-2.5rem)] lg:w-full rounded-2xl border-2 border-(--qf-primary) bg-(--qf-soft) px-4 py-3 text-start hover:bg-(--qf-primary)/15 transition active:scale-[0.99]"
+                className="mt-2 mx-5 lg:mx-0 block w-[calc(100%-2.5rem)] lg:w-full rounded-2xl border-2 border-(--qf-primary) bg-(--qf-soft) p-4 text-start hover:bg-(--qf-primary)/15 transition active:scale-[0.99]"
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-black text-(--qf-deep)">
-                    שדרגו ל-{upgradeTo.name} ב-+{formatPrice(upgradeDelta)} בלבד
-                  </span>
-                  <span className="text-xs bg-(--qf-primary) text-white px-2 py-1 rounded-full font-bold whitespace-nowrap">
-                    שדרג
-                  </span>
+                <div className="flex items-center gap-3">
+                  {heroImage && (
+                    <img
+                      src={heroImage}
+                      alt=""
+                      className="w-14 h-14 rounded-xl object-cover shrink-0"
+                    />
+                  )}
+                  <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
+                    <span className="text-sm font-black text-(--qf-deep)">
+                      שדרגו ל-{upgradeTo.name} ב-+{formatPrice(upgradeDelta)} בלבד
+                    </span>
+                    <span className="text-xs bg-(--qf-primary) text-white px-2 py-1 rounded-full font-bold whitespace-nowrap">
+                      שדרג
+                    </span>
+                  </div>
                 </div>
               </button>
             )}
@@ -618,16 +640,33 @@ export function ItemDetail({
       {item.optionGroups.map((g) => {
         if (g.allowHalf) {
           const gHalf = halfPicks[g.id] ?? {};
-          const selected = Object.keys(gHalf).length;
-          const atMax = selected >= g.maxSelect;
+          const cap = g.maxPerSide ?? null;
+
+          let leftCount = 0;
+          let rightCount = 0;
+          for (const p of Object.values(gHalf)) {
+            if (p === "left" || p === "full") leftCount += 1;
+            if (p === "right" || p === "full") rightCount += 1;
+          }
+          const totalDistinct = Object.keys(gHalf).length;
+
+          const selected = cap != null ? Math.max(leftCount, rightCount) : totalDistinct;
+          const sectionMax = cap ?? g.maxSelect;
+          const atMax = cap != null
+            ? leftCount >= cap && rightCount >= cap
+            : totalDistinct >= g.maxSelect;
           const minHalf = g.required ? Math.max(1, g.minSelect) : g.minSelect;
+
+          const counterLabel = cap != null
+            ? `צד א׳: ${leftCount}/${cap} · צד ב׳: ${rightCount}/${cap}`
+            : null;
           const subtitle = g.required
-            ? selected >= minHalf
-              ? `הושלם · ${selected}/${g.maxSelect}`
-              : `חובה ${minHalf}–${g.maxSelect} · ${selected}/${g.maxSelect}`
+            ? totalDistinct >= minHalf
+              ? counterLabel ?? `הושלם · ${totalDistinct}/${g.maxSelect}`
+              : counterLabel ?? `חובה ${minHalf}–${g.maxSelect} · ${totalDistinct}/${g.maxSelect}`
             : atMax
-              ? `הגעת למקסימום · ${g.maxSelect}/${g.maxSelect}`
-              : `אפשר לבחור עד ${g.maxSelect} · כל תוספת ניתן לקבוע לחצי פיצה`;
+              ? counterLabel ?? `הגעת למקסימום · ${g.maxSelect}/${g.maxSelect}`
+              : counterLabel ?? `אפשר לבחור עד ${g.maxSelect} · כל תוספת ניתן לקבוע לחצי פיצה`;
 
           return (
             <Section
@@ -636,16 +675,38 @@ export function ItemDetail({
               title={g.name}
               required={g.required}
               subtitle={subtitle}
-              counter={g.maxSelect > 1 ? { selected, max: g.maxSelect, atMax } : undefined}
+              counter={sectionMax > 1 ? { selected, max: sectionMax, atMax } : undefined}
               helpText={g.helpText}
               flash={flashGroupId === g.id}
             >
               {g.options.map((o) => {
                 const placement = gHalf[o.id] as HalfPlacement | undefined;
-                const blocked = !placement && atMax;
                 const halfPrice = Math.round(o.priceDelta / 2);
+
+                const wouldExceed = (p: HalfPlacement) => {
+                  if (cap == null) return false;
+                  if (placement === p) return false;
+                  let l = leftCount;
+                  let r = rightCount;
+                  if (placement === "left" || placement === "full") l -= 1;
+                  if (placement === "right" || placement === "full") r -= 1;
+                  if (p === "left" || p === "full") l += 1;
+                  if (p === "right" || p === "full") r += 1;
+                  return l > cap || r > cap;
+                };
+                const blockedAll = !placement && atMax;
+                const rowBlocked = blockedAll
+                  || (cap != null && !placement && wouldExceed("left") && wouldExceed("full") && wouldExceed("right"));
+
                 return (
-                  <div key={o.id} className={cn("flex items-center gap-2 px-4 py-3 border-b border-qf-line last:border-0", blocked && "opacity-40")}>
+                  <div key={o.id} className={cn("flex items-center gap-2 px-4 py-3 border-b border-qf-line last:border-0", rowBlocked && "opacity-40")}>
+                    {o.imageUrl && (
+                      <img
+                        src={o.imageUrl}
+                        alt=""
+                        className="w-10 h-10 rounded-lg object-cover shrink-0"
+                      />
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium">{o.name}</div>
                       {o.priceDelta > 0 && (
@@ -655,22 +716,28 @@ export function ItemDetail({
                       )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      {(["left", "full", "right"] as HalfPlacement[]).map((p) => (
-                        <button
-                          key={p}
-                          type="button"
-                          disabled={blocked && placement !== p}
-                          onClick={() => { if (!blocked || placement) toggleHalf(g, o.id, p); }}
-                          className={cn(
-                            "h-8 px-2.5 rounded-lg text-xs font-semibold border transition",
-                            placement === p
-                              ? "bg-(--qf-primary) border-(--qf-primary) text-white"
-                              : "bg-white border-qf-line text-qf-ink2 hover:border-(--qf-primary) hover:text-(--qf-primary)",
-                          )}
-                        >
-                          {p === "left" ? "חצי א׳" : p === "right" ? "חצי ב׳" : "שלם"}
-                        </button>
-                      ))}
+                      {(["left", "full", "right"] as HalfPlacement[]).map((p) => {
+                        const buttonBlocked = rowBlocked
+                          ? placement !== p
+                          : wouldExceed(p);
+                        return (
+                          <button
+                            key={p}
+                            type="button"
+                            disabled={buttonBlocked}
+                            onClick={() => { if (!buttonBlocked) toggleHalf(g, o.id, p); }}
+                            className={cn(
+                              "h-8 px-2.5 rounded-lg text-xs font-semibold border transition",
+                              placement === p
+                                ? "bg-(--qf-primary) border-(--qf-primary) text-white"
+                                : "bg-white border-qf-line text-qf-ink2 hover:border-(--qf-primary) hover:text-(--qf-primary)",
+                              buttonBlocked && "opacity-40 cursor-not-allowed",
+                            )}
+                          >
+                            {p === "left" ? "חצי א׳" : p === "right" ? "חצי ב׳" : "שלם"}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 );

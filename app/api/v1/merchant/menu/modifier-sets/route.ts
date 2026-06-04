@@ -29,6 +29,7 @@ export const GET = handler(async () => {
       max_select: s.maxSelect,
       included_free: s.includedFree,
       help_text: s.helpText,
+      max_per_side: s.maxPerSide,
       position: s.position,
       attached_count: s._count.attachedTo,
       options: s.options.map((o) => ({
@@ -59,6 +60,7 @@ export const POST = handler(async (req: Request) => {
       maxSelect: body.max_select,
       includedFree: body.included_free,
       helpText: body.help_text ?? null,
+      maxPerSide: body.max_per_side ?? null,
       position: body.position,
       options: {
         create: body.options.map((o, oi) => ({

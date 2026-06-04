@@ -113,6 +113,7 @@ export default async function ItemEditPage({
           includedFree: g.includedFree,
           helpText: g.helpText,
           allowHalf: g.allowHalf,
+          maxPerSide: g.maxPerSide,
           templateSetId: g.templateSetId,
           options: g.options.map((o) => ({
             name: o.name,

@@ -44,6 +44,7 @@ interface OptionGroup {
   includedFree: number;
   helpText: string | null;
   allowHalf: boolean;
+  maxPerSide: number | null;
   templateSetId: string | null;
   options: Option[];
 }
@@ -177,6 +178,7 @@ export function ItemEditor({
           includedFree: 0,
           helpText: null,
           allowHalf: false,
+          maxPerSide: null,
           templateSetId: null,
           options: [],
         },
@@ -200,6 +202,7 @@ export function ItemEditor({
           includedFree: set.includedFree,
           helpText: set.helpText,
           allowHalf: false,
+          maxPerSide: null,
           templateSetId: set.id,
           options: [],
         },
@@ -252,6 +255,7 @@ export function ItemEditor({
           included_free: g.includedFree,
           help_text: g.helpText,
           allow_half: g.allowHalf,
+          max_per_side: g.maxPerSide,
           template_set_id: g.templateSetId,
           options: g.options.map((o) => ({
             name: o.name,
@@ -1121,10 +1125,35 @@ function GroupEditor({
             <input
               type="checkbox"
               checked={group.allowHalf}
-              onChange={(e) => onChange({ ...group, allowHalf: e.target.checked })}
+              onChange={(e) =>
+                onChange({
+                  ...group,
+                  allowHalf: e.target.checked,
+                  maxPerSide: e.target.checked ? group.maxPerSide : null,
+                })
+              }
             />
             <span>חצי/חצי — לקוח יכול לבחור כל תוספת לחצי בלבד</span>
           </label>
+          {group.allowHalf && (
+            <label className="col-span-3 flex flex-col gap-1">
+              <span className="text-qf-mute" title="כמה תוספות מותר לבחור על כל חצי בנפרד. שדרגו לתוסי 'שלם' נספרת בשני הצדדים. ריק = ללא הגבלה לפי צד.">
+                מקסימום תוספות לצד
+              </span>
+              <input
+                type="number"
+                min={1}
+                placeholder="ללא הגבלה לפי צד"
+                value={group.maxPerSide ?? ""}
+                onChange={(e) => {
+                  const raw = e.target.value.trim();
+                  const parsed = raw === "" ? null : Math.max(1, parseInt(raw, 10) || 1);
+                  onChange({ ...group, maxPerSide: parsed });
+                }}
+                className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum text-base lg:text-sm"
+              />
+            </label>
+          )}
           <label className="flex flex-col gap-1">
             <span className="text-qf-mute">מינ׳ בחירות</span>
             <input
