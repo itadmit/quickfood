@@ -3,9 +3,15 @@
 import { usePos } from "@/components/pos/PosContext";
 import { usePosCart } from "@/components/pos/PosCartProvider";
 import { PosTicket } from "@/components/pos/PosTicket";
-import { PosMenuPicker } from "@/components/pos/PosMenuPicker";
+import { PosMenuPicker, type PosCategory, type PosItem } from "@/components/pos/PosMenuPicker";
 
-export function PosRegister() {
+export function PosRegister({
+  categories,
+  items,
+}: {
+  categories: PosCategory[];
+  items: PosItem[];
+}) {
   const { shift } = usePos();
   const { hydrated } = usePosCart();
 
@@ -18,10 +24,10 @@ export function PosRegister() {
 
   return (
     <div className="h-full flex">
-      <section className="flex-1 min-w-0 overflow-y-auto">
-        <PosMenuPicker />
+      <section className="flex-1 min-w-0 overflow-y-auto bg-qf-bg/40">
+        <PosMenuPicker categories={categories} items={items} />
       </section>
-      <aside className="w-[420px] shrink-0 border-s-2 border-black bg-white flex flex-col">
+      <aside className="w-[420px] lg:w-[460px] xl:w-[520px] shrink-0 border-s-2 border-black bg-white flex flex-col">
         <PosTicket />
       </aside>
     </div>
