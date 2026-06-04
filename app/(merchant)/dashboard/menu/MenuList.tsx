@@ -280,9 +280,9 @@ export function MenuList({
         <button
           type="button"
           onClick={() => setCategoryEditorOpen(true)}
-          className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-qf-line-dash text-sm text-qf-ink2 hover:bg-qf-line-soft"
+          className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5"
         >
-          <IcoGear s={14} c="#3a4a40" />
+          <IcoGear s={14} c="#000" />
           <span>ערוך קטגוריות</span>
         </button>
       </div>
