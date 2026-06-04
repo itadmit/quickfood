@@ -10,6 +10,7 @@ interface GrowState {
   test_mode: boolean;
   user_id: string;
   page_code: string;
+  api_key: string;
   max_installments: number;
   apple_pay_domain_association: string;
 }
@@ -94,6 +95,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
             test_mode: v.grow.test_mode,
             user_id: v.grow.user_id || undefined,
             page_code: v.grow.page_code || undefined,
+            api_key: v.grow.api_key || undefined,
             max_installments: v.grow.max_installments,
             apple_pay_domain_association: canEditApplePay
               ? v.grow.apple_pay_domain_association
@@ -258,6 +260,23 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
               </select>
             </Field>
           </div>
+
+          {!v.grow.test_mode && (
+            <Field
+              label="API Key"
+              hint="המפתח שמגיע מ-Grow במייל אחרי אישור לחיוב לייב. חובה למצב Production — בלעדיו ארנק התשלום ידחה את ההזמנות."
+            >
+              <input
+                value={v.grow.api_key}
+                onChange={(e) => setGrow("api_key", e.target.value.trim())}
+                dir="ltr"
+                autoComplete="off"
+                spellCheck={false}
+                placeholder="4655b5e3bb4f"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
+              />
+            </Field>
+          )}
 
           <details className="rounded-xl border border-qf-line-soft">
             <summary className="px-3.5 py-2.5 text-sm cursor-pointer select-none">

@@ -22,6 +22,7 @@ export const dynamic = "force-dynamic";
 interface GrowCredentials {
   userId?: string;
   pageCode?: string;
+  apiKey?: string;
   [k: string]: unknown;
 }
 
@@ -65,6 +66,7 @@ export const GET = handler(async () => {
       test_mode: config?.testMode ?? true,
       user_id: credentials.userId ?? "",
       page_code: credentials.pageCode ?? "",
+      api_key: credentials.apiKey ?? "",
       max_installments: settings.maxInstallments ?? 1,
       apple_pay_domain_association: config?.applePayDomainAssociation ?? "",
     },
@@ -131,6 +133,10 @@ export const PATCH = handler(async (req: Request) => {
     if (body.grow.page_code !== undefined) {
       if (body.grow.page_code === "") delete nextCreds.pageCode;
       else nextCreds.pageCode = body.grow.page_code;
+    }
+    if (body.grow.api_key !== undefined) {
+      if (body.grow.api_key === "") delete nextCreds.apiKey;
+      else nextCreds.apiKey = body.grow.api_key;
     }
 
     const nextSettings: GrowSettings = { ...prevSettings };

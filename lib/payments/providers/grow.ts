@@ -166,7 +166,11 @@ export class GrowProvider extends BasePaymentProvider {
   // the merchant set — see grow-test-creds.ts for the rationale.
   private get apiKey(): string {
     if (this.config!.testMode) return GROW_SHARED_TEST_API_KEY;
-    return process.env.GROW_API_KEY!;
+    // Production: prefer the tenant's own apiKey from credentials. Falls
+    // back to the platform env var so older tenants whose row was
+    // created before the per-tenant field existed keep working until the
+    // merchant pastes their own key in Settings.
+    return this.config!.credentials.apiKey || process.env.GROW_API_KEY!;
   }
 
   private get pageCode(): string {
@@ -334,6 +338,14 @@ export class GrowProvider extends BasePaymentProvider {
 
       const commission = process.env.GROW_COMPANY_COMMISSION;
       if (commission && Number(commission) > 0) body.companyCommission = Number(commission);
+
+      // Grow PROD requires apiKey in the BODY (sandbox tolerates header).
+      // Curl-tested against secure.meshulam.co.il: sending only via the
+      // X-API-KEY header → "פרמטר קוד זיהוי אינו תקין: apiKey" (err 701).
+      // Sending in the body → status:1 + authCode. We keep the header
+      // too so the sandbox flow stays identical and any reverse-proxy
+      // logging redaction still hits both spots.
+      body.apiKey = this.apiKey;
 
       const response = await this.post<GrowResponse<CreatePaymentProcessData>>(
         "/createPaymentProcess",

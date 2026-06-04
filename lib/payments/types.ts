@@ -14,9 +14,11 @@ export type TransactionStatus = "pending" | "processing" | "success" | "failed" 
 // ─── Configuration ─────────────────────────────────────────────
 
 export interface ProviderCredentials {
-  // Grow per-merchant
+  // Grow per-merchant. PRODUCTION requires apiKey per tenant — sandbox
+  // shares one platform key but live merchants each have their own.
   userId?: string;
   pageCode?: string; // optional override of platform default
+  apiKey?: string; // per-tenant for PROD; falls back to env GROW_API_KEY
   // Generic
   [key: string]: string | undefined;
 }

@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 interface GrowCredentials {
   userId?: string;
   pageCode?: string;
+  apiKey?: string;
 }
 
 interface GrowSettings {
@@ -53,6 +54,7 @@ export default async function PaymentsSettingsPage() {
             test_mode: config?.testMode ?? true,
             user_id: creds.userId ?? "",
             page_code: creds.pageCode ?? "",
+            api_key: creds.apiKey ?? "",
             max_installments: settings.maxInstallments ?? 1,
             apple_pay_domain_association:
               config?.applePayDomainAssociation ?? "",

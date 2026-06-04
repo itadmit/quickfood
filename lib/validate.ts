@@ -494,6 +494,7 @@ export const MerchantPaymentsPatchSchema = z
         test_mode: z.boolean().optional(),
         user_id: z.string().min(1).max(64).optional(),
         page_code: z.string().max(64).optional(),
+        api_key: z.string().max(128).optional(),
         max_installments: z.number().int().min(1).max(12).optional(),
         /** Apple Pay domain-association file content. Empty string clears it. */
         apple_pay_domain_association: z
