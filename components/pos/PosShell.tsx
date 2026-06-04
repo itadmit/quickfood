@@ -33,9 +33,12 @@ export function PosShell({ cashier, tenant, branch, shift: initialShift, childre
       onShiftChange={setShift}
     >
       <PosCartProvider tenantSlug={tenant.slug}>
-        <div className="min-h-screen flex flex-col bg-qf-bg">
+        {/* h-screen (not min-h) so the whole POS lives in the viewport.
+            The menu picker + ticket scroll inside their own panes,
+            keeping the bottom action row glued to the screen edge. */}
+        <div className="h-screen flex flex-col bg-qf-bg overflow-hidden">
           <PosTopBar onCloseShift={() => setClosing(true)} />
-          <main className="flex-1 overflow-hidden">{children}</main>
+          <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
         </div>
         {needsShift && <PosShiftOpenModal onOpened={setShift} />}
         {closing && shift && (

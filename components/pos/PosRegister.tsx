@@ -23,11 +23,11 @@ export function PosRegister({
   }
 
   return (
-    <div className="h-full flex">
-      <section className="flex-1 min-w-0 overflow-y-auto bg-qf-bg/40">
+    <div className="h-full flex min-h-0">
+      <section className="flex-1 min-w-0 min-h-0 overflow-y-auto bg-qf-bg/40">
         <PosMenuPicker categories={categories} items={items} />
       </section>
-      <aside className="w-[420px] lg:w-[460px] xl:w-[520px] shrink-0 border-s-2 border-black bg-white flex flex-col">
+      <aside className="w-[420px] lg:w-[460px] xl:w-[520px] shrink-0 border-s-2 border-black bg-white flex flex-col h-full min-h-0">
         <PosTicket />
       </aside>
     </div>
