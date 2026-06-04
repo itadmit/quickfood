@@ -71,6 +71,8 @@ interface BranchInfo {
   deliveryFee: number;
   serviceFee: number;
   minOrder: number;
+  status: "open" | "busy" | "closed";
+  busyEtaBoostMinutes: number;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);

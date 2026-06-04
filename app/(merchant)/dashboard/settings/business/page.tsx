@@ -35,6 +35,7 @@ export default async function BusinessSettingsPage() {
           minOrder: branch.minOrder,
           deliveryFee: branch.deliveryFee,
           serviceFee: branch.serviceFee,
+          busyEtaBoostMinutes: branch.busyEtaBoostMinutes,
           vatNumber: tenant.vatNumber ?? "",
         }}
       />

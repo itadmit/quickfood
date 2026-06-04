@@ -438,6 +438,10 @@ model Branch {
   email       String?
   isPrimary   Boolean          @default(false) @map("is_primary")
   status      RestaurantStatus @default(open)
+  // Minutes added to every ETA when status == busy. Customer-facing
+  // displays surface "+N דק' (עומס)" and the busy-alert modal warns the
+  // customer at entry + before checkout.
+  busyEtaBoostMinutes Int      @default(15) @map("busy_eta_boost_minutes")
   hours       Json             @default("{}")
   minOrder    Int              @default(0) @map("min_order")
   deliveryFee Int              @default(0) @map("delivery_fee")

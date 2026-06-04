@@ -14,6 +14,7 @@ import { takeCheckoutPrefill } from "@/lib/checkout-prefill";
 import { readDeliveryChoice } from "@/lib/delivery-city-storage";
 import { CitySelect } from "@/components/customer/CitySelect";
 import { GrowPaymentSdk, renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
+import { BusyAlertModal } from "@/components/customer/BranchStatusModal";
 
 type CustomerPaymentMethod = "cash" | "card" | "bit" | "apple_pay" | "google_pay";
 
@@ -63,6 +64,7 @@ export function CustomerCheckout({
   const [tip, setTip] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [busyAlertOpen, setBusyAlertOpen] = useState(false);
 
   // Schedule-for-later. asap = deliver as soon as possible (the default);
   // scheduledTime is a "HH:mm" string for today only (no multi-day picker
@@ -316,6 +318,27 @@ export function CustomerCheckout({
         </div>
       </div>
     );
+  }
+
+  // The pay-button handler. Shows the busy-alert modal once per session
+  // when the branch is busy, then defers to `place()` after the customer
+  // acknowledges. Session-scoped so the alert doesn't reappear on a retry.
+  function onPlaceClick() {
+    if (branch?.status === "busy") {
+      const ackKey = `qf:busy-ack:${tenantSlug}`;
+      const acked = typeof window !== "undefined" && window.sessionStorage.getItem(ackKey);
+      if (!acked) {
+        setBusyAlertOpen(true);
+        return;
+      }
+    }
+    void place();
+  }
+
+  function ackBusyAndPlace() {
+    window.sessionStorage.setItem(`qf:busy-ack:${tenantSlug}`, "1");
+    setBusyAlertOpen(false);
+    void place();
   }
 
   async function place() {
@@ -1020,7 +1043,7 @@ export function CustomerCheckout({
             </div>
             <button
               type="button"
-              onClick={place}
+              onClick={onPlaceClick}
               disabled={!canPlace}
               className="w-full mt-4 bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-14 text-base font-semibold flex items-center justify-between shadow-sm shadow-(--qf-primary)/25 transition"
             >
@@ -1051,7 +1074,7 @@ export function CustomerCheckout({
       <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 max-w-md mx-auto bg-white border-t border-qf-line px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <button
           type="button"
-          onClick={place}
+          onClick={onPlaceClick}
           disabled={!canPlace}
           className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-16 text-base font-semibold flex items-center justify-between shadow-lg shadow-(--qf-primary)/25 transition active:scale-[0.99]"
         >
@@ -1095,6 +1118,13 @@ export function CustomerCheckout({
               setPendingPayment(null);
             }
           }}
+        />
+      )}
+      {busyAlertOpen && (
+        <BusyAlertModal
+          boostMinutes={branch?.busyEtaBoostMinutes ?? 15}
+          ctaLabel="הבנתי, המשך להזמין"
+          onClose={ackBusyAndPlace}
         />
       )}
     </div>

@@ -121,6 +121,21 @@ export default async function HomePage({
       })
     : Promise.resolve([] as { name: string; cities: string[] }[]);
 
+  const reviewsForSummaryPromise =
+    tenant.reviewsEnabled && tenant.reviewsPublic
+      ? prisma.review.findMany({
+          where: { tenantId: tenant.id, status: "visible" },
+          select: { rating: true },
+        })
+      : Promise.resolve([] as { rating: number }[]);
+
+  const etaZonesPromise = primaryBranchId
+    ? prisma.deliveryZone.findMany({
+        where: { branchId: primaryBranchId, active: true },
+        select: { minEta: true, maxEta: true },
+      })
+    : Promise.resolve([] as { minEta: number; maxEta: number }[]);
+
   const [
     allCategories,
     popular,
@@ -130,6 +145,8 @@ export default async function HomePage({
     bannerCampaign,
     pendingReview,
     zones,
+    reviewsForSummary,
+    etaZones,
   ] = await Promise.all([
     prisma.menuCategory.findMany({
       where: { tenantId: tenant.id, active: true },
@@ -167,7 +184,29 @@ export default async function HomePage({
     }),
     pendingReviewPromise,
     zonesPromise,
+    reviewsForSummaryPromise,
+    etaZonesPromise,
   ]);
+
+  const ratingAvg =
+    reviewsForSummary.length > 0
+      ? Math.round(
+          (reviewsForSummary.reduce((a, r) => a + r.rating, 0) /
+            reviewsForSummary.length) *
+            10,
+        ) / 10
+      : 0;
+  const ratingSummary =
+    reviewsForSummary.length > 0
+      ? { average: ratingAvg, count: reviewsForSummary.length }
+      : null;
+
+  const deliveryEta = etaZones.length > 0
+    ? {
+        min: Math.min(...etaZones.map((z) => z.minEta)),
+        max: Math.max(...etaZones.map((z) => z.maxEta)),
+      }
+    : null;
 
   const menuItems = allMenuItems.filter((i) => isItemVisibleNow(i));
   const categories = allCategories.slice(0, 8);
@@ -237,12 +276,21 @@ export default async function HomePage({
         branch
           ? {
               address: branch.address,
+              phone: branch.phone,
               status: branch.status,
               deliveryFee: branch.deliveryFee,
+              serviceFee: branch.serviceFee,
               minOrder: branch.minOrder,
+              hours: (branch.hours ?? {}) as Record<
+                string,
+                { open: string; close: string; active: boolean }
+              >,
+              busyEtaBoostMinutes: branch.busyEtaBoostMinutes,
             }
           : null
       }
+      ratingSummary={ratingSummary}
+      deliveryEta={deliveryEta}
       categories={categories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color }))}
       allCategories={allCategories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color }))}
       menuItems={menuItems.map((i) => ({

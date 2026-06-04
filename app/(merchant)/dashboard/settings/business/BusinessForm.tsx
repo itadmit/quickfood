@@ -12,6 +12,7 @@ interface Initial {
   minOrder: number;
   deliveryFee: number;
   serviceFee: number;
+  busyEtaBoostMinutes: number;
   vatNumber: string;
 }
 
@@ -41,6 +42,7 @@ export function BusinessForm({ branchId, initial }: { branchId: string; initial:
             min_order: v.minOrder,
             delivery_fee: v.deliveryFee,
             service_fee: v.serviceFee,
+            busy_eta_boost_minutes: v.busyEtaBoostMinutes,
           }),
         }),
         fetch(`/api/v1/merchant/tenant`, {
@@ -113,6 +115,30 @@ export function BusinessForm({ branchId, initial }: { branchId: string; initial:
         </Field>
         <Field label="דמי שירות">
           <NumberField value={v.serviceFee} onChange={(n) => set("serviceFee", n)} />
+        </Field>
+      </div>
+
+      <hr className="border-qf-line-soft" />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Field label="תוספת ETA בעומס (דקות)">
+          <div className="flex items-center border border-qf-line-dash rounded-xl focus-within:border-(--qf-primary)">
+            <span className="px-3 text-qf-mute text-sm">+</span>
+            <input
+              type="number"
+              min={0}
+              max={180}
+              value={v.busyEtaBoostMinutes}
+              onChange={(e) =>
+                set("busyEtaBoostMinutes", Math.max(0, Math.min(180, parseInt(e.target.value, 10) || 0)))
+              }
+              className="flex-1 py-2.5 outline-none bg-transparent tnum"
+            />
+            <span className="px-3 text-qf-mute text-sm">דק&apos;</span>
+          </div>
+          <p className="text-[11px] text-qf-mute mt-1 leading-snug">
+            כשהסטטוס במצב &quot;עומס&quot; — ה-ETA שמוצג ללקוח גדל בכמות הזו ומופיע מודל אזהרה.
+          </p>
         </Field>
       </div>
 

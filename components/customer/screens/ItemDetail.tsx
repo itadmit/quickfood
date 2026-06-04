@@ -94,9 +94,10 @@ export function ItemDetail({
   addSource?: CartLineSource;
 }) {
   const router = useRouter();
-  const { add, updateLine, tenant } = useCart();
+  const { add, updateLine, tenant, branch } = useCart();
   const isEditing = !!editLine;
   const upsellSizeNudge = tenant.upsellSizeNudge !== false;
+  const branchClosed = branch?.status === "closed";
 
   const defaultSize = item.sizes.find((s) => s.isDefault) ?? item.sizes[0] ?? null;
   const [sizeId, setSizeId] = useState<string | null>(editLine?.sizeId ?? defaultSize?.id ?? null);
@@ -354,6 +355,7 @@ export function ItemDetail({
   }
 
   function addToCart() {
+    if (branchClosed) return;
     if (missingGroup) {
       const el = document.getElementById(`group-${missingGroup.id}`);
       if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -422,11 +424,13 @@ export function ItemDetail({
     }
   }
 
-  const ctaLabel = missingGroup
-    ? `בחר ${missingGroup.name}`
-    : isEditing
-      ? "עדכן הזמנה"
-      : "הוסף לסל";
+  const ctaLabel = branchClosed
+    ? "המסעדה סגורה"
+    : missingGroup
+      ? `בחר ${missingGroup.name}`
+      : isEditing
+        ? "עדכן הזמנה"
+        : "הוסף לסל";
 
   return (
     <div
@@ -961,7 +965,7 @@ export function ItemDetail({
           <button
             type="button"
             onClick={addToCart}
-            disabled={addPhase !== "idle"}
+            disabled={addPhase !== "idle" || branchClosed}
             className={cn(
               "flex-1 font-bold flex items-center justify-between transition-all duration-300 active:scale-[0.98]",
               kioskMode

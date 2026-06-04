@@ -118,6 +118,8 @@ export default async function CustomerLayout({
                 deliveryFee: branch.deliveryFee,
                 serviceFee: branch.serviceFee,
                 minOrder: branch.minOrder,
+                status: branch.status,
+                busyEtaBoostMinutes: branch.busyEtaBoostMinutes,
               }
             : null
         }

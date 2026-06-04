@@ -31,6 +31,9 @@ import { ItemDetailModal } from "@/components/customer/ItemDetailModal";
 import { ItemDetail } from "@/components/customer/screens/ItemDetail";
 import ItemModalSkeleton from "@/components/customer/ItemModalSkeleton";
 import { AIAdvisorTopButton } from "@/components/customer/ai-advisor/AIAdvisorTopButton";
+import { BusyAlertModal, ClosedAlertModal } from "@/components/customer/BranchStatusModal";
+import { RestaurantInfoModal } from "@/components/customer/RestaurantInfoModal";
+import { getOpenStatus, type BranchHours } from "@/lib/branch-hours";
 
 interface Props {
   tenant: {
@@ -46,10 +49,16 @@ interface Props {
   };
   branch: {
     address: string;
+    phone?: string;
     status: string;
     deliveryFee: number;
+    serviceFee?: number;
     minOrder: number;
+    hours?: Record<string, { open: string; close: string; active: boolean }>;
+    busyEtaBoostMinutes?: number;
   } | null;
+  ratingSummary?: { average: number; count: number } | null;
+  deliveryEta?: { min: number; max: number } | null;
   categories: Array<{ id: string; name: string; icon: string | null; color: string | null }>;
   /** All active categories for the inline menu list below (the `categories`
    *  prop above is capped at 8 for the icon rail). */
@@ -108,12 +117,41 @@ export function CustomerHome({
   pendingReviewOrderId = null,
   aiAdvisorEnabled = false,
   featuredBadgeLabel = null,
+  ratingSummary = null,
+  deliveryEta = null,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { method, setMethod } = useCart();
   const open = branch?.status === "open";
+  const busy = branch?.status === "busy";
+  const closed = branch?.status === "closed";
+  const busyBoost = branch?.busyEtaBoostMinutes ?? 15;
+
+  // Entry alerts. Busy is once-per-day, dismissable; closed shows every
+  // entry until the merchant flips status back. Keys mirror CampaignPopup
+  // so all dismissable popups share the same "qf:*" namespace.
+  const [busyAlertOpen, setBusyAlertOpen] = useState(false);
+  const [closedAlertOpen, setClosedAlertOpen] = useState(false);
+  useEffect(() => {
+    if (closed) {
+      setClosedAlertOpen(true);
+      return;
+    }
+    if (busy) {
+      const today = new Date().toISOString().slice(0, 10);
+      const key = `qf:busy-alert:${tenant.slug}:${today}`;
+      if (!window.localStorage.getItem(key)) {
+        setBusyAlertOpen(true);
+      }
+    }
+  }, [busy, closed, tenant.slug]);
+  function dismissBusyAlert() {
+    const today = new Date().toISOString().slice(0, 10);
+    window.localStorage.setItem(`qf:busy-alert:${tenant.slug}:${today}`, "1");
+    setBusyAlertOpen(false);
+  }
 
   const hasCover = Boolean(tenant.coverImage);
 
@@ -382,29 +420,75 @@ export function CustomerHome({
         </div>
       </header>
 
-      {/* Thin info bar — pulled up so it straddles the seam between the
-          cover image and the body: half on the hero, half on the body. */}
+      {/* Wolt-style info strip — pulled up so it straddles the seam
+          between the cover image and the body. Wraps to two lines on
+          narrow screens; on lg+ it shows a single horizontal row plus
+          a "פרטי המסעדה" link that opens the full info modal. */}
       <section className="px-5 -mt-6 relative z-10 lg:max-w-7xl lg:mx-auto lg:px-6 lg:-mt-7">
-        <div className="bg-white border border-qf-line rounded-full shadow-sm px-4 py-3 flex items-center justify-center gap-4 text-sm lg:max-w-2xl lg:mx-auto">
-          <span
-            className={cn(
-              "inline-flex items-center gap-1.5 font-medium",
-              open ? "text-qf-green-deep" : "text-qf-tomato",
+        <div className="bg-white border border-qf-line rounded-3xl lg:rounded-full shadow-sm px-4 py-3 lg:px-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 lg:gap-4 text-sm lg:max-w-4xl lg:mx-auto">
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-3 gap-y-1.5">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 font-medium",
+                openLabelTone === "open" && "text-qf-green-deep",
+                openLabelTone === "busy" && "text-qf-yolk",
+                openLabelTone === "closed" && "text-qf-tomato",
+                openLabelTone === "neutral" && "text-qf-ink2",
+              )}
+            >
+              <span
+                className={cn(
+                  "w-2 h-2 rounded-full",
+                  openLabelTone === "open" && "bg-qf-green-deep",
+                  openLabelTone === "busy" && "bg-qf-yolk",
+                  openLabelTone === "closed" && "bg-qf-tomato",
+                  openLabelTone === "neutral" && "bg-qf-mute",
+                )}
+              />
+              {openLabel}
+            </span>
+            <span className="text-qf-line hidden sm:inline">·</span>
+            <span className="inline-flex items-center gap-1.5 text-qf-ink2">
+              <IcoClock s={13} c="#7c8a82" />
+              <span>{etaLabel}</span>
+            </span>
+            <span className="text-qf-line hidden sm:inline">·</span>
+            <span className="inline-flex items-center gap-1.5 text-qf-ink2">
+              <IcoBike s={14} c="#7c8a82" />
+              <span>{branch ? formatPrice(branch.deliveryFee) : "—"}</span>
+            </span>
+            {branch && branch.minOrder > 0 && (
+              <>
+                <span className="text-qf-line hidden sm:inline">·</span>
+                <span className="inline-flex items-center gap-1.5 text-qf-ink2 tnum">
+                  <span className="text-qf-mute text-xs">מינ׳</span>
+                  <span>{formatPrice(branch.minOrder)}</span>
+                </span>
+              </>
             )}
-          >
-            <span className={cn("w-2 h-2 rounded-full", open ? "bg-qf-green-deep" : "bg-qf-tomato")} />
-            {open ? "פתוח" : "סגור"}
-          </span>
-          <span className="text-qf-line">·</span>
-          <span className="inline-flex items-center gap-1.5 text-qf-ink2">
-            <IcoClock s={13} c="#7c8a82" />
-            <span>25–35 דק&apos;</span>
-          </span>
-          <span className="text-qf-line">·</span>
-          <span className="inline-flex items-center gap-1.5 text-qf-ink2">
-            <IcoBike s={14} c="#7c8a82" />
-            <span>{branch ? formatPrice(branch.deliveryFee) : "—"}</span>
-          </span>
+            {ratingSummary && ratingSummary.count > 0 && (
+              <>
+                <span className="text-qf-line hidden sm:inline">·</span>
+                <Link
+                  href={`/s/${tenant.slug}/reviews`}
+                  className="inline-flex items-center gap-1 text-qf-ink2 hover:text-qf-ink"
+                >
+                  <IcoStar c="#e8a93b" fill="#e8a93b" s={13} />
+                  <span className="tnum font-medium">{ratingSummary.average.toFixed(1)}</span>
+                  <span className="text-qf-mute text-xs">({ratingSummary.count})</span>
+                </Link>
+              </>
+            )}
+          </div>
+          {branch && (
+            <button
+              type="button"
+              onClick={() => setInfoOpen(true)}
+              className="text-xs font-bold text-(--qf-deep) hover:underline whitespace-nowrap self-center lg:self-auto"
+            >
+              פרטי המסעדה ←
+            </button>
+          )}
         </div>
       </section>
 
@@ -614,6 +698,13 @@ export function CustomerHome({
             />
           )}
         </ItemDetailModal>
+      )}
+
+      {busyAlertOpen && (
+        <BusyAlertModal boostMinutes={busyBoost} onClose={dismissBusyAlert} />
+      )}
+      {closedAlertOpen && (
+        <ClosedAlertModal onClose={() => setClosedAlertOpen(false)} />
       )}
     </div>
   );
