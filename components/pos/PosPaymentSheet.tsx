@@ -7,6 +7,7 @@ import { PosCashKeypadModal } from "@/components/pos/PosNumericKeypad";
 import { renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { IcoCheck } from "@/components/shared/Icons";
 
 // Server error codes that come back in Hebrew error.message most of the
 // time, but occasionally as raw code strings (validation errors thrown
@@ -58,6 +59,7 @@ export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, on
   const [error, setError] = useState<string | null>(null);
   const [method, setMethod] = useState<Method | null>(null);
   const [cardOpen, setCardOpen] = useState(false);
+  const [success, setSuccess] = useState<{ title: string; sub?: string } | null>(null);
 
   // The Grow wallet is mounted at the shell level. We listen for the
   // shell-emitted "wallet closed" event so the sheet can clear itself
@@ -67,12 +69,16 @@ export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, on
     function onWalletClose() {
       if (cardOpen) {
         setCardOpen(false);
-        onPaid();
+        // Wallet closed without a successful onSuccess → either the
+        // cashier cancelled or it errored. Keep the ticket so they can
+        // retry instead of silently clearing.
+        setMethod(null);
+        setError("התשלום לא הושלם. נסה שוב או בחר מזומן.");
       }
     }
     window.addEventListener("qf:pos:wallet-close", onWalletClose);
     return () => window.removeEventListener("qf:pos:wallet-close", onWalletClose);
-  }, [cardOpen, onPaid]);
+  }, [cardOpen]);
 
   async function createOrCarryOrderId(paymentMethod: Method): Promise<string | null> {
     if (existingOrderId) return existingOrderId;
@@ -184,10 +190,58 @@ export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, on
         setError(translateError(data?.error) || "שמירת המזומן נכשלה");
         return;
       }
-      onPaid();
+      setMethod(null);
+      setSuccess({
+        title: "התשלום התקבל",
+        sub: change > 0 ? `עודף ₪${change.toLocaleString("he-IL")}` : "ללא עודף",
+      });
+      // Auto-clear after 2.4s — long enough to read the עודף amount aloud
+      // to the customer + hand the change over, short enough that the
+      // next ring doesn't wait.
+      window.setTimeout(() => {
+        setSuccess(null);
+        onPaid();
+      }, 2400);
     } finally {
       setBusy(false);
     }
+  }
+
+  // Success overlay — green check, big total, optional "עודף ₪X". Always
+  // renders OVER everything (the cash keypad is dismissed before this
+  // mounts so they never overlap).
+  if (success) {
+    return (
+      <div className="fixed inset-0 z-[60] grid place-items-center bg-black/60 p-4">
+        <div className="w-full max-w-md bg-white rounded-3xl border-2 border-black shadow-[0_6px_0_#000] p-8 text-center animate-qf-check-in">
+          <div className="w-20 h-20 rounded-full bg-qf-green-soft border-4 border-qf-green-deep grid place-items-center mx-auto">
+            <IcoCheck c="#0e7a3c" s={40} />
+          </div>
+          <h2 className="text-2xl font-black mt-4">{success.title}</h2>
+          <div className="text-3xl font-black tnum mt-2">{formatPrice(amount)}</div>
+          {success.sub && (
+            <div className="text-base text-qf-green-deep font-bold mt-2">{success.sub}</div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // While the Grow wallet is on screen, the SDK renders its own
+  // overlay. We hide the sheet completely so there's no z-index race
+  // — only a small floating banner stays to confirm we're waiting.
+  if (cardOpen) {
+    return (
+      <div className="fixed bottom-6 inset-x-0 z-[40] flex justify-center pointer-events-none">
+        <div className="pointer-events-auto bg-white border-2 border-black rounded-2xl shadow-[0_3px_0_#000] px-5 py-3 flex items-center gap-3">
+          <span className="qf-spinner text-black text-base" aria-hidden />
+          <div>
+            <div className="font-bold text-sm">ממתין לתשלום אשראי</div>
+            <div className="text-xs text-qf-mute">השלם בארנק התשלום של Grow</div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (method === "cash") {
@@ -252,12 +306,6 @@ export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, on
         >
           חזרה
         </button>
-
-        {cardOpen && (
-          <p className="mt-3 text-xs text-qf-mute text-center">
-            ארנק התשלום של Grow נפתח. סיים את התשלום שם.
-          </p>
-        )}
       </div>
     </div>
   );

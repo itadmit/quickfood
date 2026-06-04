@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { usePosCart } from "@/components/pos/PosCartProvider";
 import { formatPrice } from "@/lib/format";
-import { IcoUser, IcoPlus, IcoMinus, IcoClose } from "@/components/shared/Icons";
+import { IcoUser, IcoPlus, IcoMinus, IcoClose, IcoEdit } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 import { PosNumericKeypadModal } from "@/components/pos/PosNumericKeypad";
 import { PosPaymentSheet } from "@/components/pos/PosPaymentSheet";
@@ -67,16 +67,20 @@ export function PosTicket({ onEditLine }: { onEditLine?: (line: CartLine) => voi
                 className="rounded-xl border border-qf-line bg-white px-3 py-2"
               >
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onEditLine?.(l)}
-                    className="flex-1 min-w-0 text-start hover:bg-qf-line-soft/40 rounded-md -mx-1 px-1 py-0.5 transition"
-                    title="ערוך שורה"
-                  >
+                  <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm truncate">{l.name}</div>
                     {l.sizeName && (
                       <div className="text-[11px] text-qf-mute">{l.sizeName}</div>
                     )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onEditLine?.(l)}
+                    className="w-8 h-8 rounded-lg bg-qf-line-soft hover:bg-(--qf-soft) hover:text-(--qf-deep) grid place-items-center transition"
+                    aria-label="ערוך שורה"
+                    title="ערוך תוספות / גודל"
+                  >
+                    <IcoEdit s={14} />
                   </button>
                   <div className="flex items-center gap-1">
                     <button
