@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IcoOrders, IcoMenu, IcoHome, IcoStar, IcoBike, IcoGear, IcoFlame, IcoMegaphone, IcoBell, IcoCreditCard, IcoChart } from "@/components/shared/Icons";
+import { IcoOrders, IcoMenu, IcoHome, IcoStar, IcoBike, IcoGear, IcoFlame, IcoMegaphone, IcoBell, IcoCreditCard, IcoChart, IcoBag } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 import { canAccessDashboard } from "@/lib/auth/merchant-access";
 
@@ -17,6 +17,7 @@ type NavItem = {
 const NAV: NavItem[] = [
   { href: "/dashboard", label: "דשבורד", Icon: IcoHome, exact: true },
   { href: "/dashboard/orders", label: "הזמנות", Icon: IcoOrders },
+  { href: "/pos", label: "קופה", Icon: IcoBag },
   { href: "/dashboard/menu", label: "תפריט", Icon: IcoMenu },
   { href: "/dashboard/analytics", label: "אנליטיקס", Icon: IcoChart },
   { href: "/dashboard/campaigns", label: "קמפיינים", Icon: IcoMegaphone },
