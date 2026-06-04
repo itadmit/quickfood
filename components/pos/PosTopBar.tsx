@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { usePos } from "@/components/pos/PosContext";
 import { IcoBag, IcoUser, IcoReceipt, IcoSearch, IcoClose, IcoChev } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
+import { formatTime } from "@/lib/format";
 
 const NAV = [
   { href: "/pos", label: "קופה", Icon: IcoBag, exact: true },
@@ -98,7 +99,7 @@ export function PosTopBar({ onCloseShift }: { onCloseShift: () => void }) {
           <span className="font-bold">{cashier.name}</span>
           {shift && (
             <span className="text-black/60 text-xs">
-              · משמרת מ-{new Date(shift.openedAt).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}
+              · משמרת מ-{formatTime(shift.openedAt)}
             </span>
           )}
         </div>
