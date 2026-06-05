@@ -78,7 +78,7 @@ export function VirtualKeyboard({
   return (
     <div
       className={cn(
-        "fixed bottom-0 inset-x-0 z-40 bg-white border-t border-qf-line-soft shadow-[0_-12px_40px_rgba(17,35,26,0.12)] animate-qf-sheet-in",
+        "fixed bottom-0 inset-x-0 z-[60] bg-white border-t border-qf-line-soft shadow-[0_-12px_40px_rgba(17,35,26,0.12)] animate-qf-sheet-in",
         className,
       )}
     >
