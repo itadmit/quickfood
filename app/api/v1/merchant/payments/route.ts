@@ -147,11 +147,13 @@ export const PATCH = handler(async (req: Request) => {
     // Production needs at minimum a userId (platform supplies apiKey +
     // pageCode via env vars). Per-tenant apiKey/pageCode overrides are
     // optional advanced settings — only for tenants on their own Grow
-    // account rather than the platform.
-    if (body.grow.is_active && !nextCreds.userId) {
+    // account rather than the platform. Sandbox is fully self-contained
+    // via grow-test-creds.ts — no userId required.
+    const effectiveTestMode = body.grow.test_mode ?? existing?.testMode ?? true;
+    if (body.grow.is_active && !effectiveTestMode && !nextCreds.userId) {
       return apiError(
         "validation_error",
-        "יש למלא User ID לפני הפעלת Grow",
+        "יש למלא User ID לפני הפעלת Grow ב-Production",
         422,
         "user_id",
       );
