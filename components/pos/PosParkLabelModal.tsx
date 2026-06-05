@@ -20,7 +20,7 @@ export function PosParkLabelModal({ onCancel, onConfirm }: Props) {
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 pb-[var(--qf-kbd-h,1rem)]"
       onClick={onCancel}
     >
       <div

@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Globe } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Globe, CornerDownLeft } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { IcoClose } from "@/components/shared/Icons";
+
+/** Approximate height of the keyboard sheet (taller key + paddings).
+ *  Modals read this via CSS var `--qf-kbd-h` and pad their bottom by
+ *  it so vertical-center stays above the keyboard rather than sliding
+ *  underneath it. Update if you change key sizes meaningfully. */
+const KEYBOARD_HEIGHT_PX = 540;
 
 // Standard Israeli QWERTY (he) + US QWERTY (en) flattened to a
 // 10-column grid so every key — letters, digits, punctuation,
@@ -60,6 +66,18 @@ export function VirtualKeyboard({
 }) {
   const [lang, setLang] = useState<Lang>("he");
   const layout = LAYOUT[lang];
+
+  // Publish the keyboard's height as a global CSS variable while we're
+  // mounted. Modals that center their content vertically read this via
+  // `pb-[var(--qf-kbd-h,0)]` so the centering box shrinks and the
+  // modal floats above the keyboard instead of disappearing under it.
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--qf-kbd-h", `${KEYBOARD_HEIGHT_PX}px`);
+    return () => {
+      root.style.removeProperty("--qf-kbd-h");
+    };
+  }, []);
 
   function append(ch: string) {
     if (value.length >= maxLength) return;
@@ -162,12 +180,15 @@ export function VirtualKeyboard({
             רווח
           </KeyButton>
           <KeyButton
-            className="col-span-2 text-lg"
+            className="col-span-2 text-lg text-white"
             tone="primary"
             onPress={onClose}
             ariaLabel="סיים"
           >
-            סיום
+            <span className="inline-flex items-center gap-2 text-white">
+              <CornerDownLeft size={22} strokeWidth={2.5} aria-hidden />
+              סיום
+            </span>
           </KeyButton>
         </div>
       </div>
