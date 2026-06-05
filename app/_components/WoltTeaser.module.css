@@ -1,5 +1,5 @@
 .section {
-  padding: 88px 0 96px;
+  padding: 56px 0 64px;
   background:
     radial-gradient(circle at 25% 30%, rgba(248, 203, 30, 0.18), transparent 55%),
     radial-gradient(circle at 80% 70%, rgba(0, 157, 224, 0.10), transparent 60%),
@@ -10,10 +10,22 @@
   overflow: hidden;
 }
 
+@media (min-width: 880px) {
+  .section {
+    padding: 88px 0 96px;
+  }
+}
+
 .container {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 16px;
+}
+
+@media (min-width: 520px) {
+  .container {
+    padding: 0 24px;
+  }
 }
 
 .eyebrow {
@@ -44,25 +56,33 @@
 }
 
 .heading {
-  font-size: clamp(32px, 4vw, 48px);
-  line-height: 1.05;
+  font-size: clamp(24px, 7.5vw, 48px);
+  line-height: 1.1;
   font-weight: 900;
   color: #000;
   margin: 0;
   letter-spacing: -0.01em;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .sub {
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.55;
   color: rgba(0, 0, 0, 0.7);
   margin: 0;
   max-width: 560px;
 }
 
+@media (min-width: 520px) {
+  .sub {
+    font-size: 16px;
+  }
+}
+
 .layout {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 32px;
   align-items: center;
 }
@@ -258,5 +278,7 @@
 .right {
   display: flex;
   justify-content: center;
+  min-width: 0;
+  max-width: 100%;
 }
 

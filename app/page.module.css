@@ -1350,12 +1350,12 @@
   .qfoodCardCustomizer .qfoodCardCopy { margin-inline: auto; }
 }
 
-/* Icon tone — the midnight (yellow anchor) card keeps black strokes;
-   all other cards get a quieter ink-2 so the type stays the hero. */
+/* All decor icons stay pure ink — consistent black strokes across every
+   tone, no softening. */
 .qfoodCardMist .qfoodCardDecor svg,
 .qfoodCardSand .qfoodCardDecor svg,
 .qfoodCardPeach .qfoodCardDecor svg,
-.qfoodCardLilac .qfoodCardDecor svg { color: var(--ink-2); opacity: 0.85; }
+.qfoodCardLilac .qfoodCardDecor svg { color: var(--ink); opacity: 1; }
 
 
 /* Secondary feature grid — quieter cells for the "everything else" line */
@@ -1734,29 +1734,41 @@
   letter-spacing: 0.04em;
 }
 .priceSingleFee {
-  display: flex; align-items: baseline; gap: 12px;
-  padding: 16px 18px;
-  border-radius: 18px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
 }
 .priceSingleFeeNum {
+  flex-shrink: 0;
   font-family: var(--font-rubik), "Rubik", sans-serif;
-  font-weight: 900; font-size: 28px;
+  font-weight: 900; font-size: 34px;
   letter-spacing: -0.025em;
-  color: #C8D4FF;
+  color: var(--tomato);
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 .priceSingleFeeLabel {
+  flex: 1;
+  margin-inline-start: 16px;
+  padding-inline-start: 16px;
+  border-inline-start: 1px solid rgba(255,255,255,0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
   font-size: 14px;
-  line-height: 1.4;
-  color: rgba(255,255,255,0.85);
+  line-height: 1.35;
+  font-weight: 600;
+  color: rgba(255,255,255,0.92);
 }
 .priceSingleFeeLabel small {
-  display: block;
-  font-size: 12px;
-  color: rgba(255,255,255,0.55);
-  margin-top: 2px;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(255,255,255,0.48);
 }
 .priceSingleHead .btn { margin-top: 4px; }
 .priceSingleHead .btnInk {
