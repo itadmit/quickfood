@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePosCart } from "@/components/pos/PosCartProvider";
 import { IcoSearch } from "@/components/shared/Icons";
+import { TouchInput } from "@/components/shared/TouchInput";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
@@ -89,9 +90,9 @@ export function PosLookup() {
 
       <div className="flex items-center gap-2 border-2 border-black rounded-xl bg-white px-3 py-2 shadow-[0_2px_0_#000]">
         <IcoSearch s={16} />
-        <input
+        <TouchInput
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={setQ}
           placeholder={tab === "customer" ? "טלפון או שם" : "מספר הזמנה"}
           className="flex-1 outline-none bg-transparent text-sm"
         />

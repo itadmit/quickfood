@@ -15,15 +15,15 @@ import { IcoClose } from "@/components/shared/Icons";
 // without breaking the column rhythm.
 type Lang = "he" | "en";
 
-// Both layouts render LTR — the kiosk keyboard is a physical Israeli
-// QWERTY where ק sits on the left (mapped to Q) and פ on the right
-// (mapped to P), regardless of the document direction. RTL'ing the
-// rows would put ק on the right, which is the opposite of every
+// Both layouts render LTR — the on-screen keyboard mirrors a physical
+// Israeli QWERTY where ק sits on the left (mapped to Q) and פ on the
+// right (mapped to P), regardless of the document direction. RTL'ing
+// the rows would put ק on the right, which is the opposite of every
 // keyboard customers have ever touched. Backspace is embedded in the
 // row arrays as the `BS` sentinel so it can sit at whatever slot the
 // layout needs — in HE we put it at the end of the top letter row
 // (where `-` used to be), in EN it stays at the end of the bottom row.
-const BS = "⌫"; // ⌫
+const BS = "⌫";
 const LAYOUT: Record<Lang, { rows: string[][] }> = {
   he: {
     rows: [
@@ -43,7 +43,7 @@ const LAYOUT: Record<Lang, { rows: string[][] }> = {
   },
 };
 
-export function KioskKeyboard({
+export function VirtualKeyboard({
   value,
   onChange,
   onClose,

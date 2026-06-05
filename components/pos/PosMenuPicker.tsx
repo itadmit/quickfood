@@ -6,6 +6,7 @@ import { formatPrice } from "@/lib/format";
 import { resolveCategoryStyle } from "@/lib/category-style";
 import { cn } from "@/lib/cn";
 import { IcoSearch } from "@/components/shared/Icons";
+import { TouchInput } from "@/components/shared/TouchInput";
 
 export interface PosCategory {
   id: string;
@@ -94,9 +95,9 @@ export function PosMenuPicker({
         <div className="px-4 pt-3 pb-2 flex items-center gap-3">
           <div className="flex-1 flex items-center gap-2 border-2 border-black rounded-xl bg-white px-3 py-2 shadow-[0_2px_0_#000]">
             <IcoSearch s={14} c="#000" />
-            <input
+            <TouchInput
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={setQuery}
               placeholder="חיפוש בתפריט..."
               className="flex-1 outline-none bg-transparent text-sm"
             />

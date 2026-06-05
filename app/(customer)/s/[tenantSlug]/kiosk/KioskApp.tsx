@@ -26,7 +26,7 @@ import {
   type KioskOverrides,
 } from "@/lib/i18n/kiosk-messages";
 import { KioskHeader, KioskHeaderButton } from "./KioskHeader";
-import { KioskKeyboard } from "./KioskKeyboard";
+import { VirtualKeyboard as KioskKeyboard } from "@/components/shared/VirtualKeyboard";
 
 // Soft-card primary choice button. Used for dine-in vs takeaway and
 // for the QR-pay vs pay-at-counter screen — same visual rhythm so

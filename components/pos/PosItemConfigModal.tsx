@@ -5,6 +5,7 @@ import type { CartLine } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { IcoPlus, IcoMinus, IcoClose } from "@/components/shared/Icons";
+import { TouchTextarea } from "@/components/shared/TouchInput";
 
 type HalfPlacement = "left" | "right" | "full";
 
@@ -525,9 +526,9 @@ export function PosItemConfigModal({
           ) : (
             <>
               <SectionTitle title="הערה לפריט" />
-              <textarea
+              <TouchTextarea
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={setNotes}
                 maxLength={200}
                 rows={2}
                 placeholder="לדוגמה: בלי בצל, חתוך ל-2, חם מאוד"

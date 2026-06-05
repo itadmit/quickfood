@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/cn";
+import { TouchInput } from "@/components/shared/TouchInput";
 
 interface Props {
   /** Subtitle shown above the form — typically the total being charged. */
@@ -54,9 +55,9 @@ export function PosWalkInPromptModal({ amountLabel, onCancel, onConfirm }: Props
             <span className="text-sm font-bold">
               שם הלקוח <span className="text-qf-tomato">*</span>
             </span>
-            <input
+            <TouchInput
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={setName}
               maxLength={60}
               autoFocus
               placeholder="לדוגמה: יוסי כהן"
@@ -70,11 +71,10 @@ export function PosWalkInPromptModal({ amountLabel, onCancel, onConfirm }: Props
             <span className="text-sm font-bold">
               טלפון <span className="text-qf-mute font-normal">(אופציונלי)</span>
             </span>
-            <input
+            <TouchInput
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={setPhone}
               dir="ltr"
-              inputMode="tel"
               placeholder="0501234567"
               className="mt-1 w-full px-3 py-2.5 rounded-xl border-2 border-qf-line-dash focus:border-(--qf-primary) outline-none tnum"
               onKeyDown={(e) => {
