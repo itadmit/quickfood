@@ -95,6 +95,16 @@ export function VirtualKeyboard({
 
   return (
     <div
+      // React portals bubble events through the *React* tree, not the DOM
+      // tree. So a click on a keyboard key (rendered under a TouchInput
+      // that lives inside a modal) bubbles up to the modal's backdrop
+      // onClick={onCancel} and closes the modal as a side effect. Stop
+      // every relevant event at the keyboard root so the host modal sees
+      // nothing of what happens inside.
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
       className={cn(
         "fixed bottom-0 inset-x-0 z-[60] bg-white border-t border-qf-line-soft shadow-[0_-12px_40px_rgba(17,35,26,0.12)] animate-qf-sheet-in",
         className,
