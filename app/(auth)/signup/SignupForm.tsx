@@ -107,7 +107,7 @@ export function SignupForm() {
   const [businessName, setBusinessName] = useState("");
   const [businessType, setBusinessType] = useState<BusinessType>("general");
   const [cuisineType, setCuisineType] = useState("");
-  const [themeId, setThemeId] = useState<ThemeId>("fresh");
+  const [themeId, setThemeId] = useState<ThemeId>("sunflower");
   const [slug, setSlug] = useState("");
   const [slugStatus, setSlugStatus] = useState<SlugStatus>("idle");
 

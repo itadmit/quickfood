@@ -11,9 +11,15 @@ interface Props {
 }
 
 /**
- * Standard QuickFood toggle - black-bordered pill with primary-color
+ * Standard QuickFood toggle - black-bordered pill with brand-yellow
  * fill when on, solid black when off, and a centered white indicator
  * that slides between corners. RTL-aware (uses inset-inline-*).
+ *
+ * Yellow is hard-coded (not --qf-primary) because every consumer of
+ * Toggle is merchant-facing (dashboard / admin) where the brand color
+ * is always #F8CB1E, regardless of the tenant's customer-storefront
+ * theme. Inheriting --qf-primary would make the dashboard toggles
+ * change color per tenant, which is wrong.
  */
 export function Toggle({
   checked,
@@ -32,7 +38,7 @@ export function Toggle({
       onClick={() => onChange(!checked)}
       className={cn(
         "relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-black transition disabled:opacity-50 disabled:cursor-not-allowed",
-        checked ? "bg-(--qf-primary)" : "bg-black",
+        checked ? "bg-[#F8CB1E]" : "bg-black",
         className,
       )}
     >

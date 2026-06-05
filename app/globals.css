@@ -422,6 +422,23 @@ label[for][class*="shadow-[0_"] {
   animation: qf-pulse 1.4s ease-in-out infinite;
 }
 
+/* Empty-state "come click me" halo: a soft yellow glow that breathes
+   around a dashed CTA when the merchant has nothing in the menu yet.
+   Pauses on hover so the regular hover shadow can take over cleanly. */
+@keyframes qf-empty-nudge {
+  0%, 100% { box-shadow: 0 2px 0 #000, 0 0 0 0 rgba(248, 203, 30, 0); }
+  50%      { box-shadow: 0 2px 0 #000, 0 0 0 10px rgba(248, 203, 30, 0.35); }
+}
+.animate-qf-empty-nudge {
+  animation: qf-empty-nudge 2.4s ease-in-out infinite;
+}
+.animate-qf-empty-nudge:hover {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-qf-empty-nudge { animation: none; }
+}
+
 @keyframes qf-spin {
   to { transform: rotate(360deg); }
 }

@@ -140,7 +140,7 @@ export function DashboardViewV2({
       {hasNoMenuItems && (
         <Link
           href="/dashboard/menu/new"
-          className="group relative block rounded-2xl border-2 border-dashed border-black/50 bg-white hover:bg-[#FFFBEC] p-4 lg:p-5 transition shadow-[0_2px_0_#000] hover:shadow-[0_3px_0_#000] active:translate-y-px"
+          className="group relative block rounded-2xl border-2 border-dashed border-black/50 bg-white hover:bg-[#FFFBEC] p-4 lg:p-5 transition shadow-[0_2px_0_#000] hover:shadow-[0_3px_0_#000] active:translate-y-px animate-qf-empty-nudge"
         >
           <div className="flex items-center gap-3 lg:gap-4">
             <div className="shrink-0 w-11 h-11 rounded-xl border-2 border-black grid place-items-center bg-[#F8CB1E]">

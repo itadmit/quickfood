@@ -222,7 +222,7 @@ function MobileNavRow({ item, pathname }: { item: NavItem; pathname: string }) {
         />
       </button>
       {open && (
-        <div className="mt-0.5 ps-2 border-s-2 border-black/15 ms-5">
+        <div className="mt-1 ps-2 border-s-2 border-black/15 ms-5 space-y-1">
           {item.children!.map((child) => {
             const childActive = child.href === activeChild;
             return (
@@ -230,7 +230,7 @@ function MobileNavRow({ item, pathname }: { item: NavItem; pathname: string }) {
                 key={child.href}
                 href={child.href}
                 className={cn(
-                  "flex items-center gap-2 ps-3 pe-3 h-7 rounded-lg text-sm leading-none transition",
+                  "flex items-center gap-2 ps-3 pe-3 py-2 rounded-lg text-sm transition",
                   childActive
                     ? "bg-black text-[#F8CB1E] font-bold"
                     : "text-black/80 hover:bg-black/5 font-medium",
