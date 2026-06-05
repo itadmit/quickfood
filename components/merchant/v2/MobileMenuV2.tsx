@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { IcoClose, IcoChevDown } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 import { NAV, type NavItem, type NavChild } from "./navConfig";
@@ -24,7 +25,12 @@ interface Props {
  */
 export function MobileMenuV2({ tenant, role }: Props) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname() || "";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const sections = NAV.map((s) => ({
     ...s,
     items: s.items
@@ -66,7 +72,7 @@ export function MobileMenuV2({ tenant, role }: Props) {
         </span>
       </button>
 
-      {open && (
+      {open && mounted && createPortal(
         <div
           role="dialog"
           aria-modal="true"
@@ -120,7 +126,8 @@ export function MobileMenuV2({ tenant, role }: Props) {
               ))}
             </nav>
           </aside>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
@@ -176,7 +183,7 @@ function MobileNavRow({ item, pathname }: { item: NavItem; pathname: string }) {
       <Link
         href={item.href}
         className={cn(
-          "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition",
+          "flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition",
           active
             ? "bg-[#F8CB1E] text-black font-black border-2 border-black shadow-[0_3px_0_#000]"
             : "text-black/85 hover:bg-black/4 font-medium",
@@ -200,7 +207,7 @@ function MobileNavRow({ item, pathname }: { item: NavItem; pathname: string }) {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         className={cn(
-          "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition text-start",
+          "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition text-start",
           active
             ? "bg-[#F8CB1E] text-black font-black border-2 border-black shadow-[0_3px_0_#000]"
             : "text-black/85 hover:bg-black/4 font-medium",
@@ -223,7 +230,7 @@ function MobileNavRow({ item, pathname }: { item: NavItem; pathname: string }) {
                 key={child.href}
                 href={child.href}
                 className={cn(
-                  "flex items-center gap-2 ps-3 pe-3 py-1.5 rounded-lg text-sm transition",
+                  "flex items-center gap-2 ps-3 pe-3 h-7 rounded-lg text-sm leading-none transition",
                   childActive
                     ? "bg-black text-[#F8CB1E] font-bold"
                     : "text-black/80 hover:bg-black/5 font-medium",

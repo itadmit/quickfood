@@ -9,9 +9,11 @@ import {
   IcoLogout,
   IcoChevDown,
   IcoHelp,
+  IcoShare,
 } from "@/components/shared/Icons";
 import { OPEN_WELCOME_EVENT } from "@/components/merchant/OnboardingWelcome";
 import { MobileMenuV2 } from "./MobileMenuV2";
+import { ShopShareModal } from "./ShopShareModal";
 import { cn } from "@/lib/cn";
 
 interface Props {
@@ -24,6 +26,8 @@ interface Props {
   /** Render the "import to a fresh store" shortcut next to the bell.
    *  V2 layout passes true when the merchant has zero menu items. */
   showImportShortcut?: boolean;
+  storefrontUrl: string;
+  storefrontQrDataUrl: string;
 }
 
 type Status = "open" | "busy" | "closed";
@@ -64,13 +68,22 @@ const STATUS_SWATCH: Record<Status, string> = {
  * are real, not mocked. Wear the same bold black borders + hard
  * shadow as the rest of the v2 surface.
  */
-export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut }: Props) {
+export function TopbarV2({
+  user,
+  branch,
+  tenantSlug,
+  tenant,
+  showImportShortcut,
+  storefrontUrl,
+  storefrontQrDataUrl,
+}: Props) {
   const router = useRouter();
   const [status, setStatus] = useState<Status>(branch?.status ?? "open");
   const [statusBusy, setStatusBusy] = useState(false);
   // Single discriminated state for the two dropdowns so they're mutually
   // exclusive - opening one auto-closes the other. Set to null to close.
   const [openMenu, setOpenMenu] = useState<"status" | "user" | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const headerRef = useRef<HTMLElement | null>(null);
 
@@ -264,16 +277,28 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
           )}
         </Link>
 
+        {/* Share storefront - replaces the eye on mobile (eye is hidden
+            below lg), and sits alongside it on desktop. Opens a modal
+            with view-shop, copy URL, WhatsApp, QR, and native share. */}
+        <button
+          type="button"
+          onClick={() => setShareOpen(true)}
+          aria-label="שיתוף החנות"
+          title="שיתוף החנות"
+          className="w-10 h-10 rounded-xl border-2 border-black bg-white hover:bg-[#F8CB1E] grid place-items-center transition active:scale-95 shadow-[0_2px_0_#000]"
+        >
+          <IcoShare c="#000" s={18} />
+        </button>
+
         {/* View storefront - opens the customer-facing menu in a new tab.
-            Pulled out of the user dropdown so merchants can hop to the
-            live store in one click. */}
+            Desktop only; on mobile the share modal carries this action. */}
         <Link
           href={`/s/${tenantSlug}`}
           target="_blank"
           rel="noopener"
           aria-label="צפייה באתר"
           title="צפייה באתר"
-          className="w-10 h-10 rounded-xl border-2 border-black bg-white hover:bg-[#F8CB1E] grid place-items-center transition active:scale-95 shadow-[0_2px_0_#000]"
+          className="hidden lg:grid w-10 h-10 rounded-xl border-2 border-black bg-white hover:bg-[#F8CB1E] place-items-center transition active:scale-95 shadow-[0_2px_0_#000]"
         >
           <IcoEye c="#000" s={18} />
         </Link>
@@ -313,6 +338,14 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
           )}
         </div>
       </div>
+      <ShopShareModal
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        tenantName={tenant.name}
+        tenantSlug={tenantSlug}
+        storefrontUrl={storefrontUrl}
+        qrDataUrl={storefrontQrDataUrl}
+      />
     </header>
   );
 }

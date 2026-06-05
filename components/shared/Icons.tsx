@@ -57,6 +57,15 @@ export const IcoStar = ({ c = "#11231a", s = 14, fill = "none", className }: Ico
   </svg>
 );
 
+export const IcoShare = ({ c = "#11231a", s = 18, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    <circle cx="18" cy="5" r="3" stroke={c} strokeWidth="1.8" />
+    <circle cx="6" cy="12" r="3" stroke={c} strokeWidth="1.8" />
+    <circle cx="18" cy="19" r="3" stroke={c} strokeWidth="1.8" />
+    <path d="M8.6 10.6l6.8-4.1M8.6 13.4l6.8 4.1" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
+  </svg>
+);
+
 export const IcoClock = ({ c = "#11231a", s = 14, className }: IconProps) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
     <circle cx="12" cy="12" r="8.5" stroke={c} strokeWidth="1.5" />

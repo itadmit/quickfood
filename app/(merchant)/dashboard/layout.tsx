@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import QRCode from "qrcode";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
@@ -63,6 +64,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
     where: { tenantId: tenant.id },
   });
   const hasNoMenuItems = menuItemCount === 0;
+
+  const base = (process.env.NEXT_PUBLIC_APP_URL ?? "https://quickfood.co.il").replace(/\/$/, "");
+  const storefrontUrl = tenant.customDomain
+    ? `https://${tenant.customDomain}`
+    : `${base}/s/${tenant.slug}`;
+  const storefrontQrDataUrl = await QRCode.toDataURL(storefrontUrl, {
+    width: 512,
+    margin: 2,
+    color: { dark: "#000000", light: "#FFFFFF" },
+  });
 
   const hasPaymentMethod = !!tenant.billingPaymentMethodId;
   const trialExpired = tenant.trialEndsAt
@@ -136,6 +147,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
                 : null
             }
             showImportShortcut={hasNoMenuItems}
+            storefrontUrl={storefrontUrl}
+            storefrontQrDataUrl={storefrontQrDataUrl}
           />
           <div className="flex-1 flex">
             <SidebarV2
