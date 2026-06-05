@@ -222,7 +222,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
               hint={
                 v.grow.test_mode
                   ? "Sandbox = בדיקות בלבד. משתמש בקרדנציאלים המשותפים של QuickFood — אין צורך למלא כלום נוסף."
-                  : "Production = חיוב כרטיסים אמיתיים. חובה למלא User ID + API Key + Page Code שמגיעים ממייל האישור של Grow."
+                  : "Production = חיוב כרטיסים אמיתיים. חובה למלא רק User ID של העסק (apiKey + pageCode מסופקים על ידי הפלטפורמה)."
               }
             >
               <Toggle
@@ -258,24 +258,23 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
               </div>
               <p className="text-qf-ink2 leading-relaxed">
                 QuickFood משתמשת בקרדנציאלים המשותפים של Grow לסנדבוקס.
-                כרטיסי בדיקה ש-Grow ספקה: <span dir="ltr" className="tnum">4580 4580 4580 4580</span> (כרטיס תקין),
-                <span dir="ltr" className="tnum">4580 1111 1111 1121</span> (לבדיקת כשלון).
-                כשתעבור ל-Production תצטרך למלא User ID + API Key + Page Code מהמייל של Grow.
+                כרטיסי בדיקה: <span dir="ltr" className="tnum">4580 4580 4580 4580</span> (תקין),{" "}
+                <span dir="ltr" className="tnum">4580 1111 1111 1121</span> (כשלון לבדיקה).
               </p>
             </div>
           ) : (
             <>
               <div className="rounded-xl bg-qf-yolk-soft/60 border border-qf-yolk/30 px-4 py-3 text-sm">
-                <div className="font-bold mb-1">Production — מילוי 3 השדות הבאים חובה</div>
+                <div className="font-bold mb-1">Production — מלא רק User ID</div>
                 <p className="text-qf-ink2 leading-relaxed">
-                  הפרטים מגיעים במייל אישור החיוב לייב של Grow לעסק שלך,
-                  בכותרת &quot;מצ&quot;ב הפרטים ל-API לייב&quot;.
+                  המזהה מגיע במייל אישור החיוב לייב של Grow (&quot;מצ&quot;ב הפרטים ל-API לייב&quot;).
+                  ה-apiKey וה-pageCode הם של הפלטפורמה — מוגדרים אצלנו במערכת, לא במסעדה.
                 </p>
               </div>
 
               <Field
                 label="User ID"
-                hint="המזהה הראשי שלך אצל Grow. דוגמה: f31a894ee5522c02"
+                hint="המזהה הראשי של העסק אצל Grow. דוגמה: f31a894ee5522c02"
               >
                 <input
                   value={v.grow.user_id}
@@ -288,35 +287,40 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
                 />
               </Field>
 
-              <Field
-                label="API Key"
-                hint="המפתח שנשלח כל קריאה ל-Grow. דוגמה: 4655b5e3bb4f. בלי זה הארנק ידחה את כל הקריאות."
-              >
-                <input
-                  value={v.grow.api_key}
-                  onChange={(e) => setGrow("api_key", e.target.value.trim())}
-                  dir="ltr"
-                  autoComplete="off"
-                  spellCheck={false}
-                  placeholder="4655b5e3bb4f"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
-                />
-              </Field>
-
-              <Field
-                label="Page Code (קוד ארנק)"
-                hint="המזהה של דף התשלום שלך ב-Grow. דוגמה: 52b79f4c427f."
-              >
-                <input
-                  value={v.grow.page_code}
-                  onChange={(e) => setGrow("page_code", e.target.value.trim())}
-                  dir="ltr"
-                  autoComplete="off"
-                  spellCheck={false}
-                  placeholder="52b79f4c427f"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
-                />
-              </Field>
+              <details className="rounded-xl border border-qf-line-soft">
+                <summary className="px-3.5 py-2.5 text-sm cursor-pointer select-none">
+                  עקיפת ברירת מחדל פלטפורמתית (לרוב לא נדרש)
+                </summary>
+                <div className="px-3.5 pb-3.5 pt-1 space-y-3">
+                  <p className="text-xs text-qf-mute leading-relaxed">
+                    השאר ריק כדי להשתמש בקרדנציאלים המשותפים של QuickFood.
+                    הגדר רק אם Grow הקצה לעסק apiKey ו-pageCode ייעודיים משלו
+                    (חשבון Grow נפרד, לא חלק מהפלטפורמה).
+                  </p>
+                  <Field label="API Key (override)" hint="">
+                    <input
+                      value={v.grow.api_key}
+                      onChange={(e) => setGrow("api_key", e.target.value.trim())}
+                      dir="ltr"
+                      autoComplete="off"
+                      spellCheck={false}
+                      placeholder="ריק = שימוש בקרדנציאל הפלטפורמתי"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
+                    />
+                  </Field>
+                  <Field label="Page Code (override)" hint="">
+                    <input
+                      value={v.grow.page_code}
+                      onChange={(e) => setGrow("page_code", e.target.value.trim())}
+                      dir="ltr"
+                      autoComplete="off"
+                      spellCheck={false}
+                      placeholder="ריק = שימוש בקרדנציאל הפלטפורמתי"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
+                    />
+                  </Field>
+                </div>
+              </details>
             </>
           )}
         </div>
