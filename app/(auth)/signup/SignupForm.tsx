@@ -1137,7 +1137,7 @@ function Step1({
           className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
         />
       </Field>
-      <Field label="כתובת באתר" hint="אנגלית בלבד" required>
+      <Field label="כתובת האתר" hint="אנגלית בלבד" required>
         <div
           dir="ltr"
           className={cn(
@@ -1472,9 +1472,14 @@ function SlugStatusBadge({ status, slug }: { status: SlugStatus; slug: string })
 function SlugStatusLine({ status, slug }: { status: SlugStatus; slug: string }) {
   if (slug.length < 2 || status === "idle" || status === "too_short") {
     return (
-      <p className="text-xs text-qf-mute mt-1">
-        אנגלית בלבד · אותיות קטנות, ספרות ומקפים · לפחות 2 תווים
-      </p>
+      <div className="mt-1 space-y-0.5">
+        <p className="text-xs text-black/70 leading-snug">
+          זו הכתובת שהלקוחות יקלידו כדי להגיע לאתר שלכם — מומלץ לבחור את שם העסק באנגלית.
+        </p>
+        <p className="text-[11px] text-qf-mute">
+          אותיות קטנות, ספרות ומקפים · לפחות 2 תווים
+        </p>
+      </div>
     );
   }
   const msg = {
