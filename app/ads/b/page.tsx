@@ -1,35 +1,35 @@
 "use client";
 
-import { AdsShell, Check, BG_COLOR, INK_COLOR } from "./_components/AdsShell";
+import { AdsShell, Check, BG_COLOR, INK_COLOR } from "../_components/AdsShell";
 
 const ITEMS = [
-  "אתר הזמנות משלך",
-  "משלוחים בזמן אמת",
-  "תשלומים אונליין",
-  "לקוחות שחוזרים אליך",
+  "אתר הזמנות ממותג",
+  "מעקב משלוחים בזמן אמת",
+  "אפליקציית שליחים",
+  "0.5% עמלה בלבד",
 ];
 
-export default function AdsPageA() {
+export default function AdsPageB() {
   return (
     <AdsShell>
-      <div style={{ marginBottom: 22 }}>
+      <div style={{ marginBottom: 20 }}>
         <h1 style={{
-          fontSize: "clamp(36px,10.5vw,50px)",
+          fontSize: "clamp(34px,10vw,48px)",
           fontWeight: 900, lineHeight: 1.1,
           color: INK_COLOR, letterSpacing: "-1.5px",
-          marginBottom: 10,
+          marginBottom: 12,
         }}>
-          עדיין משלם 30%<br />עמלה?
+          כמה שילמת לוולט<br />החודש?
         </h1>
         <p style={{
-          fontSize: 16, color: "rgba(0,0,0,0.70)",
-          fontWeight: 600, lineHeight: 1.45,
+          fontSize: 15, color: "rgba(0,0,0,0.68)",
+          fontWeight: 500, lineHeight: 1.55,
         }}>
-          הגיע הזמן למכור ישירות ללקוחות שלך.
+          עכשיו תדמיין שכל הלקוחות החוזרים שלך מזמינים ישירות מהאתר שלך.
         </p>
       </div>
 
-      <ul style={{ listStyle: "none", margin: "0 0 22px", padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+      <ul style={{ listStyle: "none", margin: "0 0 20px", padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
         {ITEMS.map((item) => (
           <li key={item} style={{ display: "flex", alignItems: "flex-start", gap: 9, fontSize: 15, fontWeight: 600, color: INK_COLOR }}>
             <Check />
@@ -44,7 +44,7 @@ export default function AdsPageA() {
         background: "rgba(0,0,0,0.07)",
         border: "1.5px solid rgba(0,0,0,0.12)",
         borderRadius: 14, padding: "12px 18px",
-        marginBottom: 18,
+        marginBottom: 14,
       }}>
         <span style={{ fontSize: 38, fontWeight: 900, color: INK_COLOR, letterSpacing: "-1.5px", lineHeight: 1 }}>
           ₪299
@@ -53,6 +53,14 @@ export default function AdsPageA() {
           לחודש + 0.5% בלבד
         </span>
       </div>
+
+      {/* Tagline */}
+      <p style={{
+        fontSize: 13, fontWeight: 700, color: INK_COLOR,
+        textAlign: "center", marginBottom: 14, letterSpacing: "-0.2px",
+      }}>
+        הלקוחות שלך. ההזמנות שלך. האתר שלך.
+      </p>
 
       <button style={{
         width: "100%", padding: "17px",
