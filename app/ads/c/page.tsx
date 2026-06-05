@@ -48,8 +48,9 @@ export default function AdsPageC() {
         position: "relative", zIndex: 3,
         height: "100%",
         display: "flex", flexDirection: "column",
-        padding: "52px 24px 60px",
+        padding: "52px 24px 90px",
         maxWidth: 480, margin: "0 auto",
+        overflowY: "auto",
       }}>
 
         {/* Logo */}
