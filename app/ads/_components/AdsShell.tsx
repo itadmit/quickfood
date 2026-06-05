@@ -5,12 +5,69 @@ import { ReactNode } from "react";
 const BG = "#F8CB1E";
 const INK = "#0A0A0A";
 
-export function Check() {
+export const FEATURES = [
+  "אתר הזמנות משלך",
+  "משלוחים בזמן אמת",
+  "תשלומים אונליין",
+  "לקוחות שחוזרים",
+  "קופה",
+  "מסך מטבח",
+  "קופונים ומבצעים",
+  "פופאפים",
+];
+
+export function FeaturePills() {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
-      <circle cx="9" cy="9" r="9" fill={INK} />
-      <polyline points="4.5 9 7.5 12 13.5 6" stroke={BG} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <div style={{
+      display: "flex", flexWrap: "wrap", gap: 7,
+      marginBottom: 16,
+    }}>
+      {FEATURES.map((f) => (
+        <span key={f} style={{
+          background: "#fff",
+          border: "1.5px solid rgba(0,0,0,0.15)",
+          borderRadius: 100,
+          padding: "5px 11px",
+          fontSize: 12, fontWeight: 700, color: INK,
+          lineHeight: 1,
+        }}>
+          {f}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export function SwipeBtn({ color = BG }: { color?: string }) {
+  return (
+    <button style={{
+      width: "100%", padding: "16px",
+      background: INK, color,
+      fontSize: 16, fontWeight: 800,
+      border: "2px solid #000", borderRadius: 999,
+      cursor: "pointer", letterSpacing: "-0.2px",
+      fontFamily: "inherit",
+      boxShadow: `0 4px 0 ${color}`,
+      display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+    }}>
+      <svg style={{ animation: "swipeUp 1.5s ease-in-out infinite", flexShrink: 0 }}
+        width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="18 15 12 9 6 15" />
+      </svg>
+      החליקו למעלה לפרטים נוספים
+    </button>
+  );
+}
+
+export function TrustStrip() {
+  return (
+    <p style={{
+      textAlign: "center", fontSize: 11,
+      color: "rgba(0,0,0,0.45)", marginTop: 10, fontWeight: 500,
+    }}>
+      7 ימי ניסיון עלינו · ללא כרטיס אשראי · ללא התחייבות
+    </p>
   );
 }
 
@@ -31,7 +88,6 @@ export function AdsShell({ children }: { children: ReactNode }) {
         }
       `}</style>
 
-      {/* Video */}
       <video
         src="https://videos.pexels.com/video-files/33880845/14378437_360_640_24fps.mp4"
         autoPlay muted loop playsInline preload="metadata"
@@ -43,13 +99,11 @@ export function AdsShell({ children }: { children: ReactNode }) {
         }}
       />
 
-      {/* Yellow tint — stronger for readability */}
       <div aria-hidden style={{
         position: "absolute", inset: 0, zIndex: 1,
         background: "rgba(248,203,30,0.72)",
       }} />
 
-      {/* Dot pattern */}
       <div aria-hidden style={{
         position: "absolute", inset: 0, zIndex: 2,
         backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.09) 1.5px, transparent 1.5px)",
@@ -58,7 +112,6 @@ export function AdsShell({ children }: { children: ReactNode }) {
         maskImage: "linear-gradient(to bottom, black 0%, black 35%, rgba(0,0,0,0.3) 65%, transparent 100%)",
       }} />
 
-      {/* Page content */}
       <div style={{
         position: "relative", zIndex: 3,
         height: "100%",
@@ -66,8 +119,6 @@ export function AdsShell({ children }: { children: ReactNode }) {
         padding: "48px 20px 36px",
         maxWidth: 480, margin: "0 auto",
       }}>
-
-        {/* Logo */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/quickfood-mark-white.png"
@@ -78,7 +129,6 @@ export function AdsShell({ children }: { children: ReactNode }) {
             boxShadow: "0 3px 0 #000", display: "block",
           }}
         />
-
         {children}
       </div>
     </div>
