@@ -138,6 +138,7 @@ export function BrandingForm({
 
   return (
     <div className="space-y-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
       {/* ─── Section 1: Business details ─────────────────────── */}
       <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
         <header className="space-y-1">
@@ -360,7 +361,7 @@ export function BrandingForm({
 
         <div className="space-y-2">
           <div className="text-sm font-medium">ערכת צבע</div>
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+          <div className="flex flex-wrap gap-3">
             {Object.values(THEMES).map((t) => {
               const selected = t.id === themeId;
               return (
@@ -368,25 +369,22 @@ export function BrandingForm({
                   key={t.id}
                   type="button"
                   onClick={() => setThemeId(t.id)}
-                  className={cn(
-                    "rounded-xl border p-2.5 text-start transition",
-                    selected
-                      ? "border-qf-ink ring-2 ring-(--qf-primary)/30"
-                      : "border-qf-line-dash hover:border-qf-ink/40",
-                  )}
-                >
-                  <div className="flex gap-1 mb-1.5">
-                    <span className="w-5 h-5 rounded-md" style={{ background: t.primary }} />
-                    <span className="w-5 h-5 rounded-md" style={{ background: t.deep }} />
-                    <span className="w-5 h-5 rounded-md" style={{ background: t.soft }} />
-                  </div>
-                  <div className="text-xs font-medium">{t.name}</div>
-                </button>
+                  aria-label={t.name}
+                  aria-pressed={selected}
+                  title={t.name}
+                  className="w-9 h-9 rounded-full border-2 border-black cursor-pointer transition-transform hover:scale-110"
+                  style={{
+                    background: t.primary,
+                    outline: selected ? "2px solid #000" : "none",
+                    outlineOffset: selected ? 3 : 0,
+                  }}
+                />
               );
             })}
           </div>
         </div>
       </section>
+      </div>
 
       {/* ─── Section 3: Share ────────────────────────────────── */}
       <section

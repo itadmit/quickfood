@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IcoCreditCard, IcoArrowLeft, IcoInfo } from "@/components/shared/Icons";
+import { IcoCreditCard, IcoArrowLeft, IcoInfo, IcoClose } from "@/components/shared/Icons";
 
 export function BillingSetupBanner({
   hasPaymentMethod,
@@ -16,6 +16,7 @@ export function BillingSetupBanner({
 }) {
   const pathname = usePathname() ?? "";
   const [tipOpen, setTipOpen] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const tipRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export function BillingSetupBanner({
   if (hasPaymentMethod) return null;
   if (pathname.startsWith("/dashboard/billing")) return null;
   if (trialExpired) return null;
+  if (dismissed) return null;
 
   const urgent = trialDaysLeft !== null && trialDaysLeft <= 2;
   const headline =
@@ -57,11 +59,11 @@ export function BillingSetupBanner({
         <div
           className={
             urgent
-              ? "qf-billing-icon w-5 h-5 rounded-full bg-qf-tomato/20 grid place-items-center shrink-0"
-              : "qf-billing-icon w-5 h-5 rounded-full bg-qf-yolk/30 grid place-items-center shrink-0"
+              ? "qf-billing-icon w-5 h-5 rounded-full bg-white border border-qf-tomato/40 grid place-items-center shrink-0"
+              : "qf-billing-icon w-5 h-5 rounded-full bg-white border border-qf-yolk/50 grid place-items-center shrink-0"
           }
         >
-          <IcoCreditCard c={urgent ? "#c2421f" : "var(--qf-deep)"} s={11} />
+          <IcoCreditCard c="#000" s={11} />
         </div>
         <span className="font-medium truncate">{headline}</span>
 
@@ -94,6 +96,15 @@ export function BillingSetupBanner({
           הזן אשראי
           <IcoArrowLeft c="currentColor" s={12} />
         </Link>
+
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          aria-label="סגור"
+          className="shrink-0 w-5 h-5 rounded-full grid place-items-center text-qf-ink2 hover:text-qf-ink hover:bg-black/8 transition"
+        >
+          <IcoClose c="currentColor" s={10} />
+        </button>
       </div>
     </div>
   );

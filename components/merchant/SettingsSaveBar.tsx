@@ -18,8 +18,9 @@ export function SettingsSaveBar({
 
   return (
     <>
-      {/* Mobile: fixed bar at viewport bottom — no flow space, no gap below content */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t-2 border-black px-4 pt-3 pb-4">
+      <div className="sm:hidden h-20" style={{ marginTop: 0 }} aria-hidden />
+
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t-2 border-black px-4 pt-3 pb-3" style={{ marginBottom: 0 }}>
         {isError && (
           <p className="text-center text-xs font-bold text-qf-tomato mb-2">
             {toast!.msg}

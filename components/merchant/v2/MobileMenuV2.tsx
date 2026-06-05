@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { IcoClose, IcoChevDown } from "@/components/shared/Icons";
+import { IcoClose, IcoChevDown, IcoLogout } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 import { NAV, type NavItem, type NavChild } from "./navConfig";
 import { canAccessDashboard } from "@/lib/auth/merchant-access";
@@ -12,6 +12,7 @@ import { canAccessDashboard } from "@/lib/auth/merchant-access";
 interface Props {
   tenant: { name: string; logoLetter: string; branchName: string };
   role?: string;
+  onLogout?: () => void;
 }
 
 /**
@@ -23,7 +24,7 @@ interface Props {
  * Auto-closes on route change so tapping a nav item navigates and
  * dismisses the drawer in the same motion.
  */
-export function MobileMenuV2({ tenant, role }: Props) {
+export function MobileMenuV2({ tenant, role, onLogout }: Props) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname() || "";
@@ -125,6 +126,17 @@ export function MobileMenuV2({ tenant, role }: Props) {
                 </div>
               ))}
             </nav>
+
+            <div className="mt-auto pt-4 border-t-2 border-black/10">
+              <button
+                type="button"
+                onClick={onLogout}
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold text-black/80 bg-white hover:bg-black hover:text-[#F8CB1E] transition border-2 border-black/10 hover:border-black"
+              >
+                <IcoLogout c="currentColor" s={18} />
+                <span>התנתקות</span>
+              </button>
+            </div>
           </aside>
         </div>,
         document.body,

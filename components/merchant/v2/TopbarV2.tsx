@@ -167,7 +167,7 @@ export function TopbarV2({
       <div className="h-16 px-3 lg:px-5 flex items-center gap-2 lg:gap-3">
         {/* Hamburger lives inside the topbar so it sits ON the header
             (not floating over the billing banner above it). lg:hidden. */}
-        <MobileMenuV2 tenant={tenant} role={user.role} />
+        <MobileMenuV2 tenant={tenant} role={user.role} onLogout={logout} />
 
         <Link
           href="/dashboard"
@@ -303,8 +303,8 @@ export function TopbarV2({
           <IcoEye c="#000" s={18} />
         </Link>
 
-        {/* User */}
-        <div className="relative">
+        {/* User - desktop only; mobile logout lives in the drawer */}
+        <div className="relative hidden lg:block">
           <button
             type="button"
             data-topbar-trigger="user"
