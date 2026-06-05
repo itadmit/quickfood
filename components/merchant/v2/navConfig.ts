@@ -40,7 +40,7 @@ export const NAV: NavSection[] = [
       { href: "/dashboard/kitchen", label: "מסך מטבח", Icon: IcoOrders, badge: "חדש!" },
       { href: "/pos", label: "קופה", Icon: IcoBag, badge: "חדש!" },
       { href: "/dashboard/menu", label: "תפריט", Icon: IcoMenu },
-      { href: "/dashboard/analytics", label: "אנליטיקס", Icon: IcoChart, badge: "חדש!" },
+      { href: "/dashboard/analytics", label: "אנליטיקס", Icon: IcoChart },
       { href: "/dashboard/couriers", label: "שליחים", Icon: IcoBike },
     ],
   },
