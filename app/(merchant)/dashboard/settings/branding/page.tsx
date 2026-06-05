@@ -12,14 +12,19 @@ export default async function BrandingPage() {
   if (!session || session.type !== "merchant" || !session.tenantId) {
     redirect("/dashboard/login");
   }
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: session.tenantId },
-    select: {
-      id: true, name: true, logoLetter: true, logoUrl: true, themeId: true,
-      businessType: true, cuisineType: true, about: true, slug: true,
-      coverImage: true, customDomain: true,
-    },
-  });
+  const [tenant, branch] = await Promise.all([
+    prisma.tenant.findUnique({
+      where: { id: session.tenantId },
+      select: {
+        id: true, name: true, logoLetter: true, logoUrl: true, themeId: true,
+        businessType: true, cuisineType: true, about: true, slug: true,
+        coverImage: true, customDomain: true, vatNumber: true,
+      },
+    }),
+    prisma.branch.findFirst({
+      where: { tenantId: session.tenantId, isPrimary: true },
+    }),
+  ]);
   if (!tenant) redirect("/dashboard/login");
 
   // Prefer the merchant's custom domain when set - that's the URL we want
@@ -40,9 +45,20 @@ export default async function BrandingPage() {
 
   return (
     <div className="space-y-5">
-      <SettingsHeader subtitle="מיתוג, צבעים ותצוגת החנות שלך" />
+      <SettingsHeader subtitle="פרטי העסק, מותג ושיתוף" />
       <BrandingForm
         tenant={tenant}
+        branch={branch ? {
+          id: branch.id,
+          name: branch.name,
+          address: branch.address,
+          phone: branch.phone,
+          email: branch.email ?? "",
+          minOrder: branch.minOrder,
+          deliveryFee: branch.deliveryFee,
+          serviceFee: branch.serviceFee,
+          busyEtaBoostMinutes: branch.busyEtaBoostMinutes,
+        } : null}
         storefrontUrl={storefrontUrl}
         qrDataUrl={qrDataUrl}
       />

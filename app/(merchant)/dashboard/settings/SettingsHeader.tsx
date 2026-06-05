@@ -5,8 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 
 const TABS = [
-  { href: "/dashboard/settings/branding", label: "מיתוג ועיצוב" },
-  { href: "/dashboard/settings/business", label: "פרטי עסק" },
+  { href: "/dashboard/settings/branding", label: "פרטי עסק ומותג" },
   { href: "/dashboard/settings/hours", label: "שעות פעילות" },
   { href: "/dashboard/settings/zones", label: "אזורי משלוח" },
   { href: "/dashboard/settings/payments", label: "תשלומים" },

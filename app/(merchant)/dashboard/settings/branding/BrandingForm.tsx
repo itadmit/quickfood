@@ -24,30 +24,41 @@ interface Tenant {
   slug: string;
   coverImage: string | null;
   customDomain: string | null;
+  vatNumber: string | null;
 }
 
-/**
- * Always-2-char logo mark derived from the tenant name. Strips whitespace,
- * takes the first 2 graphemes, falls back to "QF" if the name is empty.
- * Works for both Hebrew ("פיצרייה ורדה" → "פי") and Latin ("Pizza Verde" → "Pi").
- */
+interface Branch {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  minOrder: number;
+  deliveryFee: number;
+  serviceFee: number;
+  busyEtaBoostMinutes: number;
+}
+
 function deriveLogoLetter(name: string): string {
   const trimmed = name.trim();
   if (!trimmed) return "QF";
-  // Use Array.from so surrogate-pair emojis count as one grapheme.
   return Array.from(trimmed).slice(0, 2).join("");
 }
 
 export function BrandingForm({
   tenant,
+  branch,
   storefrontUrl,
   qrDataUrl,
 }: {
   tenant: Tenant;
+  branch: Branch | null;
   storefrontUrl: string;
   qrDataUrl: string;
 }) {
   const router = useRouter();
+
+  // Branding (tenant-level) state
   const [name, setName] = useState(tenant.name);
   const [themeId, setThemeId] = useState<ThemeId>(tenant.themeId);
   const [businessType, setBusinessType] = useState<BusinessType>(tenant.businessType);
@@ -55,6 +66,20 @@ export function BrandingForm({
   const [about, setAbout] = useState(tenant.about ?? "");
   const [coverImage, setCoverImage] = useState<string | null>(tenant.coverImage);
   const [logoUrl, setLogoUrl] = useState<string | null>(tenant.logoUrl);
+  const [vatNumber, setVatNumber] = useState(tenant.vatNumber ?? "");
+
+  // Branch-level state (synced from primary branch). When the user has
+  // multiple branches we plan to swap `branch` via the topbar branch
+  // selector, but the form contract stays identical.
+  const [branchName, setBranchName] = useState(branch?.name ?? "");
+  const [branchAddress, setBranchAddress] = useState(branch?.address ?? "");
+  const [branchPhone, setBranchPhone] = useState(branch?.phone ?? "");
+  const [branchEmail, setBranchEmail] = useState(branch?.email ?? "");
+  const [minOrder, setMinOrder] = useState(branch?.minOrder ?? 0);
+  const [deliveryFee, setDeliveryFee] = useState(branch?.deliveryFee ?? 0);
+  const [serviceFee, setServiceFee] = useState(branch?.serviceFee ?? 0);
+  const [busyEtaBoost, setBusyEtaBoost] = useState(branch?.busyEtaBoostMinutes ?? 0);
+
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -64,7 +89,10 @@ export function BrandingForm({
     setSaving(true);
     setToast(null);
     try {
-      const res = await fetch("/api/v1/merchant/tenant", {
+      // Tenant + branch are persisted in parallel through their own
+      // endpoints. We treat the whole page as a single save action from
+      // the merchant's perspective.
+      const tenantPromise = fetch("/api/v1/merchant/tenant", {
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -76,46 +104,170 @@ export function BrandingForm({
           cuisine_type: cuisineType || undefined,
           about: about.trim() ? about.trim() : null,
           cover_image: coverImage,
+          vat_number: vatNumber || undefined,
         }),
       });
-      if (res.ok) {
-        setToast("נשמר");
-        router.refresh();
-      } else {
-        setToast("שמירה נכשלה");
-      }
+
+      const branchPromise = branch
+        ? fetch(`/api/v1/merchant/branches/${branch.id}`, {
+            method: "PATCH",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              name: branchName,
+              address: branchAddress,
+              phone: branchPhone,
+              email: branchEmail || undefined,
+              min_order: minOrder,
+              delivery_fee: deliveryFee,
+              service_fee: serviceFee,
+              busy_eta_boost_minutes: busyEtaBoost,
+            }),
+          })
+        : Promise.resolve({ ok: true } as Response);
+
+      const [tenantRes, branchRes] = await Promise.all([tenantPromise, branchPromise]);
+      const ok = tenantRes.ok && branchRes.ok;
+      setToast(ok ? "נשמר" : "שמירה נכשלה");
+      if (ok) router.refresh();
     } finally {
       setSaving(false);
-      setTimeout(() => setToast(null), 2000);
+      setTimeout(() => setToast(null), 2200);
     }
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4 lg:gap-6">
-      <div className="space-y-5 bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5">
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium" htmlFor="name">שם הפיצרייה</label>
-          <input
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
-          />
+    <div className="space-y-5">
+      {/* ─── Section 1: Business details ─────────────────────── */}
+      <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
+        <header className="space-y-1">
+          <h2 className="font-bold text-lg">פרטי העסק</h2>
+          <p className="text-xs text-qf-mute leading-relaxed">
+            הפרטים הקובעים את הסניף שמוצג ללקוח, את הכתובת בחשבונית, ואת
+            מחירי המשלוח הבסיסיים. דמי המשלוח כאן הם ברירת המחדל - אזורי
+            משלוח יכולים לדרוס אותם פר-אזור.
+          </p>
+        </header>
+
+        {!branch && (
+          <div className="rounded-xl bg-qf-tomato-soft border border-qf-tomato/40 px-3.5 py-2.5 text-sm text-qf-tomato">
+            לא נמצא סניף ראשי. הוסיפו סניף בהגדרות לפני שמרכזים פה את הפרטים.
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="שם הסניף">
+            <input
+              value={branchName}
+              onChange={(e) => setBranchName(e.target.value)}
+              disabled={!branch}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none disabled:bg-qf-line-soft/40 disabled:text-qf-mute"
+            />
+          </Field>
+          <Field label="טלפון">
+            <input
+              value={branchPhone}
+              onChange={(e) => setBranchPhone(e.target.value)}
+              disabled={!branch}
+              dir="ltr"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none disabled:bg-qf-line-soft/40 disabled:text-qf-mute"
+            />
+          </Field>
         </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium" htmlFor="cuisine">סוג מטבח</label>
+
+        <Field label="כתובת מלאה">
           <input
-            id="cuisine"
-            value={cuisineType}
-            onChange={(e) => setCuisineType(e.target.value)}
-            placeholder="לדוגמה: פיצה נפוליטנית"
-            className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+            value={branchAddress}
+            onChange={(e) => setBranchAddress(e.target.value)}
+            disabled={!branch}
+            className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none disabled:bg-qf-line-soft/40 disabled:text-qf-mute"
           />
+        </Field>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="דוא״ל">
+            <input
+              value={branchEmail}
+              onChange={(e) => setBranchEmail(e.target.value)}
+              disabled={!branch}
+              type="email"
+              dir="ltr"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none disabled:bg-qf-line-soft/40 disabled:text-qf-mute"
+            />
+          </Field>
+          <Field label="ח״פ / עוסק">
+            <input
+              value={vatNumber}
+              onChange={(e) => setVatNumber(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum"
+            />
+          </Field>
         </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium" htmlFor="about">תיאור העסק</label>
+
+        <hr className="border-qf-line-soft" />
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Field label="סכום מינימום (₪)">
+            <NumberField value={minOrder} onChange={setMinOrder} disabled={!branch} />
+          </Field>
+          <Field label="דמי משלוח ברירת מחדל (₪)">
+            <NumberField value={deliveryFee} onChange={setDeliveryFee} disabled={!branch} />
+          </Field>
+          <Field label="דמי שירות (₪)">
+            <NumberField value={serviceFee} onChange={setServiceFee} disabled={!branch} />
+          </Field>
+        </div>
+
+        <Field label="תוספת זמן הגעה בעומס (דקות)">
+          <div className="flex items-center border border-qf-line-dash rounded-xl focus-within:border-(--qf-primary) max-w-[240px]">
+            <span className="px-3 text-qf-mute text-sm">+</span>
+            <input
+              type="number"
+              min={0}
+              max={180}
+              value={busyEtaBoost}
+              onChange={(e) =>
+                setBusyEtaBoost(Math.max(0, Math.min(180, parseInt(e.target.value, 10) || 0)))
+              }
+              disabled={!branch}
+              className="flex-1 py-2.5 outline-none bg-transparent tnum disabled:text-qf-mute"
+            />
+            <span className="px-3 text-qf-mute text-sm">דק&apos;</span>
+          </div>
+          <p className="text-[11px] text-qf-mute mt-1.5 leading-snug">
+            כשהסטטוס במצב &quot;עומס&quot; - זמן ההגעה שמוצג ללקוח גדל בכמות הזו ומופיע מודל אזהרה.
+          </p>
+        </Field>
+      </section>
+
+      {/* ─── Section 2: Branding ─────────────────────────────── */}
+      <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
+        <header className="space-y-1">
+          <h2 className="font-bold text-lg">מותג ועיצוב</h2>
+          <p className="text-xs text-qf-mute leading-relaxed">
+            איך החנות שלך מוצגת ללקוח - שם, לוגו, תמונת קאבר, ערכת צבע.
+          </p>
+        </header>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="שם החנות (פומבי)">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+            />
+          </Field>
+          <Field label="סוג מטבח">
+            <input
+              value={cuisineType}
+              onChange={(e) => setCuisineType(e.target.value)}
+              placeholder="לדוגמה: פיצה נפוליטנית"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+            />
+          </Field>
+        </div>
+
+        <Field label="תיאור העסק">
           <textarea
-            id="about"
             value={about}
             onChange={(e) => setAbout(e.target.value)}
             rows={3}
@@ -123,10 +275,10 @@ export function BrandingForm({
             placeholder="טאגליין קצר או פסקה שמופיעה מתחת לשם החנות בעמוד הלקוח"
             className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none resize-y leading-relaxed"
           />
-          <p className="text-xs text-qf-mute">
+          <p className="text-xs text-qf-mute mt-1">
             עד 2000 תווים. מוצג בעמוד הראשי של החנות לצד הלוגו.
           </p>
-        </div>
+        </Field>
 
         <BusinessTypeSelect
           label="סוג עסק"
@@ -172,7 +324,7 @@ export function BrandingForm({
           <div className="text-sm font-medium">תמונת קאבר לחנות</div>
           <p className="text-xs text-qf-mute">
             התמונה מופיעה ככותרת בחנות ובדף התפריט של הלקוח. אם לא תועלה תמונה
-            - יוצג רקע ירוק בצבעי המותג.
+            - יוצג רקע בצבעי המותג.
           </p>
 
           {coverImage ? (
@@ -233,30 +385,11 @@ export function BrandingForm({
             })}
           </div>
         </div>
+      </section>
 
-        <div className="flex items-center justify-between pt-3 border-t border-qf-line-soft">
-          <div className="text-sm text-qf-mute">
-            {toast && (
-              <span className="inline-flex items-center gap-1.5 text-qf-green-deep">
-                <IcoCheck c="currentColor" s={14} />
-                {toast}
-              </span>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={save}
-            disabled={saving}
-            className="px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
-          >
-            {saving ? "שומר..." : "שמירת שינויים"}
-          </button>
-        </div>
-      </div>
-
-      {/* Live preview card */}
-      <aside
-        className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 h-fit space-y-4"
+      {/* ─── Section 3: Share ────────────────────────────────── */}
+      <section
+        className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3"
         data-theme={themeId}
         style={
           {
@@ -268,33 +401,15 @@ export function BrandingForm({
           } as React.CSSProperties
         }
       >
-        <div className="text-xs text-qf-mute">תצוגה מקדימה</div>
-        <div className="rounded-2xl overflow-hidden relative h-36 text-white">
-          {coverImage ? (
-            <>
-              <SmartImg src={coverImage} alt="" fill className="absolute inset-0 object-cover" />
-              <div className="absolute inset-0 bg-linear-to-b from-black/60 to-black/80" />
-            </>
-          ) : (
-            <div className="absolute inset-0 bg-linear-to-b from-(--qf-primary) to-(--qf-deep)" />
-          )}
-          <div className="absolute inset-0 flex flex-col justify-end p-4 gap-1">
-            <div className="flex items-center gap-2.5">
-              {logoUrl ? (
-                <div className="w-11 h-11 rounded-full overflow-hidden bg-white grid place-items-center shrink-0 shadow">
-                  <SmartImg src={logoUrl} alt="" width={44} height={44} className="object-contain w-full h-full" />
-                </div>
-              ) : (
-                <div className="w-11 h-11 rounded-full bg-white/20 grid place-items-center shrink-0 text-sm font-bold">
-                  {logoLetter}
-                </div>
-              )}
-              <div>
-                <div className="text-base font-semibold leading-tight drop-shadow">{name}</div>
-                {cuisineType && <div className="text-xs opacity-80 mt-0.5">{cuisineType}</div>}
-              </div>
-            </div>
-          </div>
+        <header className="space-y-1">
+          <h2 className="font-bold text-lg">שיתוף החנות</h2>
+          <p className="text-xs text-qf-mute leading-relaxed">
+            כתובת החנות הציבורית שלך לשיתוף עם לקוחות, להדפסה על פלאיירים
+            או הדבקה ב-WhatsApp.
+          </p>
+        </header>
+        <div className="text-xs text-qf-mute font-mono break-all" dir="ltr">
+          {storefrontUrl}
         </div>
         <ShopShareActions
           slug={tenant.slug}
@@ -302,21 +417,64 @@ export function BrandingForm({
           storefrontUrl={storefrontUrl}
           qrDataUrl={qrDataUrl}
         />
-      </aside>
+      </section>
+
+      {/* ─── Sticky save bar ─────────────────────────────────── */}
+      <div className="flex items-center justify-between gap-3 bg-white rounded-2xl border-2 border-black px-4 py-3 shadow-[0_3px_0_#000] sticky bottom-3 z-10 mx-3 lg:mx-4">
+        <div className="text-sm">
+          {toast && (
+            <span className="inline-flex items-center gap-1.5 text-qf-green-deep font-bold">
+              <IcoCheck c="currentColor" s={14} />
+              {toast}
+            </span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving}
+          className="px-5 py-2.5 rounded-xl bg-[#F8CB1E] hover:bg-[#FFD843] text-black border-2 border-black shadow-[0_2px_0_#000] active:translate-y-px active:shadow-[0_1px_0_#000] text-sm font-bold transition disabled:opacity-60"
+        >
+          {saving ? "שומר..." : "שמירת שינויים"}
+        </button>
+      </div>
     </div>
   );
 }
 
-/**
- * Four actions for the merchant's public storefront URL:
- *  • view shop (opens in a new tab - primary button)
- *  • copy URL (icon, briefly flips to a check on success)
- *  • QR code (icon, opens a modal with the QR image + download button)
- *  • share on WhatsApp (icon, opens wa.me with a pre-filled message)
- *
- * The storefront URL + QR data URL are generated server-side in
- * page.tsx - they account for the tenant's customDomain if one is set.
- */
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium block">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function NumberField({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: number;
+  onChange: (n: number) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="flex items-center border border-qf-line-dash rounded-xl focus-within:border-(--qf-primary)">
+      <span className="px-3 text-qf-mute">₪</span>
+      <input
+        type="number"
+        min={0}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(parseInt(e.target.value, 10) || 0)}
+        className="flex-1 py-2.5 outline-none bg-transparent tnum disabled:text-qf-mute"
+      />
+    </div>
+  );
+}
+
 function ShopShareActions({
   slug,
   name,
@@ -348,12 +506,12 @@ function ShopShareActions({
 
   return (
     <>
-      <div className="flex items-stretch gap-2">
+      <div className="flex items-stretch gap-2 flex-wrap">
         <a
           href={`/s/${slug}`}
           target="_blank"
           rel="noreferrer"
-          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium transition"
+          className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#F8CB1E] hover:bg-[#FFD843] text-black border-2 border-black shadow-[0_2px_0_#000] active:translate-y-px active:shadow-[0_1px_0_#000] text-sm font-bold transition"
         >
           צפה בחנות
         </a>
@@ -362,7 +520,7 @@ function ShopShareActions({
           onClick={copy}
           aria-label="העתק כתובת אתר"
           title={copied ? "הועתק" : "העתק כתובת אתר"}
-          className="w-10 h-10 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft grid place-items-center text-qf-ink2"
+          className="w-11 h-11 rounded-xl border-2 border-black bg-white hover:bg-qf-line-soft grid place-items-center text-qf-ink2 shadow-[0_2px_0_#000] active:translate-y-px active:shadow-[0_1px_0_#000] transition"
         >
           {copied ? (
             <IcoCheck c="currentColor" s={16} />
@@ -375,7 +533,7 @@ function ShopShareActions({
           onClick={() => setQrOpen(true)}
           aria-label="QR code לחנות"
           title="QR code לחנות"
-          className="w-10 h-10 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft grid place-items-center text-qf-ink2"
+          className="w-11 h-11 rounded-xl border-2 border-black bg-white hover:bg-qf-line-soft grid place-items-center text-qf-ink2 shadow-[0_2px_0_#000] active:translate-y-px active:shadow-[0_1px_0_#000] transition"
         >
           <IcoQrCode c="currentColor" s={18} />
         </button>
@@ -384,7 +542,7 @@ function ShopShareActions({
           onClick={shareWhatsApp}
           aria-label="שתף בוואטסאפ"
           title="שתף בוואטסאפ"
-          className="w-10 h-10 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft grid place-items-center"
+          className="w-11 h-11 rounded-xl border-2 border-black bg-white hover:bg-qf-line-soft grid place-items-center shadow-[0_2px_0_#000] active:translate-y-px active:shadow-[0_1px_0_#000] transition"
         >
           <IcoWhatsApp s={18} />
         </button>
@@ -403,11 +561,6 @@ function ShopShareActions({
   );
 }
 
-/**
- * Modal preview of the storefront QR code. Server-generated PNG data
- * URL means no client deps and the download button is a plain anchor
- * with `download` - works offline, no extra request.
- */
 function QrModal({
   name,
   slug,
@@ -459,7 +612,7 @@ function QrModal({
         <a
           href={qrDataUrl}
           download={downloadName}
-          className="block w-full text-center px-3 py-2.5 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-bold transition"
+          className="block w-full text-center px-3 py-2.5 rounded-xl bg-[#F8CB1E] hover:bg-[#FFD843] text-black border-2 border-black shadow-[0_2px_0_#000] active:translate-y-px active:shadow-[0_1px_0_#000] text-sm font-bold transition"
         >
           הורד PNG
         </a>
