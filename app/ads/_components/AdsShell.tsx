@@ -62,10 +62,9 @@ export function AdsShell({ children }: { children: ReactNode }) {
       <div style={{
         position: "relative", zIndex: 3,
         height: "100%",
-        display: "flex", flexDirection: "column", alignItems: "center",
+        display: "flex", flexDirection: "column",
         padding: "48px 20px 36px",
         maxWidth: 480, margin: "0 auto",
-        textAlign: "center",
       }}>
 
         {/* Logo */}

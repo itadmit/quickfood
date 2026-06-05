@@ -60,21 +60,14 @@ export default function AdsPageA() {
         {/* Divider */}
         <div style={{ height: 1, background: "#E8E4D5", marginBottom: 16 }} />
 
-        {/* Price */}
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "center",
-          gap: 8, marginBottom: 16,
-        }}>
-          <span style={{
-            fontSize: 44, fontWeight: 900, color: INK_COLOR,
-            letterSpacing: "-2px", lineHeight: 1,
-          }}>₪299</span>
-          <span style={{
-            fontSize: 14, fontWeight: 700, color: INK_COLOR,
-            lineHeight: 1.3, textAlign: "right",
-          }}>
-            לחודש<br />+ 0.5% בלבד
-          </span>
+        {/* Price — centered */}
+        <div style={{ textAlign: "center", marginBottom: 16 }}>
+          <div style={{ fontSize: 48, fontWeight: 900, color: INK_COLOR, letterSpacing: "-2px", lineHeight: 1 }}>
+            ₪299
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: INK_COLOR, marginTop: 4 }}>
+            לחודש + 0.5% בלבד
+          </div>
         </div>
 
         {/* CTA */}
