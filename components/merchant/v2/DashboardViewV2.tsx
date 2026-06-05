@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { IcoChart, IcoTrend, IcoArrowLeft, IcoMenuBook, IcoGear, IcoCheck, IcoMenuList, IcoClock, IcoCreditCard, IcoArrowRight } from "@/components/shared/Icons";
+import { IcoChart, IcoTrend, IcoArrowLeft, IcoMenuBook, IcoGear, IcoCheck, IcoMenuList, IcoClock, IcoCreditCard, IcoArrowRight, IcoClose } from "@/components/shared/Icons";
 import { Modal } from "@/components/shared/Modal";
 import { MenuItemImage } from "@/components/shared/MenuItemImage";
 import { formatPrice } from "@/lib/format";
@@ -563,44 +563,57 @@ function kpiHeadline(s: Summary): string {
 }
 
 function SetupTrigger({ state, onOpen }: { state: SetupState; onOpen: () => void }) {
-  const steps = [
-    state.brandingDone || !!state.initialCuisineType,
-    !!state.initialBranchAddress && !!state.initialBranchPhone,
-    state.initialMinOrder > 0 || state.initialDeliveryFee > 0,
-    state.categoriesDone,
+  const stepDefs = [
+    { label: "זהות", done: state.brandingDone || !!state.initialCuisineType },
+    { label: "סניף", done: !!state.initialBranchAddress && !!state.initialBranchPhone },
+    { label: "הזמנות", done: state.initialMinOrder > 0 || state.initialDeliveryFee > 0 },
+    { label: "תפריט", done: state.categoriesDone },
   ];
-  const done = steps.filter(Boolean).length;
-  const total = steps.length;
+  const doneCount = stepDefs.filter((s) => s.done).length;
+  const total = stepDefs.length;
 
   return (
-    <div className="rounded-2xl border-2 border-black bg-white shadow-[0_3px_0_#000] overflow-hidden animate-qf-empty-nudge">
-      <div className="flex items-center gap-4 p-4 lg:p-5">
-        <div className="shrink-0 w-12 h-12 rounded-2xl bg-[#F8CB1E] border-2 border-black grid place-items-center shadow-[0_2px_0_#000]">
+    <div className="rounded-2xl border-2 border-black bg-white shadow-[0_3px_0_#000] overflow-hidden animate-qf-empty-nudge" dir="rtl">
+      <div className="flex items-start gap-4 p-4 lg:p-5">
+        <div className="shrink-0 w-12 h-12 rounded-2xl bg-[#F8CB1E] border-2 border-black grid place-items-center shadow-[0_2px_0_#000] mt-0.5">
           <IcoMenuBook c="#000" s={22} />
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="font-black text-base text-black">הקמת החנות</div>
-          <div className="text-xs text-black/60 mt-0.5">
-            {done === 0 ? "בואו נגדיר את החנות יחד — 5 דקות ואתם מוכנים" : `${done} מתוך ${total} שלבים הושלמו`}
+        <div className="flex-1 min-w-0 space-y-3">
+          <div>
+            <div className="font-black text-base text-black">הקמת החנות</div>
+            <div className="text-xs text-black/55 mt-0.5">
+              {doneCount === 0
+                ? "בואו נגדיר את החנות יחד — 5 דקות ואתם מוכנים"
+                : `${doneCount} מתוך ${total} שלבים הושלמו`}
+            </div>
           </div>
-          <div className="flex gap-1 mt-2">
-            {steps.map((ok, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "h-1.5 flex-1 rounded-full transition",
-                  ok ? "bg-black" : "bg-black/15",
-                )}
-              />
+          <div className="flex gap-1">
+            {stepDefs.map(({ label, done }, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+                <div className={cn(
+                  "w-6 h-6 rounded-full border-2 flex items-center justify-center transition shrink-0",
+                  done ? "bg-black border-black" : "bg-white border-black/20",
+                )}>
+                  {done
+                    ? <IcoCheck c="#F8CB1E" s={10} />
+                    : <span className="text-[9px] font-black text-black/30 leading-none">{i + 1}</span>}
+                </div>
+                <span className={cn(
+                  "text-[10px] font-bold leading-tight text-center",
+                  done ? "text-black" : "text-black/35",
+                )}>
+                  {label}
+                </span>
+              </div>
             ))}
           </div>
         </div>
         <button
           type="button"
           onClick={onOpen}
-          className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-black text-[#F8CB1E] font-black text-sm border-2 border-black shadow-[0_2px_0_#000] active:translate-y-px active:shadow-none transition"
+          className="shrink-0 mt-0.5 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-black text-[#F8CB1E] font-black text-sm border-2 border-black shadow-[0_2px_0_#000] active:translate-y-px active:shadow-none transition"
         >
-          {done === 0 ? "התחל הגדרה" : "המשך הגדרה"}
+          {doneCount === 0 ? "התחל הגדרה" : "המשך הגדרה"}
           <IcoArrowLeft c="currentColor" s={14} />
         </button>
       </div>
@@ -726,7 +739,7 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
             className="w-8 h-8 rounded-full bg-black/10 hover:bg-black/20 grid place-items-center transition"
             aria-label="סגור"
           >
-            <span className="text-black font-bold text-sm leading-none">✕</span>
+            <IcoClose c="#000" s={14} />
           </button>
         </div>
 
@@ -736,11 +749,11 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
             <div
               key={n}
               className={cn(
-                "flex-1 py-2.5 text-center text-[11px] font-bold transition flex flex-col items-center gap-0.5",
+                "flex-1 py-3 text-center text-[11px] font-bold transition flex flex-col items-center gap-1",
                 step === n
                   ? "bg-black text-[#F8CB1E]"
                   : step > n
-                    ? "text-black/50 bg-black/4"
+                    ? "text-black/50 bg-black/[0.04]"
                     : "text-black/30",
               )}
             >
@@ -749,8 +762,9 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
                   <IcoCheck c="#F8CB1E" s={9} />
                 </span>
               ) : (
-                <span className={cn("w-4 h-4 rounded-full grid place-items-center text-[9px] font-black",
-                  step === n ? "bg-[#F8CB1E] text-black" : "bg-black/10 text-black/40"
+                <span className={cn(
+                  "w-4 h-4 rounded-full grid place-items-center text-[9px] font-black",
+                  step === n ? "bg-[#F8CB1E] text-black" : "bg-black/10 text-black/40",
                 )}>{n}</span>
               )}
               <span className="hidden sm:block">{label}</span>
@@ -759,7 +773,7 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
           {step === 1 && (
             <div className="space-y-4">
@@ -774,7 +788,7 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
                   onChange={(e) => setStoreName(e.target.value)}
                   placeholder="לדוגמה: פיצה מריה"
                   autoFocus
-                  className="w-full px-3.5 py-3 rounded-xl border-2 border-black outline-none text-sm font-bold placeholder:font-normal placeholder:text-black/30"
+                  className="w-full px-3.5 py-3 rounded-xl border-2 border-black outline-none text-base font-bold placeholder:font-normal placeholder:text-black/30"
                 />
               </WizardField>
               <WizardField label="סוג מטבח" optional>
@@ -782,7 +796,7 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
                   value={cuisineType}
                   onChange={(e) => setCuisineType(e.target.value)}
                   placeholder="לדוגמה: פיצה נפוליטנית, בורגר אמריקאי"
-                  className="w-full px-3.5 py-3 rounded-xl border-2 border-black outline-none text-sm placeholder:text-black/30"
+                  className="w-full px-3.5 py-3 rounded-xl border-2 border-black outline-none text-base placeholder:text-black/30"
                 />
               </WizardField>
             </div>
@@ -801,7 +815,7 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
                   onChange={(e) => setBranchAddress(e.target.value)}
                   placeholder="לדוגמה: רחוב הרצל 12, תל אביב"
                   autoFocus
-                  className="w-full px-3.5 py-3 rounded-xl border-2 border-black outline-none text-sm placeholder:text-black/30"
+                  className="w-full px-3.5 py-3 rounded-xl border-2 border-black outline-none text-base placeholder:text-black/30"
                 />
               </WizardField>
               <WizardField label="טלפון" optional>
@@ -811,7 +825,7 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
                   placeholder="050-0000000"
                   dir="ltr"
                   type="tel"
-                  className="w-full px-3.5 py-3 rounded-xl border-2 border-black outline-none text-sm placeholder:text-black/30"
+                  className="w-full px-3.5 py-3 rounded-xl border-2 border-black outline-none text-base placeholder:text-black/30"
                 />
               </WizardField>
             </div>
@@ -827,25 +841,25 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
               <div className="grid grid-cols-2 gap-3">
                 <WizardField label="סכום הזמנה מינימלי">
                   <div className="flex items-center border-2 border-black rounded-xl overflow-hidden">
-                    <span className="px-3 py-3 text-black/50 text-sm select-none border-l-2 border-black">₪</span>
+                    <span className="px-3 py-3 text-black/50 text-sm select-none border-s-2 border-black">₪</span>
                     <input
                       type="number"
                       min={0}
                       value={minOrder}
                       onChange={(e) => setMinOrder(parseInt(e.target.value, 10) || 0)}
-                      className="flex-1 px-3 py-3 outline-none bg-transparent tnum text-sm font-bold"
+                      className="flex-1 px-3 py-3 outline-none bg-transparent tnum text-base font-bold"
                     />
                   </div>
                 </WizardField>
                 <WizardField label="דמי משלוח ברירת מחדל">
                   <div className="flex items-center border-2 border-black rounded-xl overflow-hidden">
-                    <span className="px-3 py-3 text-black/50 text-sm select-none border-l-2 border-black">₪</span>
+                    <span className="px-3 py-3 text-black/50 text-sm select-none border-s-2 border-black">₪</span>
                     <input
                       type="number"
                       min={0}
                       value={deliveryFee}
                       onChange={(e) => setDeliveryFee(parseInt(e.target.value, 10) || 0)}
-                      className="flex-1 px-3 py-3 outline-none bg-transparent tnum text-sm font-bold"
+                      className="flex-1 px-3 py-3 outline-none bg-transparent tnum text-base font-bold"
                     />
                   </div>
                 </WizardField>
@@ -919,7 +933,7 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
                   onKeyDown={(e) => e.key === "Enter" && !busy && createCategory()}
                   placeholder="לדוגמה: פיצות"
                   autoFocus
-                  className="w-full px-3.5 py-3 rounded-xl border-2 border-black outline-none text-sm font-bold placeholder:font-normal placeholder:text-black/30"
+                  className="w-full px-3.5 py-3 rounded-xl border-2 border-black outline-none text-base font-bold placeholder:font-normal placeholder:text-black/30"
                 />
               </WizardField>
               <p className="text-xs text-black/50">
@@ -929,14 +943,14 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
           )}
 
           {err && (
-            <div className="rounded-xl bg-red-50 border border-red-200 px-3.5 py-2.5 text-sm text-red-700">
+            <div className="rounded-xl bg-qf-tomato/5 border border-qf-tomato/30 px-3.5 py-2.5 text-sm text-qf-tomato">
               {err}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 flex items-center gap-2 px-5 py-4 border-t-2 border-black/10 bg-white rounded-b-3xl">
+        <div className="shrink-0 flex items-center gap-3 px-6 py-5 border-t-2 border-black/10 bg-white rounded-b-3xl">
           {step > 1 && (
             <button
               type="button"
