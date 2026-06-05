@@ -546,7 +546,7 @@ function CsvImportModal({ onClose }: { onClose: () => void }) {
             type="file"
             accept=".csv,text/csv"
             onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
-            className="block text-sm"
+            className="block text-sm text-qf-mute file:me-3 file:px-3.5 file:py-2 file:rounded-xl file:border-2 file:border-black file:bg-[#F8CB1E] file:text-black file:font-bold file:cursor-pointer file:shadow-[0_2px_0_#000] hover:file:bg-[#FFD843] file:transition"
           />
           <textarea
             value={csv}

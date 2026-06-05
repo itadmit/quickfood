@@ -536,23 +536,7 @@ export function ItemEditor({
                         <IcoClose s={14} />
                       </button>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <label className="flex flex-col gap-1">
-                        <span className="text-[10px] font-medium text-qf-mute">קוד</span>
-                        <input
-                          value={s.code}
-                          onChange={(e) =>
-                            setData((d) => ({
-                              ...d,
-                              sizes: d.sizes.map((x, idx) => (idx === i ? { ...x, code: e.target.value.toUpperCase() } : x)),
-                            }))
-                          }
-                          maxLength={4}
-                          placeholder="S"
-                          dir="ltr"
-                          className="px-2 py-1.5 rounded-lg border border-qf-line-dash bg-white text-center text-sm tnum"
-                        />
-                      </label>
+                    <div className="grid grid-cols-2 gap-2">
                       <label className="flex flex-col gap-1">
                         <span className="text-[10px] font-medium text-qf-mute">הפרש מחיר (₪)</span>
                         <input
@@ -629,8 +613,8 @@ export function ItemEditor({
             </header>
             {modifierSets.length === 0 && (
               <p className="text-xs text-qf-mute leading-snug">
-                טיפ: יצרת תפריט גדול? פתח <Link href="/dashboard/menu/modifiers" className="underline">קטלוג תוספות</Link> פעם
-                אחת ושייך אותו לעשרות פריטים - עורכים במקום אחד, מתעדכן בכל הפריטים.
+                טיפ: יש לך הרבה תוספות? השתמש ב<Link href="/dashboard/menu/modifiers" className="underline">קטלוג התוספות</Link> פעם
+                אחת ושייך אותו לעשרות פריטים - עורכים במקום אחד, מתעדכן בכל הפריטים. גם שינוי מחיר או החלפת זמינות תתעדכן בכל המוצרים המשויכים בזמן אמת.
               </p>
             )}
             <DragList

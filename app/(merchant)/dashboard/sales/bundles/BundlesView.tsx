@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Modal } from "@/components/shared/Modal";
+import { Toggle } from "@/components/shared/Toggle";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import { formatPrice } from "@/lib/format";
@@ -154,7 +155,7 @@ export function BundlesView({
       <PageHeader
         chip="מכירות"
         title="מבצעי חבילות"
-        subtitle={`${initial.length} מבצעים · "הוסיפו צ׳יפס + שתייה ב-X" - מופיעים בסל כשפריט מתאים נכנס`}
+        subtitle={`${initial.length} מבצעים פעילים · הצעות שמופיעות בסל כשהלקוח מוסיף פריט שמפעיל את המבצע`}
         actions={
           <button
             type="button"
@@ -168,7 +169,7 @@ export function BundlesView({
 
       {initial.length === 0 ? (
         <div className="bg-white rounded-2xl border-2 border-dashed border-qf-line-dash p-10 text-center text-qf-mute">
-          עוד אין מבצעי חבילות. צרי את הראשון - &quot;פיצה ⟵ צ&apos;יפס + שתייה ב-₪15&quot;.
+          עוד אין מבצעי חבילות. צרו את המבצע הראשון, למשל: בקניית &quot;המבורגר&quot; תציע &quot;צ&apos;יפס + שתייה ב-₪15&quot;.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -326,7 +327,7 @@ export function BundlesView({
               </select>
             </div>
 
-            <div className="bg-(--qf-soft) rounded-2xl p-3 space-y-2">
+            <div className="bg-[#FFF7D6] border border-[#F8CB1E]/50 rounded-2xl p-3 space-y-2">
               <div>
                 <span className="text-xs font-bold block mb-1">
                   מוצר משודרג (מומלץ)
@@ -453,14 +454,13 @@ export function BundlesView({
             </label>
             )}
 
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <Toggle
                 checked={editing.active}
-                onChange={(e) => setEditing({ ...editing, active: e.target.checked })}
-                className="w-5 h-5 accent-(--qf-primary)"
+                onChange={(next) => setEditing({ ...editing, active: next })}
+                aria-label="המבצע פעיל"
               />
-              <span className="text-sm">המבצע פעיל</span>
+              <span className="text-sm font-medium">המבצע פעיל</span>
             </label>
 
             <div className="flex justify-end gap-2 pt-2">
@@ -476,7 +476,7 @@ export function BundlesView({
                 type="button"
                 onClick={save}
                 disabled={saving}
-                className="px-5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-bold disabled:opacity-60"
+                className="px-5 py-2 rounded-xl bg-[#F8CB1E] hover:bg-[#FFD843] text-black border-2 border-black shadow-[0_2px_0_#000] active:translate-y-px active:shadow-[0_1px_0_#000] text-sm font-bold transition disabled:opacity-60"
               >
                 {saving ? "שומר..." : "שמירה"}
               </button>

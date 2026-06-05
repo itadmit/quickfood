@@ -1,9 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { IcoWhatsApp } from "@/components/shared/Icons";
 
 const SUPPORT_PHONE = "972552554432";
+
+// Item editor (new + edit) has its own sticky bottom CTA that the FAB
+// would overlap on mobile. Hide there.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isItemEditorRoute(pathname: string): boolean {
+  if (pathname === "/dashboard/menu/new") return true;
+  const m = pathname.match(/^\/dashboard\/menu\/([^/]+)$/);
+  return !!m && UUID_RE.test(m[1]);
+}
 
 function buildWhatsAppHref(merchantName: string, hasNoMenuItems: boolean): string {
   const name = merchantName.trim() || "סוחר";
@@ -20,7 +30,9 @@ export function SupportFAB({
   merchantName: string;
   hasNoMenuItems?: boolean;
 }) {
+  const pathname = usePathname() ?? "";
   const [hover, setHover] = useState(false);
+  if (isItemEditorRoute(pathname)) return null;
   const href = buildWhatsAppHref(merchantName, hasNoMenuItems);
   const bubbleText = hasNoMenuItems
     ? "צריכים עזרה בהקמה? דברו איתנו פה.."
