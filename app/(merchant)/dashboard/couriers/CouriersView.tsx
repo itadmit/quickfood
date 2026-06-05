@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoBike, IcoPhone, IcoStar } from "@/components/shared/Icons";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { Modal } from "@/components/shared/Modal";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { cn } from "@/lib/cn";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
@@ -580,14 +581,14 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
       />
 
       {resetPinFor && (
-        <div
-          className="fixed inset-0 bg-black/40 z-50 grid place-items-center p-4"
-          onClick={() => !resettingPin && setResetPinFor(null)}
+        <Modal
+          open
+          onClose={() => setResetPinFor(null)}
+          closeOnBackdrop={!resettingPin}
+          size="sm"
+          ariaLabel={resetPinFor.email ? "איפוס PIN" : "הגדרת חשבון התחברות"}
         >
-          <div
-            className="bg-white rounded-2xl p-5 w-full max-w-sm space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-4">
             <h3 className="font-semibold text-lg">
               {resetPinFor.email ? "איפוס PIN" : "הגדרת חשבון התחברות"}
             </h3>
@@ -643,18 +644,18 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {settleFor && (
-        <div
-          className="fixed inset-0 bg-black/40 z-50 grid place-items-center p-4"
-          onClick={() => !settling && setSettleFor(null)}
+        <Modal
+          open
+          onClose={() => setSettleFor(null)}
+          closeOnBackdrop={!settling}
+          size="sm"
+          ariaLabel="סגירת קופה"
         >
-          <div
-            className="bg-white rounded-2xl p-5 w-full max-w-sm space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-4">
             <header>
               <h3 className="font-semibold text-lg">סגירת קופה</h3>
               <p className="text-sm text-qf-mute">
@@ -699,7 +700,7 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       <ConfirmDialog

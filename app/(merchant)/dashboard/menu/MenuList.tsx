@@ -9,13 +9,12 @@ import { IcoEye, IcoEdit, IcoTrash, IcoClose, IcoCheck, IcoMore, IcoStar } from 
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { Toggle } from "@/components/shared/Toggle";
+import { Modal } from "@/components/shared/Modal";
 import { cn } from "@/lib/cn";
 import { ItemPreviewModal } from "./ItemPreviewModal";
 import { BulkPriceModal } from "./BulkPriceModal";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { CategoryEditorModal, type EditableCategory } from "./CategoryEditorModal";
 import { resolveCategoryStyle } from "@/lib/category-style";
-import { IcoGear } from "@/components/shared/Icons";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import { DragList } from "@/components/shared/DragList";
 
@@ -74,7 +73,6 @@ export function MenuList({
   const [deleting, setDeleting] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [bulkPriceOpen, setBulkPriceOpen] = useState(false);
-  const [categoryEditorOpen, setCategoryEditorOpen] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
 
   // Drag-to-reorder. Scoped to a single category (storefront orders items
@@ -204,18 +202,6 @@ export function MenuList({
         subtitle={`${visibleCount} פריטים זמינים · ${hiddenCount} מוסתרים`}
         actions={
           <>
-            <Link
-              href="/dashboard/menu/modifiers"
-              className="inline-flex px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5"
-            >
-              קטלוג תוספות
-            </Link>
-            <Link
-              href="/dashboard/menu/notices"
-              className="inline-flex px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5"
-            >
-              הודעות
-            </Link>
             <button
               type="button"
               onClick={() => setBulkPriceOpen(true)}
@@ -277,14 +263,6 @@ export function MenuList({
             );
           })}
         </div>
-        <button
-          type="button"
-          onClick={() => setCategoryEditorOpen(true)}
-          className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5"
-        >
-          <IcoGear s={14} c="#F8CB1E" />
-          <span>ערוך קטגוריות</span>
-        </button>
       </div>
 
       {reorderMode && (
@@ -502,20 +480,6 @@ export function MenuList({
         />
       )}
 
-      <CategoryEditorModal
-        open={categoryEditorOpen}
-        onClose={() => setCategoryEditorOpen(false)}
-        categories={categories.map<EditableCategory>((c) => ({
-          id: c.id,
-          name: c.name,
-          icon: c.icon,
-          color: c.color,
-          position: c.position,
-          upsellInCart: c.upsellInCart,
-          upsellBeforeCheckout: c.upsellBeforeCheckout,
-        }))}
-      />
-
       <Toast toast={toast} onDismiss={() => setToast(null)} />
     </div>
   );
@@ -560,28 +524,24 @@ function CsvImportModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div
-        className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="px-5 py-4 border-b border-qf-line-soft flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold">ייבוא תפריט מ-CSV</h2>
-            <p className="text-xs text-qf-mute">
-              עמודות נדרשות: name, category, base_price · אופציונליות: description, prep_minutes, available, tags
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-8 h-8 rounded-lg hover:bg-qf-line-soft grid place-items-center text-qf-mute"
-            aria-label="סגור"
-          >
-            <IcoClose c="currentColor" s={16} />
-          </button>
-        </header>
-        <div className="p-5 space-y-3">
+    <Modal open onClose={onClose} size="2xl" ariaLabel="ייבוא תפריט מ-CSV">
+      <header className="sticky top-0 z-10 bg-white px-5 py-4 border-b border-qf-line-soft flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-lg font-bold">ייבוא תפריט מ-CSV</h2>
+          <p className="text-xs text-qf-mute">
+            עמודות נדרשות: name, category, base_price · אופציונליות: description, prep_minutes, available, tags
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="shrink-0 w-8 h-8 rounded-lg hover:bg-qf-line-soft grid place-items-center text-qf-mute"
+          aria-label="סגור"
+        >
+          <IcoClose c="currentColor" s={16} />
+        </button>
+      </header>
+      <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-3">
           <input
             type="file"
             accept=".csv,text/csv"
@@ -619,25 +579,24 @@ function CsvImportModal({ onClose }: { onClose: () => void }) {
             </div>
           )}
         </div>
-        <footer className="px-5 py-3 border-t border-qf-line-soft flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-3 py-2 rounded-xl border border-qf-line-dash text-sm"
-          >
-            סגור
-          </button>
-          <button
-            type="button"
-            onClick={importNow}
-            disabled={!csv.trim() || busy}
-            className="px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
-          >
-            {busy ? "מייבא..." : "ייבא"}
-          </button>
-        </footer>
-      </div>
-    </div>
+      <footer className="shrink-0 px-5 py-3 border-t border-qf-line-soft flex justify-end gap-2 bg-white">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-3 py-2 rounded-xl border border-qf-line-dash text-sm"
+        >
+          סגור
+        </button>
+        <button
+          type="button"
+          onClick={importNow}
+          disabled={!csv.trim() || busy}
+          className="px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
+        >
+          {busy ? "מייבא..." : "ייבא"}
+        </button>
+      </footer>
+    </Modal>
   );
 }
 

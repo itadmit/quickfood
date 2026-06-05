@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { IcoBike, IcoPhone } from "@/components/shared/Icons";
+import { Modal } from "@/components/shared/Modal";
 import { cn } from "@/lib/cn";
 
 interface CourierRow {
@@ -69,31 +70,30 @@ export function AssignCourierModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 bg-black/40 z-50 grid place-items-center p-4"
-      onClick={() => assigningId == null && onClose()}
+    <Modal
+      open
+      onClose={onClose}
+      closeOnBackdrop={assigningId == null}
+      size="md"
+      ariaLabel="מסירת הזמנה לשליח"
     >
-      <div
-        className="bg-white rounded-2xl p-5 w-full max-w-md max-h-[80vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="font-semibold text-lg">מסירת הזמנה לשליח</h3>
-            <p className="text-xs text-qf-mute">הזמנה {orderNumber}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={assigningId != null}
-            className="text-qf-mute hover:text-qf-ink text-2xl leading-none"
-            aria-label="סגירה"
-          >
-            ×
-          </button>
-        </header>
+      <header className="sticky top-0 z-10 bg-white flex items-center justify-between gap-3 px-5 pt-5 pb-3 border-b border-qf-line">
+        <div className="min-w-0">
+          <h3 className="font-semibold text-lg">מסירת הזמנה לשליח</h3>
+          <p className="text-xs text-qf-mute">הזמנה {orderNumber}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={assigningId != null}
+          className="shrink-0 text-qf-mute hover:text-qf-ink text-2xl leading-none disabled:opacity-50"
+          aria-label="סגירה"
+        >
+          ×
+        </button>
+      </header>
 
-        <div className="flex-1 overflow-y-auto -mx-1 px-1">
+      <div className="flex-1 overflow-y-auto px-5 py-4">
           {couriers == null && !error && (
             <div className="text-center py-10 text-qf-mute text-sm">טוען שליחים…</div>
           )}
@@ -164,8 +164,7 @@ export function AssignCourierModal({
               })}
             </ul>
           )}
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 }

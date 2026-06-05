@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { IcoCheck } from "@/components/shared/Icons";
 import { Toggle as SharedToggle } from "@/components/shared/Toggle";
+import { Modal } from "@/components/shared/Modal";
 import { cn } from "@/lib/cn";
 
 type Channel = "off" | "email" | "sms" | "whatsapp" | "whatsapp_managed";
@@ -438,13 +439,14 @@ function ManagedSubscribeModal({
 }) {
   const totalWithVat = (basePrice * 1.18).toFixed(2);
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !busy) onClose();
-      }}
+    <Modal
+      open
+      onClose={onClose}
+      closeOnBackdrop={!busy}
+      size="sm"
+      ariaLabel="הפעלת ווטסאפ של QuickFood"
     >
-      <div className="bg-white rounded-2xl border border-qf-line p-5 max-w-sm w-full space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-4">
         <div className="space-y-1">
           <div className="font-semibold">הפעלת ווטסאפ של QuickFood</div>
           <div className="text-sm text-qf-ink2">
@@ -496,7 +498,7 @@ function ManagedSubscribeModal({
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 

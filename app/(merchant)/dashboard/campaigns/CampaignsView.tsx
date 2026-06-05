@@ -4,6 +4,7 @@ import { useState } from "react";
 import { IcoMegaphone, IcoPlus, IcoEdit, IcoTrash, IcoClose, IcoCheck } from "@/components/shared/Icons";
 import { ImageUploader } from "@/components/shared/ImageUploader";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { Modal } from "@/components/shared/Modal";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { RelativeTime } from "@/components/shared/RelativeTime";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
@@ -344,26 +345,27 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
       )}
 
       {editing && (
-        <div
-          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm grid place-items-center p-4"
-          onClick={(e) => e.target === e.currentTarget && setEditing(null)}
+        <Modal
+          open
+          onClose={() => setEditing(null)}
+          size="lg"
+          ariaLabel={editing.id ? "עריכת קמפיין" : "קמפיין חדש"}
         >
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-qf-line">
-              <h2 className="font-semibold text-lg">
-                {editing.id ? "עריכת קמפיין" : "קמפיין חדש"}
-              </h2>
-              <button
-                type="button"
-                onClick={() => setEditing(null)}
-                className="w-8 h-8 rounded-full grid place-items-center hover:bg-qf-line-soft"
-                aria-label="סגור"
-              >
-                <IcoClose s={16} />
-              </button>
-            </div>
+          <div className="sticky top-0 z-10 bg-white flex items-center justify-between px-5 py-4 border-b border-qf-line">
+            <h2 className="font-semibold text-lg">
+              {editing.id ? "עריכת קמפיין" : "קמפיין חדש"}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setEditing(null)}
+              className="w-8 h-8 rounded-full grid place-items-center hover:bg-qf-line-soft"
+              aria-label="סגור"
+            >
+              <IcoClose s={16} />
+            </button>
+          </div>
 
-            <div className="p-5 space-y-4">
+          <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-4">
               <div>
                 <label className="text-sm font-medium block mb-1.5">
                   סוג קמפיין <span className="text-qf-tomato">*</span>
@@ -596,25 +598,24 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-qf-line bg-qf-bg/40">
-              <button
-                type="button"
-                onClick={() => setEditing(null)}
-                className="px-4 py-2 rounded-xl text-sm text-qf-ink2 hover:bg-qf-line-soft"
-              >
-                ביטול
-              </button>
-              <button
-                type="button"
-                onClick={save}
-                disabled={saving}
-                className="bg-(--qf-primary) hover:bg-(--qf-deep) text-white rounded-xl px-5 py-2 text-sm font-semibold disabled:opacity-60"
-              >
-                {saving ? "שומר..." : "שמור"}
-              </button>
-            </div>
+          <div className="shrink-0 flex items-center justify-end gap-2 px-5 py-4 border-t border-qf-line bg-qf-bg/40">
+            <button
+              type="button"
+              onClick={() => setEditing(null)}
+              className="px-4 py-2 rounded-xl text-sm text-qf-ink2 hover:bg-qf-line-soft"
+            >
+              ביטול
+            </button>
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving}
+              className="bg-(--qf-primary) hover:bg-(--qf-deep) text-white rounded-xl px-5 py-2 text-sm font-semibold disabled:opacity-60"
+            >
+              {saving ? "שומר..." : "שמור"}
+            </button>
           </div>
-        </div>
+        </Modal>
       )}
 
       <ConfirmDialog

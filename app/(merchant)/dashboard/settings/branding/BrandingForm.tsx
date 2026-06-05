@@ -9,6 +9,7 @@ import { ImageUploader } from "@/components/shared/ImageUploader";
 import { SmartImg } from "@/components/shared/SmartImg";
 
 import { IcoCheck, IcoCopy, IcoWhatsApp, IcoTrash, IcoQrCode, IcoClose } from "@/components/shared/Icons";
+import { Modal } from "@/components/shared/Modal";
 import { cn } from "@/lib/cn";
 
 interface Tenant {
@@ -422,24 +423,17 @@ function QrModal({
 }) {
   const downloadName = `${slug || "quickfood"}-qr.png`;
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="relative w-full max-w-sm bg-white rounded-3xl border border-qf-line p-6 space-y-4">
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="סגור"
-          className="absolute top-3 inset-s-3 w-9 h-9 rounded-full grid place-items-center bg-qf-line-soft hover:bg-qf-line transition"
-        >
-          <IcoClose c="currentColor" s={14} />
-        </button>
+    <Modal open onClose={onClose} size="sm" ariaLabel="QR code לחנות">
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="סגור"
+        className="absolute top-3 inset-s-3 z-20 w-9 h-9 rounded-full grid place-items-center bg-qf-line-soft hover:bg-qf-line transition"
+      >
+        <IcoClose c="currentColor" s={14} />
+      </button>
 
+      <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4">
         <div className="text-center space-y-1 pt-1">
           <h3 className="font-bold text-lg">QR code לחנות</h3>
           <p className="text-xs text-qf-ink2">
@@ -470,6 +464,6 @@ function QrModal({
           הורד PNG
         </a>
       </div>
-    </div>
+    </Modal>
   );
 }

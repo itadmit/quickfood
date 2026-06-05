@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { MenuItemImage } from "@/components/shared/MenuItemImage";
 import { formatPrice } from "@/lib/format";
 import { IcoClose, IcoCheck } from "@/components/shared/Icons";
+import { Modal } from "@/components/shared/Modal";
 import { cn } from "@/lib/cn";
 
 interface FullItem {
@@ -51,19 +52,6 @@ export function ItemPreviewModal({ itemId, onClose }: { itemId: string; onClose:
     };
   }, [itemId]);
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [onClose]);
-
   const defaultSize = item?.sizes.find((s) => s.is_default) ?? item?.sizes[0] ?? null;
   const sizeDelta = defaultSize?.price_delta ?? 0;
   const defaultOptsDelta = item
@@ -74,16 +62,17 @@ export function ItemPreviewModal({ itemId, onClose }: { itemId: string; onClose:
   const totalBase = item ? item.base_price + sizeDelta + defaultOptsDelta : 0;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="תצוגה מקדימה של פריט"
-      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm grid place-items-center p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="bg-white w-full max-w-md max-h-[92vh] overflow-y-auto rounded-2xl shadow-2xl">
+    <Modal open onClose={onClose} size="md" ariaLabel="תצוגה מקדימה של פריט">
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="סגור"
+        className="absolute top-3 inset-e-3 z-20 w-9 h-9 rounded-full bg-white shadow grid place-items-center"
+      >
+        <IcoClose s={18} />
+      </button>
+
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {error ? (
           <div className="p-10 text-center text-sm text-qf-tomato">{error}</div>
         ) : !item ? (
@@ -99,14 +88,6 @@ export function ItemPreviewModal({ itemId, onClose }: { itemId: string; onClose:
                 rounded="md"
                 className="w-full h-full"
               />
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="סגור"
-                className="absolute top-3 inset-e-3 w-9 h-9 rounded-full bg-white shadow grid place-items-center"
-              >
-                <IcoClose s={18} />
-              </button>
             </div>
 
             <div className="px-5 -mt-5 relative pb-2">
@@ -189,7 +170,7 @@ export function ItemPreviewModal({ itemId, onClose }: { itemId: string; onClose:
           </>
         )}
       </div>
-    </div>
+    </Modal>
   );
 }
 

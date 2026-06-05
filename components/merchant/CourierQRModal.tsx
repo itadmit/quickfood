@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
+import { Modal } from "@/components/shared/Modal";
 
 export function CourierQRModal({
   courierId,
@@ -62,14 +63,8 @@ export function CourierQRModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 bg-black/40 z-50 grid place-items-center p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-2xl p-5 w-full max-w-sm space-y-4"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Modal open onClose={onClose} size="sm" ariaLabel="התחברות מהירה לשליח">
+      <div className="p-5 space-y-4">
         <header className="text-center">
           <h3 className="font-bold text-lg">התחברות מהירה</h3>
           <p className="text-sm text-qf-mute">
@@ -130,6 +125,6 @@ export function CourierQRModal({
           סגירה
         </button>
       </div>
-    </div>
+    </Modal>
   );
 }

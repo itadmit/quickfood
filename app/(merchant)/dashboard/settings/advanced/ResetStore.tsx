@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoTrash } from "@/components/shared/Icons";
+import { Modal } from "@/components/shared/Modal";
 
 interface Props {
   tenantName: string;
@@ -77,72 +78,74 @@ export function ResetStore({ tenantName }: Props) {
         ההזמנות, הלקוחות, הצוות, יתרת SMS ופרטי החיוב נשמרים.</b>
       </p>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-50 bg-black/60 grid place-items-center px-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget && !busy) setOpen(false);
-          }}
-        >
-          <div className="bg-white rounded-2xl border-2 border-black w-full max-w-md p-6 shadow-[0_6px_0_#000]">
-            <header className="mb-3">
-              <h3 className="text-lg font-black text-qf-tomato">
-                איפוס מוחלט של החנות
-              </h3>
-              <p className="text-sm text-black/70 mt-1 leading-relaxed">
-                פעולה לא הפיכה. כדי לאשר, הקלידו את שם החנות{" "}
-                <b className="font-black">בדיוק</b> כפי שמופיע למטה.
-              </p>
-            </header>
+      <Modal
+        open={open}
+        onClose={() => {
+          if (!busy) setOpen(false);
+        }}
+        closeOnBackdrop={!busy}
+        size="md"
+        ariaLabel="איפוס מוחלט של החנות"
+        className="border-2 border-black shadow-[0_6px_0_#000]"
+      >
+        <div className="flex-1 min-h-0 overflow-y-auto p-6">
+          <header className="mb-3">
+            <h3 className="text-lg font-black text-qf-tomato">
+              איפוס מוחלט של החנות
+            </h3>
+            <p className="text-sm text-black/70 mt-1 leading-relaxed">
+              פעולה לא הפיכה. כדי לאשר, הקלידו את שם החנות{" "}
+              <b className="font-black">בדיוק</b> כפי שמופיע למטה.
+            </p>
+          </header>
 
-            <div className="bg-qf-bg-dash border border-black/10 rounded-lg px-3 py-2 mb-2 text-sm font-bold tnum text-center select-all">
-              {tenantName}
+          <div className="bg-qf-bg-dash border border-black/10 rounded-lg px-3 py-2 mb-2 text-sm font-bold tnum text-center select-all">
+            {tenantName}
+          </div>
+
+          <input
+            type="text"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            autoFocus
+            disabled={busy}
+            placeholder="הקלידו את שם החנות"
+            className="w-full px-3 py-2.5 rounded-lg border-2 border-black/40 focus:border-black outline-none text-sm font-bold transition"
+          />
+
+          {error && (
+            <div className="mt-3 bg-qf-tomato/10 border border-qf-tomato/30 text-qf-tomato text-sm rounded-xl px-3 py-2">
+              {error}
             </div>
+          )}
 
-            <input
-              type="text"
-              value={typed}
-              onChange={(e) => setTyped(e.target.value)}
-              autoFocus
+          <div className="mt-5 flex items-center gap-2 justify-end">
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
               disabled={busy}
-              placeholder="הקלידו את שם החנות"
-              className="w-full px-3 py-2.5 rounded-lg border-2 border-black/40 focus:border-black outline-none text-sm font-bold transition"
-            />
-
-            {error && (
-              <div className="mt-3 bg-qf-tomato/10 border border-qf-tomato/30 text-qf-tomato text-sm rounded-xl px-3 py-2">
-                {error}
-              </div>
-            )}
-
-            <div className="mt-5 flex items-center gap-2 justify-end">
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                disabled={busy}
-                className="px-4 py-2 rounded-lg text-sm font-bold text-black hover:bg-black/5 disabled:opacity-50"
-              >
-                ביטול
-              </button>
-              <button
-                type="button"
-                onClick={onConfirm}
-                disabled={!nameMatches || busy}
-                className="px-4 py-2 rounded-lg text-sm font-bold bg-qf-tomato hover:bg-[#a8381b] text-white disabled:opacity-50 disabled:cursor-not-allowed transition inline-flex items-center gap-2"
-              >
-                {busy ? (
-                  <>
-                    <span className="qf-spinner" aria-hidden />
-                    <span>מאפס…</span>
-                  </>
-                ) : (
-                  "כן, אפס הכל"
-                )}
-              </button>
-            </div>
+              className="px-4 py-2 rounded-lg text-sm font-bold text-black hover:bg-black/5 disabled:opacity-50"
+            >
+              ביטול
+            </button>
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={!nameMatches || busy}
+              className="px-4 py-2 rounded-lg text-sm font-bold bg-qf-tomato hover:bg-[#a8381b] text-white disabled:opacity-50 disabled:cursor-not-allowed transition inline-flex items-center gap-2"
+            >
+              {busy ? (
+                <>
+                  <span className="qf-spinner" aria-hidden />
+                  <span>מאפס…</span>
+                </>
+              ) : (
+                "כן, אפס הכל"
+              )}
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

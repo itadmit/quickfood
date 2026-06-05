@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { Modal } from "@/components/shared/Modal";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import { formatPrice } from "@/lib/format";
@@ -269,14 +270,14 @@ export function BundlesView({
       )}
 
       {editing && (
-        <div
-          className="fixed inset-0 bg-black/40 z-50 grid place-items-center p-4"
-          onClick={() => !saving && setEditing(null)}
+        <Modal
+          open
+          onClose={() => setEditing(null)}
+          closeOnBackdrop={!saving}
+          size="xl"
+          ariaLabel={editing.id ? "עריכת מבצע" : "מבצע חדש"}
         >
-          <div
-            className="bg-white rounded-2xl p-5 w-full max-w-xl space-y-4 max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-4">
             <h3 className="font-bold text-lg">
               {editing.id ? "עריכת מבצע" : "מבצע חדש"}
             </h3>
@@ -481,7 +482,7 @@ export function BundlesView({
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       <ConfirmDialog

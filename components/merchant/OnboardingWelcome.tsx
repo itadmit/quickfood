@@ -19,6 +19,7 @@ import {
   IcoGear,
   IcoCheck,
 } from "@/components/shared/Icons";
+import { Modal } from "@/components/shared/Modal";
 
 export const OPEN_WELCOME_EVENT = "qf:open-welcome";
 
@@ -45,16 +46,6 @@ export function OnboardingWelcome({
     return () => window.removeEventListener(OPEN_WELCOME_EVENT, onOpen);
   }, []);
 
-  useEffect(() => {
-    if (!open) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") dismissAndGo("later");
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
   async function dismissAndGo(target: "scratch" | "wolt" | "later") {
     setBusy(target);
     fetch("/api/v1/merchant/tenant", {
@@ -73,94 +64,85 @@ export function OnboardingWelcome({
     }
   }
 
-  if (!open) return null;
-
   const firstName = merchantName?.split(" ")[0] ?? "";
 
   return (
-    <div
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 md:p-6"
-      role="dialog"
-      aria-modal="true"
-      aria-label="ברוך הבא ל-QuickFood"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && busy === null) dismissAndGo("later");
-      }}
+    <Modal
+      open={open}
+      onClose={() => dismissAndGo("later")}
+      size="4xl"
+      closeOnBackdrop={busy === null}
+      ariaLabel="ברוך הבא ל-QuickFood"
+      panelStyle={{ backgroundColor: "#F8CB1E" }}
+      className="overflow-hidden"
     >
       <div
-        className="relative w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl"
-        style={{ backgroundColor: "#F8CB1E" }}
+        className="absolute inset-0 pointer-events-none opacity-[0.08]"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, #000 1.5px, transparent 1.5px)",
+          backgroundSize: "26px 26px",
+        }}
+        aria-hidden
+      />
+
+      <button
+        type="button"
+        onClick={() => dismissAndGo("later")}
+        disabled={busy !== null}
+        aria-label="סגור"
+        className="absolute top-4 inset-e-4 z-20 w-9 h-9 rounded-full bg-black/10 hover:bg-black/20 grid place-items-center text-black transition active:scale-95 disabled:opacity-50"
       >
-        <div
-          className="absolute inset-0 pointer-events-none opacity-[0.08]"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, #000 1.5px, transparent 1.5px)",
-            backgroundSize: "26px 26px",
-          }}
-          aria-hidden
-        />
+        <IcoClose c="currentColor" s={18} />
+      </button>
 
-        <button
-          type="button"
-          onClick={() => dismissAndGo("later")}
-          disabled={busy !== null}
-          aria-label="סגור"
-          className="absolute top-4 inset-e-4 z-10 w-9 h-9 rounded-full bg-black/10 hover:bg-black/20 grid place-items-center text-black transition active:scale-95 disabled:opacity-50"
-        >
-          <IcoClose c="currentColor" s={18} />
-        </button>
+      <div className="relative flex-1 min-h-0 overflow-y-auto px-6 py-10 md:px-10 md:py-12 flex flex-col items-center text-center">
+        {step === 1 ? (
+          <div className="mb-6 inline-flex items-center gap-2 text-black/70 text-xs font-semibold">
+            <span className="bg-black text-[#F8CB1E] px-2 py-0.5 rounded-md text-[10px] font-black tracking-wide">
+              QuickFood
+            </span>
+            <span>ברוכים הבאים</span>
+          </div>
+        ) : (
+          <StepPills step={step} />
+        )}
 
-        <div className="relative px-6 py-10 md:px-10 md:py-12 flex flex-col items-center text-center">
-          {/* Step pills — visible on every step so the merchant knows
-              how short the tour is. Step 1 also shows the brand chip. */}
-          {step === 1 ? (
-            <div className="mb-6 inline-flex items-center gap-2 text-black/70 text-xs font-semibold">
-              <span className="bg-black text-[#F8CB1E] px-2 py-0.5 rounded-md text-[10px] font-black tracking-wide">
-                QuickFood
-              </span>
-              <span>ברוכים הבאים</span>
-            </div>
-          ) : (
-            <StepPills step={step} />
-          )}
+        {step === 1 && (
+          <Step1Welcome
+            firstName={firstName}
+            busy={busy}
+            onScratch={() => setStep(2)}
+            onWolt={() => dismissAndGo("wolt")}
+          />
+        )}
 
-          {step === 1 && (
-            <Step1Welcome
-              firstName={firstName}
-              busy={busy}
-              onScratch={() => setStep(2)}
-              onWolt={() => dismissAndGo("wolt")}
-            />
-          )}
+        {step === 2 && (
+          <Step2Sidebar
+            onBack={() => setStep(1)}
+            onNext={() => setStep(3)}
+            onSkip={() => dismissAndGo("later")}
+          />
+        )}
 
-          {step === 2 && (
-            <Step2Sidebar
-              onBack={() => setStep(1)}
-              onNext={() => setStep(3)}
-              onSkip={() => dismissAndGo("later")}
-            />
-          )}
+        {step === 3 && (
+          <Step3Settings
+            onBack={() => setStep(2)}
+            onNext={() => setStep(4)}
+            onSkip={() => dismissAndGo("later")}
+          />
+        )}
 
-          {step === 3 && (
-            <Step3Settings
-              onBack={() => setStep(2)}
-              onNext={() => setStep(4)}
-              onSkip={() => dismissAndGo("later")}
-            />
-          )}
-
-          {step === 4 && (
-            <Step4Ready
-              busy={busy}
-              onBack={() => setStep(3)}
-              onScratch={() => dismissAndGo("scratch")}
-              onWolt={() => dismissAndGo("wolt")}
-            />
-          )}
-        </div>
+        {step === 4 && (
+          <Step4Ready
+            busy={busy}
+            onBack={() => setStep(3)}
+            onScratch={() => dismissAndGo("scratch")}
+            onWolt={() => dismissAndGo("wolt")}
+          />
+        )}
       </div>
-    </div>
+    </Modal>
   );
 }
 

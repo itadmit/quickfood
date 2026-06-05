@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoClose, IcoPlus, IcoMinus, IcoCheck, IcoSearch } from "@/components/shared/Icons";
+import { Modal } from "@/components/shared/Modal";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
@@ -189,16 +190,10 @@ export function ManualOrderModal({ onClose }: { onClose: () => void }) {
       });
   }, []);
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        if (configuring) setConfiguring(null);
-        else onClose();
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose, configuring]);
+  function handleModalClose() {
+    if (configuring) setConfiguring(null);
+    else onClose();
+  }
 
   function clickItem(item: MenuItem) {
     if (needsConfig(item)) {
@@ -333,28 +328,26 @@ export function ManualOrderModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-      onClick={onClose}
+    <Modal
+      open
+      onClose={handleModalClose}
+      size="4xl"
+      ariaLabel="הזמנה ידנית"
     >
-      <div
-        className="w-full max-w-4xl max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="px-5 py-4 border-b border-qf-line-soft flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold">הזמנה ידנית</h2>
-            <p className="text-xs text-qf-mute">למשל טלפונית או בשולחן</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-9 h-9 rounded-lg hover:bg-qf-line-soft grid place-items-center"
-            aria-label="סגור"
-          >
-            <IcoClose s={16} />
-          </button>
-        </header>
+      <header className="sticky top-0 z-10 bg-white px-5 py-4 border-b border-qf-line-soft flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold">הזמנה ידנית</h2>
+          <p className="text-xs text-qf-mute">למשל טלפונית או בשולחן</p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-9 h-9 rounded-lg hover:bg-qf-line-soft grid place-items-center"
+          aria-label="סגור"
+        >
+          <IcoClose s={16} />
+        </button>
+      </header>
 
         <div className="flex-1 grid grid-cols-1 md:grid-cols-[1fr_320px] overflow-hidden relative">
           {/* Items picker */}
@@ -615,8 +608,7 @@ export function ManualOrderModal({ onClose }: { onClose: () => void }) {
             </button>
           </div>
         </footer>
-      </div>
-    </div>
+    </Modal>
   );
 }
 

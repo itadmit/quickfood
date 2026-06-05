@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { IcoClose } from "@/components/shared/Icons";
+import { Modal } from "@/components/shared/Modal";
 import { cn } from "@/lib/cn";
 
 type Scope = "all" | "category";
@@ -94,29 +95,25 @@ export function BulkPriceModal({
   })();
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm grid place-items-center p-4"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col">
-        <header className="flex items-center justify-between px-5 py-4 border-b border-qf-line">
-          <div>
-            <h2 className="font-semibold text-lg">עדכון מחירים מרובה</h2>
-            <p className="text-xs text-qf-mute mt-0.5">
-              עדכן מחירים של כל הפריטים או קטגוריה שלמה בלחיצה אחת.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-8 h-8 rounded-full grid place-items-center hover:bg-qf-line-soft"
-            aria-label="סגור"
-          >
-            <IcoClose s={16} />
-          </button>
-        </header>
+    <Modal open onClose={onClose} size="md" ariaLabel="עדכון מחירים מרובה">
+      <header className="sticky top-0 z-10 bg-white flex items-center justify-between gap-3 px-5 py-4 border-b border-qf-line">
+        <div className="min-w-0">
+          <h2 className="font-semibold text-lg">עדכון מחירים מרובה</h2>
+          <p className="text-xs text-qf-mute mt-0.5">
+            עדכן מחירים של כל הפריטים או קטגוריה שלמה בלחיצה אחת.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="shrink-0 w-8 h-8 rounded-full grid place-items-center hover:bg-qf-line-soft"
+          aria-label="סגור"
+        >
+          <IcoClose s={16} />
+        </button>
+      </header>
 
-        <div className="p-5 space-y-5">
+      <div className="flex-1 overflow-y-auto p-5 space-y-5">
           {/* Scope */}
           <div>
             <label className="text-sm font-medium block mb-2">מי מקבל את העדכון?</label>
@@ -221,24 +218,23 @@ export function BulkPriceModal({
           )}
         </div>
 
-        <footer className="flex items-center justify-end gap-2 px-5 py-4 border-t border-qf-line bg-qf-bg/40">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl text-sm text-qf-ink2 hover:bg-qf-line-soft"
-          >
-            ביטול
-          </button>
-          <button
-            type="button"
-            onClick={apply}
-            disabled={busy}
-            className="px-5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-semibold disabled:opacity-60"
-          >
-            {busy ? "מעדכן..." : "החל על הפריטים"}
-          </button>
-        </footer>
-      </div>
-    </div>
+      <footer className="shrink-0 flex items-center justify-end gap-2 px-5 py-4 border-t border-qf-line bg-qf-bg/40">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 rounded-xl text-sm text-qf-ink2 hover:bg-qf-line-soft"
+        >
+          ביטול
+        </button>
+        <button
+          type="button"
+          onClick={apply}
+          disabled={busy}
+          className="px-5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-semibold disabled:opacity-60"
+        >
+          {busy ? "מעדכן..." : "החל על הפריטים"}
+        </button>
+      </footer>
+    </Modal>
   );
 }
