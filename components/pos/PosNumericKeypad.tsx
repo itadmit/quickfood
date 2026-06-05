@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 interface PosNumericKeypadProps {
   /** Title above the display. */
   title: string;
-  /** Confirm label — static string or a function of the typed value so the
+  /** Confirm label - static string or a function of the typed value so the
    *  cash variant can swap to "אישור + יתרה באשראי" for partial amounts. */
   confirmLabel?: string | ((typed: number) => string);
   /** Cancel label. */
@@ -27,7 +27,7 @@ interface PosNumericKeypadProps {
 
 /**
  * Accumulating numeric keypad. The "C" key clears, "←" deletes the last
- * digit. Typing `1` `0` `5` yields 105 (shekels — POS does not split agorot).
+ * digit. Typing `1` `0` `5` yields 105 (shekels - POS does not split agorot).
  * Quick-amount chips jump straight to a value without going through the
  * keypad. Confirm fires the parent callback with the typed integer.
  */
@@ -123,7 +123,7 @@ export function PosNumericKeypadModal({
 
         {/* dir=ltr so 1-2-3 reads left-to-right like a calculator/phone
             even though the surrounding page is RTL. Backspace lives on
-            the left next to 0, clear on the right — keeps muscle-memory
+            the left next to 0, clear on the right - keeps muscle-memory
             from common POS terminals. */}
         <div dir="ltr" className="grid grid-cols-3 gap-2">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
@@ -191,7 +191,7 @@ export interface CashKeypadProps {
   total: number;
   onCancel: () => void;
   /** `isPartial` is true when the cashier confirmed an amount below the
-   *  total — the caller routes those to the split-payment card flow.
+   *  total - the caller routes those to the split-payment card flow.
    *  Full-amount confirmations work exactly like before. */
   onConfirm: (received: number, change: number, isPartial: boolean) => void;
 }
@@ -199,7 +199,7 @@ export interface CashKeypadProps {
 /**
  * Cash payment variant: total at top, accumulator + quick-amount chips
  * derived from the total, live עודף readout. Allows the cashier to
- * confirm a partial amount — that triggers the split-payment flow where
+ * confirm a partial amount - that triggers the split-payment flow where
  * the remainder is charged on a card via Grow.
  */
 export function PosCashKeypadModal({ total, onCancel, onConfirm }: CashKeypadProps) {
@@ -229,7 +229,7 @@ export function PosCashKeypadModal({ total, onCancel, onConfirm }: CashKeypadPro
           tone: "green",
         };
       }}
-      // Confirm enabled for any positive amount — partials route to split.
+      // Confirm enabled for any positive amount - partials route to split.
       confirmDisabled={(typed) => typed <= 0}
       onCancel={onCancel}
       onConfirm={(typed) =>

@@ -10,7 +10,7 @@ interface Props {
 
 /**
  * Tiny prompt the cashier sees after tapping "החזק" on a ticket. The
- * label is optional — leaving it blank uses the current time as the
+ * label is optional - leaving it blank uses the current time as the
  * default so the parked-tickets list still has something to read.
  */
 export function PosParkLabelModal({ onCancel, onConfirm }: Props) {

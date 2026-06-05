@@ -1,4 +1,4 @@
-/* QuickFood — merchant service worker */
+/* QuickFood - merchant service worker */
 /* eslint-disable no-restricted-globals */
 
 self.addEventListener("install", (event) => {

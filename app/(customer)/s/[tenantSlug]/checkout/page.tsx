@@ -17,7 +17,7 @@ export default async function CheckoutPage({
   if (!tenant) notFound();
 
   // Each query wrapped in its own try so one bad lookup doesn't kill the
-  // whole checkout page render. (Both are non-critical — checkout still
+  // whole checkout page render. (Both are non-critical - checkout still
   // works without them, just with sane defaults.)
   let settings: { reviewsChannel: string; reviewsEnabled: boolean } | null = null;
   let growConfig: { testMode: boolean; isActive: boolean } | null = null;
@@ -52,7 +52,7 @@ export default async function CheckoutPage({
   // SSR-preconnect to Grow's CDN + preload the SDK script so the browser
   // starts downloading gs.min.js in parallel with HTML transfer/hydration.
   // Without this the SDK only starts downloading after GrowPaymentSdk
-  // mounts client-side — costing ~500-800ms on first paint. Mirrors the
+  // mounts client-side - costing ~500-800ms on first paint. Mirrors the
   // perf work on /pay-checkout/[checkoutId] and /pay/[orderId].
   if (growEnabled) {
     ReactDOM.preconnect("https://cdn.meshulam.co.il");

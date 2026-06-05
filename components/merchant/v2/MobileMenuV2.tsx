@@ -32,7 +32,7 @@ export function MobileMenuV2({ tenant, role }: Props) {
       .filter((it): it is NavItem => it !== null),
   })).filter((s) => s.items.length > 0);
 
-  // Close on route change — without this the drawer stays open while
+  // Close on route change - without this the drawer stays open while
   // the new page loads behind it.
   useEffect(() => {
     setOpen(false);
@@ -72,13 +72,13 @@ export function MobileMenuV2({ tenant, role }: Props) {
           aria-modal="true"
           className="lg:hidden fixed inset-0 z-50"
         >
-          {/* Backdrop — click to close */}
+          {/* Backdrop - click to close */}
           <div
             className="absolute inset-0 bg-black/60"
             onClick={() => setOpen(false)}
           />
 
-          {/* Drawer — slides from inline-start (RTL = right) */}
+          {/* Drawer - slides from inline-start (RTL = right) */}
           <aside
             className="absolute inset-s-0 top-0 bottom-0 w-[82%] max-w-[320px] flex flex-col gap-5 p-4 border-s-2 border-black overflow-y-auto"
             style={{ backgroundColor: "#FFF2C9" }}

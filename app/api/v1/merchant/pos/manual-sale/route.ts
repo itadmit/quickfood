@@ -14,16 +14,16 @@ const ManualSaleSchema = z.object({
   // Cashier picks cash/card in the payment sheet before the order is
   // created. Defaults to cash so pre-payment-sheet callers keep working.
   payment_method: z.enum(["cash", "card"]).default("cash"),
-  // Walk-in details — required for card (Grow PROD), optional for cash.
+  // Walk-in details - required for card (Grow PROD), optional for cash.
   guest_name: z.string().min(2).max(60).optional(),
   guest_phone: z.string().min(7).max(20).optional(),
 });
 
 /**
- * Create a one-line POS order with a free-text "תשלום ידני" snapshot —
+ * Create a one-line POS order with a free-text "תשלום ידני" snapshot -
  * no menu item attached. Status starts as `pending` + `paymentStatus`
  * pending; the cashier finalizes via `cash-collected` or the Grow wallet
- * callback (card). We don't preset paymentMethod here — the payment sheet
+ * callback (card). We don't preset paymentMethod here - the payment sheet
  * picks it after creation.
  */
 export const POST = handler(async (req: Request) => {
@@ -38,7 +38,7 @@ export const POST = handler(async (req: Request) => {
   if (!shift) return apiError("no_open_shift", "אין משמרת פתוחה תואמת", 404);
 
   // Snapshot the customer (if attached) or fall back to the tenant's
-  // own contact info — Grow's production validator rejects placeholder
+  // own contact info - Grow's production validator rejects placeholder
   // names ("Customer ."), placeholder phones ("0500000000"), and empty
   // emails, even when the wallet would otherwise succeed.
   const [counterTenant, branch, customer] = await Promise.all([

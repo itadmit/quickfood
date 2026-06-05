@@ -78,7 +78,7 @@ export async function setSessionCookies(
   refreshToken: string,
 ): Promise<void> {
   const jar = await cookies();
-  // 7-day access cookie — was 15min, which logged the user out every
+  // 7-day access cookie - was 15min, which logged the user out every
   // quarter hour because we don't have a /api/v1/auth/refresh route
   // or a middleware that rolls the access token from the refresh
   // cookie. Until that's wired, a longer-lived access cookie stops

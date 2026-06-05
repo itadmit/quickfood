@@ -1,7 +1,7 @@
 -- Split Customer.name into firstName + lastName, plus matching first/last
 -- snapshots on Order. The legacy `name` / `customer_name_snap` columns
 -- stay around so older code paths (notification builders, payment
--- provider integrations) keep functioning — application code now writes
+-- provider integrations) keep functioning - application code now writes
 -- the joined value into them on every customer/order write.
 
 -- ────────────────────────────────────────────────────────────────────

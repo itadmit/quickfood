@@ -11,13 +11,13 @@ const OPTIONS: Array<{ value: Version; label: string; description: string }> = [
     value: "v2",
     label: "ניראות חדשה (ברירת מחדל)",
     description:
-      "סגנון אתר הבית — צהוב/שחור, מסגרות בולטות, צללים קשיחים.",
+      "סגנון אתר הבית - צהוב/שחור, מסגרות בולטות, צללים קשיחים.",
   },
   {
     value: "v1",
     label: "ניראות קלאסית",
     description:
-      "הדשבורד המקורי — רקע אפרפר, גוונים שקטים, ממשק רגיל.",
+      "הדשבורד המקורי - רקע אפרפר, גוונים שקטים, ממשק רגיל.",
   },
 ];
 
@@ -62,7 +62,7 @@ export function AppearanceToggle({ initial }: { initial: Version }) {
             disabled={saving}
             // Explicit hex (#F8CB1E / #000) instead of design tokens so
             // selection state reads clearly on both V1 (slate) and V2
-            // (cream) shells — and so the toggle that lets the merchant
+            // (cream) shells - and so the toggle that lets the merchant
             // *leave* V2 still looks right while standing inside V2.
             style={
               active

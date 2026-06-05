@@ -29,12 +29,12 @@ export interface CreateOrderInput {
   guestPhone?: string;
   guestFirstName?: string;
   guestLastName?: string;
-  // Customer email captured at checkout — persisted onto Customer.email when
+  // Customer email captured at checkout - persisted onto Customer.email when
   // the order is placed by a logged-in customer. Required when the tenant's
   // reviewsChannel === 'email' (enforced one layer up).
   customerEmail?: string;
   /// Explicit opt-in to marketing/promotional comms (email + SMS).
-  /// Captured per-order — only ever flipped to TRUE, never silently to
+  /// Captured per-order - only ever flipped to TRUE, never silently to
   /// false on subsequent orders (a customer who opted in once stays
   /// opted in until they explicitly unsubscribe).
   marketingConsent?: boolean;
@@ -47,7 +47,7 @@ export interface CreateOrderInput {
   /** Cashier-applied manual discount in whole shekels (POS only).
    *  Added on top of coupon / bundle discounts; the final discount is
    *  still capped at the subtotal. Goes to Order.discount alongside the
-   *  automatic kinds — no separate column. */
+   *  automatic kinds - no separate column. */
   manualDiscount?: number;
   cutleryCount?: number;
   scheduledFor?: Date | null;
@@ -58,7 +58,7 @@ export interface CreateOrderInput {
    *  doesn't promise something the cart doesn't deliver. */
   appliedBundleIds?: string[];
   /** True when the order originates from the in-store kiosk. The
-   *  kiosk bypasses the branch's minOrder threshold — that floor
+   *  kiosk bypasses the branch's minOrder threshold - that floor
    *  exists for delivery, not for someone tapping at the counter. */
   kiosk?: boolean;
   /** Explicit Order.source override. POS sales pass "pos", kiosk cash-at-
@@ -69,7 +69,7 @@ export interface CreateOrderInput {
   cashierId?: string;
   /** Shift this sale belongs to. Set together with cashierId. */
   posShiftId?: string;
-  /** When false, the guestPhone is used ONLY for the order snapshot — no
+  /** When false, the guestPhone is used ONLY for the order snapshot - no
    *  Customer row is found or created. POS uses this to seed merchant
    *  fallback phone/name into the order snapshot (so Grow's production
    *  wallet accepts the auth code) without polluting the Customer table
@@ -105,7 +105,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   if (branch.status === "closed") throw new CartValidationError("restaurant_closed");
 
   // If the merchant disabled scheduled orders, silently demote any
-  // scheduled_for that slipped through the client-side hide — turns the
+  // scheduled_for that slipped through the client-side hide - turns the
   // order into ASAP rather than failing the request, so an old cached
   // client doesn't get a hard 4xx.
   const scheduledFor = tenant.scheduledOrdersEnabled ? input.scheduledFor : null;
@@ -302,11 +302,11 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     }
   }
 
-  // Bundle offers — for each accepted bundle, verify the triggers
+  // Bundle offers - for each accepted bundle, verify the triggers
   // are in the cart and the addons are present at the matching qty.
   // Add the bundle's savings (sum addon basePrice * qty − bundlePrice)
   // to the overall discount. Bundles the cart doesn't actually
-  // satisfy are silently dropped — better than failing the order
+  // satisfy are silently dropped - better than failing the order
   // because a stale client kept a flag for a bundle the customer
   // partially removed.
   if (input.appliedBundleIds && input.appliedBundleIds.length > 0) {
@@ -389,11 +389,11 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   const number = `${numberPrefix}-${orderSeq}`;
 
   // Determine initial state:
-  // - Card: always `pending` — waits for the Grow callback to confirm.
-  // - Storefront cash: `confirmed` — merchant prepares immediately,
+  // - Card: always `pending` - waits for the Grow callback to confirm.
+  // - Storefront cash: `confirmed` - merchant prepares immediately,
   //   cash is collected at delivery or pickup as part of the existing
   //   delivery flow (no separate confirmation step needed).
-  // - Kiosk cash: `pending` — the cashier at the counter has to take
+  // - Kiosk cash: `pending` - the cashier at the counter has to take
   //   the cash before the kitchen starts cooking. The merchant flips
   //   it to confirmed via the Kanban once they've collected.
   const initialStatus =
@@ -470,7 +470,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
   // Order-level source: any AI line dominates (the customer started with
   // the AI advisor); otherwise reorder if every line came from reorder;
-  // otherwise direct. Upsell is line-only — an upsell add doesn't make
+  // otherwise direct. Upsell is line-only - an upsell add doesn't make
   // the whole order an "upsell order".
   const lineSources = orderItemData.map((d) => d.source);
   const inferredSource: "direct" | "ai_advisor" | "reorder" = lineSources.includes(
@@ -526,9 +526,9 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     },
   });
 
-  // Coupon usage increment — fire-and-forget after the order commits.
+  // Coupon usage increment - fire-and-forget after the order commits.
   // Doing this AFTER the order create (vs in a single transaction) is fine
-  // because the worst-case race is one extra redemption — not a money bug,
+  // because the worst-case race is one extra redemption - not a money bug,
   // and the next request will see the bumped count.
   if (couponToConsume) {
     try {
@@ -560,7 +560,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     });
 
     void sendTenantPush(tenant.id, {
-      title: `הזמנה חדשה — ${order.number}`,
+      title: `הזמנה חדשה - ${order.number}`,
       body: `${total} ש"ח · ${input.method === "delivery" ? "משלוח" : "איסוף"}`,
       url: "/dashboard/orders",
       tag: `order-${order.id}`,

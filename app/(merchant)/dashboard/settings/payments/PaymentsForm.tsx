@@ -55,7 +55,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
 
   const hasAnyActive = v.accepts_cash || v.grow.is_active;
 
-  // Methods that are currently enabled — this drives the default-method
+  // Methods that are currently enabled - this drives the default-method
   // dropdown so the merchant can't pick a method that won't appear at
   // checkout. Order mirrors what the public storefront API will return
   // (which is also the order on the customer's pill grid).
@@ -87,7 +87,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           accepts_cash: v.accepts_cash,
-          // Always send the effective default — if the saved one is no
+          // Always send the effective default - if the saved one is no
           // longer enabled, this sends null so the server clears it.
           default_payment_method: effectiveDefault,
           grow: {
@@ -138,7 +138,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
         />
         <MethodRow
           icon={<IcoCreditCard s={20} />}
-          title="Grow — אשראי · Bit · Apple Pay · Google Pay"
+          title="Grow - אשראי · Bit · Apple Pay · Google Pay"
           sub="מצריך חשבון Grow פעיל. ההגדרות בהמשך."
           checked={v.grow.is_active}
           onChange={(b) => setGrow("is_active", b)}
@@ -151,7 +151,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
         )}
       </div>
 
-      {/* Default method selector — only visible when there's more than one
+      {/* Default method selector - only visible when there's more than one
           enabled method (otherwise the choice is trivial). */}
       {enabledMethods.length > 1 && (
         <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
@@ -198,7 +198,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
         </div>
       )}
 
-      {/* Grow config — only when Grow is enabled */}
+      {/* Grow config - only when Grow is enabled */}
       {v.grow.is_active && (
         <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
           <div>
@@ -221,7 +221,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
               label="מצב פעולה"
               hint={
                 v.grow.test_mode
-                  ? "Sandbox = בדיקות בלבד. משתמש בקרדנציאלים המשותפים של QuickFood — אין צורך למלא כלום נוסף."
+                  ? "Sandbox = בדיקות בלבד. משתמש בקרדנציאלים המשותפים של QuickFood - אין צורך למלא כלום נוסף."
                   : "Production = חיוב כרטיסים אמיתיים. חובה למלא רק User ID של העסק (apiKey + pageCode מסופקים על ידי הפלטפורמה)."
               }
             >
@@ -254,7 +254,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
           {v.grow.test_mode ? (
             <div className="rounded-xl bg-qf-green-soft/40 border border-qf-green-deep/20 px-4 py-3 text-sm space-y-1">
               <div className="font-bold text-qf-green-deep">
-                Sandbox פעיל — אין צורך במילוי
+                Sandbox פעיל - אין צורך במילוי
               </div>
               <p className="text-qf-ink2 leading-relaxed">
                 QuickFood משתמשת בקרדנציאלים המשותפים של Grow לסנדבוקס.
@@ -265,10 +265,10 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
           ) : (
             <>
               <div className="rounded-xl bg-qf-yolk-soft/60 border border-qf-yolk/30 px-4 py-3 text-sm">
-                <div className="font-bold mb-1">Production — מלא רק User ID</div>
+                <div className="font-bold mb-1">Production - מלא רק User ID</div>
                 <p className="text-qf-ink2 leading-relaxed">
                   המזהה מגיע במייל אישור החיוב לייב של Grow (&quot;מצ&quot;ב הפרטים ל-API לייב&quot;).
-                  ה-apiKey וה-pageCode הם של הפלטפורמה — מוגדרים אצלנו במערכת, לא במסעדה.
+                  ה-apiKey וה-pageCode הם של הפלטפורמה - מוגדרים אצלנו במערכת, לא במסעדה.
                 </p>
               </div>
 
@@ -326,11 +326,11 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
         </div>
       )}
 
-      {/* Apple Pay verification — only when Grow is on AND tenant has custom domain */}
+      {/* Apple Pay verification - only when Grow is on AND tenant has custom domain */}
       {v.grow.is_active && (
         <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
           <div>
-            <h2 className="font-semibold text-base lg:text-lg">Apple Pay — אישור דומיין</h2>
+            <h2 className="font-semibold text-base lg:text-lg">Apple Pay - אישור דומיין</h2>
             <p className="text-sm text-qf-mute mt-0.5">
               דרוש רק אם החנות שלך רצה על דומיין מותאם (custom domain).
             </p>
@@ -338,7 +338,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
 
           {!canEditApplePay ? (
             <div className="rounded-xl bg-qf-line-soft border border-qf-line-dash px-3.5 py-3 text-sm text-qf-ink2">
-              אתה משתמש בדומיין של QuickFood — Apple Pay יעבוד אוטומטית בלי
+              אתה משתמש בדומיין של QuickFood - Apple Pay יעבוד אוטומטית בלי
               הגדרה. אם תחבר custom domain תוכל להעלות כאן את קובץ ה-verification
               שתקבל מ-Grow.
             </div>

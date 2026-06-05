@@ -102,7 +102,7 @@ function RouteProgressInner() {
       const form = e.target as HTMLFormElement | null;
       if (!form) return;
       // Only react to form posts that target same origin and are not handled by client JS.
-      // Most app forms call event.preventDefault() and fetch manually — those won't reach here.
+      // Most app forms call event.preventDefault() and fetch manually - those won't reach here.
       if (form.dataset.routeProgress === "false") return;
       const action = form.getAttribute("action");
       if (!action) return;

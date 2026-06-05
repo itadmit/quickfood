@@ -65,7 +65,7 @@ export function CartUpsell({ tenantSlug }: { tenantSlug: string }) {
 
   // Direct-add for upsell items that have no required modifiers and no
   // multi-size choice (drinks, sides). The "+" used to always open the
-  // modal — Maria flagged that the obvious affordance "tap +" should
+  // modal - Maria flagged that the obvious affordance "tap +" should
   // just put the soda in the cart. Items that DO need config still
   // route through the modal so we don't ship a half-configured line.
   function quickAdd(it: UpsellItem) {

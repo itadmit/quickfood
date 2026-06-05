@@ -71,7 +71,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
         description={
           showTracking
             ? "הלקוח רואה זמן הגעה משוער, סטטוס חי, וקו זמן של ההזמנה אחרי התשלום."
-            : "אחרי התשלום הלקוח רואה רק קבלה — כמו חנות אונליין רגילה."
+            : "אחרי התשלום הלקוח רואה רק קבלה - כמו חנות אונליין רגילה."
         }
         value={showTracking}
         onChange={setShowTracking}
@@ -140,7 +140,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
                 type="number"
                 min={0}
                 step={1}
-                placeholder="—"
+                placeholder="-"
                 value={cutleryFreeAbove}
                 onChange={(e) => setCutleryFreeAbove(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm tnum"

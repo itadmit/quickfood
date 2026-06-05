@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Global merchant search — Cmd+K palette.
+ * Global merchant search - Cmd+K palette.
  * Scopes: orders (by number/customer name/phone), menu items (by name), customers.
  */
 export const GET = handler(async (req: Request) => {

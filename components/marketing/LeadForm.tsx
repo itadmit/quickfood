@@ -32,7 +32,7 @@ const EMPTY: FormState = {
 export function LeadForm({
   source,
   heading = "נדבר?",
-  subheading = "השאר פרטים ונחזור אליך תוך יום עבודה. בלי שיחת מכירה אגרסיבית — שאלות, הדגמה, וזהו.",
+  subheading = "השאר פרטים ונחזור אליך תוך יום עבודה. בלי שיחת מכירה אגרסיבית - שאלות, הדגמה, וזהו.",
   submitLabel = "שלחו לי פרטים",
   className = "",
 }: Props) {

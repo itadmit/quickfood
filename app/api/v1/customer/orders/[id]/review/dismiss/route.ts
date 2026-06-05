@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 // Mark the review prompt as dismissed for this order. Cross-device sticky:
 // once dismissed, neither the login modal nor the home banner will resurface
 // for the same order on this customer. Accepts the same dual proof as the
-// review POST — session match or signed token in ?t=.
+// review POST - session match or signed token in ?t=.
 export const POST = handler(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const session = await getSession();
   const { id } = await params;

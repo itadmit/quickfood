@@ -428,8 +428,8 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
                   </div>
                   <p className="text-[11px] text-qf-mute mt-1.5">
                     {editing.style === "image"
-                      ? "באנר תמונה — מעלים תמונה רחבה שכוללת את כל הטקסט."
-                      : "באנר כיתוב — כרטיס עם כותרת, תיאור ואייקון; ללא צורך בתמונה."}
+                      ? "באנר תמונה - מעלים תמונה רחבה שכוללת את כל הטקסט."
+                      : "באנר כיתוב - כרטיס עם כותרת, תיאור ואייקון; ללא צורך בתמונה."}
                   </p>
                 </div>
               )}
@@ -557,7 +557,7 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
                   <p className="text-[11px] text-qf-mute mt-1">
                     {editing.kind === "popup"
                       ? "מומלץ יחס 4:5 או 1:1. כלול את הכותרת והפרטים על התמונה עצמה."
-                      : "מומלץ יחס 16:9 או 21:9 — באנר רחב משובץ. כלול את הכותרת והפרטים על התמונה עצמה."}
+                      : "מומלץ יחס 16:9 או 21:9 - באנר רחב משובץ. כלול את הכותרת והפרטים על התמונה עצמה."}
                   </p>
                 </div>
               )}
@@ -575,7 +575,7 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
                   className="w-full border border-qf-line rounded-xl px-3 py-2.5 text-sm outline-none focus:border-(--qf-primary)"
                 />
                 <p className="text-[11px] text-qf-mute mt-1">
-                  אם תמלא — לחיצה על הקמפיין תנווט לקישור. השאר ריק כדי שלא יהיה לחיץ.
+                  אם תמלא - לחיצה על הקמפיין תנווט לקישור. השאר ריק כדי שלא יהיה לחיץ.
                 </p>
               </div>
 
@@ -588,7 +588,7 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
                   }
                   className="accent-(--qf-primary) w-4 h-4"
                 />
-                פעיל — מציג ללקוחות
+                פעיל - מציג ללקוחות
               </label>
 
               {error && (
@@ -668,7 +668,7 @@ function BannerPreview({ draft }: { draft: DraftCampaign }) {
   );
 }
 
-/** Card thumbnail when there's no uploaded image — mirrors the customer banner. */
+/** Card thumbnail when there's no uploaded image - mirrors the customer banner. */
 function ThumbTextBanner({
   title,
   subtitle,

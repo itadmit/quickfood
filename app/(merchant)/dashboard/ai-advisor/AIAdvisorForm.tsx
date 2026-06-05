@@ -64,7 +64,7 @@ const PROVIDER_META: Record<Provider, {
     label: "Anthropic Claude",
     pill: "תשלום · Haiku 4.5",
     modelId: "claude-haiku-4-5",
-    pricingNote: "Claude אינו בחינם — דורש כרטיס אשראי בחשבון Anthropic. בפועל כל שיחה עולה אגורות בודדות.",
+    pricingNote: "Claude אינו בחינם - דורש כרטיס אשראי בחשבון Anthropic. בפועל כל שיחה עולה אגורות בודדות.",
     signupUrl: "https://console.anthropic.com/settings/keys",
     signupLabel: "Anthropic Console",
     keyPlaceholder: "sk-ant-...",
@@ -76,7 +76,7 @@ const PROVIDER_META: Record<Provider, {
       "לחצו בדוק חיבור, ואז שמירה, והפעילו את הטוגל.",
     ],
     quotaNote:
-      "Anthropic גובים לפי שימוש — הקפידו להגדיר תקרת תקציב חודשית ב-Console כדי להגן על עצמכם.",
+      "Anthropic גובים לפי שימוש - הקפידו להגדיר תקרת תקציב חודשית ב-Console כדי להגן על עצמכם.",
   },
 };
 
@@ -206,7 +206,7 @@ export function AIAdvisorForm({ initial }: { initial: Initial }) {
           <div>
             <h2 className="text-base lg:text-lg font-semibold">יועץ AI ללקוחות</h2>
             <p className="text-xs lg:text-sm text-qf-mute mt-0.5 leading-relaxed">
-              עוזר חכם שמופיע כפתור-צף בחנות שלך. הלקוח מתאר מה בא לו, היועץ ממליץ מהתפריט, ומציע פריט מותאם להוספה לעגלה — כולל מידה ותוספות לפי ההגבלות.
+              עוזר חכם שמופיע כפתור-צף בחנות שלך. הלקוח מתאר מה בא לו, היועץ ממליץ מהתפריט, ומציע פריט מותאם להוספה לעגלה - כולל מידה ותוספות לפי ההגבלות.
             </p>
           </div>
           <span
@@ -246,7 +246,7 @@ export function AIAdvisorForm({ initial }: { initial: Initial }) {
         <div>
           <h2 className="text-base lg:text-lg font-semibold">שאלות מוכנות במסך הפתיחה</h2>
           <p className="text-xs lg:text-sm text-qf-mute mt-0.5 leading-relaxed">
-            עד {MAX_SUGGESTIONS} הצעות שיופיעו כפסים לחיצים מעל הצ׳אט הריק. לקוח שלוחץ — שולח את הטקסט ליועץ באופן מיידי.
+            עד {MAX_SUGGESTIONS} הצעות שיופיעו כפסים לחיצים מעל הצ׳אט הריק. לקוח שלוחץ - שולח את הטקסט ליועץ באופן מיידי.
           </p>
         </div>
 
@@ -432,7 +432,7 @@ export function AIAdvisorForm({ initial }: { initial: Initial }) {
             )}
           >
             {testResult.ok
-              ? `החיבור ל-${meta.label} תקין — אפשר להפעיל את היועץ.`
+              ? `החיבור ל-${meta.label} תקין - אפשר להפעיל את היועץ.`
               : testResult.message}
           </div>
         )}

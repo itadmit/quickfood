@@ -58,7 +58,7 @@ export const POST = handler(async (
   const fullyPaid = newCash >= order.total;
   const remaining = Math.max(0, order.total - newCash);
 
-  // shift_id is optional in the schema but required in practice — the
+  // shift_id is optional in the schema but required in practice - the
   // open shift is the source of truth, and we resolve it from the cashier
   // when the client omits it.
   let shiftId = body.shift_id ?? null;

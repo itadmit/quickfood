@@ -126,7 +126,7 @@ export function OrdersHistoryView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Order ids currently mid-POST + a short-lived per-id status message
-  // for the row chip — fades after 4s. Keeps the button localized to
+  // for the row chip - fades after 4s. Keeps the button localized to
   // the row the merchant clicked without blocking the rest of the list.
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [rowStatus, setRowStatus] = useState<
@@ -189,7 +189,7 @@ export function OrdersHistoryView() {
         setRowStatus((prev) => ({ ...prev, [orderId]: { tone: "err", message: msg } }));
         return;
       }
-      // Optimistic flip so the button hides for this row immediately —
+      // Optimistic flip so the button hides for this row immediately -
       // the next refresh confirms via review_reminder_sent.
       setOrders((prev) =>
         prev.map((o) =>
@@ -391,7 +391,7 @@ export function OrdersHistoryView() {
                             <button
                               type="button"
                               onClick={() => restoreToKanban(o.id)}
-                              title="הזמנה זו הוסתרה מהקאנבן — לחץ לשחזור"
+                              title="הזמנה זו הוסתרה מהקאנבן - לחץ לשחזור"
                               className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-qf-yolk-soft text-qf-ink2 text-[10px] font-medium hover:bg-qf-yolk-soft/80"
                             >
                               מוסתרת · החזר
@@ -482,7 +482,7 @@ function ReviewCell({
   sending: boolean;
   onSend: () => void;
 }) {
-  // Short-lived per-row toast — wins over any other state so the
+  // Short-lived per-row toast - wins over any other state so the
   // merchant always sees the result of their click.
   if (rowStatus) {
     return (
@@ -513,11 +513,11 @@ function ReviewCell({
     );
   }
   // Only offer the button when there's a real customer attached AND the
-  // order has actually been handed off — sending a review prompt before
+  // order has actually been handed off - sending a review prompt before
   // the customer ate their food would be weird, and a guest-phone-less
   // kiosk order has nobody to send to.
   if (order.status !== "delivered" || !order.customer) {
-    return <span className="text-xs text-qf-mute">—</span>;
+    return <span className="text-xs text-qf-mute">-</span>;
   }
   return (
     <button

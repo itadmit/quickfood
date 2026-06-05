@@ -22,7 +22,7 @@ export default async function BrandingPage() {
   });
   if (!tenant) redirect("/dashboard/login");
 
-  // Prefer the merchant's custom domain when set — that's the URL we want
+  // Prefer the merchant's custom domain when set - that's the URL we want
   // the QR scanner to land on. Falls back to the platform path so the QR
   // still works for everyone before they connect a domain.
   const base = (process.env.NEXT_PUBLIC_APP_URL ?? "https://quickfood.co.il").replace(/\/$/, "");

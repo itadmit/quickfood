@@ -13,7 +13,7 @@ const QuerySchema = z.object({
   tenant: z.string().min(1),
   /** Comma-separated order ids tracked client-side by guest customers. */
   ids: z.string().optional(),
-  /** How many distinct orders to return — capped at 5. */
+  /** How many distinct orders to return - capped at 5. */
   limit: z.coerce.number().int().min(1).max(5).default(3),
 });
 

@@ -1,5 +1,5 @@
 /**
- * Reset demo tenant — wipe all orders + reset couriers, keep menu/settings.
+ * Reset demo tenant - wipe all orders + reset couriers, keep menu/settings.
  * Run with:  set -a && source .env.local && set +a && npx tsx scripts/reset-demo-store.ts
  */
 import { prisma } from "@/lib/db/client";

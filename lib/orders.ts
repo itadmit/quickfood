@@ -13,12 +13,12 @@ import { sendOrderConfirmedEmail, sendOrderCancelledEmail } from "@/lib/orders/n
  * `pending → preparing` is allowed (in addition to the more granular
  * `pending → confirmed → preparing` path) so the merchant's Kanban
  * "אשר וקבל" button works on stuck-in-pending orders too. Those typically
- * happen when a card payment callback was lost — the merchant decides
+ * happen when a card payment callback was lost - the merchant decides
  * to accept and prepare anyway. We auto-set confirmedAt when moving out
  * of pending so the timestamps stay sane.
  */
 // Kitchen states (confirmed/preparing/in_oven/ready) are reversible so the
-// merchant can undo a mis-tap — e.g. marked a pizza as ready by mistake and
+// merchant can undo a mis-tap - e.g. marked a pizza as ready by mistake and
 // wants to drop it back to "בהכנה". Past out_for_delivery we lock things
 // down: a courier has already been dispatched/credited, so a "back" button
 // there would silently undo wallet credits + courier assignment.
@@ -93,7 +93,7 @@ export async function advanceStatus(
   // transaction with an optimistic lock on the previous status. Two
   // concurrent deliver calls used to both read out_for_delivery, both
   // pass canTransition, and both increment cashOnHand. The updateMany
-  // filter on (id, status=order.status) is atomic — Postgres acquires
+  // filter on (id, status=order.status) is atomic - Postgres acquires
   // a row lock so only one wins; the loser sees count=0 and aborts.
   const updated = await prisma.$transaction(async (tx) => {
     const updateRes = await tx.order.updateMany({
@@ -105,13 +105,13 @@ export async function advanceStatus(
     }
 
     if (to === "delivered" && assignedCourierId) {
-      // Tip belongs to the courier, never to the merchant — split it
+      // Tip belongs to the courier, never to the merchant - split it
       // out of the cash bucket so settling the drawer doesn't sweep
       // the tip away. Cash orders: courier collected tip + order; pull
       // the tip into tipsOnHand, the rest is the merchant's cashOnHand.
       // Card orders with tip: merchant already received the tip via
       // Grow (it ships as a synthetic invoice line), so they owe it
-      // to the courier — surface that as tipsOwed.
+      // to the courier - surface that as tipsOwed.
       let cashDelta = 0;
       let tipsOnHandDelta = 0;
       let tipsOwedDelta = 0;
@@ -189,7 +189,7 @@ export async function advanceStatus(
   // (= leaves pending toward any active status). Card orders already
   // record commission from the payment callback when Grow confirms.
   // The hub dedupes on `idempotency_key: "order:<orderId>"` so retries
-  // or double-paths are safe. Cancellations don't reverse — known
+  // or double-paths are safe. Cancellations don't reverse - known
   // trade-off; merchants are deterred via a cancellation email to the
   // customer (see refund route).
   if (
@@ -220,7 +220,7 @@ export async function advanceStatus(
 
   if (order.status === "pending" && to === "confirmed") {
     void sendTenantPush(order.tenantId, {
-      title: `הזמנה חדשה — ${order.number}`,
+      title: `הזמנה חדשה - ${order.number}`,
       body: `${order.total} ש"ח · ${order.method === "delivery" ? "משלוח" : "איסוף"}`,
       url: "/dashboard/orders",
       tag: `order-${orderId}`,

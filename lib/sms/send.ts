@@ -1,5 +1,5 @@
 /**
- * SMS sender — wraps sms4free.co.il, decrements the tenant's local credit
+ * SMS sender - wraps sms4free.co.il, decrements the tenant's local credit
  * balance, and writes an audit row to SmsLog.
  *
  * Hard gate: when `smsCreditsRemaining <= 0` the send is skipped and logged
@@ -28,7 +28,7 @@ export interface SendSmsInput {
   refId?: string;
   /**
    * Skip the per-tenant credit gate and decrement. Used for SMS test sends
-   * from the dashboard — the platform absorbs the cost so merchants can
+   * from the dashboard - the platform absorbs the cost so merchants can
    * verify their sender is approved before they buy a package.
    */
   skipCredit?: boolean;

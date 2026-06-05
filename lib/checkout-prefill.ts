@@ -60,7 +60,7 @@ export function takeCheckoutPrefill(tenantSlug: string): CheckoutPrefill | null 
 /**
  * Split the joined Order.deliveryNotes ("address · דירה N · קומה M · notes")
  * back into the four checkout fields. Mirrors the join logic in
- * CustomerCheckout.place() — keep the two in sync.
+ * CustomerCheckout.place() - keep the two in sync.
  */
 export function splitDeliveryNotes(
   raw: string | null | undefined,

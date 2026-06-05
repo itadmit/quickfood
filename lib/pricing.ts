@@ -1,5 +1,5 @@
 /**
- * Pricing engine — pure functions. All amounts in integer shekels.
+ * Pricing engine - pure functions. All amounts in integer shekels.
  */
 
 export interface PriceLine {

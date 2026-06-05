@@ -2,7 +2,7 @@ import LoginForm from "./LoginForm";
 import { AuthShell } from "@/components/shared/AuthShell";
 
 export const metadata = {
-  title: "התחברות — QuickFood",
+  title: "התחברות - QuickFood",
 };
 
 export default function LoginPage() {

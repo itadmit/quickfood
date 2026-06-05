@@ -12,7 +12,7 @@ export type OrderWithIncludes = Prisma.OrderGetPayload<{
 export const ORDER_INCLUDE = {
   items: true,
   customer: { select: { id: true, firstName: true, lastName: true, phone: true } },
-  // 1:1 — null when the customer hasn't rated yet. Drives the
+  // 1:1 - null when the customer hasn't rated yet. Drives the
   // "send review now" button on the merchant's Orders History page
   // (button hidden when a review row already exists).
   review: { select: { id: true } },

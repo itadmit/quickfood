@@ -1,6 +1,6 @@
 /**
- * GET  /api/v1/merchant/payments — current payment-accept config for this tenant
- * PATCH /api/v1/merchant/payments — owner/manager only; upserts the config
+ * GET  /api/v1/merchant/payments - current payment-accept config for this tenant
+ * PATCH /api/v1/merchant/payments - owner/manager only; upserts the config
  *
  * The multi-provider model: tenant.acceptsCash + (optional) Grow
  * PaymentProviderConfig. At least one must be active before saving.
@@ -146,9 +146,9 @@ export const PATCH = handler(async (req: Request) => {
 
     // Production needs at minimum a userId (platform supplies apiKey +
     // pageCode via env vars). Per-tenant apiKey/pageCode overrides are
-    // optional advanced settings — only for tenants on their own Grow
+    // optional advanced settings - only for tenants on their own Grow
     // account rather than the platform. Sandbox is fully self-contained
-    // via grow-test-creds.ts — no userId required.
+    // via grow-test-creds.ts - no userId required.
     const effectiveTestMode = body.grow.test_mode ?? existing?.testMode ?? true;
     if (body.grow.is_active && !effectiveTestMode && !nextCreds.userId) {
       return apiError(

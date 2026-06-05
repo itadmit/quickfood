@@ -10,7 +10,7 @@ interface Props {
 }
 
 /**
- * "Reopen the store from scratch" action — clears menu, marketing,
+ * "Reopen the store from scratch" action - clears menu, marketing,
  * branding visuals, reviews, etc. and resets the Tenant row to the
  * defaults a brand-new merchant would see. Owner-only on the server
  * side. Forces the merchant to type the store name to confirm so a
@@ -19,7 +19,7 @@ interface Props {
  * After a successful reset we send the merchant back to /dashboard
  * and `router.refresh()` so the welcome overlay (which re-shows
  * because we cleared `onboardingDismissedAt`) is the first thing
- * they see — same flow as day-one.
+ * they see - same flow as day-one.
  */
 export function ResetStore({ tenantName }: Props) {
   const router = useRouter();

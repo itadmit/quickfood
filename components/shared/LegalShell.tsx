@@ -20,9 +20,9 @@ interface Props {
 
 /**
  * Shared shell for the public legal pages (terms, privacy). Same V2
- * brand language as the auth shell — cream surface with dot grid,
+ * brand language as the auth shell - cream surface with dot grid,
  * black-bordered + hard-shadow white content card, brand chip top
- * bar — so the merchant never feels like they've left the product.
+ * bar - so the merchant never feels like they've left the product.
  */
 export function LegalShell({
   title,

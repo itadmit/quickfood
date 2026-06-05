@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 const BASE = "https://quickfood.co.il";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  // Static marketing surface only — tenant storefronts and admin pages
+  // Static marketing surface only - tenant storefronts and admin pages
   // are crawled (or blocked) elsewhere. Updating dates by hand keeps the
   // sitemap stable across deploys; bump them when the page meaningfully
   // changes.

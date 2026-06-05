@@ -1,6 +1,6 @@
 /**
  * Undo a scheduled "cancel at period end" while the subscription is still
- * active — i.e. the merchant changed their mind before the period ended.
+ * active - i.e. the merchant changed their mind before the period ended.
  * After this call renewals resume normally on the next renewal date.
  */
 import { handler, apiJson, apiError } from "@/lib/api-response";

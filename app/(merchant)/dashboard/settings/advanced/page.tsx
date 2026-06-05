@@ -56,7 +56,7 @@ export default async function AdvancedSettingsPage({
         <header className="mb-4">
           <h2 className="text-lg font-bold">ניראות הדשבורד</h2>
           <p className="text-sm text-qf-mute mt-1 leading-relaxed">
-            בחרו את העיצוב של מסכי הניהול. ברירת המחדל — הניראות החדשה
+            בחרו את העיצוב של מסכי הניהול. ברירת המחדל - הניראות החדשה
             (צהוב/שחור, בסגנון אתר הבית). אפשר לחזור בכל רגע לניראות
             הקלאסית.
           </p>
@@ -72,7 +72,7 @@ export default async function AdvancedSettingsPage({
           <p className="text-sm text-qf-mute mt-1 leading-relaxed">
             מדביקים את כתובת החנות שלכם בוולט, ואנחנו מייבאים אוטומטית את כל
             הקטגוריות, הפריטים, התמונות והתוספות לתפריט של QuickFood. החיסכון
-            בזמן הקמה — שעות.
+            בזמן הקמה - שעות.
           </p>
         </header>
         <WoltImportClient
@@ -114,7 +114,7 @@ export default async function AdvancedSettingsPage({
               מאפס את החנות לחלוטין: תפריט, קטגוריות, תוספות, שיווק
               (קופונים/קמפיינים), ביקורות, שליחים, אזורי משלוח,
               webhooks, לוגו, cover, סוג עסק, ערכת צבעים. חוזרים למסך
-              ברוך-הבא — ממש כאילו החנות נפתחה מחדש. הזמנות, לקוחות,
+              ברוך-הבא - ממש כאילו החנות נפתחה מחדש. הזמנות, לקוחות,
               חברי צוות, יתרת SMS ופרטי חיוב נשמרים. דורש להקליד את
               שם החנות לאישור.
             </p>

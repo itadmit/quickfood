@@ -23,11 +23,11 @@ const BodySchema = z.object({
  * Advanced settings as the "undo a bad Wolt import" escape hatch.
  *
  * Cascades worth knowing about:
- *   • ItemSize, ItemOptionGroup, Favorite — DB cascade, gone.
+ *   • ItemSize, ItemOptionGroup, Favorite - DB cascade, gone.
  *   • OrderItem.menuItemId is optional → set NULL by Prisma defaults.
  *     The nameSnapshot/unitPrice on each line keeps order history
  *     readable after the items themselves are gone.
- *   • CartItem.menuItemId has no FK constraint (loose link) — rows
+ *   • CartItem.menuItemId has no FK constraint (loose link) - rows
  *     stay; they'll be cleared the next time the carts expire.
  *   • MenuCategory and ModifierSet are NOT touched. Empty categories
  *     are harmless and re-importing from Wolt upserts back into them.

@@ -13,7 +13,7 @@ interface Props {
 }
 
 /**
- * Cashier-applied discount picker — toggle between % and ₪, type the
+ * Cashier-applied discount picker - toggle between % and ₪, type the
  * amount on the keypad, see the live new-total preview. Bounded: percent
  * 0-100, fixed 0-subtotal. Confirming with value=0 clears the discount.
  */

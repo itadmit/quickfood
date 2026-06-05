@@ -18,7 +18,7 @@ ALTER TABLE "orders" ADD COLUMN "cash_change"   INTEGER;
 ALTER TABLE "orders" ADD COLUMN "cashier_id"    UUID;
 ALTER TABLE "orders" ADD COLUMN "pos_shift_id"  UUID;
 
--- Shift table — one row per cashier × open-period
+-- Shift table - one row per cashier × open-period
 CREATE TABLE "pos_shifts" (
   "id"             UUID         NOT NULL,
   "tenant_id"      UUID         NOT NULL,

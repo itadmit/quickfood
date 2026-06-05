@@ -127,7 +127,7 @@ export function ManualOrderModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [method, setMethod] = useState<"pickup" | "delivery">("pickup");
-  // Structured address fields — composed into a single delivery_notes
+  // Structured address fields - composed into a single delivery_notes
   // line on submit (the manual route stores it as a guest-style
   // address string; there's no Customer row to attach a real Address to).
   const [addrStreet, setAddrStreet] = useState("");
@@ -264,7 +264,7 @@ export function ManualOrderModal({ onClose }: { onClose: () => void }) {
 
   // Merchant menu endpoint doesn't expose category_id on items so we
   // can't filter by category yet (chips reserved for future). Search
-  // term filters by item name — case-insensitive substring, trimmed.
+  // term filters by item name - case-insensitive substring, trimmed.
   const q = search.trim().toLowerCase();
   const filtered = q
     ? items.filter((it) => it.name.toLowerCase().includes(q))

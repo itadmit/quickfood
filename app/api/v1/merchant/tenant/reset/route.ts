@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 /**
  * POST /api/v1/merchant/tenant/reset
  *
- * "Reopen the store from scratch" — wipes all the editable content
+ * "Reopen the store from scratch" - wipes all the editable content
  * (menu, marketing, branding visuals, reviews, etc.) and resets the
  * Tenant row back to its first-day defaults. After this call the
  * merchant lands on an empty dashboard with the onboarding welcome
@@ -21,7 +21,7 @@ export const dynamic = "force-dynamic";
  *   - Billing setup (subscription, payment method, trial dates)
  *   - SMS credit balance the merchant already paid for
  *   - Team accounts (MerchantUser)
- *   - Order history (Order, OrderItem, OrderEvent) — accounting needs
+ *   - Order history (Order, OrderItem, OrderEvent) - accounting needs
  *   - Customers + addresses (so existing customers are recognised)
  *   - Branch records (the structure stays; data on each branch reset)
  *
@@ -59,7 +59,7 @@ export const POST = handler(async (req: Request) => {
 
   const tenantId = session.tenantId;
 
-  // Transaction — every wipe + the Tenant field reset happen atomically
+  // Transaction - every wipe + the Tenant field reset happen atomically
   // so a failure leaves the store in the prior state, not half-reset.
   // 60s timeout because deleting cascading menus on a large tenant can
   // take more than the default 5s.
@@ -87,7 +87,7 @@ export const POST = handler(async (req: Request) => {
         where: { tenantId },
       });
       // Notifications use a polymorphic (recipientType, recipientId)
-      // — they're addressed to specific users, not to the tenant.
+      // - they're addressed to specific users, not to the tenant.
       // We leave them be; the merchant can mark-as-read normally.
 
       // ── 4. Reset the Tenant row to "fresh store" defaults.
@@ -138,12 +138,12 @@ export const POST = handler(async (req: Request) => {
   );
 
   // R2 cleanup AFTER the DB transaction. If the bucket sweep fails we
-  // still want the DB reset to stand — leftover R2 objects are merely
+  // still want the DB reset to stand - leftover R2 objects are merely
   // dead bytes, not a data-integrity problem. We sweep both key
   // shapes used by the codebase: direct uploads land under
   // `{tenantId}/...` (see app/api/v1/upload/init), Wolt imports under
   // `tenants/{tenantId}/...` (see lib/wolt-import/commit). Best-effort
-  // — errors are surfaced in the response but don't fail the request.
+  // - errors are surfaced in the response but don't fail the request.
   const r2Direct = await safeDelete(`${tenantId}/`);
   const r2Wolt = await safeDelete(`tenants/${tenantId}/`);
 

@@ -9,7 +9,7 @@ const ACCEPT = "image/jpeg,image/png,image/webp";
 const MAX_BYTES = 5_000_000;
 
 /**
- * Compact single-image picker — used in the option-row context where there's
+ * Compact single-image picker - used in the option-row context where there's
  * room for a thumbnail but not the full ImageUploader grid. Reuses the same
  * upload flow (POST /api/v1/upload/init → PUT R2 → POST finalize). 40×40 by
  * default, click to pick / re-pick, tiny X on hover to clear.

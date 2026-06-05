@@ -24,7 +24,7 @@ const PatchBody = z.object({
   prepared: z.boolean().optional(),
 });
 
-// loadAndAuthorize throws the apiError Response on any guard failure —
+// loadAndAuthorize throws the apiError Response on any guard failure -
 // the route handler wrapper at lib/api-response.ts catches Response
 // throws and returns them as-is, so this keeps the call sites flat.
 async function loadAndAuthorize(
@@ -145,7 +145,7 @@ export const PATCH = handler(
       return apiJson({ ok: true, subtotal: totals.subtotal, total: totals.total });
     }
 
-    // prepared-only path — no totals recompute, no editable-state
+    // prepared-only path - no totals recompute, no editable-state
     // gate. Stamp / clear prepared_at and emit an OrderEvent so other
     // KDS screens get the SSE push. Verifies tenant ownership through
     // a lightweight lookup.
@@ -188,7 +188,7 @@ export const DELETE = handler(
     if (order.items.length <= 1) {
       return apiError(
         "validation_error",
-        "אי אפשר למחוק את הפריט האחרון בהזמנה — עדיף לבטל את ההזמנה",
+        "אי אפשר למחוק את הפריט האחרון בהזמנה - עדיף לבטל את ההזמנה",
         409,
       );
     }

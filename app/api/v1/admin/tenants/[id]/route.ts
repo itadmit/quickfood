@@ -7,7 +7,7 @@
  *            domain, VAT, accepts-cash, status, WhatsApp token+instance).
  *   DELETE → hard-delete the tenant. Cascades to branches, users, orders,
  *            menu items, etc. via the Prisma `onDelete: Cascade` relations.
- *            Use with care — there is no undo.
+ *            Use with care - there is no undo.
  */
 import { z } from "zod";
 import { handler, apiJson, apiError } from "@/lib/api-response";

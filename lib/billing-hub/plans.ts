@@ -1,5 +1,5 @@
 /**
- * Managed-WhatsApp reviews add-on — ₪99/mo + VAT, unlimited review-request
+ * Managed-WhatsApp reviews add-on - ₪99/mo + VAT, unlimited review-request
  * sends through the platform iBot account. No SMS-credit deduction. Mirrored
  * to Tenant.reviewsWhatsappSubscriptionId via the billing-hub webhook.
  */

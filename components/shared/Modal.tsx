@@ -28,7 +28,7 @@ const SIZE_CLASS: Record<Size, string> = {
  * 90vh with the same internal scroll structure.
  *
  * Compose with <ModalHeader/>, <ModalBody/>, <ModalFooter/> so the close
- * button is sticky at the top and the body scrolls independently — that
+ * button is sticky at the top and the body scrolls independently - that
  * is the whole point of this shell, do not skip the wrappers.
  */
 export function Modal({

@@ -17,7 +17,7 @@ async function main() {
   const result = await sendEmail({
     tenantId: null,
     to,
-    subject: "QuickFood — בדיקת מייל",
+    subject: "QuickFood - בדיקת מייל",
     body: text,
     html,
     kind: "system_test",

@@ -23,7 +23,7 @@ const RefundSchema = z.object({
  * Marks the order as refunded server-side and fires an `order.refunded`
  * webhook so external POS / accounting can react. For CARD payments, the
  * actual money refund still needs to happen in the Grow Payments dashboard
- * — the merchant clicks "החזר תשלום" in Grow, then "סמן כהוחזר" here. We
+ * - the merchant clicks "החזר תשלום" in Grow, then "סמן כהוחזר" here. We
  * don't auto-call Grow from this endpoint because Grow's refund API
  * requires their own auth handshake; keeping it manual avoids partial-
  * refund edge cases and makes the source-of-truth obvious (= Grow).
@@ -59,7 +59,7 @@ export const POST = handler(
     }
 
     // If we're refunding an already-delivered order, the courier's
-    // wallet got credited at delivery time — reverse exactly what
+    // wallet got credited at delivery time - reverse exactly what
     // advanceStatus() added so the merchant doesn't pay the courier
     // for money the customer got back.
     let cashReverse = 0;

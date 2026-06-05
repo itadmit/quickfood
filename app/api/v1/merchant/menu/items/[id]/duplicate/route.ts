@@ -52,7 +52,7 @@ export const POST = handler(async (_req, { params }: { params: Promise<{ id: str
       artType: source.artType,
       imageUrl: source.imageUrl,
       images: source.images,
-      // New duplicate stays HIDDEN by default — merchant must review before
+      // New duplicate stays HIDDEN by default - merchant must review before
       // it goes live so they don't accidentally double-list an item.
       available: false,
       featured: false,

@@ -197,7 +197,7 @@ export function NoticesView({
       <PageHeader
         chip="קטלוג"
         title="הודעות"
-        subtitle="באנרים שמופיעים על התפריט — אזהרות, אלרגנים, כשרות. שטח שמור, לא מוצר."
+        subtitle="באנרים שמופיעים על התפריט - אזהרות, אלרגנים, כשרות. שטח שמור, לא מוצר."
         actions={
           !editing ? (
             <button
@@ -305,7 +305,7 @@ export function NoticesView({
               maxLength={500}
               rows={3}
               onChange={(e) => setEditing({ ...editing, body: e.target.value })}
-              placeholder="טקסט תומך — מופיע מתחת לכותרת"
+              placeholder="טקסט תומך - מופיע מתחת לכותרת"
               className="w-full px-3 py-2 rounded-xl border border-qf-line-dash text-sm resize-none"
             />
           </Field>
@@ -352,7 +352,7 @@ export function NoticesView({
               </div>
               <div className="text-lg font-black mb-1">אין הודעות עדיין</div>
               <p className="text-sm text-qf-mute max-w-md mx-auto leading-relaxed">
-                הודעות הן באנרים שמופיעים על התפריט — לדוגמה אזהרת חרצנים בזיתים,
+                הודעות הן באנרים שמופיעים על התפריט - לדוגמה אזהרת חרצנים בזיתים,
                 הצהרת אלרגנים או כשרות. שונה ממוצר: אין מחיר, אין כפתור הוספה לעגלה.
               </p>
               <button
@@ -370,8 +370,8 @@ export function NoticesView({
                   n.scope === "store"
                     ? "כל החנות"
                     : n.scope === "category"
-                      ? `קטגוריה: ${categoryName[n.categoryId ?? ""] ?? "—"}`
-                      : `פריט: ${itemLookup[n.itemId ?? ""] ?? "—"}`;
+                      ? `קטגוריה: ${categoryName[n.categoryId ?? ""] ?? "-"}`
+                      : `פריט: ${itemLookup[n.itemId ?? ""] ?? "-"}`;
                 return (
                   <article
                     key={n.id}

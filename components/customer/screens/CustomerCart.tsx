@@ -197,7 +197,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
           <CartUpsell tenantSlug={tenantSlug} />
         </div>
 
-        {/* Summary + CTA — inline card on mobile, sticky sidebar on desktop. */}
+        {/* Summary + CTA - inline card on mobile, sticky sidebar on desktop. */}
         <aside className="px-5 mt-5 lg:px-0 lg:mt-0 lg:sticky lg:top-20 lg:self-start">
           <div className="bg-white border border-qf-line rounded-2xl p-4 space-y-2 text-sm shadow-xs">
             <Row label="סכום ביניים" value={formatPrice(subtotal)} />
@@ -238,7 +238,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
         </aside>
       </div>
 
-      {/* Footer CTA — mobile only (desktop uses the sidebar above). */}
+      {/* Footer CTA - mobile only (desktop uses the sidebar above). */}
       <div className="lg:hidden fixed bottom-20 inset-x-0 z-30 max-w-md mx-auto px-4">
         {!meetsMin && (
           <div className="bg-qf-yolk-soft border border-qf-yolk/40 rounded-xl px-3 py-2 text-xs text-qf-ink2 mb-2">

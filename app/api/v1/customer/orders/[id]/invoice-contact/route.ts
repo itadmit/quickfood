@@ -3,7 +3,7 @@
  *
  * Customer-facing "email me the invoice" endpoint. Used by the PayPage
  * when the customer opts into a tax invoice. Stores the email on the
- * order and — if the invoice has already been generated — dispatches
+ * order and - if the invoice has already been generated - dispatches
  * immediately; otherwise the Grow callback's own dispatch picks it up.
  *
  * No auth: the orderId + tenant slug pair is unguessable enough for

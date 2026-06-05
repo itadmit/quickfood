@@ -1,11 +1,11 @@
 -- Add WhatsApp (iBot Chat) as a second messaging provider alongside SMS.
--- Per-tenant credentials (BYO instance) — each merchant connects their own
+-- Per-tenant credentials (BYO instance) - each merchant connects their own
 -- iBot account. Credits are shared with SMS (same per-message price).
 
 -- 1. Extend the ReviewChannel enum with "whatsapp".
 ALTER TYPE "ReviewChannel" ADD VALUE IF NOT EXISTS 'whatsapp';
 
--- 2. Tenant: per-merchant iBot credentials. Nullable — WhatsApp is off
+-- 2. Tenant: per-merchant iBot credentials. Nullable - WhatsApp is off
 -- until both columns are populated.
 ALTER TABLE "tenants"
     ADD COLUMN "whatsapp_token" TEXT,

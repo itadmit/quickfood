@@ -17,7 +17,7 @@ const BodySchema = z.object({
   source_url: z.string().url(),
 });
 
-// One preview per minute per tenant — prevents accidental hammering on
+// One preview per minute per tenant - prevents accidental hammering on
 // the Wolt CDN if the merchant double-clicks. A successful commit row
 // doesn't count here.
 const PREVIEW_COOLDOWN_MS = 60_000;

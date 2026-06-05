@@ -31,7 +31,7 @@ export const POST = handler(async (req: Request) => {
   }
   if (!branchId) return apiError("no_branch", "אין סניף משויך", 422);
 
-  // Reject double-open — one shift per cashier at a time.
+  // Reject double-open - one shift per cashier at a time.
   const existing = await prisma.posShift.findFirst({
     where: { cashierId: user.id, closedAt: null },
     select: { id: true },

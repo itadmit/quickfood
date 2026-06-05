@@ -2,12 +2,12 @@
  * Admin-driven password reset.
  *
  * Lets a platform admin set a new password for any merchant user on any
- * tenant — bypassing the email-token flow (used for support: phone calls,
+ * tenant - bypassing the email-token flow (used for support: phone calls,
  * lost emails). Also invalidates any outstanding reset tokens for that
  * user so an old "forgot password" email can't be redeemed after the
  * admin has changed it.
  *
- * Body: `{ password: string }` — min 8 chars. Returns `{ ok: true }`.
+ * Body: `{ password: string }` - min 8 chars. Returns `{ ok: true }`.
  */
 import { z } from "zod";
 import bcrypt from "bcryptjs";

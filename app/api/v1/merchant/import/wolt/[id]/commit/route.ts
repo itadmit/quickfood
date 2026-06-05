@@ -46,7 +46,7 @@ export const POST = handler(
     if (row.status === "failed") {
       return apiError("failed_state", "הייבוא הזה כשל ויש לצור תצוגה חדשה", 409);
     }
-    // Re-triggering an already-committed import is now allowed — every
+    // Re-triggering an already-committed import is now allowed - every
     // step in commitImport is idempotent (categories/modifiers/items
     // are upserts, ItemOptionGroups are delete+create, image loop
     // skips items that already have a URL). Lets a merchant retry

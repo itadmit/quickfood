@@ -1,5 +1,5 @@
 /**
- * Icons — ported verbatim from prototypes/app.jsx (mobile) and prototypes/dashboard.jsx.
+ * Icons - ported verbatim from prototypes/app.jsx (mobile) and prototypes/dashboard.jsx.
  * All icons are inline SVG that accept color (`c`) and size (`s`) props.
  */
 
@@ -399,7 +399,7 @@ export const IcoWarning = ({ c = "#c2421f", s = 18, className }: IconProps) => (
 /**
  * Simple flat-arrow icons for buttons / links.
  * In a Hebrew RTL UI, "forward / next" actions visually go LEFT, "back"
- * actions go RIGHT — match the direction of the action, not the reading order.
+ * actions go RIGHT - match the direction of the action, not the reading order.
  */
 export const IcoArrowLeft = ({ c = "currentColor", s = 16, className }: IconProps) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
@@ -427,7 +427,7 @@ export const IcoArrowRight = ({ c = "currentColor", s = 16, className }: IconPro
 
 export const IcoImport = ({ c = "currentColor", s = 18, className }: IconProps) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
-    {/* Arrow pointing down into a tray — the universal "import" glyph */}
+    {/* Arrow pointing down into a tray - the universal "import" glyph */}
     <path
       d="M12 3v12M7 10l5 5 5-5"
       stroke={c}
@@ -479,7 +479,7 @@ export const IcoCopy = ({ c = "currentColor", s = 16, className }: IconProps) =>
   </svg>
 );
 
-/** QR-code glyph — three finder squares + a few data modules so it
+/** QR-code glyph - three finder squares + a few data modules so it
    reads as "QR" at small sizes without the visual noise of a real code. */
 export const IcoQrCode = ({ c = "#11231a", s = 18, className }: IconProps) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
@@ -496,7 +496,7 @@ export const IcoQrCode = ({ c = "#11231a", s = 18, className }: IconProps) => (
   </svg>
 );
 
-/** WhatsApp brand glyph — single path, phone receiver as negative
+/** WhatsApp brand glyph - single path, phone receiver as negative
    space inside the chat-bubble. Source: Simple Icons (CC0). */
 export const IcoRefresh = ({ c = "currentColor", s = 18, className }: IconProps) => (
   // Two opposing arcs with the L-shaped arrow corners tucked at

@@ -32,7 +32,7 @@ export const POST = handler(async (req: Request) => {
     const hoursSummary = hoursPreviewSummary(hoursMap);
     const hasHours = hoursSummary.some((h) => h.active);
 
-    // Best-effort menu fetch — the signup preview shows item/category
+    // Best-effort menu fetch - the signup preview shows item/category
     // counts and 6 sample tiles so the merchant trusts what they're
     // about to onboard. If Wolt's menu API is briefly down we still
     // succeed on the venue payload alone (merchant can sign up; the
@@ -109,7 +109,7 @@ export const POST = handler(async (req: Request) => {
       console.warn("[wolt-preview] menu fetch failed", err);
     }
 
-    // The Wolt URL slug is the cleanest source for our slug —
+    // The Wolt URL slug is the cleanest source for our slug -
     // already kebab-case, latin, unique per venue, and meaningful
     // ("meatbar-burger-dizengoff" beats anything we'd derive from
     // the Hebrew name).

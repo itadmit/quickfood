@@ -191,7 +191,7 @@ function Step1Welcome({
       </h1>
 
       <p className="text-black/70 text-sm md:text-base mb-8 max-w-md">
-        שתי דרכים להעלות את החנות שלך לאוויר. בחר את מה שעובד לך —
+        שתי דרכים להעלות את החנות שלך לאוויר. בחר את מה שעובד לך -
         תמיד אפשר להמשיך בדרך השנייה אחר כך.
       </p>
 
@@ -200,7 +200,7 @@ function Step1Welcome({
           variant="primary"
           badge="חדש פה"
           title="להתחיל מאפס"
-          body="בנה תפריט מאפס עם העורך שלנו — קטגוריות, פריטים, גדלים ותוספות. מומלץ אם זו החנות אונליין הראשונה שלך."
+          body="בנה תפריט מאפס עם העורך שלנו - קטגוריות, פריטים, גדלים ותוספות. מומלץ אם זו החנות אונליין הראשונה שלך."
           cta="נתחיל סיור קצר"
           onClick={onScratch}
           busy={busy === "scratch"}
@@ -247,7 +247,7 @@ function Step2Sidebar({
     {
       Icon: IcoOrders,
       title: "הזמנות",
-      body: "כל ההזמנות בזמן אמת — קבלה, הכנה, יציאה למשלוח וסגירה.",
+      body: "כל ההזמנות בזמן אמת - קבלה, הכנה, יציאה למשלוח וסגירה.",
     },
     {
       Icon: IcoMenuIcon,
@@ -279,7 +279,7 @@ function Step2Sidebar({
         <span className="bg-black text-[#F8CB1E] px-3 py-0.5 rounded-lg inline-block">
           תפריט הצד
         </span>{" "}
-        — הכל במרחק נגיעה
+        - הכל במרחק נגיעה
       </h2>
 
       <p className="text-black/70 text-sm md:text-base mb-7 max-w-md">
@@ -334,7 +334,7 @@ function Step3Settings({
     {
       Icon: IcoSparkle,
       title: "מותג ועיצוב",
-      body: "לוגו, צבעים, באנר ראשי וטיפוגרפיה — איך הלקוחות רואים אותך.",
+      body: "לוגו, צבעים, באנר ראשי וטיפוגרפיה - איך הלקוחות רואים אותך.",
     },
     {
       Icon: IcoHome,
@@ -349,7 +349,7 @@ function Step3Settings({
     {
       Icon: IcoBell,
       title: "התראות",
-      body: "SMS, WhatsApp ו-Email — ערוצי תקשורת עם הלקוח אחרי הזמנה.",
+      body: "SMS, WhatsApp ו-Email - ערוצי תקשורת עם הלקוח אחרי הזמנה.",
     },
     {
       Icon: IcoBike,
@@ -369,11 +369,11 @@ function Step3Settings({
         <span className="bg-black text-[#F8CB1E] px-3 py-0.5 rounded-lg inline-block">
           הגדרות
         </span>{" "}
-        — להתאים לך
+        - להתאים לך
       </h2>
 
       <p className="text-black/70 text-sm md:text-base mb-7 max-w-md">
-        בהגדרות תמצא את כל מה שצריך כדי שהחנות תרגיש שלך — מהלוגו ועד
+        בהגדרות תמצא את כל מה שצריך כדי שהחנות תרגיש שלך - מהלוגו ועד
         אופן התשלום.
       </p>
 
@@ -430,7 +430,7 @@ function Step4Ready({
       </h2>
 
       <p className="text-black/70 text-sm md:text-base mb-8 max-w-md">
-        ראית את עיקרי המערכת. הצעד הבא — להעלות את התפריט. בחר את הדרך
+        ראית את עיקרי המערכת. הצעד הבא - להעלות את התפריט. בחר את הדרך
         שעובדת לך:
       </p>
 
@@ -439,7 +439,7 @@ function Step4Ready({
           variant="primary"
           badge="חדש פה"
           title="להתחיל מאפס"
-          body="בנה תפריט מאפס עם העורך שלנו — קטגוריות, פריטים, גדלים ותוספות."
+          body="בנה תפריט מאפס עם העורך שלנו - קטגוריות, פריטים, גדלים ותוספות."
           cta="נתחיל לבנות"
           onClick={onScratch}
           busy={busy === "scratch"}

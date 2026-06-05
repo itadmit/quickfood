@@ -79,7 +79,7 @@ export const POST = handler(async (req: Request) => {
   const provider = await getConfiguredProvider(tenant.id, providerType);
   if (!provider) return apiError("provider_unavailable", "provider not configured", 503);
 
-  // Reuse the existing IP whitelist — Grow ships invoice callbacks from
+  // Reuse the existing IP whitelist - Grow ships invoice callbacks from
   // the same IP range as transaction callbacks.
   const headers = extractHeaders(req);
   const validation = provider.validateWebhook({}, headers);
@@ -141,7 +141,7 @@ export const POST = handler(async (req: Request) => {
 
     // Email the invoice if the customer already gave us an address.
     // Awaited (not fire-and-forget) so the Resend call completes inside
-    // this invocation — on Vercel, work after the response returns can be
+    // this invocation - on Vercel, work after the response returns can be
     // frozen mid-flight. A send failure is swallowed so we still 200 back
     // to Grow (it would otherwise retry forever); the helper logs it.
     await dispatchInvoice(orderId).catch((err) => {

@@ -11,7 +11,7 @@ export default async function CartPage({
 }) {
   const { tenantSlug } = await params;
 
-  // Warm Grow's CDN here — by the time the customer taps "המשך לתשלום"
+  // Warm Grow's CDN here - by the time the customer taps "המשך לתשלום"
   // and lands on /checkout, the TLS handshake is already done and the
   // SDK is in browser cache. Shaves ~200-500ms off the wallet boot.
   const tenant = await resolveTenantBySlug(tenantSlug);

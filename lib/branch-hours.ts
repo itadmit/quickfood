@@ -47,9 +47,9 @@ function toMinutes(time: string): number | null {
 export interface OpenStatus {
   /** True when `now` falls inside an active window. */
   open: boolean;
-  /** "HH:MM" the current window closes at — only set when open=true. */
+  /** "HH:MM" the current window closes at - only set when open=true. */
   closesAt: string | null;
-  /** Next open day label + "HH:MM" the next window starts — only set when open=false. */
+  /** Next open day label + "HH:MM" the next window starts - only set when open=false. */
   nextOpen: { dayLabel: string; time: string } | null;
 }
 

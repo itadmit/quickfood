@@ -43,7 +43,7 @@ export async function notifyCourierAssigned(orderId: string, courierId: string):
       ? `${order.customerFirstNameSnap ?? ""} ${order.customerLastNameSnap ?? ""}`.trim()
       : "לקוח";
   const lines = [
-    `הזמנה חדשה שויכה אליך — ${order.number}`,
+    `הזמנה חדשה שויכה אליך - ${order.number}`,
     `לקוח: ${customerName}`,
     order.customerPhoneSnap ? `טלפון: ${order.customerPhoneSnap}` : null,
     addressLine ? `כתובת: ${addressLine}` : null,

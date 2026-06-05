@@ -7,7 +7,7 @@ import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 
 const HIDDEN_PATH_SUFFIXES = ["/cart", "/checkout"];
-// /orders/<uuid> — the post-order confirmation/tracking page. Showing the
+// /orders/<uuid> - the post-order confirmation/tracking page. Showing the
 // cart there confuses the customer (they just paid, why is there a CTA to
 // pay again?). Matches any /orders/<anything> under a tenant slug.
 const HIDDEN_PATH_PATTERNS: RegExp[] = [/\/orders\/[^/]+$/];
@@ -19,7 +19,7 @@ export function FloatingCartCTA() {
   const [dismissedAt, setDismissedAt] = useState<number | null>(null);
 
   // Persist dismissal across navigations within the session. We store
-  // the line count at the time of dismissal — if the customer adds
+  // the line count at the time of dismissal - if the customer adds
   // something new (line count grows), the toast re-appears.
   useEffect(() => {
     try {

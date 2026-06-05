@@ -122,7 +122,7 @@ interface Props {
    *  (eg BottomTabBar) can observe it for scroll-spy. */
   rootId?: string;
   /** Category- and item-scoped notices rendered inline. Store-scoped
-   *  notices are not handled here — render those above this component. */
+   *  notices are not handled here - render those above this component. */
   noticesByCategory?: Map<string, NoticeRow[]>;
   noticesByItem?: Map<string, NoticeRow[]>;
   onItemClick?: (id: string) => void;

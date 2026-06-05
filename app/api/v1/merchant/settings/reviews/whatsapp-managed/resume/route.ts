@@ -1,6 +1,6 @@
 /**
  * Undo a scheduled "cancel at period end" on the managed-WhatsApp reviews
- * add-on while it is still active — the merchant changed their mind.
+ * add-on while it is still active - the merchant changed their mind.
  */
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";

@@ -23,7 +23,7 @@ const pacifico = Pacifico({
 
 const SITE_URL = "https://quickfood.co.il";
 const SITE_DESCRIPTION =
-  "QuickFood (קוויקפוד) — אתר הזמנות משלך לצד וולט. הלקוחות הקבועים שלך מזמינים ישירות אצלך, על הדומיין שלך, עם תוספות, גדלים, מעקב חי ו-וואטסאפ מהמספר שלך. ₪299 לחודש (מחיר קבוע לכל החיים) ו-0.5% להזמנה. 7 ימים ניסיון, ללא כרטיס אשראי.";
+  "QuickFood (קוויקפוד) - אתר הזמנות משלך לצד וולט. הלקוחות הקבועים שלך מזמינים ישירות אצלך, על הדומיין שלך, עם תוספות, גדלים, מעקב חי ו-וואטסאפ מהמספר שלך. ₪299 לחודש (מחיר קבוע לכל החיים) ו-0.5% להזמנה. 7 ימים ניסיון, ללא כרטיס אשראי.";
 
 // Organization + WebSite + SoftwareApplication JSON-LD. Emitted on every
 // page (via RootLayout) so branded searches ("קוויקפוד", "QuickFood")
@@ -43,7 +43,7 @@ const ORG_SCHEMA = {
       logo: `${SITE_URL}/quickfood-mark.png`,
       sameAs: [],
       areaServed: "IL",
-      slogan: "אתר הזמנות משלך — לצד וולט",
+      slogan: "אתר הזמנות משלך - לצד וולט",
     },
     {
       "@type": "WebSite",
@@ -85,7 +85,7 @@ const ORG_SCHEMA = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "QuickFood — חנות אונליין למסעדה שלך",
+    default: "QuickFood - חנות אונליין למסעדה שלך",
     template: "%s · QuickFood",
   },
   description: SITE_DESCRIPTION,
@@ -116,12 +116,12 @@ export const metadata: Metadata = {
     locale: "he_IL",
     url: SITE_URL,
     siteName: "QuickFood",
-    title: "QuickFood — חנות אונליין למסעדה שלך",
+    title: "QuickFood - חנות אונליין למסעדה שלך",
     description: SITE_DESCRIPTION,
   },
   twitter: {
     card: "summary_large_image",
-    title: "QuickFood — חנות אונליין למסעדה שלך",
+    title: "QuickFood - חנות אונליין למסעדה שלך",
     description: SITE_DESCRIPTION,
   },
   alternates: {

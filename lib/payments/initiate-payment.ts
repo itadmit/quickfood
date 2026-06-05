@@ -1,7 +1,7 @@
 /**
  * Shared payment-initiation core, used by two callers:
- *   1. POST /api/v1/customer/orders/[id]/pay/initiate  (standalone — PayPage)
- *   2. POST /api/v1/customer/orders                     (inline, on create —
+ *   1. POST /api/v1/customer/orders/[id]/pay/initiate  (standalone - PayPage)
+ *   2. POST /api/v1/customer/orders                     (inline, on create -
  *      lets the checkout flow skip a second round-trip)
  *
  * Returns a discriminated result instead of a Response so each caller maps
@@ -9,7 +9,7 @@
  * the inline caller simply omits the `payment` block and lets the client
  * fall back to the standalone route.
  *
- * Access control (customer-owns-order) is NOT done here — the standalone
+ * Access control (customer-owns-order) is NOT done here - the standalone
  * route enforces it; the inline caller just created the order so ownership
  * is implicit.
  */
@@ -43,7 +43,7 @@ export type InitiateOrderPaymentResult =
 /**
  * Build the Grow payment process for an order and persist a pending-payment
  * row. Idempotency is the caller's concern: invoking twice creates two
- * pending rows (harmless — the callback reconciles by orderReference).
+ * pending rows (harmless - the callback reconciles by orderReference).
  */
 export async function initiateOrderPayment(
   orderId: string,
@@ -69,7 +69,7 @@ export async function initiateOrderPayment(
 
   const providerType = PaymentProvider.grow;
 
-  // Independent reads run in parallel — provider config, provider instance,
+  // Independent reads run in parallel - provider config, provider instance,
   // and the customer row don't depend on each other (cuts ~2 sequential
   // Neon round-trips off the critical path; same query count, so no extra
   // DB cost).
@@ -100,7 +100,7 @@ export async function initiateOrderPayment(
   // order (POS partial-cash flow), Grow only charges the remainder. The
   // PendingPayment row stores the same remainder so the callback's
   // amount-sanity-check matches what Grow returns. Order.total stays
-  // untouched — it's the source of truth for "is this order paid yet?"
+  // untouched - it's the source of truth for "is this order paid yet?"
   const cashCollected = order.cashCollected ?? 0;
   const amountToCharge =
     cashCollected > 0 && cashCollected < order.total

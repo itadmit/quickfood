@@ -174,7 +174,7 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
             <span>קטלוג תוספות</span>
           </span>
         }
-        subtitle="קבוצות לשימוש חוזר — צור פעם אחת, שייך לעשרות פריטים, שינוי מתעדכן בכולם"
+        subtitle="קבוצות לשימוש חוזר - צור פעם אחת, שייך לעשרות פריטים, שינוי מתעדכן בכולם"
         actions={
           !editing ? (
             <button
@@ -417,7 +417,7 @@ function SetEditor({
           checked={set.required}
           onChange={(e) => onChange({ ...set, required: e.target.checked })}
         />
-        <span>חובה לבחור — הלקוח לא יוכל להזמין בלי לבחור</span>
+        <span>חובה לבחור - הלקוח לא יוכל להזמין בלי לבחור</span>
       </label>
 
       {isMulti && (
@@ -477,7 +477,7 @@ function SetEditor({
                 })
               }
             />
-            <span>חצי/חצי — לקוח יכול לבחור כל תוספת לחצי בלבד (פיצה ועוד)</span>
+            <span>חצי/חצי - לקוח יכול לבחור כל תוספת לחצי בלבד (פיצה ועוד)</span>
           </label>
           {set.allowHalf && (
             <label className="flex flex-col gap-1 text-xs max-w-xs">
@@ -639,7 +639,7 @@ function SetEditor({
                       ? "bg-qf-green-soft text-qf-green-deep"
                       : "bg-qf-tomato-soft text-qf-tomato",
                   )}
-                  title={o.available ? "זמין — לחץ לסמן כאזל" : "אזל — לחץ להחזיר לזמין"}
+                  title={o.available ? "זמין - לחץ לסמן כאזל" : "אזל - לחץ להחזיר לזמין"}
                 >
                   {o.available ? "זמין" : "אזל"}
                 </button>

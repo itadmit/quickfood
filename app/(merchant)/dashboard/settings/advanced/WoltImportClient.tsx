@@ -165,7 +165,7 @@ export function WoltImportClient({
                 ? `${lastImport.itemsImported} פריטים · ${lastImport.categoriesImported} קטגוריות · ${lastImport.imagesUploaded} תמונות`
                 : lastImport.status === "failed"
                   ? "נכשל"
-                  : "טיוטה — לא הושלם"}
+                  : "טיוטה - לא הושלם"}
             </div>
           </div>
         )}
@@ -197,7 +197,7 @@ export function WoltImportClient({
             <span className="text-sm leading-relaxed">
               אני בעל/ת החנות. התוכן (שמות, תמונות, מחירים, תוספות) שייך לי
               ואני מאשר/ת ייבוא שלו ל-QuickFood. הייבוא הזה באחריותי הבלעדית
-              מול Wolt וצדדים שלישיים — ראו{" "}
+              מול Wolt וצדדים שלישיים - ראו{" "}
               <WoltTermsTrigger className="underline font-semibold" />.
             </span>
           </label>
@@ -394,5 +394,5 @@ function formatRelativeTime(iso: string): string {
 
 // Class names referenced above that we lean on existing in the global
 // stylesheet:
-//   .qf-spinner   — defined in globals.css alongside the other qf-*
-//   .tnum         — tabular numerals utility, already in use across the app
+//   .qf-spinner   - defined in globals.css alongside the other qf-*
+//   .tnum         - tabular numerals utility, already in use across the app

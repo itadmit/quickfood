@@ -56,7 +56,7 @@ function WoltTermsModal({ onClose }: { onClose: () => void }) {
       <div className="relative w-full max-w-2xl max-h-[90vh] bg-white rounded-2xl border-2 border-black shadow-[0_6px_0_#000] overflow-hidden flex flex-col">
         <header className="flex items-center justify-between gap-3 px-5 py-4 border-b-2 border-black bg-[#FFF6CC]">
           <h2 id="wolt-terms-title" className="text-base sm:text-lg font-black text-black">
-            ייבוא תוכן מוולט — אחריות ושימוש
+            ייבוא תוכן מוולט - אחריות ושימוש
           </h2>
           <button
             type="button"
@@ -70,14 +70,14 @@ function WoltTermsModal({ onClose }: { onClose: () => void }) {
 
         <div className="overflow-y-auto px-5 py-5 text-sm text-black/85 leading-relaxed space-y-3">
           <p>
-            הפלטפורמה מציעה כלי נוחות לייבוא נתוני חנות מ-Wolt — שם העסק,
+            הפלטפורמה מציעה כלי נוחות לייבוא נתוני חנות מ-Wolt - שם העסק,
             כתובת, טלפון, שעות פעילות, לוגו, תמונת כריכה, קטגוריות, פריטים,
-            תמונות ומחירים — לחנות שלך ב-Quick Food. הייבוא מותנה בסימון
+            תמונות ומחירים - לחנות שלך ב-Quick Food. הייבוא מותנה בסימון
             מפורש של תיבת אישור לפיה אתה בעל החנות והתכנים שייכים לך.
           </p>
           <p>
             <strong>Quick Food אינה קשורה ל-Wolt</strong>, אינה משויכת אליה,
-            ואינה פועלת מטעמה. אנו רק מעבירים נתונים שאתה — בעל החנות —
+            ואינה פועלת מטעמה. אנו רק מעבירים נתונים שאתה - בעל החנות -
             ביקשת להעתיק לחשבון שלך אצלנו. השימוש בכלי הזה הוא{" "}
             <strong>באחריותך הבלעדית</strong>:
           </p>
@@ -90,7 +90,7 @@ function WoltTermsModal({ onClose }: { onClose: () => void }) {
             <li>
               אתה אחראי באופן בלעדי לכל טענה, תביעה, מחלוקת חוזית, או
               דרישה של Wolt, של ספקיה, של צלמים, או של כל צד שלישי בקשר
-              עם הייבוא או השימוש בתוכן — לרבות הפרת זכויות יוצרים, סימני
+              עם הייבוא או השימוש בתוכן - לרבות הפרת זכויות יוצרים, סימני
               מסחר, הסכמי בלעדיות, או תנאי שירות של Wolt.
             </li>
             <li>
@@ -100,7 +100,7 @@ function WoltTermsModal({ onClose }: { onClose: () => void }) {
             </li>
             <li>
               אם מסיבה כלשהי תידרש Quick Food להשיב נזק לצד שלישי בקשר עם
-              ייבוא שביצעת — אתה תשפה את החברה במלוא הסכום, לרבות הוצאות
+              ייבוא שביצעת - אתה תשפה את החברה במלוא הסכום, לרבות הוצאות
               משפטיות סבירות.
             </li>
           </ul>

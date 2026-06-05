@@ -93,7 +93,7 @@ export const GET = handler(async (req: Request) => {
         imageUrl: i.images?.[0] ?? i.imageUrl ?? null,
         // True when tapping "+" has to open the picker: required
         // modifiers OR a size choice. Optional-only groups don't
-        // force the modal — the user can still add the bare item.
+        // force the modal - the user can still add the bare item.
         needsConfig: hasRequiredGroup || hasMultipleSizes,
         // Flag the "you can still customize" case so the modal CTA
         // can hint at the alternative path.

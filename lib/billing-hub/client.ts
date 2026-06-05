@@ -1,8 +1,8 @@
 /**
  * Client for Quick Commerce Billing Hub (the QuickFood billing partner).
  *
- * All QuickFood billing — subscription, transaction commissions, SMS package
- * purchases, refunds — is processed by this external service. We do NOT
+ * All QuickFood billing - subscription, transaction commissions, SMS package
+ * purchases, refunds - is processed by this external service. We do NOT
  * implement billing locally; this file is the only thing in QuickFood that
  * speaks the hub's protocol.
  *
@@ -57,7 +57,7 @@ async function request<T>(
 ): Promise<T> {
   if (!BASE || !API_KEY || !HMAC_SECRET) {
     throw new BillingHubError(
-      "QC_BILLING_BASE_URL / API_KEY / HMAC_SECRET missing — billing-hub client not configured",
+      "QC_BILLING_BASE_URL / API_KEY / HMAC_SECRET missing - billing-hub client not configured",
       503,
       "not_configured",
     );
@@ -143,7 +143,7 @@ export interface PaymentMethodSetup {
  * Generate a Grow tokenization URL the customer visits to save a card.
  *
  *  - `subscription_setup` charges the first-month total (e.g. ₪352.82
- *     incl. VAT) — used the first time a merchant sets up billing.
+ *     incl. VAT) - used the first time a merchant sets up billing.
  *  - `card_update` only verifies the card with ₪1 hold (chargeType=3),
  *     no recurring charge. Used to replace a saved card without
  *     re-paying.

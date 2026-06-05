@@ -4,7 +4,7 @@
  * Validates the 6-digit OTP code the customer typed on the kiosk after
  * receiving it via WhatsApp/SMS. UNLIKE the storefront `/api/v1/auth/otp/verify`,
  * this endpoint does NOT create a session or attach the order to a
- * Customer row — the kiosk runs anonymously. We only return `{ ok: true }`
+ * Customer row - the kiosk runs anonymously. We only return `{ ok: true }`
  * so the client can proceed to the next step (Customer-by-phone lookup
  * + name screen).
  */

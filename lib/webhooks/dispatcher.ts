@@ -43,7 +43,7 @@ export async function dispatchWebhook(args: DispatchArgs): Promise<void> {
     ),
   );
 
-  // Attempt immediate delivery in parallel — do not await.
+  // Attempt immediate delivery in parallel - do not await.
   for (const d of deliveries) {
     const ep = endpoints.find((e) => e.id === d.endpointId)!;
     void attemptDelivery(d.id, ep.url, ep.secret).catch(() => {
@@ -53,7 +53,7 @@ export async function dispatchWebhook(args: DispatchArgs): Promise<void> {
 }
 
 /**
- * Worker entry — process pending/retryable deliveries.
+ * Worker entry - process pending/retryable deliveries.
  * Called from /api/internal/webhooks/process (QStash schedule).
  */
 export async function processPending(limit = 50): Promise<{ processed: number }> {

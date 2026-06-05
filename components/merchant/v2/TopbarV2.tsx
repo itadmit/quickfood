@@ -18,7 +18,7 @@ interface Props {
   user: { name: string; email: string; role: string };
   branch: { id: string; status: "open" | "busy" | "closed" } | null;
   tenantSlug: string;
-  /** Brand info for the mobile drawer header — desktop sidebar already
+  /** Brand info for the mobile drawer header - desktop sidebar already
    *  shows this; on mobile the hamburger drawer carries it. */
   tenant: { name: string; logoLetter: string; branchName: string };
   /** Render the "import to a fresh store" shortcut next to the bell.
@@ -34,7 +34,7 @@ const STATUS_LABELS: Record<Status, string> = {
   closed: "סגור",
 };
 
-// Semantic status colors — brand yellow=open (ready, our brand
+// Semantic status colors - brand yellow=open (ready, our brand
 // signal), red=busy (warning, slower), black=closed (off). A glance
 // at the chip = current state.
 const STATUS_STYLES: Record<Status, string> = {
@@ -58,8 +58,8 @@ const STATUS_SWATCH: Record<Status, string> = {
 };
 
 /**
- * V2 topbar — leaner than the live one (no full search palette, no
- * notifications dropdown — bell links straight to /dashboard/orders).
+ * V2 topbar - leaner than the live one (no full search palette, no
+ * notifications dropdown - bell links straight to /dashboard/orders).
  * Reuses the same /api/v1/merchant/branches PATCH so status toggles
  * are real, not mocked. Wear the same bold black borders + hard
  * shadow as the rest of the v2 surface.
@@ -69,7 +69,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
   const [status, setStatus] = useState<Status>(branch?.status ?? "open");
   const [statusBusy, setStatusBusy] = useState(false);
   // Single discriminated state for the two dropdowns so they're mutually
-  // exclusive — opening one auto-closes the other. Set to null to close.
+  // exclusive - opening one auto-closes the other. Set to null to close.
   const [openMenu, setOpenMenu] = useState<"status" | "user" | null>(null);
   const [unread, setUnread] = useState(0);
   const headerRef = useRef<HTMLElement | null>(null);
@@ -172,7 +172,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
 
         <div className="ms-auto" />
 
-        {/* "Updating store" loader — appears to the visual-right of
+        {/* "Updating store" loader - appears to the visual-right of
             the status pill while the PATCH is in flight. RTL: this
             element comes before the pill in source order, so flex
             puts it on the visual-right side of the pill. */}
@@ -233,7 +233,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
           )}
         </div>
 
-        {/* Help / onboarding shortcut — only when the menu is empty.
+        {/* Help / onboarding shortcut - only when the menu is empty.
             Click re-opens the welcome tour so the merchant can revisit
             the system overview and pick a starting path. */}
         {showImportShortcut && (
@@ -249,7 +249,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
           </button>
         )}
 
-        {/* Bell — single click jumps straight to orders (no dropdown in v2) */}
+        {/* Bell - single click jumps straight to orders (no dropdown in v2) */}
         <Link
           href="/dashboard/orders"
           aria-label="צפייה בהזמנות"
@@ -264,7 +264,7 @@ export function TopbarV2({ user, branch, tenantSlug, tenant, showImportShortcut 
           )}
         </Link>
 
-        {/* View storefront — opens the customer-facing menu in a new tab.
+        {/* View storefront - opens the customer-facing menu in a new tab.
             Pulled out of the user dropdown so merchants can hop to the
             live store in one click. */}
         <Link

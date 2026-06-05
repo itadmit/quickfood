@@ -64,7 +64,7 @@ export function PosMenuPicker({
   function handleTap(it: PosItem) {
     // Items with options OR multiple sizes go through the config modal so
     // the cashier picks them explicitly. A drink with one price + no
-    // options is a direct add — fastest path for the bulk of the menu.
+    // options is a direct add - fastest path for the bulk of the menu.
     if (it.hasOptions || it.sizeCount > 1) {
       onConfigureItem(it.id);
       return;
@@ -187,7 +187,7 @@ export function PosMenuPicker({
                     {it.hasRequiredOptions && (
                       <span
                         className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-qf-yolk-soft text-qf-ink"
-                        title="לפריט יש תוספות חובה — מומלץ לערוך את השורה בכרטיסייה"
+                        title="לפריט יש תוספות חובה - מומלץ לערוך את השורה בכרטיסייה"
                       >
                         +
                       </span>

@@ -1,5 +1,5 @@
 /**
- * Formatting helpers — Hebrew locale (he-IL), Israeli shekel.
+ * Formatting helpers - Hebrew locale (he-IL), Israeli shekel.
  * Per QuickFood README: prices in integer shekels, phone in E.164 or local format.
  */
 
@@ -23,7 +23,7 @@ export function fullName(
 // Pin every display to Israel time. Vercel functions run in UTC by
 // default, so an SSR-rendered date used to come out 2-3 hours off
 // the wall clock the merchant sees. Hard-coding Asia/Jerusalem also
-// covers customers whose phones are set to another TZ — the store's
+// covers customers whose phones are set to another TZ - the store's
 // "scheduled for 19:00" stays the local 19:00 the merchant promised.
 const TZ = "Asia/Jerusalem";
 

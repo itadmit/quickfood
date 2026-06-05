@@ -18,7 +18,7 @@ import { resolveCategoryStyle } from "@/lib/category-style";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import { DragList } from "@/components/shared/DragList";
 
-/** Three-bar drag grip — matches the "סדר" affordance merchants expect. */
+/** Three-bar drag grip - matches the "סדר" affordance merchants expect. */
 function ReorderGrip() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden className="text-qf-mute">
@@ -268,7 +268,7 @@ export function MenuList({
       {reorderMode && (
         <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border-2 border-(--qf-primary) bg-(--qf-soft)">
           <div className="text-sm font-bold text-(--qf-deep)">
-            סידור פריטים — {catMap[activeCat as string] ?? "קטגוריה"}
+            סידור פריטים - {catMap[activeCat as string] ?? "קטגוריה"}
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -292,7 +292,7 @@ export function MenuList({
       )}
 
       <div className="bg-white rounded-2xl border border-qf-line-dash overflow-hidden">
-        {/* Table header — desktop only. Mobile rows are self-explanatory cards. */}
+        {/* Table header - desktop only. Mobile rows are self-explanatory cards. */}
         {!reorderMode && (
         <div className="hidden lg:grid grid-cols-[60px_44px_1fr_140px_100px_120px_100px_60px] gap-3 px-4 py-2.5 text-xs font-medium text-qf-mute border-b border-qf-line-dash bg-qf-line-soft/60">
           <div></div>
@@ -313,14 +313,14 @@ export function MenuList({
           >
             {(item, i, drag) => (
               <div className="flex items-center gap-2 sm:gap-3 px-3 lg:px-4 py-3 border-b border-qf-line-soft last:border-b-0 bg-white">
-                {/* Drag handle — works on desktop (mouse). */}
+                {/* Drag handle - works on desktop (mouse). */}
                 <span
                   {...drag.handleProps}
                   className="hidden sm:grid shrink-0 place-items-center w-9 h-9 rounded-lg hover:bg-qf-line-soft active:bg-qf-line-soft"
                 >
                   <ReorderGrip />
                 </span>
-                {/* Up/down — the touch-friendly path (drag-and-drop doesn't
+                {/* Up/down - the touch-friendly path (drag-and-drop doesn't
                     fire on phones). */}
                 <div className="shrink-0 flex flex-col">
                   <button
@@ -626,7 +626,7 @@ function RowActions({
       setCoords({
         top: r.bottom + 4,
         // Anchor the menu's RIGHT edge to the button's RIGHT edge so it
-        // unfolds to the left — the natural direction in RTL.
+        // unfolds to the left - the natural direction in RTL.
         left: Math.max(8, r.right - MENU_W),
       });
     }

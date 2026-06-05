@@ -5,7 +5,7 @@
 -- "add domain → wait for DNS + SSL → activate" we need to know which state
 -- the domain is in, and what Vercel told us to show the merchant (TXT
 -- challenge + recommended A/CNAME). The proxy (host→tenant rewrite) only
--- routes traffic when status='active' — pending domains do not get traffic
+-- routes traffic when status='active' - pending domains do not get traffic
 -- so a broken DNS pointer can't take a storefront offline.
 
 CREATE TYPE "CustomDomainStatus" AS ENUM ('none', 'pending', 'active', 'error');

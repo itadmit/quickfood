@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/shared/Skeleton";
 /**
  * Loading shell for /[tenantSlug]/orders/[id].
  *
- * Mirrors components/customer/screens/OrderTracking.tsx — the violet
+ * Mirrors components/customer/screens/OrderTracking.tsx - the violet
  * gradient hero with the celebratory check on top, the status card
  * with progress dots, the branch contact strip, and the items list.
  * Without this Next.js was falling back to the home loader (chip rail
@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/shared/Skeleton";
 export default function OrderTrackingLoading() {
   return (
     <div className="pb-20">
-      {/* Brand hero — gradient placeholder to match the live page's
+      {/* Brand hero - gradient placeholder to match the live page's
           `from-(--qf-primary) to-(--qf-deep)` header so there's no
           visible jump when the page swaps in. */}
       <header className="bg-linear-to-b from-(--qf-primary) to-(--qf-deep) text-white px-5 pt-5 pb-8 rounded-b-3xl">
@@ -30,7 +30,7 @@ export default function OrderTrackingLoading() {
         </div>
       </header>
 
-      {/* Status card — same -mt-3 lift as the live page so the white
+      {/* Status card - same -mt-3 lift as the live page so the white
           card overlaps the hero by the same amount. */}
       <section className="px-5 -mt-3">
         <div className="bg-white rounded-2xl border border-qf-line p-4 space-y-4 shadow-sm">

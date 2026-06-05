@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Public endpoint — returns the single most recently updated active campaign
+ * Public endpoint - returns the single most recently updated active campaign
  * for the tenant (or null). The optional ?kind=popup|banner filter lets the
  * customer storefront pull only the campaign type it wants to render
  * (popup overlay vs. inline home banner).

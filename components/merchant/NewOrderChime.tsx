@@ -83,7 +83,7 @@ export function NewOrderChime() {
     <button
       type="button"
       onClick={toggle}
-      title={enabled ? "סאונד פעיל — לחץ להשתקה" : "סאונד מושתק — לחץ להפעלה"}
+      title={enabled ? "סאונד פעיל - לחץ להשתקה" : "סאונד מושתק - לחץ להפעלה"}
       className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border ${
         enabled
           ? "border-qf-green-deep bg-qf-green-soft text-qf-green-deep"

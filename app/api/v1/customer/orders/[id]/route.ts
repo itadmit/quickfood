@@ -9,7 +9,7 @@ function maskPhone(phone: string | null): string | null {
   if (!phone) return null;
   const digits = phone.replace(/\D/g, "");
   if (digits.length < 4) return null;
-  // 050-***-**67 — leaks the prefix (so the customer recognizes it)
+  // 050-***-**67 - leaks the prefix (so the customer recognizes it)
   // and the last two digits (enough to confirm "yes that's mine").
   const prefix = digits.startsWith("972") ? `0${digits.slice(3, 5)}` : digits.slice(0, 3);
   return `${prefix}-***-**${digits.slice(-2)}`;
@@ -48,7 +48,7 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
   });
   if (!order) return apiError("not_found", "הזמנה לא נמצאה", 404);
 
-  // Visibility: owner customer or guest with matching phone — for MVP, any
+  // Visibility: owner customer or guest with matching phone - for MVP, any
   // logged-in customer can view their own; guest orders are public-by-id
   // (UUIDv4 is unguessable enough for MVP).
   const session = await getSession();
@@ -92,7 +92,7 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
       delivery_address: order.deliveryAddress,
       // Customer block: prefer the live Customer row when present
       // (logged-in customer's account), otherwise fall back to the
-      // snapshot fields stored on the order at creation time —
+      // snapshot fields stored on the order at creation time -
       // manual / guest orders never get a Customer row but always
       // have customerPhoneSnap + customerFirstNameSnap.
       customer: {

@@ -17,7 +17,7 @@ const ForgotSchema = z.object({
 /**
  * POST /api/v1/auth/forgot-password
  *
- * Always returns 200 with the same generic message — we never confirm or deny
+ * Always returns 200 with the same generic message - we never confirm or deny
  * whether an email exists, to avoid leaking account enumeration. The actual
  * reset URL is delivered only via email.
  */

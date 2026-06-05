@@ -62,7 +62,7 @@ export function AuthRotatingTagline() {
       dir="rtl"
     >
       {/* `key={index}` re-triggers the CSS keyframe on every swap.
-          Previous text unmounts instantly — the animation duration
+          Previous text unmounts instantly - the animation duration
           (~620ms) is short enough that the gap reads as "snappy"
           rather than "broken". */}
       <h2

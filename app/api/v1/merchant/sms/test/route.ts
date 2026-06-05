@@ -1,5 +1,5 @@
 /**
- * SMS test send — used by the merchant dashboard to verify sms4free credentials
+ * SMS test send - used by the merchant dashboard to verify sms4free credentials
  * and sender approval before the merchant buys a credit package. Bypasses the
  * per-tenant credit gate (platform absorbs the cost), but still rate-limited
  * via a 60-second cooldown per tenant.
@@ -45,7 +45,7 @@ export const POST = handler(async (req: Request) => {
     select: { name: true },
   });
 
-  const body = `הודעת בדיקה מ-${tenant?.name ?? "QuickFood"}. אם קיבלת אותה — הכל מחובר.`;
+  const body = `הודעת בדיקה מ-${tenant?.name ?? "QuickFood"}. אם קיבלת אותה - הכל מחובר.`;
   const result = await sendSms({
     tenantId: session.tenantId,
     to,

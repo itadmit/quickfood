@@ -13,7 +13,7 @@ interface Props {
 }
 
 /**
- * Cycles through `words` with a vertical slide animation — current word
+ * Cycles through `words` with a vertical slide animation - current word
  * slides down and fades out, next word slides in from above. Loops.
  */
 export default function VerticalRotator({
@@ -42,7 +42,7 @@ export default function VerticalRotator({
     return () => clearTimeout(t);
   }, [phase, hold, slide, words.length]);
 
-  // Inline styles so the component is self-contained — no CSS module needed.
+  // Inline styles so the component is self-contained - no CSS module needed.
   const wordStyle: React.CSSProperties = {
     display: "inline-block",
     transition: `transform ${slide}ms cubic-bezier(.65,0,.35,1), opacity ${slide}ms ease`,

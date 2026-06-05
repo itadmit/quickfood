@@ -18,7 +18,7 @@ export const POST = handler(async (req: Request) => {
   if (process.env.SMS_PROVIDER === "console" || !process.env.SMS_PROVIDER) {
     console.log(`[otp] ${phone} ← ${code}`);
   }
-  // TODO: integrate SMS provider (sms4free / twilio) — read SMS_PROVIDER
+  // TODO: integrate SMS provider (sms4free / twilio) - read SMS_PROVIDER
 
   return apiJson({
     sent: true,

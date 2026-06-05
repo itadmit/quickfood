@@ -85,7 +85,7 @@ export function ZonesView({ branchId, initial }: { branchId: string; initial: Zo
       pushToast("ok", "האזור נוצר");
       router.refresh();
     } catch {
-      pushToast("err", "שגיאת רשת — בדוק חיבור ונסה שוב");
+      pushToast("err", "שגיאת רשת - בדוק חיבור ונסה שוב");
     } finally {
       setBusy(false);
     }
@@ -290,7 +290,7 @@ export function ZonesView({ branchId, initial }: { branchId: string; initial: Zo
                   </button>
                 </div>
 
-                {/* Cities — display chips, click "ערוך" to edit inline */}
+                {/* Cities - display chips, click "ערוך" to edit inline */}
                 {editingCitiesFor === z.id ? (
                   <div className="space-y-2 bg-qf-line-soft/60 rounded-xl p-3 border border-qf-line-dash">
                     <label className="text-xs font-medium block text-qf-ink2">

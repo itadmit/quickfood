@@ -77,7 +77,7 @@ export function PosShell({ cashier, tenant, branch, growTestMode, shift: initial
           />
         )}
         {/* Mount the Grow SDK once at the shell so it preloads while the
-            cashier interacts with the register — by the time they tap
+            cashier interacts with the register - by the time they tap
             'אשראי' the iframes are ready and renderGrowWallet() resolves
             immediately. Same pattern as CustomerCheckout. */}
         <GrowPaymentSdk
@@ -109,7 +109,7 @@ export function PosShell({ cashier, tenant, branch, growTestMode, shift: initial
 
 /**
  * Tiny child of PosCartProvider whose only job is to clear the cart the
- * first time we render with a "paid=1" banner — that's our success
+ * first time we render with a "paid=1" banner - that's our success
  * landing after the Grow SDK navigation. Done as a child so we can call
  * usePosCart() (a hook inside the provider).
  */

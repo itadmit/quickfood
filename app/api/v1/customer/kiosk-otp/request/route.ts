@@ -12,7 +12,7 @@
  *   - Tenant must have kioskRequirePhone=true (no point spamming codes
  *     when the kiosk doesn't even ask for a phone).
  *   - Throttle: if there's an unused, unexpired OtpCode for this phone
- *     from the last 60s we skip re-issuing — protects against double-tap
+ *     from the last 60s we skip re-issuing - protects against double-tap
  *     button mashing AND from a wall-of-OTPs DoS.
  *
  * No session is created; the verify endpoint also doesn't issue tokens.
@@ -60,7 +60,7 @@ export const POST = handler(async (req: Request) => {
     return apiError("otp_disabled", "אימות OTP לא פעיל לקיוסק זה", 403);
   }
 
-  // Throttle — if we issued a code less than THROTTLE_SECONDS ago and
+  // Throttle - if we issued a code less than THROTTLE_SECONDS ago and
   // it's still valid, return early with a "resend in N seconds" hint.
   // This guards against accidental double-clicks AND against a kiosk
   // attacker spamming the platform's WhatsApp/SMS budget.
@@ -94,10 +94,10 @@ export const POST = handler(async (req: Request) => {
   const { code, expiresAt } = await issueOtp(e164);
   const body =
     `${tenant.name} · קוד אימות: ${code}\n` +
-    `הקוד תקף ל-10 דקות. אם לא ביקשת — אפשר להתעלם.`;
+    `הקוד תקף ל-10 דקות. אם לא ביקשת - אפשר להתעלם.`;
 
   // sendWhatsApp + sendSms validate the recipient as local 05X via
-  // /^05\d{8}$/ — passing the E.164 form (+972…) trips
+  // /^05\d{8}$/ - passing the E.164 form (+972…) trips
   // invalid_recipient and silently fails BOTH channels, surfacing as a
   // 502 here. Keep `e164` as the OtpCode key (so verify() can find it),
   // but hand the providers the local format they actually accept.
@@ -115,7 +115,7 @@ export const POST = handler(async (req: Request) => {
       kind: "kiosk_otp",
       refKind: "phone",
       refId: e164,
-      // OTP delivery shouldn't burn the merchant's SMS budget — codes
+      // OTP delivery shouldn't burn the merchant's SMS budget - codes
       // are a platform-level UX feature, not a marketing message.
       skipCredit: true,
     });

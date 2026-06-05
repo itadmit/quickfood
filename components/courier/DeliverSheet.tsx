@@ -102,7 +102,7 @@ export function DeliverSheet({
                   <span className="tnum font-bold text-white">{total} ש&quot;ח</span>
                 </div>
                 <p className="text-[11px] text-emerald-200/80 pt-1">
-                  הטיפ נשאר אצלך — לא נכלל בסגירת הקופה מול בעל העסק.
+                  הטיפ נשאר אצלך - לא נכלל בסגירת הקופה מול בעל העסק.
                 </p>
               </div>
             )}

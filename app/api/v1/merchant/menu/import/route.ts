@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * CSV import — expects a CSV with header row:
+ * CSV import - expects a CSV with header row:
  *   name,description,category,base_price,prep_minutes,available,tags
  *
  * Tags can be semicolon-separated. Category is matched by name (case-insensitive);

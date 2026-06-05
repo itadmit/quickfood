@@ -1,4 +1,4 @@
--- Add free-text "about" on the tenant — populated by the Wolt importer
+-- Add free-text "about" on the tenant - populated by the Wolt importer
 -- from the venue's description blob, and editable later from
 -- Settings → Branding.
 ALTER TABLE "tenants" ADD COLUMN "about" TEXT;

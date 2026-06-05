@@ -46,7 +46,7 @@ interface OrderRow {
 
 // Group selected options by display key (name + half) so a topping
 // that appears in two modifier groups shows up as "עגבניה ×2" instead
-// of "עגבניה · עגבניה" — same helper as the order drawer.
+// of "עגבניה · עגבניה" - same helper as the order drawer.
 function renderItemOptions(opts: Array<{ name?: string; half?: string }>): string {
   const groups = new Map<string, { name: string; half?: string; count: number }>();
   for (const o of opts) {
@@ -79,7 +79,7 @@ const COLUMNS: Array<{
   {
     status: ["pending", "confirmed"],
     title: "חדשות",
-    // The column holds both pending (need merchant approval — usually
+    // The column holds both pending (need merchant approval - usually
     // cash orders or card orders whose Grow callback hasn't landed)
     // AND confirmed (Grow already approved the payment, just waiting
     // for the merchant to start cooking). Per-card actionLabel below
@@ -106,7 +106,7 @@ const COLUMNS: Array<{
     status: ["out_for_delivery"],
     title: "יצאו למשלוח",
     subtitle: "בדרך ללקוח",
-    next: "out_for_delivery", // delivered — handled separately
+    next: "out_for_delivery", // delivered - handled separately
     actionLabel: "סמן כנמסר",
   },
 ];
@@ -114,10 +114,10 @@ const COLUMNS: Array<{
 const SLA_MINUTES_BEFORE_LATE = 15;
 
 // Reverse map for the "חזרה שלב" undo button on each card. Only states
-// past the "new orders" column have a meaningful previous — going from
+// past the "new orders" column have a meaningful previous - going from
 // confirmed back to pending just un-accepts the order, which the merchant
 // can do via cancel + recreate; not worth a one-tap arrow that clutters
-// every new card. Past out_for_delivery stays locked too — courier
+// every new card. Past out_for_delivery stays locked too - courier
 // wallet/route is tied to it, use refund/cancel instead.
 const PREVIOUS_STATUS: Partial<Record<Status, Status>> = {
   preparing: "confirmed",
@@ -140,7 +140,7 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
   }, []);
 
   // Track orders the user just optimistically advanced. When the SSE
-  // fires "order.status_changed" we refresh — but the new list often
+  // fires "order.status_changed" we refresh - but the new list often
   // hasn't yet caught the PATCH we just sent (write-then-read on Neon
   // can lag a few hundred ms), so without this the card visibly jumps
   // back to the old column then forward again. expiresAt acts as a
@@ -150,7 +150,7 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
     useRef<Map<string, { target: Status | "delivered"; expiresAt: number }>>(new Map());
 
   // Every order id we've ever shown. The new-order chime keys off this:
-  // any id in a fresh snapshot that we've never seen rings the bell — so
+  // any id in a fresh snapshot that we've never seen rings the bell - so
   // the sound fires whether the order arrived over the live SSE event or
   // got picked up by a refresh() (reconnect, tab refocus, SSE gap). Seeded
   // from the server-rendered initial list so existing orders stay silent.
@@ -200,7 +200,7 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
       }));
       // Ring the chime for any order we've never seen before, regardless of
       // how it reached us. SSE order.created and a reconnect refresh() both
-      // funnel through here, so this is the single source of truth — the SSE
+      // funnel through here, so this is the single source of truth - the SSE
       // listener no longer dispatches the event itself (would double-ring).
       const freshUnseen = fresh.some((o) => !seenIdsRef.current.has(o.id));
       for (const o of fresh) seenIdsRef.current.add(o.id);
@@ -244,7 +244,7 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
     try {
       await refresh();
     } finally {
-      // Tiny floor so the spin animation is visible — otherwise a sub-100ms
+      // Tiny floor so the spin animation is visible - otherwise a sub-100ms
       // refresh looks like the button didn't do anything.
       setTimeout(() => setManualRefreshing(false), 350);
     }
@@ -253,7 +253,7 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
   // SSE subscription to merchant tenant channel. The native EventSource
   // auto-reconnect handles transient network blips, but a 5xx from the
   // server (Vercel function timeout, deploy mid-stream) closes the
-  // connection permanently — so we re-open it with backoff. The
+  // connection permanently - so we re-open it with backoff. The
   // visibilitychange listener also re-opens + immediately refreshes
   // when the tab returns from background (mobile Safari kills the
   // EventSource when the tab isn't focused).
@@ -271,7 +271,7 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
         backoffMs = 1000;
       });
       es.addEventListener("order.created", () => {
-        // refresh() detects the unseen id and rings the chime itself — see
+        // refresh() detects the unseen id and rings the chime itself - see
         // seenIdsRef. Dispatching here too would double-ring.
         void refresh();
       });
@@ -333,7 +333,7 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
         await refresh();
       }
     } catch {
-      pushToast("err", "אין חיבור לשרת — מנסה לסנכרן");
+      pushToast("err", "אין חיבור לשרת - מנסה לסנכרן");
       pendingAdvancesRef.current.delete(orderId);
       await refresh();
     }
@@ -360,7 +360,7 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
       }
       pushToast("ok", "ההזמנה הוסרה מהקאנבן");
     } catch {
-      pushToast("err", "אין חיבור לשרת — מנסה לסנכרן");
+      pushToast("err", "אין חיבור לשרת - מנסה לסנכרן");
       await refresh();
     }
   }
@@ -538,7 +538,7 @@ function Column({
               key={o.id}
               order={o}
               next={next}
-              // Pickup orders skip the "out for delivery" step — when
+              // Pickup orders skip the "out for delivery" step - when
               // advancing them from "ready", the action is "hand to
               // customer", not "hand to courier". And a `confirmed`
               // card lives in the "new" column but doesn't need
@@ -577,7 +577,7 @@ function Card({
   order: OrderRow;
   next: Status;
   actionLabel: string;
-  /** `null` until the client-side timer has ticked at least once — keeps SSR and first paint identical. */
+  /** `null` until the client-side timer has ticked at least once - keeps SSR and first paint identical. */
   now: number | null;
   onAdvance: (id: string, to: Status | "delivered") => void;
   onSelect: (id: string) => void;
@@ -734,7 +734,7 @@ function StatusChip({
   };
   // Once the customer actually paid (card via Grow callback, or
   // cash collected at delivery), "שולמה" is what the merchant cares
-  // about — clearer than the generic "אושרה". Pending payments
+  // about - clearer than the generic "אושרה". Pending payments
   // (cash before delivery, or unsettled card) keep the lifecycle
   // label so we don't accidentally claim money we don't have.
   const label = paymentStatus === "paid" ? "שולמה" : labels[status];

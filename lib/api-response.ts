@@ -1,6 +1,6 @@
 /**
  * Unified API error/success response helpers.
- * Per /Users/tadmitinteractive/Downloads/pizza/API.md §7 — { error: { code, message, field? } }.
+ * Per /Users/tadmitinteractive/Downloads/pizza/API.md §7 - { error: { code, message, field? } }.
  */
 
 export interface ApiErrorBody {
@@ -14,7 +14,7 @@ export interface ApiErrorBody {
 export function apiError(code: string, message: string, status = 400, field?: string): Response {
   // Defense in depth: callers occasionally forward `message` straight from
   // upstream providers (e.g. Grow's `{id, message}` validation wrappers).
-  // Coerce here so the body's `error.message` is always a string — otherwise
+  // Coerce here so the body's `error.message` is always a string - otherwise
   // clients that render `data.error.message` directly hit React #31.
   const safeMessage =
     typeof message === "string"

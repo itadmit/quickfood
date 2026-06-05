@@ -80,7 +80,7 @@ function buildHoursPayload(hours: WoltDayHours[]) {
 
 export function SignupForm() {
   const router = useRouter();
-  // Step 0 = optional "do you have Wolt?" pre-fill — initial view.
+  // Step 0 = optional "do you have Wolt?" pre-fill - initial view.
   // Steps 1-3 = the actual wizard (business details, branding, owner).
   const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
   const [busy, setBusy] = useState(false);
@@ -111,7 +111,7 @@ export function SignupForm() {
   const [slug, setSlug] = useState("");
   const [slugStatus, setSlugStatus] = useState<SlugStatus>("idle");
 
-  // Scroll back to the top whenever the wizard advances/retreats — otherwise
+  // Scroll back to the top whenever the wizard advances/retreats - otherwise
   // the user lands on the next step at whatever scroll position the previous
   // one ended on, which hides the heading + step indicator above.
   useEffect(() => {
@@ -178,7 +178,7 @@ export function SignupForm() {
     slugStatus === "available" &&
     branchAddress.length >= 3 &&
     branchPhone.length >= 7;
-  // Step 2 is branding only (theme picker) — always has a default
+  // Step 2 is branding only (theme picker) - always has a default
   // selection, so the merchant can always proceed.
   const canNext2 = true;
   const canSubmit =
@@ -265,7 +265,7 @@ export function SignupForm() {
       address: woltOverrides.address ?? woltPreview.address,
       phone: woltOverrides.phone ?? woltPreview.phone,
     };
-    // Prefer the Wolt URL slug — already kebab-case and meaningful.
+    // Prefer the Wolt URL slug - already kebab-case and meaningful.
     // Fall back to a transliteration of the name only if Wolt didn't
     // surface a slug.
     const targetSlug =
@@ -277,7 +277,7 @@ export function SignupForm() {
     if (woltApply.phone && eff.phone) setBranchPhone(eff.phone);
 
     // If everything is filled and the slug is free, skip Step 1
-    // (business details) entirely — Wolt already gave us name,
+    // (business details) entirely - Wolt already gave us name,
     // address, phone, and a clean slug. business_type stays at its
     // "general" default; the merchant can edit it later from
     // Settings → Business. We jump straight to Step 2 (branding).
@@ -565,7 +565,7 @@ function Step0Url({
             <span className="text-xs text-black/80 leading-relaxed">
               אני בעל/ת החנות. התוכן (שמות, תמונות, מחירים, תוספות) שייך לי
               ואני מאשר/ת ייבוא שלו ל-QuickFood. הייבוא הזה באחריותי הבלעדית
-              מול Wolt וצדדים שלישיים — ראו{" "}
+              מול Wolt וצדדים שלישיים - ראו{" "}
               <WoltTermsTrigger />.
             </span>
           </label>
@@ -668,7 +668,7 @@ function Step0Mapping({
 
   function renderTextValue(k: TextField, dirLtr = false) {
     const v = effectiveFor(k);
-    if (!v) return "—";
+    if (!v) return "-";
     if (k === "phone") {
       return <span dir="ltr" className="tnum">{v}</span>;
     }
@@ -690,7 +690,7 @@ function Step0Mapping({
       label: "שם העסק",
       available: !!preview.name,
       editableField: "name",
-      value: <span className="font-bold">{effectiveFor("name") || "—"}</span>,
+      value: <span className="font-bold">{effectiveFor("name") || "-"}</span>,
     },
     {
       key: "address",
@@ -728,7 +728,7 @@ function Step0Mapping({
           ))}
         </ul>
       ) : (
-        "—"
+        "-"
       ),
     },
     {
@@ -741,7 +741,7 @@ function Step0Mapping({
           <Image src={preview.logo_url} alt="" fill sizes="48px" className="object-contain" unoptimized />
         </div>
       ) : (
-        "—"
+        "-"
       ),
     },
     {
@@ -754,7 +754,7 @@ function Step0Mapping({
           <Image src={preview.cover_url} alt="" fill sizes="128px" className="object-cover" unoptimized />
         </div>
       ) : (
-        "—"
+        "-"
       ),
     },
   ];
@@ -768,7 +768,7 @@ function Step0Mapping({
           מצאנו את החנות שלכם
         </h3>
         <p className="text-sm text-black/65 leading-relaxed">
-          סמנו מה לקחת מוולט ל-QuickFood. כל סעיף שתבטלו — תוכלו להזין ידנית
+          סמנו מה לקחת מוולט ל-QuickFood. כל סעיף שתבטלו - תוכלו להזין ידנית
           בשלב הבא.
         </p>
       </div>
@@ -856,7 +856,7 @@ function Step0Mapping({
       </div>
 
       <p className="text-xs text-black/60 leading-relaxed text-center">
-        כל הפרטים האלה ניתנים לעריכה בכל רגע מההגדרות בלוח הבקרה — לוגו,
+        כל הפרטים האלה ניתנים לעריכה בכל רגע מההגדרות בלוח הבקרה - לוגו,
         קאבר, שעות, כתובת, מחירים, הכל. אפשר לסמן עכשיו ולתקן אחרי שהחנות
         עולה.
       </p>
@@ -1017,7 +1017,7 @@ function MenuStat({ label, value }: { label: string; value: number }) {
 
 // Friendly nudge surfaced in Step 0b when we spot Wolt-specific hacks
 // (zero-price cutlery item, zero-price notice items). These exist in
-// Wolt because Wolt has no native cutlery toggle or banner system —
+// Wolt because Wolt has no native cutlery toggle or banner system -
 // merchants stuff them into the menu. QuickFood has both as
 // first-class features, so this banner says "by the way, you'll be
 // able to drop those entirely" without being snarky about Wolt.
@@ -1040,7 +1040,7 @@ function WoltVsQuickFoodTip({
           <span className="bg-[#F8CB1E] px-1.5 py-0.5 rounded-md">
             “{detected.cutleryItem!.name}”
           </span>{" "}
-          (מסומן בכוכב למעלה) — סכו״ם חד״פ
+          (מסומן בכוכב למעלה) - סכו״ם חד״פ
         </>
       ),
       tip: "בקוויק פוד זה מובנה בצ׳ק־אאוט כקליק אחד של הלקוח (חינם או בתוספת תשלום, עם רף מינימום). אין צורך לסחוב פריט כזה בתפריט.",
@@ -1049,7 +1049,7 @@ function WoltVsQuickFoodTip({
   if (noticeCount > 0) {
     bullets.push({
       what: `${noticeCount} פריטים שנראים כמו הודעות ללקוח${noticeCount > 1 ? "" : ""} (מסומנים בכוכב)`,
-      tip: "בקוויק פוד יש מערכת באנרים ופופאפים ייעודיים — מודיעים ללקוח בלי לזהם את התפריט.",
+      tip: "בקוויק פוד יש מערכת באנרים ופופאפים ייעודיים - מודיעים ללקוח בלי לזהם את התפריט.",
     });
   }
 
@@ -1065,7 +1065,7 @@ function WoltVsQuickFoodTip({
               אגב, סתם שתדעו
             </div>
             <p className="text-sm font-bold text-black leading-snug">
-              חלק מהפריטים שלכם בוולט הם פתרונות עוקפים — בקוויק פוד יש
+              חלק מהפריטים שלכם בוולט הם פתרונות עוקפים - בקוויק פוד יש
               להם כלי מובנה.
             </p>
           </div>
@@ -1125,7 +1125,7 @@ function Step1({
 
   return (
     <div className="space-y-5">
-      {/* One field per row — the previous 2-column grid squeezed the
+      {/* One field per row - the previous 2-column grid squeezed the
           slug widget so the validation badge clipped on narrow viewports. */}
       <Field label="שם העסק" required>
         <input
@@ -1284,7 +1284,7 @@ function Step3({
   return (
     <div className="space-y-4">
       <p className="text-sm text-qf-ink2">
-        חשבון הבעלים הראשי — תוכל להוסיף מנהלים, צוות מטבח ושליחים מאוחר יותר.
+        חשבון הבעלים הראשי - תוכל להוסיף מנהלים, צוות מטבח ושליחים מאוחר יותר.
       </p>
       <Field label="שם מלא" required>
         <input
@@ -1381,7 +1381,7 @@ function StepIndicator({ step }: { step: 1 | 2 | 3 }) {
         aria-hidden
         className="absolute top-5 inset-x-[16.66%] h-0.5 bg-black/15"
       />
-      {/* Progress line — width based on current step */}
+      {/* Progress line - width based on current step */}
       <div
         aria-hidden
         className="absolute top-5 h-0.5 bg-black transition-all"
@@ -1474,7 +1474,7 @@ function SlugStatusLine({ status, slug }: { status: SlugStatus; slug: string }) 
     return (
       <div className="mt-1 space-y-0.5">
         <p className="text-xs text-black/70 leading-snug">
-          זו הכתובת שהלקוחות יקלידו כדי להגיע לאתר שלכם — מומלץ לבחור את שם העסק באנגלית.
+          זו הכתובת שהלקוחות יקלידו כדי להגיע לאתר שלכם - מומלץ לבחור את שם העסק באנגלית.
         </p>
         <p className="text-[11px] text-qf-mute">
           אותיות קטנות, ספרות ומקפים · לפחות 2 תווים
@@ -1500,7 +1500,7 @@ function SlugStatusLine({ status, slug }: { status: SlugStatus; slug: string }) 
       icon: <X size={12} strokeWidth={2.6} />,
     },
     invalid: {
-      text: "אנגלית בלבד — אותיות קטנות, ספרות ומקפים",
+      text: "אנגלית בלבד - אותיות קטנות, ספרות ומקפים",
       color: "text-qf-tomato",
       icon: <X size={12} strokeWidth={2.6} />,
     },

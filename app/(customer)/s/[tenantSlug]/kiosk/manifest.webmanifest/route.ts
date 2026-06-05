@@ -18,7 +18,7 @@ const THEME_COLOR_BY_ID: Record<string, string> = {
  * Per-tenant PWA manifest for the kiosk. When the merchant adds the
  * kiosk URL to their tablet's home screen, the OS reads this manifest
  * and uses the venue's logo + name + theme color for the installed app
- * shortcut — looks like a dedicated kiosk app, not "QuickFood".
+ * shortcut - looks like a dedicated kiosk app, not "QuickFood".
  *
  * start_url + scope are both locked to /s/<slug>/kiosk so the standalone
  * window can never wander into the rest of the storefront.
@@ -40,7 +40,7 @@ export async function GET(
   const manifest = {
     name: `${tenant.name} · קיוסק`,
     short_name: tenant.name,
-    description: `קיוסק להזמנה עצמית — ${tenant.name}`,
+    description: `קיוסק להזמנה עצמית - ${tenant.name}`,
     start_url: kioskPath,
     scope: kioskPath,
     display: "standalone",

@@ -66,7 +66,7 @@ export function BusinessForm({ branchId, initial }: { branchId: string; initial:
           המסך הזה קובע איך החנות עובדת
         </div>
         <p className="text-xs text-qf-ink2 leading-relaxed">
-          כאן מגדירים את <strong>סכום המינימום להזמנה</strong>, <strong>דמי המשלוח</strong>, <strong>דמי השירות</strong> ופרטי העסק שמופיעים על החשבוניות. שווה לעבור על כל השדות לפני שמתחילים לקבל הזמנות — אלה הערכים שהלקוח רואה בעגלה.
+          כאן מגדירים את <strong>סכום המינימום להזמנה</strong>, <strong>דמי המשלוח</strong>, <strong>דמי השירות</strong> ופרטי העסק שמופיעים על החשבוניות. שווה לעבור על כל השדות לפני שמתחילים לקבל הזמנות - אלה הערכים שהלקוח רואה בעגלה.
         </p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -145,7 +145,7 @@ export function BusinessForm({ branchId, initial }: { branchId: string; initial:
             <span className="px-3 text-qf-mute text-sm">דק&apos;</span>
           </div>
           <p className="text-[11px] text-qf-mute mt-1 leading-snug">
-            כשהסטטוס במצב &quot;עומס&quot; — זמן ההגעה שמוצג ללקוח גדל בכמות הזו ומופיע מודל אזהרה.
+            כשהסטטוס במצב &quot;עומס&quot; - זמן ההגעה שמוצג ללקוח גדל בכמות הזו ומופיע מודל אזהרה.
           </p>
         </Field>
       </div>

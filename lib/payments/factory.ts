@@ -5,7 +5,7 @@
  * provider class, and configures it for use.
  *
  * In the multi-provider model, callers must specify which provider they want
- * (no more "default" on the tenant). For cash there's no provider — order
+ * (no more "default" on the tenant). For cash there's no provider - order
  * code handles it inline.
  */
 
@@ -24,7 +24,7 @@ type ProviderCtor = new () => IPaymentProvider;
 
 const REGISTRY: Partial<Record<ProviderType, ProviderCtor>> = {
   grow: GrowProvider,
-  // cash has no provider implementation — handled inline by order code
+  // cash has no provider implementation - handled inline by order code
 };
 
 export function createProviderInstance(type: ProviderType): IPaymentProvider {

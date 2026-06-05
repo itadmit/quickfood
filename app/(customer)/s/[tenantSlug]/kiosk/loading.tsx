@@ -1,7 +1,7 @@
 /**
  * Kiosk-specific loading fallback. The parent storefront loading.tsx
- * renders a multi-section skeleton tuned for the mobile/web menu —
- * categories rail, popular items, full menu list — which flashes on
+ * renders a multi-section skeleton tuned for the mobile/web menu -
+ * categories rail, popular items, full menu list - which flashes on
  * top of the kiosk for the split second before the page boundary
  * resolves. That looks completely wrong on a 21" landscape kiosk.
  *

@@ -21,7 +21,7 @@ export const POST = handler(
 
     // Visibility matches GET /customer/orders/[id]: if a logged-in customer
     // is calling, the order must be theirs. Guest orders (no customerId)
-    // are reachable by anyone holding the UUID — same as the tracking page.
+    // are reachable by anyone holding the UUID - same as the tracking page.
     const [orderOwner, session] = await Promise.all([
       prisma.order.findUnique({
         where: { id: orderId },

@@ -103,7 +103,7 @@ async function convertOne(url: string | null | undefined): Promise<string | null
     return url;
   }
 
-  // Already converted this exact URL earlier in the run — reuse the new
+  // Already converted this exact URL earlier in the run - reuse the new
   // URL so we don't try to re-download a key we just deleted.
   const cached = converted.get(url);
   if (cached) {
@@ -113,7 +113,7 @@ async function convertOne(url: string | null | undefined): Promise<string | null
 
   const oldKey = keyFromUrl(url);
   if (!oldKey) {
-    console.warn(`  skip — non-R2 URL: ${url}`);
+    console.warn(`  skip - non-R2 URL: ${url}`);
     stats.skipped += 1;
     return url;
   }
@@ -167,14 +167,14 @@ async function convertOne(url: string | null | undefined): Promise<string | null
     converted.set(url, newUrl);
     return newUrl;
   } catch (e) {
-    console.error(`  ✗ ${oldKey} — ${e instanceof Error ? e.message : String(e)}`);
+    console.error(`  ✗ ${oldKey} - ${e instanceof Error ? e.message : String(e)}`);
     stats.failed += 1;
     return url; // leave the row untouched on failure
   }
 }
 
 async function migrateTenants() {
-  console.log("\n— Tenant (logoUrl + coverImage)");
+  console.log("\n- Tenant (logoUrl + coverImage)");
   const rows = await prisma.tenant.findMany({
     select: { id: true, logoUrl: true, coverImage: true },
   });
@@ -193,7 +193,7 @@ async function migrateTenants() {
 }
 
 async function migrateMenuItems() {
-  console.log("\n— MenuItem (imageUrl + images[])");
+  console.log("\n- MenuItem (imageUrl + images[])");
   const rows = await prisma.menuItem.findMany({
     select: { id: true, imageUrl: true, images: true },
   });
@@ -218,7 +218,7 @@ async function migrateMenuItems() {
 }
 
 async function migrateItemOptions() {
-  console.log("\n— ItemOption (imageUrl)");
+  console.log("\n- ItemOption (imageUrl)");
   const rows = await prisma.itemOption.findMany({
     select: { id: true, imageUrl: true },
   });
@@ -231,7 +231,7 @@ async function migrateItemOptions() {
 }
 
 async function migrateModifierSetOptions() {
-  console.log("\n— ModifierSetOption (imageUrl)");
+  console.log("\n- ModifierSetOption (imageUrl)");
   const rows = await prisma.modifierSetOption.findMany({
     select: { id: true, imageUrl: true },
   });
@@ -244,7 +244,7 @@ async function migrateModifierSetOptions() {
 }
 
 async function migrateCampaigns() {
-  console.log("\n— Campaign (imageUrl)");
+  console.log("\n- Campaign (imageUrl)");
   const rows = await prisma.campaign.findMany({
     select: { id: true, imageUrl: true },
   });
@@ -259,8 +259,8 @@ async function migrateCampaigns() {
 async function main() {
   console.log(
     APPLY
-      ? "Converting images → WebP (APPLY mode — will write to R2 + DB and delete originals).\n"
-      : "Dry run — no R2 or DB writes. Re-run with --apply to actually convert.\n",
+      ? "Converting images → WebP (APPLY mode - will write to R2 + DB and delete originals).\n"
+      : "Dry run - no R2 or DB writes. Re-run with --apply to actually convert.\n",
   );
 
   await migrateTenants();
@@ -271,7 +271,7 @@ async function main() {
 
   const savedKB = (stats.bytesIn - stats.bytesOut) / 1024;
   const ratio = stats.bytesIn > 0 ? (stats.bytesOut / stats.bytesIn) * 100 : 0;
-  console.log("\n— Summary");
+  console.log("\n- Summary");
   console.log(`  Scanned:   ${stats.scanned}`);
   console.log(`  Converted: ${stats.converted}`);
   console.log(`  Skipped:   ${stats.skipped}`);

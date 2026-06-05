@@ -42,12 +42,12 @@ function translateError(payload: { code?: string; message?: string } | undefined
 interface Props {
   amount: number;
   /** True for manual-amount sales (the "מספרים" button). False for ticket
-   *  sales — the regular cart is dumped to the server as line items. */
+   *  sales - the regular cart is dumped to the server as line items. */
   isManual: boolean;
   /** When set, this sheet settles an existing order (kiosk queue case).
    *  When NULL, it creates a fresh POS order before charging. */
   existingOrderId?: string;
-  /** Pre-selected payment method — skips the in-sheet method picker and
+  /** Pre-selected payment method - skips the in-sheet method picker and
    *  goes straight to the cash keypad or Grow wallet. POS cart buttons
    *  set this; queue flows leave it undefined so the cashier picks. */
   initialMethod?: Method;
@@ -95,7 +95,7 @@ export function PosPaymentSheet({
   // When the cashier clicked a specific method on the cart (cash/card),
   // skip the in-sheet picker and go straight to that flow. Queue/manual
   // sales without a pre-pick fall through to the picker render below.
-  // Refs in deps array intentionally omit chooseCash/chooseCard — they're
+  // Refs in deps array intentionally omit chooseCash/chooseCard - they're
   // defined below and would cause hoisting noise; running once on mount
   // is what we actually want.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -107,7 +107,7 @@ export function PosPaymentSheet({
 
   // The Grow wallet is mounted at the shell level. We listen for the
   // shell-emitted "wallet closed" event so the sheet can clear itself
-  // once the wallet UI goes away — payment status update comes from the
+  // once the wallet UI goes away - payment status update comes from the
   // Grow S2S callback, not from the front-end close event.
   useEffect(() => {
     function onWalletClose() {
@@ -194,7 +194,7 @@ export function PosPaymentSheet({
     setError(null);
     // Walk-in name is required for card payment (Grow PROD requirement).
     // Queue orders already have a customer snapshot from the kiosk, and
-    // attached customers obviously already have one — both bypass the
+    // attached customers obviously already have one - both bypass the
     // prompt. Otherwise we collect once and remember for retries.
     if (!existingOrderId && !customer && !walkIn) {
       setWalkInOpen(true);
@@ -233,7 +233,7 @@ export function PosPaymentSheet({
         return;
       }
       setCardOpen(true);
-      // Render Grow wallet — same component the customer storefront uses.
+      // Render Grow wallet - same component the customer storefront uses.
       renderGrowWallet(data.sdk_auth_code);
       // Card success is detected via the customer-orders polling loop;
       // simplest in v1: after the wallet closes, the cashier confirms.
@@ -265,7 +265,7 @@ export function PosPaymentSheet({
       }
       // Split payment: cashier took partial cash, the remainder needs to
       // be charged on a card via Grow. Flip the order's intended method
-      // to card and chain into the card flow — pay/initiate sees
+      // to card and chain into the card flow - pay/initiate sees
       // cashCollected > 0 and asks Grow for the remainder only.
       if (!data.fully_paid) {
         setMethod(null);
@@ -289,7 +289,7 @@ export function PosPaymentSheet({
         title: "התשלום התקבל",
         sub: change > 0 ? `עודף ₪${change.toLocaleString("he-IL")}` : "ללא עודף",
       });
-      // Auto-clear after 2.4s — long enough to read the עודף amount aloud
+      // Auto-clear after 2.4s - long enough to read the עודף amount aloud
       // to the customer + hand the change over, short enough that the
       // next ring doesn't wait.
       window.setTimeout(() => {
@@ -301,7 +301,7 @@ export function PosPaymentSheet({
     }
   }
 
-  // Success overlay — green check, big total, optional "עודף ₪X". Always
+  // Success overlay - green check, big total, optional "עודף ₪X". Always
   // renders OVER everything (the cash keypad is dismissed before this
   // mounts so they never overlap).
   if (success) {
@@ -321,10 +321,10 @@ export function PosPaymentSheet({
     );
   }
 
-  // Walk-in customer prompt — only when card is chosen and there's
+  // Walk-in customer prompt - only when card is chosen and there's
   // nobody attached yet. Cash skips this entirely. When the cashier
   // came in via the cart's direct "אשראי" button (initialMethod set),
-  // cancelling the walk-in step closes the whole sheet — we never want
+  // cancelling the walk-in step closes the whole sheet - we never want
   // to dump them on the legacy "cash or card" picker behind it.
   if (walkInOpen) {
     return (
@@ -345,7 +345,7 @@ export function PosPaymentSheet({
 
   // While the Grow wallet is on screen, the SDK renders its own
   // overlay. We hide the sheet completely so there's no z-index race
-  // — only a small floating banner stays to confirm we're waiting.
+  // - only a small floating banner stays to confirm we're waiting.
   if (cardOpen) {
     return (
       <div className="fixed bottom-6 inset-x-0 z-[40] flex justify-center pointer-events-none">
@@ -368,7 +368,7 @@ export function PosPaymentSheet({
           setMethod(null);
           // Same reasoning as the walk-in cancel above: when initialMethod
           // is set, the cashier explicitly picked cash from the cart, so
-          // cancelling the keypad should drop them back at the cart — not
+          // cancelling the keypad should drop them back at the cart - not
           // at the legacy method picker that lives below.
           if (initialMethod) onClose();
         }}

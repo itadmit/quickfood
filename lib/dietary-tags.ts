@@ -1,7 +1,7 @@
 /**
  * Canonical list of menu-item tags / dietary badges.
  *
- * Tags are stored as Hebrew strings on `MenuItem.tags` (string[]) — that's
+ * Tags are stored as Hebrew strings on `MenuItem.tags` (string[]) - that's
  * the source of truth. This module just adds metadata on top so the
  * customer menu can show colored chips and offer a "filter by tag" row.
  *
@@ -25,14 +25,14 @@ export interface DietaryTag {
 }
 
 export const TAG_DEFS: DietaryTag[] = [
-  // Promotion/discovery badges — shown on cards but not in the filter row,
+  // Promotion/discovery badges - shown on cards but not in the filter row,
   // since "show me popular items only" isn't a useful filter.
   { label: "פופולרי",   filterable: false, tone: "yellow"  },
   { label: "חדש",       filterable: false, tone: "green"   },
   { label: "מבצע",      filterable: false, tone: "tomato"  },
   { label: "המלצת השף", filterable: false, tone: "yellow"  },
 
-  // Dietary filters — these ARE useful as filters.
+  // Dietary filters - these ARE useful as filters.
   { label: "צמחוני",      filterable: true, tone: "green"  },
   { label: "טבעוני",      filterable: true, tone: "green"  },
   { label: "ללא גלוטן",   filterable: true, tone: "ink"    },
@@ -59,7 +59,7 @@ export const FILTERABLE_TAG_LABELS = TAG_DEFS.filter((t) => t.filterable).map(
   (t) => t.label,
 );
 
-/** Tailwind class fragments for each tone — used by both the merchant
+/** Tailwind class fragments for each tone - used by both the merchant
     editor (selected state) and the customer card badge. */
 export const TONE_CLASSES: Record<
   TagTone,

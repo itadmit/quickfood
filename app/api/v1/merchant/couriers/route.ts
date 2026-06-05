@@ -87,7 +87,7 @@ export const POST = handler(async (req: Request) => {
     },
   });
 
-  // Best-effort welcome email — magic-link (single-click sign-in) +
+  // Best-effort welcome email - magic-link (single-click sign-in) +
   // long-term credentials so the courier always has the PIN on file.
   // Failures here never block courier creation.
   if (courier.email) {

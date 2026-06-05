@@ -32,7 +32,7 @@ export function CourierLocationTracker({ enabled }: { enabled: boolean }) {
           }
         },
         () => {
-          /* silent — courier may have denied permission */
+          /* silent - courier may have denied permission */
         },
         { enableHighAccuracy: true, maximumAge: 15_000, timeout: 12_000 },
       );

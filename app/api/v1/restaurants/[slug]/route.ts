@@ -11,7 +11,7 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ slug: st
   if (!tenant) return apiError("not_found", "מסעדה לא נמצאה", 404);
   const branch = tenant.branches[0] ?? null;
 
-  // Union of cities across the tenant's active delivery zones — the
+  // Union of cities across the tenant's active delivery zones - the
   // storefront uses this for the "select your city" picker. Sorted for
   // a stable order; empty if the merchant hasn't filled cities anywhere
   // (in which case the picker falls back to a free-text "all of

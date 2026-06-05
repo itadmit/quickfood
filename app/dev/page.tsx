@@ -16,7 +16,7 @@ export default function DevLinksPage() {
         <div className="grid grid-cols-1 gap-3">
           <LinkCard
             href="/pizzeria-verde"
-            title="חנות הלקוח — פיצרייה ורדה"
+            title="חנות הלקוח - פיצרייה ורדה"
             sub="storefront לדמו (לאחר seed)"
           />
           <LinkCard
@@ -33,7 +33,7 @@ export default function DevLinksPage() {
           <LinkCard
             href="/api/v1/openapi"
             title="OpenAPI spec"
-            sub="/api/v1/openapi.json — חוזה ה-API למובייל / אינטגרציות"
+            sub="/api/v1/openapi.json - חוזה ה-API למובייל / אינטגרציות"
           />
           <LinkCard href="/" title="חזרה לדף הבית" sub="לנדינג שיווקי" />
         </div>

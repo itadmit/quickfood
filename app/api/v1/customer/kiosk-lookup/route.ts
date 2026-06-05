@@ -5,11 +5,11 @@
  *   { tenant_slug: string, phone: string }
  *
  * Only returns identifying info when the phone matches an existing
- * Customer row that has ALREADY ordered from THIS tenant — otherwise we
+ * Customer row that has ALREADY ordered from THIS tenant - otherwise we
  * would leak a name to any kiosk that punched in a stranger's number.
  * The tenant must also have kioskEnabled=true.
  *
- * No PII is returned for "no match" — just `{ found: false }`. Even on a
+ * No PII is returned for "no match" - just `{ found: false }`. Even on a
  * match we return only first/last name; the email stays server-side and
  * is consumed by the invoice dispatcher.
  */

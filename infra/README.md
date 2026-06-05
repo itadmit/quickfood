@@ -3,7 +3,7 @@
 External-service configuration that has to live somewhere outside the app
 code. Apply once per environment.
 
-## Cloudflare R2 — CORS
+## Cloudflare R2 - CORS
 
 The image upload flow PUTs files directly from the browser to a presigned R2
 URL (see [`app/api/v1/upload/init/route.ts`](../app/api/v1/upload/init/route.ts)
@@ -49,7 +49,7 @@ the response headers.
 
 Add a new origin to `r2-cors.json` whenever:
 - A new production domain is added (e.g., `quickfood.app`).
-- A merchant's custom domain starts uploading directly (rare — most merchants
+- A merchant's custom domain starts uploading directly (rare - most merchants
   upload through the same dashboard URL).
 - A different preview / staging environment needs to upload (covered today
   by the `https://*.vercel.app` wildcard).

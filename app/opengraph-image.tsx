@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { readFileSync } from "fs";
 import { join } from "path";
 
-export const alt = "QuickFood — חנות אונליין למסעדה שלך";
+export const alt = "QuickFood - חנות אונליין למסעדה שלך";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -57,7 +57,7 @@ export default function OpengraphImage() {
           QuickFood
         </div>
 
-        {/* Hebrew headline. Satori has no bidi reordering — Hebrew runs
+        {/* Hebrew headline. Satori has no bidi reordering - Hebrew runs
             get reversed up-front and the column is right-anchored so the
             text looks native-RTL in the rendered PNG. */}
         <div

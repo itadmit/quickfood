@@ -79,7 +79,7 @@ export function ItemDetail({
   item: ItemData;
   businessType?: BusinessType;
   inModal?: boolean;
-  /** Rendered inside the kiosk overlay — drops the mobile-narrow
+  /** Rendered inside the kiosk overlay - drops the mobile-narrow
    *  max-w-md cap on the footer CTA and bumps touch targets so the
    *  bar actually feels tappable on a 10–13" tablet in landscape. */
   kioskMode?: boolean;
@@ -89,7 +89,7 @@ export function ItemDetail({
   onClose?: () => void;
   editLine?: CartLine;
   /** Provenance tag attached to the cart line when this detail screen
-   *  results in a new add. Defaults to "menu" — override from CartUpsell,
+   *  results in a new add. Defaults to "menu" - override from CartUpsell,
    *  AI flows, reorder rails, etc. */
   addSource?: CartLineSource;
 }) {
@@ -106,7 +106,7 @@ export function ItemDetail({
     const initial: Record<string, Set<string>> = {};
     if (editLine) {
       // Pre-populate from the existing cart line. Half-and-half picks
-      // live in the `half` field, so they go in halfPicks below — here
+      // live in the `half` field, so they go in halfPicks below - here
       // we only seed flat single/multi selections.
       for (const g of item.optionGroups) {
         if (g.allowHalf) continue;
@@ -152,7 +152,7 @@ export function ItemDetail({
 
   // Favorite state. Asked once on mount via the existing
   // /api/v1/customer/favorites GET (filtered to this tenant). Guest
-  // sessions return 401 and we silently leave the heart unfilled — the
+  // sessions return 401 and we silently leave the heart unfilled - the
   // click handler shows the login hint then.
   const [favorited, setFavorited] = useState(false);
   const [favoriteFlash, setFavoriteFlash] = useState<"saved" | "auth" | null>(null);
@@ -291,7 +291,7 @@ export function ItemDetail({
 
   const missingGroup = useMemo(() => {
     for (const g of item.optionGroups) {
-      // A group marked חובה must always require at least one pick — even
+      // A group marked חובה must always require at least one pick - even
       // if the catalog's minSelect leaked through as 0 (a known artefact
       // of the Wolt importer that doesn't always seed the floor).
       const floor = g.required ? Math.max(1, g.minSelect) : g.minSelect;
@@ -443,7 +443,7 @@ export function ItemDetail({
           "lg:max-w-4xl lg:mx-auto lg:mt-8 lg:bg-white lg:rounded-3xl lg:shadow-xl lg:overflow-hidden",
       )}
     >
-      {/* Sticky top bar — mobile only on the full page. Inside the
+      {/* Sticky top bar - mobile only on the full page. Inside the
           modal the close button (top-right of the modal chrome)
           handles "go back". */}
       {!inModal && (
@@ -809,7 +809,7 @@ export function ItemDetail({
               // `atMax` only blocks new picks for MULTI groups. For
               // single-select (radio) the new tap always replaces the
               // current selection, so blocking the row would leave the
-              // customer stuck on their first choice with no way back —
+              // customer stuck on their first choice with no way back -
               // exactly the "selected one, can't switch" bug.
               const blocked = g.type === "multi" && !checked && atMax;
               return (
@@ -901,7 +901,7 @@ export function ItemDetail({
         )}
       </Section>
 
-      {/* Footer CTA — Wolt-style chunky pill with quantity stepper on one side
+      {/* Footer CTA - Wolt-style chunky pill with quantity stepper on one side
           and bold add-to-cart CTA on the other. Sticks to viewport on mobile,
           sits naturally at the bottom of the card on desktop. In kioskMode
           we drop the max-w-md cap (the kiosk tablet was getting a cramped

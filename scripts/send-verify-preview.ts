@@ -5,12 +5,12 @@
  *   $ npx tsx --env-file=.env.local scripts/send-verify-preview.ts <recipient@example.com>
  *
  * Sends 6 emails (subjects prefixed with [PREVIEW N/6] for easy ordering):
- *   1. welcome             — after merchant signup
- *   2. verify              — email verification
- *   3. password reset      — forgot password flow
- *   4. test                — system test (Resend health check)
- *   5. review reminder     — sent to customer after delivered order (plain text)
- *   6. lead notification   — sent to admin on landing-page lead (custom HTML)
+ *   1. welcome             - after merchant signup
+ *   2. verify              - email verification
+ *   3. password reset      - forgot password flow
+ *   4. test                - system test (Resend health check)
+ *   5. review reminder     - sent to customer after delivered order (plain text)
+ *   6. lead notification   - sent to admin on landing-page lead (custom HTML)
  */
 import { sendEmail } from "../lib/email/send";
 import {
@@ -90,14 +90,14 @@ async function main() {
     const r = testEmail({ recipient: to });
     sends.push({
       label: "test",
-      subject: "[PREVIEW 4/6] QuickFood — בדיקת מייל",
+      subject: "[PREVIEW 4/6] QuickFood - בדיקת מייל",
       body: r.text,
       html: r.html,
       kind: "preview_test",
     });
   }
 
-  // 5. review reminder — same branded template as the rest
+  // 5. review reminder - same branded template as the rest
   {
     const r = reviewReminderEmail({
       hello: `שלום ${ownerName}`,
@@ -113,7 +113,7 @@ async function main() {
     });
   }
 
-  // 6. lead notification — same branded template, sent to admin inbox
+  // 6. lead notification - same branded template, sent to admin inbox
   {
     const r = leadEmail({
       name: "ישראל ישראלי",

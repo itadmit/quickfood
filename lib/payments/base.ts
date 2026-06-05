@@ -41,7 +41,7 @@ export abstract class BasePaymentProvider implements IPaymentProvider {
 
   /**
    * Normalize an amount (in shekels) to at-most 2 decimals. Returns a *number*,
-   * not a string — Grow's server-side validation rejects price/sum values
+   * not a string - Grow's server-side validation rejects price/sum values
    * formatted as "28.00" with the misleading "סכום הכללי…אינו זהה" error,
    * even when the arithmetic reconciles. Sending the bare number (which
    * URLSearchParams stringifies as "28") matches the working QuickShop10

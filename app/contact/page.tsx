@@ -20,7 +20,7 @@ export default function ContactPage() {
         <LeadForm
           source="contact"
           heading="השאר פרטים, נחזור אליך"
-          subheading="הדרך המהירה ביותר לקבל תשובה — תוך יום עבודה. בלי בוטים, בלי שיחת מכירה."
+          subheading="הדרך המהירה ביותר לקבל תשובה - תוך יום עבודה. בלי בוטים, בלי שיחת מכירה."
           submitLabel="שליחה"
         />
       </section>

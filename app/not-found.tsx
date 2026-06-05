@@ -12,13 +12,13 @@ const rubik = Rubik({
 });
 
 export const metadata: Metadata = {
-  title: "404 — הדף לא נמצא",
+  title: "404 - הדף לא נמצא",
   description:
     "הדף שחיפשת לא קיים, אבל החנות שלך עוד יכולה לקום ב-5 דקות. חזור לדף הבית או דבר איתנו.",
   robots: { index: false, follow: false },
 };
 
-// Never let Vercel's CDN cache a 404 response — a single 404 on a custom
+// Never let Vercel's CDN cache a 404 response - a single 404 on a custom
 // domain during the brief window after the merchant points their DNS but
 // before the proxy starts routing them would otherwise stick at the edge
 // for the better part of an hour, making the storefront look broken.
@@ -29,7 +29,7 @@ export default function NotFound() {
   return (
     <div className={`${styles.root} ${rubik.variable}`}>
       <nav className={styles.nav} aria-label="ראשי">
-        <Link href="/" className={styles.brand} aria-label="QuickFood — דף הבית">
+        <Link href="/" className={styles.brand} aria-label="QuickFood - דף הבית">
           <img
             src="/quickfood-mark-white.png"
             alt="QuickFood"
@@ -68,7 +68,7 @@ export default function NotFound() {
           </h1>
 
           <p className={styles.lede}>
-            הקישור שניסית לפתוח לא קיים אצלנו — אולי הפריט הוסר, הכתובת השתנתה,
+            הקישור שניסית לפתוח לא קיים אצלנו - אולי הפריט הוסר, הכתובת השתנתה,
             או שמישהו ערבל את האותיות. החנות שלך עדיין שם, ואנחנו ב-5 שניות
             ממך.
           </p>
@@ -112,7 +112,7 @@ export default function NotFound() {
   );
 }
 
-/* The pizza-pie "0" — a circle with a wedge missing on the upper-right.
+/* The pizza-pie "0" - a circle with a wedge missing on the upper-right.
    Two simple paths so it scales crisply at every size, plus a few
    pepperoni dots so it actually reads as a pizza and not a donut. */
 function PizzaZero() {
@@ -122,12 +122,12 @@ function PizzaZero() {
       role="img"
       aria-hidden
     >
-      {/* Crust outline — a full disc with a pie-wedge subtracted via path
+      {/* Crust outline - a full disc with a pie-wedge subtracted via path
           composition. The wedge spans from 12 o'clock to ~4 o'clock. */}
       <defs>
         <clipPath id="pieMask">
           {/* Pie with wedge cut out. Sweep flag chosen so the cut faces
-              outward — gives the "missing slice" look rather than a
+              outward - gives the "missing slice" look rather than a
               Pac-Man mouth. */}
           <path d="
             M 100 100
@@ -138,10 +138,10 @@ function PizzaZero() {
         </clipPath>
       </defs>
 
-      {/* Cheese layer — soft yellow, sits under the crust. */}
+      {/* Cheese layer - soft yellow, sits under the crust. */}
       <g clipPath="url(#pieMask)">
         <circle cx="100" cy="100" r="86" fill="#FFE99A" />
-        {/* Pepperoni — 5 tomato discs scattered on the cheese */}
+        {/* Pepperoni - 5 tomato discs scattered on the cheese */}
         <circle cx="70" cy="70" r="11" fill="#E04A2B" />
         <circle cx="125" cy="80" r="9" fill="#E04A2B" />
         <circle cx="65" cy="125" r="10" fill="#E04A2B" />
@@ -154,7 +154,7 @@ function PizzaZero() {
         <circle cx="85" cy="130" r="2.5" fill="#2A6B3F" />
       </g>
 
-      {/* Crust ring — thick black stroke. Two arcs: the main arc, then
+      {/* Crust ring - thick black stroke. Two arcs: the main arc, then
           the two straight cut edges of the missing slice. */}
       <path
         d="M 100 8
@@ -164,7 +164,7 @@ function PizzaZero() {
         strokeWidth="14"
         strokeLinecap="round"
       />
-      {/* The two straight edges of the missing wedge — short black lines
+      {/* The two straight edges of the missing wedge - short black lines
           that meet at the center, forming the cut. */}
       <path
         d="M 100 8 L 100 100 L 53.5 180.8"

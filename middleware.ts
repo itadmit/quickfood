@@ -1,26 +1,26 @@
 /**
- * Host-based tenant routing — the "Shopify-style" custom-domain entry point.
+ * Host-based tenant routing - the "Shopify-style" custom-domain entry point.
  *
  * When a request arrives on a host that is NOT the platform host
  * (quickfood.co.il / *.vercel.app / localhost), look up the tenant whose
  * `customDomain` matches the request host and rewrite the URL transparently
  * to `/s/{tenantSlug}{originalPath}`. From the storefront's perspective the
- * request looks identical to a slug-based visit — no other code needs to
+ * request looks identical to a slug-based visit - no other code needs to
  * change.
  *
  * Important: this routes on ANY tenant that has a `customDomain` set,
  * regardless of `customDomainStatus`. The "active" flag is administrative
- * — it tells the merchant we've confirmed end-to-end via Vercel. But the
+ * - it tells the merchant we've confirmed end-to-end via Vercel. But the
  * domain is added to the Vercel project as soon as the merchant types it,
  * so visits can arrive (and need to route) before they click "verify".
  * If we filter on `active` here, visits during the pending window hit
- * `not-found` — which Vercel's edge CDN will then cache for ~1h, leaving
+ * `not-found` - which Vercel's edge CDN will then cache for ~1h, leaving
  * the merchant staring at a 404 long after we flipped them to active.
  *
  * Cache busting: every rewrite response carries `Cache-Control:
  * private, no-store` and `Vary: Host` so the edge cache never holds
  * onto a snapshot of a custom-domain response. Storefront pages are
- * `force-dynamic` anyway, so we don't lose perf — we just lose the
+ * `force-dynamic` anyway, so we don't lose perf - we just lose the
  * 404-staleness footgun.
  *
  * Notes for Next.js 16:
@@ -37,7 +37,7 @@ import { neon } from "@neondatabase/serverless";
 // Vercel runs middleware in the Edge runtime regardless of the Next.js
 // "Node runtime default" docs for proxy.ts, and Prisma Client refuses to
 // load there. Neon's HTTP driver is a thin fetch-based SQL client that
-// runs everywhere — perfect for the one short SELECT we need on every
+// runs everywhere - perfect for the one short SELECT we need on every
 // custom-domain request. Falls back to DIRECT_URL when the pooled URL is
 // the pgbouncer one (Neon HTTP doesn't work through a pgbouncer port).
 const NEON_URL = process.env.NEON_HTTP_URL || process.env.DIRECT_URL || process.env.DATABASE_URL || "";
@@ -62,7 +62,7 @@ function isPlatformHost(host: string): boolean {
 
 // In-process memo: cache hostname → tenantSlug | null for a short window so
 // every navigation on a custom domain doesn't hit Postgres. TTL is short
-// because a freshly-added domain needs to start routing within seconds —
+// because a freshly-added domain needs to start routing within seconds -
 // merchants are watching the spinner.
 type CacheEntry = { slug: string | null; expiresAt: number };
 const CACHE_TTL_MS = 10_000;
@@ -75,7 +75,7 @@ async function resolveTenantSlug(host: string): Promise<string | null> {
 
   if (!sql) return null;
 
-  // Route on `customDomain` alone — `customDomainStatus` is administrative.
+  // Route on `customDomain` alone - `customDomainStatus` is administrative.
   // The status check used to live here, but it caused 404s during the
   // pending window (between add+verify) that Vercel's edge CDN then cached.
   const rows = (await sql`
@@ -110,7 +110,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
   if (!slug) {
     // Custom host pointing at us but no matching tenant. Fall through to
-    // the default app — but with no-cache headers so this state doesn't
+    // the default app - but with no-cache headers so this state doesn't
     // get baked into the CDN. (Otherwise a visit before the merchant
     // adds the domain will poison the edge for an hour.)
     return applyNoCacheHeaders(NextResponse.next());
@@ -122,12 +122,12 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   // Prefix the visitor's path with /s/{slug} so it lines up with the
   // storefront's route group. The storefront index lives at
   // /s/[tenantSlug]/page.tsx, so a visit to "/" rewrites to "/s/{slug}"
-  // (NOT "/s/{slug}/menu" — that path doesn't exist and would 404).
+  // (NOT "/s/{slug}/menu" - that path doesn't exist and would 404).
   const target =
     path === "/" || path === ""
       ? `/s/${slug}`
       : path.startsWith(`/s/${slug}`)
-        ? path // already rewritten — passthrough
+        ? path // already rewritten - passthrough
         : `/s/${slug}${path}`;
 
   url.pathname = target;

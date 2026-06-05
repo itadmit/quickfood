@@ -5,12 +5,12 @@
  * Docs: https://grow-il.readme.io
  *
  * Auth model:
- *   apiKey   — body param on every call (env GROW_API_KEY)
- *   X-API-KEY — header, only on /createPaymentProcess
- *   pageCode — env GROW_PAGE_CODE (override per tenant via credentials.pageCode)
- *   userId   — per tenant, in PaymentProviderConfig.credentials
+ *   apiKey   - body param on every call (env GROW_API_KEY)
+ *   X-API-KEY - header, only on /createPaymentProcess
+ *   pageCode - env GROW_PAGE_CODE (override per tenant via credentials.pageCode)
+ *   userId   - per tenant, in PaymentProviderConfig.credentials
  *
- * Callbacks are S2S, form-urlencoded, with no HMAC — security is IP whitelist +
+ * Callbacks are S2S, form-urlencoded, with no HMAC - security is IP whitelist +
  * unguessable notifyUrl. Acknowledge via /approveTransaction or Grow will retry
  * the callback up to 6 times.
  */
@@ -28,7 +28,7 @@ import type {
   WebhookValidationResult,
 } from "../types";
 
-// ─── Grow IPs (no HMAC available — IP whitelist is best we have) ──
+// ─── Grow IPs (no HMAC available - IP whitelist is best we have) ──
 
 const GROW_LIVE_IPS = new Set<string>([
   "18.158.107.17", "3.121.149.170", "3.76.166.104", "3.69.160.29", "3.78.79.166",
@@ -43,7 +43,7 @@ const GROW_TEST_IPS = new Set<string>([
 ]);
 
 /**
- * Grow sometimes returns `message` / `err` as a nested object — most often a
+ * Grow sometimes returns `message` / `err` as a nested object - most often a
  * `{id, message}` validation wrapper. Flatten any non-string to a readable
  * string so it survives a JSON round-trip and never reaches React as a
  * raw object (which would throw React #31 when rendered as a child).
@@ -86,7 +86,7 @@ const CARD_BRAND_MAP: Record<string, string> = {
 interface GrowResponse<T = unknown> {
   err?: string;
   // Grow's API returns this as a NUMBER in some endpoints/responses and as a
-  // STRING in others — accept both. Truthy `1` (number or string) = success.
+  // STRING in others - accept both. Truthy `1` (number or string) = success.
   status: string | number;
   data?: T;
   message?: string;
@@ -142,7 +142,7 @@ export class GrowProvider extends BasePaymentProvider {
     // regardless of what the merchant typed in the form. Flipping
     // "Sandbox" on at /dashboard/settings/payments is meant to JUST
     // WORK without any credentials of their own (no Vercel env vars
-    // required either — sandbox is fully self-contained).
+    // required either - sandbox is fully self-contained).
     if (config.testMode) return;
     // Production: per-tenant credentials are the source of truth. The
     // env vars are kept ONLY as a backwards-compat safety net for
@@ -168,7 +168,7 @@ export class GrowProvider extends BasePaymentProvider {
   }
 
   // In sandbox we hand back the shared test creds regardless of what
-  // the merchant set — see grow-test-creds.ts for the rationale.
+  // the merchant set - see grow-test-creds.ts for the rationale.
   private get apiKey(): string {
     if (this.config!.testMode) return GROW_SHARED_TEST_API_KEY;
     // Production: prefer the tenant's own apiKey from credentials. Falls
@@ -304,7 +304,7 @@ export class GrowProvider extends BasePaymentProvider {
       const phone = this.normalizeIsraeliPhone(req.customer.phone);
       const description = this.sanitize(`Order ${req.orderReference}`, 100);
 
-      // NOTE: we deliberately do not build `productData` here — see comment
+      // NOTE: we deliberately do not build `productData` here - see comment
       // on the body below. Grow's `sum`-vs-products validator rejects every
       // shape we tried (string/number prices, unique/sequential catalog
       // numbers, Hebrew/ASCII descriptions), so we omit the field entirely
@@ -364,7 +364,7 @@ export class GrowProvider extends BasePaymentProvider {
       // (this.log() is dev-only); successes stay quiet to avoid noise.
       if (String(response.status) !== "1") {
         // Log Grow's complaint AND the request fields most likely to have
-        // triggered it — without the request side we'd be guessing.
+        // triggered it - without the request side we'd be guessing.
         // Redact: phone → last 3 digits; email → masked local-part; URLs
         // → host only; commission / apiKey never logged.
         const maskedPhone = phone ? `***${phone.slice(-3)}` : "";
@@ -481,13 +481,13 @@ export class GrowProvider extends BasePaymentProvider {
     if (!allowed.has(ip)) {
       // Strict enforcement is reserved for live (production + non-test)
       // callbacks. Grow's sandbox IP pool rotates more often than we can
-      // keep the allowlist up to date — rejecting test callbacks left
+      // keep the allowlist up to date - rejecting test callbacks left
       // tenants stuck with pending payments forever (transaction never
       // flips paid → kiosk polls forever → invoice callback never fires
       // either). Worst case for accepting an off-list test IP is a
       // phantom test transaction worth zero real money.
       if (strictlyEnforce) {
-        this.logError(`Webhook rejected — IP not in live whitelist`, { ip });
+        this.logError(`Webhook rejected - IP not in live whitelist`, { ip });
         return { isValid: false, error: `IP ${ip} not in Grow whitelist` };
       }
       this.log(`Webhook from off-list IP ${ip} (allowed: ${isTestMode ? "testMode" : "dev"})`);
@@ -559,7 +559,7 @@ export class GrowProvider extends BasePaymentProvider {
 
   /**
    * Acknowledge a callback (Grow expects /approveTransaction within ~minutes,
-   * else retries up to 6 times). Echo back every field Grow sent us — that's
+   * else retries up to 6 times). Echo back every field Grow sent us - that's
    * their contract.
    */
   async acknowledgeCallback(parsed: ParsedCallback): Promise<{ success: boolean; error?: string }> {
@@ -668,7 +668,7 @@ export class GrowProvider extends BasePaymentProvider {
   }
 
   // Async callback Grow fires once an invoice is generated for the
-  // transaction. Body is a JSON array (note the brackets) — see
+  // transaction. Body is a JSON array (note the brackets) - see
   // grow-il.readme.io/reference/invoice-server-response.
   private buildInvoiceCallbackUrl(tenantSlug: string): string {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL;

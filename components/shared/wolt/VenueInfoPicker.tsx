@@ -38,7 +38,7 @@ export function VenueInfoPicker({
   flags,
   onToggle,
   heading = "פרטי החנות שזוהו בוולט",
-  helper = "סמנו מה לעדכן ב-QuickFood. שדה שמסומן ושכבר קיים אצלכם — יידרס בערך מוולט.",
+  helper = "סמנו מה לעדכן ב-QuickFood. שדה שמסומן ושכבר קיים אצלכם - יידרס בערך מוולט.",
 }: {
   info: VenueInfoPreview;
   flags: VenueApplyFlags;
@@ -76,7 +76,7 @@ export function VenueInfoPicker({
       label: "כתובת",
       available: !!wolt.address,
       overwrite: !!wolt.address && !!current.address,
-      woltDisplay: wolt.address ?? <em className="text-qf-mute">—</em>,
+      woltDisplay: wolt.address ?? <em className="text-qf-mute">-</em>,
       currentDisplay: current.address ?? <em className="text-qf-mute">ריק</em>,
     },
     {
@@ -89,7 +89,7 @@ export function VenueInfoPicker({
           {wolt.phone}
         </span>
       ) : (
-        <em className="text-qf-mute">—</em>
+        <em className="text-qf-mute">-</em>
       ),
       currentDisplay: current.phone ? (
         <span dir="ltr" className="tnum">
@@ -135,7 +135,7 @@ export function VenueInfoPicker({
           />
         </div>
       ) : (
-        <em className="text-qf-mute">—</em>
+        <em className="text-qf-mute">-</em>
       ),
       currentDisplay: current.coverImage ? (
         <div className="relative w-32 h-16 rounded-lg overflow-hidden bg-qf-line-soft">
@@ -169,7 +169,7 @@ export function VenueInfoPicker({
           />
         </div>
       ) : (
-        <em className="text-qf-mute">—</em>
+        <em className="text-qf-mute">-</em>
       ),
       currentDisplay: current.logoUrl ? (
         <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-qf-line-soft">

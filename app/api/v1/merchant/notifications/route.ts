@@ -25,7 +25,7 @@ export const GET = handler(async () => {
       where: {
         tenantId: session.tenantId,
         status: { in: ["pending", "confirmed"] },
-        // Skip card-pending orders that haven't confirmed payment yet —
+        // Skip card-pending orders that haven't confirmed payment yet -
         // no need to notify the merchant about an order the customer
         // may still abandon at the QR screen.
         NOT: HIDE_UNPAID_NONCASH,

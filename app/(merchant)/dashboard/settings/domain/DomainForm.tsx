@@ -37,7 +37,7 @@ export function DomainForm({
   const [busy, setBusy] = useState<"add" | "verify" | "remove" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  // Surfaces the running auto-poll to the user — both as a soft "still
+  // Surfaces the running auto-poll to the user - both as a soft "still
   // checking" affordance and so they don't double-click verify while a
   // background poll is in flight.
   const [polling, setPolling] = useState(false);
@@ -58,7 +58,7 @@ export function DomainForm({
   }, []);
 
   // Auto-poll the verify endpoint every 8 seconds while pending. DNS +
-  // SSL provisioning is asynchronous — we don't want the merchant to
+  // SSL provisioning is asynchronous - we don't want the merchant to
   // sit there clicking "Verify" every 30 seconds. The poll stops as
   // soon as the row flips to "active", or if the merchant kicks off
   // a manual action (add/remove). Caps at 60 attempts (~8 minutes) so
@@ -85,7 +85,7 @@ export function DomainForm({
           if (cancelled) return;
           if (fresh.ok) setState((await fresh.json()) as DomainState);
           if (data.ok) {
-            setToast("הדומיין פעיל — החנות שלך זמינה בכתובת החדשה");
+            setToast("הדומיין פעיל - החנות שלך זמינה בכתובת החדשה");
             setTimeout(() => setToast(null), 4000);
             router.refresh();
             return;
@@ -323,7 +323,7 @@ function ActiveDomainCard({
               <p className="text-sm text-black/70 mb-4 leading-relaxed">
                 הוסף את הרשומות הבאות בלוח הבקרה של ספק הדומיין שלך (GoDaddy / Cloudflare /
                 Namecheap וכו׳). לאחר שהרשומות התפרסמו, ניתן ללחוץ "בדוק חיבור"
-                — או פשוט לחכות, אנחנו בודקים אוטומטית כל כמה שניות.
+                - או פשוט לחכות, אנחנו בודקים אוטומטית כל כמה שניות.
               </p>
               <div className="space-y-2.5">
                 {records.map((r, i) => (
@@ -437,7 +437,7 @@ function PropagationBanner({ polling }: { polling: boolean }) {
           תהליך החיבור כולל אימות DNS והנפקת תעודת SSL אוטומטית ע״י Vercel. זה
           לרוב לוקח <strong>בין דקה ל-30 דקות</strong>, ובמקרים נדירים עד שעה
           (תלוי כמה זמן לוקח לספק הדומיין שלך לעדכן את הרשומות בעולם). אנחנו
-          בודקים אוטומטית כל כמה שניות — אפשר להישאר בדף או לחזור מאוחר יותר.
+          בודקים אוטומטית כל כמה שניות - אפשר להישאר בדף או לחזור מאוחר יותר.
         </div>
       </div>
     </div>

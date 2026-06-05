@@ -1,11 +1,11 @@
 /**
- * Invoice dispatch — once Grow's async invoice callback lands, email the
+ * Invoice dispatch - once Grow's async invoice callback lands, email the
  * customer a link to download the tax invoice / receipt. The email is
  * collected on the PayPage ("מעוניין בחשבונית מס?" opt-in).
  *
  * Idempotent: we stamp an `OrderEvent` row so a retry of the callback (or
  * a second dispatch after the customer adds their email) doesn't double
- * send. Safe to call multiple times — a no-op until both the invoice URL
+ * send. Safe to call multiple times - a no-op until both the invoice URL
  * and an email address are present.
  */
 
@@ -46,8 +46,8 @@ export async function dispatchInvoice(
 
   try {
     const { html, text } = renderRtlEmail({
-      subject: `חשבונית מס/קבלה — הזמנה #${order.number}`,
-      preheader: `${order.tenant.name} — קישור להורדת החשבונית`,
+      subject: `חשבונית מס/קבלה - הזמנה #${order.number}`,
+      preheader: `${order.tenant.name} - קישור להורדת החשבונית`,
       heading: "החשבונית מוכנה",
       paragraphs: [
         `קיבלת חשבונית מס/קבלה עבור ההזמנה שלך ב${order.tenant.name} (הזמנה #${order.number}).`,
@@ -64,7 +64,7 @@ export async function dispatchInvoice(
     const email = await sendEmail({
       tenantId: order.tenantId,
       to: order.customerEmailSnap,
-      subject: `חשבונית מס/קבלה — הזמנה #${order.number}`,
+      subject: `חשבונית מס/קבלה - הזמנה #${order.number}`,
       body: text,
       html,
       kind: "invoice_delivery",

@@ -18,7 +18,7 @@ interface Props {
 const AUTO_CLOSE_MS = 25_000;
 
 function todayKey() {
-  // YYYY-MM-DD in the user's local timezone — popup is per-day, no need for UTC precision
+  // YYYY-MM-DD in the user's local timezone - popup is per-day, no need for UTC precision
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
@@ -49,7 +49,7 @@ export function CampaignPopup({ tenantSlug }: Props) {
         // Defer paint a tick so the fade-in transition runs.
         window.setTimeout(() => !cancelled && setVisible(true), 50);
       } catch {
-        // Silent — popup is non-critical.
+        // Silent - popup is non-critical.
       }
     })();
     return () => {

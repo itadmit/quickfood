@@ -3,7 +3,7 @@
  *
  * Called from `advanceStatus(order, "delivered")`. We delay by the tenant's
  * `reviewsDelayMinutes`. If reviews are disabled or the channel is `off`,
- * we skip scheduling — but we don't error: a status transition shouldn't
+ * we skip scheduling - but we don't error: a status transition shouldn't
  * fail just because reminders are off.
  */
 import { prisma } from "@/lib/db/client";

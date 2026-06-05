@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // `pending` is included so the Kanban's "ממתינות לקבלה" column can
-// show orders awaiting merchant confirmation — kiosk cash orders
+// show orders awaiting merchant confirmation - kiosk cash orders
 // waiting for a cashier to take the cash, or card orders whose Grow
 // callback hasn't landed. The kitchen / KDS screen filters `pending`
 // out client-side so the kitchen never pre-cooks an unconfirmed order.
@@ -43,7 +43,7 @@ export const GET = handler(async (req: Request) => {
     where.status = { in: ACTIVE_STATUSES };
     where.kanbanHiddenAt = null;
     // Hide card orders that are still waiting for Grow to confirm
-    // payment. Cash-pending stays visible — the merchant needs to
+    // payment. Cash-pending stays visible - the merchant needs to
     // see it so they can press "מזומן התקבל" once the kiosk customer
     // hands over the cash.
     where.NOT = HIDE_UNPAID_NONCASH;
@@ -55,7 +55,7 @@ export const GET = handler(async (req: Request) => {
     where.method = method as OrderMethod;
   }
 
-  // Date window — `from` / `to` are ISO date strings (YYYY-MM-DD or full
+  // Date window - `from` / `to` are ISO date strings (YYYY-MM-DD or full
   // ISO). `to` is treated as end-of-day so callers can pass a plain date.
   if (from || to) {
     const range: Prisma.DateTimeFilter = {};
@@ -104,7 +104,7 @@ export const GET = handler(async (req: Request) => {
   ]);
 
   // One sweep across both audit logs to mark which orders already had a
-  // review reminder delivered — drives the "שלח ביקורת עכשיו" button on
+  // review reminder delivered - drives the "שלח ביקורת עכשיו" button on
   // the history row. Cheaper than N+1 per-order lookups.
   const orderIds = orders.map((o) => o.id);
   const [smsSent, emailSent] = orderIds.length

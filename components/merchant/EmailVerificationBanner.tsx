@@ -210,7 +210,7 @@ function ChangeEmailModal({
 
         <div className="px-6 pt-5 pb-1 text-center">
           <h2 className="text-[19px] font-black leading-snug text-black">
-            סמכנו עלייך, לא נורא — יאללה עכשיו שאנחנו מכירים, הזן את המייל האמיתי בבקשה.
+            סמכנו עלייך, לא נורא - יאללה עכשיו שאנחנו מכירים, הזן את המייל האמיתי בבקשה.
           </h2>
           <p className="text-xs text-black/65 mt-2 leading-relaxed">
             נשלח לכתובת החדשה מייל אימות חדש. הקישור הישן יפסיק לעבוד.

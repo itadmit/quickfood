@@ -19,7 +19,7 @@ export default async function BillingPage({
   if (!session || session.type !== "merchant" || !session.tenantId) {
     redirect("/dashboard/login");
   }
-  // Billing is the owner's alone — managers and below don't see the
+  // Billing is the owner's alone - managers and below don't see the
   // subscription / payment method.
   if (session.role !== "owner") {
     redirect("/dashboard");

@@ -25,7 +25,7 @@ export const POST = handler(async (_req, { params }: { params: Promise<{ id: str
     },
   });
 
-  // The cron worker will pick this up — alternatively we could call
+  // The cron worker will pick this up - alternatively we could call
   // attemptDelivery directly here for instant retry.
   return apiJson({ ok: true });
 });

@@ -97,7 +97,7 @@ export function BundlesView({
       ? "/api/v1/merchant/bundles"
       : `/api/v1/merchant/bundles/${editing.id}`;
     // When linked_item_id is set, the bundle is a Wolt-style upgrade
-    // suggestion — addons get ignored on the customer side, and the
+    // suggestion - addons get ignored on the customer side, and the
     // bundle's own `bundle_price` is replaced by the linked item's
     // price at suggestion time. We still send a positive bundle_price
     // to satisfy the API schema (the field is required for legacy
@@ -154,7 +154,7 @@ export function BundlesView({
       <PageHeader
         chip="מכירות"
         title="מבצעי חבילות"
-        subtitle={`${initial.length} מבצעים · "הוסיפו צ׳יפס + שתייה ב-X" — מופיעים בסל כשפריט מתאים נכנס`}
+        subtitle={`${initial.length} מבצעים · "הוסיפו צ׳יפס + שתייה ב-X" - מופיעים בסל כשפריט מתאים נכנס`}
         actions={
           <button
             type="button"
@@ -168,7 +168,7 @@ export function BundlesView({
 
       {initial.length === 0 ? (
         <div className="bg-white rounded-2xl border-2 border-dashed border-qf-line-dash p-10 text-center text-qf-mute">
-          עוד אין מבצעי חבילות. צרי את הראשון — &quot;פיצה ⟵ צ&apos;יפס + שתייה ב-₪15&quot;.
+          עוד אין מבצעי חבילות. צרי את הראשון - &quot;פיצה ⟵ צ&apos;יפס + שתייה ב-₪15&quot;.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -333,7 +333,7 @@ export function BundlesView({
                 </span>
                 <p className="text-[11px] text-qf-ink2 mb-2 leading-relaxed">
                   בחר/י מוצר קומבו קיים בתפריט (לדוגמה "ארוחת מלווח · 25₪").
-                  ההצעה תוצג ללקוח כ"שדרג ל-X, חוסכים Y₪" — הלקוח יפתח את
+                  ההצעה תוצג ללקוח כ"שדרג ל-X, חוסכים Y₪" - הלקוח יפתח את
                   המוצר ויבחר בעצמו את התוספות (שתייה / גודל / וכו׳).
                   המנות שהפעילו את ההצעה יוסרו מהסל אוטומטית.
                 </p>
@@ -347,7 +347,7 @@ export function BundlesView({
                   }
                   className="w-full px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none bg-white"
                 >
-                  <option value="">— ללא מוצר משודרג (השתמש בתוספות סטטיות למטה) —</option>
+                  <option value="">- ללא מוצר משודרג (השתמש בתוספות סטטיות למטה) -</option>
                   {items.map((i) => (
                     <option key={i.id} value={i.id}>
                       {i.name} · {formatPrice(i.basePrice)}
@@ -364,7 +364,7 @@ export function BundlesView({
               </span>
               <p className="text-[11px] text-qf-mute mb-2">
                 ישתמש רק כשאין מוצר משודרג. הפריטים מתווספים לסל ישירות
-                בכמות שתבחר/י — הלקוח לא יכול להחליף אותם.
+                בכמות שתבחר/י - הלקוח לא יכול להחליף אותם.
               </p>
               <div className="space-y-1.5">
                 {editing.addonItems.map((a, idx) => (

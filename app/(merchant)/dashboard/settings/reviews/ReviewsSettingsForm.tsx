@@ -108,7 +108,7 @@ export function ReviewsSettingsForm({
         setManagedError(data?.error?.message ?? "הפעלת המנוי נכשלה");
         return;
       }
-      // Subscribe succeeded — also flip the reviews channel to the new
+      // Subscribe succeeded - also flip the reviews channel to the new
       // managed track so the merchant doesn't have to click twice. The
       // PATCH validates against the just-mirrored subscription id.
       await fetch("/api/v1/merchant/settings/reviews", {
@@ -233,7 +233,7 @@ export function ReviewsSettingsForm({
             })}
             {/* Managed-WhatsApp: paid add-on (₪99/mo). When not subscribed,
                 the click opens a confirmation modal instead of switching
-                channels — the channel only flips once the subscription is
+                channels - the channel only flips once the subscription is
                 live (and the webhook has mirrored the sub id). */}
             {(() => {
               const selected = v.channel === "whatsapp_managed";

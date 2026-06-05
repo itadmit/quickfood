@@ -13,7 +13,7 @@ import {
   IcoBag,
 } from "@/components/shared/Icons";
 
-// Shared nav config for the V2 dashboard skin — same list rendered by
+// Shared nav config for the V2 dashboard skin - same list rendered by
 // SidebarV2 on desktop and MobileMenuV2 on mobile.
 export type NavChild = {
   href: string;
@@ -41,7 +41,7 @@ export const NAV: NavSection[] = [
     items: [
       { href: "/dashboard", label: "דשבורד", Icon: IcoHome, exact: true },
       // exact:true on the live kanban so it doesn't ALSO light up when
-      // the merchant is browsing /dashboard/orders/history — the
+      // the merchant is browsing /dashboard/orders/history - the
       // startsWith default matched both and made the active state look
       // doubled. History below has no subroutes so the default is fine.
       { href: "/dashboard/orders", label: "הזמנות", Icon: IcoOrders, exact: true },

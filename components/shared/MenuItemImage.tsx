@@ -1,5 +1,5 @@
 /**
- * MenuItemImage — shows a real product image if available, otherwise renders
+ * MenuItemImage - shows a real product image if available, otherwise renders
  * a tasteful, themed placeholder that matches the tenant's business type.
  *
  * The placeholder is intentionally NOT a cartoonish illustration; it uses
@@ -69,7 +69,7 @@ export function MenuItemImage({
   }[rounded];
 
   if (src) {
-    // Real image — SmartImg adds a skeleton-shimmer placeholder while the
+    // Real image - SmartImg adds a skeleton-shimmer placeholder while the
     // request is in flight and fades the picture in once it loads, so cards
     // don't pop with raw <img> behavior.
     return (

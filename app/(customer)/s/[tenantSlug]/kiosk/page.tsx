@@ -59,7 +59,7 @@ export default async function KioskPage({
       where: { tenantId: tenant.id, active: true },
       orderBy: { position: "asc" },
       // upsellInCart powers the "Anything else?" carousel inside the
-      // kiosk cart sheet — same flag the storefront uses.
+      // kiosk cart sheet - same flag the storefront uses.
       // upsellBeforeCheckout powers the dessert-prompt interstitial.
       select: { id: true, name: true, upsellInCart: true, upsellBeforeCheckout: true },
     }),
@@ -82,7 +82,7 @@ export default async function KioskPage({
   ]);
 
   // Kiosks don't tolerate a fetch-and-skeleton flicker when the user
-  // taps an item — the experience needs to feel like a native app. So
+  // taps an item - the experience needs to feel like a native app. So
   // we pre-load every item's full sizes + option groups on the server
   // and ship it down with the initial render. loadMenuItemForCustomer
   // is `unstable_cache`d per item so this stays cheap on warm.

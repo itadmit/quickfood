@@ -58,7 +58,7 @@ export function CustomerCheckout({
   // Tri-state: while true, render a skeleton instead of the "merchant has
   // no payment methods" empty state. Without this, the empty copy flashes
   // for the few hundred ms between mount and when the restaurants endpoint
-  // resolves — looks broken.
+  // resolves - looks broken.
   const [methodsLoading, setMethodsLoading] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<CustomerPaymentMethod | null>(null);
   const [tip, setTip] = useState(0);
@@ -68,7 +68,7 @@ export function CustomerCheckout({
 
   // Schedule-for-later. asap = deliver as soon as possible (the default);
   // scheduledTime is a "HH:mm" string for today only (no multi-day picker
-  // for V1 — the most common use is "אסוף בעוד שעתיים" / "תספיק להגיע
+  // for V1 - the most common use is "אסוף בעוד שעתיים" / "תספיק להגיע
   // בשמונה"). The merchant's open hours could be enforced server-side
   // later; for now we just let the merchant decline if it's outside hours.
   const [scheduledTime, setScheduledTime] = useState<string>("");
@@ -90,7 +90,7 @@ export function CustomerCheckout({
   >(null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [couponBusy, setCouponBusy] = useState(false);
-  // True once the POST /orders call has succeeded — even though we clear()
+  // True once the POST /orders call has succeeded - even though we clear()
   // the cart immediately afterward, this stays true until the browser
   // finishes navigating to /orders/[id], so we can show a "processing"
   // screen instead of the "הסל ריק" empty-state flashing for ~250ms.
@@ -141,7 +141,7 @@ export function CustomerCheckout({
   // Consume any "הזמן שוב" prefill the home rail dropped in sessionStorage
   // on mount. takeCheckoutPrefill() clears the entry so a refresh doesn't
   // replay it. Each field is only applied if the customer hasn't already
-  // typed something — we never clobber active edits.
+  // typed something - we never clobber active edits.
   useEffect(() => {
     const choice = readDeliveryChoice(tenantSlug);
     if (choice?.kind !== "delivery") return;
@@ -232,7 +232,7 @@ export function CustomerCheckout({
   }
 
   // Pre-computed time slots for today, every 15 min starting from now+30min
-  // (kitchen prep buffer) up to 23:00. Computed once per mount — a checkout
+  // (kitchen prep buffer) up to 23:00. Computed once per mount - a checkout
   // session is short enough that drift doesn't matter, and scheduledIso()
   // below already pushes past-times to tomorrow as a safety net.
   const scheduleSlots = useMemo(() => {
@@ -259,7 +259,7 @@ export function CustomerCheckout({
     if (Number.isNaN(h) || Number.isNaN(m)) return null;
     const d = new Date();
     d.setHours(h, m, 0, 0);
-    // If the merchant chose a time that's already past, push to tomorrow —
+    // If the merchant chose a time that's already past, push to tomorrow -
     // the customer probably typo'd; let them confirm before submit.
     if (d.getTime() < Date.now() - 60_000) {
       d.setDate(d.getDate() + 1);
@@ -270,14 +270,14 @@ export function CustomerCheckout({
   const businessType = (tenant.businessType as BusinessType) ?? "general";
 
   // While we wait for the route transition to /orders/[id], the cart is
-  // already empty — show a friendly processing screen instead of the
+  // already empty - show a friendly processing screen instead of the
   // "הסל ריק" empty state that would flash for the route-change frame.
   if (submitted && !pendingPayment) {
     return <ProcessingScreen />;
   }
 
   // NOTE: when there's an active pendingPayment, we keep the checkout form
-  // visible underneath. Grow's wallet appears as its own overlay on top —
+  // visible underneath. Grow's wallet appears as its own overlay on top -
   // replacing the page used to break the SDK's z-index. The SDK component
   // is mounted at the end of the render tree below.
 
@@ -420,7 +420,7 @@ export function CustomerCheckout({
 
       // For non-cash payments we need to render the Grow wallet inline
       // before navigating away. Initiate the payment and stash the
-      // authCode — the SDK mount (rendered at the bottom of the form) will
+      // authCode - the SDK mount (rendered at the bottom of the form) will
       // overlay the wallet on top of the existing checkout view.
       if (data.needs_payment) {
         // Fast path: the create response already initiated payment inline
@@ -472,7 +472,7 @@ export function CustomerCheckout({
       setSubmitted(true);
       clear();
       router.push(`/s/${tenantSlug}/orders/${orderId}`);
-      // Don't fall through to `setBusy(false)` in finally — the route
+      // Don't fall through to `setBusy(false)` in finally - the route
       // change tears the component down anyway, and letting `busy` flip
       // back briefly would re-enable the CTA for one frame.
       return;
@@ -494,7 +494,7 @@ export function CustomerCheckout({
   const phoneLooksValid = validateIsraeliPhone(phone);
   const phoneError =
     phoneTouched && phone.trim() && !phoneLooksValid
-      ? "מספר טלפון לא תקין — למשל 050-1234567"
+      ? "מספר טלפון לא תקין - למשל 050-1234567"
       : phoneTouched && !phone.trim()
         ? "נדרש מספר טלפון"
         : null;
@@ -528,7 +528,7 @@ export function CustomerCheckout({
       </header>
 
       <div className="px-4 mt-4 space-y-3 lg:max-w-6xl lg:mx-auto lg:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-6 lg:space-y-0 lg:mt-4"><div className="lg:col-start-1 space-y-3">
-        {/* 1. Contact — promoted to the top */}
+        {/* 1. Contact - promoted to the top */}
         <Card>
           <CardTitle>פרטי קשר</CardTitle>
           <div className="grid grid-cols-2 gap-3 mt-3">
@@ -640,7 +640,7 @@ export function CustomerCheckout({
           </Card>
         )}
 
-        {/* Payment — collapsed to two top-level choices. All online methods
+        {/* Payment - collapsed to two top-level choices. All online methods
               (card / Bit / Apple Pay / Google Pay) are picked inside Grow's
               wallet when it opens, so showing them all here is noise. */}
         <Card>
@@ -688,7 +688,7 @@ export function CustomerCheckout({
           )}
         </Card>
 
-        {/* 5. Tip (delivery only — pickup has no courier) */}
+        {/* 5. Tip (delivery only - pickup has no courier) */}
         {method === "delivery" && (
           <Card>
             <div className="flex items-baseline justify-between">
@@ -750,7 +750,7 @@ export function CustomerCheckout({
         )}
 
         {/* 5b. Schedule order. Hidden entirely when the merchant disabled
-            scheduled orders in dashboard settings — keeps fast-food queues
+            scheduled orders in dashboard settings - keeps fast-food queues
             sane. */}
         {tenant.scheduledOrdersEnabled !== false && (
           <Card>
@@ -802,7 +802,7 @@ export function CustomerCheckout({
                   </>
                 ) : (
                   <p className="text-sm text-qf-mute mt-2">
-                    לא נותרו שעות פנויות להיום — בחר &quot;בהקדם האפשרי&quot;.
+                    לא נותרו שעות פנויות להיום - בחר &quot;בהקדם האפשרי&quot;.
                   </p>
                 )}
               </div>
@@ -879,7 +879,7 @@ export function CustomerCheckout({
           />
         </Card>
 
-        {/* Order summary — rendered LAST on mobile (just before the error +
+        {/* Order summary - rendered LAST on mobile (just before the error +
             footer CTA) so the customer scrolls past every input first.
             Desktop has the same content as a sticky sidebar (below). */}
         <div className="lg:hidden">
@@ -971,7 +971,7 @@ export function CustomerCheckout({
         )}
         </div>{/* end left column */}
 
-        {/* Desktop sidebar — sticky order summary + CTA. Hidden on mobile,
+        {/* Desktop sidebar - sticky order summary + CTA. Hidden on mobile,
             which keeps the inline summary + fixed-footer CTA instead. */}
         <aside className="hidden lg:block lg:col-start-2 lg:sticky lg:top-20 lg:self-start">
           <Card>
@@ -1070,7 +1070,7 @@ export function CustomerCheckout({
         </aside>
       </div>
 
-      {/* Fixed CTA — mobile only (desktop uses the sidebar above). */}
+      {/* Fixed CTA - mobile only (desktop uses the sidebar above). */}
       <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 max-w-md mx-auto bg-white border-t border-qf-line px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <button
           type="button"
@@ -1099,7 +1099,7 @@ export function CustomerCheckout({
         </button>
       </div>
 
-      {/* Grow wallet — pre-loaded on page mount when the tenant has Grow
+      {/* Grow wallet - pre-loaded on page mount when the tenant has Grow
           enabled, so the SDK has ~1s to do its async setup while the
           customer fills out the form. The wallet itself only renders when
           we trigger `renderGrowWallet(authCode)` after /pay/initiate. */}
@@ -1111,7 +1111,7 @@ export function CustomerCheckout({
           onWalletChange={(state) => setWalletOpen(state === "open")}
           onError={(message) => {
             // Only surface the error if we actually have an in-flight
-            // payment — pre-mount SDK errors (none of our business) get
+            // payment - pre-mount SDK errors (none of our business) get
             // silently logged via the console hooks in GrowPaymentSdk.
             if (pendingPayment) {
               setError(asErrorString(message, "התשלום נכשל. אפשר לנסות שוב."));
@@ -1262,7 +1262,7 @@ function SumRow({
 /**
  * Coerce anything that came back from an API/SDK error to a renderable
  * string. We've seen Grow occasionally return `message` as a `{id, message}`
- * object — without this, React error #31 ("object with keys {id, message}")
+ * object - without this, React error #31 ("object with keys {id, message}")
  * fires the moment we drop it into <div>{error}</div>.
  */
 function asErrorString(value: unknown, fallback: string): string {

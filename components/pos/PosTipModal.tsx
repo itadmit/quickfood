@@ -15,7 +15,7 @@ interface Props {
 const PERCENT_QUICK = [10, 12, 15, 18, 20];
 
 /**
- * Cashier-applied tip picker — quick % chips for the common cases plus
+ * Cashier-applied tip picker - quick % chips for the common cases plus
  * the same %/₪ toggle + numeric keypad pattern as the discount modal.
  * Bounded: percent 0-50 (anything above is almost always a typo),
  * fixed 0-9999 ₪.

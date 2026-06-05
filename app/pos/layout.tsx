@@ -21,7 +21,7 @@ export default async function PosLayout({
   }
 
   // Cashier is hard-bound to their pinned branch. Owner/manager training
-  // gets the primary branch — they can't switch from inside the POS today.
+  // gets the primary branch - they can't switch from inside the POS today.
   const [user, primaryBranch] = await Promise.all([
     prisma.merchantUser.findUnique({
       where: { id: session.userId },

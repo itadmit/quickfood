@@ -4,11 +4,11 @@
  * Reads the singleton `platform_settings` row, sends a single text message
  * via iBot, and reports the raw provider response. Does NOT write to the
  * unified `sms_logs` table (no tenant context) and does NOT decrement any
- * credits — this is a connectivity check, not a customer-bound message.
+ * credits - this is a connectivity check, not a customer-bound message.
  *
  * Returns:
- *   { ok: true, message }              — provider returned success
- *   { ok: false, reason, message? }    — bad phone / not configured / failed
+ *   { ok: true, message }              - provider returned success
+ *   { ok: false, reason, message? }    - bad phone / not configured / failed
  */
 import { z } from "zod";
 import { handler, apiJson, apiError } from "@/lib/api-response";
@@ -64,7 +64,7 @@ export const POST = handler(async (req: Request) => {
     token: settings.whatsappDefaultToken,
     instanceId: settings.whatsappDefaultInstanceId,
     jid: toJid(to),
-    msg: "QuickFood — בדיקת חיבור WhatsApp ברירת מחדל. אם קיבלת — הכל מחובר.",
+    msg: "QuickFood - בדיקת חיבור WhatsApp ברירת מחדל. אם קיבלת - הכל מחובר.",
   });
 
   return apiJson({

@@ -98,7 +98,7 @@ export const POST = handler(async (req: Request) => {
   const parsed = provider.parseCallback(body);
 
   // Kiosk-card pre-checkout branch. If the reference Grow echoed back is
-  // a checkout ref (KCO- prefix) the Order doesn't exist yet — we
+  // a checkout ref (KCO- prefix) the Order doesn't exist yet - we
   // materialize it from the cart snapshot here, then run the normal
   // pending-payment finalization path against the freshly-created order.
   const checkoutId = checkoutRefToId(parsed.orderReference);
@@ -265,7 +265,7 @@ export const POST = handler(async (req: Request) => {
 
       // Advance the order: pending ← confirmed (fires webhooks). Only
       // if legal. The 0.5% commission used to fire unconditionally here
-      // — including for orders the merchant had already cancelled while
+      // - including for orders the merchant had already cancelled while
       // the callback was in flight, which billed the merchant for cash
       // they never got. Now it only runs after a successful transition.
       const order = await prisma.order.findUnique({
@@ -302,7 +302,7 @@ export const POST = handler(async (req: Request) => {
     }
   }
 
-  // Acknowledge to Grow (non-blocking) — keep this OUTSIDE the transaction.
+  // Acknowledge to Grow (non-blocking) - keep this OUTSIDE the transaction.
   void provider
     .acknowledgeCallback(parsed)
     .then((ack) => {

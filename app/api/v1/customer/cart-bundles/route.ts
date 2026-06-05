@@ -69,7 +69,7 @@ export const GET = handler(async (req: Request) => {
   });
 
   // Wolt model first: if the bundle is wired to a `linkedItem`, the
-  // suggestion is "upgrade your <trigger> to <combo>" — savings are
+  // suggestion is "upgrade your <trigger> to <combo>" - savings are
   // computed against the trigger item prices the customer currently
   // has in cart, vs the combo's own price. The customer flow opens
   // the combo's normal ItemDetail to pick modifiers (drink, size, …).
@@ -97,7 +97,7 @@ export const GET = handler(async (req: Request) => {
       if (matchedTriggers.length === 0) return null;
 
       if (b.linkedItem && b.linkedItem.available) {
-        // Skip if the upgrade product itself is already in the cart —
+        // Skip if the upgrade product itself is already in the cart -
         // no point re-pitching the combo they've already added.
         if (inCart.has(b.linkedItem.id)) return null;
         const triggerSum = matchedTriggers.reduce(
@@ -125,7 +125,7 @@ export const GET = handler(async (req: Request) => {
         };
       }
 
-      // Legacy addons path — kept until pre-migration bundles are
+      // Legacy addons path - kept until pre-migration bundles are
       // re-configured. New UI hides this once the merchant flips
       // them over.
       const availableAddons = b.addons.filter((a) => a.item.available);

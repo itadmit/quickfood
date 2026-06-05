@@ -83,7 +83,7 @@ export function checkRate(
 }
 
 /**
- * Convenience: throw 429 (as a Response — caught by `handler()`) when too
+ * Convenience: throw 429 (as a Response - caught by `handler()`) when too
  * many requests have come from the given identifier in the last minute.
  */
 export function assertApiKeyRateLimit(apiKeyId: string, limit?: number): void {

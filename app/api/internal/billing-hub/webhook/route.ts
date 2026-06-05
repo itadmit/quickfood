@@ -79,7 +79,7 @@ export const POST = handler(async (req: Request) => {
           where: { id: tenant.id },
           data: {
             billingPaymentMethodId: paymentMethodId,
-            // Token is on file — mark setup complete + close out the local
+            // Token is on file - mark setup complete + close out the local
             // trial so the dashboard banner / lock disappear.
             billingSetupCompletedAt: new Date(),
           },
@@ -88,7 +88,7 @@ export const POST = handler(async (req: Request) => {
 
       // Create the base subscription if we haven't already. The hub already
       // charged ₪352.82 via the setup amount, so the subscription rides on
-      // a 30-day initial trial — the next invoice fires one billing cycle
+      // a 30-day initial trial - the next invoice fires one billing cycle
       // from now.
       if (!tenant.billingSubscriptionId && paymentMethodId) {
         try {
@@ -153,7 +153,7 @@ export const POST = handler(async (req: Request) => {
       const tenant = await findTenantByCustomerId(d.customer_id);
       if (!tenant) break;
       // Any paid base-plan invoice keeps the setup-complete timestamp fresh.
-      // We no longer reset SMS credits here — SMS purchases are now one-off
+      // We no longer reset SMS credits here - SMS purchases are now one-off
       // charges that fire `charge.succeeded` instead.
       if (d.plan_code === BASE_PLAN_CODE) {
         await prisma.tenant.update({
@@ -238,7 +238,7 @@ export const POST = handler(async (req: Request) => {
           data: { billingSubscriptionId: null, billingSetupCompletedAt: null },
         });
       } else if (subId === tenant.reviewsWhatsappSubscriptionId) {
-        // Add-on ended — clear the mirror id. If the merchant had picked
+        // Add-on ended - clear the mirror id. If the merchant had picked
         // `whatsapp_managed` as their reviews channel, flip it off so future
         // sends fail cleanly with `channel_off` rather than calling the
         // platform iBot account without an active subscription.
@@ -262,7 +262,7 @@ export const POST = handler(async (req: Request) => {
     case "charge.failed":
     case "charge.dunning_started":
     case "charge.recovered":
-      // Currently no-op — hub handles dunning. Wire owner emails here when ready.
+      // Currently no-op - hub handles dunning. Wire owner emails here when ready.
       break;
 
     default:

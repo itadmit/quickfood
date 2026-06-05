@@ -1,5 +1,5 @@
 /**
- * Email sender — wraps Resend (https://resend.com).
+ * Email sender - wraps Resend (https://resend.com).
  *
  * Same shape as `lib/sms/send.ts`: pre-create a `pending` EmailLog row, call
  * the provider, mark the row sent/failed. No per-message billing model on
@@ -18,12 +18,12 @@ export interface SendEmailInput {
   tenantId: string | null;
   to: string;
   subject: string;
-  /** Plain-text body (always required — used as fallback + stored in EmailLog). */
+  /** Plain-text body (always required - used as fallback + stored in EmailLog). */
   body: string;
   /** Optional pre-rendered HTML body. Must already be RTL-wrapped (see lib/email/templates.ts). */
   html?: string;
   fromName?: string;
-  /** Optional Reply-To header — used when an inbound lead/contact form should
+  /** Optional Reply-To header - used when an inbound lead/contact form should
    *  let the recipient hit "Reply" and reach the submitter directly. */
   replyTo?: string;
   kind?: string;

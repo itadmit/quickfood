@@ -1,4 +1,4 @@
-// QuickFood — Prisma schema
+// QuickFood - Prisma schema
 // מקור האמת: /Users/tadmitinteractive/Downloads/pizza/DATA_MODEL.md
 // תוספות מהתכנית: WebhookEndpoint, WebhookDelivery, ApiKey, OrderEvent, OtpCode
 
@@ -76,7 +76,7 @@ enum PaymentStatus {
   refunded
 }
 
-/// How the order itself was initiated. `direct` is the default —
+/// How the order itself was initiated. `direct` is the default -
 /// customer browsed the menu and built a cart manually. Other values
 /// power the merchant analytics breakdown of channel performance.
 enum OrderSource {
@@ -88,7 +88,7 @@ enum OrderSource {
 }
 
 /// How a specific line landed in the cart. A single order can mix
-/// sources — e.g. an AI-driven cart with one upsell line added later.
+/// sources - e.g. an AI-driven cart with one upsell line added later.
 /// The Order.source above is the dominant flow at order-placement
 /// time; this is per-line provenance.
 enum OrderItemSource {
@@ -279,7 +279,7 @@ model Tenant {
   // order tracking (ETA, status timeline, SSE updates, branch contact).
   checkoutShowTracking Boolean @default(false) @map("checkout_show_tracking")
 
-  // When false, the customer can only order "as soon as possible" — the
+  // When false, the customer can only order "as soon as possible" - the
   // schedule-for-later section is hidden from checkout. Useful for fast-food
   // spots that don't want pre-orders piling up in the queue.
   scheduledOrdersEnabled Boolean @default(true) @map("scheduled_orders_enabled")
@@ -303,7 +303,7 @@ model Tenant {
   //
   // featuredBadgeLabel: text shown on the corner of menu cards that
   // have MenuItem.featured=true. Lets each venue speak in their own
-  // voice — "מומלץ של השף" / "הכי נמכר" / "חדש" / etc. NULL falls
+  // voice - "מומלץ של השף" / "הכי נמכר" / "חדש" / etc. NULL falls
   // back to the platform default in the UI.
   featuredBadgeLabel String? @map("featured_badge_label") @db.VarChar(40)
   // upsellSizeNudge: shows a prominent "upgrade to XL for ₪10" banner
@@ -323,7 +323,7 @@ model Tenant {
   // cart and goes back to the start screen, so the next customer
   // doesn't walk up to someone else's half-built order.
   kioskIdleSeconds Int @default(90) @map("kiosk_idle_seconds")
-  /// When false, the kiosk skips the phone-entry screen entirely —
+  /// When false, the kiosk skips the phone-entry screen entirely -
   /// customer goes straight from mode pick to the menu, no OTP, no
   /// invoice prompt. Useful for fast-counter setups where the merchant
   /// doesn't want to slow customers down with a contact field.
@@ -358,7 +358,7 @@ model Tenant {
   reviewsDelayMinutes Int           @default(60) @map("reviews_delay_minutes")
   smsSender           String?       @map("sms_sender") @db.VarChar(11)
 
-  // SMS + WhatsApp credit balance. Top-ups (Starter/Growth/Scale) STACK —
+  // SMS + WhatsApp credit balance. Top-ups (Starter/Growth/Scale) STACK -
   // there is no messaging subscription. Each purchase is a one-off charge
   // to the saved token that adds the package quota to this counter. Both
   // SMS and WhatsApp sends decrement from the same pool because per-message
@@ -366,7 +366,7 @@ model Tenant {
   smsCreditsRemaining Int @default(0) @map("sms_credits_remaining")
 
   // iBot Chat (WhatsApp) credentials. Each tenant connects their own iBot
-  // instance — QuickFood does not host a shared WhatsApp number. When both
+  // instance - QuickFood does not host a shared WhatsApp number. When both
   // fields are set we treat WhatsApp as available; the `reviewsChannel`
   // value `whatsapp` triggers sends.
   whatsappToken      String? @map("whatsapp_token")
@@ -381,9 +381,9 @@ model Tenant {
 
   // Mirror IDs from the QuickBilling Hub (canonical state lives there).
   billingCustomerId       String?   @map("billing_customer_id")
-  // Base platform subscription (quickfood_base — ₪299/mo + VAT).
+  // Base platform subscription (quickfood_base - ₪299/mo + VAT).
   billingSubscriptionId   String?   @map("billing_subscription_id")
-  // Managed-WhatsApp reviews add-on (quickfood_reviews_whatsapp — ₪99/mo + VAT,
+  // Managed-WhatsApp reviews add-on (quickfood_reviews_whatsapp - ₪99/mo + VAT,
   // unlimited sends via the platform iBot account). Mirrored from the hub on
   // subscription.created / .cancelled webhooks. When set, reviewsChannel may be
   // `whatsapp_managed`; sends bypass the smsCreditsRemaining pool.
@@ -471,7 +471,7 @@ model DeliveryZone {
   radiusKm    Decimal? @map("radius_km") @db.Decimal(6, 2)
   geometry    Json?
   /// Cities this zone delivers to. Single source of truth for the
-  /// customer-facing "select your city" picker on the storefront —
+  /// customer-facing "select your city" picker on the storefront -
   /// the union of all active zones' cities is the supported set.
   /// Stored as plain strings (Hebrew city names) so merchants can
   /// type freely; the picker also offers a curated suggestion list.
@@ -506,7 +506,7 @@ model MenuCategory {
   // When true, items from this category trigger the "want to add a
   // dessert?" interstitial right before the customer hits "place
   // order" (kiosk + storefront checkout). Distinct from upsellInCart
-  // — that one shows continuously inside the open cart sheet; this
+  // - that one shows continuously inside the open cart sheet; this
   // one is a one-shot last-chance prompt the customer either accepts
   // or skips through.
   upsellBeforeCheckout Boolean @default(false) @map("upsell_before_checkout")
@@ -543,7 +543,7 @@ model MenuItem {
   position    Int          @default(0)
   tags        String[]     @default([])
   sku         String?
-  // Optional time-of-day windowing — minutes since midnight in the local
+  // Optional time-of-day windowing - minutes since midnight in the local
   // timezone. NULL on either side = no restriction; both set = visible
   // only when the current time is in [from, to). availableDays is a 7-bit
   // mask (bit 0 = Sunday, bit 6 = Saturday); NULL = every day.
@@ -553,7 +553,7 @@ model MenuItem {
   // Inventory: if non-null the item auto-disappears when this hits 0.
   // Refilled manually (or via API) when the merchant restocks.
   stockRemaining Int?      @map("stock_remaining")
-  // Provenance for bulk imports — see MenuCategory.externalSource for the
+  // Provenance for bulk imports - see MenuCategory.externalSource for the
   // contract. A re-import keys off (tenantId, externalSource, externalId)
   // to upsert rather than duplicate.
   externalSource String? @map("external_source") @db.VarChar(20)
@@ -579,13 +579,13 @@ model MenuItem {
 
 /// Suggested combos. When the cart contains at least one item from
 /// `triggers` AND none of the `addons`, the customer sees an offer
-/// "add X + Y for ₪Z" — accepting injects each addon as its own cart
+/// "add X + Y for ₪Z" - accepting injects each addon as its own cart
 /// line + an Order.discount line equal to (sum of addon basePrice -
 /// bundlePrice) so the merchant sees the savings reflected explicitly
 /// on the receipt + the kitchen sees normal items.
 ///
 /// Modelled as additive (the trigger stays in the cart at full price;
-/// the bundle just opens up an extra discounted attach) — that's the
+/// the bundle just opens up an extra discounted attach) - that's the
 /// simpler mental model and lets one customer combine multiple
 /// bundles. Replacing bundles (remove the trigger, add the package)
 /// were considered but rejected: too easy to surprise a customer who
@@ -600,7 +600,7 @@ model BundleOffer {
   bundlePrice Int      @map("bundle_price")
   active      Boolean  @default(true)
   position    Int      @default(0)
-  // Optional time window — both NULL = always active when active=true.
+  // Optional time window - both NULL = always active when active=true.
   validFrom   DateTime? @map("valid_from")
   validUntil  DateTime? @map("valid_until")
   createdAt   DateTime  @default(now()) @map("created_at")
@@ -610,7 +610,7 @@ model BundleOffer {
   /// suggestion points at. When the customer's cart contains a trigger
   /// item, the offer surfaces as "שדרג ל-{linkedItem.name}, חוסכים X₪"
   /// and tapping opens the combo's normal ItemDetail (with its own
-  /// modifier groups — drink choice, size, etc.). On accept the
+  /// modifier groups - drink choice, size, etc.). On accept the
   /// customer-side flow swaps the trigger items out for the combo so
   /// the cart doesn't double up. Nullable for backward compatibility
   /// with legacy bundles that pre-pick addons via the `addons` relation;
@@ -626,7 +626,7 @@ model BundleOffer {
 }
 
 /// One of the items whose presence in the cart fires the offer. Cart
-/// only needs to contain ONE of these (OR-logic) — most bundles are
+/// only needs to contain ONE of these (OR-logic) - most bundles are
 /// "if you have a pizza, add chips+drink for ₪15".
 model BundleOfferTrigger {
   bundleId String      @map("bundle_id") @db.Uuid
@@ -639,7 +639,7 @@ model BundleOfferTrigger {
 
 /// Items that get added when the customer accepts the offer.
 /// `qty` lets the same item appear N times in one bundle (e.g.
-/// "2 cans of Coke" — qty=2 on a single addon row).
+/// "2 cans of Coke" - qty=2 on a single addon row).
 model BundleOfferAddon {
   bundleId String      @map("bundle_id") @db.Uuid
   bundle   BundleOffer @relation(fields: [bundleId], references: [id], onDelete: Cascade)
@@ -650,7 +650,7 @@ model BundleOfferAddon {
   @@map("bundle_offer_addons")
 }
 
-/// Customer "heart" on a menu item — single global favorites list per
+/// Customer "heart" on a menu item - single global favorites list per
 /// customer (cross-tenant is fine since one customer eats at multiple
 /// restaurants). Composite PK (customerId, itemId) prevents duplicates and
 /// makes the "toggle" call a simple upsert.
@@ -729,7 +729,7 @@ model ItemOption {
   @@map("item_options")
 }
 
-// Reusable option group ("modifier set") — the Wolt-style library that lets a
+// Reusable option group ("modifier set") - the Wolt-style library that lets a
 // merchant define a set of toppings/extras once and attach it to many items.
 // Attached via ItemOptionGroup.templateSetId; edits to the set propagate to
 // every item that references it.
@@ -751,7 +751,7 @@ model ModifierSet {
   // Per-side cap inherited by attached ItemOptionGroups (when they don't
   // override). See ItemOptionGroup.maxPerSide for semantics.
   maxPerSide   Int?            @map("max_per_side")
-  // Provenance for bulk imports — see MenuCategory.externalSource. A
+  // Provenance for bulk imports - see MenuCategory.externalSource. A
   // re-import keys off (tenantId, externalSource, externalId) to upsert.
   externalSource String?       @map("external_source") @db.VarChar(20)
   externalId     String?       @map("external_id") @db.VarChar(64)
@@ -776,7 +776,7 @@ model ModifierSetOption {
   available  Boolean     @default(true)
   imageUrl   String?     @map("image_url")
   position   Int         @default(0)
-  // Provenance for bulk imports — scoped per parent set so the same source
+  // Provenance for bulk imports - scoped per parent set so the same source
   // option id can re-appear if the merchant has two imported sets.
   externalId String?     @map("external_id") @db.VarChar(64)
 
@@ -795,7 +795,7 @@ model Customer {
   lastName   String   @default("") @map("last_name")
   anonymized Boolean  @default(false)
   /// Explicit opt-in to marketing/promotional content (email or SMS).
-  /// Defaults to false — the customer has to actively tick the consent
+  /// Defaults to false - the customer has to actively tick the consent
   /// checkbox during checkout / kiosk capture. Stays false unless the
   /// customer says yes; later opt-outs flip it back to false.
   marketingConsent Boolean @default(false) @map("marketing_consent")
@@ -871,13 +871,13 @@ model Order {
   /// Tax invoice / receipt landed via Grow's async invoice callback (the
   /// `invoiceNotifyUrl` we pass on createPaymentProcess). Both stay NULL
   /// for cash orders + for tenants without invoice generation enabled in
-  /// their Grow control panel — UI degrades gracefully.
+  /// their Grow control panel - UI degrades gracefully.
   invoiceNumber String? @map("invoice_number")
   invoiceUrl    String? @map("invoice_url")
 
   /// Set when the merchant taps the X icon on a Kanban card. The order
   /// stays in the DB + History view + still bills the customer
-  /// normally — this only hides it from the active-orders board so the
+  /// normally - this only hides it from the active-orders board so the
   /// kitchen stops staring at a card that's gone stale ("חורג" timeout,
   /// duplicate, customer walked off, …). NULL = visible on the Kanban.
   kanbanHiddenAt DateTime? @map("kanban_hidden_at")
@@ -938,7 +938,7 @@ model Order {
 /// "float" (the drawer's starting balance), accumulates every paid-cash
 /// order, optionally records mid-shift drawer drops in `cashOutNotes`,
 /// closes with a counted `closingFloat` and a computed `expectedCash`
-/// — the variance is the day-end report.
+/// - the variance is the day-end report.
 model PosShift {
   id           String   @id @default(uuid()) @db.Uuid
   tenantId     String   @map("tenant_id") @db.Uuid
@@ -989,7 +989,7 @@ model OrderItem {
 
   notes String?
 
-  // Per-item prep toggle — the kitchen ticks off each line as it
+  // Per-item prep toggle - the kitchen ticks off each line as it
   // goes out (todo-list style on the Kanban card). NULL = not yet
   // started. The order's status field is still the authoritative
   // "ready" signal; this is just visual sub-state so the cook
@@ -1174,7 +1174,7 @@ model SmsLog {
   // "sms" or "whatsapp". Both channels write to this single audit log,
   // since the credit pool, balance, and history UI are unified.
   channel      String             @default("sms")
-  // What we're sending — e.g. "review_reminder", "order_status", etc.
+  // What we're sending - e.g. "review_reminder", "order_status", etc.
   kind         String             @default("generic")
   // Free-form reference (e.g. orderId for a review reminder) for idempotency
   // and observability. Not enforced as FK because senders may be diverse.
@@ -1247,7 +1247,7 @@ model MerchantUser {
   role              UserRole                  @default(owner)
   branches          String[]                  @default([])
   // Cashier users are pinned to one branch (their POS terminal). For other
-  // roles this is informational only — gating is via `branches` above.
+  // roles this is informational only - gating is via `branches` above.
   branchId          String?                   @map("branch_id") @db.Uuid
   branch            Branch?                   @relation("MerchantUserBranch", fields: [branchId], references: [id], onDelete: SetNull)
   tfaEnabled        Boolean                   @default(false) @map("tfa_enabled")
@@ -1303,7 +1303,7 @@ model PasswordResetToken {
 /// Email verification tokens. Created on signup and whenever the merchant
 /// clicks "send again" from the verification banner. We hash the token at
 /// rest (same pattern as PasswordResetToken) so a leaked DB doesn't grant
-/// account access. Tokens are single-use — `usedAt` is set on first hit
+/// account access. Tokens are single-use - `usedAt` is set on first hit
 /// to make replay impossible.
 model EmailVerificationToken {
   id        String       @id @default(uuid()) @db.Uuid
@@ -1333,7 +1333,7 @@ model OtpCode {
 
 /// Platform-wide singleton settings, edited by platform admins from
 /// `/admin/settings`. The `id` is hard-coded to "singleton" so there is
-/// exactly one row — we upsert it from the API. New global defaults
+/// exactly one row - we upsert it from the API. New global defaults
 /// (fallback tokens, feature flags, etc.) get added as new columns here.
 model PlatformSettings {
   id                        String   @id @default("singleton")
@@ -1523,7 +1523,7 @@ model PaymentProviderConfig {
   isActive                  Boolean         @default(false) @map("is_active")
   /// Per-tenant Apple Pay domain-association file content. Only used when the
   /// tenant serves checkout from a custom domain (Tenant.customDomain). Issued
-  /// by Grow per domain. For tenants on the platform domain, leave NULL — the
+  /// by Grow per domain. For tenants on the platform domain, leave NULL - the
   /// /.well-known/ route falls back to APPLE_PAY_DOMAIN_ASSOCIATION_(DEV|PROD).
   applePayDomainAssociation String?         @map("apple_pay_domain_association") @db.Text
   createdAt                 DateTime        @default(now()) @map("created_at")
@@ -1564,7 +1564,7 @@ model PendingPayment {
 // Kiosk-card pre-checkout. Holds the cart snapshot while Grow processes
 // the payment so the Order row only materializes once payment confirms.
 // Avoids the "zombie order" problem where unpaid kiosk attempts leave
-// stale rows in the orders table. Cash kiosk orders skip this — they
+// stale rows in the orders table. Cash kiosk orders skip this - they
 // go straight into Order at status=pending and the cashier confirms.
 model KioskPendingCheckout {
   id           String   @id @default(uuid()) @db.Uuid
@@ -1697,7 +1697,7 @@ model Notice {
 //     externalSource='wolt', externalId=<wolt id>), downloads images to
 //     R2, flips status to committed (or failed + errors[]).
 //
-// The most recent row per tenant gates re-import frequency — we don't
+// The most recent row per tenant gates re-import frequency - we don't
 // need a separate field on Tenant.
 model WoltImport {
   id                 String           @id @default(uuid()) @db.Uuid
@@ -1717,7 +1717,7 @@ model WoltImport {
   // Array of { context: string, message: string } for partial failures.
   errors             Json?
   // Raw Wolt /v4/venues/{id}/menu response, kept for the lifetime of the
-  // row (~megabyte per import — tolerable). Lets the commit step run
+  // row (~megabyte per import - tolerable). Lets the commit step run
   // without re-fetching, and helps when debugging mapping issues.
   rawMenu            Json?            @map("raw_menu")
   // Raw venue payload scraped from the Wolt HTML page (name, address,

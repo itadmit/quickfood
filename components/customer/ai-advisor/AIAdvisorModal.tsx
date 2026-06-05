@@ -62,7 +62,7 @@ function saveChat(tenantSlug: string, data: PersistedChat) {
   try {
     sessionStorage.setItem(STORAGE_PREFIX + tenantSlug, JSON.stringify(data));
   } catch {
-    /* quota or disabled — ignore */
+    /* quota or disabled - ignore */
   }
 }
 
@@ -495,7 +495,7 @@ function EmptyState({
       </div>
       <h2 className="text-xl font-black mb-1">היי, אני היועץ של {tenantName}</h2>
       <p className="text-sm text-qf-mute leading-relaxed max-w-xs">
-        תגיד לי מה בא לך, על איזה תקציב או הגבלות תזונה — אני ממליץ ומרכיב לך הזמנה.
+        תגיד לי מה בא לך, על איזה תקציב או הגבלות תזונה - אני ממליץ ומרכיב לך הזמנה.
       </p>
       <div className="mt-6 grid grid-cols-2 gap-2 w-full">
         {suggestions.map((s) => (

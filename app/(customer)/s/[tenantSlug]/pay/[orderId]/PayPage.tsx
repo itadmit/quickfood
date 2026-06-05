@@ -136,7 +136,7 @@ export function PayPage({
       }
       // Cap invoice polling: stop ~45s after paid even if Grow never
       // ships the invoice (some merchant accounts aren't configured for
-      // invoice generation — we'd poll forever otherwise).
+      // invoice generation - we'd poll forever otherwise).
       if (paidAtMs && Date.now() - paidAtMs > 45_000) {
         stopped = true;
       }
@@ -191,7 +191,7 @@ export function PayPage({
           </p>
         </div>
 
-        {/* Invoice surface — two states only. The customer captures their
+        {/* Invoice surface - two states only. The customer captures their
             email upfront on the kiosk name-entry screen now, so the
             phone pay page never asks for it. Render the download
             button as soon as Grow ships the invoice URL; otherwise show

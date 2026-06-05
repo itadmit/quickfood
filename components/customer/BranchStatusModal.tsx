@@ -26,7 +26,7 @@ export function BusyAlertModal({
         אנחנו בעומס
       </h2>
       <p className="text-sm text-qf-ink2 text-center mt-2 leading-relaxed">
-        ההזמנה תיקח כ-{boostMinutes} דקות יותר מהרגיל. המטבח עובד במלוא הכוח —
+        ההזמנה תיקח כ-{boostMinutes} דקות יותר מהרגיל. המטבח עובד במלוא הכוח -
         תודה על הסבלנות!
       </p>
       <button

@@ -1,5 +1,5 @@
 /**
- * Custom-domain management — Shopify-style.
+ * Custom-domain management - Shopify-style.
  *
  *   GET    → current domain state for this tenant: hostname, status, the
  *            DNS records the merchant must set (A / CNAME / TXT), and any
@@ -78,7 +78,7 @@ function buildDnsRecords(
 
   for (const v of verification ?? []) {
     if (v.type?.toUpperCase() === "TXT") {
-      // Vercel returns the FQDN in `domain` — surface a "name" portion
+      // Vercel returns the FQDN in `domain` - surface a "name" portion
       // relative to the user's apex so they can paste straight into the
       // DNS console.
       const txtName = v.domain.endsWith(hostname)
@@ -162,7 +162,7 @@ export const POST = handler(async (req: Request) => {
   }
 
   // If the same tenant already has a different domain set, clear it from
-  // Vercel before swapping — we keep a single domain per tenant for now.
+  // Vercel before swapping - we keep a single domain per tenant for now.
   const current = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
     select: { customDomain: true },
@@ -212,7 +212,7 @@ export const POST = handler(async (req: Request) => {
   try {
     config = await getDomainConfig(hostname);
   } catch (err) {
-    // Non-fatal — we'll show the default A record (76.76.21.21) and let
+    // Non-fatal - we'll show the default A record (76.76.21.21) and let
     // the merchant verify later when DNS propagates.
     console.warn("[domain] getDomainConfig failed", hostname, err);
   }
@@ -221,7 +221,7 @@ export const POST = handler(async (req: Request) => {
 
   // Persist `apexName` alongside the Vercel config so the DNS-records
   // builder can choose A vs CNAME correctly for `.co.il` and other
-  // multi-part TLDs on future reads (GET / verify) — those code paths
+  // multi-part TLDs on future reads (GET / verify) - those code paths
   // don't re-call Vercel's addDomain so apexName isn't otherwise around.
   const storedConfig: StoredConfig | null = config
     ? { ...config, apexName: addRes.apexName }
@@ -269,7 +269,7 @@ export const DELETE = handler(async () => {
       await removeDomain(t.customDomain);
     } catch (err) {
       if (err instanceof VercelNotConfiguredError) {
-        // platform never had a token — nothing to clean up upstream
+        // platform never had a token - nothing to clean up upstream
       } else if (!(err instanceof VercelApiError) || err.status !== 404) {
         console.warn("[domain] remove failed", t.customDomain, err);
       }

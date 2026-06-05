@@ -12,7 +12,7 @@
  *    (Used when a restaurant runs on its own domain and registered it with
  *    Grow independently.)
  *
- *  - Otherwise the host is the platform domain — return the env-var content
+ *  - Otherwise the host is the platform domain - return the env-var content
  *    APPLE_PAY_DOMAIN_ASSOCIATION_PROD (production) or _DEV (preview/dev).
  *
  * If nothing is configured, return 404 so Apple sees an honest answer.
@@ -36,7 +36,7 @@ function getRequestHost(req: Request): string | null {
 export async function GET(req: Request): Promise<Response> {
   const host = getRequestHost(req)?.toLowerCase().split(":")[0] ?? null;
 
-  // Step 1 — per-tenant override (custom domain)
+  // Step 1 - per-tenant override (custom domain)
   if (host) {
     const tenant = await prisma.tenant.findFirst({
       where: { customDomain: host },
@@ -60,7 +60,7 @@ export async function GET(req: Request): Promise<Response> {
     }
   }
 
-  // Step 2 — platform domain fallback (env)
+  // Step 2 - platform domain fallback (env)
   const isProd =
     process.env.VERCEL_ENV === "production" ||
     process.env.NODE_ENV === "production";

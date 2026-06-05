@@ -41,7 +41,7 @@ const SaleSchema = z.object({
 });
 
 /**
- * POS register sale — same line-item shape as the customer storefront,
+ * POS register sale - same line-item shape as the customer storefront,
  * but `source = pos` + `paymentMethod = cash` (settled by the payment
  * sheet after creation), and tagged with `cashierId + posShiftId` for
  * day-end reporting.
@@ -86,7 +86,7 @@ export const POST = handler(async (req: Request) => {
     }
   }
   // Walk-in details from the cashier (only present when the operator
-  // filled them in — required for card payments, optional for cash).
+  // filled them in - required for card payments, optional for cash).
   if (!customerFirstName && body.guest_name) {
     // Grow PROD requires fullName to have at least two tokens; the wire-
     // side helper adds a "." anyway, but splitting on the first space is
@@ -96,7 +96,7 @@ export const POST = handler(async (req: Request) => {
     if (rest.length > 0) customerLastName = rest.join(" ");
   }
   if (!customerPhone && body.guest_phone) customerPhone = body.guest_phone;
-  // Last resort — merchant fallbacks so the wallet doesn't reject on
+  // Last resort - merchant fallbacks so the wallet doesn't reject on
   // empty fields. Cash flow ignores this since Grow isn't called.
   if (!customerPhone && branch?.phone) customerPhone = branch.phone;
   if (!customerFirstName) customerFirstName = tenant.name;
@@ -120,7 +120,7 @@ export const POST = handler(async (req: Request) => {
       paymentMethod: body.payment_method,
       manualDiscount: body.manual_discount,
       tip: body.tip,
-      kiosk: true, // bypass minOrder — counter sale, not delivery
+      kiosk: true, // bypass minOrder - counter sale, not delivery
       sourceOverride: "pos",
       cashierId: session.userId,
       posShiftId: shift.id,

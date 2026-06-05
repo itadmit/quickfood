@@ -23,7 +23,7 @@ export function signPayload(
 /**
  * Verify a signed payload. Returns true if the signature matches and is within tolerance.
  *
- * Verification reference for receivers — also used by our own tests.
+ * Verification reference for receivers - also used by our own tests.
  */
 export function verifySignature(opts: {
   secret: string;

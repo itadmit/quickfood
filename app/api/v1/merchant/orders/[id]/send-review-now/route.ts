@@ -3,11 +3,11 @@
  *
  * Manual "send the review reminder now" button on the Orders History page.
  * Uses the same `sendReviewReminderNow()` helper as the QStash-scheduled
- * job — so the skip checks (not delivered, already reviewed, channel off,
+ * job - so the skip checks (not delivered, already reviewed, channel off,
  * guest order, no email on customer) stay aligned between the two paths.
  *
  * `allowResend: true` lets the merchant retry an order whose first
- * delivery was dismissed or never landed — we already bail on `review`
+ * delivery was dismissed or never landed - we already bail on `review`
  * being set, so they can't spam someone who has already rated.
  */
 
@@ -25,9 +25,9 @@ const HUMAN_REASONS: Record<string, string> = {
   already_reviewed: "כבר התקבלה ביקורת על ההזמנה",
   reviews_disabled: "ביקורות לקוחות כבויות בהגדרות",
   channel_off: "ערוץ הביקורות כבוי בהגדרות",
-  whatsapp_managed_inactive: "מנוי ווטסאפ ביקורות אינו פעיל — הפעל את המנוי כדי לשלוח",
-  guest_order: "אין ללקוח טלפון/חשבון — לא ניתן לשלוח",
-  no_email_on_customer: "אין מייל ללקוח — בחר ערוץ SMS/וואטסאפ או בקש מייל",
+  whatsapp_managed_inactive: "מנוי ווטסאפ ביקורות אינו פעיל - הפעל את המנוי כדי לשלוח",
+  guest_order: "אין ללקוח טלפון/חשבון - לא ניתן לשלוח",
+  no_email_on_customer: "אין מייל ללקוח - בחר ערוץ SMS/וואטסאפ או בקש מייל",
   dismissed: "הלקוח דחה את הבקשה לדרג",
   already_sent: "כבר נשלחה ביקורת על ההזמנה",
 };

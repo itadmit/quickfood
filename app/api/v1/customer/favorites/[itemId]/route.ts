@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Toggle a favorite. Customers-only — guests don't have anywhere to
+ * Toggle a favorite. Customers-only - guests don't have anywhere to
  * persist the favorite to. The composite (customerId, itemId) PK on
  * Favorite means we can use a single upsert / delete without an
  * existence-check round-trip; we use deleteMany so a "remove" call is
@@ -19,7 +19,7 @@ export const POST = handler(async (_req, { params }: { params: Promise<{ itemId:
   }
   const { itemId } = await params;
 
-  // Item must exist — protects against a spam attacker creating phantom
+  // Item must exist - protects against a spam attacker creating phantom
   // favorites for IDs that don't belong to any tenant.
   const item = await prisma.menuItem.findUnique({
     where: { id: itemId },

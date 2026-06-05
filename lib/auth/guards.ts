@@ -3,7 +3,7 @@ import { apiError } from "@/lib/api-response";
 import { assertApiKeyRateLimit } from "@/lib/api/rate-limit";
 
 /**
- * Guards — call from API Route Handlers. Throw a Response on failure.
+ * Guards - call from API Route Handlers. Throw a Response on failure.
  * Usage:
  *   const session = await requireCustomer();
  *   // ... use session.userId

@@ -165,7 +165,7 @@ export function ItemPreviewModal({ itemId, onClose }: { itemId: string; onClose:
               <span className="font-semibold tnum">{formatPrice(totalBase)}</span>
             </div>
             <div className="px-5 pb-5 pt-2 text-[11px] text-qf-mute text-center">
-              תצוגה מקדימה — כך הלקוח יראה את הפריט באפליקציה
+              תצוגה מקדימה - כך הלקוח יראה את הפריט באפליקציה
             </div>
           </>
         )}

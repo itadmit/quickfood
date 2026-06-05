@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/shared/Skeleton";
 /**
  * Storefront fallback. Mirrors <CustomerHome/> so the click-to-paint
  * transition stays shape-stable on both mobile and desktop:
- *   - hero (cover-image-replacement) — green on mobile, neutral on desktop
+ *   - hero (cover-image-replacement) - green on mobile, neutral on desktop
  *   - status pill straddling the hero/body seam
  *   - previous-orders row (2 cards on mobile, 3 on desktop)
  *   - categories rail (16x16 mobile / 6–8 col grid on lg+)
@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/shared/Skeleton";
 export default function CustomerHomeLoading() {
   return (
     <div className="pb-24 lg:pb-12">
-      {/* Hero — replaces the cover image / green band */}
+      {/* Hero - replaces the cover image / green band */}
       <header className="relative bg-qf-green-soft text-white px-5 pt-5 pb-12 overflow-hidden rounded-b-3xl lg:rounded-none lg:px-6 lg:pt-12 lg:pb-16">
         <div className="lg:max-w-7xl lg:mx-auto">
           {/* Mobile pill + icon row */}
@@ -47,12 +47,12 @@ export default function CustomerHomeLoading() {
         </div>
       </header>
 
-      {/* Status pill — straddles the seam, exactly like the real page */}
+      {/* Status pill - straddles the seam, exactly like the real page */}
       <section className="px-5 -mt-6 relative z-10 lg:max-w-7xl lg:mx-auto lg:px-6 lg:-mt-7">
         <Skeleton className="h-12 rounded-full bg-white shadow-sm lg:max-w-2xl lg:mx-auto" />
       </section>
 
-      {/* Previous orders rail — desktop shows up to 3 in a row */}
+      {/* Previous orders rail - desktop shows up to 3 in a row */}
       <section className="px-5 mt-5 lg:max-w-7xl lg:mx-auto lg:px-6 lg:mt-8">
         <div className="flex items-center justify-between mb-2 lg:mb-4">
           <Skeleton className="h-4 lg:h-5 w-32" />

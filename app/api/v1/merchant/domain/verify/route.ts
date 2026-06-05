@@ -56,7 +56,7 @@ export const POST = handler(async () => {
   }
 
   // Preserve `apexName` (and any other long-lived fields we add later)
-  // when we refresh `customDomainConfig` from Vercel below — Vercel's
+  // when we refresh `customDomainConfig` from Vercel below - Vercel's
   // `/domains/{name}/config` response doesn't include apexName.
   const previousApexName = (tenant.customDomainConfig as { apexName?: string } | null)
     ?.apexName;

@@ -149,7 +149,7 @@ export const DELETE = handler(async (_req, { params }: { params: Promise<{ id: s
   });
   if (!existing) return apiError("not_found", "קטלוג לא נמצא", 404);
 
-  // ItemOptionGroup.templateSetId is ON DELETE SET NULL — attached groups
+  // ItemOptionGroup.templateSetId is ON DELETE SET NULL - attached groups
   // become inline again but their inline options are preserved, so the
   // attached items keep working.
   const attached = await prisma.itemOptionGroup.findMany({

@@ -35,7 +35,7 @@ export default function LivePhoneDemo({ src, title }: Props) {
 }
 
 /**
- * iOS-style spinner — 12 rounded dashes rotating around a center, each one
+ * iOS-style spinner - 12 rounded dashes rotating around a center, each one
  * fading on a 12-step phase loop. Pure SVG + CSS so it works without JS.
  */
 function IosSpinner() {

@@ -11,7 +11,7 @@ interface Props {
 }
 
 /**
- * Standard QuickFood toggle — black-bordered pill with primary-color
+ * Standard QuickFood toggle - black-bordered pill with primary-color
  * fill when on, solid black when off, and a centered white indicator
  * that slides between corners. RTL-aware (uses inset-inline-*).
  */

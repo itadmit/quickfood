@@ -2,7 +2,7 @@ import { cache } from "react";
 import { prisma } from "@/lib/db/client";
 
 /**
- * Resolve tenant by slug — cached per request via React `cache()`.
+ * Resolve tenant by slug - cached per request via React `cache()`.
  * Returns null if not found.
  */
 export const resolveTenantBySlug = cache(async (slug: string) => {

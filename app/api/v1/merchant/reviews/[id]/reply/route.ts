@@ -34,7 +34,7 @@ export const POST = handler(async (req: Request, { params }: { params: Promise<{
   });
 
   // Best-effort notification: tell the customer the merchant replied.
-  // Only when we have an email — silently skip otherwise. Failures
+  // Only when we have an email - silently skip otherwise. Failures
   // never propagate (the reply itself is the source of truth in DB).
   if (review.customer?.email) {
     const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "https://quickfood.co.il";

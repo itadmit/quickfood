@@ -32,7 +32,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ orderId:
 
     // Visibility matches GET /api/v1/customer/orders/[id]: a logged-in
     // customer must own the order; guest orders stay public-by-UUID
-    // (MVP — the receipt link is the auth token). The SSE used to skip
+    // (MVP - the receipt link is the auth token). The SSE used to skip
     // this check entirely, leaking live courier GPS + phone to anyone
     // who knew the order UUID.
     const session = await getSession();

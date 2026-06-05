@@ -8,7 +8,7 @@
  * Flow:
  *  1. QStash POSTs here with `{ orderId }` after the tenant's delay.
  *  2. We verify the QStash signature on the raw request body.
- *  3. Delegate to sendReviewReminderNow() — with allowResend=false so
+ *  3. Delegate to sendReviewReminderNow() - with allowResend=false so
  *     the helper bails if the row was already sent (e.g. the merchant
  *     hit the manual button before the timer fired).
  */

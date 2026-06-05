@@ -33,7 +33,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!session || session.type !== "merchant") {
     redirect("/dashboard/login");
   }
-  // Cashier role is locked to /pos at the route level too — bouncing
+  // Cashier role is locked to /pos at the route level too - bouncing
   // here avoids a wasted SSR render before the client guard kicks in.
   if (session.role === "cashier") {
     redirect("/pos");
@@ -80,7 +80,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // so the merchant can flip between skins without us touching the route.
   const isV2 = tenant.dashboardVersion === "v2";
 
-  // Email verification takes precedence over the trial/billing banner —
+  // Email verification takes precedence over the trial/billing banner -
   // showing both at once piles two CTAs on top of each other and makes the
   // dashboard feel anxious. Billing surfaces only after the user has
   // verified the email; the trial timer keeps ticking either way.
@@ -96,7 +96,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         // cream backdrop are inline because they reach through the dot
         // grid behind the cards.
         <div
-          // `overflow-x-clip` (not `-hidden`) — `-hidden` implies a
+          // `overflow-x-clip` (not `-hidden`) - `-hidden` implies a
           // scroll container, which captures the page scroll and
           // breaks the sidebar's `position: sticky`. `-clip` clips
           // overflow without creating a new scroll context.

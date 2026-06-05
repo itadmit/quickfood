@@ -38,7 +38,7 @@ export function PosTopBar({ onCloseShift }: { onCloseShift: () => void }) {
         const data = await res.json();
         if (!stopped) setQueueCount(typeof data.count === "number" ? data.count : 0);
       } catch {
-        // network blips are fine — next tick retries
+        // network blips are fine - next tick retries
       }
     }
     tick();

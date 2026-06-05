@@ -1,7 +1,7 @@
 /**
  * Payment provider types (QuickFood, multi-tenant restaurant SaaS).
  *
- * Amounts in this module are in shekels (decimal) — callers convert from
+ * Amounts in this module are in shekels (decimal) - callers convert from
  * Order.total (אגורות, Int) by dividing by 100 before passing in.
  */
 
@@ -14,7 +14,7 @@ export type TransactionStatus = "pending" | "processing" | "success" | "failed" 
 // ─── Configuration ─────────────────────────────────────────────
 
 export interface ProviderCredentials {
-  // Grow per-merchant. PRODUCTION requires apiKey per tenant — sandbox
+  // Grow per-merchant. PRODUCTION requires apiKey per tenant - sandbox
   // shares one platform key but live merchants each have their own.
   userId?: string;
   pageCode?: string; // optional override of platform default

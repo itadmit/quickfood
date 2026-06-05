@@ -159,7 +159,7 @@ export function CourierOrderDetail({ orderId }: { orderId: string }) {
                 .join(" · ")}
             </p>
           )}
-          {/* Don't double-print delivery_notes — it's already the address
+          {/* Don't double-print delivery_notes - it's already the address
               line when no structured address row exists. Only surface a
               note here when it's distinct from the line above. */}
           {(order.address?.notes ||
@@ -228,7 +228,7 @@ export function CourierOrderDetail({ orderId }: { orderId: string }) {
           </p>
           {order.tip > 0 && !isCash && (
             <p className="text-[11px] text-white/60">
-              הטיפ שולם בכרטיס וירשם כחוב של בעל העסק כלפיך — לבקש בקופה.
+              הטיפ שולם בכרטיס וירשם כחוב של בעל העסק כלפיך - לבקש בקופה.
             </p>
           )}
         </div>
@@ -242,7 +242,7 @@ export function CourierOrderDetail({ orderId }: { orderId: string }) {
                 <span className="text-white/80">
                   {it.name}
                   {it.size ? ` · ${it.size}` : ""}
-                  {it.notes ? ` — ${it.notes}` : ""}
+                  {it.notes ? ` - ${it.notes}` : ""}
                 </span>
               </li>
             ))}

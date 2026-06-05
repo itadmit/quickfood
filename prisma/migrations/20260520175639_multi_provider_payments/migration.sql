@@ -13,7 +13,7 @@ ALTER TABLE "tenants" ADD COLUMN "accepts_cash" BOOLEAN NOT NULL DEFAULT true;
 --      can toggle it on in the settings UI.
 UPDATE "tenants" SET "accepts_cash" = false WHERE "payment_provider" = 'grow';
 
--- 3) Drop the old single-provider column. The PaymentProvider enum stays —
+-- 3) Drop the old single-provider column. The PaymentProvider enum stays -
 --    it's still used by payment_provider_configs / pending_payments /
 --    payment_transactions to differentiate provider types.
 ALTER TABLE "tenants" DROP COLUMN "payment_provider";

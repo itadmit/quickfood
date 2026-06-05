@@ -2,7 +2,7 @@ import { AuthShell } from "@/components/shared/AuthShell";
 import ResetPasswordForm from "./ResetPasswordForm";
 
 export const metadata = {
-  title: "סיסמה חדשה — QuickFood",
+  title: "סיסמה חדשה - QuickFood",
 };
 
 interface SearchParams {

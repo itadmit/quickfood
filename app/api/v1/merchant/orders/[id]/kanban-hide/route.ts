@@ -1,8 +1,8 @@
 /**
- * POST   /api/v1/merchant/orders/[id]/kanban-hide   — hide from Kanban
- * DELETE /api/v1/merchant/orders/[id]/kanban-hide   — restore to Kanban
+ * POST   /api/v1/merchant/orders/[id]/kanban-hide   - hide from Kanban
+ * DELETE /api/v1/merchant/orders/[id]/kanban-hide   - restore to Kanban
  *
- * Stamps / clears Order.kanbanHiddenAt. The order itself is untouched —
+ * Stamps / clears Order.kanbanHiddenAt. The order itself is untouched -
  * status stays the same, billing stays the same, History keeps showing
  * it. Just a soft hide so the active-orders board doesn't carry stale
  * cards forever (timeouts, duplicates, walk-offs).

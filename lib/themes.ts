@@ -1,5 +1,5 @@
 /**
- * Design tokens — ported verbatim from prototypes:
+ * Design tokens - ported verbatim from prototypes:
  * - /Users/tadmitinteractive/Downloads/pizza/prototypes/app.jsx  (mobile)
  * - /Users/tadmitinteractive/Downloads/pizza/prototypes/dashboard.jsx (dashboard + 7 themes)
  */

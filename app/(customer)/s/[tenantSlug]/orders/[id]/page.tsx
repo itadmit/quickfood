@@ -70,10 +70,10 @@ export default async function OrderTrackingPage({
   // Review eligibility: three independent proofs of ownership, any one of
   // which unlocks the form.
   //  1. Cookie session whose customerId matches (logged-in customer).
-  //  2. Signed HMAC token in the URL (?t=…) — used by the review-reminder
+  //  2. Signed HMAC token in the URL (?t=…) - used by the review-reminder
   //     email and by the same-device localStorage path (the page re-loads
   //     itself with ?t= when it finds a stored token for this order).
-  //  3. (client-only) localStorage holds a stored token from checkout —
+  //  3. (client-only) localStorage holds a stored token from checkout -
   //     handled by OrderTracking.tsx on mount.
   const session = await getSession();
   const sessionMatches =

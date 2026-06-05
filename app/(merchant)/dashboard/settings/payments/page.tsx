@@ -42,7 +42,7 @@ export default async function PaymentsSettingsPage() {
 
   return (
     <div className="space-y-5">
-      <SettingsHeader subtitle="איזה אמצעי תשלום המסעדה מקבלת — הלקוח יבחר בקופה" />
+      <SettingsHeader subtitle="איזה אמצעי תשלום המסעדה מקבלת - הלקוח יבחר בקופה" />
       <PaymentsForm
         canEditApplePay={Boolean(tenant.customDomain)}
         customDomain={tenant.customDomain}

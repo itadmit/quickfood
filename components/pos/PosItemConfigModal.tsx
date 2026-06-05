@@ -58,7 +58,7 @@ export interface PosItemConfigResult {
 interface Props {
   tenantSlug: string;
   itemId: string;
-  /** When set, the modal opens in edit mode — prefilled from the line, and
+  /** When set, the modal opens in edit mode - prefilled from the line, and
    *  the confirm button reads "עדכן שורה" instead of "הוסף". */
   existingLine?: CartLine;
   onClose: () => void;
@@ -66,8 +66,8 @@ interface Props {
 }
 
 /**
- * Cashier-side item configuration. Lighter than the customer ItemDetail —
- * no hero image, no upsell, no tags, no description, no AI advisor — just
+ * Cashier-side item configuration. Lighter than the customer ItemDetail -
+ * no hero image, no upsell, no tags, no description, no AI advisor - just
  * the picker: size, every option group (incl. half-and-half for pizza),
  * notes, quantity, add. Mirrors the customer's pricing math exactly so a
  * POS-rung order totals the same as one rung through the storefront.
@@ -90,7 +90,7 @@ export function PosItemConfigModal({
   const [flashGroupId, setFlashGroupId] = useState<string | null>(null);
 
   // Load the full item (sizes + option groups). The customer storefront's
-  // public menu-item endpoint already returns exactly the shape we need —
+  // public menu-item endpoint already returns exactly the shape we need -
   // reuse it as-is rather than maintaining a parallel merchant version.
   useEffect(() => {
     fetch(`/api/v1/customer/menu-item?slug=${encodeURIComponent(tenantSlug)}&id=${encodeURIComponent(itemId)}`)
@@ -151,7 +151,7 @@ export function PosItemConfigModal({
     setHalfPicks(nextHalfPicks);
   }, [item, existingLine]);
 
-  // Required-group validation — same rule as the customer screen.
+  // Required-group validation - same rule as the customer screen.
   const missingGroup = useMemo<OptionGroup | null>(() => {
     if (!item) return null;
     for (const g of item.optionGroups) {

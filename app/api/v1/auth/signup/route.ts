@@ -29,7 +29,7 @@ const HoursMapSchema = z.object({
   saturday: DayHoursSchema,
 });
 
-// Hebrew error messages on every constraint — the generic Zod fallback
+// Hebrew error messages on every constraint - the generic Zod fallback
 // ("String must contain at least 2 character(s)") used to surface raw
 // into the signup UI, and a merchant who forgot to fill business_name
 // would see that English string under the phone field with no clue
@@ -43,7 +43,7 @@ const SignupSchema = z.object({
     .string({ required_error: "כתובת באתר חסרה" })
     .min(2, "כתובת באתר חייבת להכיל לפחות 2 תווים")
     .max(40, "כתובת באתר ארוכה מדי")
-    .regex(/^[a-z0-9-]+$/, "כתובת באתר באנגלית בלבד — אותיות קטנות, ספרות ומקפים"),
+    .regex(/^[a-z0-9-]+$/, "כתובת באתר באנגלית בלבד - אותיות קטנות, ספרות ומקפים"),
   business_type: z
     .enum([
       "pizza",
@@ -86,7 +86,7 @@ const SignupSchema = z.object({
 
   // Optional fields populated by the signup wizard's Wolt pre-step.
   // Each field is opt-in (the mapping UI lets the merchant tick which
-  // fields to keep from Wolt) — anything omitted falls back to either
+  // fields to keep from Wolt) - anything omitted falls back to either
   // an empty value or the signup default (e.g. default hours).
   logo_url: z.string().url().optional().nullable(),
   cover_image_url: z.string().url().optional().nullable(),
@@ -200,7 +200,7 @@ export const POST = handler(async (req: Request) => {
   const trialEndsAt = new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
 
   // Create the billing-hub customer up-front so we have an id to reference
-  // when the merchant later clicks "complete billing setup". Best-effort —
+  // when the merchant later clicks "complete billing setup". Best-effort -
   // signup must not fail just because the hub is briefly unreachable.
   try {
     const customer = await createCustomer({
@@ -227,7 +227,7 @@ export const POST = handler(async (req: Request) => {
     });
   }
 
-  // Verification + welcome emails — fire-and-forget; signup must not fail
+  // Verification + welcome emails - fire-and-forget; signup must not fail
   // if Resend hiccups. Verification carries the "activate" CTA and is the
   // main email the merchant cares about; the welcome runs alongside so
   // existing copy keeps working until we consolidate.

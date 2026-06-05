@@ -43,7 +43,7 @@ export default function CheckoutLoading() {
             </div>
           </Card>
 
-          {/* 3. Order summary — mobile only (desktop puts this in the sidebar). */}
+          {/* 3. Order summary - mobile only (desktop puts this in the sidebar). */}
           <div className="lg:hidden">
             <SummaryCardSkeleton />
           </div>
@@ -78,7 +78,7 @@ export default function CheckoutLoading() {
           </Card>
         </div>
 
-        {/* Desktop sticky sidebar — full summary card with CTA inside it. */}
+        {/* Desktop sticky sidebar - full summary card with CTA inside it. */}
         <aside className="hidden lg:block lg:col-start-2 lg:sticky lg:top-20 lg:self-start">
           <SummaryCardSkeleton withCta />
         </aside>

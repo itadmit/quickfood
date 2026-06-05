@@ -41,11 +41,11 @@ const BulkPriceSchema = z
  * "all pizzas go up by 5%" or "all sides drop to ₪12."
  *
  * Adjustment types:
- *   percent_increase   p% — newPrice = round(price * (1 + p/100))
- *   percent_decrease   p% — newPrice = round(price * (1 - p/100))
- *   fixed_add          ₪x — newPrice = price + x
- *   fixed_subtract     ₪x — newPrice = max(0, price - x)
- *   set                ₪x — newPrice = x   (overrides every selected item)
+ *   percent_increase   p% - newPrice = round(price * (1 + p/100))
+ *   percent_decrease   p% - newPrice = round(price * (1 - p/100))
+ *   fixed_add          ₪x - newPrice = price + x
+ *   fixed_subtract     ₪x - newPrice = max(0, price - x)
+ *   set                ₪x - newPrice = x   (overrides every selected item)
  *
  * Prices are integer shekels (NOT agorot) per the project convention. We
  * use Math.round for percent (banker's-friendly enough at this scale) and
@@ -60,7 +60,7 @@ export const POST = handler(async (req: Request) => {
   // Load the candidate items first so we can compute new prices and skip
   // anything from outside the tenant in one round-trip. updateMany() can't
   // do per-row math in Postgres without raw SQL, so we batch with a
-  // transaction of single updates — fine for the ~500-item upper bound a
+  // transaction of single updates - fine for the ~500-item upper bound a
   // single tenant will hit.
   const where = {
     tenantId: session.tenantId,
@@ -102,7 +102,7 @@ export const POST = handler(async (req: Request) => {
     newPrice: computeNew(it.basePrice),
   }));
 
-  // Skip no-op writes — useful when "+0%" was sent by accident or for items
+  // Skip no-op writes - useful when "+0%" was sent by accident or for items
   // where the math lands on the same integer.
   const real = updates.filter((u) => u.newPrice !== u.oldPrice);
 

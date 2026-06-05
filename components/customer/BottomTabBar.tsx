@@ -13,7 +13,7 @@ export function BottomTabBar({ tenantSlug }: { tenantSlug: string }) {
   const showReviewsTab = !!tenant?.reviewsPublic;
 
   const homePath = `/s/${tenantSlug}`;
-  // Menu lives inline on the home page — the "תפריט" tab is just a
+  // Menu lives inline on the home page - the "תפריט" tab is just a
   // scroll-anchor variant of the storefront route. On other pages
   // (cart, checkout, etc.) clicking it navigates back to home and the
   // browser scrolls to the anchor.
@@ -22,7 +22,7 @@ export function BottomTabBar({ tenantSlug }: { tenantSlug: string }) {
 
   // When viewing the home page, watch the inline `#menu-section` band.
   // While it's in the viewport we swap the active tab from "בית" to
-  // "תפריט" — same affordance as if menu were a separate page.
+  // "תפריט" - same affordance as if menu were a separate page.
   const [scrolledIntoMenu, setScrolledIntoMenu] = useState(false);
   useEffect(() => {
     if (!onHome) {
@@ -36,7 +36,7 @@ export function BottomTabBar({ tenantSlug }: { tenantSlug: string }) {
         for (const entry of entries) setScrolledIntoMenu(entry.isIntersecting);
       },
       // Activates once the menu section's top edge crosses 35% from the
-      // viewport top — matches the visual "I'm reading the menu now" moment.
+      // viewport top - matches the visual "I'm reading the menu now" moment.
       { rootMargin: "-35% 0px -50% 0px", threshold: 0 },
     );
     observer.observe(el);
@@ -79,7 +79,7 @@ export function BottomTabBar({ tenantSlug }: { tenantSlug: string }) {
 
   function handleClick(key: TabKey, e: React.MouseEvent) {
     if (!onHome) return;
-    // On the home page the menu is inline — clicking "תפריט" should
+    // On the home page the menu is inline - clicking "תפריט" should
     // scroll to it instead of navigating away. Same for "בית" → scroll
     // to top.
     if (key === "menu") {

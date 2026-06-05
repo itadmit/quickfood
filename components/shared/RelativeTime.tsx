@@ -13,7 +13,7 @@ interface Props {
  * Renders a human-friendly "לפני X דק'" label without causing React hydration
  * mismatches (error #418).
  *
- * The naïve approach — calling `formatRelativeMinutes` directly in render —
+ * The naïve approach - calling `formatRelativeMinutes` directly in render -
  * computes `Date.now() - date` at server-render time and again at the client's
  * first paint. Even small clock drift produces different text on each side,
  * which React 19 surfaces as a hydration error.

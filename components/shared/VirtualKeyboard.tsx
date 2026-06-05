@@ -12,8 +12,8 @@ import { IcoClose } from "@/components/shared/Icons";
 const KEYBOARD_HEIGHT_PX = 540;
 
 // Standard Israeli QWERTY (he) + US QWERTY (en) flattened to a
-// 10-column grid so every key — letters, digits, punctuation,
-// backspace — renders at the exact same width (the width of one ל).
+// 10-column grid so every key - letters, digits, punctuation,
+// backspace - renders at the exact same width (the width of one ל).
 // Missing letter slots are filled with `.` / `-` / `,` so a lone key
 // never stretches; backspace tucks in at the end of row 4 in a single
 // column. The bottom strip carries space (8 columns) + done (2
@@ -21,13 +21,13 @@ const KEYBOARD_HEIGHT_PX = 540;
 // without breaking the column rhythm.
 type Lang = "he" | "en";
 
-// Both layouts render LTR — the on-screen keyboard mirrors a physical
+// Both layouts render LTR - the on-screen keyboard mirrors a physical
 // Israeli QWERTY where ק sits on the left (mapped to Q) and פ on the
 // right (mapped to P), regardless of the document direction. RTL'ing
 // the rows would put ק on the right, which is the opposite of every
 // keyboard customers have ever touched. Backspace is embedded in the
 // row arrays as the `BS` sentinel so it can sit at whatever slot the
-// layout needs — in HE we put it at the end of the top letter row
+// layout needs - in HE we put it at the end of the top letter row
 // (where `-` used to be), in EN it stays at the end of the bottom row.
 const BS = "⌫";
 const LAYOUT: Record<Lang, { rows: string[][] }> = {

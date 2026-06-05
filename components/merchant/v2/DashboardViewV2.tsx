@@ -47,7 +47,7 @@ const RANGES: Array<{ key: "today" | "yesterday" | "7d" | "30d"; label: string }
 ];
 
 /**
- * V2 of the merchant home — same data shape as DashboardView, but
+ * V2 of the merchant home - same data shape as DashboardView, but
  * rebuilt with the landing-page aesthetic (yellow + bold black borders +
  * hard black drop-shadows). Rendered when tenant.dashboardVersion === "v2".
  *
@@ -115,7 +115,7 @@ export function DashboardViewV2({
             </h1>
           </div>
 
-          {/* Range switcher — black-bordered tabs */}
+          {/* Range switcher - black-bordered tabs */}
           <div className="inline-flex bg-white rounded-xl border-2 border-black p-1 self-start sm:self-auto shadow-[0_2px_0_#000]">
             {RANGES.map((r) => (
               <button
@@ -148,7 +148,7 @@ export function DashboardViewV2({
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm lg:text-base font-black text-black">
-                התפריט שלכם עוד ריק — בואו נתחיל
+                התפריט שלכם עוד ריק - בואו נתחיל
               </div>
               <div className="text-xs lg:text-sm text-black/65 mt-0.5">
                 לחצו כאן כדי להוסיף את הפריט הראשון לתפריט.
@@ -163,7 +163,7 @@ export function DashboardViewV2({
       )}
 
       {/* ─── KPI TILES ──────────────────────────────────────────── */}
-      {/* Quiet by default — only the "primary" KPI (orders) wears the
+      {/* Quiet by default - only the "primary" KPI (orders) wears the
           full bold treatment, the rest sit as restrained white cards
           with a tiny yellow rule on top as the only color cue. Avoids
           the "4 mini-heroes competing with the actual hero" trap. */}
@@ -338,7 +338,7 @@ export function DashboardViewV2({
   );
 }
 
-/** Card primitive — quiet surface that lets the hero do the talking.
+/** Card primitive - quiet surface that lets the hero do the talking.
     The bold-black-shadow treatment is reserved for the hero + the
     primary KPI tile + the active sidebar item. Reusing it on every
     card was visually exhausting. */
@@ -382,7 +382,7 @@ function KpiTile({
    * "primary" = the one KPI we want eyes on first (currently orders).
    * Wears the full bold treatment: yellow surface, black border, hard
    * shadow. "quiet" = white card with a thin yellow rule on top as the
-   * only color cue — keeps the grid from looking like 4 mini-heroes.
+   * only color cue - keeps the grid from looking like 4 mini-heroes.
    */
   accent: "primary" | "quiet";
 }) {
@@ -406,7 +406,7 @@ function KpiTile({
     );
   }
 
-  // Quiet variant — small yellow rule along the top edge is the only
+  // Quiet variant - small yellow rule along the top edge is the only
   // brand cue. Border + shadow as faint as the regular Card.
   return (
     <div className="relative bg-white rounded-2xl border border-black/10 p-3 lg:p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] overflow-hidden">
@@ -538,7 +538,7 @@ function RecentStatusChipV2({ status }: { status: string }) {
     );
   }
 
-  // idle (pending, confirmed) — clean black-bordered white pill
+  // idle (pending, confirmed) - clean black-bordered white pill
   return (
     <span className={cn(base, "border-black bg-white text-black")}>
       {meta.label}

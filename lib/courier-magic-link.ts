@@ -6,7 +6,7 @@ export const COURIER_MAGIC_LINK_TTL_MINUTES = 60;
 /**
  * Mint a single-use magic-link token for a courier and return the
  * absolute verify URL the merchant can hand to them. Same shape as the
- * /merchant/couriers/[id]/magic-link endpoint — extracted so callers
+ * /merchant/couriers/[id]/magic-link endpoint - extracted so callers
  * (e.g. the welcome email on courier creation) don't have to round-trip
  * through that route.
  */

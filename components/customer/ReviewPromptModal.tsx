@@ -91,7 +91,7 @@ export function ReviewPromptModal({
   }
 
   function close() {
-    // Just hide for this session — don't persist dismissal.
+    // Just hide for this session - don't persist dismissal.
     setOpen(false);
   }
 

@@ -89,7 +89,7 @@ export default async function CustomerLayout({
       : null;
 
   // Show the "you're viewing your own storefront" bar only when the logged-in
-  // merchant owns *this* tenant — a manager of a different store browsing
+  // merchant owns *this* tenant - a manager of a different store browsing
   // here shouldn't see a "manage" CTA that lands them somewhere unrelated.
   const isOwnMerchant =
     session?.type === "merchant" && session.tenantId === tenant.id;

@@ -2,7 +2,7 @@
  * PATCH /api/v1/merchant/menu/items/[id]/featured
  *
  * Toggles whether a menu item is in the storefront's "popular" / featured
- * section. Mirrors the availability endpoint — narrow, fast, optimistic-update
+ * section. Mirrors the availability endpoint - narrow, fast, optimistic-update
  * friendly.
  */
 

@@ -13,7 +13,7 @@ interface QuickFoodLogoProps {
 }
 
 /**
- * QuickFood brand lockup — purple gradient icon with a script "F" + the
+ * QuickFood brand lockup - purple gradient icon with a script "F" + the
  * "Quick Food" wordmark, both in Pacifico.
  *
  * The icon is rendered as inline SVG (not <img>) so the <text> inside picks
@@ -21,7 +21,7 @@ interface QuickFoodLogoProps {
  * lives at /branding/icon.svg for places that need a URL (favicon, OG image,
  * <link rel> tags).
  *
- * For per-tenant restaurant branding use Tenant.logoLetter / logoUrl — this
+ * For per-tenant restaurant branding use Tenant.logoLetter / logoUrl - this
  * lockup is for the *platform* brand only.
  */
 export function QuickFoodLogo({

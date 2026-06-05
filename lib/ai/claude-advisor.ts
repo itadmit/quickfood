@@ -82,7 +82,7 @@ export async function* streamClaudeChat(opts: {
           try {
             parsed = tracked.json.length > 0 ? JSON.parse(tracked.json) : {};
           } catch {
-            /* incomplete JSON — skip */
+            /* incomplete JSON - skip */
           }
           yield {
             kind: "tool",

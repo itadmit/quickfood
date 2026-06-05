@@ -18,7 +18,7 @@ type PosTip =
   | { mode: "fixed"; value: number };
 
 /** A ticket the cashier set aside ("park sale") so they can ring another
- *  customer in between. Lives in localStorage — no DB row — because the
+ *  customer in between. Lives in localStorage - no DB row - because the
  *  order shouldn't materialize until it's actually paid. */
 export interface ParkedTicket {
   id: string;
@@ -29,7 +29,7 @@ export interface ParkedTicket {
   notes: string;
   discount: PosDiscount | null;
   tip: PosTip | null;
-  /** Cached subtotal at park time — saves recomputing in the recall list. */
+  /** Cached subtotal at park time - saves recomputing in the recall list. */
   subtotal: number;
 }
 
@@ -137,7 +137,7 @@ export function PosCartProvider({
         if (Array.isArray(parsedParked)) setParked(parsedParked as ParkedTicket[]);
       }
     } catch {
-      // Corrupt cart — reset rather than block the cashier.
+      // Corrupt cart - reset rather than block the cashier.
     }
     setHydrated(true);
   }, [tenantSlug]);

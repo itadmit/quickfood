@@ -3,23 +3,23 @@
  *
  * Architecture in three layers:
  *
- *   1. Defaults (this file) — every user-facing string in the kiosk,
+ *   1. Defaults (this file) - every user-facing string in the kiosk,
  *      keyed by a dotted path ("payQr.steps.scan"). Hebrew today; an
  *      `en.ts` / `ar.ts` neighbour can be added later without touching
  *      callers.
  *
- *   2. Tenant overrides — flat dotted-key JSON on `Tenant.kioskStringOverrides`.
+ *   2. Tenant overrides - flat dotted-key JSON on `Tenant.kioskStringOverrides`.
  *      A single missing key falls through to the default; a fully empty
  *      object (the default) means "everything stock".
  *
- *   3. Interpolation — `{token}` placeholders the caller passes in
+ *   3. Interpolation - `{token}` placeholders the caller passes in
  *      `params`. Used for amounts, names, counts, etc.
  *
  * Callers see one function: `t("path.to.key", { token: "value" })`.
  *
  * Future i18n hook: when we add other locales, the build step picks
  * which defaults file to merge here. The override key shape stays
- * locale-agnostic — merchants type one Hebrew override, not three.
+ * locale-agnostic - merchants type one Hebrew override, not three.
  */
 
 export type KioskOverrides = Record<string, string>;
@@ -45,7 +45,7 @@ export const KIOSK_DEFAULTS_HE = {
     subtitleRequired:
     "נשלח קוד אימות ל-WhatsApp. נשתמש במספר הטלפון כדי לזהות אתכם ולעדכן אתכם כשההזמנה תהיה מוכנה.",
     subtitleOptional:
-      "נשלח לכם באסמס את החשבונית ועדכון כשההזמנה מוכנה. אופציונלי — אפשר לדלג.",
+      "נשלח לכם באסמס את החשבונית ועדכון כשההזמנה מוכנה. אופציונלי - אפשר לדלג.",
     placeholder: "050-0000000",
     clearKey: "נקה",
     backspaceLabel: "מחק ספרה",
@@ -74,7 +74,7 @@ export const KIOSK_DEFAULTS_HE = {
     headingPrefilled: "האם השם נכון?",
     headingFresh: "מה השם שלכם?",
     subtitlePrefilled:
-      "שלום {name} — נקרא לכם בשם הזה כשההזמנה מוכנה. אפשר לערוך.",
+      "שלום {name} - נקרא לכם בשם הזה כשההזמנה מוכנה. אפשר לערוך.",
     subtitlePrefilledNoName:
       "נקרא לכם בשם הזה כשההזמנה מוכנה. אפשר לערוך.",
     subtitleFresh: "נקרא לכם בשם כשההזמנה מוכנה.",
@@ -111,7 +111,7 @@ export const KIOSK_DEFAULTS_HE = {
     step2: "בחרו אמצעי תשלום: אשראי / Bit / Apple Pay",
     step3: "השלימו את התשלום בטלפון",
     step4: "ההזמנה תועבר אוטומטית למטבח",
-    step5: "אישור הזמנה יופיע מולכם — תוכלו להוריד חשבונית מס/קבלה",
+    step5: "אישור הזמנה יופיע מולכם - תוכלו להוריד חשבונית מס/קבלה",
   },
   thanks: {
     paidViaQrHeading: "התשלום התקבל",
@@ -233,7 +233,7 @@ export const KIOSK_DEFAULTS_HE = {
   },
 } as const;
 
-// Recursive dotted-key type — produces "start.cta" | "payQr.step1" | …
+// Recursive dotted-key type - produces "start.cta" | "payQr.step1" | …
 // directly from the defaults tree so the compiler refuses unknown keys.
 type DottedKeys<T, Prefix extends string = ""> = T extends string
   ? Prefix
@@ -273,7 +273,7 @@ function interpolate(
 /**
  * Build a `t(key, params?)` function bound to a particular tenant's
  * override map. The override map is a flat `{ "dotted.key": "..." }`
- * dict — anything not present falls back to the in-repo default.
+ * dict - anything not present falls back to the in-repo default.
  */
 export function buildKioskT(overrides: KioskOverrides | null | undefined) {
   const safeOverrides: KioskOverrides = overrides ?? {};
@@ -293,7 +293,7 @@ export type KioskT = ReturnType<typeof buildKioskT>;
 /**
  * Coerce an arbitrary JSON value (e.g. `Tenant.kioskStringOverrides`
  * straight off Prisma) into the flat-string-map shape the helper
- * expects. Anything funny gets dropped silently — we never want a
+ * expects. Anything funny gets dropped silently - we never want a
  * malformed override row to crash a kiosk render.
  */
 export function normalizeKioskOverrides(value: unknown): KioskOverrides {

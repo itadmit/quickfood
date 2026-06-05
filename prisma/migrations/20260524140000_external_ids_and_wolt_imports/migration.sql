@@ -20,7 +20,7 @@ ALTER TABLE "modifier_sets"
 ALTER TABLE "modifier_set_options"
   ADD COLUMN "external_id" VARCHAR(64);
 
--- CreateIndex (unique) — Postgres treats multiple NULL tuples as distinct,
+-- CreateIndex (unique) - Postgres treats multiple NULL tuples as distinct,
 -- so manually-created rows (all-NULL externals) don't collide with each
 -- other; only true source-duplicates within a tenant trigger the conflict.
 CREATE UNIQUE INDEX "menu_categories_tenant_id_external_source_external_id_key"

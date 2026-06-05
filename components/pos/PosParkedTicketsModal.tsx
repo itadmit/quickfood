@@ -6,7 +6,7 @@ import { IcoClose, IcoUser } from "@/components/shared/Icons";
 
 interface Props {
   onClose: () => void;
-  /** Called after a parked ticket is restored — POS shell typically closes
+  /** Called after a parked ticket is restored - POS shell typically closes
    *  the modal and the cart panel pops the recalled ticket in place. */
   onRestored?: () => void;
 }
@@ -18,7 +18,7 @@ interface Props {
  * back; tap the X to discard.
  *
  * If the working cart isn't empty we warn before restoring (parking
- * the current ticket would have been a separate action — restoring now
+ * the current ticket would have been a separate action - restoring now
  * dumps it).
  */
 export function PosParkedTicketsModal({ onClose, onRestored }: Props) {

@@ -47,6 +47,6 @@ async function handle(req: Request) {
   return apiJson({ ok: true, matched: true, status: newStatus });
 }
 
-// sms4free spec doesn't pin a method — accept both.
+// sms4free spec doesn't pin a method - accept both.
 export const POST = handler(handle);
 export const GET = handler(handle);

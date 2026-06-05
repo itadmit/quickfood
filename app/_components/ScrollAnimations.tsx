@@ -10,12 +10,12 @@ import { useEffect } from "react";
  *
  * The selectors here are CSS-module hashed at build time (the class
  * tokens we use are `${styles.howStep}` etc.), but the underlying
- * generated class names always start with the source name — so we
+ * generated class names always start with the source name - so we
  * match on `[class*="howStep"]` etc. instead of literal class names.
  * That keeps the observer in sync without importing the styles map.
  *
  * Honours `prefers-reduced-motion` by skipping the observer entirely
- * — the matching CSS rule already forces cards to their resting state.
+ * - the matching CSS rule already forces cards to their resting state.
  */
 export default function ScrollAnimations() {
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function ScrollAnimations() {
         }
       },
       {
-        // Triggers when 15% of the card is past the bottom edge — late
+        // Triggers when 15% of the card is past the bottom edge - late
         // enough to feel like a reveal, early enough that the user
         // doesn't have to scroll past to see it animate.
         threshold: 0.15,

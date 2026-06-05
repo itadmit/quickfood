@@ -63,7 +63,7 @@ export const PATCH = handler(async (req: Request) => {
 
 export const DELETE = handler(async () => {
   const session = await requireCustomer();
-  // GDPR — anonymize, do not delete (retain historical orders for accounting).
+  // GDPR - anonymize, do not delete (retain historical orders for accounting).
   await prisma.customer.update({
     where: { id: session.userId },
     data: {

@@ -51,7 +51,7 @@ export function PosQueue() {
         osc.start();
         osc.stop(ctx.currentTime + 0.1);
       } catch {
-        // No audio context on this device — fine, badge is enough.
+        // No audio context on this device - fine, badge is enough.
       }
     });
     return () => es.close();

@@ -1,12 +1,12 @@
 /**
- * Grow Payment SDK (Growin Wallet) — embedded inline wallet, no redirect.
+ * Grow Payment SDK (Growin Wallet) - embedded inline wallet, no redirect.
  *
  * Loads the Grow JS SDK from cdn.meshulam.co.il and registers a singleton
  * `window.growPayment` instance with our event callbacks. The actual wallet
  * is rendered when the parent calls `renderGrowWallet(authCode)` after the
  * backend returns an authCode from `/pay/initiate`.
  *
- * Mounting this component is enough to load the SDK — it produces no UI.
+ * Mounting this component is enough to load the SDK - it produces no UI.
  * The wallet itself is owned and rendered by Grow's SDK as an overlay.
  *
  * SDK URL: https://cdn.meshulam.co.il/sdk/gs.min.js
@@ -62,7 +62,7 @@ interface GrowSdkConfig {
 const SDK_URL = "https://cdn.meshulam.co.il/sdk/gs.min.js";
 
 /**
- * The Grow SDK's failure payloads aren't strict — `message` is occasionally a
+ * The Grow SDK's failure payloads aren't strict - `message` is occasionally a
  * nested object (e.g. `{id, message}`). The parent renders our error as a
  * React child, so we MUST hand back a string. Without this coercion a single
  * non-string `message` trips React #31 on the entire checkout screen.
@@ -127,7 +127,7 @@ export function GrowPaymentSdk({
   onReady,
 }: GrowPaymentSdkProps) {
   // Stable ref so we don't re-init the SDK every render. Grow's SDK doesn't
-  // document re-init behaviour — we call init() exactly once and forward
+  // document re-init behaviour - we call init() exactly once and forward
   // events through this ref.
   const propsRef = useRef({ thankYouUrl, onError, onWalletChange });
   useEffect(() => {
@@ -200,7 +200,7 @@ export function GrowPaymentSdk({
         // The SDK's init() is synchronous but kicks off async sub-frame
         // loading. Calling renderPaymentOptions before those iframes are
         // ready makes the SDK render its own "SDK was not loaded as needed"
-        // error message into the wallet div — and (in current versions) it
+        // error message into the wallet div - and (in current versions) it
         // does NOT throw, so our retry-on-catch in renderGrowWallet won't
         // fire. So we still wait a baseline before signalling ready, just
         // shorter than the original 800ms now that preload+SSR-initiate
@@ -224,7 +224,7 @@ export function GrowPaymentSdk({
     };
   }, [testMode, onReady]);
 
-  // SDK renders its own UI — no markup here.
+  // SDK renders its own UI - no markup here.
   return null;
 }
 
@@ -232,7 +232,7 @@ export function GrowPaymentSdk({
  * Trigger the wallet to render with the authCode from /pay/initiate.
  * Retries internally if the SDK's async sub-frame loading hasn't finished
  * yet (it throws "SDK was not loaded as needed" until then). Backs off
- * every 60ms up to ~1.5s — typical real-world settle is <200ms.
+ * every 60ms up to ~1.5s - typical real-world settle is <200ms.
  */
 export function renderGrowWallet(authCode: string): boolean {
   if (typeof window === "undefined") return false;

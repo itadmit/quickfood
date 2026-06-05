@@ -1,5 +1,5 @@
 /**
- * WhatsApp sender — wraps iBot Chat (https://ibot-chat.com/api/v1),
+ * WhatsApp sender - wraps iBot Chat (https://ibot-chat.com/api/v1),
  * shares the per-tenant credit pool with SMS, and writes an audit row to
  * the unified `sms_logs` table with `channel: "whatsapp"`.
  *
@@ -30,7 +30,7 @@ export interface SendWhatsAppInput {
   refId?: string;
   /**
    * Skip the per-tenant credit gate and decrement. Used for WhatsApp test
-   * sends from the dashboard — the platform absorbs the cost so merchants
+   * sends from the dashboard - the platform absorbs the cost so merchants
    * can verify their iBot connection before they buy a package.
    */
   skipCredit?: boolean;
@@ -175,7 +175,7 @@ export async function sendWhatsApp(
   }
 
   // iBot Chat is a GET-only API (querystring auth). Encode the message + jid
-  // carefully — `msg` may contain Hebrew, newlines, or URL fragments.
+  // carefully - `msg` may contain Hebrew, newlines, or URL fragments.
   const params = new URLSearchParams({
     token,
     instance_id: instanceId,
@@ -249,7 +249,7 @@ export function toJid(israeliMobile: string): string {
 }
 
 /**
- * Bare iBot `/send-text` call — no DB writes, no credit accounting, no
+ * Bare iBot `/send-text` call - no DB writes, no credit accounting, no
  * tenant lookup. Used for admin-level smoke tests of the platform's
  * fallback credentials and for the merchant-level test (which has its
  * own logging path). Returns the parsed iBot response so the caller can

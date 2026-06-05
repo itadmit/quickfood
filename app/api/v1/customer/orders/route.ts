@@ -24,7 +24,7 @@ const CreateOrderSchema = z.object({
   guest_first_name: z.string().min(1).max(40).optional(),
   guest_last_name: z.string().max(40).optional(),
   customer_email: z.string().email().optional(),
-  // Explicit opt-in to marketing/promotional comms — only persisted
+  // Explicit opt-in to marketing/promotional comms - only persisted
   // when true; never silently flips an existing yes back to no.
   marketing_consent: z.boolean().optional(),
   coupon_code: z.string().min(1).max(40).optional(),
@@ -122,7 +122,7 @@ export const POST = handler(async (req: Request) => {
 
     // Fold the payment initiation into this same request for card orders so
     // the client skips a second round-trip (second network hop + possible
-    // cold start) — that's the bulk of the click-to-wallet latency. This is
+    // cold start) - that's the bulk of the click-to-wallet latency. This is
     // best-effort: any failure leaves `payment` null and the client falls
     // back to POST /pay/initiate, so it can never block order creation.
     // Kiosk orders pay later via the QR pay page (which initiates on its
@@ -152,7 +152,7 @@ export const POST = handler(async (req: Request) => {
         // have an OTP session (same-device return visit, or click from the
         // review-reminder email).
         review_token: signReviewToken(result.order.id),
-        // For card payments, client should now call /pay/initiate — unless
+        // For card payments, client should now call /pay/initiate - unless
         // `payment` below is already populated (inline fast path).
         needs_payment: needsPayment,
         // Inline initiation result (null if it failed or wasn't needed).

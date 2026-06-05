@@ -23,7 +23,7 @@ export default async function SmsPage() {
     prisma.smsLog.findMany({
       where: {
         tenantId: session.tenantId,
-        // Hide the internal "top-up credit" markers — those are for webhook
+        // Hide the internal "top-up credit" markers - those are for webhook
         // dedupe, not user-visible message activity.
         kind: { not: "topup_credit" },
       },

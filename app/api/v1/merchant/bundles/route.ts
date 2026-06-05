@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 // Wolt model: new bundles point at an existing combo menu item via
 // `linked_item_id` and skip `addon_items`. Legacy bundles created
-// before this migration still ship with `addon_items` populated — both
+// before this migration still ship with `addon_items` populated - both
 // shapes are accepted on write, but at least one path must resolve to
 // "what gets added when the customer accepts".
 const Input = z
@@ -85,7 +85,7 @@ export const POST = handler(async (req: Request) => {
   if (!session.tenantId) return apiError("forbidden", "no tenant", 403);
   const body = Input.parse(await req.json());
 
-  // All referenced items must belong to the same tenant — otherwise a
+  // All referenced items must belong to the same tenant - otherwise a
   // merchant could craft a bundle that triggers off another shop's
   // pizza and pulls in their drinks.
   const allIds = [

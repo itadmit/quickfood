@@ -19,10 +19,10 @@ interface Props {
 }
 
 /**
- * Inline home-page banner — server-rendered alongside the rest of the home
+ * Inline home-page banner - server-rendered alongside the rest of the home
  * page so it appears without a flash. Two render modes:
- *   - style="image" — merchant-uploaded wide image (16:9 / 21:9)
- *   - style="text"  — accent-colored card with chosen icon, title, optional subtitle
+ *   - style="image" - merchant-uploaded wide image (16:9 / 21:9)
+ *   - style="text"  - accent-colored card with chosen icon, title, optional subtitle
  *
  * Icons + colors are drawn from the same registry as menu categories (see
  * lib/category-style.ts), so the merchant has the full palette available.
@@ -34,7 +34,7 @@ interface Props {
 export function CampaignBanner({ tenantSlug, banner }: Props) {
   if (!banner) return null;
 
-  // An image-style banner with no actual image would render an empty box —
+  // An image-style banner with no actual image would render an empty box -
   // skip it. The merchant UI prevents this, but be defensive at the boundary.
   if (banner.style === "image" && !banner.imageUrl) return null;
 

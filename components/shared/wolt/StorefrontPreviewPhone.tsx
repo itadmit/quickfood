@@ -329,7 +329,7 @@ function TabItem({
 }
 
 /* ─── Inline icons (kept local so the component is fully
-   self-contained — no shared icon barrel needed). ──────────── */
+   self-contained - no shared icon barrel needed). ──────────── */
 
 function HelpMark({ size = 22 }: { size?: number }) {
   return (

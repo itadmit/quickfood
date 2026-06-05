@@ -37,7 +37,7 @@ function classifyActivity(t: Tenant): { level: ActivityLevel; label: string; ton
 }
 
 function timeAgo(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const diff = Date.now() - new Date(iso).getTime();
   const min = Math.floor(diff / 60_000);
   if (min < 1) return "עכשיו";
@@ -190,7 +190,7 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
                     <div className="text-[10px] text-qf-mute mt-0.5">{timeAgo(t.woltCommittedAt)}</div>
                   </div>
                 ) : (
-                  <span className="text-xs text-qf-mute">—</span>
+                  <span className="text-xs text-qf-mute">-</span>
                 )}
               </div>
               <div className="text-xs text-qf-mute">

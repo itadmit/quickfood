@@ -27,7 +27,7 @@ export default async function AnalyticsPage({
   const raw = (await searchParams).range;
   const allowed = ["today", "yesterday", "7d", "30d"] as const;
   type Quick = (typeof allowed)[number];
-  // Default to 7d — short enough to surface fresh signal, long enough that
+  // Default to 7d - short enough to surface fresh signal, long enough that
   // AOV / repeat-rate / channel breakdown all have enough data to be
   // meaningful. The dashboard home defaults to "today"; this is the
   // deeper-dive view.

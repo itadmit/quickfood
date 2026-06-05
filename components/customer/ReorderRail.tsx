@@ -56,7 +56,7 @@ type ConfirmState = {
 interface Props {
   tenantSlug: string;
   businessType: BusinessType;
-  /** Server-rendered initial list — used when the customer is logged in.
+  /** Server-rendered initial list - used when the customer is logged in.
    *  Guests get [] and we hydrate from localStorage on the client. */
   initialOrders: RecentOrder[];
   /** True if the customer is logged in. Skips the localStorage path. */
@@ -99,7 +99,7 @@ export function ReorderRail({
         setOrders(data.orders ?? []);
       })
       .catch(() => {
-        /* network — silently render empty rail */
+        /* network - silently render empty rail */
       })
       .finally(() => setPhase("ready"));
     return () => ctrl.abort();
@@ -142,7 +142,7 @@ export function ReorderRail({
             })),
           );
           // Stash the customer's previous checkout details so /checkout
-          // can prefill them on mount — saves them re-typing address,
+          // can prefill them on mount - saves them re-typing address,
           // phone, payment, tip, etc.
           if (prefill && Object.keys(prefill).length > 0) {
             saveCheckoutPrefill(tenantSlug, prefill);
@@ -162,7 +162,7 @@ export function ReorderRail({
         }
       } catch {
         setConfirm({
-          issues: [{ kind: "item_missing", name: "—" }],
+          issues: [{ kind: "item_missing", name: "-" }],
           pricing: null,
         });
       } finally {
@@ -281,7 +281,7 @@ function ReorderCard({
         type="button"
         onClick={onReorder}
         disabled={busy}
-        aria-label={`הזמן שוב — ${order.headline_item ?? "הזמנה"}`}
+        aria-label={`הזמן שוב - ${order.headline_item ?? "הזמנה"}`}
         className={cn(
           "shrink-0 inline-flex items-center gap-1.5 bg-(--qf-primary) text-white text-xs font-semibold rounded-full pr-3 pl-3 h-9 transition active:scale-[0.97] disabled:opacity-60 disabled:active:scale-100",
         )}

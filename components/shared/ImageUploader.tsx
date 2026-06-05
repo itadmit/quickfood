@@ -100,7 +100,7 @@ export function ImageUploader({
     // Falls back to the original on any failure.
     const file = await convertImageToWebP(original);
 
-    // 1) init — get a presigned URL
+    // 1) init - get a presigned URL
     const initRes = await fetch("/api/v1/upload/init", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -126,7 +126,7 @@ export function ImageUploader({
       return null;
     }
 
-    // 3) finalize — confirm + get public URL
+    // 3) finalize - confirm + get public URL
     const finRes = await fetch(
       `/api/v1/upload/finalize/${init.file_id}?key=${encodeURIComponent(init.key)}`,
       { method: "POST" },
@@ -299,7 +299,7 @@ export function ImageUploader({
  * Placeholder tile shown while an upload is in flight. Renders a circular
  * progress ring sweeping from 0→100% with the live percentage in the middle.
  * The very last bit (post-upload "finalize" call) is shown as 100% even though
- * the row hasn't been removed yet — keeps the UI calm.
+ * the row hasn't been removed yet - keeps the UI calm.
  */
 function UploadingTile({ progress, name }: { progress: number; name: string }) {
   // SVG ring math

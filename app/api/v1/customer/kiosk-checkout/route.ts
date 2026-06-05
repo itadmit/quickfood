@@ -64,7 +64,7 @@ export const POST = handler(async (req: Request) => {
     source: l.source,
   }));
 
-  // Cash-at-kiosk skips the Grow checkout intermediate — the customer
+  // Cash-at-kiosk skips the Grow checkout intermediate - the customer
   // walks the order number to the counter and the cashier collects it
   // from the POS queue. We materialize a real Order immediately,
   // status=pending + paymentStatus=pending + source=kiosk.

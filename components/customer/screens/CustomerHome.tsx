@@ -89,7 +89,7 @@ interface Props {
    *  offers pickup as an option. */
   deliveryCities?: string[];
   /** Tenant-level toggle ("הגדרות → קופה → אפשר איסוף עצמי"). When false the
-   *  "איסוף" tab on the storefront becomes a disabled affordance — clicking
+   *  "איסוף" tab on the storefront becomes a disabled affordance - clicking
    *  it opens the picker modal explaining the store is delivery-only. */
   pickupEnabled?: boolean;
   bannerCampaign?: CampaignBannerData | null;
@@ -130,7 +130,7 @@ export function CustomerHome({
   const busyBoost = branch?.busyEtaBoostMinutes ?? 15;
   const [infoOpen, setInfoOpen] = useState(false);
 
-  // "פתוח עד 23:30" / "סגור · נפתח..." — uses branch.hours when present;
+  // "פתוח עד 23:30" / "סגור · נפתח..." - uses branch.hours when present;
   // falls back to the merchant's manual "open/busy/closed" status flag.
   const hoursStatus = branch?.hours
     ? getOpenStatus(branch.hours as BranchHours)
@@ -189,7 +189,7 @@ export function CustomerHome({
   const [itemData, setItemData] = useState<null | { item: Record<string, unknown>; tenant: { slug: string; businessType: string } }>(null);
   const [itemLoading, setItemLoading] = useState(false);
 
-  // Sync with URL for back/forward navigation — only opens, never closes
+  // Sync with URL for back/forward navigation - only opens, never closes
   // (closeModal handles closing; onItemOpen handles direct clicks)
   useEffect(() => {
     if (itemId) setIsModalOpen(true);
@@ -225,7 +225,7 @@ export function CustomerHome({
 
   // Search query is now layout-level (lives in MenuSearchProvider) so the
   // desktop header search input and the sticky mobile search input share
-  // a single source of truth. Dietary-tag filter stays local — it's only
+  // a single source of truth. Dietary-tag filter stays local - it's only
   // ever rendered inside the menu section.
   const { query: menuQuery, setQuery: setMenuQuery } = useMenuSearch();
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
@@ -339,7 +339,7 @@ export function CustomerHome({
             {aiAdvisorEnabled && <AIAdvisorTopButton />}
           </div>
 
-          {/* Tenant name — promoted to a prominent title on desktop */}
+          {/* Tenant name - promoted to a prominent title on desktop */}
           <div className="hidden lg:flex items-center gap-4 mb-6">
             {tenant.logoUrl && (
               <div className="w-16 h-16 rounded-2xl overflow-hidden bg-white shadow-md grid place-items-center shrink-0">
@@ -407,7 +407,7 @@ export function CustomerHome({
             })}
           </div>
 
-          {/* Search trigger — looks like an input but is a button. Tapping
+          {/* Search trigger - looks like an input but is a button. Tapping
               scrolls down to the inline menu and focuses the real search
               field there. Hidden on desktop since the menu (and its own
               search input) is visible immediately without scroll. */}
@@ -449,7 +449,7 @@ export function CustomerHome({
         </div>
       </header>
 
-      {/* Wolt-style info strip — pulled up so it straddles the seam
+      {/* Wolt-style info strip - pulled up so it straddles the seam
           between the cover image and the body. Single centered row on
           all sizes; on mobile the "פרטי המסעדה" link collapses to a
           single 'i' chip to keep everything on one line. */}
@@ -482,7 +482,7 @@ export function CustomerHome({
             <span className="text-qf-line hidden sm:inline">·</span>
             <span className="inline-flex items-center gap-1.5 text-qf-ink2">
               <IcoBike s={14} c="#7c8a82" />
-              <span>{branch ? formatPrice(branch.deliveryFee) : "—"}</span>
+              <span>{branch ? formatPrice(branch.deliveryFee) : "-"}</span>
             </span>
             {branch && branch.minOrder > 0 && (
               <>
@@ -524,7 +524,7 @@ export function CustomerHome({
         </div>
       </section>
 
-      {/* Pending-review banner — surfaces when a delivered order is waiting
+      {/* Pending-review banner - surfaces when a delivered order is waiting
           for the customer's rating. Click jumps straight to the review card
           on the order tracking page. */}
       {pendingReviewOrderId && (
@@ -549,7 +549,7 @@ export function CustomerHome({
           appears without a flash; renders nothing if no active banner exists. */}
       <CampaignBanner tenantSlug={tenant.slug} banner={bannerCampaign} />
 
-      {/* Previous orders rail — up to 3 distinct past orders.  For guests the
+      {/* Previous orders rail - up to 3 distinct past orders.  For guests the
           rail hydrates from localStorage on the client (with a skeleton while
           it loads); for logged-in customers we server-render the initial list. */}
       <ReorderRail
@@ -559,7 +559,7 @@ export function CustomerHome({
         hasCustomerSession={hasCustomerSession}
       />
 
-      {/* Categories — horizontal scroll on mobile, wrap-grid on desktop */}
+      {/* Categories - horizontal scroll on mobile, wrap-grid on desktop */}
       <section className="px-5 mt-5 lg:max-w-7xl lg:mx-auto lg:px-6 lg:mt-10">
         <h2 className="text-base lg:text-xl font-semibold mb-2 lg:mb-4">קטגוריות</h2>
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-5 px-5 lg:mx-0 lg:px-0 lg:overflow-visible lg:grid lg:grid-cols-6 xl:grid-cols-8 lg:gap-3">
@@ -585,7 +585,7 @@ export function CustomerHome({
         </div>
       </section>
 
-      {/* Popular items — horizontal scroll on mobile, multi-col grid on desktop */}
+      {/* Popular items - horizontal scroll on mobile, multi-col grid on desktop */}
       {popular.length > 0 && (
         <section className="px-5 mt-5 lg:max-w-7xl lg:mx-auto lg:px-6 lg:mt-10">
           <div className="flex items-center justify-between mb-2 lg:mb-4">
@@ -629,7 +629,7 @@ export function CustomerHome({
         </section>
       )}
 
-      {/* Inline full menu — Wolt-style. Sticky category chip bar +
+      {/* Inline full menu - Wolt-style. Sticky category chip bar +
           scroll-spy. BottomTabBar uses the `menu-section` id below to
           highlight the "תפריט" tab when this band enters the viewport. */}
       {menuItems.length > 0 && (
@@ -645,7 +645,7 @@ export function CustomerHome({
             </div>
           )}
           <h2 className="text-base lg:text-xl font-semibold mb-3">התפריט המלא</h2>
-          {/* Mobile-only search input — sticks to the top of the viewport
+          {/* Mobile-only search input - sticks to the top of the viewport
               once the user scrolls past the heading, sitting just above the
               MenuList sticky category bar (which adjusts its sticky top to
               compensate). Desktop renders the search in CustomerTopNav. */}

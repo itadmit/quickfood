@@ -130,7 +130,7 @@ export function Topbar({ user, branch, tenantSlug, tenant, showImportShortcut }:
         {/* Mobile-only hamburger + drawer */}
         <MobileNav tenant={tenant} />
 
-        {/* Search — full pill on desktop, icon-only button on mobile */}
+        {/* Search - full pill on desktop, icon-only button on mobile */}
         <button
           type="button"
           onClick={() => setSearchOpen(true)}
@@ -154,21 +154,21 @@ export function Topbar({ user, branch, tenantSlug, tenant, showImportShortcut }:
           <Chip>
             זמן הכנה:{" "}
             <span className="tnum font-medium">
-              {kpis?.avg_prep_minutes != null ? `${kpis.avg_prep_minutes} דק׳` : "—"}
+              {kpis?.avg_prep_minutes != null ? `${kpis.avg_prep_minutes} דק׳` : "-"}
             </span>
           </Chip>
           <Chip>
-            בתור: <span className="tnum font-medium">{kpis?.active_orders ?? "—"}</span>
+            בתור: <span className="tnum font-medium">{kpis?.active_orders ?? "-"}</span>
           </Chip>
           <Chip>
             שליחים:{" "}
             <span className="tnum font-medium">
-              {kpis ? `${kpis.couriers_available}/${kpis.couriers_total}` : "—"}
+              {kpis ? `${kpis.couriers_available}/${kpis.couriers_total}` : "-"}
             </span>
           </Chip>
         </div>
 
-        {/* Status dropdown — compact icon+label on mobile */}
+        {/* Status dropdown - compact icon+label on mobile */}
         <div className="ms-auto relative">
           <button
             type="button"
@@ -217,7 +217,7 @@ export function Topbar({ user, branch, tenantSlug, tenant, showImportShortcut }:
           )}
         </div>
 
-        {/* Help / onboarding shortcut — only shown while the menu is
+        {/* Help / onboarding shortcut - only shown while the menu is
             empty. Re-opens the welcome tour so the merchant can revisit
             the system overview and pick a starting path. */}
         {showImportShortcut && (
@@ -285,7 +285,7 @@ export function Topbar({ user, branch, tenantSlug, tenant, showImportShortcut }:
           )}
         </div>
 
-        {/* User — avatar only on mobile, full pill on desktop */}
+        {/* User - avatar only on mobile, full pill on desktop */}
         <div className="relative">
           <button
             type="button"
@@ -408,7 +408,7 @@ function SearchPalette({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     if (q.trim().length < 2) {
-      // Deferred — outside synchronous body of effect
+      // Deferred - outside synchronous body of effect
       const id = setTimeout(() => {
         setResults({ orders: [], items: [], customers: [] });
         setLoading(false);

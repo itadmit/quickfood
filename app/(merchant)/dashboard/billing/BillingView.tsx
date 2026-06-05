@@ -74,7 +74,7 @@ export function BillingView({
           return true;
         }
       } catch {
-        /* network blip — keep polling */
+        /* network blip - keep polling */
       }
       return false;
     }
@@ -202,7 +202,7 @@ export function BillingView({
       <PageHeader
         chip="חשבון"
         title="חיוב ומנוי"
-        subtitle="התשלום עובר דרך Quick Commerce Billing — כרטיס אחד, חשבונית אחת"
+        subtitle="התשלום עובר דרך Quick Commerce Billing - כרטיס אחד, חשבונית אחת"
       />
 
       {justReturnedFromSetup && status === "active" && (

@@ -22,7 +22,7 @@ export async function GET(req: Request) {
       await wait(POLL_MS);
 
       // New orders since lastSeen. Skip non-cash orders that are still
-      // waiting for the Grow callback — they aren't real work yet and
+      // waiting for the Grow callback - they aren't real work yet and
       // would just trigger a noop refresh on the merchant client. When
       // the callback flips them to confirmed, an orderEvent is written
       // and we emit it as `order.status_change` below.

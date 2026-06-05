@@ -70,7 +70,7 @@ export const DELETE = handler(
     if (itemCount > 0) {
       return apiError(
         "conflict",
-        `לא ניתן למחוק — ${itemCount} פריטים משויכים`,
+        `לא ניתן למחוק - ${itemCount} פריטים משויכים`,
         409,
       );
     }

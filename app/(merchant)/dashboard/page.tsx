@@ -18,7 +18,7 @@ export default async function DashboardPage({
   if (!session || session.type !== "merchant" || !session.tenantId) {
     redirect("/dashboard/login");
   }
-  // Kitchen / courier roles don't get the analytics home — send them to
+  // Kitchen / courier roles don't get the analytics home - send them to
   // their own landing (kitchen screen / orders).
   const home = roleHome(session.role);
   if (home !== "/dashboard") redirect(home);

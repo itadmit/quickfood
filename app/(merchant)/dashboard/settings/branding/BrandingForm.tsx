@@ -138,8 +138,8 @@ export function BrandingForm({
         <div className="space-y-2">
           <div className="text-sm font-medium">לוגו</div>
           <p className="text-xs text-qf-mute">
-            מומלץ ריבוע (1:1) עם רקע שקוף — png או webp. הלוגו מופיע בעיגול
-            הקטן ליד שם החנות בלקוח. אם לא יועלה לוגו — יוצגו האותיות
+            מומלץ ריבוע (1:1) עם רקע שקוף - png או webp. הלוגו מופיע בעיגול
+            הקטן ליד שם החנות בלקוח. אם לא יועלה לוגו - יוצגו האותיות
             הראשונות מהשם.
           </p>
 
@@ -172,7 +172,7 @@ export function BrandingForm({
           <div className="text-sm font-medium">תמונת קאבר לחנות</div>
           <p className="text-xs text-qf-mute">
             התמונה מופיעה ככותרת בחנות ובדף התפריט של הלקוח. אם לא תועלה תמונה
-            — יוצג רקע ירוק בצבעי המותג.
+            - יוצג רקע ירוק בצבעי המותג.
           </p>
 
           {coverImage ? (
@@ -191,7 +191,7 @@ export function BrandingForm({
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-qf-tomato/40 text-qf-tomato hover:bg-qf-tomato-soft text-sm font-medium"
               >
                 <IcoTrash c="currentColor" s={14} />
-                מחק תמונה — להחלפה בחר תמונה חדשה לאחר המחיקה
+                מחק תמונה - להחלפה בחר תמונה חדשה לאחר המחיקה
               </button>
             </div>
           ) : (
@@ -309,13 +309,13 @@ export function BrandingForm({
 
 /**
  * Four actions for the merchant's public storefront URL:
- *  • view shop (opens in a new tab — primary button)
+ *  • view shop (opens in a new tab - primary button)
  *  • copy URL (icon, briefly flips to a check on success)
  *  • QR code (icon, opens a modal with the QR image + download button)
  *  • share on WhatsApp (icon, opens wa.me with a pre-filled message)
  *
  * The storefront URL + QR data URL are generated server-side in
- * page.tsx — they account for the tenant's customDomain if one is set.
+ * page.tsx - they account for the tenant's customDomain if one is set.
  */
 function ShopShareActions({
   slug,
@@ -337,12 +337,12 @@ function ShopShareActions({
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      /* clipboard blocked — ignore */
+      /* clipboard blocked - ignore */
     }
   }
 
   function shareWhatsApp() {
-    const text = `${name} — להזמנות אונליין: ${storefrontUrl}`;
+    const text = `${name} - להזמנות אונליין: ${storefrontUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   }
 
@@ -406,7 +406,7 @@ function ShopShareActions({
 /**
  * Modal preview of the storefront QR code. Server-generated PNG data
  * URL means no client deps and the download button is a plain anchor
- * with `download` — works offline, no extra request.
+ * with `download` - works offline, no extra request.
  */
 function QrModal({
   name,

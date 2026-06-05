@@ -10,7 +10,7 @@
 ## TL;DR
 
 Grow is an Israeli payment gateway. QuickFood integrates it via Grow's
-**Growin Wallet SDK** — a JS library loaded from `cdn.meshulam.co.il/sdk/gs.min.js`
+**Growin Wallet SDK** - a JS library loaded from `cdn.meshulam.co.il/sdk/gs.min.js`
 that renders the wallet inline on our checkout page (no redirect, no iframe
 modal). A server-to-server callback finalizes the order. The integration is
 multi-tenant via a single platform `apiKey` + `pageCode`; each restaurant
@@ -59,7 +59,7 @@ GROW_API_URL=                # informational; provider auto-picks sandbox/prod f
 | Production  | `https://secure.meshulam.co.il/api/light/server/1.0` (granted only after Grow's site review) |
 
 All requests are `application/x-www-form-urlencoded` (NOT JSON).
-Server-side only — Grow blocks browser-originated requests.
+Server-side only - Grow blocks browser-originated requests.
 
 ---
 
@@ -122,7 +122,7 @@ POST {NEXT_PUBLIC_APP_URL}/api/payments/callback?provider=grow&tenant=<slug>
 
 [`route.ts`](../app/api/payments/callback/route.ts):
 
-1. Validates the request — Grow has no HMAC; we check the source IP against
+1. Validates the request - Grow has no HMAC; we check the source IP against
    `GROW_TEST_IPS` / `GROW_LIVE_IPS` (warn-only in dev, fail-closed in prod).
 2. Parses the body (handles flat form-urlencoded *and* nested JSON shapes).
 3. Locates `PendingPayment` by `providerRequestId` (Grow `processId`), with
@@ -131,7 +131,7 @@ POST {NEXT_PUBLIC_APP_URL}/api/payments/callback?provider=grow&tenant=<slug>
 5. Creates a `PaymentTransaction`, marks `PendingPayment.status = confirmed`,
    sets `Order.paymentStatus = paid`, advances Order to `confirmed`
    (fires `order.status_changed` webhook).
-6. Non-blocking `POST /approveTransaction` back to Grow — required, else
+6. Non-blocking `POST /approveTransaction` back to Grow - required, else
    Grow retries the callback up to 6 more times. Our handler is idempotent,
    so retries are safe but wasteful.
 
@@ -152,8 +152,8 @@ POST {NEXT_PUBLIC_APP_URL}/api/payments/callback?provider=grow&tenant=<slug>
 | Field      | Rule                                                                 |
 |------------|----------------------------------------------------------------------|
 | `fullName` | At least 2 space-separated tokens (first + last). We pad with `.` if needed. |
-| `phone`    | Israeli mobile — exactly 10 digits starting with `05`. We normalize `+972`, `972`, `00972`, dashes, spaces. Fallback: `0500000000`. |
-| `description` | No "special characters" — Grow rejects silently. We strip everything but letters/digits/space/`.-_@`. |
+| `phone`    | Israeli mobile - exactly 10 digits starting with `05`. We normalize `+972`, `972`, `00972`, dashes, spaces. Fallback: `0500000000`. |
+| `description` | No "special characters" - Grow rejects silently. We strip everything but letters/digits/space/`.-_@`. |
 
 `fullName` and `phone` are **required** by Grow.
 
@@ -163,7 +163,7 @@ POST {NEXT_PUBLIC_APP_URL}/api/payments/callback?provider=grow&tenant=<slug>
 
 ### Sandbox credentials (already configured)
 
-- `userId` (per tenant): `814d52344861c4a3` — currently seeded for `pizzeria-verde`.
+- `userId` (per tenant): `814d52344861c4a3` - currently seeded for `pizzeria-verde`.
 - `apiKey` (platform): `7018a83ce5b9`
 - `pageCode` (platform, SDK Wallet mode): `239ed72cde47`
 
@@ -200,13 +200,13 @@ GET https://sandbox.meshulam.co.il/api/light/server/1.0/updateMyUrl/?url=<YOUR_L
 
 `POST /refundTransaction` with `userId + transactionId + transactionToken + refundSum`.
 
-**Critical rule**: same-day refunds must be **FULL only** — Grow rejects
+**Critical rule**: same-day refunds must be **FULL only** - Grow rejects
 partial same-day refunds with error 130
 ("לא ניתן לבצע זיכוי חלקי על עסקה שבוצעה היום"). Partial refunds work from
 the next day onward.
 
 We persist `transactionToken` on the `PaymentTransaction.providerToken`
-column at callback time — must be passed back on every refund call.
+column at callback time - must be passed back on every refund call.
 
 ---
 
@@ -231,7 +231,7 @@ To accept Apple Pay, the **production domain** must be verified with Apple:
 
 ## Google Pay
 
-Standard Grow Wallet — but Google Pay only renders in **Chrome / Chromium**
+Standard Grow Wallet - but Google Pay only renders in **Chrome / Chromium**
 browsers (security restriction enforced by Grow's SDK).
 
 ---
@@ -239,7 +239,7 @@ browsers (security restriction enforced by Grow's SDK).
 ## PayBox
 
 If a customer pays via PayBox, the callback returns `transactionTypeId=5`.
-Our `parseCallback` does not branch on this — the payment is treated like
+Our `parseCallback` does not branch on this - the payment is treated like
 any other successful transaction. The raw field is preserved in
 `PaymentTransaction.providerResponse` for accounting.
 
@@ -251,11 +251,11 @@ Per Grow's
 [platforms guide](https://grow-il.readme.io/reference/api-guidelines-for-platforms-system-integrators):
 
 - `apiKey` is mandatory on every call and identifies QuickFood as the platform.
-- `companyCommission` (₪ excl. VAT — **not %**) routes a per-transaction
+- `companyCommission` (₪ excl. VAT - **not %**) routes a per-transaction
   cut to us. Env: `GROW_COMPANY_COMMISSION`.
 - Settlement is monthly via invoice we issue Grow.
 - Min thresholds: ₪100K monthly volume + ₪1K monthly platform commission.
-- There is no platform-owner dashboard from Grow — track via our own
+- There is no platform-owner dashboard from Grow - track via our own
   `PaymentTransaction` / `PendingPayment` rows.
 
 Each merchant still passes Grow's individual site review before getting
@@ -267,7 +267,7 @@ production credentials.
 
 | File                                                                     | Purpose                                       |
 |--------------------------------------------------------------------------|-----------------------------------------------|
-| [`lib/payments/providers/grow.ts`](../lib/payments/providers/grow.ts)     | Grow provider — initiate / parseCallback / acknowledge / refund |
+| [`lib/payments/providers/grow.ts`](../lib/payments/providers/grow.ts)     | Grow provider - initiate / parseCallback / acknowledge / refund |
 | [`lib/payments/factory.ts`](../lib/payments/factory.ts)                   | Loads `PaymentProviderConfig` and returns a configured provider |
 | [`lib/payments/types.ts`](../lib/payments/types.ts)                       | Interfaces                                   |
 | [`lib/payments/base.ts`](../lib/payments/base.ts)                         | Base class                                   |
@@ -279,10 +279,10 @@ production credentials.
 
 ## Known gaps & follow-ups
 
-- **No HMAC on callbacks** — security relies on Grow's IP whitelist + the
+- **No HMAC on callbacks** - security relies on Grow's IP whitelist + the
   unguessable `notifyUrl`. Watch for IP-list changes.
-- **Frontend SDK component** — checkout UI doesn't exist yet; port from QuickShop10 when it does.
-- **Idempotency on retries** — we de-dupe on `(provider, providerTransactionId)` unique index, so Grow's 6× retries are safe.
-- **Bit / Apple Pay / Google Pay** — no sandbox; first deploy requires real ₪1 smoke tests per method.
-- **Same-day partial refunds** — return Grow error 130; surface a clearer message in any future admin UI.
-- **`payerBankAccountDetails`** — Grow's callback can carry bank-account fields for ההעברה בנקאית flow. Not parsed today (we don't expose bank transfer).
+- **Frontend SDK component** - checkout UI doesn't exist yet; port from QuickShop10 when it does.
+- **Idempotency on retries** - we de-dupe on `(provider, providerTransactionId)` unique index, so Grow's 6× retries are safe.
+- **Bit / Apple Pay / Google Pay** - no sandbox; first deploy requires real ₪1 smoke tests per method.
+- **Same-day partial refunds** - return Grow error 130; surface a clearer message in any future admin UI.
+- **`payerBankAccountDetails`** - Grow's callback can carry bank-account fields for ההעברה בנקאית flow. Not parsed today (we don't expose bank transfer).

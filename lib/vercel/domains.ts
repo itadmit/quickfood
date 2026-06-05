@@ -1,5 +1,5 @@
 /**
- * Vercel Domains API — thin client for the per-tenant custom-domain flow.
+ * Vercel Domains API - thin client for the per-tenant custom-domain flow.
  *
  * Shopify-style flow:
  *   1. Merchant types a domain → `addDomain` → Vercel returns either
@@ -8,14 +8,14 @@
  *      pointing at Vercel and (b) the recommended A / CNAME records to
  *      show in the UI.
  *   3. When the merchant clicks "Verify" we call `verifyDomain` (only when
- *      a TXT challenge is pending) and `getDomainConfig` again — once both
+ *      a TXT challenge is pending) and `getDomainConfig` again - once both
  *      `verified=true` and `misconfigured=false` we flip the tenant to
  *      `customDomainStatus = 'active'`.
  *   4. SSL is provisioned automatically by Vercel once the domain is
  *      verified and resolves to their infrastructure.
  *
  * Auth: bearer token (`VERCEL_TOKEN`) + `teamId` query param when the
- * project lives under a team account (which ours does — see
+ * project lives under a team account (which ours does - see
  * `.vercel/project.json`).
  */
 
@@ -161,12 +161,12 @@ export async function removeDomain(name: string): Promise<void> {
 }
 
 /**
- * Whether the hostname is the apex of its DNS zone — needs an A record
+ * Whether the hostname is the apex of its DNS zone - needs an A record
  * (CNAMEs are not allowed at apex per RFC 1912 §2.4 and almost every
  * registrar rejects them outright if any other record exists).
  *
  * "Apex" means: not "sub.example.com", but "example.com" itself. The
- * tricky part is multi-part TLDs like ".co.il" or ".com.au" — here
+ * tricky part is multi-part TLDs like ".co.il" or ".com.au" - here
  * "pizzaninja.co.il" looks 3-label-deep but IS the apex. We don't pull
  * the full Public Suffix List into the bundle; instead we recognize the
  * handful of common second-level TLDs as part of the suffix, plus we
@@ -205,7 +205,7 @@ export function normalizeHostname(input: string): string | null {
   // Strip trailing dot
   s = s.replace(/\.+$/, "");
   if (!s) return null;
-  // Hostname regex — labels of 1-63 [a-z0-9-] separated by dots, TLD min 2.
+  // Hostname regex - labels of 1-63 [a-z0-9-] separated by dots, TLD min 2.
   // Allows IDN punycode (xn--...).
   const re = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
   if (!re.test(s)) return null;

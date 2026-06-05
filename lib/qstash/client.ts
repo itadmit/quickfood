@@ -1,5 +1,5 @@
 /**
- * QStash (Upstash) client — publishes delayed jobs and verifies inbound
+ * QStash (Upstash) client - publishes delayed jobs and verifies inbound
  * webhook signatures.
  *
  * We use QStash for one-shot delayed jobs (e.g. "send review reminder for
@@ -41,7 +41,7 @@ export interface ScheduleInput {
   url: string;
   /** Cron expression in QStash's accepted dialect (e.g. "* * * * *"). */
   cron: string;
-  /** Stable scheduleId — QStash upserts when this is provided. */
+  /** Stable scheduleId - QStash upserts when this is provided. */
   scheduleId?: string;
   /** Optional body; QStash forwards this on every fire. Defaults to "{}". */
   body?: unknown;
@@ -155,7 +155,7 @@ export async function publish<T>(input: PublishInput<T>): Promise<{ messageId: s
   }
 
   // QStash publish URL: POST {qstash}/v2/publish/{destination}.
-  // Destination is appended raw — QStash parses everything after /v2/publish/
+  // Destination is appended raw - QStash parses everything after /v2/publish/
   // as the target URL including its `https://` scheme.
   const target = `${QSTASH_URL}/v2/publish/${input.url}`;
   const res = await fetch(target, {
@@ -194,7 +194,7 @@ function safeJson(s: string): unknown {
  * The payload contains `iss`, `sub` (target URL), `exp`, `nbf`, `iat`, and
  * `body` (SHA-256 hash of the request body, base64url).
  *
- * Accepts either the current OR next signing key — QStash rotates them.
+ * Accepts either the current OR next signing key - QStash rotates them.
  */
 export async function verifySignature(req: Request, rawBody: string): Promise<boolean> {
   const sig = req.headers.get("upstash-signature");

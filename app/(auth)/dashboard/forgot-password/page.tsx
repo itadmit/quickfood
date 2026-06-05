@@ -2,7 +2,7 @@ import { AuthShell } from "@/components/shared/AuthShell";
 import ForgotPasswordForm from "./ForgotPasswordForm";
 
 export const metadata = {
-  title: "שכחת סיסמה — QuickFood",
+  title: "שכחת סיסמה - QuickFood",
 };
 
 export default function ForgotPasswordPage() {

@@ -11,7 +11,7 @@ import { streamAdvisorChat } from "@/lib/ai";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Unicode ranges for the Arabic script. Hebrew customers expect Hebrew —
+// Unicode ranges for the Arabic script. Hebrew customers expect Hebrew -
 // the model occasionally slips into Arabic for cuisine-adjacent prompts
 // (falafel, shawarma) and we strip it server-side as a safety net.
 // Covers: Arabic (0600-06FF), Arabic Supplement (0750-077F),

@@ -136,7 +136,7 @@ export function SmsView({
       <PageHeader
         chip="תקשורת"
         title="הודעות"
-        subtitle="חבילות, יתרה והיסטוריית שליחה — היתרה משותפת ל-SMS ול-WhatsApp"
+        subtitle="חבילות, יתרה והיסטוריית שליחה - היתרה משותפת ל-SMS ול-WhatsApp"
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
@@ -148,7 +148,7 @@ export function SmsView({
         <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5">
           <div className="text-xs text-qf-mute">שם השולח</div>
           <div className="text-base lg:text-lg font-semibold mt-1" dir="ltr">
-            {tenant.sender || "—"}
+            {tenant.sender || "-"}
           </div>
           <div className="text-xs text-qf-mute mt-0.5">עד 11 תווים. משתנה בהגדרות &gt; ביקורות.</div>
         </div>
@@ -158,7 +158,7 @@ export function SmsView({
         <div>
           <h2 className="text-base lg:text-lg font-semibold">רכישת חבילה</h2>
           <p className="text-xs lg:text-sm text-qf-mute">
-            כל רכישה היא חיוב חד-פעמי מהאשראי השמור והוספת הודעות ליתרה. אין מנוי חודשי על SMS — קונים עוד מתי שצריך, היתרה מצטברת.
+            כל רכישה היא חיוב חד-פעמי מהאשראי השמור והוספת הודעות ליתרה. אין מנוי חודשי על SMS - קונים עוד מתי שצריך, היתרה מצטברת.
           </p>
         </div>
         {!tenant.billingReady && (
@@ -214,7 +214,7 @@ export function SmsView({
           <div>
             <h2 className="text-base lg:text-lg font-semibold">בדיקת SMS</h2>
             <p className="text-xs lg:text-sm text-qf-mute">
-              שליחת הודעת בדיקה כדי לוודא שההגדרות עובדות. הפלטפורמה סופגת את העלות — לא יוריד מהיתרה.
+              שליחת הודעת בדיקה כדי לוודא שההגדרות עובדות. הפלטפורמה סופגת את העלות - לא יוריד מהיתרה.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">

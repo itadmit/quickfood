@@ -36,7 +36,7 @@ export function isItemVisibleNow(item: AvailabilityFields, now: Date = new Date(
     if ((item.availableDays & dayBit) === 0) return false;
   }
 
-  // Time-of-day check — only enforced when BOTH ends are set.
+  // Time-of-day check - only enforced when BOTH ends are set.
   if (item.availableFrom !== null && item.availableTo !== null) {
     const minutesNow = now.getHours() * 60 + now.getMinutes();
     const from = item.availableFrom;
@@ -45,10 +45,10 @@ export function isItemVisibleNow(item: AvailabilityFields, now: Date = new Date(
       // Normal window: 09:00 → 17:00
       if (minutesNow < from || minutesNow >= to) return false;
     } else if (from > to) {
-      // Wraps midnight: 22:00 → 02:00 — visible if late-night OR early-morning
+      // Wraps midnight: 22:00 → 02:00 - visible if late-night OR early-morning
       if (minutesNow < from && minutesNow >= to) return false;
     }
-    // from === to is a zero-length window — interpret as "always" (merchant
+    // from === to is a zero-length window - interpret as "always" (merchant
     // probably hasn't finished setting it up).
   }
 

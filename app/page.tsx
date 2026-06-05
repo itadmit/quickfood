@@ -22,7 +22,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-// Tight map for the WoltCard slots — extend here when a new section
+// Tight map for the WoltCard slots - extend here when a new section
 // needs an icon. Lucide gives consistent stroke + geometry which the
 // old hand-rolled FeatureIcon set didn't.
 type IconName = "store" | "flame" | "wallet" | "star" | "chat" | "chef" | "pizza" | "pin" | "heart" | "navigation" | "sparkles" | "leaf" | "users";
@@ -68,9 +68,9 @@ export const metadata: Metadata = {
   // "אתר הזמנות למסעדה", and (c) the most-searched verticals so
   // long-tail like "מערכת הזמנות לפיצרייה" hits an exact match.
   title:
-    "QuickFood · קוויקפוד — אתר הזמנות למסעדה | חנות אונליין לפיצרייה, המבורגרייה, סושייה",
+    "QuickFood · קוויקפוד - אתר הזמנות למסעדה | חנות אונליין לפיצרייה, המבורגרייה, סושייה",
   description:
-    "QuickFood (קוויקפוד) — פלטפורמת הזמנות למסעדות: אתר משלך עם דומיין משלך, תפריט מלא עם תוספות, גדלים וחצי-חצי, סליקת אשראי/Bit/Apple Pay, ניהול שליחים עם מעקב חי, יועץ AI בעברית, חיבור לקופה דרך API. הקבועים שלך מזמינים ישירות בלי לשלם 30% לוולט. ₪299 לחודש מחיר קבוע + 0.5% להזמנה. 7 ימים ניסיון בלי כרטיס.",
+    "QuickFood (קוויקפוד) - פלטפורמת הזמנות למסעדות: אתר משלך עם דומיין משלך, תפריט מלא עם תוספות, גדלים וחצי-חצי, סליקת אשראי/Bit/Apple Pay, ניהול שליחים עם מעקב חי, יועץ AI בעברית, חיבור לקופה דרך API. הקבועים שלך מזמינים ישירות בלי לשלם 30% לוולט. ₪299 לחודש מחיר קבוע + 0.5% להזמנה. 7 ימים ניסיון בלי כרטיס.",
   keywords: [
     "אתר הזמנות למסעדה",
     "מערכת הזמנות למסעדה",
@@ -103,13 +103,13 @@ export const metadata: Metadata = {
     locale: "he_IL",
     url: "https://quickfood.co.il",
     siteName: "QuickFood",
-    title: "QuickFood (קוויקפוד) — חנות אונליין למסעדה שלך",
+    title: "QuickFood (קוויקפוד) - חנות אונליין למסעדה שלך",
     description:
       "פלטפורמה ישראלית להקמת אתר הזמנות למסעדה ב-5 דקות. תפריט עם תוספות וחצי-חצי, סליקה ב-Bit/אשראי/Apple Pay, ניהול שליחים, AI בעברית. ₪299 לחודש קבוע.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "QuickFood (קוויקפוד) — חנות אונליין למסעדה שלך",
+    title: "QuickFood (קוויקפוד) - חנות אונליין למסעדה שלך",
     description:
       "אתר הזמנות למסעדה ב-5 דקות. תפריט מלא, סליקה לכל אמצעי תשלום, ניהול שליחים, AI בעברית. ₪299/חודש.",
   },
@@ -617,7 +617,7 @@ function CustomizerWoltCard({
       </div>
       <div className={styles.qfoodCardMockup}>
         <div className={styles.mockupAnnotation} aria-hidden>
-          <span className={styles.mockupAnnotationText}>נסו ללחוץ — זה חי!</span>
+          <span className={styles.mockupAnnotationText}>נסו ללחוץ - זה חי!</span>
           <svg
             className={styles.mockupAnnotationArrow}
             viewBox="0 0 110 90"
@@ -709,7 +709,7 @@ function MiniCell({
    Preferred-provider announcement for Grow Payments. Frames the deal
    as a partnership benefit (better terms than going direct) while
    making it explicit that Grow is a third party and any other
-   processor still works — we don't lock you in. */
+   processor still works - we don't lock you in. */
 function GrowPartner() {
   return (
     <section id="grow" className={styles.section}>
@@ -719,7 +719,7 @@ function GrowPartner() {
           סליקה דרך Grow. <em>סנכרון מלא לדשבורד. בלי תוספות.</em>
         </h2>
         <p className={styles.sectionLede}>
-          חברת הסליקה <strong>Grow</strong> מנהלת תשלומים ל-100,000 עסקים בישראל. דרך QuickFood היא מחוברת ישירות לדשבורד שלך — ביטולים, זיכויים, חשבוניות מס וכל אמצעי התשלום מסונכרנים אוטומטית, בלי לעבור בין מערכות.
+          חברת הסליקה <strong>Grow</strong> מנהלת תשלומים ל-100,000 עסקים בישראל. דרך QuickFood היא מחוברת ישירות לדשבורד שלך - ביטולים, זיכויים, חשבוניות מס וכל אמצעי התשלום מסונכרנים אוטומטית, בלי לעבור בין מערכות.
         </p>
 
         <div className={styles.growCard}>
@@ -769,15 +769,15 @@ function GrowPartner() {
                 <span>ביטלת הזמנה? החיוב חוזר ללקוח בקליק אחד, הסכום מתעדכן ב-Grow, החשבונית הקודמת מתבטלת אוטומטית. בלי לעבור בין שתי מערכות, בלי טעויות הנהלת חשבונות.</span>
               </li>
               <li>
-                <strong>פייבוקס, ביט, Apple Pay, Google Pay — בלי תוספת</strong>
-                <span>אמצעי תשלום שספקים אחרים גובים עליהם בנפרד או דורשים &quot;חבילת תוספים&quot; — אצל Grow הכל כלול בתעריף הבסיס. בלי הפעלה ידנית, בלי עמלה אחרת לכל אחד.</span>
+                <strong>פייבוקס, ביט, Apple Pay, Google Pay - בלי תוספת</strong>
+                <span>אמצעי תשלום שספקים אחרים גובים עליהם בנפרד או דורשים &quot;חבילת תוספים&quot; - אצל Grow הכל כלול בתעריף הבסיס. בלי הפעלה ידנית, בלי עמלה אחרת לכל אחד.</span>
               </li>
               <li>
-                <strong>חשבוניות מס ללא הגבלה — כלולות במנוי</strong>
+                <strong>חשבוניות מס ללא הגבלה - כלולות במנוי</strong>
                 <span>על כל הזמנה Grow מנפיקה חשבונית מס תקנית, שולחת ללקוח ומגישה לרשויות. בלי תקרת חודש, בלי תשלום נוסף, בלי חשבון נפרד אצל סולק חשבוניות.</span>
               </li>
               <li>
-                <strong>תשלום מהיר לחשבון — תוך 24 שעות</strong>
+                <strong>תשלום מהיר לחשבון - תוך 24 שעות</strong>
                 <span>יום עסקים אחד מההזמנה ועד שהכסף בבנק שלך. בלי תור, בלי תקרה יומית, בלי חודש המתנה כמו אצל סולקים מסורתיים.</span>
               </li>
               <li>
@@ -788,7 +788,7 @@ function GrowPartner() {
           </div>
 
           <div className={styles.growFootnote}>
-            <strong>שקיפות מלאה:</strong> Grow היא חברת סליקה עצמאית — לא חברת-בת שלנו. אנחנו ממליצים עליה כספק מומלץ כי השגנו ללקוחות QuickFood אינטגרציה מלאה ותעריפים טובים. אבל <strong>אפשר לחבר כל חברת סליקה אחרת</strong> שעובדת איתך — Tranzila, CardCom, Pelecard, Isracard וכל מי שתומך ב-API סטנדרטי. הבחירה שלך, לא נועלים אותך.
+            <strong>שקיפות מלאה:</strong> Grow היא חברת סליקה עצמאית - לא חברת-בת שלנו. אנחנו ממליצים עליה כספק מומלץ כי השגנו ללקוחות QuickFood אינטגרציה מלאה ותעריפים טובים. אבל <strong>אפשר לחבר כל חברת סליקה אחרת</strong> שעובדת איתך - Tranzila, CardCom, Pelecard, Isracard וכל מי שתומך ב-API סטנדרטי. הבחירה שלך, לא נועלים אותך.
           </div>
         </div>
       </div>
@@ -998,7 +998,7 @@ function FinalCta() {
           <LeadForm
             source="landing"
             heading="עדיין מתלבט? נדבר."
-            subheading="השאר פרטים ונחזור אליך תוך יום עבודה. בלי שיחת מכירה אגרסיבית — שאלות, הדגמה קצרה, וזהו."
+            subheading="השאר פרטים ונחזור אליך תוך יום עבודה. בלי שיחת מכירה אגרסיבית - שאלות, הדגמה קצרה, וזהו."
             submitLabel="שלחו לי פרטים"
           />
         </div>

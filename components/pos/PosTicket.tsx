@@ -165,7 +165,7 @@ export function PosTicket({ onEditLine }: { onEditLine?: (line: CartLine) => voi
           })
         ) : (
           <div className="h-full grid place-items-center text-qf-mute text-sm py-12">
-            כרטיסייה ריקה — בחרו פריט מהתפריט או הקליקו &quot;מספרים&quot;.
+            כרטיסייה ריקה - בחרו פריט מהתפריט או הקליקו &quot;מספרים&quot;.
           </div>
         )}
       </div>

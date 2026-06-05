@@ -5,7 +5,7 @@ import { OrderStatus, Prisma } from "@prisma/client";
  * between order creation and the Grow callback flipping them to paid +
  * advancing them to `confirmed`. Until the callback lands they must NOT
  * appear in any merchant-facing "live" surface (Kanban active tab, KPI
- * active count, Kitchen Display Screen) — otherwise the merchant starts
+ * active count, Kitchen Display Screen) - otherwise the merchant starts
  * cooking food for an order the customer might abandon mid-payment.
  *
  * Cash-pending orders stay visible: there's no payment callback for cash,

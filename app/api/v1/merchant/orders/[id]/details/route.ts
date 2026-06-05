@@ -57,7 +57,7 @@ export const PATCH = handler(
     const addrChanges = body.address;
     const hasAddrChange = addrChanges && Object.keys(addrChanges).length > 0;
     if (hasAddrChange && !order.deliveryAddressId) {
-      // Guest order — no structured Address row to mutate. The
+      // Guest order - no structured Address row to mutate. The
       // address-as-typed lives in deliveryNotes; merge the structured
       // fields into a single line so the courier still sees it.
       const line = [
@@ -84,7 +84,7 @@ export const PATCH = handler(
             ...(addrChanges.floor !== undefined ? { floor: addrChanges.floor } : {}),
             ...(addrChanges.entrance !== undefined ? { entrance: addrChanges.entrance } : {}),
             ...(addrChanges.notes !== undefined ? { notes: addrChanges.notes } : {}),
-            // Clear lat/lng — the old geocode no longer matches the
+            // Clear lat/lng - the old geocode no longer matches the
             // new street. The courier's Waze fallback re-geocodes
             // from the text address.
             lat: null,

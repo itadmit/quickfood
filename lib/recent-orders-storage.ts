@@ -1,7 +1,7 @@
 /**
  * Client-side store for guest customers' recent order ids. Logged-in
- * customers don't need this — the server fetches their orders by
- * customer id — but guests have no persistent identity, so we hold
+ * customers don't need this - the server fetches their orders by
+ * customer id - but guests have no persistent identity, so we hold
  * onto the order ids they've placed in localStorage and re-fetch them
  * by id on the home screen.
  */
@@ -20,7 +20,7 @@ export function recordRecentOrder(tenantSlug: string, orderId: string): void {
     const next = [orderId, ...existing.filter((id) => id !== orderId)].slice(0, MAX_KEEP);
     window.localStorage.setItem(key(tenantSlug), JSON.stringify(next));
   } catch {
-    /* localStorage unavailable — silently drop */
+    /* localStorage unavailable - silently drop */
   }
 }
 

@@ -68,7 +68,7 @@ export const POST = handler(async (req: Request) => {
     select: { id: true },
   });
   if (existing) {
-    return apiError("validation_error", "קוד כבר קיים — בחר אחר", 422, "code");
+    return apiError("validation_error", "קוד כבר קיים - בחר אחר", 422, "code");
   }
 
   // If targeting a single category, sanity-check it belongs to the tenant.

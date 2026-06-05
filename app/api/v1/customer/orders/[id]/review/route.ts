@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 const ReviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
   text: z.string().trim().max(1000).optional().nullable(),
-  // Optional per-item ratings. Keys are OrderItem ids — only items belonging
+  // Optional per-item ratings. Keys are OrderItem ids - only items belonging
   // to this order are accepted; others are silently ignored.
   items: z
     .array(
@@ -57,7 +57,7 @@ export const POST = handler(async (req: Request, { params }: { params: Promise<{
   // Authorization: either the cookie session belongs to the order's
   // customer, or the request carried a valid signed token for this order.
   // Reviews still require a non-null customerId (Review.customerId is
-  // required by the schema) — which is now true for every phone-checkout
+  // required by the schema) - which is now true for every phone-checkout
   // order since we upsert the customer in orders-create.ts.
   if (!order.customerId) {
     return apiError("forbidden", "לא ניתן לדרג הזמנה ללא לקוח", 403);
@@ -81,7 +81,7 @@ export const POST = handler(async (req: Request, { params }: { params: Promise<{
     return apiError("invalid_state", "ביקורות מושבתות במסעדה זו", 409);
   }
 
-  // orderId is unique on Review — one review per order. Use upsert-style
+  // orderId is unique on Review - one review per order. Use upsert-style
   // guard with a friendly error rather than letting Prisma throw P2002.
   const existing = await prisma.review.findUnique({
     where: { orderId: order.id },

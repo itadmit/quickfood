@@ -13,22 +13,22 @@ interface Props {
   /** Cities the merchant has marked as covered (union of all active zones). */
   cities: string[];
   /** Merchant-level toggle. When false the pickup option is rendered as a
-   *  muted, non-selectable tab — the modal still opens so the customer
+   *  muted, non-selectable tab - the modal still opens so the customer
    *  sees why their tap on "איסוף" did nothing. Defaults to true. */
   pickupEnabled?: boolean;
-  /** The branch address — shown when the customer picks "pickup". */
+  /** The branch address - shown when the customer picks "pickup". */
   branchAddress: string | null;
-  /** True if this is the first time the modal opens — used to choose the
+  /** True if this is the first time the modal opens - used to choose the
    *  copy on the close button (no "ביטול" until they've made a choice). */
   required: boolean;
-  /** "delivery" | "pickup" — what method the modal initially highlights. */
+  /** "delivery" | "pickup" - what method the modal initially highlights. */
   initialMethod: "delivery" | "pickup";
   onChoose: (choice: { kind: "delivery"; city: string } | { kind: "pickup" }) => void;
   onClose: () => void;
 }
 
 /**
- * "Do we deliver to you?" modal — shown on first visit to a storefront
+ * "Do we deliver to you?" modal - shown on first visit to a storefront
  * and any time the customer taps the location chip in the top bar.
  * V2 brand language: hero image header, bold black-bordered white
  * card with hard-offset shadow, yellow CTA. The functional split
@@ -72,7 +72,7 @@ export function CityPickerModal({
         className="relative w-full max-w-md bg-white rounded-3xl border-2 border-black shadow-[0_6px_0_#000] flex flex-col overflow-hidden max-h-[90vh] animate-qf-check-in"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Hero header — cover image when available, otherwise a
+        {/* Hero header - cover image when available, otherwise a
             theme-colored surface with a dot pattern, so the modal
             always opens with something hearty above the fold. */}
         <div
@@ -125,9 +125,9 @@ export function CityPickerModal({
             </h2>
             <p className="text-sm text-black/65 leading-snug">
               {hasCities && pickupEnabled
-                ? `בדקו אם ${tenantName} מגיעים עד אליכם — בחרו עיר למשלוח, או הזמינו לאיסוף עצמי מהסניף.`
+                ? `בדקו אם ${tenantName} מגיעים עד אליכם - בחרו עיר למשלוח, או הזמינו לאיסוף עצמי מהסניף.`
                 : hasCities && !pickupEnabled
-                  ? `${tenantName} מציעים משלוחים בלבד — בחרו את העיר שלכם.`
+                  ? `${tenantName} מציעים משלוחים בלבד - בחרו את העיר שלכם.`
                   : !hasCities && pickupEnabled
                     ? "המסעדה לא הגדירה ערי משלוח. אפשר להזמין לאיסוף עצמי מהסניף."
                     : "המסעדה לא מציעה משלוחים ולא איסוף עצמי בשלב זה."}

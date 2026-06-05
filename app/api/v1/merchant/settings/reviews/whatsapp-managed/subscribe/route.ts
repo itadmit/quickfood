@@ -1,6 +1,6 @@
 /**
  * Subscribe the tenant to the managed-WhatsApp reviews add-on
- * (`quickfood_reviews_whatsapp` — ₪99/mo + VAT, unlimited sends via the
+ * (`quickfood_reviews_whatsapp` - ₪99/mo + VAT, unlimited sends via the
  * platform iBot account, no SMS-credit deduction).
  *
  * Requires that the tenant has already completed billing setup (saved card on

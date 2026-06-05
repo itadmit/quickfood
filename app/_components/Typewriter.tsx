@@ -5,7 +5,7 @@ import styles from "../page.module.css";
 
 interface Props {
   words: string[];
-  /** ms — how long each word is shown fully typed before deleting */
+  /** ms - how long each word is shown fully typed before deleting */
   hold?: number;
   /** ms per character during type-in / delete-out */
   charDelay?: number;

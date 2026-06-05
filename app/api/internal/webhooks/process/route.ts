@@ -11,8 +11,8 @@ export const dynamic = "force-dynamic";
  * Triggered by a QStash schedule (registered via `scripts/register-qstash-schedules.ts`)
  * that POSTs here every minute. Two auth paths:
  *
- *   • POST with `upstash-signature` — verified against QSTASH_*_SIGNING_KEY.
- *   • GET/POST with `Authorization: Bearer <CRON_SECRET>` — manual ping for
+ *   • POST with `upstash-signature` - verified against QSTASH_*_SIGNING_KEY.
+ *   • GET/POST with `Authorization: Bearer <CRON_SECRET>` - manual ping for
  *     local dev or one-off retries. CRON_SECRET must be set to enable this path.
  */
 async function run(req: Request, rawBody: string): Promise<Response> {

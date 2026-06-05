@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * POS order lookup — by order number (full or prefix). Scoped to the
+ * POS order lookup - by order number (full or prefix). Scoped to the
  * tenant. Returns up to 20 hits ordered by most-recent.
  */
 export const GET = handler(async (req: Request) => {

@@ -6,7 +6,7 @@
  *
  * Older Wolt imports created ModifierSets without copying Wolt's
  * minimum_total_selections / maximum_total_selections / free_selections
- * onto the catalog set — those columns took their schema defaults
+ * onto the catalog set - those columns took their schema defaults
  * (required=false, min=0, max=5, includedFree=0). The runtime serializer
  * always reads the set values first (fromSet?.required ?? g.required),
  * so the real Wolt config that landed on per-item ItemOptionGroup rows
@@ -60,7 +60,7 @@ async function main() {
 
     for (const s of sets) {
       // Protect merchant edits: if they've promoted the set to required=true
-      // in the catalog UI, never overwrite. Everything else is fair game —
+      // in the catalog UI, never overwrite. Everything else is fair game -
       // the buggy importer left these at semi-random values and we want
       // them to match Wolt.
       if (s.required === true) {

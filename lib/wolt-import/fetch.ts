@@ -80,7 +80,7 @@ export async function resolveVenue(url: string): Promise<WoltVenueInfo> {
   if (!venue?.id) {
     throw new WoltFetchError(
       "venue_not_found",
-      "לא הצלחנו לזהות את החנות בדף שוולט החזירה — ייתכן שהיא סגורה זמנית",
+      "לא הצלחנו לזהות את החנות בדף שוולט החזירה - ייתכן שהיא סגורה זמנית",
     );
   }
   return { venueId: venue.id, name: venue.name || slug, venue };

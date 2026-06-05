@@ -32,7 +32,7 @@ export function DragList<T>({
 }: {
   items: T[];
   onReorder: (next: T[]) => void;
-  /** Stable key per item (defaults to index — pass a real id if available). */
+  /** Stable key per item (defaults to index - pass a real id if available). */
   getKey?: (item: T, index: number) => string | number;
   children: (
     item: T,
@@ -124,7 +124,7 @@ export function DragList<T>({
   );
 }
 
-/** Visual handle for the drag-list — six dots in a 3×2 grid, like Wolt/Notion. */
+/** Visual handle for the drag-list - six dots in a 3×2 grid, like Wolt/Notion. */
 export function DragHandle({ className }: { className?: string }) {
   return (
     <svg

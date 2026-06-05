@@ -22,11 +22,11 @@ export default async function KitchenPage() {
     where: {
       tenantId: session.tenantId,
       status: { in: [...KITCHEN_STATUSES] },
-      // Same soft-hide that the Kanban honors — if the merchant tapped
+      // Same soft-hide that the Kanban honors - if the merchant tapped
       // X on a card, the kitchen screen shouldn't keep showing it.
       kanbanHiddenAt: null,
       // Card / wallet orders waiting on Grow's payment callback are not
-      // real work yet — keep them off the kitchen screen until paid.
+      // real work yet - keep them off the kitchen screen until paid.
       NOT: HIDE_UNPAID_NONCASH,
     },
     orderBy: { createdAt: "asc" },

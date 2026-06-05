@@ -162,10 +162,10 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
 
   async function deleteTenant() {
     const ok = window.confirm(
-      `מחיקת ${t.name}? הפעולה אינה הפיכה — כל המסעדה, ההזמנות, התפריט והמשתמשים יימחקו לצמיתות.`,
+      `מחיקת ${t.name}? הפעולה אינה הפיכה - כל המסעדה, ההזמנות, התפריט והמשתמשים יימחקו לצמיתות.`,
     );
     if (!ok) return;
-    const second = window.prompt(`להמשך — הקלד את ה-slug של המסעדה: ${t.slug}`);
+    const second = window.prompt(`להמשך - הקלד את ה-slug של המסעדה: ${t.slug}`);
     if (second !== t.slug) {
       window.alert("slug שגוי. הפעולה בוטלה.");
       return;
@@ -429,7 +429,7 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
               <Link href="/admin/settings" className="underline">
                 הגדרות פלטפורמה
               </Link>
-              ). כדי שהמסעדה תשלח מהמספר שלה — הזן Token + Instance ID משלה.
+              ). כדי שהמסעדה תשלח מהמספר שלה - הזן Token + Instance ID משלה.
             </div>
           )}
           <Field

@@ -73,7 +73,7 @@ export interface RebuildLine {
 }
 
 /**
- * Old / new subtotal (item-level totals only — delivery + service + tip
+ * Old / new subtotal (item-level totals only - delivery + service + tip
  * are recomputed at checkout, so we don't compare them here). When old
  * and new differ, the UI should ask the customer to confirm the price
  * change before adding everything to the cart.
@@ -189,7 +189,7 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
       : [];
     // Resolve each stored selection to its live menu definition first,
     // then apply the includedFree allowance per group so the cheapest N
-    // picks come back free — same rule the storefront uses on first add.
+    // picks come back free - same rule the storefront uses on first add.
     interface Resolved {
       group: typeof menuItem.optionGroups[number];
       opt: typeof menuItem.optionGroups[number]["options"][number];
@@ -260,7 +260,7 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
     });
 
     // Only count items that actually made it into the rebuilt cart toward
-    // the comparison subtotals — comparing snapshots of items we couldn't
+    // the comparison subtotals - comparing snapshots of items we couldn't
     // restore would inflate the "old" side and confuse the customer.
     const optsDelta = liveOptions.reduce((a, o) => a + o.priceDelta, 0);
     const newUnit = menuItem.basePrice + sizeDelta + optsDelta;

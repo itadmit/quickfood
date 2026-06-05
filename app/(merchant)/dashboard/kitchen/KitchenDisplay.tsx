@@ -69,12 +69,12 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
   // always reads the live value rather than a closed-over stale one.
   const soundMutedRef = useRef(false);
   // Every order id we've shown the kitchen. Any unseen id in a fresh
-  // snapshot rings the chime — so a new ticket sounds whether it arrived
+  // snapshot rings the chime - so a new ticket sounds whether it arrived
   // over the live SSE event or via a reconnect refresh() (Vercel closes
   // idle SSE streams; without this the ticket appears silently).
   const seenIdsRef = useRef<Set<string>>(new Set(initial.map((o) => o.id)));
 
-  // Elapsed-minutes ticker. Throttled to 30s — Math.floor on the
+  // Elapsed-minutes ticker. Throttled to 30s - Math.floor on the
   // minute counter means per-second updates would change nothing.
   useEffect(() => {
     setNow(Date.now());
@@ -95,7 +95,7 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
           // `pending` orders haven't been confirmed by the merchant yet
           // (kiosk cash waiting for cashier, or card waiting for the Grow
           // callback). The kitchen shouldn't start cooking until they
-          // flip to confirmed — that's the explicit "go" signal.
+          // flip to confirmed - that's the explicit "go" signal.
           return ["confirmed", "preparing", "in_oven", "ready"].includes(s);
         })
         .map((o) => ({
@@ -145,7 +145,7 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
     }
   }, []);
 
-  // SSE — shared with the Kanban (one EventSource per browser, since
+  // SSE - shared with the Kanban (one EventSource per browser, since
   // the route is the same URL). Refresh the whole list on any event;
   // patch-level diffing isn't worth it for a 100-row list.
   useEffect(() => {
@@ -162,7 +162,7 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
       });
       es.addEventListener("order.created", () => {
         // refresh() detects the unseen id and rings the chime itself
-        // (see seenIdsRef) — works for both live SSE and reconnect paths.
+        // (see seenIdsRef) - works for both live SSE and reconnect paths.
         void refresh();
       });
       es.addEventListener("order.status_changed", () => void refresh());
@@ -200,7 +200,7 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refresh]);
 
-  // Audio — same /sounds/new.mp3 as NewOrderChime so the UX matches.
+  // Audio - same /sounds/new.mp3 as NewOrderChime so the UX matches.
   // iOS/Chrome block autoplay until a user gesture; unlock on the
   // first click anywhere.
   useEffect(() => {
@@ -288,7 +288,7 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
           <button
             type="button"
             onClick={toggleMute}
-            title={soundMuted ? "סאונד מושתק — הקש להפעלה" : "סאונד פעיל — הקש להשתקה"}
+            title={soundMuted ? "סאונד מושתק - הקש להפעלה" : "סאונד פעיל - הקש להשתקה"}
             className={cn(
               "inline-flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-bold",
               soundMuted

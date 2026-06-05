@@ -9,7 +9,7 @@
  * `null` (or no entry) means the customer hasn't answered yet. Once
  * they answer, value is either:
  *   - a city name (delivery to that city)
- *   - the sentinel "__pickup__" (they chose to come pick up — no
+ *   - the sentinel "__pickup__" (they chose to come pick up - no
  *     coverage needed)
  */
 

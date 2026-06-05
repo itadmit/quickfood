@@ -29,7 +29,7 @@ import { KioskHeader, KioskHeaderButton } from "./KioskHeader";
 import { VirtualKeyboard as KioskKeyboard } from "@/components/shared/VirtualKeyboard";
 
 // Soft-card primary choice button. Used for dine-in vs takeaway and
-// for the QR-pay vs pay-at-counter screen — same visual rhythm so
+// for the QR-pay vs pay-at-counter screen - same visual rhythm so
 // each step of the kiosk flow feels like the same family of choices.
 function ModeCard({
   icon,
@@ -88,7 +88,7 @@ interface BundleSuggestion {
   bundle_price: number;
   full_price: number;
   savings: number;
-  /** Wolt-mode upgrade target — opens its own ItemDetail when the
+  /** Wolt-mode upgrade target - opens its own ItemDetail when the
    *  customer accepts. Present iff mode === "linked". */
   linked_item?: {
     id: string;
@@ -96,7 +96,7 @@ interface BundleSuggestion {
     base_price: number;
     image_url: string | null;
   };
-  /** Legacy mode — addons get injected directly into the cart. */
+  /** Legacy mode - addons get injected directly into the cart. */
   addons?: Array<{
     item_id: string;
     name: string;
@@ -104,7 +104,7 @@ interface BundleSuggestion {
     image_url: string | null;
     qty: number;
   }>;
-  /** Items in cart that fired this offer — removed from cart when
+  /** Items in cart that fired this offer - removed from cart when
    *  the suggestion is accepted so the customer doesn't pay for the
    *  trigger items + the combo on top. */
   trigger_item_ids: string[];
@@ -168,7 +168,7 @@ export function KioskApp({
   >("start");
   const [diningMode, setDiningMode] = useState<"dinein" | "takeaway" | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
-  // Optional phone — collected before browse so we can SMS the invoice
+  // Optional phone - collected before browse so we can SMS the invoice
   // when Grow ships it. Customer can skip and it stays empty.
   const [customerPhone, setCustomerPhone] = useState<string>("");
   // Returning-customer name preloaded from `/kiosk-lookup` after phone
@@ -176,7 +176,7 @@ export function KioskApp({
   // the name-entry screen renders fresh-input mode.
   const [customerFirstName, setCustomerFirstName] = useState<string>("");
   const [customerLastName, setCustomerLastName] = useState<string>("");
-  // Optional email captured on the name-entry screen — when the
+  // Optional email captured on the name-entry screen - when the
   // customer ticks "אני רוצה לקבל חשבונית למייל" we collect their
   // address here so the tax invoice + review-reminder email both go
   // straight to them without a second prompt on the pay page.
@@ -184,7 +184,7 @@ export function KioskApp({
   const [customerEmail, setCustomerEmail] = useState<string>("");
   // Marketing opt-in checkbox on the name-entry screen. Default off
   // (explicit opt-in only); flows through to Customer.marketingConsent
-  // on order create — never writes false, so we never accidentally
+  // on order create - never writes false, so we never accidentally
   // un-opt-in a customer who said yes on a previous visit.
   const [marketingConsent, setMarketingConsent] = useState<boolean>(false);
   // Did the lookup confirm a prior customer at this tenant? Drives the
@@ -192,12 +192,12 @@ export function KioskApp({
   const [nameWasPrefilled, setNameWasPrefilled] = useState(false);
   const [phoneSubmitting, setPhoneSubmitting] = useState(false);
   // Latched true once the customer has completed phone-entry for this
-  // session — either by skipping (non-required mode), entering+lookup
+  // session - either by skipping (non-required mode), entering+lookup
   // (non-required), or entering+OTP (required). Lets the mode picker
   // skip phone+OTP on a back-and-forth between dine-in / takeaway and
   // the menu. Reset on full session reset only.
   const [phoneStepDone, setPhoneStepDone] = useState(false);
-  // OTP flow state — only used when kioskRequirePhone=true. We track
+  // OTP flow state - only used when kioskRequirePhone=true. We track
   // the channel the code was sent through so we can tell the customer
   // "we WhatsApp'd you" vs "we SMS'd you" with the right copy.
   const [otpCode, setOtpCode] = useState<string>("");
@@ -206,7 +206,7 @@ export function KioskApp({
   const [otpError, setOtpError] = useState<string | null>(null);
   const [otpResendIn, setOtpResendIn] = useState(0);
   // QR-pay session for kiosk card payments. Holds the checkoutId
-  // (NOT an Order id — the Order materializes only after Grow confirms
+  // (NOT an Order id - the Order materializes only after Grow confirms
   // payment). orderNumber is null until materialization.
   const [pendingPayOrder, setPendingPayOrder] = useState<{
     checkoutId: string;
@@ -214,7 +214,7 @@ export function KioskApp({
     total: number;
   } | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  // "Anything to add before you go?" interstitial — one-shot per
+  // "Anything to add before you go?" interstitial - one-shot per
   // checkout attempt. Goes true when the merchant presses "להזמין"
   // and there are upsell candidates; the user either picks something
   // and stays in the cart, or skips and the real placeOrder fires.
@@ -237,7 +237,7 @@ export function KioskApp({
   const [bundleSuggestions, setBundleSuggestions] = useState<BundleSuggestion[]>([]);
   const [acceptedBundleIds, setAcceptedBundleIds] = useState<Set<string>>(new Set());
   // The Wolt-style upgrade popup. Re-fires on every fresh trigger
-  // add — if a customer dismisses then adds another מלווח, they get
+  // add - if a customer dismisses then adds another מלווח, they get
   // prompted again. popupArmedRef is the "an add just happened, look
   // for a bundle to surface on the next suggestion fetch" flag. It
   // gets armed when cart count grows and disarms the moment the popup
@@ -258,13 +258,13 @@ export function KioskApp({
   // Which input the on-screen Hebrew keyboard is currently bound to.
   // Each input that opts in sets this on focus/click; the KioskKeyboard
   // at the bottom of the tree reads/writes the matching state slot.
-  // `null` keeps the keyboard hidden — search has its own bool above
+  // `null` keeps the keyboard hidden - search has its own bool above
   // for backwards compatibility with the existing wiring.
   const [kbdTarget, setKbdTarget] = useState<
     "search" | "firstName" | "lastName" | "email" | "notes" | null
   >(null);
   // Drop any name-input keyboard binding when the customer navigates
-  // away from name-entry — without this the next visit briefly opens
+  // away from name-entry - without this the next visit briefly opens
   // with the wrong target latched in (e.g. coming back from pay-choice
   // would still target "lastName" until they tap an input again).
   useEffect(() => {
@@ -276,7 +276,7 @@ export function KioskApp({
     }
   }, [state, kbdTarget]);
   // Auto-open the keyboard on the first-name field the moment the
-  // name-entry screen mounts — saves a tap. Skip if a field is already
+  // name-entry screen mounts - saves a tap. Skip if a field is already
   // bound (e.g. bounced back from pay-choice with lastName still latched).
   useEffect(() => {
     if (state === "name-entry" && kbdTarget === null) {
@@ -287,7 +287,7 @@ export function KioskApp({
   // The customer layout below us renders top nav, FAB, preview bar etc.
   // Cover the lot with a full-viewport overlay so the kiosk reads as a
   // single-purpose appliance, not "the storefront in disguise". Body
-  // scroll is locked too — touching the back of the chrome shouldn't
+  // scroll is locked too - touching the back of the chrome shouldn't
   // pull the kiosk content around.
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -302,12 +302,12 @@ export function KioskApp({
 
   // Every item's full sizes + option groups arrived in the initial
   // server render (itemDetails prop), so the picker opens instantly
-  // — no skeleton, no network round-trip. Kiosks have to feel native.
+  // - no skeleton, no network round-trip. Kiosks have to feel native.
   const pickedItemData = pickItemId ? itemDetails[pickItemId] : null;
 
   // Idle reset. After idleSeconds of zero touch/click/key the kiosk
   // wipes the cart, closes any open picker, and returns to the start
-  // screen — the next customer should never inherit the previous
+  // screen - the next customer should never inherit the previous
   // person's half-built order. Five-second polling is fine; we don't
   // need millisecond accuracy.
   const lastActivityRef = useRef(Date.now());
@@ -371,7 +371,7 @@ export function KioskApp({
   }, [lines, tenantSlug]);
 
   // When the customer accepts a Wolt-style linked bundle we don't add
-  // anything to the cart ourselves — we open the combo's ItemDetail so
+  // anything to the cart ourselves - we open the combo's ItemDetail so
   // they pick variants (drink choice, size, …) and add it on their own
   // terms. Once the combo actually lands in the cart we swap the
   // trigger items out so the cart doesn't carry the trigger pizza AND
@@ -399,7 +399,7 @@ export function KioskApp({
       setPickItemId(linkedId);
       return;
     }
-    // Legacy addons path — inject the configured items directly.
+    // Legacy addons path - inject the configured items directly.
     for (const a of b.addons ?? []) {
       const detail = itemDetails[a.item_id];
       for (let i = 0; i < a.qty; i++) {
@@ -512,7 +512,7 @@ export function KioskApp({
   useEffect(() => {
     if (state === "start") return;
     // While we're waiting for a phone-side payment, the customer isn't
-    // touching the kiosk on purpose — extend the idle timeout to a long
+    // touching the kiosk on purpose - extend the idle timeout to a long
     // absolute window (8 min) so the kiosk doesn't reset mid-payment.
     const effectiveIdle = state === "pay-qr" ? 480 : idleSeconds;
     const handle = window.setInterval(() => {
@@ -523,7 +523,7 @@ export function KioskApp({
   }, [state, idleSeconds, reset]);
 
   // Build the QR image once a pending payment order is set. Target is the
-  // customer-facing pay page on the same origin — they scan, the phone
+  // customer-facing pay page on the same origin - they scan, the phone
   // opens the Grow wallet there. Empty origin (SSR/initial render) is fine;
   // the kiosk only renders this client-side.
   useEffect(() => {
@@ -553,7 +553,7 @@ export function KioskApp({
   }, [state, pendingPayOrder, tenantSlug]);
 
   // Poll the checkout. When Grow's callback materializes the order, the
-  // checkout flips to status=completed with order_id populated — at that
+  // checkout flips to status=completed with order_id populated - at that
   // point we know the customer paid and the kitchen has the ticket.
   useEffect(() => {
     if (state !== "pay-qr" || !pendingPayOrder) return;
@@ -602,7 +602,7 @@ export function KioskApp({
     return list;
   }, [items, query, activeCat]);
 
-  // Helper — same logic, parameterized over the merchant's category
+  // Helper - same logic, parameterized over the merchant's category
   // flag (upsellInCart for the in-cart strip, upsellBeforeCheckout
   // for the dessert prompt). Filters out anything already in the cart
   // and caps to 4 so the screen stays tidy.
@@ -676,12 +676,12 @@ export function KioskApp({
     advanceToPayment();
   }
 
-  // Returning-customer name lookup — same path whether we got here
+  // Returning-customer name lookup - same path whether we got here
   // straight from phone-entry (kioskRequirePhone=false) or via OTP
   // verify (kioskRequirePhone=true). Always lands the user on `browse`.
   // Hoisted so both the manual "verify" button AND the auto-submit
   // effect that fires when the 6th digit lands can reuse it. Standard
-  // OTP UX is "no submit button needed — typing the last digit just
+  // OTP UX is "no submit button needed - typing the last digit just
   // verifies"; the button stays as a fallback for accessibility +
   // retry-after-error.
   const verifyKioskOtp = useCallback(
@@ -718,7 +718,7 @@ export function KioskApp({
   );
 
   // Auto-submit OTP when the 6th digit lands. Mirrors iOS + every bank
-  // OTP screen — typing the last char should just verify, no extra
+  // OTP screen - typing the last char should just verify, no extra
   // tap required.
   useEffect(() => {
     if (state !== "otp-verify") return;
@@ -746,10 +746,10 @@ export function KioskApp({
         setNameWasPrefilled(false);
       }
     } catch {
-      /* lookup is non-blocking — proceed anyway */
+      /* lookup is non-blocking - proceed anyway */
     }
     // Latch "phone step is done" so a back-and-forth through mode-picker
-    // doesn't re-prompt phone+OTP — only a full session reset clears it.
+    // doesn't re-prompt phone+OTP - only a full session reset clears it.
     setPhoneStepDone(true);
     setState("browse");
   }
@@ -788,7 +788,7 @@ export function KioskApp({
 
   // Countdown timer for the "resend in Xs" hint on the OTP screen.
   // Only ticks while otp-verify is the active state and the timer is
-  // positive — re-entering the screen restarts the countdown via
+  // positive - re-entering the screen restarts the countdown via
   // issueKioskOtp's setOtpResendIn(60).
   useEffect(() => {
     if (state !== "otp-verify" || otpResendIn <= 0) return;
@@ -802,7 +802,7 @@ export function KioskApp({
     setCheckoutPromptOpen(false);
     setCartOpen(false);
     // When the tenant requires phone+name, route through the name-entry
-    // screen first — the customer confirms (or types) the name we'll
+    // screen first - the customer confirms (or types) the name we'll
     // print on the kitchen ticket. The screen itself decides where to
     // go next (pay-choice or straight to cash placeOrder).
     if (kioskRequirePhone) {
@@ -875,7 +875,7 @@ export function KioskApp({
         return;
       }
 
-      // Cash: existing flow — Order created immediately at status=pending,
+      // Cash: existing flow - Order created immediately at status=pending,
       // cashier confirms via "מזומן התקבל" in the Kanban.
       const res = await fetch("/api/v1/customer/orders", {
         method: "POST",
@@ -921,7 +921,7 @@ export function KioskApp({
                 backgroundPosition: "center",
               }}
             />
-            {/* Soft black wash — knocks the photo back so it reads as
+            {/* Soft black wash - knocks the photo back so it reads as
                 backdrop, not foreground content, and pushes the white
                 headline + CTA forward. Detail survives at 30%. */}
             <div
@@ -997,7 +997,7 @@ export function KioskApp({
               onClick={() => {
                 setDiningMode("dinein");
                 // Returning to the picker mid-cart shouldn't re-prompt
-                // phone+OTP — only ask once per session. Merchants who
+                // phone+OTP - only ask once per session. Merchants who
                 // turned phone collection off skip the screen entirely.
                 setState(
                   !kioskCollectPhone || phoneStepDone ? "browse" : "phone-entry",
@@ -1025,7 +1025,7 @@ export function KioskApp({
   if (state === "phone-entry") {
     const digits = customerPhone.replace(/\D/g, "");
     // Customer-service bypass: typing ten 9s lets internal staff sail
-    // through OTP without waiting for a WhatsApp/SMS — used when we're
+    // through OTP without waiting for a WhatsApp/SMS - used when we're
     // walking a customer through the kiosk on the phone. The bypass is
     // silently scrubbed before the order POST so it doesn't pollute
     // the Customer table with a fake "9999999999" number.
@@ -1071,7 +1071,7 @@ export function KioskApp({
             </div>
           </div>
 
-          {/* LTR keypad so "1" sits top-LEFT and "9" bottom-RIGHT — the
+          {/* LTR keypad so "1" sits top-LEFT and "9" bottom-RIGHT - the
               parent column is RTL (Hebrew), and a child grid inherits
               that flow direction, which inverted 1/2/3 visually before. */}
           <div dir="ltr" className="grid grid-cols-3 gap-3 w-full max-w-md">
@@ -1151,7 +1151,7 @@ export function KioskApp({
                 }
                 if (kioskRequirePhone) {
                   // Optimistic flip: jump to the OTP screen the moment
-                  // the customer taps המשך — perceived latency drops
+                  // the customer taps המשך - perceived latency drops
                   // from "wait 1-2s on this screen" to "the next screen
                   // is already painting while we send". The OTP screen
                   // reads phoneSubmitting and shows a "שולחים קוד…"
@@ -1166,7 +1166,7 @@ export function KioskApp({
                   );
                   return;
                 }
-                // No phone gate — lookup + go to browse. We DO await
+                // No phone gate - lookup + go to browse. We DO await
                 // here so the user doesn't see the menu before we know
                 // their name (the lookup result drives the name-entry
                 // pre-fill).
@@ -1511,7 +1511,7 @@ export function KioskApp({
             onClick={() => {
               if (!canContinue) return;
               // Require a syntactically valid email if the customer
-              // opted into the invoice — otherwise the upstream order
+              // opted into the invoice - otherwise the upstream order
               // create silently drops the bad address and they think
               // they'll get an invoice that never comes.
               if (wantsInvoice && !/^\S+@\S+\.\S+$/.test(customerEmail.trim())) {
@@ -1531,7 +1531,7 @@ export function KioskApp({
           </button>
         </div>
 
-        {/* On-screen Hebrew keyboard — rebound to whichever name input
+        {/* On-screen Hebrew keyboard - rebound to whichever name input
             the customer tapped. Browse-screen's own keyboard mount lives
             past an early return that this branch never reaches, so we
             mount a dedicated instance here. */}
@@ -1570,7 +1570,7 @@ export function KioskApp({
   // Without this branch the "placing" state falls through to the
   // browse render, so for a heartbeat between the customer tapping
   // "תשלום בטלפון" and the QR / thanks screen mounting, the menu
-  // flashes on screen — which reads as "my order vanished".
+  // flashes on screen - which reads as "my order vanished".
   if (state === "placing") {
     return (
       <div className="fixed inset-0 z-[200] bg-qf-bg flex flex-col items-center justify-center gap-6 p-12 text-center select-none">
@@ -1804,7 +1804,7 @@ export function KioskApp({
 
       <div className="flex-1 flex min-h-0 pb-28">
         {/* Side category nav. Vertical list, large touch targets,
-            collapsed scroll. Hidden when a search query is active —
+            collapsed scroll. Hidden when a search query is active -
             the search results span every category anyway. */}
         {!query && categories.length > 0 && (
           <nav className="w-56 lg:w-64 shrink-0 border-e border-qf-line-soft bg-white overflow-y-auto py-4">
@@ -1840,7 +1840,7 @@ export function KioskApp({
             // On xl+ (proper kiosk hardware, 1280px+) the picker lives
             // inline so the header + category sidebar stay visible. On
             // smaller screens (tablet, small monitors) the inline layout
-            // would squeeze ItemDetail too narrow — so the picker
+            // would squeeze ItemDetail too narrow - so the picker
             // escapes the main column and covers the area BELOW the
             // sticky header (top-[76px], where the kiosk header sits).
             // Critically it does NOT cover the header, so the "לשבת /
@@ -1955,10 +1955,10 @@ export function KioskApp({
         </main>
       </div>
 
-      {/* Cart sticky bar — collapsed by default so the menu owns the
+      {/* Cart sticky bar - collapsed by default so the menu owns the
           screen. The pulse animation re-keys every add so the bar
           visibly nudges and reminds the customer it's there. Hidden
-          while the item picker is open — ItemDetail has its own
+          while the item picker is open - ItemDetail has its own
           add-to-cart footer there, so two cart CTAs would compete.
           Also hidden while the on-screen keyboard is up so it
           doesn't sit on top of the keys. */}
@@ -2264,7 +2264,7 @@ export function KioskApp({
         </div>
       )}
 
-      {/* "Anything to add before you go?" interstitial — last-chance
+      {/* "Anything to add before you go?" interstitial - last-chance
           upsell after the customer hits "place order". Stays a sheet
           like the cart for visual continuity. */}
       {checkoutPromptOpen && checkoutUpsellSuggestions.length > 0 && (
@@ -2344,7 +2344,7 @@ export function KioskApp({
             setKbdTarget(null);
             setNotesBinding(null);
           }}
-          placeholder="הקלידו הערה — לדוגמה: בלי בצל, חתוך ל-8"
+          placeholder="הקלידו הערה - לדוגמה: בלי בצל, חתוך ל-8"
           maxLength={200}
         />
       )}
@@ -2374,7 +2374,7 @@ export function KioskApp({
         />
       )}
 
-      {/* Bundle upgrade popup — fires the moment a fresh add lands a
+      {/* Bundle upgrade popup - fires the moment a fresh add lands a
           linked bundle in the suggestion list. Gated on !pickItemId
           so it doesn't stack on top of the ItemDetail modal that's
           mid-closing-animation when the customer adds the trigger
@@ -2445,7 +2445,7 @@ export function KioskApp({
         </div>
       )}
 
-      {/* Help modal — short flow recap + tiny "powered by QuickFood"
+      {/* Help modal - short flow recap + tiny "powered by QuickFood"
           attribution with a sales phone CTA, so passers-by who like
           what they see know who to call. */}
       {helpOpen && (

@@ -3,7 +3,7 @@
  *
  * Single source of truth used by both the nav (to hide sections a role
  * can't use) and the server/client route guards (to enforce it). Pure
- * functions — safe to import from server components and client components.
+ * functions - safe to import from server components and client components.
  *
  * Matrix (confirmed with the owner):
  *   owner            → everything

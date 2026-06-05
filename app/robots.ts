@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        // Private surfaces — never useful to Google and risk leaking
+        // Private surfaces - never useful to Google and risk leaking
         // half-finished UI / API responses if indexed.
         disallow: [
           "/api/",

@@ -1,4 +1,4 @@
--- Bundle offers — additive "make it a meal" combos.
+-- Bundle offers - additive "make it a meal" combos.
 --
 -- Triggers: which menu items, when present in the cart, fire the
 -- offer. Addons: the items the customer gets if they accept. The

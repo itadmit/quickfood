@@ -58,19 +58,19 @@ export function CourierProfile() {
         <div className="rounded-2xl bg-white/5 border border-white/10 p-4 space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-xs text-white/50">שם</p>
-            <p className="font-medium">{me?.name ?? "—"}</p>
+            <p className="font-medium">{me?.name ?? "-"}</p>
           </div>
           <div className="flex items-center justify-between">
             <p className="text-xs text-white/50">מסעדה</p>
-            <p className="font-medium">{me?.tenant.name ?? "—"}</p>
+            <p className="font-medium">{me?.tenant.name ?? "-"}</p>
           </div>
           <div className="flex items-center justify-between">
             <p className="text-xs text-white/50">כלי תחבורה</p>
-            <p className="font-medium">{me ? VEHICLE_LABEL[me.vehicle] : "—"}</p>
+            <p className="font-medium">{me ? VEHICLE_LABEL[me.vehicle] : "-"}</p>
           </div>
           <div className="flex items-center justify-between">
             <p className="text-xs text-white/50">טלפון</p>
-            <p className="font-medium tnum" dir="ltr">{me?.phone ?? "—"}</p>
+            <p className="font-medium tnum" dir="ltr">{me?.phone ?? "-"}</p>
           </div>
           {me?.email && (
             <div className="flex items-center justify-between">
@@ -89,7 +89,7 @@ export function CourierProfile() {
           />
           <Stat
             label="דירוג"
-            value={me?.rating_avg ? me.rating_avg.toFixed(1) : "—"}
+            value={me?.rating_avg ? me.rating_avg.toFixed(1) : "-"}
           />
         </div>
 

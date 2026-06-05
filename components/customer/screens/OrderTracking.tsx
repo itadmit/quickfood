@@ -133,7 +133,7 @@ export function OrderTracking({
   const stages = stagesFor(order.method);
   const stage = stageOf(order.status, order.method);
   const isDelivered = order.status === "delivered";
-  // "Just placed" — the customer just landed on this page. Render the
+  // "Just placed" - the customer just landed on this page. Render the
   // celebratory green-check confirmation instead of the ETA so they
   // know the order went through.
   const isJustPlaced = order.status === "pending";
@@ -154,7 +154,7 @@ export function OrderTracking({
     router.replace(`${window.location.pathname}?${params.toString()}${window.location.hash}`);
   }, [canReview, order.id, tenantSlug, router]);
 
-  // SSE updates — only relevant when the merchant opted into live tracking.
+  // SSE updates - only relevant when the merchant opted into live tracking.
   // For the lite thank-you screen, the page never refreshes (less work, less
   // server load, and the customer doesn't expect a live timeline).
   useEffect(() => {
@@ -266,7 +266,7 @@ export function OrderTracking({
         }
         subhead={
           isJustPlaced
-            ? `ההזמנה אצל ${tenantName} — תקבל עדכון ברגע שהיא תיכנס להכנה`
+            ? `ההזמנה אצל ${tenantName} - תקבל עדכון ברגע שהיא תיכנס להכנה`
             : isDelivered
               ? null
               : "דקות עד להגעה משוערת"
@@ -289,7 +289,7 @@ export function OrderTracking({
             </div>
           </div>
 
-          {/* Progress steps — circles connected by a track. The fill grows
+          {/* Progress steps - circles connected by a track. The fill grows
               across the connector when the next stage is reached, and the
               currently-active circle gets a soft pulsing ring so the eye
               lands on "where we are right now" without reading the labels. */}
@@ -417,7 +417,7 @@ export function OrderTracking({
         </section>
       )}
 
-      {/* Review prompt — only after delivery, only for the order's owner */}
+      {/* Review prompt - only after delivery, only for the order's owner */}
       {isDelivered && canReview && (
         <section className="px-5 mt-4 lg:px-0 lg:mt-6" id="review">
           <ReviewCard
@@ -471,7 +471,7 @@ export function OrderTracking({
         </div>
       </section>
 
-      {/* Share + social proof — surface even on the live-tracking view so
+      {/* Share + social proof - surface even on the live-tracking view so
           the customer can forward the link to whoever's picking up. */}
       {!isDelivered && (
         <section className="px-5 mt-4 lg:px-0">
@@ -492,7 +492,7 @@ export function OrderTracking({
         </section>
       )}
 
-      {/* Footer — single primary CTA, same shape as the ThankYouView. */}
+      {/* Footer - single primary CTA, same shape as the ThankYouView. */}
       <section className="px-5 mt-6 lg:px-0">
         <Link
           href={`/s/${tenantSlug}#menu-section`}
@@ -557,7 +557,7 @@ function ReviewCard({
   const [error, setError] = useState<string | null>(null);
 
   // Already reviewed → read-only thank-you state. If the merchant replied,
-  // surface their response in a highlighted block — same shape as the
+  // surface their response in a highlighted block - same shape as the
   // public reviews page.
   if (review) {
     return (
@@ -762,7 +762,7 @@ function ReviewCard({
  * E-commerce style post-order confirmation. Shown when the merchant has the
  * "show order tracking" toggle off (the default) in Settings → Checkout.
  *
- * Goal: feel like the thank-you page on any decent online store — clear
+ * Goal: feel like the thank-you page on any decent online store - clear
  * confirmation, order number, receipt, and a path back to shopping or to
  * the restaurant. NO live ETA, NO step timeline, NO SSE refresh.
  */
@@ -787,7 +787,7 @@ function ThankYouView({
   review: ExistingReview | null;
   onReviewSubmitted: (r: ExistingReview) => void;
 }) {
-  // Same URL serves three intents — pick the framing that fits.
+  // Same URL serves three intents - pick the framing that fits.
   //  - "review": delivered + can rate + hasn't yet → the review form is the
   //    protagonist (this is what email-reminder lands on)
   //  - "thanks_for_review": delivered + already rated → quiet acknowledgment
@@ -928,7 +928,7 @@ function ThankYouView({
       />
 
       {/* In review mode, the rating form is the reason the customer is
-          here — surface it directly under the header, push the receipt
+          here - surface it directly under the header, push the receipt
           down as reference, and drop the social-proof noise. */}
       {mode === "review" ? (
         <>
@@ -944,7 +944,7 @@ function ThankYouView({
         <>
           {itemsSection}
 
-          {/* Share — surface above the review prompt because most customers
+          {/* Share - surface above the review prompt because most customers
               hit this page right after paying, well before delivery. */}
           {order.status !== "delivered" && (
             <section className="px-5 mt-4">
@@ -956,7 +956,7 @@ function ThankYouView({
             </section>
           )}
 
-          {/* Social proof — recent positive reviews from other customers.
+          {/* Social proof - recent positive reviews from other customers.
               Only when we're NOT in review-mode (it's noise on a page
               whose whole point is the customer's own rating). */}
           {recentReviews.length > 0 && (
@@ -980,7 +980,7 @@ function ThankYouView({
 }
 
 /**
- * Hero block at the top of the order page — cover image as the background
+ * Hero block at the top of the order page - cover image as the background
  * (with a dim gradient so foreground text stays readable), the tenant's
  * logo as a floating circular badge bottom-overlapping the next block, and
  * the business name + order number stamped under it. Falls back to the
@@ -1023,7 +1023,7 @@ function BrandedHeader({
             : undefined
         }
       >
-        {/* Fallback gradient when no cover is set — same brand wash the
+        {/* Fallback gradient when no cover is set - same brand wash the
             page used before this refactor. */}
         {!tenantCoverImage && (
           <div
@@ -1061,7 +1061,7 @@ function BrandedHeader({
         </div>
       </div>
 
-      {/* Floating logo + business name strip — sits at the seam between the
+      {/* Floating logo + business name strip - sits at the seam between the
           cover and the content below, so the cover frames a clear identity
           chip instead of bleeding straight into a generic receipt. */}
       <div className="relative -mt-8 px-5 lg:px-0">
@@ -1097,7 +1097,7 @@ function BrandedHeader({
 }
 
 /**
- * "Share with whoever's picking up" — WhatsApp deep-link plus native Web
+ * "Share with whoever's picking up" - WhatsApp deep-link plus native Web
  * Share fallback for iOS/Android. The text the receiver gets is short and
  * carries the tracking link so they can follow status without logging in.
  */
@@ -1136,7 +1136,7 @@ function ShareCTA({
         url: currentUrl(),
       });
     } catch {
-      /* user dismissed the sheet — nothing to do */
+      /* user dismissed the sheet - nothing to do */
     }
   }
 
@@ -1174,7 +1174,7 @@ function ShareCTA({
 /**
  * Carousel of the latest visible reviews (≥4 stars, with a body) so the
  * customer who just paid sees other satisfied buyers as the order is on
- * its way. Read-only — submitting goes through ReviewCard below.
+ * its way. Read-only - submitting goes through ReviewCard below.
  */
 function ReviewsTeaser({
   tenantName,

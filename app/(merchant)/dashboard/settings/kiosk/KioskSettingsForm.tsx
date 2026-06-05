@@ -55,9 +55,9 @@ export function KioskSettingsForm({
   if (!enabled) {
     return (
       <div className="bg-white border-2 border-dashed border-qf-line-dash rounded-2xl p-8 text-center space-y-3">
-        <h2 className="text-lg font-bold">קיוסק להזמנה עצמית — תוסף בתשלום</h2>
+        <h2 className="text-lg font-bold">קיוסק להזמנה עצמית - תוסף בתשלום</h2>
         <p className="text-sm text-qf-mute leading-relaxed max-w-xl mx-auto">
-          קיוסק על טאבלט בכניסה לעסק שמאפשר ללקוחות להזמין לבד — אותו תפריט, אותו עיצוב כמו האתר שלך, עם איפוס אוטומטי כשהלקוח עוזב. תשלום בקופה (או דרך מסופון מחובר — נוסיף בהמשך).
+          קיוסק על טאבלט בכניסה לעסק שמאפשר ללקוחות להזמין לבד - אותו תפריט, אותו עיצוב כמו האתר שלך, עם איפוס אוטומטי כשהלקוח עוזב. תשלום בקופה (או דרך מסופון מחובר - נוסיף בהמשך).
         </p>
         <p className="text-xs text-qf-mute">
           רוצה לנסות? פני אלינו ב-WhatsApp ונפעיל את התוסף לחנות שלך.
@@ -123,7 +123,7 @@ export function KioskSettingsForm({
             <label htmlFor="kiosk-collect-phone" className="flex-1 cursor-pointer">
               <div className="text-sm font-bold">לבקש טלפון לחשבונית</div>
               <div className="text-xs text-qf-mute mt-0.5 leading-relaxed">
-                לפני התפריט הלקוח רואה מסך שמבקש טלפון לשליחת חשבונית. אם כבוי — הלקוח קופץ ישר לתפריט, בלי מסך טלפון ובלי OTP. מומלץ לעסקים שרוצים מינימום חיכוך והחשבונית מודפסת על דלפק.
+                לפני התפריט הלקוח רואה מסך שמבקש טלפון לשליחת חשבונית. אם כבוי - הלקוח קופץ ישר לתפריט, בלי מסך טלפון ובלי OTP. מומלץ לעסקים שרוצים מינימום חיכוך והחשבונית מודפסת על דלפק.
               </div>
             </label>
           </div>
@@ -161,7 +161,7 @@ export function KioskSettingsForm({
               className="w-32 px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum text-center"
             />
             <p className="text-xs text-qf-mute mt-1">
-              כשהלקוח מסיים — או נטש באמצע — הקיוסק חוזר למסך הפתיחה ומנקה את הסל אחרי X שניות. 60-120 ברירת מחדל סבירה.
+              כשהלקוח מסיים - או נטש באמצע - הקיוסק חוזר למסך הפתיחה ומנקה את הסל אחרי X שניות. 60-120 ברירת מחדל סבירה.
             </p>
           </div>
 
@@ -185,7 +185,7 @@ export function KioskSettingsForm({
             <div>
               <div className="font-bold text-qf-ink">טקסטים מותאמים</div>
               <div className="text-sm text-qf-mute mt-0.5 leading-relaxed">
-                שינוי המלל בקיוסק — כותרות, הוראות, כפתורים. ברירת המחדל
+                שינוי המלל בקיוסק - כותרות, הוראות, כפתורים. ברירת המחדל
                 נשמרת כשהשדה נשאר ריק.
               </div>
             </div>

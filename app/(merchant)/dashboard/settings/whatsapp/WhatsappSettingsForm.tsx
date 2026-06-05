@@ -174,7 +174,7 @@ export function WhatsappSettingsForm({
         <div>
           <h2 className="text-base lg:text-lg font-semibold">בדיקת WhatsApp</h2>
           <p className="text-xs lg:text-sm text-qf-mute">
-            שליחת הודעת בדיקה כדי לוודא שהחיבור עובד. הפלטפורמה סופגת את העלות — לא יוריד מהיתרה.
+            שליחת הודעת בדיקה כדי לוודא שהחיבור עובד. הפלטפורמה סופגת את העלות - לא יוריד מהיתרה.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">

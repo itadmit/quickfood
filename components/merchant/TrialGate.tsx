@@ -36,7 +36,7 @@ export function TrialGate({
         </div>
         <h2 className="text-xl font-bold">תקופת הניסיון הסתיימה</h2>
         <p className="text-sm text-qf-ink2 mt-2 leading-relaxed">
-          כדי להמשיך להשתמש בדשבורד, באתר ובכל יכולות המערכת — יש להשלים פתיחת מנוי משלם.
+          כדי להמשיך להשתמש בדשבורד, באתר ובכל יכולות המערכת - יש להשלים פתיחת מנוי משלם.
         </p>
         <div className="mt-3 text-xs text-qf-mute">
           חיוב חודשי: ₪299 + מע״מ. ניתן לבטל בכל עת.

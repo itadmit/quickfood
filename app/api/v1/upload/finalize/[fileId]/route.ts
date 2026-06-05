@@ -14,7 +14,7 @@ export const POST = handler(async (req: Request, { params }: { params: Promise<{
   if (!key || !key.includes(fileId)) {
     return apiError("validation_error", "key parameter missing or mismatched", 422, "key");
   }
-  // R2 can take a brief moment to propagate after a successful PUT — retry the
+  // R2 can take a brief moment to propagate after a successful PUT - retry the
   // HEAD a few times before declaring the object missing.
   let exists = false;
   for (let attempt = 0; attempt < 4; attempt++) {

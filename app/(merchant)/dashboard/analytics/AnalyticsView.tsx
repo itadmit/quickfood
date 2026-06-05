@@ -110,7 +110,7 @@ export function AnalyticsView({
         <div>
           <h1 className="text-2xl font-black">אנליטיקס</h1>
           <p className="text-sm text-black/60 mt-0.5">
-            ניתוח עמוק של הביצועים — כספים, ערוצים, לקוחות ותפעול.
+            ניתוח עמוק של הביצועים - כספים, ערוצים, לקוחות ותפעול.
           </p>
         </div>
         <div
@@ -153,7 +153,7 @@ export function AnalyticsView({
         />
       </section>
 
-      {/* INSIGHTS — "החוזקות שלך" */}
+      {/* INSIGHTS - "החוזקות שלך" */}
       {insights.length > 0 && (
         <section
           className="rounded-2xl border-2 border-black p-4 lg:p-5 shadow-[0_3px_0_#000]"
@@ -335,8 +335,8 @@ export function AnalyticsView({
             <div className="grid grid-cols-2 gap-3 mt-3">
               <OpsTile label="אישור" value={`${ops.acceptRate}%`} />
               <OpsTile label="ביטולים" value={`${ops.cancelRate}%`} tone={ops.cancelRate >= 10 ? "warn" : "ok"} />
-              <OpsTile label="זמן הכנה" value={ops.avgPrepMinutes > 0 ? `${ops.avgPrepMinutes} דק׳` : "—"} />
-              <OpsTile label="זמן עד לאישור" value={ops.avgAcceptMinutes > 0 ? `${ops.avgAcceptMinutes} דק׳` : "—"} />
+              <OpsTile label="זמן הכנה" value={ops.avgPrepMinutes > 0 ? `${ops.avgPrepMinutes} דק׳` : "-"} />
+              <OpsTile label="זמן עד לאישור" value={ops.avgAcceptMinutes > 0 ? `${ops.avgAcceptMinutes} דק׳` : "-"} />
             </div>
           )}
         </Panel>

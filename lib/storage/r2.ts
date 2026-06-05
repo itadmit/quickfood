@@ -21,7 +21,7 @@ function client() {
       accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
       secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
     },
-    // Fail fast — without these, a misconfigured endpoint or a flaky
+    // Fail fast - without these, a misconfigured endpoint or a flaky
     // R2 connection can hang the SDK for several minutes and burn the
     // whole Vercel function budget (Task timed out after 300 seconds).
     maxAttempts: 2,
@@ -98,7 +98,7 @@ export async function uploadBytes(opts: {
  * deletes their store so we don't leave orphan images in the bucket.
  *
  * Paginates ListObjectsV2 (1k keys per page) and batches DeleteObjects
- * (1k keys per request — the S3 hard limit). Returns the total count
+ * (1k keys per request - the S3 hard limit). Returns the total count
  * deleted so callers can include it in their summary.
  *
  * Best-effort: any single batch failure is swallowed (and counted as
@@ -119,7 +119,7 @@ export async function deletePrefix(
         Bucket: BUCKET,
         Prefix: prefix,
         ContinuationToken: continuationToken,
-        // 1000 is both the S3 list cap AND the DeleteObjects cap — one
+        // 1000 is both the S3 list cap AND the DeleteObjects cap - one
         // page maps cleanly to one delete request.
         MaxKeys: 1000,
       }),

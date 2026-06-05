@@ -1,22 +1,22 @@
-/* QuickFood landing — design tokens are scoped to .root so they don't leak. */
+/* QuickFood landing - design tokens are scoped to .root so they don't leak. */
 
 .root {
-  /* Triolla Yellow — bold confident hero, white-cream body, true black ink.
+  /* Triolla Yellow - bold confident hero, white-cream body, true black ink.
      Single primary accent (saturated yellow #F8CB1E) used as a full-bleed
      section background AND as the single highlight color elsewhere. Black
      and yellow do all the work; secondary colors stay neutral. */
-  --cream:       #FAF8F2;   /* Page background — warm off-white */
+  --cream:       #FAF8F2;   /* Page background - warm off-white */
   --cream-2:     #F2EFE6;   /* Slightly deeper neutral surface */
   --paper:       #FFFFFF;   /* Card / surface */
-  --ink:         #0A0A0A;   /* Body + headlines — near-true-black */
+  --ink:         #0A0A0A;   /* Body + headlines - near-true-black */
   --ink-2:       #2A2A2A;   /* Soft headline */
   --mute:        #6E6E6E;   /* Captions / labels */
-  /* Primary brand accent — saturated sunny yellow. Used for the hero
+  /* Primary brand accent - saturated sunny yellow. Used for the hero
      full-bleed background and the single highlight color across the
      page (the anchor feature card, the 0.5% pill, link hover, etc.). */
-  --tomato:      #F8CB1E;   /* legacy name — now == primary yellow */
+  --tomato:      #F8CB1E;   /* legacy name - now == primary yellow */
   --tomato-deep: #E0B214;
-  --cheese:      #FFE99A;   /* yellow soft — for chip backgrounds */
+  --cheese:      #FFE99A;   /* yellow soft - for chip backgrounds */
   --basil:       #2A2A2A;
   --basil-deep:  #0A0A0A;
   --line:        #E8E4D5;   /* Border on cards */
@@ -111,7 +111,7 @@
   border-width: 2px;
 }
 .btnGhostOutline:hover { background: var(--ink); color: white; }
-/* Primary CTA — black pill, white text. Triolla-style "צור קשר" feel,
+/* Primary CTA - black pill, white text. Triolla-style "צור קשר" feel,
    pops on both the yellow hero and the cream body sections. */
 .btnInk {
   background: var(--ink);
@@ -147,7 +147,7 @@
   box-shadow: 0 2px 0 var(--ink);
 }
 .btnLg { border-radius: 999px; }
-/* Secondary on the yellow hero — outlined, matches the primary's hard-
+/* Secondary on the yellow hero - outlined, matches the primary's hard-
    shadow language so the two CTAs sit as one pair, not mismatched. */
 .btnGhostOutline {
   background: transparent;
@@ -171,7 +171,7 @@
 .btnWhite { background: white; color: var(--ink); padding: 18px 32px; font-size: 15px; border-radius: 14px; font-weight: 700; }
 .btnWhite:hover { background: var(--cream-2); }
 
-/* ─── HERO — TRIOLLA YELLOW FULL-BLEED ───────────────────── */
+/* ─── HERO - TRIOLLA YELLOW FULL-BLEED ───────────────────── */
 .hero {
   position: relative;
   background: var(--tomato);
@@ -179,7 +179,7 @@
   overflow: hidden;
   border-bottom: 1px solid rgba(0,0,0,0.06);
 }
-/* Dot pattern — echoes the welcome-overlay + dashboard-v2 backdrop so
+/* Dot pattern - echoes the welcome-overlay + dashboard-v2 backdrop so
    the brand surface reads as one consistent texture across landing
    and product. Opacity tuned for the bright yellow base. */
 .hero::before {
@@ -212,7 +212,7 @@
 }
 .hero .container { position: relative; z-index: 2; }
 
-/* Hero video panel — full-bleed on the visual-left half of the hero.
+/* Hero video panel - full-bleed on the visual-left half of the hero.
    The ::after horizontal gradient melts the right edge of the video
    into the yellow surface so there's no "video ends here" hard line
    adjacent to the headline. Dot pattern (.hero::before) sits behind
@@ -235,7 +235,7 @@
   display: block;
 }
 .heroMedia::after {
-  /* Aggressive fade — video is only crisp on the leftmost slice,
+  /* Aggressive fade - video is only crisp on the leftmost slice,
      dissolves into yellow well before the rim so the brand surface
      takes back most of the visual weight. */
   content: "";
@@ -284,7 +284,7 @@
   font-family: var(--font-rubik), "Rubik", sans-serif;
   font-weight: 900;
   letter-spacing: -0.05em;
-  /* 1.05 instead of the old 0.95 — gives breathing room between the
+  /* 1.05 instead of the old 0.95 - gives breathing room between the
      three lines now that the em pills carry vertical padding for
      Hebrew descenders. Still tight enough for the bold display look. */
   line-height: 1.05;
@@ -299,7 +299,7 @@
   background: var(--paper);
   /* Vertical padding is in em so it scales with the responsive font-size.
      Bottom is generous because Hebrew final letters (ך, ן, ץ, ף, ם) have
-     descenders that fall below the baseline — without breathing room
+     descenders that fall below the baseline - without breathing room
      there, the pill cuts through the tail. Top is tiny: the line-height
      (0.95) already has clearance above the ascenders (ל). */
   padding: 0.04em 16px 0.18em;
@@ -336,7 +336,7 @@
   .typewriterCursor { animation: none; }
 }
 .stack { display: block; }
-/* Subtitle — proper body-sized paragraph beneath the headline. The
+/* Subtitle - proper body-sized paragraph beneath the headline. The
    previous `em`-relative size was scaling with the giant headline. */
 .headlineSmall {
   font-family: var(--font-noto-hebrew), "Noto Sans Hebrew", "Heebo", sans-serif;
@@ -356,7 +356,7 @@
   display: flex; gap: 12px; flex-wrap: wrap;
   margin-top: 48px;
 }
-/* Stats — 3 equal columns. Always shown as a tight row regardless of
+/* Stats - 3 equal columns. Always shown as a tight row regardless of
    viewport, just shrinks the numerals on small screens. */
 .heroStats {
   display: grid;
@@ -428,7 +428,7 @@
   }
 }
 
-/* Scroll-linked continuous spin — only in browsers that support scroll-driven animations */
+/* Scroll-linked continuous spin - only in browsers that support scroll-driven animations */
 @keyframes pizzaScrollSpin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(75deg); }
@@ -537,7 +537,7 @@
 }
 
 /* ─── SECTION ────────────────────────────────────────────── */
-/* Section spacing — give every section room to breathe like a Wolt /
+/* Section spacing - give every section room to breathe like a Wolt /
    Stripe page. Doubles the previous vertical padding on desktop. */
 .section { padding: 120px 0; position: relative; }
 
@@ -576,7 +576,7 @@
 .trustPills { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 /* Brand logo chips in the trust strip. Visa/MC/AMEX/ApplePay already
    ship as little white cards; we render them naked at a uniform height.
-   Bit ships as a dark-teal app-icon square — uses .trustLogoBit so it
+   Bit ships as a dark-teal app-icon square - uses .trustLogoBit so it
    keeps its native rounded-square look without being squished. */
 .trustLogo {
   height: 26px;
@@ -589,7 +589,7 @@
   width: 28px;
   border-radius: 7px;
 }
-/* PayBox ships as a flat cyan rectangle — round the corners so it
+/* PayBox ships as a flat cyan rectangle - round the corners so it
    matches the rounded-card silhouette of Visa/MC/AMEX/Apple Pay. */
 .trustLogoPaybox { border-radius: 5px; }
 .trustDivider {
@@ -687,7 +687,7 @@
   max-width: 30ch;
   margin-inline: auto;
 }
-/* Connector line — hidden in the bold-tile treatment; the heavy black
+/* Connector line - hidden in the bold-tile treatment; the heavy black
    shadows underneath each card carry the rhythm now. Kept defined so
    the JSX still has a class to attach without throwing. */
 .howConnector {
@@ -701,7 +701,7 @@
   .howNum { width: 48px; height: 48px; font-size: 22px; }
 }
 
-/* "Suited for" — single rotating food type, big and bold. Reads as one
+/* "Suited for" - single rotating food type, big and bold. Reads as one
    answer-line: who is this product for? */
 .suitedSection {
   padding: 96px 0 80px;
@@ -775,7 +775,7 @@
   letter-spacing: -0.04em;
   margin: 0 0 20px;
   /* 22ch fits "כלים שנבנו למטבח. לא לחנות חולצות." on a single line
-     at desktop sizes — was 18ch which broke "חולצות." onto its own
+     at desktop sizes - was 18ch which broke "חולצות." onto its own
      row. `balance` keeps short titles centered nicely too. */
   max-width: 22ch;
   text-wrap: balance;
@@ -793,7 +793,7 @@
 
 /* ─── GROW PARTNER ───────────────────────────────────────────
    Spotlight card for the Grow payments partnership. Cream-on-paper
-   with Grow's purple as accent — visually distinct from the wolt
+   with Grow's purple as accent - visually distinct from the wolt
    feature cards above (which are white-on-cream) so it reads as a
    separate "partnership announcement", not another feature. */
 .growCard {
@@ -930,7 +930,7 @@
 }
 
 /* ─── PROBLEM ────────────────────────────────────────────── */
-/* Three pastel cards instead of the old black block — same palette
+/* Three pastel cards instead of the old black block - same palette
    family as the Wolt-style stacked feature section. */
 .problemGrid {
   margin-top: 56px;
@@ -957,7 +957,7 @@
 }
 .problemCardPeach,
 .problemCardLilac { background: var(--paper); }
-/* Middle "QuickFood" card — yellow anchor in the math comparison.
+/* Middle "QuickFood" card - yellow anchor in the math comparison.
    Inverted shadow trick: tomato bg with black shadow underneath
    keeps it visually anchored without leaning on a different border. */
 .problemCardMist {
@@ -1064,7 +1064,7 @@
 .miniDashValue { font-size: 22px; font-weight: 800; margin-top: 2px; }
 .miniDashHint { font-size: 10px; color: rgba(241,233,216,0.5); text-align: center; }
 
-/* Live demo wrapper — the bezel itself + loader live in
+/* Live demo wrapper - the bezel itself + loader live in
    LivePhoneDemo.module.css; this is just the column that holds it. */
 .phoneLive {
   width: 280px;
@@ -1084,7 +1084,7 @@
 .phoneLiveLink:hover { opacity: 1; }
 
 /* ─── EDITORIAL FEATURE STACK ────────────────────────────── */
-/* Pastel storytelling cards. Softer / more muted than the first pass —
+/* Pastel storytelling cards. Softer / more muted than the first pass -
    palette intentionally adjacent to but distinct from common food-tech
    pages. Each card lays out differently so the section reads like a
    spread, not a feature checklist. */
@@ -1103,7 +1103,7 @@
   padding: 48px 56px;
   border-radius: 24px;
   overflow: hidden;
-  /* Bold-card language — 2px black border + hard shadow underneath.
+  /* Bold-card language - 2px black border + hard shadow underneath.
      Lift on hover bumps the shadow taller for the same playful feel
      as the welcome tiles. */
   border: 2px solid var(--ink);
@@ -1114,10 +1114,10 @@
   transform: translateY(-3px);
   box-shadow: 0 8px 0 var(--ink);
 }
-/* Layout variants — alternate which side the decor sits on. Default
+/* Layout variants - alternate which side the decor sits on. Default
    DOM order puts decor first; in an RTL flex row that means decor on
    the visual right. Push it past the body with `order` to flip it. */
-.qfoodCardDecorStart .qfoodCardDecor { order: 0; } /* default — decor on the RIGHT in RTL */
+.qfoodCardDecorStart .qfoodCardDecor { order: 0; } /* default - decor on the RIGHT in RTL */
 .qfoodCardDecorEnd .qfoodCardDecor { order: 1; } /* decor on the LEFT in RTL */
 .qfoodCardWide {
   display: block;
@@ -1151,7 +1151,7 @@
     opacity: 1;
     margin-bottom: 4px;
   }
-  /* Always put the decor at the top on mobile — "illustration then story"
+  /* Always put the decor at the top on mobile - "illustration then story"
      reads better on a narrow screen than text-then-icon. */
   .qfoodCardDecorStart .qfoodCardDecor,
   .qfoodCardDecorEnd .qfoodCardDecor { order: -1; }
@@ -1162,7 +1162,7 @@
   max-width: 580px;
 }
 .qfoodCardTag {
-  /* Brand chip — same black-bg + yellow-text "QuickFood" pill the
+  /* Brand chip - same black-bg + yellow-text "QuickFood" pill the
      welcome overlay introduced. Functions as a label without leaning
      on text styling alone. */
   display: inline-block;
@@ -1198,7 +1198,7 @@
   justify-content: center;
   user-select: none;
 }
-/* Brand disc behind the icon — yellow surface with a hard black ring
+/* Brand disc behind the icon - yellow surface with a hard black ring
    matches the bold-card language used elsewhere on the page. Skipped
    for the wide-decor anchor card and the live-mockup customizer card. */
 .qfoodCardDecor::before {
@@ -1230,7 +1230,7 @@
   .qfoodCardDecor svg { width: 84px; height: 84px; }
 }
 
-/* Tones — all white cards with quiet borders for the Linen & Bone
+/* Tones - all white cards with quiet borders for the Linen & Bone
    direction. The card layouts (wide / decor-end / decor-start) still
    alternate, but the color story is whitespace, not pastels. The
    "midnight" tone keeps a black background for the anchor so the
@@ -1252,14 +1252,14 @@
 }
 
 .qfoodCardMidnight {
-  /* Anchor — yellow card, black text. Same energy as the hero band.
+  /* Anchor - yellow card, black text. Same energy as the hero band.
      Inherits the 2px black border from the base .qfoodCard. */
   background: var(--tomato);
   color: var(--ink);
 }
 .qfoodCardMidnight .qfoodCardHeading { color: var(--ink); }
 
-/* Customizer-mockup card — body on the start side, live mockup on the
+/* Customizer-mockup card - body on the start side, live mockup on the
    end side. Wider end-slot than the icon variants so the customizer card
    isn't squashed. Falls back to a stack on mobile. Switches the base
    .qfoodCard flex back to grid because the mockup needs a fixed end-slot. */
@@ -1350,7 +1350,7 @@
   .qfoodCardCustomizer .qfoodCardCopy { margin-inline: auto; }
 }
 
-/* All decor icons stay pure ink — consistent black strokes across every
+/* All decor icons stay pure ink - consistent black strokes across every
    tone, no softening. */
 .qfoodCardMist .qfoodCardDecor svg,
 .qfoodCardSand .qfoodCardDecor svg,
@@ -1358,7 +1358,7 @@
 .qfoodCardLilac .qfoodCardDecor svg { color: var(--ink); opacity: 1; }
 
 
-/* Secondary feature grid — quieter cells for the "everything else" line */
+/* Secondary feature grid - quieter cells for the "everything else" line */
 .miniGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1384,7 +1384,7 @@
   box-shadow: 0 7px 0 var(--ink);
 }
 .miniCellTag {
-  /* Brand chip — black pill with yellow text, mirrors .qfoodCardTag and
+  /* Brand chip - black pill with yellow text, mirrors .qfoodCardTag and
      the welcome overlay so the whole landing speaks one sticker
      dialect. */
   display: inline-block;
@@ -1406,8 +1406,8 @@
   margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--ink-2);
 }
 
-/* ─── BENTO FEATURES (legacy — kept until the rewrite finishes) ── */
-/* Editorial grid — all cards on white surface with a 1px line. Color
+/* ─── BENTO FEATURES (legacy - kept until the rewrite finishes) ── */
+/* Editorial grid - all cards on white surface with a 1px line. Color
    blocks are reserved for the two "anchor" cards (Tomato + Ink) so the
    composition still has rhythm without looking like a Skittles ad. */
 .bento {
@@ -1463,7 +1463,7 @@
   margin-bottom: 4px;
   display: block;
 }
-/* Anchor card 1 — primary inverted (tomato). Used on the hero "תשלום
+/* Anchor card 1 - primary inverted (tomato). Used on the hero "תשלום
    מובנה" cell to draw the eye to the most differentiating feature. */
 .bentoTomato {
   background: var(--tomato);
@@ -1475,7 +1475,7 @@
 .bentoTomato h4 { color: white; }
 .bentoTomato p { color: rgba(255,255,255,0.86); }
 
-/* Anchor card 2 — dark inverted (ink). Used on the "מיתוג" tall column. */
+/* Anchor card 2 - dark inverted (ink). Used on the "מיתוג" tall column. */
 .bentoInk {
   background: var(--ink);
   border-color: transparent;
@@ -1486,7 +1486,7 @@
 .bentoInk h4 { color: var(--cream); }
 .bentoInk p { color: rgba(247,244,238,0.78); }
 
-/* Soft accents — paper card with a tinted border instead of a saturated
+/* Soft accents - paper card with a tinted border instead of a saturated
    background, so they read as quiet emphasis rather than playful blocks. */
 .bentoCheese {
   background: var(--paper);
@@ -1609,7 +1609,7 @@
 }
 .priceCardFeatured {
   background: var(--ink); color: var(--cream);
-  /* The featured plan reverses the rhythm — black surface, yellow hard
+  /* The featured plan reverses the rhythm - black surface, yellow hard
      shadow underneath. Reads as "this is the one we want you to pick"
      without the cheap "MOST POPULAR" badge. */
   box-shadow: 0 6px 0 var(--tomato);
@@ -1661,7 +1661,7 @@
 .priceCardFeatured .btnInk { background: var(--tomato); color: white; }
 .priceCardFeatured .btnInk:hover { background: var(--tomato-deep); }
 
-/* ─── PRICING — SINGLE PLAN CARD ─────────────────────────── */
+/* ─── PRICING - SINGLE PLAN CARD ─────────────────────────── */
 /* One big card replacing the three-tier grid. Left column owns the
    price + CTA; right column lists everything included. Mobile stacks. */
 .priceSingleWrap {
@@ -1772,7 +1772,7 @@
 }
 .priceSingleHead .btn { margin-top: 4px; }
 .priceSingleHead .btnInk {
-  /* Already gradient ink — but inside the midnight card we want a white
+  /* Already gradient ink - but inside the midnight card we want a white
      CTA so it pops off the dark background. */
   background: white;
   color: var(--ink);
@@ -1798,7 +1798,7 @@
   margin-bottom: 18px;
 }
 
-/* Optional add-on block at the bottom of the pricing card body — for
+/* Optional add-on block at the bottom of the pricing card body - for
    WhatsApp/SMS packs and other things that aren't part of the base
    plan but matter for the buying decision. */
 .priceSingleAddon {

@@ -1,5 +1,5 @@
 /**
- * Decorative pizza illustration — ported from prototypes/app.jsx (PizzaArt).
+ * Decorative pizza illustration - ported from prototypes/app.jsx (PizzaArt).
  * Used as a placeholder when no real image is uploaded.
  */
 

@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Broad customer search for the POS — by phone fragment or name. Unlike
+ * Broad customer search for the POS - by phone fragment or name. Unlike
  * the merchant Cmd+K palette this does NOT require prior orders at this
  * tenant: a brand-new walk-in can be attached to a sale, and any future
  * order links back to them. Returns up to 20 results.

@@ -13,7 +13,7 @@ const DISMISS_KEY = "qf:merchant-preview-bar:dismissed";
  * dashboard so they can stop hunting through URLs to switch contexts.
  *
  * Visibility is gated server-side in the customer layout. The dismiss is
- * per-tab via sessionStorage — comes back next visit so the merchant keeps
+ * per-tab via sessionStorage - comes back next visit so the merchant keeps
  * the affordance, but stays out of the way during a focused session.
  */
 export function MerchantPreviewBar({ tenantName }: { tenantName: string }) {

@@ -14,7 +14,7 @@ const ValidateSchema = z.object({
 /**
  * POST /api/v1/customer/coupons/validate
  *
- * Public endpoint (no session required) — the customer is checking a code
+ * Public endpoint (no session required) - the customer is checking a code
  * BEFORE they've registered/signed-in. Server returns the computed discount
  * amount in agorot/shekels (matches the integer-shekel money convention used
  * everywhere else in the app).
@@ -86,7 +86,7 @@ export const POST = handler(async (req: Request) => {
   if (coupon.maxDiscount !== null && discount > coupon.maxDiscount) {
     discount = coupon.maxDiscount;
   }
-  // Never let the discount exceed the subtotal — clamp at the line.
+  // Never let the discount exceed the subtotal - clamp at the line.
   if (discount > body.subtotal) discount = body.subtotal;
 
   return apiJson({

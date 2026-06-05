@@ -23,7 +23,7 @@ interface Props {
  * flight, then a 300ms opacity fade-in once the image loads. Uses the
  * existing `animate-qf-pulse` keyframes so it respects reduced-motion.
  *
- * Use this wherever a raw <img> would otherwise pop in abruptly — menu
+ * Use this wherever a raw <img> would otherwise pop in abruptly - menu
  * cards, tenant cover images, item details. Designed to drop in without
  * size-impact: the wrapper takes the same dimensions the <img> would have,
  * so layout doesn't shift between "loading" and "loaded".

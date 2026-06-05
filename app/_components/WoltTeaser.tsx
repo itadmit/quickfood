@@ -110,7 +110,7 @@ export default function WoltTeaser() {
               </div>
               {error && <span className={styles.error}>{error}</span>}
               <span className={styles.disclaimer}>
-                ההדמיה היא להמחשה בלבד — לא נוצרת חנות, שום פריט לא נשמר אצלנו.
+                ההדמיה היא להמחשה בלבד - לא נוצרת חנות, שום פריט לא נשמר אצלנו.
                 התוכן מוצג מתוך עמוד Wolt הציבורי שלכם.
               </span>
             </label>

@@ -331,7 +331,7 @@ export function ItemEditor({
 
   return (
     <div className="space-y-5 pb-28 lg:pb-0">
-      {/* Header — on mobile we drop the "save" button (it lives in the
+      {/* Header - on mobile we drop the "save" button (it lives in the
           sticky bottom bar instead) and only keep back + title + the
           destructive/secondary actions, so 3 buttons don't elbow the
           title into ellipsis. */}
@@ -408,7 +408,7 @@ export function ItemEditor({
                   href="/dashboard/menu"
                   className="block w-full px-3.5 py-2.5 rounded-xl border border-qf-tomato/40 bg-qf-tomato-soft text-qf-tomato text-sm"
                 >
-                  אין קטגוריות עדיין — פתח קטגוריה לפני שמירה
+                  אין קטגוריות עדיין - פתח קטגוריה לפני שמירה
                 </Link>
               ) : (
                 <select
@@ -469,7 +469,7 @@ export function ItemEditor({
           <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
             <h2 className="font-semibold">תמונות המוצר</h2>
             <p className="text-xs text-qf-mute">
-              העלה תמונה אחת או יותר. אם לא תעלה — יוצג פלייסהולדר מותאם לסוג העסק שלך.
+              העלה תמונה אחת או יותר. אם לא תעלה - יוצג פלייסהולדר מותאם לסוג העסק שלך.
             </p>
             <ImageUploader
               type="menu_item_image"
@@ -630,7 +630,7 @@ export function ItemEditor({
             {modifierSets.length === 0 && (
               <p className="text-xs text-qf-mute leading-snug">
                 טיפ: יצרת תפריט גדול? פתח <Link href="/dashboard/menu/modifiers" className="underline">קטלוג תוספות</Link> פעם
-                אחת ושייך אותו לעשרות פריטים — עורכים במקום אחד, מתעדכן בכל הפריטים.
+                אחת ושייך אותו לעשרות פריטים - עורכים במקום אחד, מתעדכן בכל הפריטים.
               </p>
             )}
             <DragList
@@ -681,7 +681,7 @@ export function ItemEditor({
             </div>
           </section>
 
-          {/* Availability windowing — when does this item appear on the
+          {/* Availability windowing - when does this item appear on the
               storefront. Time + weekdays + stock. NULL on all = always. */}
           <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
             <header>
@@ -693,7 +693,7 @@ export function ItemEditor({
             {/* Time-of-day window. Both ends NULL → no restriction; we show
                 an explicit pill so the merchant sees the current state at a
                 glance, plus a "אפס" link when a window is set. Native time
-                inputs on iOS Safari can look thin/empty until tapped — the
+                inputs on iOS Safari can look thin/empty until tapped - the
                 pill makes the intent ("zone of activity") obvious. */}
             <div>
               <div className="flex items-baseline justify-between mb-2">
@@ -708,7 +708,7 @@ export function ItemEditor({
                 >
                   {data.availableFrom === null && data.availableTo === null
                     ? "תמיד זמין"
-                    : `${minutesToHM(data.availableFrom) || "—"} → ${minutesToHM(data.availableTo) || "—"}`}
+                    : `${minutesToHM(data.availableFrom) || "-"} → ${minutesToHM(data.availableTo) || "-"}`}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-2.5">
@@ -748,7 +748,7 @@ export function ItemEditor({
               <div className="flex gap-1.5">
                 {HEBREW_DAYS.map((label, i) => {
                   const mask = 1 << i;
-                  // null means "every day" — treat as all on so checks reflect reality
+                  // null means "every day" - treat as all on so checks reflect reality
                   const days = data.availableDays ?? 0b1111111;
                   const on = (days & mask) !== 0;
                   return (
@@ -846,7 +846,7 @@ export function ItemEditor({
                         key={s.code}
                         radio
                         active={s.isDefault}
-                        label={s.name || "—"}
+                        label={s.name || "-"}
                         priceLabel={
                           s.priceDelta === 0
                             ? null
@@ -897,7 +897,7 @@ export function ItemEditor({
                               key={oi}
                               radio={g.type === "single"}
                               active={false}
-                              label={o.name || "—"}
+                              label={o.name || "-"}
                               priceLabel={
                                 o.priceDelta === 0
                                   ? null
@@ -938,7 +938,7 @@ export function ItemEditor({
         onCancel={() => setConfirmDel(false)}
       />
 
-      {/* Mobile-only sticky save bar — Wolt-style commit affordance at the
+      {/* Mobile-only sticky save bar - Wolt-style commit affordance at the
           bottom of the viewport instead of a tiny header button. Desktop
           keeps the header save (visible from line ~360). pb safe-area on
           iPhone home-indicator handsets. */}
@@ -1035,7 +1035,7 @@ function GroupEditor({
 }) {
   // When this group is linked to a ModifierSet, all its fields and options
   // come from the set at runtime. The merchant edits the set itself (in the
-  // catalog page) — here we just show a read-only summary + offer to detach.
+  // catalog page) - here we just show a read-only summary + offer to detach.
   if (group.templateSetId) {
     return (
       <div className="border border-(--qf-primary)/30 rounded-xl p-3 space-y-2 bg-(--qf-primary)/5">
@@ -1071,7 +1071,7 @@ function GroupEditor({
           </button>
         </div>
         <p className="text-xs text-qf-mute leading-snug">
-          הקבוצה הזו נשלפת מקטלוג התוספות. עריכת השם, האפשרויות והמחירים — בדף הקטלוג. כל שינוי שם
+          הקבוצה הזו נשלפת מקטלוג התוספות. עריכת השם, האפשרויות והמחירים - בדף הקטלוג. כל שינוי שם
           יחול גם על שאר הפריטים שמחוברים אליה.
           {templateSet ? ` (${templateSet.optionsCount} אפשרויות)` : ""}
         </p>
@@ -1119,7 +1119,7 @@ function GroupEditor({
           <IcoClose s={14} />
         </button>
       </div>
-      {/* Limits row — only relevant for multi. min_select also matters for
+      {/* Limits row - only relevant for multi. min_select also matters for
           single+required (effectively 1) but we keep the UI simple. */}
       {group.type === "multi" && (
         <div className="grid grid-cols-3 gap-2 text-xs">
@@ -1135,7 +1135,7 @@ function GroupEditor({
                 })
               }
             />
-            <span>חצי/חצי — לקוח יכול לבחור כל תוספת לחצי בלבד</span>
+            <span>חצי/חצי - לקוח יכול לבחור כל תוספת לחצי בלבד</span>
           </label>
           {group.allowHalf && (
             <label className="col-span-3 flex flex-col gap-1">
@@ -1201,7 +1201,7 @@ function GroupEditor({
         onChange={(e) => onChange({ ...group, helpText: e.target.value || null })}
         rows={1}
         maxLength={200}
-        placeholder="טקסט עזר (אופציונלי) — ׳בחר רטב לצד׳"
+        placeholder="טקסט עזר (אופציונלי) - ׳בחר רטב לצד׳"
         className="w-full px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-xs bg-white resize-none"
       />
       <DragList
@@ -1295,7 +1295,7 @@ function GroupEditor({
                   ? "bg-qf-green-soft text-qf-green-deep"
                   : "bg-qf-tomato-soft text-qf-tomato",
               )}
-              title={o.available ? "זמין — לחץ כדי לסמן כאזל" : "אזל היום — לחץ להחזיר לזמין"}
+              title={o.available ? "זמין - לחץ כדי לסמן כאזל" : "אזל היום - לחץ להחזיר לזמין"}
             >
               {o.available ? "זמין" : "אזל"}
             </button>

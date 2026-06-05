@@ -67,13 +67,13 @@ export function AIAdvisorPromoPopup({
 
   // Soft-close: hides the popup for THIS render but doesn't set a cookie.
   // Next page load shows it again. Used for X, Esc, outside click, and
-  // even when the user opens the advisor — none of those count as a
+  // even when the user opens the advisor - none of those count as a
   // "not interested" signal.
   function closeWithoutCookie() {
     setShowPromo(false);
   }
 
-  // Hard-close: explicit "לא תודה" — write the 7-day cookie so the
+  // Hard-close: explicit "לא תודה" - write the 7-day cookie so the
   // popup stays dismissed across visits.
   function dismissForWeek() {
     setShowPromo(false);

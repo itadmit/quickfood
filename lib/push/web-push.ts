@@ -1,12 +1,12 @@
 /**
- * Web Push — shared low-level send.
+ * Web Push - shared low-level send.
  *
  * Uses the `web-push` library to encrypt and POST to the user agent's push
  * service (FCM, Mozilla autopush, APNs). All three are free of charge.
  *
  * Subscriptions that the push service marks gone (HTTP 404 or 410) are
  * deleted from the DB so we don't keep retrying them. Callers must pass
- * `onExpired` so we know which table to clean up — the model differs
+ * `onExpired` so we know which table to clean up - the model differs
  * between couriers and merchants.
  */
 import webpush from "web-push";
@@ -35,7 +35,7 @@ export interface PushSubscriptionRow {
 export interface PushPayload {
   title: string;
   body: string;
-  /** Path the SW should open on click — relative or absolute. */
+  /** Path the SW should open on click - relative or absolute. */
   url?: string;
   tag?: string;
   icon?: string;

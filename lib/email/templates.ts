@@ -8,7 +8,7 @@
  */
 
 // Brand palette mirrors the V2 dashboard: bold yellow surface + cream
-// card + black ink/borders. Email-safe — no gradients, no box-shadows,
+// card + black ink/borders. Email-safe - no gradients, no box-shadows,
 // no rgba/CSS variables (Outlook strips them all).
 const BRAND = {
   yellow: "#F8CB1E",
@@ -23,7 +23,7 @@ const BRAND = {
   waGreen: "#25D366",
 };
 
-// Public origin used for email-embedded assets — must be reachable from the
+// Public origin used for email-embedded assets - must be reachable from the
 // recipient's inbox, NOT localhost. Gmail strips data: URIs in <img>, so the
 // WhatsApp glyph must be hosted at an absolute https URL.
 const EMAIL_ASSETS_BASE = (process.env.EMAIL_ASSETS_BASE ?? "https://quickfood.co.il").replace(
@@ -49,7 +49,7 @@ export interface EmailButton {
 }
 
 export interface RtlEmailOptions {
-  /** Email subject — repeated in the preheader for some clients. */
+  /** Email subject - repeated in the preheader for some clients. */
   subject: string;
   /** Hidden 1-line preview shown in inbox listings. */
   preheader?: string;
@@ -63,7 +63,7 @@ export interface RtlEmailOptions {
   footerNote?: string;
   /** If true, treat paragraphs as raw HTML (caller is responsible for escaping). */
   raw?: boolean;
-  /** Optional raw HTML rendered between the primary button and the footer note —
+  /** Optional raw HTML rendered between the primary button and the footer note -
    *  used for secondary CTAs like the WhatsApp support button. Caller is
    *  responsible for escaping any dynamic values. */
   tail?: string;
@@ -77,7 +77,7 @@ export function renderRtlEmail(opts: RtlEmailOptions): { html: string; text: str
     .map((p) => `<p dir="rtl" style="margin:0 0 14px;line-height:1.65;color:${BRAND.ink2};font-size:15px;direction:rtl;text-align:right;">${opts.raw ? p : escape(p)}</p>`)
     .join("");
 
-  // Black-on-yellow chunky button — matches the dashboard's V2 brand
+  // Black-on-yellow chunky button - matches the dashboard's V2 brand
   // (yellow surface, black CTA with bold yellow text). Email-safe:
   // solid background color, no gradients, no box-shadow.
   const button = opts.button
@@ -100,7 +100,7 @@ export function renderRtlEmail(opts: RtlEmailOptions): { html: string; text: str
     ? `<p dir="rtl" style="margin:18px 0 0;font-size:12px;color:${BRAND.mute};line-height:1.5;direction:rtl;text-align:right;">${escape(opts.footerNote)}</p>`
     : "";
 
-  // Secondary WhatsApp CTA — green pill with white WhatsApp glyph + label,
+  // Secondary WhatsApp CTA - green pill with white WhatsApp glyph + label,
   // chunky black border + flat black shadow (mirrors the support FAB used in
   // the customer UI). Email-safe table layout; clients that strip box-shadow
   // (Outlook desktop) still see the green pill with border.
@@ -161,14 +161,14 @@ ${preheader}
 </body>
 </html>`;
 
-  // Plaintext fallback — same content, no HTML.
+  // Plaintext fallback - same content, no HTML.
   const textParts: string[] = [opts.heading, "", ...opts.paragraphs];
   if (opts.button) textParts.push("", `${opts.button.label}: ${opts.button.href}`);
   if (opts.whatsappButton) {
     textParts.push("", `${opts.whatsappButton.label}: ${opts.whatsappButton.href}`);
   }
   if (opts.footerNote) textParts.push("", opts.footerNote);
-  textParts.push("", "—", "QuickFood");
+  textParts.push("", "-", "QuickFood");
   const text = textParts.join("\n");
 
   return { html, text };
@@ -408,7 +408,7 @@ export function courierWelcomeEmail({
 }: {
   courierName: string;
   businessName: string;
-  /** One-shot magic-link URL — opens, signs in, expires after ttlMinutes. */
+  /** One-shot magic-link URL - opens, signs in, expires after ttlMinutes. */
   loginUrl: string;
   /** The phone / email the courier types on /courier/login if the magic
    *  link expires. We show whichever the merchant has stored. */
@@ -434,9 +434,9 @@ export function courierWelcomeEmail({
     raw: true,
     paragraphs: [
       `<strong>${escape(businessName)}</strong> הוסיפ/ה אותך כשליח/ה במערכת QuickFood.`,
-      `לחיצה על הכפתור למטה מבצעת התחברות מיידית — הקישור תקף ${ttlMinutes} דקות והוא חד-פעמי.`,
+      `לחיצה על הכפתור למטה מבצעת התחברות מיידית - הקישור תקף ${ttlMinutes} דקות והוא חד-פעמי.`,
       credsBlock,
-      `אחרי תוקף הקישור — היכנס/י בכתובת למעלה עם המזהה וה־PIN שלך. אם איבדת את ה־PIN, בקש/י ממנהל/ת המסעדה איפוס.`,
+      `אחרי תוקף הקישור - היכנס/י בכתובת למעלה עם המזהה וה־PIN שלך. אם איבדת את ה־PIN, בקש/י ממנהל/ת המסעדה איפוס.`,
     ],
     button: { href: loginUrl, label: "כניסה לאפליקציית השליחים" },
     footerNote: "בהצלחה!",
@@ -658,7 +658,7 @@ export function orderConfirmedEmail({
     heading: `תודה ${customerName}!`,
     paragraphs: [
       `קיבלנו את ההזמנה שלך ב-<strong>${escape(businessName)}</strong> והיא בדרך לרשת.`,
-      `שמרנו לך פירוט מלא כאן וגם בקישור המעקב. אם תרצה לשנות משהו — צור קשר עם המסעדה.`,
+      `שמרנו לך פירוט מלא כאן וגם בקישור המעקב. אם תרצה לשנות משהו - צור קשר עם המסעדה.`,
     ],
     raw: true,
     button: { href: trackingUrl, label: "צפייה במעקב ההזמנה" },

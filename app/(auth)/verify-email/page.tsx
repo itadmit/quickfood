@@ -6,7 +6,7 @@ type Status = "success" | "expired" | "used" | "not_found" | "missing";
 const COPY: Record<Status, { title: string; subtitle: string; body: string; cta: { href: string; label: string }; tone: "ok" | "error" }> = {
   success: {
     title: "המייל אומת. החנות פעילה.",
-    subtitle: "תודה — סיימנו את הצעד הזה.",
+    subtitle: "תודה - סיימנו את הצעד הזה.",
     body: "אפשר להמשיך לדשבורד ולהוסיף תפריט, להפעיל את הסניף ולשתף את הקישור עם הלקוחות.",
     cta: { href: "/dashboard", label: "מעבר לדשבורד" },
     tone: "ok",
@@ -14,7 +14,7 @@ const COPY: Record<Status, { title: string; subtitle: string; body: string; cta:
   expired: {
     title: "הקישור פג תוקף",
     subtitle: "קישורי אימות תקפים ל-24 שעות.",
-    body: "אפשר להיכנס לדשבורד וללחוץ על 'שלח לי שוב' בבאנר העליון — יישלח קישור חדש למייל.",
+    body: "אפשר להיכנס לדשבורד וללחוץ על 'שלח לי שוב' בבאנר העליון - יישלח קישור חדש למייל.",
     cta: { href: "/dashboard/login", label: "כניסה לדשבורד" },
     tone: "error",
   },
@@ -35,7 +35,7 @@ const COPY: Record<Status, { title: string; subtitle: string; body: string; cta:
   missing: {
     title: "לא הגיע קישור",
     subtitle: "הדף הזה נפתח רק אחרי לחיצה על קישור אימות מהמייל.",
-    body: "אם רשמת חנות חדשה — צריך לבדוק את תיבת המייל ולחפש את המייל מ-QuickFood.",
+    body: "אם רשמת חנות חדשה - צריך לבדוק את תיבת המייל ולחפש את המייל מ-QuickFood.",
     cta: { href: "/dashboard/login", label: "כניסה לדשבורד" },
     tone: "error",
   },
@@ -47,7 +47,7 @@ function resolveStatus(raw: string | undefined): Status {
 }
 
 export const metadata = {
-  title: "אימות מייל — QuickFood",
+  title: "אימות מייל - QuickFood",
 };
 
 export default async function VerifyEmailPage({

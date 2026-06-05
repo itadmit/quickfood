@@ -252,7 +252,7 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
         pushToast(
           "ok",
           ttl
-            ? `הקישור הועתק. תקף ${ttl} דקות — שלח/י ב-WhatsApp/SMS.`
+            ? `הקישור הועתק. תקף ${ttl} דקות - שלח/י ב-WhatsApp/SMS.`
             : "הקישור הועתק. שלח/י ב-WhatsApp/SMS.",
         );
       } catch {

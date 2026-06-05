@@ -207,7 +207,7 @@ export async function channelBreakdown(tenantId: string, range: Range) {
     };
   });
 
-  // Upsell stats live at the line level — they're a per-item phenomenon
+  // Upsell stats live at the line level - they're a per-item phenomenon
   // and don't show up in Order.source. Group the upsell lines separately.
   const upsellLines = await prisma.orderItem.findMany({
     where: {
@@ -317,7 +317,7 @@ export async function customerSegments(tenantId: string, range: Range) {
       if (returningPhones.has(k.slice(6))) returningC += 1;
       else newC += 1;
     } else if (k.startsWith("anon:")) {
-      newC += 1; // can't link guest with no phone — count as new
+      newC += 1; // can't link guest with no phone - count as new
     } else {
       if (returningCustomerIds.has(k)) returningC += 1;
       else newC += 1;
@@ -445,7 +445,7 @@ export async function insights(tenantId: string, range: Range): Promise<Insight[
       out.push({
         tone: "watch",
         title: "AOV נמוך יותר ב-AI",
-        body: `הזמנות AI מציגות AOV נמוך ב-${Math.abs(uplift)}% — כדאי לבדוק את ההצעות.`,
+        body: `הזמנות AI מציגות AOV נמוך ב-${Math.abs(uplift)}% - כדאי לבדוק את ההצעות.`,
         metric: `${uplift}%`,
       });
     }
@@ -496,7 +496,7 @@ export async function insights(tenantId: string, range: Range): Promise<Insight[
     out.push({
       tone: "watch",
       title: "אחוז ביטולים גבוה",
-      body: `${ops.cancelRate}% ביטולים בטווח הזה — בדוק זמינות פריטים וזמני שיא.`,
+      body: `${ops.cancelRate}% ביטולים בטווח הזה - בדוק זמינות פריטים וזמני שיא.`,
       metric: `${ops.cancelRate}%`,
     });
   }

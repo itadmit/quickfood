@@ -1,7 +1,7 @@
 -- Sequential, per-tenant order numbers.
 --
 -- Before this, Order.number was random 4-digit ("M-1771", "M-2575") and
--- globally UNIQUE — both a UX wart (merchants saw their orders jumping
+-- globally UNIQUE - both a UX wart (merchants saw their orders jumping
 -- around) and a real collision risk as the catalog grew (random space
 -- is small and the unique index is global).
 --
@@ -24,7 +24,7 @@ SET "next_order_number" = COALESCE(
   0
 ) + 1;
 
--- 3. Drop the global unique on order number — the random-suffix scheme
+-- 3. Drop the global unique on order number - the random-suffix scheme
 --    relied on it. The composite per-tenant unique below replaces it.
 ALTER TABLE "orders" DROP CONSTRAINT IF EXISTS "orders_number_key";
 

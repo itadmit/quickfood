@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db/client";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** Read status — used by the dashboard to render the most recent import
+/** Read status - used by the dashboard to render the most recent import
     and (less often) to poll mid-commit. */
 export const GET = handler(
   async (_req: Request, ctx: { params: Promise<{ id: string }> }) => {
@@ -15,7 +15,7 @@ export const GET = handler(
 
     const row = await prisma.woltImport.findUnique({
       where: { id },
-      // rawMenu is megabytes — never ship it back to the dashboard.
+      // rawMenu is megabytes - never ship it back to the dashboard.
       select: {
         id: true,
         tenantId: true,

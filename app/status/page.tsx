@@ -6,7 +6,7 @@ export const metadata = {
     "סטטוס בזמן אמת של כל רכיבי QuickFood - חנות לקוחות, דשבורד מסעדן, סליקה, וואטסאפ ו-SMS, וובהוקים ואחסון תמונות.",
 };
 
-// Placeholder static snapshot — we report 100% green until we wire this
+// Placeholder static snapshot - we report 100% green until we wire this
 // page into the real monitoring backend (Vercel/UptimeRobot/Better Stack).
 // Updating the constants below is the temporary way to publish an incident.
 

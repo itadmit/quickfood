@@ -27,7 +27,7 @@ export const POST = handler(async (req: Request) => {
 
   const { item_ids } = ReorderSchema.parse(await req.json());
 
-  // Reject duplicates — a duplicated id would make positions ambiguous.
+  // Reject duplicates - a duplicated id would make positions ambiguous.
   if (new Set(item_ids).size !== item_ids.length) {
     return apiError("validation_error", "רשימת הפריטים מכילה כפילויות", 422);
   }

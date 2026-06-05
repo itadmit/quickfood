@@ -21,7 +21,7 @@ export const GET = handler(async () => {
       events: e.events,
       active: e.active,
       created_at: e.createdAt.toISOString(),
-      // secret is intentionally NOT returned — it's shown only once on create
+      // secret is intentionally NOT returned - it's shown only once on create
     })),
   });
 });

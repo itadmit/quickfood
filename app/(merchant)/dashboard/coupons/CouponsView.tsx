@@ -167,7 +167,7 @@ export function CouponsView({
       <PageHeader
         chip="שיווק"
         title="קופונים"
-        subtitle="קוד הנחה, תוקף ומגבלת שימוש — הלקוח מקליד בצ׳קאוט ומקבל את ההנחה בלייב"
+        subtitle="קוד הנחה, תוקף ומגבלת שימוש - הלקוח מקליד בצ׳קאוט ומקבל את ההנחה בלייב"
         actions={
           !editing ? (
             <button
@@ -363,7 +363,7 @@ function CouponEditor({
           <input
             value={draft.description}
             onChange={(e) => onChange({ ...draft, description: e.target.value })}
-            placeholder="קמפיין אינסטגרם — אוקטובר"
+            placeholder="קמפיין אינסטגרם - אוקטובר"
             className="px-3 py-2 rounded-xl border border-qf-line-dash text-sm"
           />
         </label>
@@ -448,7 +448,7 @@ function CouponEditor({
         )}
         {draft.appliesTo === "items" && (
           <p className="mt-2 text-xs text-qf-mute">
-            בחירת פריטים ספציפיים — בקרוב. בינתיים השתמש ב״קטגוריה״ או ״כל ההזמנה״.
+            בחירת פריטים ספציפיים - בקרוב. בינתיים השתמש ב״קטגוריה״ או ״כל ההזמנה״.
           </p>
         )}
       </div>

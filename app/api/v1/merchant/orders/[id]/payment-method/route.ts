@@ -12,7 +12,7 @@ const Schema = z.object({
 
 /**
  * Switch an order's intended payment method. Only legal while
- * `paymentStatus = pending` — once a payment has settled we don't let the
+ * `paymentStatus = pending` - once a payment has settled we don't let the
  * cashier rewrite history. Used by the POS payment sheet when the
  * cashier rings up cash but the customer then asks to pay by card (or
  * vice versa).

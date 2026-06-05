@@ -17,7 +17,7 @@ const ResetSchema = z.object({
  *
  * Validates the one-time token (matched by SHA-256 hash, not the raw token),
  * sets the new password on the user, and marks the token used. The user is
- * NOT auto-logged-in — they go through the normal login flow next.
+ * NOT auto-logged-in - they go through the normal login flow next.
  */
 export const POST = handler(async (req: Request) => {
   const { token, password } = ResetSchema.parse(await req.json());

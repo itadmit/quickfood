@@ -1,12 +1,12 @@
 /**
- * One-shot script — register (upsert) the recurring QStash schedules that
+ * One-shot script - register (upsert) the recurring QStash schedules that
  * QuickFood needs. Replaces what used to live in vercel.json.
  *
  *   $ npx tsx scripts/register-qstash-schedules.ts
  *
  * Required env (read from .env.local in dev, Vercel envs in prod):
- *   QSTASH_URL, QSTASH_TOKEN          — to talk to the QStash control plane
- *   NEXT_PUBLIC_APP_URL               — the public origin QStash should call
+ *   QSTASH_URL, QSTASH_TOKEN          - to talk to the QStash control plane
+ *   NEXT_PUBLIC_APP_URL               - the public origin QStash should call
  *                                       (e.g. https://quickfood.co.il)
  *
  * Re-runs are safe: each schedule is keyed by a stable `scheduleId`, so this
@@ -38,7 +38,7 @@ async function main() {
   }
   if (base.startsWith("http://localhost") || base.startsWith("http://127.")) {
     console.error(
-      `Refusing to register schedules pointing at ${base} — QStash can't reach localhost.\n` +
+      `Refusing to register schedules pointing at ${base} - QStash can't reach localhost.\n` +
       `Set NEXT_PUBLIC_APP_URL to your public domain (e.g. https://quickfood.co.il) before running.`,
     );
     process.exit(1);

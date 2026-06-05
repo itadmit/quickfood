@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 import { TouchInput } from "@/components/shared/TouchInput";
 
 interface Props {
-  /** Subtitle shown above the form — typically the total being charged. */
+  /** Subtitle shown above the form - typically the total being charged. */
   amountLabel: string;
   onCancel: () => void;
   onConfirm: (data: { name: string; phone?: string }) => void;
@@ -15,7 +15,7 @@ interface Props {
  * Lightweight prompt that fires before the Grow wallet opens for a card
  * payment with no attached customer. Grow's production endpoint refuses
  * to set up a wallet with placeholder customer fields, and tax invoices
- * later need a real name — so we collect the walk-in's name (required)
+ * later need a real name - so we collect the walk-in's name (required)
  * and phone (optional but preferred). Data is snapshotted onto the
  * order; no Customer row is created (cashier-side fallback only).
  */

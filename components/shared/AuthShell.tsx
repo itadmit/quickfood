@@ -3,7 +3,7 @@ import { AuthHeroVideo } from "./AuthHeroVideo";
 import { AuthRotatingTagline } from "./AuthRotatingTagline";
 
 interface Props {
-  /** "login" or "signup" — controls the top-bar cross-link */
+  /** "login" or "signup" - controls the top-bar cross-link */
   variant: "login" | "signup";
   /** Right column content (the form) */
   children: React.ReactNode;
@@ -19,7 +19,7 @@ interface Props {
 }
 
 /**
- * Auth screens shell — login, signup, forgot-password, reset-password
+ * Auth screens shell - login, signup, forgot-password, reset-password
  * all wear this. Full-bleed yellow hero in the landing page's
  * "Triolla" treatment: video pinned to the visual-left edge that
  * melts via horizontal gradient into the yellow surface, dot pattern
@@ -33,7 +33,7 @@ interface Props {
 export function AuthShell({ variant, children, title, subtitle }: Props) {
   return (
     // dash-v2 hooks the auth screens into the same token override the
-    // V2 dashboard uses — green → yellow, surfaces → cream, ink/lines
+    // V2 dashboard uses - green → yellow, surfaces → cream, ink/lines
     // → black. SignupForm's many inline qf-* utilities pick up the V2
     // palette for free, without rewriting each input.
     <div
@@ -43,7 +43,7 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
       {/* ─── Dot pattern across the surface. Horizontal mask so the
               dots are dense across the YELLOW area on the visual-right
               and fade out to transparent on the visual-left where the
-              video starts — instead of being covered awkwardly by the
+              video starts - instead of being covered awkwardly by the
               video, the pattern simply ends. The fade boundary sits
               around 42% (video edge) with a soft ramp from 35–55%. */}
       <div
@@ -84,7 +84,7 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
         />
       </aside>
 
-      {/* ─── Top bar — brand chip + cross-link, floats above everything ─── */}
+      {/* ─── Top bar - brand chip + cross-link, floats above everything ─── */}
       <header className="relative z-20 px-5 lg:px-10 pt-6 flex items-center justify-between gap-4">
         <BrandChip />
         <Link
@@ -100,19 +100,19 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
         </Link>
       </header>
 
-      {/* ─── Main split — form on visual-RIGHT, video on visual-LEFT.
+      {/* ─── Main split - form on visual-RIGHT, video on visual-LEFT.
               RTL grid: first DOM child lands in the inline-start
               column (= visual right). So form is first, spacer
               (under the absolute video) is second. */}
-      {/* `min-h` only, never `h` — the form column grows naturally
+      {/* `min-h` only, never `h` - the form column grows naturally
           when the wizard's step content is taller than the viewport
           (e.g. Step 1 with 6 fields). With `h-[...]` the grid was
           locked to viewport height and the form clipped at the bottom. */}
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[58%_42%] min-h-[calc(100vh-88px)]">
-        {/* Form column — visual right (58%). */}
+        {/* Form column - visual right (58%). */}
         <main className="flex items-center justify-center px-5 lg:px-12 py-6 lg:py-6">
           <div className="w-full max-w-md space-y-5">
-            {/* Eyebrow + rotating marketing tagline above the card —
+            {/* Eyebrow + rotating marketing tagline above the card -
                 a different one-liner shows on each visit so returning
                 merchants don't see the same screen twice. Desktop only:
                 on mobile the form already owns the viewport, and the
@@ -147,7 +147,7 @@ export function AuthShell({ variant, children, title, subtitle }: Props) {
 }
 
 /**
- * Black tile + cream "F" — same lockup as the landing-page top bar so
+ * Black tile + cream "F" - same lockup as the landing-page top bar so
  * the merchant lands in a place that visually feels like "the same
  * product I just signed up for on the marketing site".
  */

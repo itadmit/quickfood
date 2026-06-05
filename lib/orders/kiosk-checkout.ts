@@ -22,9 +22,9 @@ export interface KioskCheckoutError {
   field?: string;
 }
 
-// Server-side cart pricer — items + sizes + options + bundle discounts.
+// Server-side cart pricer - items + sizes + options + bundle discounts.
 // Mirrors the subset of orders-create.ts pricing that kiosk orders use
-// (no coupons / delivery / service / tip — kiosk is pickup-only).
+// (no coupons / delivery / service / tip - kiosk is pickup-only).
 async function priceKioskCart(input: CreateOrderInput): Promise<{
   total: number;
   error?: CartValidationError;
@@ -181,7 +181,7 @@ export async function createKioskCheckout(
 }
 
 // Called from the Grow callback when payment for a checkout-prefixed
-// reference confirms. Idempotent — returns the existing orderId if the
+// reference confirms. Idempotent - returns the existing orderId if the
 // checkout was already materialized.
 export async function materializeKioskCheckout(
   checkoutId: string,

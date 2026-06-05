@@ -18,7 +18,7 @@ export function KioskStringsForm({
   overrides: Record<string, string>;
   sectionLabels: Record<string, string>;
 }) {
-  // Working copy keyed by dotted key — empty string means "use default".
+  // Working copy keyed by dotted key - empty string means "use default".
   // Initialized from the saved overrides; missing keys stay undefined so
   // the textarea renders as a placeholder showing the default copy.
   const [values, setValues] = useState<Record<string, string>>(overrides);
@@ -30,7 +30,7 @@ export function KioskStringsForm({
   }
 
   // Group keys by section so the form has natural visual breaks. Filter by
-  // the search query against the default text (Hebrew) + key path — when
+  // the search query against the default text (Hebrew) + key path - when
   // a merchant remembers a phrase but not where in the flow it lives.
   const grouped = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -60,7 +60,7 @@ export function KioskStringsForm({
   async function save() {
     setBusy(true);
     try {
-      // Strip empty values — empty string means "use default", and we
+      // Strip empty values - empty string means "use default", and we
       // don't want them sitting in the DB taking up space + bloating the
       // PATCH payload on every save.
       const clean: Record<string, string> = {};
@@ -96,7 +96,7 @@ export function KioskStringsForm({
           השאר שדה ריק = ייעשה שימוש בברירת המחדל. ערוך טקסט = הוא יחליף את
           ברירת המחדל בקיוסק שלך. הסמן <code>{"{tenantName}"}</code>,{" "}
           <code>{"{number}"}</code>, <code>{"{amount}"}</code> וכו׳ נשמר כפי
-          שהוא — אם תרצי לשנות את הסדר, השאר את הסמן בטקסט החדש.
+          שהוא - אם תרצי לשנות את הסדר, השאר את הסמן בטקסט החדש.
         </div>
 
         <div className="bg-white border border-qf-line-dash rounded-2xl p-4 flex items-center justify-between gap-3 flex-wrap">

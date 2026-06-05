@@ -54,12 +54,12 @@ export const PATCH = handler(
         changedBy: session.userId,
       });
 
-      // Implicit "cash collected" — when a cash order moves from
+      // Implicit "cash collected" - when a cash order moves from
       // pending → confirmed, the merchant is acknowledging they took
       // the cash at the counter (kiosk flow). Flip paymentStatus to
       // paid in the same call so the order surfaces as fully settled.
       // Card-pending orders confirmed manually (Grow callback lost)
-      // are left as paymentStatus=pending — payment didn't actually
+      // are left as paymentStatus=pending - payment didn't actually
       // happen, the merchant accepted on good faith.
       if (
         order.status === "pending" &&

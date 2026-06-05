@@ -18,7 +18,7 @@ export interface CartLine {
   sizeDelta: number;
   options: Array<{ groupId: string; optionId: string; name: string; groupName?: string; priceDelta: number; half?: "left" | "right" | "full" }>;
   notes: string | null;
-  /** How this line landed in the cart — powers the merchant analytics
+  /** How this line landed in the cart - powers the merchant analytics
    *  breakdown of channel performance. Defaults to "menu" so old carts
    *  in localStorage stay valid. */
   source?: CartLineSource;
@@ -42,7 +42,7 @@ interface CartContextValue extends CartState {
   tenant: TenantInfo;
   branch: BranchInfo | null;
   /** True once localStorage has been read on mount. Until then,
-   * `lines` may transiently look empty even when a cart exists — consumers
+   * `lines` may transiently look empty even when a cart exists - consumers
    * should suppress empty-state UI while this is false. */
   hydrated: boolean;
 }
@@ -99,7 +99,7 @@ export function CartProvider({
   const [state, setState] = useState<CartState>({ lines: [], method: "delivery" });
   const [hydrated, setHydrated] = useState(false);
 
-  // Hydrate from localStorage — synchronous setState here is intentional
+  // Hydrate from localStorage - synchronous setState here is intentional
   // (one-time hydration on mount) and the lint rule does not apply.
   useEffect(() => {
     try {

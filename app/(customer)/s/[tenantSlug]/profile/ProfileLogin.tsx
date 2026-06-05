@@ -129,7 +129,7 @@ export function ProfileLogin() {
             {busy ? "מאמת..." : "התחבר"}
           </button>
           <div className="text-xs text-qf-mute text-center">
-            ב-MVP הקוד נכתב ל-server console — בדוק את הלוג
+            ב-MVP הקוד נכתב ל-server console - בדוק את הלוג
           </div>
         </div>
       )}

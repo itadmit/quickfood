@@ -25,7 +25,7 @@ export const GET = handler(async () => {
         tenantId: session.tenantId,
         status: { in: ["pending", "confirmed", "preparing", "in_oven", "ready", "out_for_delivery"] },
         // Hidden-from-Kanban orders shouldn't tick the "active orders"
-        // KPI — they're explicitly out of the active queue.
+        // KPI - they're explicitly out of the active queue.
         kanbanHiddenAt: null,
         NOT: HIDE_UNPAID_NONCASH,
       },

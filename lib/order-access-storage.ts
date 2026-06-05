@@ -30,7 +30,7 @@ function writeMap(tenantSlug: string, map: TokenMap): void {
     const entries = Object.entries(map).slice(-MAX_KEEP);
     window.localStorage.setItem(key(tenantSlug), JSON.stringify(Object.fromEntries(entries)));
   } catch {
-    /* localStorage unavailable — silently drop */
+    /* localStorage unavailable - silently drop */
   }
 }
 

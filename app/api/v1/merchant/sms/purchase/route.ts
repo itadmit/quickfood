@@ -2,7 +2,7 @@
  * One-off SMS top-up. Charges the merchant's saved card via QuickBilling's
  * `POST /api/v1/charges` and adds the package quota to `smsCreditsRemaining`.
  *
- * The merchant can stack purchases — buy Starter (300) today, buy Growth
+ * The merchant can stack purchases - buy Starter (300) today, buy Growth
  * (1000) tomorrow, end up with 1300 credits. No subscriptions, no monthly
  * reset, no proration headaches.
  *
@@ -23,12 +23,12 @@ import { createCharge, BillingHubError } from "@/lib/billing-hub/client";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Base prices, pre-VAT. The hub adds 18% on top — Starter ends up ~₪46.02
+// Base prices, pre-VAT. The hub adds 18% on top - Starter ends up ~₪46.02
 // on the merchant's card, Growth ~₪93.22, Scale ~₪352.82.
 const PACKAGES = {
-  starter: { quota: 300, baseIls: 39, label: "Starter — 300 הודעות" },
-  growth: { quota: 1000, baseIls: 79, label: "Growth — 1,000 הודעות" },
-  scale: { quota: 5000, baseIls: 299, label: "Scale — 5,000 הודעות" },
+  starter: { quota: 300, baseIls: 39, label: "Starter - 300 הודעות" },
+  growth: { quota: 1000, baseIls: 79, label: "Growth - 1,000 הודעות" },
+  scale: { quota: 5000, baseIls: 299, label: "Scale - 5,000 הודעות" },
 } as const;
 
 const Schema = z.object({
@@ -119,7 +119,7 @@ export const POST = handler(async (req: Request) => {
         ]);
       }
     } else {
-      // No invoice id returned (rare) — credit without dedupe; webhook will
+      // No invoice id returned (rare) - credit without dedupe; webhook will
       // not be able to match, but at least the merchant gets what they paid for.
       await prisma.tenant.update({
         where: { id: tenant.id },

@@ -38,7 +38,7 @@ export default function CartLoading() {
           </div>
         </div>
 
-        {/* Summary card — inline footer-style on mobile, sticky sidebar on desktop. */}
+        {/* Summary card - inline footer-style on mobile, sticky sidebar on desktop. */}
         <aside className="px-5 mt-5 lg:px-0 lg:mt-0 lg:sticky lg:top-20 lg:self-start">
           <div className="bg-white border border-qf-line rounded-2xl p-4 space-y-2.5 shadow-xs">
             <div className="flex items-center justify-between">

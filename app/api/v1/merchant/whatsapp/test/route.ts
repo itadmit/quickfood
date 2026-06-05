@@ -1,5 +1,5 @@
 /**
- * WhatsApp test send — used by the merchant dashboard to verify the iBot
+ * WhatsApp test send - used by the merchant dashboard to verify the iBot
  * connection (token + instance_id) before the merchant relies on it for
  * customer messages. Bypasses the per-tenant credit gate (platform absorbs
  * the cost), but rate-limited via a 60-second cooldown per tenant.
@@ -46,7 +46,7 @@ export const POST = handler(async (req: Request) => {
     select: { name: true },
   });
 
-  const body = `הודעת בדיקה מ-${tenant?.name ?? "QuickFood"}. אם קיבלת אותה — ה-WhatsApp מחובר.`;
+  const body = `הודעת בדיקה מ-${tenant?.name ?? "QuickFood"}. אם קיבלת אותה - ה-WhatsApp מחובר.`;
   const result = await sendWhatsApp({
     tenantId: session.tenantId,
     to,

@@ -30,12 +30,12 @@ export interface CommitOptions {
  * Behavior worth knowing about:
  *   • Prices on Wolt are agorot (₪5 = 500). QuickFood stores integer
  *     shekels. We round to the nearest shekel.
- *   • Wolt sub-categories (parent_category_id != null) are flattened —
+ *   • Wolt sub-categories (parent_category_id != null) are flattened -
  *     the sub-category becomes a top-level QF category named
  *     "<parent> · <child>", since the QF MenuCategory model is flat.
  *   • Disabled items are still imported with available=false so the
  *     merchant sees the full catalog and can re-enable selectively.
- *   • Image fetch failures don't fail the import — they get logged into
+ *   • Image fetch failures don't fail the import - they get logged into
  *     `errors[]` and the item is created without an image.
  */
 export async function commitImport(
@@ -114,7 +114,7 @@ export async function commitImport(
   // per-item min/max/includedFree overrides at attach time.
   // Wolt stores min/max/required on the per-item ref, not on the group
   // itself. The runtime serializer reads catalog-set values first, so
-  // we seed the set with the first item ref's config — on re-import we
+  // we seed the set with the first item ref's config - on re-import we
   // leave it alone, preserving any catalog edits the merchant made.
   const firstRefByGroup = new Map<string, WoltOptionGroupRefOnItem>();
   for (const it of menu.items) {
@@ -159,7 +159,7 @@ export async function commitImport(
       });
       setIdMap.set(g.id, saved.id);
 
-      // Sync the options for this set — upsert in place by externalId so
+      // Sync the options for this set - upsert in place by externalId so
       // a re-import keeps the same QF option ids (and order numbers
       // referenced from cart history stay valid).
       for (const [vidx, v] of g.values.entries()) {
@@ -277,7 +277,7 @@ export async function commitImport(
 
   // Mark the import committed BEFORE the image loop. A 100-image
   // catalog plus a slow Wolt CDN can push past Vercel's per-function
-  // ceiling — if we leave the status flip for the end, a timeout
+  // ceiling - if we leave the status flip for the end, a timeout
   // strands the row at "preview" forever (catch in the route handler
   // never fires when Vercel kills the function), even though the
   // categories/items/modifiers all landed. Merchants then can't see

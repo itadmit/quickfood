@@ -95,7 +95,7 @@ export function PlatformSettingsForm({ initial }: { initial: Initial }) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-base lg:text-lg font-semibold">
-              WhatsApp (iBot Chat) — ברירת מחדל
+              WhatsApp (iBot Chat) - ברירת מחדל
             </h2>
             <p className="text-xs lg:text-sm text-qf-mute mt-0.5">
               כאן נכנסים פרטי חשבון iBot של QuickFood. שולחים מכאן אם המסעדה

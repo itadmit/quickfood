@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /**
- * zod schemas — shared between API Route Handlers and (eventually) OpenAPI auto-gen.
+ * zod schemas - shared between API Route Handlers and (eventually) OpenAPI auto-gen.
  * Field naming: snake_case (matches API.md).
  */
 
@@ -238,12 +238,12 @@ export const MenuItemInputSchema = z.object({
   tags: z.array(z.string()).default([]),
   position: z.number().int().default(0),
   sku: z.string().max(40).optional(),
-  // Time-of-day windowing — minutes since midnight, 0..1439. Both null =
+  // Time-of-day windowing - minutes since midnight, 0..1439. Both null =
   // no time restriction. availableDays is a 7-bit mask, null = every day.
   available_from: z.number().int().min(0).max(1439).nullable().optional(),
   available_to: z.number().int().min(0).max(1439).nullable().optional(),
   available_days: z.number().int().min(0).max(127).nullable().optional(),
-  // Inventory countdown — null = no inventory tracking (infinite).
+  // Inventory countdown - null = no inventory tracking (infinite).
   stock_remaining: z.number().int().min(0).nullable().optional(),
   sizes: z.array(ItemSizeInputSchema).default([]),
   option_groups: z.array(ItemOptionGroupInputSchema).default([]),
@@ -286,7 +286,7 @@ export const TenantPatchSchema = z.object({
   // Cleared via the DB if a tenant ever needs to be re-shown.
   onboarding_dismissed: z.literal(true).optional(),
   dashboard_version: z.enum(["v1", "v2"]).optional(),
-  // Kiosk feature settings — only the welcome text + idle reset are
+  // Kiosk feature settings - only the welcome text + idle reset are
   // merchant-editable. `kiosk_enabled` itself is a superadmin gate.
   kiosk_welcome_text: z.string().max(160).nullable().optional(),
   kiosk_idle_seconds: z.number().int().min(15).max(600).optional(),
@@ -478,7 +478,7 @@ export const TenantCreateSchema = z.object({
  */
 export const MerchantPaymentsPatchSchema = z
   .object({
-    /** Tenant.acceptsCash — show "cash on delivery" at checkout */
+    /** Tenant.acceptsCash - show "cash on delivery" at checkout */
     accepts_cash: z.boolean(),
     /** Which method should be pre-selected for the customer at checkout.
      *  Server validates this is one of the methods the tenant actually
