@@ -91,17 +91,12 @@ export default function AdsPageC() {
           border: "2px solid #000",
           borderRadius: 20,
           boxShadow: "0 4px 0 #000",
-          padding: "18px 20px 16px",
+          padding: "14px 20px 14px",
+          marginBottom: 16,
         }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-            <div>
-              <div style={{ fontSize: 42, fontWeight: 900, color: INK, letterSpacing: "-2px", lineHeight: 1 }}>₪299</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: INK, marginTop: 2 }}>לחודש + 0.5% בלבד</div>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: INK }}>ללא התחייבות</div>
-              <div style={{ fontSize: 12, color: "rgba(0,0,0,0.50)", fontWeight: 500 }}>מחיר קבוע לכל החיים</div>
-            </div>
+          <div style={{ textAlign: "center", marginBottom: 12 }}>
+            <div style={{ fontSize: 42, fontWeight: 900, color: INK, letterSpacing: "-2px", lineHeight: 1 }}>₪299</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: INK, marginTop: 4 }}>לחודש + 0.5% בלבד</div>
           </div>
 
           <button style={{
