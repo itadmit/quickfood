@@ -139,284 +139,306 @@ export function BrandingForm({
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
-      {/* ─── Section 1: Business details ─────────────────────── */}
-      <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
-        <header className="space-y-1">
-          <h2 className="font-bold text-lg">פרטי העסק</h2>
-          <p className="text-xs text-qf-mute leading-relaxed">
-            הפרטים הקובעים את הסניף שמוצג ללקוח, את הכתובת בחשבונית, ואת
-            מחירי המשלוח הבסיסיים. דמי המשלוח כאן הם ברירת המחדל - אזורי
-            משלוח יכולים לדרוס אותם פר-אזור.
-          </p>
-        </header>
 
-        {!branch && (
-          <div className="rounded-xl bg-qf-tomato-soft border border-qf-tomato/40 px-3.5 py-2.5 text-sm text-qf-tomato">
-            לא נמצא סניף ראשי. הוסיפו סניף בהגדרות לפני שמרכזים פה את הפרטים.
-          </div>
-        )}
+        {/* ─── Column 1 (right in RTL): Branch details + Identity ── */}
+        <div className="space-y-5">
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="שם הסניף">
-            <input
-              value={branchName}
-              onChange={(e) => setBranchName(e.target.value)}
-              disabled={!branch}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none disabled:bg-qf-line-soft/40 disabled:text-qf-mute"
-            />
-          </Field>
-          <Field label="טלפון">
-            <input
-              value={branchPhone}
-              onChange={(e) => setBranchPhone(e.target.value)}
-              disabled={!branch}
-              dir="ltr"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none disabled:bg-qf-line-soft/40 disabled:text-qf-mute"
-            />
-          </Field>
-        </div>
+          {/* פרטי העסק */}
+          <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
+            <header className="space-y-1">
+              <h2 className="font-bold text-lg">פרטי העסק</h2>
+              <p className="text-xs text-qf-mute leading-relaxed">
+                הפרטים הקובעים את הסניף שמוצג ללקוח, את הכתובת בחשבונית, ואת
+                מחירי המשלוח הבסיסיים. דמי המשלוח כאן הם ברירת המחדל - אזורי
+                משלוח יכולים לדרוס אותם פר-אזור.
+              </p>
+            </header>
 
-        <Field label="כתובת מלאה">
-          <input
-            value={branchAddress}
-            onChange={(e) => setBranchAddress(e.target.value)}
-            disabled={!branch}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none disabled:bg-qf-line-soft/40 disabled:text-qf-mute"
-          />
-        </Field>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="דוא״ל">
-            <input
-              value={branchEmail}
-              onChange={(e) => setBranchEmail(e.target.value)}
-              disabled={!branch}
-              type="email"
-              dir="ltr"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none disabled:bg-qf-line-soft/40 disabled:text-qf-mute"
-            />
-          </Field>
-          <Field label="ח״פ / עוסק">
-            <input
-              value={vatNumber}
-              onChange={(e) => setVatNumber(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum"
-            />
-          </Field>
-        </div>
-
-        <hr className="border-qf-line-soft" />
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Field label="סכום מינימום (₪)">
-            <NumberField value={minOrder} onChange={setMinOrder} disabled={!branch} />
-          </Field>
-          <Field label="דמי משלוח ברירת מחדל (₪)">
-            <NumberField value={deliveryFee} onChange={setDeliveryFee} disabled={!branch} />
-          </Field>
-          <Field label="דמי שירות (₪)">
-            <NumberField value={serviceFee} onChange={setServiceFee} disabled={!branch} />
-          </Field>
-        </div>
-
-        <Field label="תוספת זמן הגעה בעומס (דקות)">
-          <div className="flex items-center border border-qf-line-dash rounded-xl focus-within:border-(--qf-primary) max-w-[240px]">
-            <span className="px-3 text-qf-mute text-sm">+</span>
-            <input
-              type="number"
-              min={0}
-              max={180}
-              value={busyEtaBoost}
-              onChange={(e) =>
-                setBusyEtaBoost(Math.max(0, Math.min(180, parseInt(e.target.value, 10) || 0)))
-              }
-              disabled={!branch}
-              className="flex-1 py-2.5 outline-none bg-transparent tnum disabled:text-qf-mute"
-            />
-            <span className="px-3 text-qf-mute text-sm">דק&apos;</span>
-          </div>
-          <p className="text-[11px] text-qf-mute mt-1.5 leading-snug">
-            כשהסטטוס במצב &quot;עומס&quot; - זמן ההגעה שמוצג ללקוח גדל בכמות הזו ומופיע מודל אזהרה.
-          </p>
-        </Field>
-      </section>
-
-      {/* ─── Section 2: Branding ─────────────────────────────── */}
-      <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
-        <header className="space-y-1">
-          <h2 className="font-bold text-lg">מותג ועיצוב</h2>
-          <p className="text-xs text-qf-mute leading-relaxed">
-            איך החנות שלך מוצגת ללקוח - שם, לוגו, תמונת קאבר, ערכת צבע.
-          </p>
-        </header>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="שם החנות (פומבי)">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
-            />
-          </Field>
-          <Field label="סוג מטבח">
-            <input
-              value={cuisineType}
-              onChange={(e) => setCuisineType(e.target.value)}
-              placeholder="לדוגמה: פיצה נפוליטנית"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
-            />
-          </Field>
-        </div>
-
-        <Field label="תיאור העסק">
-          <textarea
-            value={about}
-            onChange={(e) => setAbout(e.target.value)}
-            rows={3}
-            maxLength={2000}
-            placeholder="טאגליין קצר או פסקה שמופיעה מתחת לשם החנות בעמוד הלקוח"
-            className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none resize-y leading-relaxed"
-          />
-          <p className="text-xs text-qf-mute mt-1">
-            עד 2000 תווים. מוצג בעמוד הראשי של החנות לצד הלוגו.
-          </p>
-        </Field>
-
-        <BusinessTypeSelect
-          label="סוג עסק"
-          hint="מוצרים ללא תמונה יציגו את האייקון לפי סוג העסק"
-          value={businessType}
-          onChange={setBusinessType}
-        />
-
-        <div className="space-y-2">
-          <div className="text-sm font-medium">לוגו</div>
-          <p className="text-xs text-qf-mute">
-            מומלץ ריבוע (1:1) עם רקע שקוף - png או webp. הלוגו מופיע בעיגול
-            הקטן ליד שם החנות בלקוח. אם לא יועלה לוגו - יוצגו האותיות
-            הראשונות מהשם.
-          </p>
-
-          {logoUrl ? (
-            <div className="flex items-center gap-3">
-              <div className="relative w-20 h-20 rounded-2xl overflow-hidden border border-qf-line-dash bg-qf-line-soft/40">
-                <SmartImg src={logoUrl} alt="" fill className="absolute inset-0 object-contain" />
+            {!branch && (
+              <div className="rounded-xl bg-qf-tomato-soft border border-qf-tomato/40 px-3.5 py-2.5 text-sm text-qf-tomato">
+                לא נמצא סניף ראשי. הוסיפו סניף בהגדרות לפני שמרכזים פה את הפרטים.
               </div>
-              <button
-                type="button"
-                onClick={() => setLogoUrl(null)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-qf-tomato/40 text-qf-tomato hover:bg-qf-tomato-soft text-sm font-medium"
-              >
-                <IcoTrash c="currentColor" s={14} />
-                מחק לוגו
-              </button>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label="שם הסניף">
+                <input
+                  value={branchName}
+                  onChange={(e) => setBranchName(e.target.value)}
+                  disabled={!branch}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none disabled:bg-qf-line-soft/40 disabled:text-qf-mute"
+                />
+              </Field>
+              <Field label="טלפון">
+                <input
+                  value={branchPhone}
+                  onChange={(e) => setBranchPhone(e.target.value)}
+                  disabled={!branch}
+                  dir="ltr"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none disabled:bg-qf-line-soft/40 disabled:text-qf-mute"
+                />
+              </Field>
             </div>
-          ) : (
-            <ImageUploader
-              type="logo"
-              value={[]}
-              onChange={(urls) => setLogoUrl(urls[0] ?? null)}
-              max={1}
-              multiple={false}
+
+            <Field label="כתובת מלאה">
+              <input
+                value={branchAddress}
+                onChange={(e) => setBranchAddress(e.target.value)}
+                disabled={!branch}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none disabled:bg-qf-line-soft/40 disabled:text-qf-mute"
+              />
+            </Field>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label="דוא״ל">
+                <input
+                  value={branchEmail}
+                  onChange={(e) => setBranchEmail(e.target.value)}
+                  disabled={!branch}
+                  type="email"
+                  dir="ltr"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none disabled:bg-qf-line-soft/40 disabled:text-qf-mute"
+                />
+              </Field>
+              <Field label="ח״פ / עוסק">
+                <input
+                  value={vatNumber}
+                  onChange={(e) => setVatNumber(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum"
+                />
+              </Field>
+            </div>
+
+            <hr className="border-qf-line-soft" />
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Field label="סכום מינימום (₪)">
+                <NumberField value={minOrder} onChange={setMinOrder} disabled={!branch} />
+              </Field>
+              <Field label="דמי משלוח ברירת מחדל (₪)">
+                <NumberField value={deliveryFee} onChange={setDeliveryFee} disabled={!branch} />
+              </Field>
+              <Field label="דמי שירות (₪)">
+                <NumberField value={serviceFee} onChange={setServiceFee} disabled={!branch} />
+              </Field>
+            </div>
+
+            <Field label="תוספת זמן הגעה בעומס (דקות)">
+              <div className="flex items-center border border-qf-line-dash rounded-xl focus-within:border-(--qf-primary) max-w-[240px]">
+                <span className="px-3 text-qf-mute text-sm">+</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={180}
+                  value={busyEtaBoost}
+                  onChange={(e) =>
+                    setBusyEtaBoost(Math.max(0, Math.min(180, parseInt(e.target.value, 10) || 0)))
+                  }
+                  disabled={!branch}
+                  className="flex-1 py-2.5 outline-none bg-transparent tnum disabled:text-qf-mute"
+                />
+                <span className="px-3 text-qf-mute text-sm">דק&apos;</span>
+              </div>
+              <p className="text-[11px] text-qf-mute mt-1.5 leading-snug">
+                כשהסטטוס במצב &quot;עומס&quot; - זמן ההגעה שמוצג ללקוח גדל בכמות הזו ומופיע מודל אזהרה.
+              </p>
+            </Field>
+          </section>
+
+          {/* מיתוג - שם החנות, סוג מטבח, תיאור, סוג עסק */}
+          <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
+            <header className="space-y-1">
+              <h2 className="font-bold text-lg">מיתוג</h2>
+              <p className="text-xs text-qf-mute leading-relaxed">
+                שם החנות, הסגנון הקולינרי והתיאור שמופיעים בעמוד הלקוח.
+              </p>
+            </header>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label="שם החנות (פומבי)">
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+                />
+              </Field>
+              <Field label="סוג מטבח">
+                <input
+                  value={cuisineType}
+                  onChange={(e) => setCuisineType(e.target.value)}
+                  placeholder="לדוגמה: פיצה נפוליטנית"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+                />
+              </Field>
+            </div>
+
+            <Field label="תיאור העסק">
+              <textarea
+                value={about}
+                onChange={(e) => setAbout(e.target.value)}
+                rows={3}
+                maxLength={2000}
+                placeholder="טאגליין קצר או פסקה שמופיעה מתחת לשם החנות בעמוד הלקוח"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none resize-y leading-relaxed"
+              />
+              <p className="text-xs text-qf-mute mt-1">
+                עד 2000 תווים. מוצג בעמוד הראשי של החנות לצד הלוגו.
+              </p>
+            </Field>
+
+            <BusinessTypeSelect
+              label="סוג עסק"
+              hint="מוצרים ללא תמונה יציגו את האייקון לפי סוג העסק"
+              value={businessType}
+              onChange={setBusinessType}
             />
-          )}
+          </section>
+
         </div>
 
-        <div className="space-y-2">
-          <div className="text-sm font-medium">תמונת קאבר לחנות</div>
-          <p className="text-xs text-qf-mute">
-            התמונה מופיעה ככותרת בחנות ובדף התפריט של הלקוח. אם לא תועלה תמונה
-            - יוצג רקע בצבעי המותג.
-          </p>
+        {/* ─── Column 2 (left in RTL): Design + Share ───────────── */}
+        <div className="space-y-5">
 
-          {coverImage ? (
+          {/* עיצוב */}
+          <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-5">
+            <header className="space-y-1">
+              <h2 className="font-bold text-lg">עיצוב</h2>
+              <p className="text-xs text-qf-mute leading-relaxed">
+                לוגו, תמונת קאבר וערכת הצבע של החנות.
+              </p>
+            </header>
+
             <div className="space-y-2">
-              <div className="relative rounded-2xl overflow-hidden border border-qf-line-dash aspect-5/2">
-                <SmartImg
-                  src={coverImage}
-                  alt=""
-                  fill
-                  className="absolute inset-0"
+              <div className="font-semibold">לוגו</div>
+              <p className="text-xs text-qf-mute">
+                מומלץ ריבוע (1:1) עם רקע שקוף - png או webp. הלוגו מופיע בעיגול
+                הקטן ליד שם החנות בלקוח. אם לא יועלה לוגו - יוצגו האותיות
+                הראשונות מהשם.
+              </p>
+
+              {logoUrl ? (
+                <div className="flex items-center gap-3">
+                  <div className="relative w-20 h-20 rounded-2xl overflow-hidden border border-qf-line-dash bg-qf-line-soft/40">
+                    <SmartImg src={logoUrl} alt="" fill className="absolute inset-0 object-contain" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setLogoUrl(null)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-qf-tomato/40 text-qf-tomato hover:bg-qf-tomato-soft text-sm font-medium"
+                  >
+                    <IcoTrash c="currentColor" s={14} />
+                    מחק לוגו
+                  </button>
+                </div>
+              ) : (
+                <ImageUploader
+                  type="logo"
+                  value={[]}
+                  onChange={(urls) => setLogoUrl(urls[0] ?? null)}
+                  max={1}
+                  multiple={false}
                 />
-              </div>
-              <button
-                type="button"
-                onClick={() => setCoverImage(null)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-qf-tomato/40 text-qf-tomato hover:bg-qf-tomato-soft text-sm font-medium"
-              >
-                <IcoTrash c="currentColor" s={14} />
-                מחק תמונה - להחלפה בחר תמונה חדשה לאחר המחיקה
-              </button>
+              )}
             </div>
-          ) : (
-            <ImageUploader
-              type="cover_image"
-              value={[]}
-              onChange={(urls) => setCoverImage(urls[0] ?? null)}
-              max={1}
-              multiple={false}
-            />
-          )}
-        </div>
 
-        <div className="space-y-2">
-          <div className="text-sm font-medium">ערכת צבע</div>
-          <div className="flex flex-wrap gap-3">
-            {Object.values(THEMES).map((t) => {
-              const selected = t.id === themeId;
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setThemeId(t.id)}
-                  aria-label={t.name}
-                  aria-pressed={selected}
-                  title={t.name}
-                  className="w-9 h-9 rounded-full border-2 border-black cursor-pointer transition-transform hover:scale-110"
-                  style={{
-                    background: t.primary,
-                    outline: selected ? "2px solid #000" : "none",
-                    outlineOffset: selected ? 3 : 0,
-                  }}
+            <div className="space-y-2">
+              <div className="font-semibold">תמונת קאבר</div>
+              <p className="text-xs text-qf-mute">
+                התמונה מופיעה ככותרת בחנות ובדף התפריט של הלקוח. אם לא תועלה תמונה
+                - יוצג רקע בצבעי המותג.
+              </p>
+
+              {coverImage ? (
+                <div className="space-y-2">
+                  <div className="relative rounded-2xl overflow-hidden border border-qf-line-dash aspect-5/2">
+                    <SmartImg
+                      src={coverImage}
+                      alt=""
+                      fill
+                      className="absolute inset-0"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCoverImage(null)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-qf-tomato/40 text-qf-tomato hover:bg-qf-tomato-soft text-sm font-medium"
+                  >
+                    <IcoTrash c="currentColor" s={14} />
+                    מחק תמונה - להחלפה בחר תמונה חדשה לאחר המחיקה
+                  </button>
+                </div>
+              ) : (
+                <ImageUploader
+                  type="cover_image"
+                  value={[]}
+                  onChange={(urls) => setCoverImage(urls[0] ?? null)}
+                  max={1}
+                  multiple={false}
                 />
-              );
-            })}
-          </div>
-        </div>
-      </section>
-      </div>
+              )}
+            </div>
 
-      {/* ─── Section 3: Share ────────────────────────────────── */}
-      <section
-        className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3"
-        data-theme={themeId}
-        style={
-          {
-            "--qf-primary": THEMES[themeId].primary,
-            "--qf-deep": THEMES[themeId].deep,
-            "--qf-soft": THEMES[themeId].soft,
-            "--qf-line": THEMES[themeId].line,
-            "--qf-on-primary": THEMES[themeId].onPrimary,
-          } as React.CSSProperties
-        }
-      >
-        <header className="space-y-1">
-          <h2 className="font-bold text-lg">שיתוף החנות</h2>
-          <p className="text-xs text-qf-mute leading-relaxed">
-            כתובת החנות הציבורית שלך לשיתוף עם לקוחות, להדפסה על פלאיירים
-            או הדבקה ב-WhatsApp.
-          </p>
-        </header>
-        <div className="text-xs text-qf-mute font-mono break-all" dir="ltr">
-          {storefrontUrl}
+            <div className="space-y-2">
+              <div className="font-semibold">ערכת צבע</div>
+              <div className="flex flex-wrap gap-3">
+                {Object.values(THEMES).map((t) => {
+                  const selected = t.id === themeId;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setThemeId(t.id)}
+                      aria-label={t.name}
+                      aria-pressed={selected}
+                      title={t.name}
+                      className="w-9 h-9 rounded-full border-2 border-black cursor-pointer transition-transform hover:scale-110"
+                      style={{
+                        background: t.primary,
+                        outline: selected ? "2px solid #000" : "none",
+                        outlineOffset: selected ? 3 : 0,
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          {/* שיתוף החנות */}
+          <section
+            className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3"
+            data-theme={themeId}
+            style={
+              {
+                "--qf-primary": THEMES[themeId].primary,
+                "--qf-deep": THEMES[themeId].deep,
+                "--qf-soft": THEMES[themeId].soft,
+                "--qf-line": THEMES[themeId].line,
+                "--qf-on-primary": THEMES[themeId].onPrimary,
+              } as React.CSSProperties
+            }
+          >
+            <header className="space-y-1">
+              <h2 className="font-bold text-lg">שיתוף החנות</h2>
+              <p className="text-xs text-qf-mute leading-relaxed">
+                כתובת החנות הציבורית שלך לשיתוף עם לקוחות, להדפסה על פלאיירים
+                או הדבקה ב-WhatsApp.
+              </p>
+            </header>
+            <div className="text-xs text-qf-mute font-mono break-all" dir="ltr">
+              {storefrontUrl}
+            </div>
+            <ShopShareActions
+              slug={tenant.slug}
+              name={name}
+              storefrontUrl={storefrontUrl}
+              qrDataUrl={qrDataUrl}
+            />
+          </section>
+
         </div>
-        <ShopShareActions
-          slug={tenant.slug}
-          name={name}
-          storefrontUrl={storefrontUrl}
-          qrDataUrl={qrDataUrl}
-        />
-      </section>
+
+      </div>
 
       <SettingsSaveBar saving={saving} onSave={save} toast={toast} />
     </div>

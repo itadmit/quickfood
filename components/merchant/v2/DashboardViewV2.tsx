@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { IcoChart, IcoTrend, IcoArrowLeft, IcoMenuBook } from "@/components/shared/Icons";
+import { IcoChart, IcoTrend, IcoArrowLeft, IcoMenuBook, IcoGear, IcoCheck, IcoMenuList, IcoClock, IcoCreditCard, IcoArrowRight } from "@/components/shared/Icons";
+import { Modal } from "@/components/shared/Modal";
 import { MenuItemImage } from "@/components/shared/MenuItemImage";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -55,6 +57,20 @@ const RANGES: Array<{ key: "today" | "yesterday" | "7d" | "30d"; label: string }
  * duplicated rather than imported so the two can drift independently
  * while we iterate.
  */
+interface SetupState {
+  brandingDone: boolean;
+  categoriesDone: boolean;
+  menuItemsDone: boolean;
+  branchId: string | null;
+  initialStoreName: string;
+  initialCuisineType: string;
+  initialBranchName: string;
+  initialBranchAddress: string;
+  initialBranchPhone: string;
+  initialMinOrder: number;
+  initialDeliveryFee: number;
+}
+
 export function DashboardViewV2({
   range,
   summary,
@@ -63,6 +79,7 @@ export function DashboardViewV2({
   recentOrders,
   merchantFirstName,
   hasNoMenuItems = false,
+  setupState,
 }: {
   range: "today" | "yesterday" | "7d" | "30d";
   summary: Summary;
@@ -71,8 +88,10 @@ export function DashboardViewV2({
   recentOrders: RecentOrder[];
   merchantFirstName: string;
   hasNoMenuItems?: boolean;
+  setupState?: SetupState;
 }) {
   const router = useRouter();
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const maxBar = Math.max(1, ...hourly.current, ...hourly.previous);
   const hours = Array.from({ length: 13 }, (_, i) => 11 + i);
@@ -136,30 +155,20 @@ export function DashboardViewV2({
         </div>
       </section>
 
-      {/* ─── EMPTY MENU NUDGE ───────────────────────────────────── */}
-      {hasNoMenuItems && (
-        <Link
-          href="/dashboard/menu/new"
-          className="group relative block rounded-2xl border-2 border-dashed border-black/50 bg-white hover:bg-[#FFFBEC] p-4 lg:p-5 transition shadow-[0_2px_0_#000] hover:shadow-[0_3px_0_#000] active:translate-y-px animate-qf-empty-nudge"
-        >
-          <div className="flex items-center gap-3 lg:gap-4">
-            <div className="shrink-0 w-11 h-11 rounded-xl border-2 border-black grid place-items-center bg-[#F8CB1E]">
-              <IcoMenuBook c="#000" s={22} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm lg:text-base font-black text-black">
-                התפריט שלכם עוד ריק - בואו נתחיל
-              </div>
-              <div className="text-xs lg:text-sm text-black/65 mt-0.5">
-                לחצו כאן כדי להוסיף את הפריט הראשון לתפריט.
-              </div>
-            </div>
-            <div className="shrink-0 inline-flex items-center gap-1.5 text-sm font-black text-black">
-              <span className="hidden sm:inline">הוספת פריט</span>
-              <IcoArrowLeft c="currentColor" s={16} />
-            </div>
-          </div>
-        </Link>
+      {/* ─── SETUP WIZARD TRIGGER ───────────────────────────────── */}
+      {hasNoMenuItems && setupState && (
+        <>
+          <SetupTrigger
+            state={setupState}
+            onOpen={() => setWizardOpen(true)}
+          />
+          {wizardOpen && (
+            <SetupWizardModal
+              state={setupState}
+              onClose={() => setWizardOpen(false)}
+            />
+          )}
+        </>
       )}
 
       {/* ─── KPI TILES ──────────────────────────────────────────── */}
@@ -551,6 +560,450 @@ function kpiHeadline(s: Summary): string {
   if (orders === 0) return "עדיין שקט במטבח";
   if (orders === 1) return "הזמנה אחת בינתיים";
   return `${orders} הזמנות בינתיים`;
+}
+
+function SetupTrigger({ state, onOpen }: { state: SetupState; onOpen: () => void }) {
+  const steps = [
+    state.brandingDone || !!state.initialCuisineType,
+    !!state.initialBranchAddress && !!state.initialBranchPhone,
+    state.initialMinOrder > 0 || state.initialDeliveryFee > 0,
+    state.categoriesDone,
+  ];
+  const done = steps.filter(Boolean).length;
+  const total = steps.length;
+
+  return (
+    <div className="rounded-2xl border-2 border-black bg-white shadow-[0_3px_0_#000] overflow-hidden animate-qf-empty-nudge">
+      <div className="flex items-center gap-4 p-4 lg:p-5">
+        <div className="shrink-0 w-12 h-12 rounded-2xl bg-[#F8CB1E] border-2 border-black grid place-items-center shadow-[0_2px_0_#000]">
+          <IcoMenuBook c="#000" s={22} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-black text-base text-black">הקמת החנות</div>
+          <div className="text-xs text-black/60 mt-0.5">
+            {done === 0 ? "בואו נגדיר את החנות יחד — 5 דקות ואתם מוכנים" : `${done} מתוך ${total} שלבים הושלמו`}
+          </div>
+          <div className="flex gap-1 mt-2">
+            {steps.map((ok, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "h-1.5 flex-1 rounded-full transition",
+                  ok ? "bg-black" : "bg-black/15",
+                )}
+              />
+            ))}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onOpen}
+          className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-black text-[#F8CB1E] font-black text-sm border-2 border-black shadow-[0_2px_0_#000] active:translate-y-px active:shadow-none transition"
+        >
+          {done === 0 ? "התחל הגדרה" : "המשך הגדרה"}
+          <IcoArrowLeft c="currentColor" s={14} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+type WizardStep = 1 | 2 | 3 | 4 | 5;
+
+const WIZARD_STEPS: { n: WizardStep; label: string }[] = [
+  { n: 1, label: "זהות" },
+  { n: 2, label: "פרטי קשר" },
+  { n: 3, label: "הזמנות" },
+  { n: 4, label: "תשלומים" },
+  { n: 5, label: "תפריט" },
+];
+
+function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () => void }) {
+  const router = useRouter();
+
+  const initialStep: WizardStep = (() => {
+    if (!state.initialBranchAddress || !state.initialBranchPhone) return 2;
+    if (!state.initialCuisineType && !state.brandingDone) return 1;
+    if (state.initialMinOrder === 0 && state.initialDeliveryFee === 0) return 3;
+    if (!state.categoriesDone) return 5;
+    return 1;
+  })();
+
+  const [step, setStep] = useState<WizardStep>(initialStep);
+
+  const [storeName, setStoreName] = useState(state.initialStoreName);
+  const [cuisineType, setCuisineType] = useState(state.initialCuisineType);
+  const [branchAddress, setBranchAddress] = useState(state.initialBranchAddress);
+  const [branchPhone, setBranchPhone] = useState(state.initialBranchPhone);
+  const [minOrder, setMinOrder] = useState(state.initialMinOrder);
+  const [deliveryFee, setDeliveryFee] = useState(state.initialDeliveryFee);
+  const [categoryName, setCategoryName] = useState("");
+
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  function prev() {
+    setErr(null);
+    setStep((s) => (s > 1 ? ((s - 1) as WizardStep) : s));
+  }
+
+  async function saveIdentity() {
+    if (!storeName.trim()) { setErr("שם החנות הוא שדה חובה"); return; }
+    setBusy(true); setErr(null);
+    try {
+      const res = await fetch("/api/v1/merchant/tenant", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: storeName.trim(), cuisine_type: cuisineType || undefined }),
+      });
+      if (!res.ok) throw new Error();
+      setStep(2);
+    } catch { setErr("שמירה נכשלה, נסה שנית"); }
+    finally { setBusy(false); }
+  }
+
+  async function saveContact() {
+    if (!state.branchId) { setStep(3); return; }
+    setBusy(true); setErr(null);
+    try {
+      const res = await fetch(`/api/v1/merchant/branches/${state.branchId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ address: branchAddress || undefined, phone: branchPhone || undefined }),
+      });
+      if (!res.ok) throw new Error();
+      setStep(3);
+    } catch { setErr("שמירה נכשלה, נסה שנית"); }
+    finally { setBusy(false); }
+  }
+
+  async function saveOrderSettings() {
+    if (!state.branchId) { setStep(4); return; }
+    setBusy(true); setErr(null);
+    try {
+      const res = await fetch(`/api/v1/merchant/branches/${state.branchId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ min_order: minOrder, delivery_fee: deliveryFee }),
+      });
+      if (!res.ok) throw new Error();
+      setStep(4);
+    } catch { setErr("שמירה נכשלה, נסה שנית"); }
+    finally { setBusy(false); }
+  }
+
+  async function createCategory() {
+    if (!categoryName.trim()) { setErr("הזן שם קטגוריה"); return; }
+    setBusy(true); setErr(null);
+    try {
+      const res = await fetch("/api/v1/merchant/menu/categories", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: categoryName.trim() }),
+      });
+      if (!res.ok) throw new Error();
+      onClose();
+      router.push("/dashboard/menu/new");
+    } catch { setErr("יצירה נכשלה, נסה שנית"); }
+    finally { setBusy(false); }
+  }
+
+  return (
+    <Modal open onClose={onClose} size="xl" ariaLabel="אשף הקמת חנות" closeOnBackdrop={false}>
+      <div className="flex flex-col h-full" dir="rtl">
+        {/* Header */}
+        <div className="flex items-center gap-3 px-5 py-4 border-b-2 border-black bg-[#F8CB1E] rounded-t-3xl shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-black grid place-items-center shrink-0">
+            <IcoMenuBook c="#F8CB1E" s={18} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-black text-sm text-black">הקמת החנות</div>
+            <div className="text-[11px] text-black/60">שלב {step} מתוך 5</div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-black/10 hover:bg-black/20 grid place-items-center transition"
+            aria-label="סגור"
+          >
+            <span className="text-black font-bold text-sm leading-none">✕</span>
+          </button>
+        </div>
+
+        {/* Step tabs */}
+        <div className="flex border-b border-black/10 shrink-0">
+          {WIZARD_STEPS.map(({ n, label }) => (
+            <div
+              key={n}
+              className={cn(
+                "flex-1 py-2.5 text-center text-[11px] font-bold transition flex flex-col items-center gap-0.5",
+                step === n
+                  ? "bg-black text-[#F8CB1E]"
+                  : step > n
+                    ? "text-black/50 bg-black/4"
+                    : "text-black/30",
+              )}
+            >
+              {step > n ? (
+                <span className="w-4 h-4 rounded-full bg-black grid place-items-center">
+                  <IcoCheck c="#F8CB1E" s={9} />
+                </span>
+              ) : (
+                <span className={cn("w-4 h-4 rounded-full grid place-items-center text-[9px] font-black",
+                  step === n ? "bg-[#F8CB1E] text-black" : "bg-black/10 text-black/40"
+                )}>{n}</span>
+              )}
+              <span className="hidden sm:block">{label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+
+          {step === 1 && (
+            <div className="space-y-4">
+              <WizardSectionHeader
+                icon={<IcoGear c="#000" s={18} />}
+                title="זהות החנות"
+                sub="השם והסגנון שיוצגו ללקוחות בדף ההזמנות"
+              />
+              <WizardField label="שם החנות (פומבי)">
+                <input
+                  value={storeName}
+                  onChange={(e) => setStoreName(e.target.value)}
+                  placeholder="לדוגמה: פיצה מריה"
+                  autoFocus
+                  className="w-full px-3.5 py-3 rounded-xl border-2 border-black outline-none text-sm font-bold placeholder:font-normal placeholder:text-black/30"
+                />
+              </WizardField>
+              <WizardField label="סוג מטבח" optional>
+                <input
+                  value={cuisineType}
+                  onChange={(e) => setCuisineType(e.target.value)}
+                  placeholder="לדוגמה: פיצה נפוליטנית, בורגר אמריקאי"
+                  className="w-full px-3.5 py-3 rounded-xl border-2 border-black outline-none text-sm placeholder:text-black/30"
+                />
+              </WizardField>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-4">
+              <WizardSectionHeader
+                icon={<IcoGear c="#000" s={18} />}
+                title="פרטי הסניף"
+                sub="הכתובת והטלפון שיוצגו ללקוחות ובחשבוניות"
+              />
+              <WizardField label="כתובת מלאה" optional>
+                <input
+                  value={branchAddress}
+                  onChange={(e) => setBranchAddress(e.target.value)}
+                  placeholder="לדוגמה: רחוב הרצל 12, תל אביב"
+                  autoFocus
+                  className="w-full px-3.5 py-3 rounded-xl border-2 border-black outline-none text-sm placeholder:text-black/30"
+                />
+              </WizardField>
+              <WizardField label="טלפון" optional>
+                <input
+                  value={branchPhone}
+                  onChange={(e) => setBranchPhone(e.target.value)}
+                  placeholder="050-0000000"
+                  dir="ltr"
+                  type="tel"
+                  className="w-full px-3.5 py-3 rounded-xl border-2 border-black outline-none text-sm placeholder:text-black/30"
+                />
+              </WizardField>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-4">
+              <WizardSectionHeader
+                icon={<IcoMenuList c="#000" s={18} />}
+                title="הגדרות הזמנה"
+                sub="סכום מינימום ודמי משלוח שיוצגו בדף הלקוח"
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <WizardField label="סכום הזמנה מינימלי">
+                  <div className="flex items-center border-2 border-black rounded-xl overflow-hidden">
+                    <span className="px-3 py-3 text-black/50 text-sm select-none border-l-2 border-black">₪</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={minOrder}
+                      onChange={(e) => setMinOrder(parseInt(e.target.value, 10) || 0)}
+                      className="flex-1 px-3 py-3 outline-none bg-transparent tnum text-sm font-bold"
+                    />
+                  </div>
+                </WizardField>
+                <WizardField label="דמי משלוח ברירת מחדל">
+                  <div className="flex items-center border-2 border-black rounded-xl overflow-hidden">
+                    <span className="px-3 py-3 text-black/50 text-sm select-none border-l-2 border-black">₪</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={deliveryFee}
+                      onChange={(e) => setDeliveryFee(parseInt(e.target.value, 10) || 0)}
+                      className="flex-1 px-3 py-3 outline-none bg-transparent tnum text-sm font-bold"
+                    />
+                  </div>
+                </WizardField>
+              </div>
+              <p className="text-xs text-black/50">
+                ניתן להוסיף אזורי משלוח עם תעריפים שונים בהגדרות לאחר מכן.
+              </p>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="space-y-4">
+              <WizardSectionHeader
+                icon={<IcoCreditCard c="#000" s={18} />}
+                title="תשלומים"
+                sub="הגדירו את אמצעי התשלום שהלקוחות יוכלו להשתמש בהם"
+              />
+              <div className="space-y-2">
+                <div className="rounded-2xl border-2 border-black p-4 space-y-2 bg-[#FFFBEC]">
+                  <div className="flex items-center gap-2">
+                    <IcoCreditCard c="#000" s={18} />
+                    <span className="font-bold text-sm">Grow Payments</span>
+                  </div>
+                  <p className="text-xs text-black/60 leading-relaxed">
+                    סליקת אשראי, Bit, Apple Pay, Google Pay ו-PayBox — הכל בפתיחת ארנק Grow אחד.
+                    חשבון חינמי, תשלום רק על עסקאות.
+                  </p>
+                  <a
+                    href="/dashboard/settings/payments"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-black border-b-2 border-black/30 hover:border-black transition"
+                  >
+                    הגדר תשלומים
+                    <IcoArrowLeft c="currentColor" s={12} />
+                  </a>
+                </div>
+                <div className="rounded-2xl border-2 border-black p-4 flex items-center gap-3">
+                  <IcoClock c="#000" s={18} />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-sm">שעות פתיחה</div>
+                    <div className="text-xs text-black/55">הגדרו מתי החנות פעילה לקבלת הזמנות</div>
+                  </div>
+                  <a
+                    href="/dashboard/settings/hours"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs font-bold border-b-2 border-black/30 hover:border-black transition"
+                  >
+                    הגדר
+                  </a>
+                </div>
+              </div>
+              <p className="text-[11px] text-black/40">
+                אפשר להמשיך כרגע ולהגדיר תשלומים ושעות פתיחה לאחר מכן.
+              </p>
+            </div>
+          )}
+
+          {step === 5 && (
+            <div className="space-y-4">
+              <WizardSectionHeader
+                icon={<IcoMenuBook c="#000" s={18} />}
+                title="צרו קטגוריה ראשונה"
+                sub="קטגוריות מסדרות את התפריט — פיצות, תוספות, שתייה..."
+              />
+              <WizardField label="שם הקטגוריה">
+                <input
+                  value={categoryName}
+                  onChange={(e) => setCategoryName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && !busy && createCategory()}
+                  placeholder="לדוגמה: פיצות"
+                  autoFocus
+                  className="w-full px-3.5 py-3 rounded-xl border-2 border-black outline-none text-sm font-bold placeholder:font-normal placeholder:text-black/30"
+                />
+              </WizardField>
+              <p className="text-xs text-black/50">
+                לאחר יצירת הקטגוריה תועברו מיד להוסיף את המוצר הראשון.
+              </p>
+            </div>
+          )}
+
+          {err && (
+            <div className="rounded-xl bg-red-50 border border-red-200 px-3.5 py-2.5 text-sm text-red-700">
+              {err}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="shrink-0 flex items-center gap-2 px-5 py-4 border-t-2 border-black/10 bg-white rounded-b-3xl">
+          {step > 1 && (
+            <button
+              type="button"
+              onClick={prev}
+              className="px-4 py-2.5 rounded-xl border-2 border-black bg-white text-black font-bold text-sm hover:bg-black/5 transition"
+            >
+              חזרה
+            </button>
+          )}
+          <div className="flex-1" />
+          {step < 5 && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={
+                step === 1 ? saveIdentity
+                : step === 2 ? saveContact
+                : step === 3 ? saveOrderSettings
+                : () => setStep(5)
+              }
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-black text-[#F8CB1E] font-black text-sm border-2 border-black shadow-[0_2px_0_#000] active:translate-y-px active:shadow-none transition disabled:opacity-60"
+            >
+              {busy ? "שומר..." : step === 4 ? "המשך לתפריט" : "שמור והמשך"}
+              <IcoArrowLeft c="currentColor" s={14} />
+            </button>
+          )}
+          {step === 5 && (
+            <button
+              type="button"
+              disabled={busy || !categoryName.trim()}
+              onClick={createCategory}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-black text-[#F8CB1E] font-black text-sm border-2 border-black shadow-[0_2px_0_#000] active:translate-y-px active:shadow-none transition disabled:opacity-60"
+            >
+              {busy ? "יוצר..." : "צור קטגוריה והמשך"}
+              <IcoArrowLeft c="currentColor" s={14} />
+            </button>
+          )}
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function WizardSectionHeader({ icon, title, sub }: { icon: React.ReactNode; title: string; sub: string }) {
+  return (
+    <div className="flex items-start gap-3 pb-1">
+      <div className="w-10 h-10 rounded-xl bg-[#F8CB1E] border-2 border-black grid place-items-center shrink-0 shadow-[0_2px_0_#000]">
+        {icon}
+      </div>
+      <div>
+        <div className="font-black text-base text-black">{title}</div>
+        <div className="text-xs text-black/55 mt-0.5">{sub}</div>
+      </div>
+    </div>
+  );
+}
+
+function WizardField({ label, optional, children }: { label: string; optional?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-1.5">
+        <label className="text-xs font-bold text-black">{label}</label>
+        {optional && <span className="text-[10px] text-black/40 border border-black/20 rounded px-1">אופציונלי</span>}
+      </div>
+      {children}
+    </div>
+  );
 }
 
 function formatRelative(iso: string): string {

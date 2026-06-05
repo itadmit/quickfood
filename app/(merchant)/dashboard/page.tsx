@@ -29,7 +29,7 @@ export default async function DashboardPage({
   const range: Quick = allowed.includes(raw as Quick) ? (raw as Quick) : "today";
   const apiRange: Range = range;
 
-  const [sum, hr, items, recentOrders, tenant, merchant, menuItemCount] = await Promise.all([
+  const [sum, hr, items, recentOrders, tenant, merchant, menuItemCount, categoryCount, primaryBranch] = await Promise.all([
     summary(session.tenantId, apiRange),
     hourly(session.tenantId, apiRange),
     topItems(session.tenantId, apiRange, 5),
@@ -41,13 +41,19 @@ export default async function DashboardPage({
     }),
     prisma.tenant.findUnique({
       where: { id: session.tenantId },
-      select: { dashboardVersion: true },
+      select: { dashboardVersion: true, logoUrl: true, about: true, cuisineType: true, name: true },
     }),
     prisma.merchantUser.findUnique({
       where: { id: session.userId },
       select: { name: true },
     }),
     prisma.menuItem.count({ where: { tenantId: session.tenantId } }),
+    prisma.menuCategory.count({ where: { tenantId: session.tenantId } }),
+    prisma.branch.findFirst({
+      where: { tenantId: session.tenantId },
+      select: { id: true, name: true, address: true, phone: true, minOrder: true, deliveryFee: true },
+      orderBy: { createdAt: "asc" },
+    }),
   ]);
 
   const recent = recentOrders.map((o) => ({
@@ -74,6 +80,19 @@ export default async function DashboardPage({
         recentOrders={recent}
         merchantFirstName={firstName}
         hasNoMenuItems={menuItemCount === 0}
+        setupState={{
+          brandingDone: !!(tenant?.logoUrl || tenant?.about || tenant?.cuisineType),
+          categoriesDone: categoryCount > 0,
+          menuItemsDone: menuItemCount > 0,
+          branchId: primaryBranch?.id ?? null,
+          initialStoreName: tenant?.name ?? "",
+          initialCuisineType: tenant?.cuisineType ?? "",
+          initialBranchName: primaryBranch?.name ?? "",
+          initialBranchAddress: primaryBranch?.address ?? "",
+          initialBranchPhone: primaryBranch?.phone ?? "",
+          initialMinOrder: primaryBranch?.minOrder ?? 0,
+          initialDeliveryFee: primaryBranch?.deliveryFee ?? 0,
+        }}
       />
     );
   }

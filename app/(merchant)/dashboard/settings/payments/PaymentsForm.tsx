@@ -140,8 +140,8 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
         />
         <MethodRow
           icon={<IcoCreditCard s={20} />}
-          title="Grow - אשראי · Bit · Apple Pay · Google Pay"
-          sub="מצריך חשבון Grow פעיל. ההגדרות בהמשך."
+          title="אשראי דרך חברת Grow"
+          sub="תשלום דרך כרטיס אשראי · Bit · Apple Pay · Google Pay · PayBox ועוד"
           checked={v.grow.is_active}
           onChange={(b) => setGrow("is_active", b)}
         />
