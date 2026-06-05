@@ -1,127 +1,49 @@
 "use client";
 
-import { FeatureGrid } from "../_components/AdsShell";
-
-const BG = "#F8CB1E";
-const INK = "#0A0A0A";
+import { AdsShell, FeatureGrid, SwipeBtn, TrustStrip, BG_COLOR, INK_COLOR } from "../_components/AdsShell";
 
 export default function AdsPageC() {
   return (
-    <div
-      dir="rtl"
-      style={{
-        position: "fixed", inset: 0, overflow: "hidden",
-        background: BG,
-        fontFamily: "var(--font-noto-hebrew,'Noto Sans Hebrew','Heebo',Arial,sans-serif)",
-      }}
-    >
-      <style>{`
-        @keyframes swipeUp {
-          0%,100% { transform: translateY(0); opacity: 0.7; }
-          50%      { transform: translateY(-8px); opacity: 1; }
-        }
-      `}</style>
+    <AdsShell>
+      <div style={{ marginTop: 20, marginBottom: 16, width: "100%" }}>
+        <div style={{
+          display: "inline-block", fontSize: 12, fontWeight: 700, color: INK_COLOR,
+          background: "rgba(0,0,0,0.09)", border: "1.5px solid rgba(0,0,0,0.15)",
+          borderRadius: 100, padding: "4px 12px", marginBottom: 14,
+        }}>
+          אתר הזמנות למסעדות
+        </div>
+        <h1 style={{
+          fontSize: "clamp(28px,9vw,44px)",
+          fontWeight: 900, lineHeight: 1.1,
+          color: INK_COLOR, letterSpacing: "-1px",
+          marginBottom: 12,
+        }}>
+          יש לכם אינסטגרם?<br />יש לכם פייסבוק?
+        </h1>
+        <p style={{
+          fontSize: 18, color: INK_COLOR, fontWeight: 900,
+          lineHeight: 1.4, marginBottom: 6,
+        }}>
+          אז למה אין לכם אתר הזמנות?
+        </p>
+      </div>
 
-      <video
-        src="https://videos.pexels.com/video-files/33880845/14378437_360_640_24fps.mp4"
-        autoPlay muted loop playsInline preload="metadata"
-        aria-hidden
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 0 }}
-      />
-      <div aria-hidden style={{ position: "absolute", inset: 0, zIndex: 1, background: "rgba(248,203,30,0.72)" }} />
-      <div aria-hidden style={{
-        position: "absolute", inset: 0, zIndex: 2,
-        backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.09) 1.5px, transparent 1.5px)",
-        backgroundSize: "26px 26px",
-        WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 40%, rgba(0,0,0,0.3) 70%, transparent 100%)",
-        maskImage: "linear-gradient(to bottom, black 0%, black 40%, rgba(0,0,0,0.3) 70%, transparent 100%)",
-      }} />
+      <FeatureGrid />
 
       <div style={{
-        position: "relative", zIndex: 3,
-        height: "100%",
-        display: "flex", flexDirection: "column",
-        padding: "52px 24px 90px",
-        maxWidth: 480, margin: "0 auto",
-        overflowY: "auto",
+        width: "100%", background: "#fff",
+        border: "2px solid #000", borderRadius: 20, boxShadow: "0 4px 0 #000",
+        padding: "14px 20px", marginBottom: 16, marginTop: "auto",
       }}>
-
-        {/* Logo */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/quickfood-mark-white.png"
-          alt="QuickFood"
-          width={48} height={48}
-          style={{ borderRadius: 12, border: "2px solid #000", boxShadow: "0 3px 0 #000", display: "block" }}
-        />
-
-        {/* Copy */}
-        <div style={{ marginTop: "auto", marginBottom: 20 }}>
-          <p style={{
-            fontSize: 22, fontWeight: 900, color: INK,
-            letterSpacing: "-0.5px", lineHeight: 1.3, marginBottom: 6,
-          }}>
-            וולט מביא לקוחות חדשים.
-          </p>
-          <h1 style={{
-            fontSize: "clamp(28px,8.5vw,42px)",
-            fontWeight: 900, lineHeight: 1.1,
-            color: INK, letterSpacing: "-1px",
-            marginBottom: 16,
-          }}>
-            אבל למה שהלקוחות הקבועים שלכם לא יזמינו ישירות מכם?
-          </h1>
-
-          <div style={{
-            display: "inline-block",
-            background: INK, color: BG,
-            borderRadius: 12, padding: "6px 14px 14px",
-            fontSize: "clamp(22px,7vw,32px)",
-            fontWeight: 900, letterSpacing: "-1px",
-            marginBottom: 18,
-          }}>
-            אתר הזמנות למסעדות.
-          </div>
-
-          <FeatureGrid />
+        <div style={{ textAlign: "center", marginBottom: 12 }}>
+          <div style={{ fontSize: 48, fontWeight: 900, color: INK_COLOR, letterSpacing: "-2px", lineHeight: 1 }}>₪299</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: INK_COLOR, marginTop: 4 }}>לחודש + 0.5% בלבד</div>
         </div>
-
-        {/* White card */}
-        <div style={{
-          background: "#fff",
-          border: "2px solid #000",
-          borderRadius: 20,
-          boxShadow: "0 4px 0 #000",
-          padding: "14px 20px 14px",
-          marginBottom: 16,
-        }}>
-          <div style={{ textAlign: "center", marginBottom: 12 }}>
-            <div style={{ fontSize: 48, fontWeight: 900, color: INK, letterSpacing: "-2px", lineHeight: 1 }}>₪299</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: INK, marginTop: 4 }}>לחודש + 0.5% בלבד</div>
-          </div>
-          <div style={{ height: 1, background: "#E8E4D5", marginBottom: 12 }} />
-          <button style={{
-            width: "100%", padding: "16px",
-            background: INK, color: BG,
-            fontSize: 16, fontWeight: 800,
-            border: "2px solid #000", borderRadius: 999,
-            cursor: "pointer", letterSpacing: "-0.2px",
-            fontFamily: "inherit",
-            boxShadow: `0 4px 0 ${BG}`,
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          }}>
-            <svg style={{ animation: "swipeUp 1.5s ease-in-out infinite", flexShrink: 0 }}
-              width="16" height="16" viewBox="0 0 24 24" fill="none"
-              stroke={BG} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="18 15 12 9 6 15" />
-            </svg>
-            החליקו למעלה לפרטים נוספים
-          </button>
-          <p style={{ textAlign: "center", fontSize: 11, color: "rgba(0,0,0,0.45)", marginTop: 10, fontWeight: 500 }}>
-            7 ימי ניסיון עלינו · ללא כרטיס אשראי · ללא התחייבות
-          </p>
-        </div>
+        <div style={{ height: 1, background: "#E8E4D5", marginBottom: 12 }} />
+        <SwipeBtn color={BG_COLOR} />
+        <TrustStrip />
       </div>
-    </div>
+    </AdsShell>
   );
 }

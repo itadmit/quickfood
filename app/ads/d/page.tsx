@@ -1,8 +1,8 @@
 "use client";
 
-import { AdsShell, FeatureGrid, SwipeBtn, TrustStrip, BG_COLOR, INK_COLOR } from "./_components/AdsShell";
+import { AdsShell, FeatureGrid, SwipeBtn, TrustStrip, BG_COLOR, INK_COLOR } from "../_components/AdsShell";
 
-export default function AdsPageA() {
+export default function AdsPageD() {
   return (
     <AdsShell>
       <div style={{ marginTop: 20, marginBottom: 16, width: "100%" }}>
@@ -17,15 +17,18 @@ export default function AdsPageA() {
           fontSize: "clamp(30px,9.5vw,46px)",
           fontWeight: 900, lineHeight: 1.1,
           color: INK_COLOR, letterSpacing: "-1px",
-          marginBottom: 12,
+          marginBottom: 10,
         }}>
-          מסעדה בלי אתר הזמנות היא כמו מסעדה בלי טלפון.
+          לקוחות כבר מזמינים מהמסעדה שלכם.
         </h1>
-        <p style={{ fontSize: 15, color: INK_COLOR, fontWeight: 600, lineHeight: 1.55, marginBottom: 4 }}>
-          לקוחות רוצים להזמין. תנו להם דרך ישירה לעשות את זה.
+        <p style={{
+          fontSize: 20, color: INK_COLOR, fontWeight: 900,
+          lineHeight: 1.3, marginBottom: 8,
+        }}>
+          השאלה היא דרך מי.
         </p>
-        <p style={{ fontSize: 13, color: INK_COLOR, fontWeight: 500, lineHeight: 1.4 }}>
-          אתר הזמנות · משלוחים · תשלומים — במערכת אחת.
+        <p style={{ fontSize: 14, color: INK_COLOR, fontWeight: 500, lineHeight: 1.55 }}>
+          אתר הזמנות ממותג, משלוחים ותשלומים במקום אחד.
         </p>
       </div>
 
