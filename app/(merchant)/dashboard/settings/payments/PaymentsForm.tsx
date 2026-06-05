@@ -289,14 +289,14 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
 
               <details className="rounded-xl border border-qf-line-soft">
                 <summary className="px-3.5 py-2.5 text-sm cursor-pointer select-none">
-                  עקיפת ברירת מחדל פלטפורמתית (לרוב לא נדרש)
+                  הגדרות מתקדמות (הגדרות מתכנת)
                 </summary>
                 <div className="px-3.5 pb-3.5 pt-1 space-y-3">
-                  <p className="text-xs text-qf-mute leading-relaxed">
-                    השאר ריק כדי להשתמש בקרדנציאלים המשותפים של QuickFood.
-                    הגדר רק אם Grow הקצה לעסק apiKey ו-pageCode ייעודיים משלו
-                    (חשבון Grow נפרד, לא חלק מהפלטפורמה).
-                  </p>
+                  <div className="rounded-lg bg-qf-tomato-soft border border-qf-tomato/40 px-3 py-2.5 text-xs text-qf-tomato leading-relaxed">
+                    <span className="font-bold">אזהרה:</span>{" "}
+                    שימוש בשדות אלו ללא אישור מפורש יבטל את חשבון הסליקה שלך.
+                    השאר ריק כדי להפעיל את הסליקה שהוקצאה לך מ-Grow for QuickFood.
+                  </div>
                   <Field label="API Key (override)" hint="">
                     <input
                       value={v.grow.api_key}
