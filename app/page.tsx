@@ -844,7 +844,7 @@ function Pricing() {
                 <span className={styles.priceSingleFeeNum}>0.5%</span>
                 <span className={styles.priceSingleFeeLabel}>
                   עמלת סליקה לכל הזמנה
-                  <small> + מע״מ. בערך כמו עמלת כרטיס אשראי רגילה.</small>
+                  <small> + מע״מ.</small>
                 </span>
               </div>
               <Link

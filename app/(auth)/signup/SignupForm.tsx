@@ -619,8 +619,7 @@ function Step0Url({
         onClick={onSkip}
         className="block w-full text-center py-3 rounded-xl bg-white border-2 border-black hover:bg-[#FFFBEC] text-sm font-bold text-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition"
       >
-        אני מתחיל מאפס — מילוי ידני
-      </button>
+הרשמה רגילה       </button>
     </div>
   );
 }
