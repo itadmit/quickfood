@@ -13,34 +13,36 @@ export function SettingsSaveBar({
   toast?: { kind: "ok" | "err"; msg: string } | null;
   disabled?: boolean;
 }) {
-  const label = saving ? "שומר..." : "שמירת שינויים";
+  const isSaved = !saving && toast?.kind === "ok";
+  const isError = !saving && toast?.kind === "err";
 
   return (
-    <div className="sticky bottom-3 z-10">
-      {/* Mobile: full-width yellow button, no white box */}
-      <div className="sm:hidden px-3 space-y-1.5">
-        {toast && (
-          <div
-            className={
-              "text-center text-xs font-bold " +
-              (toast.kind === "ok" ? "text-qf-green-deep" : "text-qf-tomato")
-            }
-          >
-            {toast.msg}
-          </div>
+    <>
+      {/* Mobile: sticky white bar, button changes state instead of going transparent */}
+      <div className="sm:hidden sticky bottom-0 z-10 bg-white border-t-2 border-black px-4 pt-3 pb-4">
+        {isError && (
+          <p className="text-center text-xs font-bold text-qf-tomato mb-2">
+            {toast!.msg}
+          </p>
         )}
         <button
           type="button"
-          onClick={onSave}
-          disabled={saving || disabled}
-          className="w-full py-4 rounded-2xl bg-[#F8CB1E] hover:bg-[#FFD843] text-black border-2 border-black shadow-[0_3px_0_#000] active:translate-y-px active:shadow-[0_1px_0_#000] text-base font-black transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          onClick={saving || disabled ? undefined : onSave}
+          className={
+            "w-full py-4 rounded-2xl border-2 text-base font-black transition-all duration-200 " +
+            (saving
+              ? "bg-[#F8CB1E]/60 text-black/60 border-black/40 shadow-none"
+              : isSaved
+              ? "bg-qf-green-soft text-qf-green-deep border-qf-green-deep/30 shadow-none"
+              : "bg-[#F8CB1E] text-black border-black shadow-[0_3px_0_#000] active:translate-y-px active:shadow-[0_1px_0_#000]")
+          }
         >
-          {label}
+          {saving ? "שומר..." : isSaved ? "נשמר" : "שמירת שינויים"}
         </button>
       </div>
 
-      {/* Desktop: full-width white bar */}
-      <div className="hidden sm:flex items-center justify-between gap-3 bg-white rounded-2xl border-2 border-black px-4 py-3 shadow-[0_3px_0_#000] mx-3 lg:mx-4">
+      {/* Desktop: inline row at bottom of form, not sticky */}
+      <div className="hidden sm:flex items-center justify-between gap-3">
         <div className="text-sm">
           {toast && (
             <span
@@ -64,9 +66,9 @@ export function SettingsSaveBar({
           disabled={saving || disabled}
           className="px-5 py-2.5 rounded-xl bg-[#F8CB1E] hover:bg-[#FFD843] text-black border-2 border-black shadow-[0_2px_0_#000] active:translate-y-px active:shadow-[0_1px_0_#000] text-sm font-bold transition-all disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {label}
+          {saving ? "שומר..." : "שמירת שינויים"}
         </button>
       </div>
-    </div>
+    </>
   );
 }
