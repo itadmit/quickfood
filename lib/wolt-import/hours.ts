@@ -47,7 +47,7 @@ const HE_DAY_TO_KEY: Record<string, DayKey> = {
   שבת: "saturday",
 };
 
-const TIME_RANGE = /^\s*(\d{1,2}):(\d{2})\s*[–-‐\-]\s*(\d{1,2}):(\d{2})\s*$/;
+const TIME_RANGE = /^\s*(\d{1,2}):(\d{2})\s*[\-–‐]\s*(\d{1,2}):(\d{2})\s*$/;
 
 function parseTimeRange(formatted: string): { open: string; close: string } | null {
   const m = formatted.match(TIME_RANGE);
