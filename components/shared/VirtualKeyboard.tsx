@@ -82,7 +82,7 @@ export function VirtualKeyboard({
         className,
       )}
     >
-      <div className="max-w-4xl mx-auto px-5 py-5 space-y-2.5">
+      <div className="max-w-7xl mx-auto px-6 py-5 space-y-3">
         <div className="flex items-center justify-between gap-3 pb-1">
           <div className="text-xs font-bold tracking-[0.18em] text-qf-mute uppercase">
             מקלדת
@@ -194,7 +194,7 @@ function KeyButton({
       onClick={onPress}
       aria-label={ariaLabel}
       className={cn(
-        "h-16 rounded-xl border text-2xl font-bold transition active:scale-[0.96] active:shadow-none shadow-[0_2px_0_rgba(17,35,26,0.08)] grid place-items-center uppercase",
+        "h-[72px] rounded-xl border text-3xl font-bold transition active:scale-[0.96] active:shadow-none shadow-[0_2px_0_rgba(17,35,26,0.08)] grid place-items-center uppercase",
         tone === "primary"
           ? "bg-(--qf-primary) text-white border-(--qf-deep) hover:bg-(--qf-deep)"
           : "bg-white text-qf-ink border-qf-line-soft hover:bg-qf-line-soft",
