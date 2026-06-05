@@ -18,8 +18,8 @@ export function SettingsSaveBar({
 
   return (
     <>
-      {/* Mobile: sticky white bar, button changes state instead of going transparent */}
-      <div className="sm:hidden sticky bottom-0 z-10 bg-white border-t-2 border-black px-4 pt-3 pb-4">
+      {/* Mobile: sticky white bar, -mx-3 bleeds past main's p-3 padding to full viewport width */}
+      <div className="sm:hidden sticky bottom-0 z-10 bg-white border-t-2 border-black px-4 pt-3 pb-4 -mx-3">
         {isError && (
           <p className="text-center text-xs font-bold text-qf-tomato mb-2">
             {toast!.msg}
