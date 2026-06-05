@@ -44,6 +44,11 @@ export interface CreateOrderInput {
   customerNotes?: string | null;
   paymentMethod: "cash" | "card" | "apple_pay" | "google_pay" | "bit";
   tip?: number;
+  /** Cashier-applied manual discount in whole shekels (POS only).
+   *  Added on top of coupon / bundle discounts; the final discount is
+   *  still capped at the subtotal. Goes to Order.discount alongside the
+   *  automatic kinds — no separate column. */
+  manualDiscount?: number;
   cutleryCount?: number;
   scheduledFor?: Date | null;
   couponCode?: string | null;
@@ -337,6 +342,14 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       const savings = Math.max(0, fullPrice - b.bundlePrice);
       discount += savings;
     }
+    if (discount > subtotal) discount = subtotal;
+  }
+
+  // Cashier-applied manual discount (POS only). Stack onto coupon +
+  // bundle savings, then re-cap at subtotal so a sloppy ₪999 tap can't
+  // produce a negative total.
+  if (input.manualDiscount && input.manualDiscount > 0) {
+    discount += Math.floor(input.manualDiscount);
     if (discount > subtotal) discount = subtotal;
   }
 

@@ -7,19 +7,52 @@ import { IcoUser, IcoPlus, IcoMinus, IcoClose, IcoEdit } from "@/components/shar
 import { cn } from "@/lib/cn";
 import { PosNumericKeypadModal } from "@/components/pos/PosNumericKeypad";
 import { PosPaymentSheet } from "@/components/pos/PosPaymentSheet";
+import { PosDiscountModal } from "@/components/pos/PosDiscountModal";
+import { PosTipModal } from "@/components/pos/PosTipModal";
+import { PosParkLabelModal } from "@/components/pos/PosParkLabelModal";
 import type { CartLine } from "@/components/customer/CartProvider";
 
 export function PosTicket({ onEditLine }: { onEditLine?: (line: CartLine) => void }) {
-  const { lines, subtotal, updateQuantity, remove, customer, setCustomer, clear } =
-    usePosCart();
+  const {
+    lines,
+    subtotal,
+    updateQuantity,
+    remove,
+    customer,
+    setCustomer,
+    clear,
+    discount,
+    setDiscount,
+    discountAmount,
+    tip,
+    setTip,
+    tipAmount,
+    total,
+    park,
+  } = usePosCart();
   const [manualOpen, setManualOpen] = useState(false);
-  const [payment, setPayment] = useState<{ amount: number; isManual: boolean } | null>(null);
+  const [discountOpen, setDiscountOpen] = useState(false);
+  const [tipOpen, setTipOpen] = useState(false);
+  const [parkOpen, setParkOpen] = useState(false);
+  const [payment, setPayment] = useState<{
+    amount: number;
+    isManual: boolean;
+    initialMethod?: "cash" | "card";
+    manualDiscount?: number;
+    tip?: number;
+  } | null>(null);
 
   const hasContent = lines.length > 0;
 
-  function openCashPay() {
+  function openPayment(method: "cash" | "card") {
     if (!hasContent) return;
-    setPayment({ amount: subtotal, isManual: false });
+    setPayment({
+      amount: total,
+      isManual: false,
+      initialMethod: method,
+      manualDiscount: discountAmount > 0 ? discountAmount : undefined,
+      tip: tipAmount > 0 ? tipAmount : undefined,
+    });
   }
 
   function openManualSale() {
@@ -138,10 +171,64 @@ export function PosTicket({ onEditLine }: { onEditLine?: (line: CartLine) => voi
       </div>
 
       <footer className="border-t-2 border-black p-3 space-y-2 bg-qf-bg/40">
+        {(discountAmount > 0 || tipAmount > 0) && (
+          <div className="flex items-center justify-between text-sm text-qf-mute">
+            <span>סכום ביניים</span>
+            <span className="tnum">{formatPrice(subtotal)}</span>
+          </div>
+        )}
+        {discountAmount > 0 && (
+          <div className="flex items-center justify-between text-sm text-qf-green-deep font-bold">
+            <button
+              type="button"
+              onClick={() => setDiscountOpen(true)}
+              className="underline"
+            >
+              הנחה
+              {discount?.mode === "percent" ? ` (${discount.value}%)` : ""}
+            </button>
+            <span className="tnum">−{formatPrice(discountAmount)}</span>
+          </div>
+        )}
+        {tipAmount > 0 && (
+          <div className="flex items-center justify-between text-sm text-(--qf-deep) font-bold">
+            <button
+              type="button"
+              onClick={() => setTipOpen(true)}
+              className="underline"
+            >
+              טיפ
+              {tip?.mode === "percent" ? ` (${tip.value}%)` : ""}
+            </button>
+            <span className="tnum">+{formatPrice(tipAmount)}</span>
+          </div>
+        )}
         <div className="flex items-center justify-between text-base font-bold">
           <span>סה״כ</span>
-          <span className="tnum">{formatPrice(subtotal)}</span>
+          <span className="tnum">{formatPrice(total)}</span>
         </div>
+        {hasContent && (discountAmount === 0 || tipAmount === 0) && (
+          <div className="flex items-center justify-between gap-2 text-xs">
+            {discountAmount === 0 && (
+              <button
+                type="button"
+                onClick={() => setDiscountOpen(true)}
+                className="text-(--qf-deep) hover:underline text-start"
+              >
+                + הוסף הנחה
+              </button>
+            )}
+            {tipAmount === 0 && (
+              <button
+                type="button"
+                onClick={() => setTipOpen(true)}
+                className="text-(--qf-deep) hover:underline text-end ms-auto"
+              >
+                + הוסף טיפ
+              </button>
+            )}
+          </div>
+        )}
         <div className="grid grid-cols-3 gap-2">
           <button
             type="button"
@@ -152,7 +239,7 @@ export function PosTicket({ onEditLine }: { onEditLine?: (line: CartLine) => voi
           </button>
           <button
             type="button"
-            onClick={openCashPay}
+            onClick={() => openPayment("cash")}
             disabled={!hasContent}
             className="px-3 py-3 rounded-xl bg-[#F8CB1E] border-2 border-black font-bold text-sm shadow-[0_2px_0_#000] disabled:opacity-40"
           >
@@ -160,7 +247,7 @@ export function PosTicket({ onEditLine }: { onEditLine?: (line: CartLine) => voi
           </button>
           <button
             type="button"
-            onClick={openCashPay}
+            onClick={() => openPayment("card")}
             disabled={!hasContent}
             className="px-3 py-3 rounded-xl bg-black text-[#F8CB1E] border-2 border-black font-bold text-sm shadow-[0_2px_0_#000] disabled:opacity-40"
           >
@@ -168,15 +255,24 @@ export function PosTicket({ onEditLine }: { onEditLine?: (line: CartLine) => voi
           </button>
         </div>
         {hasContent && (
-          <button
-            type="button"
-            onClick={() => {
-              if (confirm("לבטל את הכרטיסייה?")) clear();
-            }}
-            className="w-full text-xs text-qf-tomato hover:underline"
-          >
-            ביטול כרטיסייה
-          </button>
+          <div className="flex items-center justify-between gap-3 text-xs">
+            <button
+              type="button"
+              onClick={() => setParkOpen(true)}
+              className="text-(--qf-deep) hover:underline font-bold"
+            >
+              החזק כרטיסייה
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (confirm("לבטל את הכרטיסייה?")) clear();
+              }}
+              className="text-qf-tomato hover:underline"
+            >
+              ביטול כרטיסייה
+            </button>
+          </div>
         )}
       </footer>
 
@@ -192,10 +288,46 @@ export function PosTicket({ onEditLine }: { onEditLine?: (line: CartLine) => voi
         />
       )}
 
+      {discountOpen && (
+        <PosDiscountModal
+          subtotal={subtotal}
+          current={discount}
+          onCancel={() => setDiscountOpen(false)}
+          onConfirm={(d) => {
+            setDiscount(d);
+            setDiscountOpen(false);
+          }}
+        />
+      )}
+
+      {tipOpen && (
+        <PosTipModal
+          subtotal={subtotal}
+          current={tip}
+          onCancel={() => setTipOpen(false)}
+          onConfirm={(t) => {
+            setTip(t);
+            setTipOpen(false);
+          }}
+        />
+      )}
+
+      {parkOpen && (
+        <PosParkLabelModal
+          onCancel={() => setParkOpen(false)}
+          onConfirm={(label) => {
+            park(label);
+            setParkOpen(false);
+          }}
+        />
+      )}
+
       {payment && (
         <PosPaymentSheet
           amount={payment.amount}
           isManual={payment.isManual}
+          initialMethod={payment.initialMethod}
+          manualDiscount={payment.manualDiscount}
           onClose={() => setPayment(null)}
           onPaid={() => {
             setPayment(null);

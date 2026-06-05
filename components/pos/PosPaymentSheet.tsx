@@ -47,13 +47,33 @@ interface Props {
   /** When set, this sheet settles an existing order (kiosk queue case).
    *  When NULL, it creates a fresh POS order before charging. */
   existingOrderId?: string;
+  /** Pre-selected payment method — skips the in-sheet method picker and
+   *  goes straight to the cash keypad or Grow wallet. POS cart buttons
+   *  set this; queue flows leave it undefined so the cashier picks. */
+  initialMethod?: Method;
+  /** Cashier-applied discount in whole shekels (already capped at subtotal
+   *  client-side). The sheet forwards it to the /sale endpoint when
+   *  creating the order. */
+  manualDiscount?: number;
+  /** Cashier-applied tip in whole shekels. Already included in `amount`
+   *  client-side, recorded separately on Order.tip via the /sale call. */
+  tip?: number;
   onClose: () => void;
   onPaid: () => void;
 }
 
 type Method = "cash" | "card";
 
-export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, onPaid }: Props) {
+export function PosPaymentSheet({
+  amount,
+  isManual,
+  existingOrderId,
+  initialMethod,
+  manualDiscount,
+  tip,
+  onClose,
+  onPaid,
+}: Props) {
   const { shift } = usePos();
   const { lines, customer, notes } = usePosCart();
   const [busy, setBusy] = useState(false);
@@ -66,6 +86,19 @@ export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, on
   // retry after a Grow error doesn't re-prompt.
   const [walkIn, setWalkIn] = useState<{ name: string; phone?: string } | null>(null);
   const [walkInOpen, setWalkInOpen] = useState(false);
+
+  // When the cashier clicked a specific method on the cart (cash/card),
+  // skip the in-sheet picker and go straight to that flow. Queue/manual
+  // sales without a pre-pick fall through to the picker render below.
+  // Refs in deps array intentionally omit chooseCash/chooseCard — they're
+  // defined below and would cause hoisting noise; running once on mount
+  // is what we actually want.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!initialMethod) return;
+    if (initialMethod === "cash") void chooseCash();
+    else void chooseCard();
+  }, []);
 
   // The Grow wallet is mounted at the shell level. We listen for the
   // shell-emitted "wallet closed" event so the sheet can clear itself
@@ -114,6 +147,8 @@ export function PosPaymentSheet({ amount, isManual, existingOrderId, onClose, on
             payment_method: paymentMethod,
             guest_name: guestName,
             guest_phone: guestPhone,
+            manual_discount: manualDiscount,
+            tip,
             lines: lines.map((l) => ({
               item_id: l.itemId,
               quantity: l.quantity,

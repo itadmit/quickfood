@@ -4,7 +4,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { usePos } from "@/components/pos/PosContext";
-import { IcoBag, IcoUser, IcoReceipt, IcoSearch, IcoClose, IcoChev } from "@/components/shared/Icons";
+import { usePosCart } from "@/components/pos/PosCartProvider";
+import { IcoBag, IcoUser, IcoReceipt, IcoSearch, IcoClose, IcoChev, IcoClock } from "@/components/shared/Icons";
+import { PosParkedTicketsModal } from "@/components/pos/PosParkedTicketsModal";
 import { cn } from "@/lib/cn";
 import { formatTime } from "@/lib/format";
 
@@ -18,7 +20,9 @@ export function PosTopBar({ onCloseShift }: { onCloseShift: () => void }) {
   const router = useRouter();
   const pathname = usePathname() ?? "";
   const { cashier, tenant, branch, shift } = usePos();
+  const { parked } = usePosCart();
   const [queueCount, setQueueCount] = useState<number>(0);
+  const [parkedOpen, setParkedOpen] = useState(false);
 
   // Pull initial queue count + poll every 5s as a fallback. The realtime
   // SSE wire-up in PosQueue keeps this in sync more responsively when the
@@ -94,6 +98,21 @@ export function PosTopBar({ onCloseShift }: { onCloseShift: () => void }) {
       </nav>
 
       <div className="ms-auto flex items-center gap-2">
+        {parked.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setParkedOpen(true)}
+            className="relative inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5"
+            aria-label="כרטיסיות מוחזקות"
+            title="כרטיסיות מוחזקות"
+          >
+            <IcoClock s={14} c="#000" />
+            <span className="hidden sm:inline">מוחזקות</span>
+            <span className="absolute -top-1.5 -end-1.5 min-w-[20px] h-5 px-1 rounded-full bg-(--qf-primary) text-white text-[11px] font-black grid place-items-center border-2 border-black">
+              {parked.length}
+            </span>
+          </button>
+        )}
         <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border-2 border-black text-sm">
           <IcoUser s={14} c="#000" />
           <span className="font-bold">{cashier.name}</span>
@@ -123,6 +142,8 @@ export function PosTopBar({ onCloseShift }: { onCloseShift: () => void }) {
           <IcoClose s={14} />
         </button>
       </div>
+
+      {parkedOpen && <PosParkedTicketsModal onClose={() => setParkedOpen(false)} />}
     </header>
   );
 }

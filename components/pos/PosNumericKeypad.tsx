@@ -104,13 +104,13 @@ export function PosNumericKeypadModal({
         </div>
 
         {quickAmounts.length > 0 && (
-          <div dir="ltr" className="grid grid-cols-3 gap-2 mb-3">
+          <div dir="ltr" className="flex flex-wrap gap-2 mb-3">
             {quickAmounts.map((amt) => (
               <button
                 key={amt}
                 type="button"
                 onClick={() => setTyped(amt)}
-                className="px-3 py-2.5 rounded-xl bg-white border-2 border-black font-bold tnum text-base shadow-[0_2px_0_#000] hover:bg-black/5"
+                className="flex-1 min-w-[68px] px-3 py-2.5 rounded-xl bg-white border-2 border-black font-bold tnum text-base shadow-[0_2px_0_#000] hover:bg-black/5"
               >
                 ₪{amt}
               </button>
@@ -221,10 +221,11 @@ export function PosCashKeypadModal({ total, onCancel, onConfirm }: CashKeypadPro
   );
 }
 
-/** Round-up chips: exact, next round-50, next round-100. Deduped + sorted. */
+/** Round-up chips: exact, next 50, next 100, next 200. Deduped + sorted. */
 function quickAmountsFor(total: number): number[] {
   const exact = total;
   const next50 = Math.ceil(total / 50) * 50;
   const next100 = Math.ceil(total / 100) * 100;
-  return Array.from(new Set([exact, next50, next100])).sort((a, b) => a - b);
+  const next200 = Math.ceil(total / 200) * 200;
+  return Array.from(new Set([exact, next50, next100, next200])).sort((a, b) => a - b);
 }

@@ -17,6 +17,13 @@ const SaleSchema = z.object({
   // the auth code (placeholder "Customer" gets rejected).
   guest_name: z.string().min(2).max(60).optional(),
   guest_phone: z.string().min(7).max(20).optional(),
+  /** Cashier-applied discount in whole shekels (already computed
+   *  client-side from either a % or fixed-₪ choice). Server re-validates
+   *  by capping at subtotal in createOrder. */
+  manual_discount: z.number().int().min(0).max(99_999).optional(),
+  /** Cashier-applied tip in whole shekels. Goes straight to Order.tip
+   *  and is added to the final total by createOrder. */
+  tip: z.number().int().min(0).max(99_999).optional(),
   lines: z
     .array(
       z.object({
@@ -111,6 +118,8 @@ export const POST = handler(async (req: Request) => {
       method: "pickup",
       customerNotes: body.notes ?? null,
       paymentMethod: body.payment_method,
+      manualDiscount: body.manual_discount,
+      tip: body.tip,
       kiosk: true, // bypass minOrder — counter sale, not delivery
       sourceOverride: "pos",
       cashierId: session.userId,
