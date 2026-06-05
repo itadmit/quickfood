@@ -1,6 +1,6 @@
 "use client";
 
-import { AdsShell, FeaturePills, SwipeBtn, TrustStrip, BG_COLOR, INK_COLOR } from "../_components/AdsShell";
+import { AdsShell, FeatureGrid, SwipeBtn, TrustStrip, BG_COLOR, INK_COLOR } from "../_components/AdsShell";
 
 export default function AdsPageB() {
   return (
@@ -19,7 +19,7 @@ export default function AdsPageB() {
         </p>
       </div>
 
-      <FeaturePills />
+      <FeatureGrid />
 
       <div style={{
         width: "100%",

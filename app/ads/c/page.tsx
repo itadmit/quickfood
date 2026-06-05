@@ -1,5 +1,7 @@
 "use client";
 
+import { FeatureGrid } from "../_components/AdsShell";
+
 const BG = "#F8CB1E";
 const INK = "#0A0A0A";
 
@@ -89,9 +91,10 @@ export default function AdsPageC() {
             </span>
           </h1>
 
-          <p style={{ fontSize: 16, color: INK, fontWeight: 600, lineHeight: 1.5, marginTop: 16 }}>
+          <p style={{ fontSize: 16, color: INK, fontWeight: 600, lineHeight: 1.5, marginTop: 16, marginBottom: 18 }}>
             פלטפורמת הזמנות ישירה לעסק שלך. הלקוחות הקבועים שלך מזמינים אצלך — בלי לשלם עמלות לאף אחד.
           </p>
+          <FeatureGrid />
         </div>
 
         {/* Price strip + CTA */}

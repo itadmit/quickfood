@@ -16,25 +16,33 @@ export const FEATURES = [
   "פופאפים",
 ];
 
-export function FeaturePills() {
+export function FeatureGrid() {
+  const half = Math.ceil(FEATURES.length / 2);
+  const col1 = FEATURES.slice(0, half);
+  const col2 = FEATURES.slice(half);
   return (
-    <div style={{
-      display: "flex", flexWrap: "wrap", gap: 7,
-      marginBottom: 16,
-    }}>
-      {FEATURES.map((f) => (
-        <span key={f} style={{
-          background: "#fff",
-          border: "1.5px solid rgba(0,0,0,0.15)",
-          borderRadius: 100,
-          padding: "5px 11px",
-          fontSize: 12, fontWeight: 700, color: INK,
-          lineHeight: 1,
-        }}>
-          {f}
-        </span>
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "9px 12px", marginBottom: 16 }}>
+      {col1.map((f, i) => (
+        <FeatureRow key={f} label={f} pair={col2[i]} />
       ))}
     </div>
+  );
+}
+
+function FeatureRow({ label, pair }: { label: string; pair?: string }) {
+  return (
+    <>
+      <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 700, color: INK }}>
+        <Check />
+        {label}
+      </div>
+      {pair ? (
+        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 700, color: INK }}>
+          <Check />
+          {pair}
+        </div>
+      ) : <div />}
+    </>
   );
 }
 
