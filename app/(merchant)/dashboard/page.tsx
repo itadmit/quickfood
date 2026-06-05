@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
+import { PaymentProvider } from "@prisma/client";
 import { summary, hourly, topItems, type Range } from "@/lib/analytics";
 import { fullName } from "@/lib/format";
 import { DashboardView } from "./DashboardView";
@@ -29,7 +30,7 @@ export default async function DashboardPage({
   const range: Quick = allowed.includes(raw as Quick) ? (raw as Quick) : "today";
   const apiRange: Range = range;
 
-  const [sum, hr, items, recentOrders, tenant, merchant, menuItemCount, categoryCount, primaryBranch] = await Promise.all([
+  const [sum, hr, items, recentOrders, tenant, merchant, menuItemCount, categoryCount, primaryBranch, paymentConfig] = await Promise.all([
     summary(session.tenantId, apiRange),
     hourly(session.tenantId, apiRange),
     topItems(session.tenantId, apiRange, 5),
@@ -41,7 +42,7 @@ export default async function DashboardPage({
     }),
     prisma.tenant.findUnique({
       where: { id: session.tenantId },
-      select: { dashboardVersion: true, logoUrl: true, about: true, cuisineType: true, name: true },
+      select: { dashboardVersion: true, logoUrl: true, about: true, cuisineType: true, name: true, acceptsCash: true },
     }),
     prisma.merchantUser.findUnique({
       where: { id: session.userId },
@@ -51,8 +52,12 @@ export default async function DashboardPage({
     prisma.menuCategory.count({ where: { tenantId: session.tenantId } }),
     prisma.branch.findFirst({
       where: { tenantId: session.tenantId },
-      select: { id: true, name: true, address: true, phone: true, minOrder: true, deliveryFee: true },
+      select: { id: true, name: true, address: true, phone: true, minOrder: true, deliveryFee: true, hours: true },
       orderBy: { createdAt: "asc" },
+    }),
+    prisma.paymentProviderConfig.findUnique({
+      where: { tenantId_provider: { tenantId: session.tenantId, provider: PaymentProvider.grow } },
+      select: { isActive: true, credentials: true },
     }),
   ]);
 
@@ -92,6 +97,10 @@ export default async function DashboardPage({
           initialBranchPhone: primaryBranch?.phone ?? "",
           initialMinOrder: primaryBranch?.minOrder ?? 0,
           initialDeliveryFee: primaryBranch?.deliveryFee ?? 0,
+          initialAcceptsCash: tenant?.acceptsCash ?? true,
+          initialGrowActive: paymentConfig?.isActive ?? false,
+          initialGrowUserId: ((paymentConfig?.credentials ?? {}) as { userId?: string }).userId ?? "",
+          initialBranchHours: (primaryBranch?.hours ?? {}) as Record<string, { open: string; close: string; active: boolean }>,
         }}
       />
     );

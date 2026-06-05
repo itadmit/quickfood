@@ -411,18 +411,29 @@ export function ItemEditor({
                   אין קטגוריות עדיין - פתח קטגוריה לפני שמירה
                 </Link>
               ) : (
-                <select
-                  value={data.categoryId}
-                  onChange={(e) => update("categoryId", e.target.value)}
-                  aria-required="true"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-base lg:text-sm"
-                >
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="קטגוריה">
+                  {categories.map((c) => {
+                    const selected = data.categoryId === c.id;
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        onClick={() => update("categoryId", c.id)}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 text-sm font-medium transition",
+                          selected
+                            ? "border-black bg-black text-white"
+                            : "border-qf-line-dash bg-white text-qf-ink hover:bg-qf-line-soft",
+                        )}
+                      >
+                        {selected && <IcoCheck c="currentColor" s={12} />}
+                        {c.name}
+                      </button>
+                    );
+                  })}
+                </div>
               )}
             </Field>
             <Field label="תיאור">

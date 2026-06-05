@@ -57,6 +57,20 @@ const RANGES: Array<{ key: "today" | "yesterday" | "7d" | "30d"; label: string }
  * duplicated rather than imported so the two can drift independently
  * while we iterate.
  */
+type DayHours = { open: string; close: string; active: boolean };
+
+const WIZARD_DAYS = [
+  { key: "sunday", label: "ראשון" },
+  { key: "monday", label: "שני" },
+  { key: "tuesday", label: "שלישי" },
+  { key: "wednesday", label: "רביעי" },
+  { key: "thursday", label: "חמישי" },
+  { key: "friday", label: "שישי" },
+  { key: "saturday", label: "שבת" },
+] as const;
+
+const DEFAULT_HOURS: DayHours = { open: "11:00", close: "23:00", active: true };
+
 interface SetupState {
   brandingDone: boolean;
   categoriesDone: boolean;
@@ -69,6 +83,10 @@ interface SetupState {
   initialBranchPhone: string;
   initialMinOrder: number;
   initialDeliveryFee: number;
+  initialAcceptsCash: boolean;
+  initialGrowActive: boolean;
+  initialGrowUserId: string;
+  initialBranchHours: Record<string, DayHours>;
 }
 
 export function DashboardViewV2({
@@ -587,16 +605,17 @@ function SetupTrigger({ state, onOpen }: { state: SetupState; onOpen: () => void
                 : `${doneCount} מתוך ${total} שלבים הושלמו`}
             </div>
           </div>
-          <div className="flex gap-1">
+          <div className="relative flex gap-1">
+            <div className="absolute inset-x-3 top-[11px] h-0.5 bg-black/12" aria-hidden />
             {stepDefs.map(({ label, done }, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+              <div key={i} className="relative flex-1 flex flex-col items-center gap-1.5">
                 <div className={cn(
-                  "w-6 h-6 rounded-full border-2 flex items-center justify-center transition shrink-0",
-                  done ? "bg-black border-black" : "bg-white border-black/20",
+                  "relative z-10 w-6 h-6 rounded-full border-2 flex items-center justify-center transition shrink-0",
+                  done ? "bg-black border-black" : "bg-white border-black/25",
                 )}>
                   {done
                     ? <IcoCheck c="#F8CB1E" s={10} />
-                    : <span className="text-[9px] font-black text-black/30 leading-none">{i + 1}</span>}
+                    : <span className="text-[9px] font-black text-black/35 leading-none">{i + 1}</span>}
                 </div>
                 <span className={cn(
                   "text-[10px] font-bold leading-tight text-center",
@@ -650,6 +669,14 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
   const [branchPhone, setBranchPhone] = useState(state.initialBranchPhone);
   const [minOrder, setMinOrder] = useState(state.initialMinOrder);
   const [deliveryFee, setDeliveryFee] = useState(state.initialDeliveryFee);
+  const [acceptsCash, setAcceptsCash] = useState(state.initialAcceptsCash);
+  const [growActive, setGrowActive] = useState(state.initialGrowActive);
+  const [growUserId, setGrowUserId] = useState(state.initialGrowUserId);
+  const [wizardHours, setWizardHours] = useState<Record<string, DayHours>>(() => {
+    const out: Record<string, DayHours> = {};
+    for (const d of WIZARD_DAYS) out[d.key] = state.initialBranchHours[d.key] ?? DEFAULT_HOURS;
+    return out;
+  });
   const [categoryName, setCategoryName] = useState("");
 
   const [busy, setBusy] = useState(false);
@@ -701,6 +728,33 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
       });
       if (!res.ok) throw new Error();
       setStep(4);
+    } catch { setErr("שמירה נכשלה, נסה שנית"); }
+    finally { setBusy(false); }
+  }
+
+  async function savePaymentsAndHours() {
+    setBusy(true); setErr(null);
+    try {
+      const tasks: Promise<Response>[] = [
+        fetch("/api/v1/merchant/payments", {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            accepts_cash: acceptsCash,
+            grow: { is_active: growActive, test_mode: false, user_id: growUserId || undefined, max_installments: 1 },
+          }),
+        }),
+      ];
+      if (state.branchId) {
+        tasks.push(fetch(`/api/v1/merchant/branches/${state.branchId}`, {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ hours: wizardHours }),
+        }));
+      }
+      const results = await Promise.all(tasks);
+      if (!results.every((r) => r.ok)) throw new Error();
+      setStep(5);
     } catch { setErr("שמירה נכשלה, נסה שנית"); }
     finally { setBusy(false); }
   }
@@ -871,50 +925,119 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
           )}
 
           {step === 4 && (
-            <div className="space-y-4">
+            <div className="space-y-5">
               <WizardSectionHeader
                 icon={<IcoCreditCard c="#000" s={18} />}
-                title="תשלומים"
-                sub="הגדירו את אמצעי התשלום שהלקוחות יוכלו להשתמש בהם"
+                title="תשלומים ושעות פתיחה"
+                sub="הגדירו איך הלקוחות ישלמו ומתי החנות פעילה"
               />
-              <div className="space-y-2">
-                <div className="rounded-2xl border-2 border-black p-4 space-y-2 bg-[#FFFBEC]">
-                  <div className="flex items-center gap-2">
-                    <IcoCreditCard c="#000" s={18} />
-                    <span className="font-bold text-sm">Grow Payments</span>
-                  </div>
-                  <p className="text-xs text-black/60 leading-relaxed">
-                    סליקת אשראי, Bit, Apple Pay, Google Pay ו-PayBox — הכל בפתיחת ארנק Grow אחד.
-                    חשבון חינמי, תשלום רק על עסקאות.
-                  </p>
-                  <a
-                    href="/dashboard/settings/payments"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-black border-b-2 border-black/30 hover:border-black transition"
-                  >
-                    הגדר תשלומים
-                    <IcoArrowLeft c="currentColor" s={12} />
-                  </a>
-                </div>
-                <div className="rounded-2xl border-2 border-black p-4 flex items-center gap-3">
-                  <IcoClock c="#000" s={18} />
+
+              {/* Payment methods */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-black">אמצעי תשלום</label>
+                <div
+                  role="checkbox"
+                  aria-checked={acceptsCash}
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === " " && setAcceptsCash((v) => !v)}
+                  onClick={() => setAcceptsCash((v) => !v)}
+                  className={cn(
+                    "flex items-center gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition select-none",
+                    acceptsCash ? "border-black bg-black/5" : "border-black/20 bg-white",
+                  )}
+                >
                   <div className="flex-1 min-w-0">
-                    <div className="font-bold text-sm">שעות פתיחה</div>
-                    <div className="text-xs text-black/55">הגדרו מתי החנות פעילה לקבלת הזמנות</div>
+                    <div className="font-bold text-sm">מזומן</div>
+                    <div className="text-xs text-black/55">תשלום לשליח בעת המסירה</div>
                   </div>
-                  <a
-                    href="/dashboard/settings/hours"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs font-bold border-b-2 border-black/30 hover:border-black transition"
+                  <WizardCheckbox checked={acceptsCash} />
+                </div>
+
+                <div className={cn(
+                  "p-3.5 rounded-xl border-2 cursor-pointer transition",
+                  growActive ? "border-black bg-black/5" : "border-black/20 bg-white",
+                )}>
+                  <div
+                    role="checkbox"
+                    aria-checked={growActive}
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === " " && setGrowActive((v) => !v)}
+                    onClick={() => setGrowActive((v) => !v)}
+                    className="flex items-center gap-3 select-none"
                   >
-                    הגדר
-                  </a>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-sm">Grow Payments</div>
+                      <div className="text-xs text-black/55">אשראי, Bit, Apple Pay, Google Pay, PayBox</div>
+                    </div>
+                    <WizardCheckbox checked={growActive} />
+                  </div>
+                  {growActive && (
+                    <div className="mt-3 pt-3 border-t border-black/10" onClick={(e) => e.stopPropagation()}>
+                      <WizardField label="User ID של Grow (Production)">
+                        <input
+                          value={growUserId}
+                          onChange={(e) => setGrowUserId(e.target.value.trim())}
+                          placeholder="f31a894ee5522c02"
+                          dir="ltr"
+                          autoComplete="off"
+                          spellCheck={false}
+                          className="w-full px-3.5 py-2.5 rounded-xl border-2 border-black outline-none font-mono text-sm placeholder:font-sans placeholder:text-black/30"
+                        />
+                      </WizardField>
+                      <p className="text-[11px] text-black/45 mt-1.5">
+                        השאר ריק לבדיקות (Sandbox). מגיע ממייל אישור החיוב לייב של Grow.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {/* Hours */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-black">שעות פתיחה</label>
+                <div className="rounded-xl border-2 border-black/15 divide-y divide-black/10 overflow-hidden">
+                  {WIZARD_DAYS.map((d) => {
+                    const h = wizardHours[d.key];
+                    return (
+                      <div key={d.key} className="flex items-center gap-2 px-3 py-2">
+                        <span className="text-xs font-medium w-14 shrink-0">{d.label}</span>
+                        <button
+                          type="button"
+                          onClick={() => setWizardHours((prev) => ({ ...prev, [d.key]: { ...prev[d.key], active: !h.active } }))}
+                          className={cn(
+                            "text-[10px] font-bold px-2.5 py-1 rounded-lg border shrink-0 transition",
+                            h.active ? "bg-black text-white border-black" : "bg-white text-black/40 border-black/25",
+                          )}
+                        >
+                          {h.active ? "פתוח" : "סגור"}
+                        </button>
+                        {h.active && (
+                          <div className="flex items-center gap-1.5 flex-1">
+                            <input
+                              type="time"
+                              value={h.open}
+                              onChange={(e) => setWizardHours((prev) => ({ ...prev, [d.key]: { ...prev[d.key], open: e.target.value } }))}
+                              dir="ltr"
+                              className="flex-1 min-w-0 text-xs border border-black/20 rounded-lg px-2 py-1 outline-none"
+                            />
+                            <span className="text-xs text-black/35">—</span>
+                            <input
+                              type="time"
+                              value={h.close}
+                              onChange={(e) => setWizardHours((prev) => ({ ...prev, [d.key]: { ...prev[d.key], close: e.target.value } }))}
+                              dir="ltr"
+                              className="flex-1 min-w-0 text-xs border border-black/20 rounded-lg px-2 py-1 outline-none"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               <p className="text-[11px] text-black/40">
-                אפשר להמשיך כרגע ולהגדיר תשלומים ושעות פתיחה לאחר מכן.
+                ניתן לשנות הגדרות אלו בכל עת בהגדרות החנות.
               </p>
             </div>
           )}
@@ -969,7 +1092,7 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
                 step === 1 ? saveIdentity
                 : step === 2 ? saveContact
                 : step === 3 ? saveOrderSettings
-                : () => setStep(5)
+                : savePaymentsAndHours
               }
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-black text-[#F8CB1E] font-black text-sm border-2 border-black shadow-[0_2px_0_#000] active:translate-y-px active:shadow-none transition disabled:opacity-60"
             >
@@ -1016,6 +1139,17 @@ function WizardField({ label, optional, children }: { label: string; optional?: 
         {optional && <span className="text-[10px] text-black/40 border border-black/20 rounded px-1">אופציונלי</span>}
       </div>
       {children}
+    </div>
+  );
+}
+
+function WizardCheckbox({ checked }: { checked: boolean }) {
+  return (
+    <div className={cn(
+      "w-5 h-5 rounded-md border-2 shrink-0 grid place-items-center transition",
+      checked ? "bg-black border-black" : "bg-white border-black/25",
+    )}>
+      {checked && <IcoCheck c="#F8CB1E" s={10} />}
     </div>
   );
 }
