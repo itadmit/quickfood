@@ -377,6 +377,7 @@
 .reorderBtn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   background: var(--accent-deep);
   color: #fff;
@@ -387,6 +388,27 @@
   border-radius: 999px;
   cursor: default;
   flex-shrink: 0;
+}
+
+/* On narrow viewports (mobile) the phone mock itself shrinks; the inline
+   "הזמן שוב" pill ends up squeezed against the meta text. Promote it to
+   a full-width pill below the row so it reads like the real app's
+   previous-orders card. */
+@media (max-width: 500px) {
+  .reorderCard {
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 10px;
+    row-gap: 8px;
+  }
+  .reorderBody {
+    flex: 1 1 auto;
+  }
+  .reorderBtn {
+    flex: 1 1 100%;
+    padding: 10px 14px;
+    font-size: 12px;
+  }
 }
 
 /* Categories rail */
