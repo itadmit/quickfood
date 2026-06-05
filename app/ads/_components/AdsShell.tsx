@@ -16,6 +16,15 @@ export const FEATURES = [
   "פופאפים",
 ];
 
+export function Check() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
+      <circle cx="9" cy="9" r="9" fill={INK} />
+      <polyline points="4.5 9 7.5 12 13.5 6" stroke={BG} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function FeatureGrid() {
   const half = Math.ceil(FEATURES.length / 2);
   const col1 = FEATURES.slice(0, half);
