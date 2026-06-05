@@ -18,8 +18,8 @@ export function SettingsSaveBar({
 
   return (
     <>
-      {/* Mobile: sticky white bar, -mx-3 bleeds past main's p-3 padding to full viewport width */}
-      <div className="sm:hidden sticky bottom-0 z-10 bg-white border-t-2 border-black px-4 pt-3 pb-4 -mx-3">
+      {/* Mobile: fixed bar at viewport bottom — no flow space, no gap below content */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t-2 border-black px-4 pt-3 pb-4">
         {isError && (
           <p className="text-center text-xs font-bold text-qf-tomato mb-2">
             {toast!.msg}
