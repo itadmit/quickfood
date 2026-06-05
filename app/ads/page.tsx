@@ -1,23 +1,21 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-const VIDEOS = [
-  "https://videos.pexels.com/video-files/3209828/3209828-hd_1920_1080_25fps.mp4",
-  "https://videos.pexels.com/video-files/4253935/4253935-uhd_2560_1440_25fps.mp4",
-  "https://videos.pexels.com/video-files/3843965/3843965-hd_1920_1080_25fps.mp4",
-  "https://videos.pexels.com/video-files/7456498/7456498-hd_1280_720_25fps.mp4",
-  "https://videos.pexels.com/video-files/6966966/6966966-hd_1920_1080_25fps.mp4",
-];
+const BG_COLOR = "#F8CB1E";
+const INK = "#0A0A0A";
 
 export default function AdsPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoFailed, setVideoFailed] = useState(false);
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.src = VIDEOS[Math.floor(Math.random() * VIDEOS.length)];
-      videoRef.current.play().catch(() => {});
-    }
+    const el = videoRef.current;
+    if (!el) return;
+    const onError = () => setVideoFailed(true);
+    el.addEventListener("error", onError);
+    el.play().catch(() => setVideoFailed(true));
+    return () => el.removeEventListener("error", onError);
   }, []);
 
   return (
@@ -27,237 +25,229 @@ export default function AdsPage() {
         position: "fixed",
         inset: 0,
         overflow: "hidden",
-        background: "#0a0a0a",
+        background: BG_COLOR,
         fontFamily:
-          "var(--font-noto-hebrew, -apple-system, 'Segoe UI', Arial, sans-serif)",
+          "var(--font-noto-hebrew,'Noto Sans Hebrew','Heebo',Arial,sans-serif)",
       }}
     >
-      <video
-        ref={videoRef}
-        autoPlay
-        muted
-        loop
-        playsInline
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          zIndex: 0,
-        }}
-      />
+      <style>{`
+        @keyframes blobA {
+          0%,100% { transform: translate(0,0) scale(1); }
+          50%      { transform: translate(40px,-30px) scale(1.08); }
+        }
+        @keyframes blobB {
+          0%,100% { transform: translate(0,0) scale(1); }
+          50%      { transform: translate(-35px,25px) scale(1.06); }
+        }
+        @keyframes blobC {
+          0%,100% { transform: translate(0,0) scale(1); }
+          50%      { transform: translate(20px,40px) scale(1.05); }
+        }
+        @keyframes swipeUp {
+          0%,100% { transform: translateY(0); opacity: 0.7; }
+          50%      { transform: translateY(-8px); opacity: 1; }
+        }
+      `}</style>
 
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "linear-gradient(180deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.10) 30%, rgba(0,0,0,0.55) 68%, rgba(0,0,0,0.85) 100%)",
-          zIndex: 1,
-        }}
-      />
+      {/* Animated warm blobs behind the dot pattern */}
+      <div aria-hidden style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+        <div style={{
+          position: "absolute", width: 520, height: 520,
+          borderRadius: "50%", background: "#F0BE32",
+          top: -100, right: -80,
+          animation: "blobA 7s ease-in-out infinite",
+          filter: "blur(60px)",
+        }} />
+        <div style={{
+          position: "absolute", width: 400, height: 400,
+          borderRadius: "50%", background: "#FFE099",
+          bottom: -60, left: -60,
+          animation: "blobB 9s ease-in-out infinite",
+          filter: "blur(50px)",
+        }} />
+        <div style={{
+          position: "absolute", width: 300, height: 300,
+          borderRadius: "50%", background: "#FBD84A",
+          top: "40%", left: "30%",
+          animation: "blobC 11s ease-in-out infinite",
+          filter: "blur(70px)",
+        }} />
+      </div>
 
-      <div
-        style={{
-          position: "relative",
-          zIndex: 2,
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          padding: "52px 24px 44px",
-          maxWidth: 480,
-          margin: "0 auto",
-        }}
-      >
+      {/* Dot pattern — exact copy from landing page */}
+      <div aria-hidden style={{
+        position: "absolute", inset: 0, zIndex: 1,
+        backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.09) 1.5px, transparent 1.5px)",
+        backgroundSize: "26px 26px",
+        WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 40%, rgba(0,0,0,0.4) 75%, transparent 100%)",
+        maskImage: "linear-gradient(to bottom, black 0%, black 40%, rgba(0,0,0,0.4) 75%, transparent 100%)",
+      }} />
+
+      {/* Optional video overlay (plays if file exists at /ads/bg.mp4) */}
+      {!videoFailed && (
+        <video
+          ref={videoRef}
+          autoPlay muted loop playsInline
+          style={{
+            position: "absolute", inset: 0,
+            width: "100%", height: "100%",
+            objectFit: "cover", zIndex: 2,
+            opacity: 0.22,
+            mixBlendMode: "multiply",
+          }}
+        >
+          <source src="/ads/bg.mp4" type="video/mp4" />
+        </video>
+      )}
+
+      {/* Content */}
+      <div style={{
+        position: "relative", zIndex: 3,
+        height: "100%",
+        display: "flex", flexDirection: "column",
+        padding: "52px 24px 44px",
+        maxWidth: 480, margin: "0 auto",
+      }}>
+
+        {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: "auto" }}>
-          <div
-            style={{
-              width: 42,
-              height: 42,
-              background: "#fff",
-              borderRadius: 10,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
+          <div style={{
+            width: 44, height: 44,
+            background: INK, borderRadius: 12,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: `0 3px 0 ${BG_COLOR}`,
+            flexShrink: 0,
+          }}>
             <svg viewBox="0 0 32 32" width={30} height={30} xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="qfg" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#a855f7" />
-                  <stop offset="100%" stopColor="#7c3aed" />
-                </linearGradient>
-              </defs>
-              <rect width="32" height="32" rx="8" fill="url(#qfg)" />
-              <text
-                x="16"
-                y="22.5"
-                textAnchor="middle"
+              <rect width="32" height="32" rx="8" fill="#fff" fillOpacity="0.12" />
+              <text x="16" y="23" textAnchor="middle"
                 fontFamily="'Pacifico','Brush Script MT',cursive"
-                fontSize="22"
-                fill="#ffffff"
-              >
-                F
-              </text>
+                fontSize="20" fill="#F8CB1E">F</text>
             </svg>
           </div>
-          <span
-            style={{
-              fontSize: 22,
-              fontWeight: 700,
-              color: "#fff",
-              letterSpacing: "-0.3px",
-            }}
-          >
+          <span style={{
+            fontSize: 20, fontWeight: 800, color: INK, letterSpacing: "-0.3px",
+          }}>
             QuickFood
           </span>
         </div>
 
-        <div style={{ marginBottom: 28 }}>
-          <div
-            style={{
-              display: "inline-block",
-              background: "rgba(255,255,255,0.14)",
-              backdropFilter: "blur(12px)",
-              border: "1px solid rgba(255,255,255,0.22)",
-              borderRadius: 100,
-              padding: "5px 14px",
-              fontSize: 13,
-              color: "#fff",
-              fontWeight: 500,
-              marginBottom: 16,
-            }}
-          >
-            אין עמלות. אין ביניים. רק העסק שלך.
+        {/* Main copy */}
+        <div style={{ marginBottom: 24 }}>
+
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            background: "rgba(0,0,0,0.08)",
+            border: "1.5px solid rgba(0,0,0,0.12)",
+            borderRadius: 100,
+            padding: "5px 14px",
+            fontSize: 12, color: INK, fontWeight: 600,
+            marginBottom: 18,
+          }}>
+            <span style={{
+              display: "inline-block", width: 7, height: 7,
+              borderRadius: "50%", background: "#22c55e", flexShrink: 0,
+            }} />
+            7 ימי ניסיון · ללא כרטיס אשראי
           </div>
 
-          <h1
-            style={{
-              fontSize: "clamp(36px, 10vw, 48px)",
-              fontWeight: 900,
-              lineHeight: 1.1,
-              color: "#fff",
-              letterSpacing: "-1px",
-              marginBottom: 14,
-            }}
-          >
-            הלקוחות שלך,
-            <br />
-            הכסף שלך.
-            <br />
-            <span
-              style={{
-                background: "#FFD023",
-                color: "#000",
-                borderRadius: 10,
-                padding: "2px 12px",
-                display: "inline-block",
-              }}
-            >
-              סוף לוולט.
+          <h1 style={{
+            fontSize: "clamp(38px,11vw,52px)",
+            fontWeight: 900,
+            lineHeight: 1.05,
+            color: INK,
+            letterSpacing: "-1.5px",
+            marginBottom: 14,
+          }}>
+            הלקוחות שלך.<br />
+            ההזמנות שלך.<br />
+            <span style={{
+              background: INK, color: BG_COLOR,
+              borderRadius: 10, padding: "2px 12px",
+              display: "inline-block",
+            }}>
+              העתיד שלך.
             </span>
           </h1>
 
-          <p
-            style={{
-              fontSize: 16,
-              color: "rgba(255,255,255,0.80)",
-              lineHeight: 1.55,
-              fontWeight: 400,
-            }}
-          >
-            הזמנות ישירות לעסק שלך — בלי 30% לאפליקציות הגדולות.
+          <p style={{
+            fontSize: 15, color: "rgba(0,0,0,0.68)",
+            lineHeight: 1.55, fontWeight: 400,
+          }}>
+            פלטפורמת הזמנות ישירה לעסק שלך — הלקוחות מזמינים ישירות אצלך.
           </p>
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            background: "rgba(255,255,255,0.11)",
-            backdropFilter: "blur(16px)",
-            border: "1px solid rgba(255,255,255,0.18)",
-            borderRadius: 16,
-            padding: "14px 18px",
-            marginBottom: 18,
-          }}
-        >
+        {/* Price badge */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 12,
+          background: "rgba(0,0,0,0.07)",
+          border: "1.5px solid rgba(0,0,0,0.12)",
+          borderRadius: 16, padding: "14px 18px",
+          marginBottom: 18,
+        }}>
           <div>
-            <div
-              style={{
-                fontSize: 38,
-                fontWeight: 900,
-                color: "#FFD023",
-                lineHeight: 1,
-                letterSpacing: "-1px",
-              }}
-            >
+            <div style={{
+              fontSize: 40, fontWeight: 900, color: INK,
+              lineHeight: 1, letterSpacing: "-1.5px",
+            }}>
               ₪299
             </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.60)", fontWeight: 400 }}>
+            <span style={{ fontSize: 11, color: "rgba(0,0,0,0.5)", fontWeight: 500 }}>
               לחודש בלבד
             </span>
-            <span style={{ fontSize: 15, color: "#fff", fontWeight: 600 }}>
+            <span style={{ fontSize: 15, color: INK, fontWeight: 700 }}>
               + 0.5% לעסקה
             </span>
           </div>
-          <div
-            style={{
-              width: 1,
-              height: 38,
-              background: "rgba(255,255,255,0.18)",
-              margin: "0 4px",
-              flexShrink: 0,
-            }}
-          />
+          <div style={{
+            width: 1, height: 38,
+            background: "rgba(0,0,0,0.12)",
+            margin: "0 4px", flexShrink: 0,
+          }} />
           <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            <span
-              style={{
-                fontSize: 12,
-                color: "rgba(255,255,255,0.45)",
-                textDecoration: "line-through",
-                fontWeight: 500,
-              }}
-            >
-              וולט: 30%
+            <span style={{ fontSize: 12, color: INK, fontWeight: 700 }}>
+              ללא התחייבות
             </span>
-            <span style={{ fontSize: 13, color: "#4ade80", fontWeight: 700 }}>
-              חוסכים אלפי ₪
+            <span style={{ fontSize: 12, color: "rgba(0,0,0,0.55)", fontWeight: 500 }}>
+              מחיר קבוע לכל החיים
             </span>
           </div>
         </div>
 
+        {/* CTA */}
         <button
           style={{
-            width: "100%",
-            padding: "17px",
-            background: "#fff",
-            color: "#000",
-            fontSize: 17,
-            fontWeight: 800,
-            border: "none",
-            borderRadius: 14,
-            cursor: "pointer",
-            letterSpacing: "-0.2px",
+            width: "100%", padding: "17px",
+            background: INK, color: BG_COLOR,
+            fontSize: 17, fontWeight: 800,
+            border: "none", borderRadius: 999,
+            cursor: "pointer", letterSpacing: "-0.2px",
             fontFamily: "inherit",
+            boxShadow: `0 4px 0 rgba(0,0,0,0.25)`,
+            display: "flex", alignItems: "center",
+            justifyContent: "center", gap: 8,
           }}
         >
-          QuickFood — פתחו לי חנות
+          <svg
+            style={{ animation: "swipeUp 1.5s ease-in-out infinite", flexShrink: 0 }}
+            width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke={BG_COLOR} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+          >
+            <polyline points="18 15 12 9 6 15" />
+          </svg>
+          החליקו למעלה לפרטים נוספים
         </button>
-        <p
-          style={{
-            textAlign: "center",
-            fontSize: 12,
-            color: "rgba(255,255,255,0.40)",
-            marginTop: 10,
-          }}
-        >
-          ניסיון חינם · ללא כרטיס אשראי
+
+        {/* Trust strip */}
+        <p style={{
+          textAlign: "center", fontSize: 11,
+          color: "rgba(0,0,0,0.50)", marginTop: 12,
+          fontWeight: 500,
+        }}>
+          7 ימי ניסיון עלינו · ללא כרטיס אשראי · ללא התחייבות
         </p>
       </div>
     </div>
