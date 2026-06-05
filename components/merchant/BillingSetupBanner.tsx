@@ -1,20 +1,10 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IcoCreditCard, IcoArrowLeft } from "@/components/shared/Icons";
+import { IcoCreditCard, IcoArrowLeft, IcoInfo } from "@/components/shared/Icons";
 
-/**
- * Inline banner above the merchant topbar surfacing the billing-setup gap.
- *
- * Three visible states (none of which appear once a payment method is saved):
- *   1. trial active        — yellow banner: "ניסיון פעיל — נותרו X ימים"
- *   2. trial near end (≤2) — same banner, more urgent copy
- *   3. trial expired       — full-screen TrialGate kicks in elsewhere; this
- *                            banner stays out of the way to avoid duplicate UI
- *
- * Hidden on /dashboard/billing — that's where the merchant goes to act.
- */
 export function BillingSetupBanner({
   hasPaymentMethod,
   trialDaysLeft,
@@ -25,29 +15,36 @@ export function BillingSetupBanner({
   trialExpired: boolean;
 }) {
   const pathname = usePathname() ?? "";
+  const [tipOpen, setTipOpen] = useState(false);
+  const tipRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!tipOpen) return;
+    function onDoc(e: MouseEvent) {
+      if (tipRef.current && !tipRef.current.contains(e.target as Node)) {
+        setTipOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [tipOpen]);
+
   if (hasPaymentMethod) return null;
   if (pathname.startsWith("/dashboard/billing")) return null;
-  // After expiry the TrialGate full-screen lock takes over — no need to also
-  // show a banner.
   if (trialExpired) return null;
 
   const urgent = trialDaysLeft !== null && trialDaysLeft <= 2;
   const headline =
     trialDaysLeft === null
-      ? "החשבון טרם הופעל."
+      ? "החשבון טרם הופעל"
       : trialDaysLeft === 0
-        ? "תקופת הניסיון מסתיימת היום."
+        ? "תקופת הניסיון מסתיימת היום"
         : trialDaysLeft === 1
-          ? "תקופת הניסיון מסתיימת מחר."
-          : `נותרו ${trialDaysLeft} ימים בתקופת הניסיון.`;
-  const body =
-    trialDaysLeft === null
-      ? "כדי לפתוח את כל האפשרויות במערכת יש להזין כרטיס אשראי ולהסדיר תשלום. שימו לב — לא תחויבו עדיין."
-      : "כדי לפתוח את כל האפשרויות המלאות במערכת יש להזין כרטיס אשראי ולהסדיר תשלום. שימו לב — לא תחויבו עדיין.";
+          ? "תקופת הניסיון מסתיימת מחר"
+          : `נותרו ${trialDaysLeft} ימים בניסיון`;
+  const tooltipBody =
+    "כדי לפתוח את כל האפשרויות המלאות במערכת יש להזין כרטיס אשראי ולהסדיר תשלום. שימו לב — לא תחויבו עדיין.";
 
-  // The `qf-billing-banner` / `qf-billing-cta` class hooks let
-  // globals.css repaint the banner under .dash-v2 with the V2 brand
-  // (yellow surface, black border, black CTA) without forking the JSX.
   return (
     <div
       className={
@@ -56,25 +53,45 @@ export function BillingSetupBanner({
           : "qf-billing-banner bg-qf-yolk-soft border-b border-qf-yolk/40"
       }
     >
-      <div className="px-6 py-2.5 flex items-center gap-3 text-sm text-qf-ink">
+      <div className="px-3 lg:px-6 py-1.5 flex items-center gap-2 text-sm text-qf-ink">
         <div
           className={
             urgent
-              ? "qf-billing-icon w-7 h-7 rounded-full bg-qf-tomato/20 grid place-items-center shrink-0"
-              : "qf-billing-icon w-7 h-7 rounded-full bg-qf-yolk/30 grid place-items-center shrink-0"
+              ? "qf-billing-icon w-5 h-5 rounded-full bg-qf-tomato/20 grid place-items-center shrink-0"
+              : "qf-billing-icon w-5 h-5 rounded-full bg-qf-yolk/30 grid place-items-center shrink-0"
           }
         >
-          <IcoCreditCard c={urgent ? "#c2421f" : "var(--qf-deep)"} s={14} />
+          <IcoCreditCard c={urgent ? "#c2421f" : "var(--qf-deep)"} s={11} />
         </div>
-        <div className="flex-1 min-w-0">
-          <span className="font-medium">{headline}</span>{" "}
-          <span className="text-qf-ink2">{body}</span>
+        <span className="font-medium truncate">{headline}</span>
+
+        <div ref={tipRef} className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setTipOpen((v) => !v)}
+            onMouseEnter={() => setTipOpen(true)}
+            aria-label="מידע נוסף"
+            aria-expanded={tipOpen}
+            className="w-5 h-5 rounded-full grid place-items-center text-qf-ink2 hover:text-qf-ink hover:bg-black/5 transition"
+          >
+            <IcoInfo c="currentColor" s={14} />
+          </button>
+          {tipOpen && (
+            <div
+              role="tooltip"
+              onMouseLeave={() => setTipOpen(false)}
+              className="absolute z-50 top-full mt-1.5 inset-inline-start-0 w-64 bg-white border border-qf-line-dash rounded-xl shadow-lg p-3 text-xs text-qf-ink leading-relaxed"
+            >
+              {tooltipBody}
+            </div>
+          )}
         </div>
+
         <Link
           href="/dashboard/billing"
-          className="qf-billing-cta inline-flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xs font-medium"
+          className="qf-billing-cta ms-auto inline-flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xs font-medium"
         >
-          השלמת תשלום
+          הזן אשראי
           <IcoArrowLeft c="currentColor" s={12} />
         </Link>
       </div>

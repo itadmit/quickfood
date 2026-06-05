@@ -162,7 +162,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             merchantName={user.name}
             initialOpen={!tenant.onboardingDismissedAt && hasNoMenuItems}
           />
-          <SupportFAB merchantName={user.name} />
+          <SupportFAB merchantName={user.name} hasNoMenuItems={hasNoMenuItems} />
         </div>
       ) : (
         <div className="min-h-screen bg-qf-bg-dash text-qf-ink flex flex-col overflow-x-clip">
@@ -213,7 +213,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             merchantName={user.name}
             initialOpen={!tenant.onboardingDismissedAt && hasNoMenuItems}
           />
-          <SupportFAB merchantName={user.name} />
+          <SupportFAB merchantName={user.name} hasNoMenuItems={hasNoMenuItems} />
         </div>
       )}
     </ThemeProvider>

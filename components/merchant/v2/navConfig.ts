@@ -15,6 +15,14 @@ import {
 
 // Shared nav config for the V2 dashboard skin — same list rendered by
 // SidebarV2 on desktop and MobileMenuV2 on mobile.
+export type NavChild = {
+  href: string;
+  label: string;
+  exact?: boolean;
+  match?: string;
+  badge?: string;
+};
+
 export type NavItem = {
   href: string;
   label: string;
@@ -22,6 +30,7 @@ export type NavItem = {
   exact?: boolean;
   match?: string;
   badge?: string;
+  children?: NavChild[];
 };
 
 export type NavSection = { title: string; items: NavItem[] };
@@ -39,7 +48,18 @@ export const NAV: NavSection[] = [
       { href: "/dashboard/orders/history", label: "היסטוריית הזמנות", Icon: IcoOrders },
       { href: "/dashboard/kitchen", label: "מסך מטבח", Icon: IcoOrders, badge: "חדש!" },
       { href: "/pos", label: "קופה", Icon: IcoBag, badge: "חדש!" },
-      { href: "/dashboard/menu", label: "תפריט", Icon: IcoMenu },
+      {
+        href: "/dashboard/menu",
+        label: "תפריט",
+        Icon: IcoMenu,
+        match: "/dashboard/menu",
+        children: [
+          { href: "/dashboard/menu", label: "מוצרים", match: "/dashboard/menu" },
+          { href: "/dashboard/categories", label: "קטגוריות", match: "/dashboard/categories" },
+          { href: "/dashboard/menu/modifiers", label: "קטלוג תוספות", match: "/dashboard/menu/modifiers" },
+          { href: "/dashboard/menu/notices", label: "הודעות", match: "/dashboard/menu/notices" },
+        ],
+      },
       { href: "/dashboard/analytics", label: "אנליטיקס", Icon: IcoChart },
       { href: "/dashboard/couriers", label: "שליחים", Icon: IcoBike },
     ],

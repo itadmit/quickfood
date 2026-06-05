@@ -163,7 +163,7 @@ export const POST = handler(async (req: Request) => {
             address: body.branch_address,
             phone: body.branch_phone,
             isPrimary: true,
-            status: "closed",
+            status: "open",
             hours: branchHours,
             minOrder: 60,
             deliveryFee: 14,

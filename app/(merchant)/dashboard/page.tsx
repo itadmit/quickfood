@@ -29,7 +29,7 @@ export default async function DashboardPage({
   const range: Quick = allowed.includes(raw as Quick) ? (raw as Quick) : "today";
   const apiRange: Range = range;
 
-  const [sum, hr, items, recentOrders, tenant, merchant] = await Promise.all([
+  const [sum, hr, items, recentOrders, tenant, merchant, menuItemCount] = await Promise.all([
     summary(session.tenantId, apiRange),
     hourly(session.tenantId, apiRange),
     topItems(session.tenantId, apiRange, 5),
@@ -47,6 +47,7 @@ export default async function DashboardPage({
       where: { id: session.userId },
       select: { name: true },
     }),
+    prisma.menuItem.count({ where: { tenantId: session.tenantId } }),
   ]);
 
   const recent = recentOrders.map((o) => ({
@@ -72,6 +73,7 @@ export default async function DashboardPage({
         topItems={items}
         recentOrders={recent}
         merchantFirstName={firstName}
+        hasNoMenuItems={menuItemCount === 0}
       />
     );
   }

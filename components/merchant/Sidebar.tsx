@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IcoOrders, IcoMenu, IcoHome, IcoStar, IcoBike, IcoGear, IcoFlame, IcoMegaphone, IcoBell, IcoCreditCard, IcoChart, IcoBag } from "@/components/shared/Icons";
+import { IcoOrders, IcoMenu, IcoMenuList, IcoHome, IcoStar, IcoBike, IcoGear, IcoFlame, IcoMegaphone, IcoBell, IcoCreditCard, IcoChart, IcoBag } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 import { canAccessDashboard } from "@/lib/auth/merchant-access";
 
@@ -18,7 +18,10 @@ const NAV: NavItem[] = [
   { href: "/dashboard", label: "דשבורד", Icon: IcoHome, exact: true },
   { href: "/dashboard/orders", label: "הזמנות", Icon: IcoOrders },
   { href: "/pos", label: "קופה", Icon: IcoBag },
-  { href: "/dashboard/menu", label: "תפריט", Icon: IcoMenu },
+  { href: "/dashboard/menu", label: "מוצרים", Icon: IcoMenu, exact: true },
+  { href: "/dashboard/categories", label: "קטגוריות", Icon: IcoMenuList },
+  { href: "/dashboard/menu/modifiers", label: "קטלוג תוספות", Icon: IcoMenuList },
+  { href: "/dashboard/menu/notices", label: "הודעות", Icon: IcoMenuList },
   { href: "/dashboard/analytics", label: "אנליטיקס", Icon: IcoChart },
   { href: "/dashboard/campaigns", label: "קמפיינים", Icon: IcoMegaphone },
   { href: "/dashboard/coupons", label: "קופונים", Icon: IcoCreditCard },

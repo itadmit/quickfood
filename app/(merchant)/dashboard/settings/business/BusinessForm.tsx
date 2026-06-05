@@ -61,6 +61,14 @@ export function BusinessForm({ branchId, initial }: { branchId: string; initial:
 
   return (
     <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
+      <div className="rounded-xl bg-qf-yolk-soft border border-qf-yolk/40 px-3.5 py-3">
+        <div className="text-sm font-bold text-qf-ink mb-0.5">
+          המסך הזה קובע איך החנות עובדת
+        </div>
+        <p className="text-xs text-qf-ink2 leading-relaxed">
+          כאן מגדירים את <strong>סכום המינימום להזמנה</strong>, <strong>דמי המשלוח</strong>, <strong>דמי השירות</strong> ופרטי העסק שמופיעים על החשבוניות. שווה לעבור על כל השדות לפני שמתחילים לקבל הזמנות — אלה הערכים שהלקוח רואה בעגלה.
+        </p>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="שם הסניף">
           <input
@@ -121,7 +129,7 @@ export function BusinessForm({ branchId, initial }: { branchId: string; initial:
       <hr className="border-qf-line-soft" />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Field label="תוספת ETA בעומס (דקות)">
+        <Field label="תוספת זמן הגעה בעומס (דקות)">
           <div className="flex items-center border border-qf-line-dash rounded-xl focus-within:border-(--qf-primary)">
             <span className="px-3 text-qf-mute text-sm">+</span>
             <input
@@ -137,7 +145,7 @@ export function BusinessForm({ branchId, initial }: { branchId: string; initial:
             <span className="px-3 text-qf-mute text-sm">דק&apos;</span>
           </div>
           <p className="text-[11px] text-qf-mute mt-1 leading-snug">
-            כשהסטטוס במצב &quot;עומס&quot; — ה-ETA שמוצג ללקוח גדל בכמות הזו ומופיע מודל אזהרה.
+            כשהסטטוס במצב &quot;עומס&quot; — זמן ההגעה שמוצג ללקוח גדל בכמות הזו ומופיע מודל אזהרה.
           </p>
         </Field>
       </div>

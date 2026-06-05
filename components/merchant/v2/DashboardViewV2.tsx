@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { IcoChart, IcoTrend } from "@/components/shared/Icons";
+import { IcoChart, IcoTrend, IcoArrowLeft, IcoMenuBook } from "@/components/shared/Icons";
 import { MenuItemImage } from "@/components/shared/MenuItemImage";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -62,6 +62,7 @@ export function DashboardViewV2({
   topItems,
   recentOrders,
   merchantFirstName,
+  hasNoMenuItems = false,
 }: {
   range: "today" | "yesterday" | "7d" | "30d";
   summary: Summary;
@@ -69,6 +70,7 @@ export function DashboardViewV2({
   topItems: TopItem[];
   recentOrders: RecentOrder[];
   merchantFirstName: string;
+  hasNoMenuItems?: boolean;
 }) {
   const router = useRouter();
 
@@ -133,6 +135,32 @@ export function DashboardViewV2({
           </div>
         </div>
       </section>
+
+      {/* ─── EMPTY MENU NUDGE ───────────────────────────────────── */}
+      {hasNoMenuItems && (
+        <Link
+          href="/dashboard/menu/new"
+          className="group relative block rounded-2xl border-2 border-dashed border-black/50 bg-white hover:bg-[#FFFBEC] p-4 lg:p-5 transition shadow-[0_2px_0_#000] hover:shadow-[0_3px_0_#000] active:translate-y-px"
+        >
+          <div className="flex items-center gap-3 lg:gap-4">
+            <div className="shrink-0 w-11 h-11 rounded-xl border-2 border-black grid place-items-center bg-[#F8CB1E]">
+              <IcoMenuBook c="#000" s={22} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm lg:text-base font-black text-black">
+                התפריט שלכם עוד ריק — בואו נתחיל
+              </div>
+              <div className="text-xs lg:text-sm text-black/65 mt-0.5">
+                לחצו כאן כדי להוסיף את הפריט הראשון לתפריט.
+              </div>
+            </div>
+            <div className="shrink-0 inline-flex items-center gap-1.5 text-sm font-black text-black">
+              <span className="hidden sm:inline">הוספת פריט</span>
+              <IcoArrowLeft c="currentColor" s={16} />
+            </div>
+          </div>
+        </Link>
+      )}
 
       {/* ─── KPI TILES ──────────────────────────────────────────── */}
       {/* Quiet by default — only the "primary" KPI (orders) wears the
