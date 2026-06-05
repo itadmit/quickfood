@@ -96,6 +96,17 @@ export async function initiateOrderPayment(
   const baseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
   const orderRef = order.number;
 
+  // Split-payment support: if cash has already been collected toward this
+  // order (POS partial-cash flow), Grow only charges the remainder. The
+  // PendingPayment row stores the same remainder so the callback's
+  // amount-sanity-check matches what Grow returns. Order.total stays
+  // untouched — it's the source of truth for "is this order paid yet?"
+  const cashCollected = order.cashCollected ?? 0;
+  const amountToCharge =
+    cashCollected > 0 && cashCollected < order.total
+      ? order.total - cashCollected
+      : order.total;
+
   const composedName =
     fullName(customer?.firstName, customer?.lastName) ||
     fullName(order.customerFirstNameSnap, order.customerLastNameSnap) ||
@@ -127,7 +138,7 @@ export async function initiateOrderPayment(
     tenantSlug: order.tenant.slug,
     orderId: order.id,
     orderReference: orderRef,
-    amount: order.total,
+    amount: amountToCharge,
     currency: "ILS",
     customer: {
       name: composedName,
@@ -148,7 +159,7 @@ export async function initiateOrderPayment(
       orderId: order.id,
       orderReference: orderRef,
       provider: providerType,
-      amount: order.total,
+      amount: amountToCharge,
       currency: "ILS",
       status: PendingPaymentStatus.pending,
       expiresAt: new Date(Date.now() + 12 * 60_000),

@@ -6,8 +6,9 @@ import { cn } from "@/lib/cn";
 interface PosNumericKeypadProps {
   /** Title above the display. */
   title: string;
-  /** Confirm label. */
-  confirmLabel?: string;
+  /** Confirm label — static string or a function of the typed value so the
+   *  cash variant can swap to "אישור + יתרה באשראי" for partial amounts. */
+  confirmLabel?: string | ((typed: number) => string);
   /** Cancel label. */
   cancelLabel?: string;
   /** Initial accumulator value in shekels. */
@@ -63,6 +64,8 @@ export function PosNumericKeypadModal({
 
   const caption = liveCaption?.(typed);
   const disabled = confirmDisabled ? confirmDisabled(typed) : typed <= 0;
+  const resolvedConfirmLabel =
+    typeof confirmLabel === "function" ? confirmLabel(typed) : confirmLabel;
 
   function press(d: number) {
     setTyped((t) => Math.min(t * 10 + d, 999_999));
@@ -151,7 +154,7 @@ export function PosNumericKeypadModal({
             disabled={disabled}
             className="px-5 py-3 rounded-2xl bg-black text-[#F8CB1E] border-2 border-black font-bold text-base shadow-[0_2px_0_#000] hover:bg-black/90 disabled:opacity-40"
           >
-            {confirmLabel}
+            {resolvedConfirmLabel}
           </button>
         </div>
       </div>
@@ -187,24 +190,36 @@ function KeyButton({
 export interface CashKeypadProps {
   total: number;
   onCancel: () => void;
-  onConfirm: (received: number, change: number) => void;
+  /** `isPartial` is true when the cashier confirmed an amount below the
+   *  total — the caller routes those to the split-payment card flow.
+   *  Full-amount confirmations work exactly like before. */
+  onConfirm: (received: number, change: number, isPartial: boolean) => void;
 }
 
 /**
  * Cash payment variant: total at top, accumulator + quick-amount chips
- * derived from the total, live עודף readout. Confirm disabled while
- * `received < total`.
+ * derived from the total, live עודף readout. Allows the cashier to
+ * confirm a partial amount — that triggers the split-payment flow where
+ * the remainder is charged on a card via Grow.
  */
 export function PosCashKeypadModal({ total, onCancel, onConfirm }: CashKeypadProps) {
   const quick = quickAmountsFor(total);
   return (
     <PosNumericKeypadModal
       title={`קבלת מזומן · סה״כ ₪${total.toLocaleString("he-IL")}`}
-      confirmLabel="אישור תשלום"
+      confirmLabel={(typed) =>
+        typed > 0 && typed < total ? "אישור + יתרה באשראי" : "אישור תשלום"
+      }
       quickAmounts={quick}
       liveCaption={(typed) => {
+        if (typed <= 0) {
+          return { text: "הקלד את הסכום שהתקבל", tone: "muted" };
+        }
         if (typed < total) {
-          return { text: `חסר ₪${(total - typed).toLocaleString("he-IL")}`, tone: "red" };
+          return {
+            text: `חסר ₪${(total - typed).toLocaleString("he-IL")} • היתרה תיגבה באשראי`,
+            tone: "red",
+          };
         }
         if (typed === total) {
           return { text: "ללא עודף", tone: "muted" };
@@ -214,9 +229,12 @@ export function PosCashKeypadModal({ total, onCancel, onConfirm }: CashKeypadPro
           tone: "green",
         };
       }}
-      confirmDisabled={(typed) => typed < total}
+      // Confirm enabled for any positive amount — partials route to split.
+      confirmDisabled={(typed) => typed <= 0}
       onCancel={onCancel}
-      onConfirm={(typed) => onConfirm(typed, Math.max(0, typed - total))}
+      onConfirm={(typed) =>
+        onConfirm(typed, Math.max(0, typed - total), typed < total)
+      }
     />
   );
 }

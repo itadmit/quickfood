@@ -86,6 +86,11 @@ export function PosPaymentSheet({
   // retry after a Grow error doesn't re-prompt.
   const [walkIn, setWalkIn] = useState<{ name: string; phone?: string } | null>(null);
   const [walkInOpen, setWalkInOpen] = useState(false);
+  // Order ID the first /sale call materialized. Needed for the
+  // split-payment flow where the cashier collects partial cash, then
+  // chains into a card charge: the second call must hit the SAME order
+  // (cash-collected then pay/initiate) rather than create a duplicate.
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
 
   // When the cashier clicked a specific method on the cart (cash/card),
   // skip the in-sheet picker and go straight to that flow. Queue/manual
@@ -121,6 +126,7 @@ export function PosPaymentSheet({
 
   async function createOrCarryOrderId(paymentMethod: Method): Promise<string | null> {
     if (existingOrderId) return existingOrderId;
+    if (createdOrderId) return createdOrderId;
     setBusy(true);
     try {
       const endpoint = isManual
@@ -171,7 +177,9 @@ export function PosPaymentSheet({
         setError(translateError(data?.error) || "יצירת ההזמנה נכשלה");
         return null;
       }
-      return data.order.id as string;
+      const newOrderId = data.order.id as string;
+      setCreatedOrderId(newOrderId);
+      return newOrderId;
     } finally {
       setBusy(false);
     }
@@ -234,7 +242,7 @@ export function PosPaymentSheet({
     }
   }
 
-  async function confirmCash(received: number, change: number) {
+  async function confirmCash(received: number, change: number, isPartial: boolean) {
     setError(null);
     const orderId = await createOrCarryOrderId("cash");
     if (!orderId) return;
@@ -246,9 +254,34 @@ export function PosPaymentSheet({
         credentials: "include",
         body: JSON.stringify({ amount: received, change, shift_id: shift?.id }),
       });
+      const data = (await res.json().catch(() => ({}))) as {
+        fully_paid?: boolean;
+        remaining?: number;
+        error?: { code?: string; message?: string };
+      };
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
         setError(translateError(data?.error) || "שמירת המזומן נכשלה");
+        return;
+      }
+      // Split payment: cashier took partial cash, the remainder needs to
+      // be charged on a card via Grow. Flip the order's intended method
+      // to card and chain into the card flow — pay/initiate sees
+      // cashCollected > 0 and asks Grow for the remainder only.
+      if (!data.fully_paid) {
+        setMethod(null);
+        await fetch(`/api/v1/merchant/orders/${orderId}/payment-method`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ payment_method: "card" }),
+        });
+        // Walk-in name still required for Grow PROD. The amount Grow
+        // shows is the remainder (pay/initiate already calculated it).
+        if (!customer && !walkIn) {
+          setWalkInOpen(true);
+        } else {
+          await runCardCharge();
+        }
         return;
       }
       setMethod(null);

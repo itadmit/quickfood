@@ -13,9 +13,17 @@ const Schema = z.object({
 });
 
 /**
- * Confirm cash received at the counter. Marks the order paid + confirmed,
- * snapshots the cashier + shift, stores the customer's tendered amount
- * and computed change so day-end can reconcile the drawer.
+ * Confirm cash received at the counter. Supports both full settlement
+ * AND partial split payments (cash + card on the same order):
+ *
+ * - If the accumulated cash collected (existing + this call) reaches the
+ *   order total, the order flips to paid + confirmed (existing behaviour).
+ * - If still short, Order.cashCollected accumulates, paymentStatus stays
+ *   pending, and the response signals the remaining due so the cashier
+ *   can chain a card charge for the balance.
+ *
+ * Day-end reconciliation reads Order.cashCollected and the
+ * PaymentTransaction rows side-by-side.
  */
 export const POST = handler(async (
   req: Request,
@@ -28,7 +36,15 @@ export const POST = handler(async (
 
   const order = await prisma.order.findUnique({
     where: { id },
-    select: { id: true, tenantId: true, total: true, paymentStatus: true, status: true },
+    select: {
+      id: true,
+      tenantId: true,
+      total: true,
+      paymentStatus: true,
+      status: true,
+      cashCollected: true,
+      confirmedAt: true,
+    },
   });
   if (!order || order.tenantId !== session.tenantId) {
     return apiError("not_found", "הזמנה לא נמצאה", 404);
@@ -36,9 +52,11 @@ export const POST = handler(async (
   if (order.paymentStatus === "paid") {
     return apiError("already_paid", "ההזמנה כבר שולמה", 409);
   }
-  if (body.amount < order.total) {
-    return apiError("insufficient", "סכום נמוך מהחיוב", 422);
-  }
+
+  const existingCash = order.cashCollected ?? 0;
+  const newCash = existingCash + body.amount;
+  const fullyPaid = newCash >= order.total;
+  const remaining = Math.max(0, order.total - newCash);
 
   // shift_id is optional in the schema but required in practice — the
   // open shift is the source of truth, and we resolve it from the cashier
@@ -56,34 +74,43 @@ export const POST = handler(async (
     prisma.order.update({
       where: { id },
       data: {
-        paymentStatus: "paid",
-        status: "confirmed",
-        confirmedAt: new Date(),
-        paymentMethod: "cash",
-        cashCollected: body.amount,
-        cashChange: body.change,
+        // Only flip to paid + confirmed when the full total is covered.
+        // Partial cash leaves paymentStatus=pending so a follow-up card
+        // charge can complete the order via the Grow callback.
+        paymentStatus: fullyPaid ? "paid" : order.paymentStatus,
+        status: fullyPaid ? "confirmed" : order.status,
+        confirmedAt: fullyPaid && !order.confirmedAt ? new Date() : order.confirmedAt,
+        // Keep paymentMethod=cash for full cash. For partial cash the
+        // payment-method endpoint will flip it to card before pay/initiate.
+        ...(fullyPaid ? { paymentMethod: "cash" as const } : {}),
+        cashCollected: newCash,
+        cashChange: fullyPaid ? body.change : 0,
         cashierId: session.userId,
         posShiftId: shiftId,
       },
     }),
     // Event drives the kitchen kanban + KDS realtime so they see the
     // order pop into the "preparing" lane the moment the cashier
-    // confirms cash.
+    // confirms cash. Partial cash fires a different event tag so
+    // downstream consumers don't mistake it for a settled order.
     prisma.orderEvent.create({
       data: {
         orderId: id,
-        type: "status_changed",
+        type: fullyPaid ? "status_changed" : "payment_partial",
         payload: {
           from: order.status,
-          to: "confirmed",
+          to: fullyPaid ? "confirmed" : order.status,
           changed_by: "cashier",
           payment_method: "cash",
-          cash_collected: body.amount,
-          cash_change: body.change,
+          cash_collected_now: body.amount,
+          cash_collected_total: newCash,
+          cash_change: fullyPaid ? body.change : 0,
+          fully_paid: fullyPaid,
+          remaining,
         },
       },
     }),
   ]);
 
-  return apiJson({ ok: true });
+  return apiJson({ ok: true, fully_paid: fullyPaid, remaining });
 });
