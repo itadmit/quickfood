@@ -48,7 +48,7 @@ export default function AdsPageC() {
         position: "relative", zIndex: 3,
         height: "100%",
         display: "flex", flexDirection: "column",
-        padding: "52px 24px 44px",
+        padding: "52px 24px 60px",
         maxWidth: 480, margin: "0 auto",
       }}>
 
@@ -62,19 +62,7 @@ export default function AdsPageC() {
         />
 
         {/* Hero headline */}
-        <div style={{ marginTop: "auto", marginBottom: 28 }}>
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            background: "rgba(0,0,0,0.08)",
-            border: "1.5px solid rgba(0,0,0,0.15)",
-            borderRadius: 100, padding: "5px 14px",
-            fontSize: 12, color: INK, fontWeight: 600,
-            marginBottom: 20,
-          }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#16a34a", display: "inline-block", flexShrink: 0 }} />
-            7 ימי ניסיון · ללא כרטיס אשראי
-          </div>
-
+        <div style={{ marginTop: "auto", marginBottom: 20 }}>
           <h1 style={{
             fontSize: "clamp(42px,13vw,62px)",
             fontWeight: 900, lineHeight: 1,
@@ -85,7 +73,7 @@ export default function AdsPageC() {
             <span style={{
               display: "inline-block",
               background: INK, color: BG,
-              borderRadius: 12, padding: "2px 14px",
+              borderRadius: 12, padding: "6px 14px",
             }}>
               האתר שלך.
             </span>
