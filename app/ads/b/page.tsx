@@ -7,15 +7,18 @@ export default function AdsPageB() {
     <AdsShell>
       <div style={{ marginTop: 20, marginBottom: 16, width: "100%" }}>
         <h1 style={{
-          fontSize: "clamp(32px,10vw,48px)",
-          fontWeight: 900, lineHeight: 1.08,
+          fontSize: "clamp(34px,10.5vw,50px)",
+          fontWeight: 900, lineHeight: 1.05,
           color: INK_COLOR, letterSpacing: "-1.5px",
-          marginBottom: 10,
+          marginBottom: 12,
         }}>
-          כמה שילמת לוולט<br />החודש?
+          בעלי מסעדות?
         </h1>
-        <p style={{ fontSize: 15, color: INK_COLOR, fontWeight: 600, lineHeight: 1.55 }}>
-          עכשיו תדמיין שכל הלקוחות החוזרים שלך מזמינים ישירות מהאתר שלך — ללא עמלות ענק, עם כלים מקצועיים לצמיחה.
+        <p style={{ fontSize: 16, color: INK_COLOR, fontWeight: 700, lineHeight: 1.55 }}>
+          הפסיקו לשלם עד 30% עמלה על כל הזמנה.
+        </p>
+        <p style={{ fontSize: 15, color: INK_COLOR, fontWeight: 500, lineHeight: 1.55, marginTop: 6 }}>
+          קבלו אתר הזמנות משלכם — עם משלוחים, תשלומים ומעקב בזמן אמת.
         </p>
       </div>
 
@@ -27,10 +30,11 @@ export default function AdsPageB() {
         border: "2px solid #000",
         borderRadius: 20,
         boxShadow: "0 4px 0 #000",
-        padding: "20px 20px 18px",
+        padding: "14px 20px 14px",
+        marginBottom: 16,
         marginTop: "auto",
       }}>
-        <div style={{ textAlign: "center", marginBottom: 14 }}>
+        <div style={{ textAlign: "center", marginBottom: 12 }}>
           <div style={{ fontSize: 48, fontWeight: 900, color: INK_COLOR, letterSpacing: "-2px", lineHeight: 1 }}>
             ₪299
           </div>
@@ -38,12 +42,7 @@ export default function AdsPageB() {
             לחודש + 0.5% בלבד
           </div>
         </div>
-        <p style={{
-          fontSize: 12, fontWeight: 700, color: "rgba(0,0,0,0.50)",
-          textAlign: "center", marginBottom: 14,
-        }}>
-          הלקוחות שלך. ההזמנות שלך. האתר שלך.
-        </p>
+        <div style={{ height: 1, background: "#E8E4D5", marginBottom: 12 }} />
         <SwipeBtn color={BG_COLOR} />
         <TrustStrip />
       </div>

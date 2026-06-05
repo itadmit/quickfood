@@ -26,16 +26,9 @@ export default function AdsPageC() {
         src="https://videos.pexels.com/video-files/33880845/14378437_360_640_24fps.mp4"
         autoPlay muted loop playsInline preload="metadata"
         aria-hidden
-        style={{
-          position: "absolute", inset: 0,
-          width: "100%", height: "100%",
-          objectFit: "cover", zIndex: 0,
-        }}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 0 }}
       />
-      <div aria-hidden style={{
-        position: "absolute", inset: 0, zIndex: 1,
-        background: "rgba(248,203,30,0.72)",
-      }} />
+      <div aria-hidden style={{ position: "absolute", inset: 0, zIndex: 1, background: "rgba(248,203,30,0.72)" }} />
       <div aria-hidden style={{
         position: "absolute", inset: 0, zIndex: 2,
         backgroundImage: "radial-gradient(circle, rgba(0,0,0,0.09) 1.5px, transparent 1.5px)",
@@ -62,31 +55,38 @@ export default function AdsPageC() {
           style={{ borderRadius: 12, border: "2px solid #000", boxShadow: "0 3px 0 #000", display: "block" }}
         />
 
-        {/* Hero headline */}
+        {/* Copy */}
         <div style={{ marginTop: "auto", marginBottom: 20 }}>
-          <h1 style={{
-            fontSize: "clamp(42px,13vw,62px)",
-            fontWeight: 900, lineHeight: 1,
-            color: INK, letterSpacing: "-2px",
+          <p style={{
+            fontSize: 22, fontWeight: 900, color: INK,
+            letterSpacing: "-0.5px", lineHeight: 1.3, marginBottom: 6,
           }}>
-            <span style={{ display: "block", marginBottom: 8 }}>הלקוחות שלך.</span>
-            <span style={{ display: "block", marginBottom: 8 }}>ההזמנות שלך.</span>
-            <span style={{
-              display: "inline-block",
-              background: INK, color: BG,
-              borderRadius: 12, padding: "6px 14px 14px",
-            }}>
-              האתר שלך.
-            </span>
+            וולט מביא לקוחות חדשים.
+          </p>
+          <h1 style={{
+            fontSize: "clamp(28px,8.5vw,42px)",
+            fontWeight: 900, lineHeight: 1.1,
+            color: INK, letterSpacing: "-1px",
+            marginBottom: 16,
+          }}>
+            אבל למה שהלקוחות הקבועים שלכם לא יזמינו ישירות מכם?
           </h1>
 
-          <p style={{ fontSize: 16, color: INK, fontWeight: 600, lineHeight: 1.5, marginTop: 16, marginBottom: 18 }}>
-            פלטפורמת הזמנות ישירה לעסק שלך. הלקוחות הקבועים שלך מזמינים אצלך — בלי לשלם עמלות לאף אחד.
-          </p>
+          <div style={{
+            display: "inline-block",
+            background: INK, color: BG,
+            borderRadius: 12, padding: "6px 14px 14px",
+            fontSize: "clamp(22px,7vw,32px)",
+            fontWeight: 900, letterSpacing: "-1px",
+            marginBottom: 18,
+          }}>
+            אתר הזמנות למסעדות.
+          </div>
+
           <FeatureGrid />
         </div>
 
-        {/* Price strip + CTA */}
+        {/* White card */}
         <div style={{
           background: "#fff",
           border: "2px solid #000",
@@ -96,10 +96,10 @@ export default function AdsPageC() {
           marginBottom: 16,
         }}>
           <div style={{ textAlign: "center", marginBottom: 12 }}>
-            <div style={{ fontSize: 42, fontWeight: 900, color: INK, letterSpacing: "-2px", lineHeight: 1 }}>₪299</div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: INK, marginTop: 4 }}>לחודש + 0.5% בלבד</div>
+            <div style={{ fontSize: 48, fontWeight: 900, color: INK, letterSpacing: "-2px", lineHeight: 1 }}>₪299</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: INK, marginTop: 4 }}>לחודש + 0.5% בלבד</div>
           </div>
-
+          <div style={{ height: 1, background: "#E8E4D5", marginBottom: 12 }} />
           <button style={{
             width: "100%", padding: "16px",
             background: INK, color: BG,
