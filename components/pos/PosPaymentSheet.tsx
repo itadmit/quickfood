@@ -322,12 +322,18 @@ export function PosPaymentSheet({
   }
 
   // Walk-in customer prompt — only when card is chosen and there's
-  // nobody attached yet. Cash skips this entirely.
+  // nobody attached yet. Cash skips this entirely. When the cashier
+  // came in via the cart's direct "אשראי" button (initialMethod set),
+  // cancelling the walk-in step closes the whole sheet — we never want
+  // to dump them on the legacy "cash or card" picker behind it.
   if (walkInOpen) {
     return (
       <PosWalkInPromptModal
         amountLabel={formatPrice(amount)}
-        onCancel={() => setWalkInOpen(false)}
+        onCancel={() => {
+          setWalkInOpen(false);
+          if (initialMethod) onClose();
+        }}
         onConfirm={(data) => {
           setWalkIn(data);
           setWalkInOpen(false);
@@ -358,11 +364,25 @@ export function PosPaymentSheet({
     return (
       <PosCashKeypadModal
         total={amount}
-        onCancel={() => setMethod(null)}
+        onCancel={() => {
+          setMethod(null);
+          // Same reasoning as the walk-in cancel above: when initialMethod
+          // is set, the cashier explicitly picked cash from the cart, so
+          // cancelling the keypad should drop them back at the cart — not
+          // at the legacy method picker that lives below.
+          if (initialMethod) onClose();
+        }}
         onConfirm={confirmCash}
       />
     );
   }
+
+  // Bail out of the legacy picker render entirely whenever initialMethod
+  // was set. Without this guard, any transient state where method is null
+  // and walkInOpen/cardOpen are false (e.g. during the awaits inside
+  // runCardCharge or right after a partial-cash mutation) would flash
+  // the picker for a few frames.
+  if (initialMethod) return null;
 
   return (
     <div
