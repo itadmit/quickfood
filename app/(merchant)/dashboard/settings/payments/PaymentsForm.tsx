@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { IcoCash, IcoCheck, IcoClose, IcoCreditCard } from "@/components/shared/Icons";
+import { IcoCash, IcoCheck, IcoCreditCard } from "@/components/shared/Icons";
 import { Toggle as SharedToggle } from "@/components/shared/Toggle";
+import { SettingsSaveBar } from "@/components/merchant/SettingsSaveBar";
 
 interface GrowState {
   is_active: boolean;
@@ -119,6 +120,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
   }
 
   return (
+    <>
     <div className="space-y-5">
       {/* Section: which methods to accept */}
       <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
@@ -372,35 +374,9 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
         </div>
       )}
 
-      {/* Save bar */}
-      <div className="flex items-center justify-between pt-1">
-        <div className="text-sm">
-          {toast && (
-            <span
-              className={
-                "inline-flex items-center gap-1.5 " +
-                (toast.kind === "ok" ? "text-qf-green-deep" : "text-qf-tomato")
-              }
-            >
-              {toast.kind === "ok" ? (
-                <IcoCheck c="currentColor" s={14} />
-              ) : (
-                <IcoClose c="currentColor" s={14} />
-              )}
-              {toast.msg}
-            </span>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={save}
-          disabled={saving || !hasAnyActive}
-          className="px-5 py-2.5 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {saving ? "שומר..." : "שמירת שינויים"}
-        </button>
-      </div>
     </div>
+      <SettingsSaveBar saving={saving} onSave={save} toast={toast} disabled={!hasAnyActive} />
+    </>
   );
 }
 

@@ -6,10 +6,15 @@ import { IcoWhatsApp } from "@/components/shared/Icons";
 
 const SUPPORT_PHONE = "972552554432";
 
-// Item editor (new + edit) has its own sticky bottom CTA that the FAB
-// would overlap on mobile. Hide there.
+// Pages that own a sticky-bottom CTA. The FAB would overlap that CTA on
+// mobile (and hide its left edge on desktop), so we hide here instead.
+//
+//   - Item editor (new + edit)
+//   - Every /dashboard/settings/* page — all settings forms now share
+//     the bold-card sticky "שמירת שינויים" bar.
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-function isItemEditorRoute(pathname: string): boolean {
+function shouldHideFab(pathname: string): boolean {
+  if (pathname.startsWith("/dashboard/settings")) return true;
   if (pathname === "/dashboard/menu/new") return true;
   const m = pathname.match(/^\/dashboard\/menu\/([^/]+)$/);
   return !!m && UUID_RE.test(m[1]);
@@ -32,7 +37,7 @@ export function SupportFAB({
 }) {
   const pathname = usePathname() ?? "";
   const [hover, setHover] = useState(false);
-  if (isItemEditorRoute(pathname)) return null;
+  if (shouldHideFab(pathname)) return null;
   const href = buildWhatsAppHref(merchantName, hasNoMenuItems);
   const bubbleText = hasNoMenuItems
     ? "צריכים עזרה בהקמה? דברו איתנו פה.."

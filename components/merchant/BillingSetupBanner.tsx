@@ -89,7 +89,7 @@ export function BillingSetupBanner({
 
         <Link
           href="/dashboard/billing"
-          className="qf-billing-cta ms-auto inline-flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xs font-medium"
+          className="qf-billing-cta ms-auto inline-flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-lg bg-[#F8CB1E] hover:bg-[#FFD843] text-black border-2 border-black shadow-[0_2px_0_#000] active:translate-y-px active:shadow-[0_1px_0_#000] text-xs font-bold transition-all"
         >
           הזן אשראי
           <IcoArrowLeft c="currentColor" s={12} />

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { IcoCheck } from "@/components/shared/Icons";
 import { Toggle as SharedToggle } from "@/components/shared/Toggle";
+import { SettingsSaveBar } from "@/components/merchant/SettingsSaveBar";
 import { cn } from "@/lib/cn";
 
 interface Initial {
@@ -30,7 +30,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
     initial.cutleryFreeAbove != null ? String(initial.cutleryFreeAbove / 100) : "",
   );
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
 
   async function save() {
     setSaving(true);
@@ -53,10 +53,10 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
         }),
       });
       if (res.ok) {
-        setToast("נשמר");
+        setToast({ kind: "ok", msg: "נשמר" });
         router.refresh();
       } else {
-        setToast("שמירה נכשלה");
+        setToast({ kind: "err", msg: "שמירה נכשלה" });
       }
     } finally {
       setSaving(false);
@@ -65,6 +65,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
   }
 
   return (
+    <>
     <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-5">
       <Toggle
         label="הצג מעקב הזמנה בעמוד התודה"
@@ -150,25 +151,9 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
         )}
       </div>
 
-      <div className="flex items-center justify-between pt-3 border-t border-qf-line-soft">
-        <div className="text-sm">
-          {toast && (
-            <span className="inline-flex items-center gap-1.5 text-qf-green-deep">
-              <IcoCheck c="currentColor" s={14} />
-              {toast}
-            </span>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={save}
-          disabled={saving}
-          className="px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
-        >
-          {saving ? "שומר..." : "שמירת שינויים"}
-        </button>
-      </div>
     </div>
+      <SettingsSaveBar saving={saving} onSave={save} toast={toast} />
+    </>
   );
 }
 

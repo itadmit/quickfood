@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SettingsSaveBar } from "@/components/merchant/SettingsSaveBar";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 
 export function SalesSettingsForm({
@@ -76,19 +77,10 @@ export function SalesSettingsForm({
           </label>
         </div>
 
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={save}
-            disabled={busy}
-            className="px-5 py-2.5 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-bold disabled:opacity-60"
-          >
-            {busy ? "שומר..." : "שמירה"}
-          </button>
-        </div>
       </div>
 
       <Toast toast={toast} onDismiss={() => setToast(null)} />
+      <SettingsSaveBar saving={busy} onSave={save} />
     </>
   );
 }

@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/cn";
-import { IcoCheck } from "@/components/shared/Icons";
 import { Toggle } from "@/components/shared/Toggle";
+import { SettingsSaveBar } from "@/components/merchant/SettingsSaveBar";
 
 type DayHours = { open: string; close: string; active: boolean };
 
@@ -34,7 +33,7 @@ export function HoursForm({
     return out;
   });
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
 
   function setDay(key: string, patch: Partial<DayHours>) {
     setHours((h) => ({ ...h, [key]: { ...h[key], ...patch } }));
@@ -49,7 +48,7 @@ export function HoursForm({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ hours }),
       });
-      setToast(res.ok ? "נשמר" : "שמירה נכשלה");
+      setToast(res.ok ? { kind: "ok", msg: "נשמר" } : { kind: "err", msg: "שמירה נכשלה" });
       if (res.ok) router.refresh();
     } finally {
       setSaving(false);
@@ -58,61 +57,45 @@ export function HoursForm({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5">
-      <div className="divide-y divide-qf-line-soft sm:divide-y-0 sm:space-y-2">
-        {DAYS.map((d) => {
-          const h = hours[d.key];
-          return (
-            <div
-              key={d.key}
-              className="grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_120px_120px_100px] gap-x-3 gap-y-2 items-center py-3 sm:py-1.5"
-            >
-              <div className="font-medium text-sm">{d.label}</div>
-              <label className="inline-flex items-center gap-2 text-sm sm:order-last">
-                <Toggle
-                  checked={h.active}
-                  onChange={(next) => setDay(d.key, { active: next })}
-                  aria-label={`${d.label} ${h.active ? "פתוח" : "סגור"}`}
+    <>
+      <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5">
+        <div className="divide-y divide-qf-line-soft sm:divide-y-0 sm:space-y-2">
+          {DAYS.map((d) => {
+            const h = hours[d.key];
+            return (
+              <div
+                key={d.key}
+                className="grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_120px_120px_100px] gap-x-3 gap-y-2 items-center py-3 sm:py-1.5"
+              >
+                <div className="font-medium text-sm">{d.label}</div>
+                <label className="inline-flex items-center gap-2 text-sm sm:order-last">
+                  <Toggle
+                    checked={h.active}
+                    onChange={(next) => setDay(d.key, { active: next })}
+                    aria-label={`${d.label} ${h.active ? "פתוח" : "סגור"}`}
+                  />
+                  <span className="text-xs text-qf-mute">{h.active ? "פתוח" : "סגור"}</span>
+                </label>
+                <input
+                  type="time"
+                  value={h.open}
+                  onChange={(e) => setDay(d.key, { open: e.target.value })}
+                  disabled={!h.active}
+                  className="col-start-1 sm:col-auto px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm disabled:opacity-50"
                 />
-                <span className="text-xs text-qf-mute">{h.active ? "פתוח" : "סגור"}</span>
-              </label>
-              <input
-                type="time"
-                value={h.open}
-                onChange={(e) => setDay(d.key, { open: e.target.value })}
-                disabled={!h.active}
-                className="col-start-1 sm:col-auto px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm disabled:opacity-50"
-              />
-              <input
-                type="time"
-                value={h.close}
-                onChange={(e) => setDay(d.key, { close: e.target.value })}
-                disabled={!h.active}
-                className="px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm disabled:opacity-50"
-              />
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="flex items-center justify-between pt-4 mt-2 border-t border-qf-line-soft">
-        <div className="text-sm text-qf-mute">
-          {toast && (
-            <span className="inline-flex items-center gap-1.5 text-qf-green-deep">
-              <IcoCheck c="currentColor" s={14} />
-              {toast}
-            </span>
-          )}
+                <input
+                  type="time"
+                  value={h.close}
+                  onChange={(e) => setDay(d.key, { close: e.target.value })}
+                  disabled={!h.active}
+                  className="px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm disabled:opacity-50"
+                />
+              </div>
+            );
+          })}
         </div>
-        <button
-          type="button"
-          onClick={save}
-          disabled={saving}
-          className="px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
-        >
-          {saving ? "שומר..." : "שמירת שינויים"}
-        </button>
       </div>
-    </div>
+      <SettingsSaveBar saving={saving} onSave={save} toast={toast} />
+    </>
   );
 }

@@ -10,6 +10,7 @@ import { SmartImg } from "@/components/shared/SmartImg";
 
 import { IcoCheck, IcoCopy, IcoWhatsApp, IcoTrash, IcoQrCode, IcoClose } from "@/components/shared/Icons";
 import { Modal } from "@/components/shared/Modal";
+import { SettingsSaveBar } from "@/components/merchant/SettingsSaveBar";
 import { cn } from "@/lib/cn";
 
 interface Tenant {
@@ -81,7 +82,7 @@ export function BrandingForm({
   const [busyEtaBoost, setBusyEtaBoost] = useState(branch?.busyEtaBoostMinutes ?? 0);
 
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
 
   const logoLetter = deriveLogoLetter(name);
 
@@ -127,7 +128,7 @@ export function BrandingForm({
 
       const [tenantRes, branchRes] = await Promise.all([tenantPromise, branchPromise]);
       const ok = tenantRes.ok && branchRes.ok;
-      setToast(ok ? "נשמר" : "שמירה נכשלה");
+      setToast(ok ? { kind: "ok", msg: "נשמר" } : { kind: "err", msg: "שמירה נכשלה" });
       if (ok) router.refresh();
     } finally {
       setSaving(false);
@@ -419,25 +420,7 @@ export function BrandingForm({
         />
       </section>
 
-      {/* ─── Sticky save bar ─────────────────────────────────── */}
-      <div className="flex items-center justify-between gap-3 bg-white rounded-2xl border-2 border-black px-4 py-3 shadow-[0_3px_0_#000] sticky bottom-3 z-10 mx-3 lg:mx-4">
-        <div className="text-sm">
-          {toast && (
-            <span className="inline-flex items-center gap-1.5 text-qf-green-deep font-bold">
-              <IcoCheck c="currentColor" s={14} />
-              {toast}
-            </span>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={save}
-          disabled={saving}
-          className="px-5 py-2.5 rounded-xl bg-[#F8CB1E] hover:bg-[#FFD843] text-black border-2 border-black shadow-[0_2px_0_#000] active:translate-y-px active:shadow-[0_1px_0_#000] text-sm font-bold transition disabled:opacity-60"
-        >
-          {saving ? "שומר..." : "שמירת שינויים"}
-        </button>
-      </div>
+      <SettingsSaveBar saving={saving} onSave={save} toast={toast} />
     </div>
   );
 }

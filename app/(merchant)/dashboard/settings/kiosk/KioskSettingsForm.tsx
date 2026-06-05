@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
+import { SettingsSaveBar } from "@/components/merchant/SettingsSaveBar";
 
 export function KioskSettingsForm({
   slug,
@@ -165,16 +166,6 @@ export function KioskSettingsForm({
             </p>
           </div>
 
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={save}
-              disabled={busy}
-              className="px-5 py-2.5 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-bold disabled:opacity-60"
-            >
-              {busy ? "שומר..." : "שמירה"}
-            </button>
-          </div>
         </div>
 
         <a
@@ -197,6 +188,7 @@ export function KioskSettingsForm({
       </div>
 
       <Toast toast={toast} onDismiss={() => setToast(null)} />
+      <SettingsSaveBar saving={busy} onSave={save} />
     </>
   );
 }

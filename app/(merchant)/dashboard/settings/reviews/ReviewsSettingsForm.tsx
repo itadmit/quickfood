@@ -3,9 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { IcoCheck } from "@/components/shared/Icons";
 import { Toggle as SharedToggle } from "@/components/shared/Toggle";
 import { Modal } from "@/components/shared/Modal";
+import { SettingsSaveBar } from "@/components/merchant/SettingsSaveBar";
 import { cn } from "@/lib/cn";
 
 type Channel = "off" | "email" | "sms" | "whatsapp" | "whatsapp_managed";
@@ -56,8 +56,7 @@ export function ReviewsSettingsForm({
   const router = useRouter();
   const [v, setV] = useState<Initial>(initial);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [saveToast, setSaveToast] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
   const [subscribeModalOpen, setSubscribeModalOpen] = useState(false);
   const [managedBusy, setManagedBusy] = useState(false);
   const [managedError, setManagedError] = useState<string | null>(null);
@@ -68,8 +67,7 @@ export function ReviewsSettingsForm({
 
   async function save() {
     setSaving(true);
-    setError(null);
-    setToast(null);
+    setSaveToast(null);
     try {
       const res = await fetch("/api/v1/merchant/settings/reviews", {
         method: "PATCH",
@@ -84,14 +82,14 @@ export function ReviewsSettingsForm({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data?.error?.message ?? "שמירה נכשלה");
+        setSaveToast({ kind: "err", msg: data?.error?.message ?? "שמירה נכשלה" });
         return;
       }
-      setToast("נשמר");
+      setSaveToast({ kind: "ok", msg: "נשמר" });
       router.refresh();
     } finally {
       setSaving(false);
-      setTimeout(() => setToast(null), 2000);
+      setTimeout(() => setSaveToast(null), 2000);
     }
   }
 
@@ -175,6 +173,7 @@ export function ReviewsSettingsForm({
   const disabled = !v.enabled;
 
   return (
+    <>
     <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-5">
       <Toggle
         label="הפעל ביקורות"
@@ -388,26 +387,6 @@ export function ReviewsSettingsForm({
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-3 border-t border-qf-line-soft">
-        <div className="text-sm">
-          {toast && (
-            <span className="inline-flex items-center gap-1.5 text-qf-green-deep">
-              <IcoCheck c="currentColor" s={14} />
-              {toast}
-            </span>
-          )}
-          {error && <span className="text-qf-tomato">{error}</span>}
-        </div>
-        <button
-          type="button"
-          onClick={save}
-          disabled={saving}
-          className="px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
-        >
-          {saving ? "שומר..." : "שמירת שינויים"}
-        </button>
-      </div>
-
       {subscribeModalOpen && (
         <ManagedSubscribeModal
           basePrice={managed.basePrice}
@@ -419,6 +398,8 @@ export function ReviewsSettingsForm({
         />
       )}
     </div>
+      <SettingsSaveBar saving={saving} onSave={save} toast={saveToast} />
+    </>
   );
 }
 
