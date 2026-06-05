@@ -74,7 +74,7 @@ export default function AdsPageC() {
             <span style={{
               display: "inline-block",
               background: INK, color: BG,
-              borderRadius: 12, padding: "6px 14px",
+              borderRadius: 12, padding: "6px 14px 14px",
             }}>
               האתר שלך.
             </span>
