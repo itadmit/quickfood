@@ -97,7 +97,7 @@ export function NewTenantForm() {
         </div>
       </header>
 
-      <section className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-4">
+      <section className="bg-white rounded-2xl border border-qf-line-dash p-4 sm:p-5 space-y-4">
         <h2 className="font-semibold">פרטי מסעדה</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="שם המסעדה">
@@ -141,7 +141,7 @@ export function NewTenantForm() {
         />
 
         <Field label="ערכת צבע">
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {Object.values(THEMES).map((t) => (
               <button
                 key={t.id}
@@ -166,7 +166,7 @@ export function NewTenantForm() {
         </Field>
       </section>
 
-      <section className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-4">
+      <section className="bg-white rounded-2xl border border-qf-line-dash p-4 sm:p-5 space-y-4">
         <h2 className="font-semibold">סניף ראשי</h2>
         <Field label="כתובת">
           <input
@@ -186,7 +186,7 @@ export function NewTenantForm() {
         </Field>
       </section>
 
-      <section className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-4">
+      <section className="bg-white rounded-2xl border border-qf-line-dash p-4 sm:p-5 space-y-4">
         <h2 className="font-semibold">משתמש בעלים</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="שם מלא">

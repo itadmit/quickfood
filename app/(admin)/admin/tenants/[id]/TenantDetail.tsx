@@ -299,7 +299,7 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
 
   return (
     <div className="space-y-5">
-      <header className="flex items-start justify-between gap-3">
+      <header className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div className="min-w-0">
           <Link
             href="/admin/tenants"
@@ -326,7 +326,7 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
             /{t.slug} · {formatDate(t.createdAt)}
           </div>
         </div>
-        <div className="flex gap-2 shrink-0">
+        <div className="flex flex-wrap gap-2 shrink-0">
           <Link
             href={`/s/${t.slug}`}
             target="_blank"
@@ -621,7 +621,7 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
           {t.branches.map((b) => (
             <div
               key={b.id}
-              className="py-3 flex items-center gap-4 text-sm"
+              className="py-3 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-sm"
             >
               <div className="flex-1 min-w-0">
                 <div className="font-medium">
