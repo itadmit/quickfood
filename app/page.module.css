@@ -1588,6 +1588,192 @@
   .foodGalleryRow { grid-template-columns: repeat(4, 1fr); }
 }
 
+/* ─── CUSTOMER SHOWCASE ─────────────────────────────────── */
+.showcaseWrap {
+  max-width: 680px;
+  margin: 48px auto 0;
+}
+.showcaseCard {
+  display: block;
+  border: 2px solid var(--ink);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 5px 0 var(--ink);
+  text-decoration: none;
+  color: var(--ink);
+  transition: transform 0.15s, box-shadow 0.15s;
+  background: var(--paper);
+}
+.showcaseCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 0 var(--ink);
+}
+.showcaseCard:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 0 var(--ink);
+}
+.showcaseUrlBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  background: var(--cream-2);
+  border-bottom: 2px solid var(--line);
+}
+.showcaseUrlDots {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.showcaseUrlDots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: block;
+}
+.showcaseUrlField {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: white;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+  font-family: var(--font-mono), "JetBrains Mono", monospace;
+}
+.showcaseUrlIcon { color: var(--mute); flex-shrink: 0; }
+.showcaseLiveChip {
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #1A6B3C;
+  background: #EEFAF2;
+  border: 1.5px solid #A8E6BE;
+  border-radius: 999px;
+  padding: 3px 9px;
+  flex-shrink: 0;
+}
+.showcaseLiveChip::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #28A05D;
+  animation: showcasePulse 1.8s ease-in-out infinite;
+}
+@keyframes showcasePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.showcaseBody {
+  padding: 28px 32px 28px;
+}
+.showcaseBrand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.showcaseLogoWrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  border: 2px solid var(--ink);
+  box-shadow: 0 3px 0 var(--ink);
+  background: var(--tomato);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.showcaseBrandName {
+  font-family: var(--font-rubik), "Rubik", sans-serif;
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.showcaseBrandDomain {
+  font-size: 12px;
+  color: var(--mute);
+  font-family: var(--font-mono), "JetBrains Mono", monospace;
+  margin-top: 3px;
+}
+.showcaseTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 26px;
+}
+.showcaseTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--cream-2);
+  border: 1.5px solid var(--line);
+  color: var(--ink-2);
+}
+.showcaseTag::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--ink);
+  flex-shrink: 0;
+}
+.showcaseTagGreen { background: #EEFAF2; border-color: #A8E6BE; color: #1A6B3C; }
+.showcaseTagGreen::before { background: #28A05D; }
+.showcaseTagBlue { background: #F0F4FF; border-color: #BED0FF; color: #2B4EAA; }
+.showcaseTagBlue::before { background: #3B6EE8; }
+.showcaseTagYellow { background: var(--cheese); border-color: var(--tomato-deep); color: var(--ink); }
+.showcaseTagYellow::before { background: var(--tomato-deep); }
+.showcaseVisitRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line-soft);
+}
+.showcaseVisitLabel {
+  font-size: 13px;
+  color: var(--mute);
+}
+.showcaseVisitBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--ink);
+  color: white;
+  border: 2px solid var(--ink);
+  box-shadow: 0 3px 0 var(--tomato);
+  flex-shrink: 0;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.showcaseCard:hover .showcaseVisitBtn {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 var(--tomato);
+}
+@media (max-width: 600px) {
+  .showcaseBody { padding: 20px 20px; }
+  .showcaseVisitRow { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+
 /* ─── PRICING ───────────────────────────────────────────── */
 .pricingHead { text-align: center; margin-bottom: 32px; }
 .pricingHead .sectionTitle { margin-left: auto; margin-right: auto; }

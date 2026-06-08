@@ -128,6 +128,7 @@ export default function LandingPage() {
       <Math />
       <Features />
       <GrowPartner />
+      <CustomerShowcase />
       <Pricing />
       <Faq />
       <FinalCta />
@@ -702,6 +703,82 @@ function MiniCell({
       <h4 className={styles.miniCellTitle}>{title}</h4>
       <p className={styles.miniCellBody}>{body}</p>
     </div>
+  );
+}
+
+/* ─── CUSTOMER SHOWCASE ─────────────────────────────────────
+   Single live-customer card. Shows Pizza Ninja as a proof point
+   right before the pricing section - "someone real is using this,
+   with a real domain and real payments". */
+function CustomerShowcase() {
+  return (
+    <section className={styles.section} id="customers">
+      <div className={styles.container}>
+        <div className={styles.sectionEyebrow}>בפעולה אצל לקוחות</div>
+        <h2 className={styles.sectionTitle}>
+          פיצה נינג׳ה. <em>דומיין פרטי. Grow Payments. הכל פעיל.</em>
+        </h2>
+        <p className={styles.sectionLede}>
+          פיצה נינג׳ה הם אחד הלקוחות הראשונים שלנו — חיברו דומיין פרטי, הגדירו Grow Payments (אשראי, Bit, Apple Pay), ייבאו תפריט מוולט בקליק אחד, ומוכרים ישירות ללקוחות הקבועים שלהם — בלי עמלת וולט.
+        </p>
+
+        <div className={styles.showcaseWrap}>
+          <a
+            href="https://pizzaninja.co.il/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.showcaseCard}
+          >
+            {/* Browser URL bar */}
+            <div className={styles.showcaseUrlBar}>
+              <div className={styles.showcaseUrlDots}>
+                <span style={{ background: "#FF5F57" }} />
+                <span style={{ background: "#FEBC2E" }} />
+                <span style={{ background: "#28C840" }} />
+              </div>
+              <div className={styles.showcaseUrlField}>
+                <svg className={styles.showcaseUrlIcon} viewBox="0 0 16 16" fill="none" width={13} height={13} aria-hidden>
+                  <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M8 1.5C8 1.5 5.5 4 5.5 8s2.5 6.5 2.5 6.5M8 1.5C8 1.5 10.5 4 10.5 8S8 14.5 8 14.5M1.5 8h13" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                </svg>
+                pizzaninja.co.il
+                <span className={styles.showcaseLiveChip}>חי</span>
+              </div>
+            </div>
+
+            {/* Card body */}
+            <div className={styles.showcaseBody}>
+              <div className={styles.showcaseBrand}>
+                <div className={styles.showcaseLogoWrap} aria-hidden>
+                  <Pizza strokeWidth={2} size={26} color="#000" />
+                </div>
+                <div>
+                  <div className={styles.showcaseBrandName}>פיצה נינג׳ה</div>
+                  <div className={styles.showcaseBrandDomain}>pizzaninja.co.il</div>
+                </div>
+              </div>
+
+              <div className={styles.showcaseTags}>
+                <span className={`${styles.showcaseTag} ${styles.showcaseTagGreen}`}>דומיין פרטי מחובר</span>
+                <span className={`${styles.showcaseTag} ${styles.showcaseTagBlue}`}>Grow Payments פעיל</span>
+                <span className={styles.showcaseTag}>אשראי · Bit · Apple Pay</span>
+                <span className={`${styles.showcaseTag} ${styles.showcaseTagYellow}`}>תפריט מוולט</span>
+                <span className={styles.showcaseTag}>שעות פתיחה מוגדרות</span>
+                <span className={`${styles.showcaseTag} ${styles.showcaseTagGreen}`}>הכל פעיל</span>
+              </div>
+
+              <div className={styles.showcaseVisitRow}>
+                <span className={styles.showcaseVisitLabel}>לקוח אמיתי · החנות חיה עכשיו</span>
+                <span className={styles.showcaseVisitBtn}>
+                  לצפייה בחנות
+                  <IcoArrowLeft c="currentColor" s={14} />
+                </span>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
   );
 }
 
