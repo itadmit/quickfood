@@ -6,10 +6,19 @@ import { isValidSlug } from "@/lib/slug";
 import { issueTokensForMerchant, setSessionCookies } from "@/lib/auth/session";
 import { createCustomer, BillingHubError } from "@/lib/billing-hub/client";
 import { sendEmail } from "@/lib/email/send";
-import { welcomeEmail } from "@/lib/email/templates";
+import { welcomeEmail, merchantSignupAdminEmail } from "@/lib/email/templates";
 import { sendVerificationEmail } from "@/lib/auth/email-verification";
 
 const TRIAL_DAYS = 7;
+
+// Platform owner addresses notified on every new merchant signup. Env override
+// (comma-separated) wins; otherwise fall back to the two default inboxes.
+const ADMIN_SIGNUP_NOTIFY = (
+  process.env.ADMIN_SIGNUP_NOTIFY_EMAILS ?? "itadmit@gmail.com,0547359@gmail.com"
+)
+  .split(",")
+  .map((e) => e.trim())
+  .filter(Boolean);
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -262,6 +271,33 @@ export const POST = handler(async (req: Request) => {
       });
     } catch (err) {
       console.warn("[signup] welcome email failed", err);
+    }
+    try {
+      const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://quickfood.co.il").replace(/\/$/, "");
+      const { html, text } = merchantSignupAdminEmail({
+        businessName: tenant.name,
+        slug: tenant.slug,
+        ownerName: owner.name,
+        ownerEmail: owner.email,
+        branchAddress: body.branch_address,
+        branchPhone: body.branch_phone,
+        businessType: body.business_type,
+        dashboardUrl: `${appUrl}/admin`,
+      });
+      for (const to of ADMIN_SIGNUP_NOTIFY) {
+        await sendEmail({
+          tenantId: null,
+          to,
+          subject: `סוחר חדש נרשם: ${tenant.name}`,
+          body: text,
+          html,
+          kind: "admin_signup_notify",
+          refKind: "tenant",
+          refId: tenant.id,
+        });
+      }
+    } catch (err) {
+      console.warn("[signup] admin notify email failed", err);
     }
   })();
 

@@ -214,6 +214,53 @@ export function welcomeEmail({
   });
 }
 
+export function merchantSignupAdminEmail({
+  businessName,
+  slug,
+  ownerName,
+  ownerEmail,
+  branchAddress,
+  branchPhone,
+  businessType,
+  dashboardUrl,
+}: {
+  businessName: string;
+  slug: string;
+  ownerName: string;
+  ownerEmail: string;
+  branchAddress: string;
+  branchPhone: string;
+  businessType: string;
+  dashboardUrl: string;
+}) {
+  const rows: Array<[string, string]> = [
+    ["שם העסק", businessName],
+    ["כתובת באתר", slug],
+    ["סוג עסק", businessType],
+    ["שם הבעלים", ownerName],
+    ["אימייל", ownerEmail],
+    ["טלפון", branchPhone],
+    ["כתובת סניף", branchAddress],
+  ];
+  const table = `<table dir="rtl" cellpadding="0" cellspacing="0" border="0" style="width:100%;direction:rtl;text-align:right;border-collapse:collapse;margin:4px 0 0;">
+    ${rows
+      .map(
+        ([k, v]) =>
+          `<tr><td style="padding:7px 0;font-size:14px;color:${BRAND.mute};width:110px;vertical-align:top;">${escape(k)}</td><td style="padding:7px 0;font-size:15px;font-weight:700;color:${BRAND.ink2};">${escape(v)}</td></tr>`,
+      )
+      .join("")}
+  </table>`;
+
+  return renderRtlEmail({
+    subject: `סוחר חדש נרשם: ${businessName}`,
+    preheader: `${businessName} (${slug}) השלים הרשמה ל-QuickFood.`,
+    heading: "סוחר חדש נרשם",
+    raw: true,
+    paragraphs: [`נרשם עסק חדש למערכת:`, table],
+    button: { href: dashboardUrl, label: "לעמוד הניהול" },
+  });
+}
+
 export function passwordResetEmail({
   ownerName,
   resetUrl,
