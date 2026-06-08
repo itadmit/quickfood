@@ -65,7 +65,7 @@ export function LeadForm({
       if (!res.ok || !body.ok) {
         throw new Error(body.error?.message ?? "שגיאה בשליחה");
       }
-      track("Lead", { content_name: source }, { email: data.email, phone: data.phone });
+      track("Contact", { content_name: source }, { email: data.email, phone: data.phone });
       setStatus("ok");
     } catch (err) {
       setStatus("err");
