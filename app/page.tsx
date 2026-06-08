@@ -714,12 +714,12 @@ function CustomerShowcase() {
   return (
     <section className={styles.section} id="customers">
       <div className={styles.container}>
-        <div className={styles.sectionEyebrow}>בפעולה אצל לקוחות</div>
+        <div className={styles.sectionEyebrow}>סיפור הצלחה</div>
         <h2 className={styles.sectionTitle}>
-          פיצה נינג׳ה. <em>דומיין פרטי. Grow Payments. הכל פעיל.</em>
+          פיצה נינג׳ה. <em>מוולט לחנות עצמאית — תוך יום.</em>
         </h2>
         <p className={styles.sectionLede}>
-          פיצה נינג׳ה הם אחד הלקוחות הראשונים שלנו — חיברו דומיין פרטי, הגדירו Grow Payments (אשראי, Bit, Apple Pay), ייבאו תפריט מוולט בקליק אחד, ומוכרים ישירות ללקוחות הקבועים שלהם — בלי עמלת וולט.
+          פיצה נינג׳ה היו על וולט. החליטו לפתוח ערוץ ישיר ללקוחות הקבועים שלהם — חיברו דומיין פרטי, הגדירו Grow Payments (אשראי, Bit, Apple Pay), ייבאו את התפריט המלא בקליק אחד. מהיום הם גובים 0.5% במקום 30%.
         </p>
 
         <div className={styles.showcaseWrap}>
@@ -768,7 +768,7 @@ function CustomerShowcase() {
               </div>
 
               <div className={styles.showcaseVisitRow}>
-                <span className={styles.showcaseVisitLabel}>לקוח אמיתי · החנות חיה עכשיו</span>
+                <span className={styles.showcaseVisitLabel}>חנות חיה · pizzaninja.co.il</span>
                 <span className={styles.showcaseVisitBtn}>
                   לצפייה בחנות
                   <IcoArrowLeft c="currentColor" s={14} />
