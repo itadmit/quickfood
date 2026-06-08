@@ -3,6 +3,7 @@ import { Noto_Sans_Hebrew, Pacifico } from "next/font/google";
 import "./globals.css";
 import { RouteProgress } from "@/components/shared/RouteProgress";
 import { ScrollToTop } from "@/components/shared/ScrollToTop";
+import { MetaPixel } from "@/components/marketing/MetaPixel";
 
 const notoHebrew = Noto_Sans_Hebrew({
   subsets: ["hebrew", "latin"],
@@ -155,6 +156,7 @@ export default function RootLayout({
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_SCHEMA) }}
         />
+        <MetaPixel />
         <RouteProgress />
         <ScrollToTop />
         {children}

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthEmailField, AuthPasswordField } from "@/components/shared/AuthFields";
 import { IcoArrowLeft } from "@/components/shared/Icons";
+import { trackCustom } from "@/lib/fb/pixel";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -31,6 +32,7 @@ export default function LoginForm() {
         return;
       }
       const role = "user" in data ? data.user.role : "";
+      trackCustom("Login", { role }, { email: email.toLowerCase() });
       router.push(
         role === "platform_admin"
           ? "/admin"

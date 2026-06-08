@@ -2,6 +2,7 @@
 
 import { useState, useId, type FormEvent } from "react";
 import { IcoCheck, IcoArrowLeft } from "@/components/shared/Icons";
+import { track } from "@/lib/fb/pixel";
 
 interface Props {
   source: string;
@@ -64,6 +65,7 @@ export function LeadForm({
       if (!res.ok || !body.ok) {
         throw new Error(body.error?.message ?? "שגיאה בשליחה");
       }
+      track("Lead", { content_name: source }, { email: data.email, phone: data.phone });
       setStatus("ok");
     } catch (err) {
       setStatus("err");

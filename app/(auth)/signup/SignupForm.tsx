@@ -11,6 +11,7 @@ import { BusinessTypeSelect } from "@/components/shared/BusinessTypeSelect";
 import { WoltTermsTrigger } from "@/components/shared/wolt/WoltTermsModal";
 import { StorefrontPreviewPhone } from "@/components/shared/wolt/StorefrontPreviewPhone";
 import { cn } from "@/lib/cn";
+import { track } from "@/lib/fb/pixel";
 
 type SlugStatus = "idle" | "checking" | "available" | "taken" | "invalid" | "reserved" | "too_short";
 
@@ -246,6 +247,11 @@ export function SignupForm() {
       // pre-filled and the owner-acked, so the merchant doesn't have
       // to paste the URL or re-tick a checkbox they already saw on
       // signup. The page auto-runs the preview on mount.
+      track(
+        "CompleteRegistration",
+        { content_name: businessType, currency: "ILS", value: 299 },
+        { email: ownerEmail.toLowerCase(), phone: branchPhone },
+      );
       const dest = woltUrl
         ? `/dashboard/settings/advanced?wolt=${encodeURIComponent(woltUrl)}&ack=1&autostart=1`
         : (data.redirect ?? "/dashboard");
