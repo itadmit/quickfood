@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { Toggle } from "@/components/shared/Toggle";
 
@@ -141,6 +141,28 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
     }
   }
 
+  async function extendTrial(days: number) {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/v1/admin/tenants/${t.id}/extend-trial`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ days }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data?.error?.message ?? "הארכת הניסיון נכשלה");
+        return;
+      }
+      set("trialEndsAt", data?.tenant?.trial_ends_at ?? t.trialEndsAt);
+      flash(`תקופת הניסיון הוארכה ב-${days} ימים`);
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function toggleStatus() {
     const next: Status = t.status === "active" ? "suspended" : "active";
     setSaving(true);
@@ -268,6 +290,13 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
 
   const whatsappConnected = !!t.whatsappToken && !!t.whatsappInstanceId;
 
+  const trialEndsAtMs = t.trialEndsAt ? new Date(t.trialEndsAt).getTime() : null;
+  const trialExpired = trialEndsAtMs !== null && trialEndsAtMs < Date.now();
+  const trialDaysLeft =
+    trialEndsAtMs !== null
+      ? Math.max(0, Math.ceil((trialEndsAtMs - Date.now()) / 86_400_000))
+      : null;
+
   return (
     <div className="space-y-5">
       <header className="flex items-start justify-between gap-3">
@@ -346,6 +375,55 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
         <Stat label="קמפיינים" value={t.counts.campaigns} />
         <Stat label="יתרת הודעות" value={t.smsCreditsRemaining} />
       </div>
+
+      {/* Trial period */}
+      <Section title="תקופת ניסיון">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex-1 min-w-0">
+            {t.trialEndsAt ? (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm">
+                  תאריך סיום:{" "}
+                  <span className="font-medium" dir="ltr">
+                    {formatDateTime(t.trialEndsAt)}
+                  </span>
+                </span>
+                {trialExpired ? (
+                  <span className="text-xs px-2 py-0.5 rounded-md bg-qf-tomato-soft text-qf-tomato font-medium">
+                    פג תוקף
+                  </span>
+                ) : (
+                  <span className="text-xs px-2 py-0.5 rounded-md bg-qf-green-soft text-qf-green-deep font-medium">
+                    נותרו {trialDaysLeft} ימים
+                  </span>
+                )}
+              </div>
+            ) : (
+              <span className="text-sm text-qf-mute">
+                למסעדה זו לא הוגדרה תקופת ניסיון.
+              </span>
+            )}
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => extendTrial(7)}
+              disabled={saving}
+              className="px-3 py-1.5 rounded-lg border border-qf-line-dash text-sm font-medium hover:bg-qf-line-soft disabled:opacity-60"
+            >
+              הארך ב-7 ימים
+            </button>
+            <button
+              type="button"
+              onClick={() => extendTrial(30)}
+              disabled={saving}
+              className="px-3 py-1.5 rounded-lg bg-(--qf-primary) text-white text-sm font-medium disabled:opacity-60"
+            >
+              הארך ב-30 ימים
+            </button>
+          </div>
+        </div>
+      </Section>
 
       {/* Editable details */}
       <Section title="פרטי מסעדה">
