@@ -271,6 +271,7 @@ export default async function HomePage({
         about: tenant.about,
         businessType: tenant.businessType,
         coverImage: tenant.coverImage,
+        themeId: tenant.themeId,
       }}
       branch={
         branch

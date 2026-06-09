@@ -17,7 +17,7 @@ import {
   type NoticeRow,
 } from "@/components/customer/MenuList";
 import { useMenuSearch } from "@/components/customer/MenuSearchProvider";
-import { resolveCategoryStyle } from "@/lib/category-style";
+import { resolveCategoryStyle, THEME_DEFAULT_CATEGORY_COLOR, type CategoryColorKey } from "@/lib/category-style";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { SmartImg } from "@/components/shared/SmartImg";
@@ -46,6 +46,7 @@ interface Props {
     about?: string | null;
     businessType?: BusinessType;
     coverImage?: string | null;
+    themeId?: string | null;
   };
   branch: {
     address: string;
@@ -120,6 +121,9 @@ export function CustomerHome({
   ratingSummary = null,
   deliveryEta = null,
 }: Props) {
+  const themeDefaultColor: CategoryColorKey =
+    THEME_DEFAULT_CATEGORY_COLOR[tenant.themeId ?? ""] ?? "green";
+
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -564,7 +568,7 @@ export function CustomerHome({
         <h2 className="text-base lg:text-xl font-semibold mb-2 lg:mb-4">קטגוריות</h2>
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-5 px-5 lg:mx-0 lg:px-0 lg:overflow-visible lg:grid lg:grid-cols-6 xl:grid-cols-8 lg:gap-3">
           {categories.map((c) => {
-            const style = resolveCategoryStyle(c.icon, c.color);
+            const style = resolveCategoryStyle(c.icon, c.color, themeDefaultColor);
             const Icon = style.Icon;
             return (
               <Link
@@ -688,6 +692,7 @@ export function CustomerHome({
               scrollOffset={120}
               featuredBadgeLabel={featuredBadgeLabel}
               onItemClick={onItemOpen}
+              themeDefaultColor={themeDefaultColor}
             />
           </div>
         </section>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
-import { resolveCategoryStyle } from "@/lib/category-style";
+import { resolveCategoryStyle, type CategoryColorKey } from "@/lib/category-style";
 import { formatPrice } from "@/lib/format";
 import { FILTERABLE_TAG_LABELS, findTag, TONE_CLASSES } from "@/lib/dietary-tags";
 import { cn } from "@/lib/cn";
@@ -129,6 +129,9 @@ interface Props {
   /** Label rendered on the corner of cards whose item.featured===true.
    *  Empty / undefined → the platform default ("מומלץ של השף"). */
   featuredBadgeLabel?: string | null;
+  /** Fallback color for categories that have no explicit color set.
+   *  Defaults to "green" when omitted. */
+  themeDefaultColor?: CategoryColorKey;
 }
 
 export function MenuList({
@@ -147,6 +150,7 @@ export function MenuList({
   noticesByItem,
   onItemClick,
   featuredBadgeLabel,
+  themeDefaultColor,
 }: Props) {
   const featuredLabel = featuredBadgeLabel?.trim() || "מומלץ של השף";
   const availableTags = useMemo(() => {
@@ -270,7 +274,7 @@ export function MenuList({
         <div className="flex gap-1.5 overflow-x-auto no-scrollbar px-4 py-2.5">
           {visibleCategories.map((c) => {
             const active = activeCat === c.id;
-            const style = resolveCategoryStyle(c.icon, c.color);
+            const style = resolveCategoryStyle(c.icon, c.color, themeDefaultColor);
             const Icon = style.Icon;
             return (
               <button

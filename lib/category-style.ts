@@ -131,14 +131,27 @@ export function isCategoryColor(key: string | null | undefined): key is Category
   return !!key && key in CATEGORY_COLORS;
 }
 
+export const THEME_DEFAULT_CATEGORY_COLOR: Record<string, CategoryColorKey> = {
+  fresh:     "green",
+  basil:     "green",
+  forest:    "teal",
+  olive:     "green",
+  tomato:    "tomato",
+  charcoal:  "blue",
+  cobalt:    "blue",
+  sunflower: "yolk",
+};
+
 // ─── Resolver ───────────────────────────────────────────────────
 
 export function resolveCategoryStyle(
   icon: string | null | undefined,
   color: string | null | undefined,
+  themeDefaultColor?: CategoryColorKey,
 ) {
   const iconKey: CategoryIconKey = isCategoryIcon(icon) ? icon : DEFAULT_ICON;
-  const colorKey: CategoryColorKey = isCategoryColor(color) ? color : DEFAULT_COLOR;
+  const fallback: CategoryColorKey = themeDefaultColor ?? DEFAULT_COLOR;
+  const colorKey: CategoryColorKey = isCategoryColor(color) ? color : fallback;
   return {
     iconKey,
     colorKey,
