@@ -38,6 +38,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               לקוחות
             </Link>
             <Link
+              href="/admin/analytics"
+              className="px-3 py-1.5 rounded-lg hover:bg-qf-line-soft whitespace-nowrap"
+            >
+              אנליטיקס
+            </Link>
+            <Link
               href="/admin/tenants/new"
               className="px-3 py-1.5 rounded-lg hover:bg-qf-line-soft whitespace-nowrap"
             >
