@@ -719,7 +719,7 @@ function CustomerShowcase() {
           פיצה נינג׳ה. <em>מוולט לחנות עצמאית — תוך יום.</em>
         </h2>
         <p className={styles.sectionLede}>
-          פיצה נינג׳ה היו על וולט. החליטו לפתוח ערוץ ישיר ללקוחות הקבועים שלהם — חיברו דומיין פרטי, הגדירו Grow Payments (אשראי, Bit, Apple Pay), ייבאו את התפריט המלא בקליק אחד. מהיום הם גובים 0.5% במקום 30%.
+          פיצה נינג׳ה היו על וולט. החליטו לפתוח ערוץ ישיר ללקוחות הקבועים שלהם — חיברו דומיין פרטי, הגדירו Grow Payments (אשראי, Bit, Apple Pay), ייבאו את התפריט המלא בקליק אחד.
         </p>
 
         <div className={styles.showcaseWrap}>
@@ -742,7 +742,7 @@ function CustomerShowcase() {
                   <path d="M8 1.5C8 1.5 5.5 4 5.5 8s2.5 6.5 2.5 6.5M8 1.5C8 1.5 10.5 4 10.5 8S8 14.5 8 14.5M1.5 8h13" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                 </svg>
                 pizzaninja.co.il
-                <span className={styles.showcaseLiveChip}>חי</span>
+                <span className={styles.showcaseLiveChip}>LIVE</span>
               </div>
             </div>
 
@@ -761,9 +761,9 @@ function CustomerShowcase() {
               <div className={styles.showcaseTags}>
                 <span className={`${styles.showcaseTag} ${styles.showcaseTagGreen}`}>דומיין פרטי מחובר</span>
                 <span className={`${styles.showcaseTag} ${styles.showcaseTagBlue}`}>Grow Payments פעיל</span>
-                <span className={styles.showcaseTag}>אשראי · Bit · Apple Pay</span>
+                <span className={`${styles.showcaseTag} ${styles.showcaseTagBlue}`}>אשראי · Bit · Apple Pay</span>
                 <span className={`${styles.showcaseTag} ${styles.showcaseTagYellow}`}>תפריט מוולט</span>
-                <span className={styles.showcaseTag}>שעות פתיחה מוגדרות</span>
+                <span className={`${styles.showcaseTag} ${styles.showcaseTagGreen}`}>שעות פתיחה מוגדרות</span>
                 <span className={`${styles.showcaseTag} ${styles.showcaseTagGreen}`}>הכל פעיל</span>
               </div>
 
