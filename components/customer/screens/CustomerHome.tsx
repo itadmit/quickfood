@@ -471,8 +471,8 @@ export function CustomerHome({
           all sizes; on mobile the "פרטי המסעדה" link collapses to a
           single 'i' chip to keep everything on one line. */}
       <section className="px-5 -mt-6 relative z-10 lg:max-w-7xl lg:mx-auto lg:px-6 lg:-mt-7">
-        <div className="bg-white border border-qf-line rounded-3xl lg:rounded-full shadow-sm px-4 py-2 lg:py-2.5 lg:px-5 text-xs lg:max-w-4xl lg:mx-auto overflow-x-auto no-scrollbar">
-          <div className="flex items-center justify-center gap-x-1.5 lg:gap-x-2 whitespace-nowrap min-w-0">
+        <div className="bg-white border border-qf-line rounded-3xl lg:rounded-full shadow-sm px-4 py-2.5 lg:px-5 text-xs lg:max-w-4xl lg:mx-auto overflow-x-auto no-scrollbar">
+          <div className="flex items-center justify-center gap-x-2 whitespace-nowrap min-w-0">
             <span
               className={cn(
                 "inline-flex items-center gap-1.5 font-medium",
