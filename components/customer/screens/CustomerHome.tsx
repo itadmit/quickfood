@@ -458,8 +458,8 @@ export function CustomerHome({
           all sizes; on mobile the "פרטי המסעדה" link collapses to a
           single 'i' chip to keep everything on one line. */}
       <section className="px-5 -mt-6 relative z-10 lg:max-w-7xl lg:mx-auto lg:px-6 lg:-mt-7">
-        <div className="bg-white border border-qf-line rounded-3xl lg:rounded-full shadow-sm px-4 py-3 lg:px-5 text-sm lg:max-w-4xl lg:mx-auto">
-          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
+        <div className="bg-white border border-qf-line rounded-3xl lg:rounded-full shadow-sm px-4 py-3 lg:px-5 text-sm lg:max-w-4xl lg:mx-auto overflow-x-auto no-scrollbar">
+          <div className="flex items-center justify-center gap-x-2 whitespace-nowrap min-w-0">
             <span
               className={cn(
                 "inline-flex items-center gap-1.5 font-medium",
@@ -478,19 +478,19 @@ export function CustomerHome({
               />
               {openLabel}
             </span>
-            <span className="text-qf-line hidden sm:inline">·</span>
+            <span className="text-qf-line">·</span>
             <span className="inline-flex items-center gap-1.5 text-qf-ink2">
               <IcoClock s={13} c="#7c8a82" />
               <span>{etaLabel}</span>
             </span>
-            <span className="text-qf-line hidden sm:inline">·</span>
+            <span className="text-qf-line">·</span>
             <span className="inline-flex items-center gap-1.5 text-qf-ink2">
               <IcoBike s={14} c="#7c8a82" />
               <span>{branch ? formatPrice(branch.deliveryFee) : "-"}</span>
             </span>
             {branch && branch.minOrder > 0 && (
               <>
-                <span className="text-qf-line hidden sm:inline">·</span>
+                <span className="text-qf-line">·</span>
                 <span className="inline-flex items-center gap-1.5 text-qf-ink2 tnum">
                   <span className="text-qf-mute text-xs">מינ׳</span>
                   <span>{formatPrice(branch.minOrder)}</span>
@@ -499,7 +499,7 @@ export function CustomerHome({
             )}
             {ratingSummary && ratingSummary.count > 0 && (
               <>
-                <span className="text-qf-line hidden sm:inline">·</span>
+                <span className="text-qf-line">·</span>
                 <Link
                   href={`/s/${tenant.slug}/reviews`}
                   className="inline-flex items-center gap-1 text-qf-ink2 hover:text-qf-ink"
@@ -512,7 +512,7 @@ export function CustomerHome({
             )}
             {branch && (
               <>
-                <span className="text-qf-line hidden sm:inline">·</span>
+                <span className="text-qf-line">·</span>
                 <button
                   type="button"
                   onClick={() => setInfoOpen(true)}
