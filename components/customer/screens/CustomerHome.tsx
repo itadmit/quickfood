@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { IcoPin, IcoSearch, IcoClock, IcoBike, IcoArrowLeft, IcoStar, IcoInfo } from "@/components/shared/Icons";
+import { ChevronDown } from "lucide-react";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
 import { CampaignPopup } from "@/components/customer/CampaignPopup";
@@ -133,6 +134,8 @@ export function CustomerHome({
   const closed = branch?.status === "closed";
   const busyBoost = branch?.busyEtaBoostMinutes ?? 15;
   const [infoOpen, setInfoOpen] = useState(false);
+  const [aboutOverflows, setAboutOverflows] = useState(false);
+  const aboutRef = useRef<HTMLDivElement>(null);
 
   // "פתוח עד 23:30" / "סגור · נפתח..." - uses branch.hours when present;
   // falls back to the merchant's manual "open/busy/closed" status flag.
@@ -161,6 +164,12 @@ export function CustomerHome({
   const etaLabel = busy
     ? `${baseEta.min + busyBoost}–${baseEta.max + busyBoost} דק'`
     : `${baseEta.min}–${baseEta.max} דק'`;
+
+  useEffect(() => {
+    const el = aboutRef.current;
+    if (!el) return;
+    setAboutOverflows(el.scrollHeight > el.clientHeight + 2);
+  }, [tenant.about]);
 
   // Entry alerts. Busy is once-per-day, dismissable; closed shows every
   // entry until the merchant flips status back. Keys mirror CampaignPopup
@@ -362,9 +371,29 @@ export function CustomerHome({
                 <div className="text-base text-white/90 drop-shadow mt-1">{tenant.cuisineType}</div>
               )}
               {tenant.about && (
-                <div className="text-sm text-white/85 drop-shadow mt-2 leading-relaxed whitespace-pre-line line-clamp-4 max-w-xl">
-                  {tenant.about}
-                </div>
+                <button
+                  type="button"
+                  onClick={aboutOverflows ? () => setInfoOpen(true) : undefined}
+                  className={cn(
+                    "relative mt-2 max-w-xl text-start",
+                    aboutOverflows && "cursor-pointer group",
+                  )}
+                >
+                  <div
+                    ref={aboutRef}
+                    className="text-sm text-white/85 drop-shadow leading-relaxed whitespace-pre-line line-clamp-2"
+                  >
+                    {tenant.about}
+                  </div>
+                  {aboutOverflows && (
+                    <>
+                      <div className="absolute inset-x-0 bottom-5 h-6 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+                      <div className="flex items-center gap-1 mt-0.5 text-white/70 group-hover:text-white text-xs transition">
+                        <ChevronDown size={15} />
+                      </div>
+                    </>
+                  )}
+                </button>
               )}
             </div>
           </div>
@@ -444,9 +473,20 @@ export function CustomerHome({
                 <div className="text-sm text-white/90 drop-shadow truncate">{tenant.cuisineType}</div>
               )}
               {tenant.about && (
-                <div className="text-xs text-white/85 drop-shadow mt-1.5 leading-relaxed whitespace-pre-line line-clamp-3">
-                  {tenant.about}
-                </div>
+                <button
+                  type="button"
+                  onClick={aboutOverflows ? () => setInfoOpen(true) : undefined}
+                  className={cn("relative mt-1.5 text-start", aboutOverflows && "cursor-pointer group")}
+                >
+                  <div className="text-xs text-white/85 drop-shadow leading-relaxed whitespace-pre-line line-clamp-2">
+                    {tenant.about}
+                  </div>
+                  {aboutOverflows && (
+                    <div className="flex items-center gap-0.5 mt-0.5 text-white/60 group-hover:text-white/90 transition">
+                      <ChevronDown size={13} />
+                    </div>
+                  )}
+                </button>
               )}
             </div>
           </div>
