@@ -381,7 +381,7 @@ export function CustomerHome({
                 >
                   <div
                     ref={aboutRef}
-                    className="text-sm text-white/85 drop-shadow leading-relaxed whitespace-pre-line line-clamp-2"
+                    className="text-sm text-white/85 drop-shadow leading-relaxed whitespace-pre-line line-clamp-3"
                   >
                     {tenant.about}
                   </div>
@@ -478,7 +478,7 @@ export function CustomerHome({
                   onClick={aboutOverflows ? () => setInfoOpen(true) : undefined}
                   className={cn("relative mt-1.5 text-start", aboutOverflows && "cursor-pointer group")}
                 >
-                  <div className="text-xs text-white/85 drop-shadow leading-relaxed whitespace-pre-line line-clamp-2">
+                  <div className="text-xs text-white/85 drop-shadow leading-relaxed whitespace-pre-line line-clamp-3">
                     {tenant.about}
                   </div>
                   {aboutOverflows && (
@@ -498,7 +498,7 @@ export function CustomerHome({
           all sizes; on mobile the "פרטי המסעדה" link collapses to a
           single 'i' chip to keep everything on one line. */}
       <section className="px-5 -mt-6 relative z-10 lg:max-w-7xl lg:mx-auto lg:px-6 lg:-mt-7">
-        <div className="bg-white border border-qf-line rounded-3xl lg:rounded-full shadow-sm px-4 py-3 lg:px-5 text-sm lg:max-w-4xl lg:mx-auto overflow-x-auto no-scrollbar">
+        <div className="bg-white border border-qf-line rounded-3xl lg:rounded-full shadow-sm px-4 py-2.5 lg:px-5 text-xs lg:max-w-4xl lg:mx-auto overflow-x-auto no-scrollbar">
           <div className="flex items-center justify-center gap-x-2 whitespace-nowrap min-w-0">
             <span
               className={cn(
