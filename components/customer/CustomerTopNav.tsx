@@ -111,7 +111,7 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
             className={cn(
               "inline-flex items-center gap-2 px-3 h-10 rounded-full text-sm font-medium transition",
               onHome
-                ? "bg-qf-green-soft text-qf-green-deep"
+                ? "bg-(--qf-soft) text-(--qf-deep)"
                 : "text-qf-ink2 hover:bg-qf-line-soft",
             )}
           >
@@ -132,7 +132,7 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
               className={cn(
                 "inline-flex items-center gap-2 px-3 h-10 rounded-full text-sm font-medium transition",
                 onReviews
-                  ? "bg-qf-green-soft text-qf-green-deep"
+                  ? "bg-(--qf-soft) text-(--qf-deep)"
                   : "text-qf-ink2 hover:bg-qf-line-soft",
               )}
             >
@@ -166,7 +166,7 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
             className={cn(
               "inline-flex items-center gap-2 px-3 h-10 rounded-full text-sm font-medium transition",
               onProfile
-                ? "bg-qf-green-soft text-qf-green-deep"
+                ? "bg-(--qf-soft) text-(--qf-deep)"
                 : "text-qf-ink2 hover:bg-qf-line-soft",
             )}
           >
