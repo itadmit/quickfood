@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { IcoPin, IcoSearch, IcoClock, IcoBike, IcoArrowLeft, IcoStar, IcoInfo } from "@/components/shared/Icons";
 import { ChevronDown } from "lucide-react";
@@ -136,6 +136,7 @@ export function CustomerHome({
   const [infoOpen, setInfoOpen] = useState(false);
   const [aboutOverflows, setAboutOverflows] = useState(false);
   const aboutRef = useRef<HTMLDivElement>(null);
+  const aboutMobileRef = useRef<HTMLDivElement>(null);
 
   // "פתוח עד 23:30" / "סגור · נפתח..." - uses branch.hours when present;
   // falls back to the merchant's manual "open/busy/closed" status flag.
@@ -165,10 +166,16 @@ export function CustomerHome({
     ? `${baseEta.min + busyBoost}–${baseEta.max + busyBoost} דק'`
     : `${baseEta.min}–${baseEta.max} דק'`;
 
-  useEffect(() => {
-    const el = aboutRef.current;
-    if (!el) return;
-    setAboutOverflows(el.scrollHeight > el.clientHeight + 2);
+  useLayoutEffect(() => {
+    const measure = (el: HTMLDivElement | null) => {
+      if (!el || el.clientHeight === 0) return false;
+      el.classList.remove("line-clamp-3");
+      const fullH = el.scrollHeight;
+      el.classList.add("line-clamp-3");
+      setAboutOverflows(fullH > el.clientHeight + 4);
+      return true;
+    };
+    if (!measure(aboutRef.current)) measure(aboutMobileRef.current);
   }, [tenant.about]);
 
   // Entry alerts. Busy is once-per-day, dismissable; closed shows every
@@ -375,23 +382,25 @@ export function CustomerHome({
                   type="button"
                   onClick={aboutOverflows ? () => setInfoOpen(true) : undefined}
                   className={cn(
-                    "relative mt-2 max-w-xl text-start",
+                    "mt-2 max-w-xl text-start",
                     aboutOverflows && "cursor-pointer group",
                   )}
                 >
-                  <div
-                    ref={aboutRef}
-                    className="text-sm text-white/85 drop-shadow leading-relaxed whitespace-pre-line line-clamp-3"
-                  >
-                    {tenant.about}
+                  <div className="relative">
+                    <div
+                      ref={aboutRef}
+                      className="text-sm text-white/85 drop-shadow leading-relaxed whitespace-pre-line line-clamp-3"
+                    >
+                      {tenant.about}
+                    </div>
+                    {aboutOverflows && (
+                      <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/55 to-transparent pointer-events-none" />
+                    )}
                   </div>
                   {aboutOverflows && (
-                    <>
-                      <div className="absolute inset-x-0 bottom-5 h-6 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-                      <div className="flex items-center gap-1 mt-0.5 text-white/70 group-hover:text-white text-xs transition">
-                        <ChevronDown size={15} />
-                      </div>
-                    </>
+                    <div className="flex items-center gap-1 mt-0.5 text-white/70 group-hover:text-white text-xs transition">
+                      <ChevronDown size={15} />
+                    </div>
                   )}
                 </button>
               )}
@@ -476,10 +485,18 @@ export function CustomerHome({
                 <button
                   type="button"
                   onClick={aboutOverflows ? () => setInfoOpen(true) : undefined}
-                  className={cn("relative mt-1.5 text-start", aboutOverflows && "cursor-pointer group")}
+                  className={cn("mt-1.5 text-start", aboutOverflows && "cursor-pointer group")}
                 >
-                  <div className="text-xs text-white/85 drop-shadow leading-relaxed whitespace-pre-line line-clamp-3">
-                    {tenant.about}
+                  <div className="relative">
+                    <div
+                      ref={aboutMobileRef}
+                      className="text-xs text-white/85 drop-shadow leading-relaxed whitespace-pre-line line-clamp-3"
+                    >
+                      {tenant.about}
+                    </div>
+                    {aboutOverflows && (
+                      <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/55 to-transparent pointer-events-none" />
+                    )}
                   </div>
                   {aboutOverflows && (
                     <div className="flex items-center gap-0.5 mt-0.5 text-white/60 group-hover:text-white/90 transition">
@@ -498,8 +515,8 @@ export function CustomerHome({
           all sizes; on mobile the "פרטי המסעדה" link collapses to a
           single 'i' chip to keep everything on one line. */}
       <section className="px-5 -mt-6 relative z-10 lg:max-w-7xl lg:mx-auto lg:px-6 lg:-mt-7">
-        <div className="bg-white border border-qf-line rounded-3xl lg:rounded-full shadow-sm px-4 py-2.5 lg:px-5 text-xs lg:max-w-4xl lg:mx-auto overflow-x-auto no-scrollbar">
-          <div className="flex items-center justify-center gap-x-2 whitespace-nowrap min-w-0">
+        <div className="bg-white border border-qf-line rounded-3xl lg:rounded-full shadow-sm px-4 py-2 lg:px-5 text-xs lg:max-w-4xl lg:mx-auto overflow-x-auto no-scrollbar">
+          <div className="flex items-center justify-center gap-x-1.5 whitespace-nowrap min-w-0">
             <span
               className={cn(
                 "inline-flex items-center gap-1.5 font-medium",
@@ -523,8 +540,8 @@ export function CustomerHome({
               <IcoClock s={13} c="#7c8a82" />
               <span>{etaLabel}</span>
             </span>
-            <span className="text-qf-line">·</span>
-            <span className="inline-flex items-center gap-1.5 text-qf-ink2">
+            <span className="text-qf-line hidden sm:inline">·</span>
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-qf-ink2">
               <IcoBike s={14} c="#7c8a82" />
               <span>{branch ? formatPrice(branch.deliveryFee) : "-"}</span>
             </span>
