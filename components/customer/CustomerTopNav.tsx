@@ -144,22 +144,25 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
               <span>ביקורות</span>
             </Link>
           )}
-          {!onCartLike && (
-            <Link
-              href={`/s/${tenantSlug}/cart`}
-              className="relative inline-flex items-center gap-2 px-3 h-10 rounded-full text-sm font-medium text-qf-ink2 hover:bg-qf-line-soft transition"
-            >
-              <span className="relative">
-                <IcoBag c="#3a4a40" s={16} />
-                {itemCount > 0 && (
-                  <span className="absolute -top-1.5 -inset-e-1.5 bg-qf-tomato text-white text-[9px] font-bold rounded-full min-w-4 h-4 px-1 grid place-items-center tnum">
-                    {itemCount}
-                  </span>
-                )}
-              </span>
-              <span>הסל שלי</span>
-            </Link>
-          )}
+          <Link
+            href={`/s/${tenantSlug}/cart`}
+            className={cn(
+              "relative inline-flex items-center gap-2 px-3 h-10 rounded-full text-sm font-medium transition",
+              onCartLike
+                ? "bg-(--qf-soft) text-(--qf-deep)"
+                : "text-qf-ink2 hover:bg-qf-line-soft",
+            )}
+          >
+            <span className="relative">
+              <IcoBag c={onCartLike ? "var(--qf-primary)" : "#3a4a40"} s={16} />
+              {!onCartLike && itemCount > 0 && (
+                <span className="absolute -top-1.5 -inset-e-1.5 bg-qf-tomato text-white text-[9px] font-bold rounded-full min-w-4 h-4 px-1 grid place-items-center tnum">
+                  {itemCount}
+                </span>
+              )}
+            </span>
+            <span>הסל שלי</span>
+          </Link>
           <Link
             href={`/s/${tenantSlug}/profile`}
             aria-label="אזור אישי"
