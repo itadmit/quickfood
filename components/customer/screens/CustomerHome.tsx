@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { IcoPin, IcoSearch, IcoClock, IcoBike, IcoArrowLeft, IcoStar, IcoInfo } from "@/components/shared/Icons";
-import { ChevronDown } from "lucide-react";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
 import { CampaignPopup } from "@/components/customer/CampaignPopup";
@@ -367,13 +366,10 @@ export function CustomerHome({
                 <button
                   type="button"
                   onClick={() => setInfoOpen(true)}
-                  className="mt-2 max-w-xl text-start cursor-pointer group"
+                  className="mt-2 max-w-xl text-start cursor-pointer"
                 >
                   <div className="text-sm text-white/85 drop-shadow leading-relaxed whitespace-pre-line line-clamp-2">
                     {tenant.about}
-                  </div>
-                  <div className="flex items-center gap-1 mt-0.5 text-white/70 group-hover:text-white text-xs transition">
-                    <ChevronDown size={15} />
                   </div>
                 </button>
               )}
@@ -458,13 +454,10 @@ export function CustomerHome({
                 <button
                   type="button"
                   onClick={() => setInfoOpen(true)}
-                  className="mt-1.5 text-start cursor-pointer group"
+                  className="mt-1.5 text-start cursor-pointer"
                 >
                   <div className="text-xs text-white/85 drop-shadow leading-relaxed whitespace-pre-line line-clamp-2">
                     {tenant.about}
-                  </div>
-                  <div className="flex items-center gap-0.5 mt-0.5 text-white/60 group-hover:text-white/90 transition">
-                    <ChevronDown size={13} />
                   </div>
                 </button>
               )}
@@ -478,8 +471,8 @@ export function CustomerHome({
           all sizes; on mobile the "פרטי המסעדה" link collapses to a
           single 'i' chip to keep everything on one line. */}
       <section className="px-5 -mt-6 relative z-10 lg:max-w-7xl lg:mx-auto lg:px-6 lg:-mt-7">
-        <div className="bg-white border border-qf-line rounded-3xl lg:rounded-full shadow-sm px-4 py-2 lg:px-5 text-xs lg:max-w-4xl lg:mx-auto overflow-x-auto no-scrollbar">
-          <div className="flex items-center justify-center gap-x-1.5 whitespace-nowrap min-w-0">
+        <div className="bg-white border border-qf-line rounded-3xl lg:rounded-full shadow-sm px-4 py-2 lg:py-2.5 lg:px-5 text-xs lg:max-w-4xl lg:mx-auto overflow-x-auto no-scrollbar">
+          <div className="flex items-center justify-center gap-x-1.5 lg:gap-x-2 whitespace-nowrap min-w-0">
             <span
               className={cn(
                 "inline-flex items-center gap-1.5 font-medium",
