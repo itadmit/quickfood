@@ -219,6 +219,7 @@ export function merchantSignupAdminEmail({
   slug,
   ownerName,
   ownerEmail,
+  ownerPhone,
   branchAddress,
   branchPhone,
   businessType,
@@ -228,6 +229,7 @@ export function merchantSignupAdminEmail({
   slug: string;
   ownerName: string;
   ownerEmail: string;
+  ownerPhone?: string;
   branchAddress: string;
   branchPhone: string;
   businessType: string;
@@ -239,7 +241,8 @@ export function merchantSignupAdminEmail({
     ["סוג עסק", businessType],
     ["שם הבעלים", ownerName],
     ["אימייל", ownerEmail],
-    ["טלפון", branchPhone],
+    ...(ownerPhone ? [["מובייל בעלים", ownerPhone] as [string, string]] : []),
+    ["טלפון סניף", branchPhone],
     ["כתובת סניף", branchAddress],
   ];
   const table = `<table dir="rtl" cellpadding="0" cellspacing="0" border="0" style="width:100%;direction:rtl;text-align:right;border-collapse:collapse;margin:4px 0 0;">

@@ -1244,6 +1244,7 @@ model MerchantUser {
   email             String                    @unique
   passwordHash      String                    @map("password_hash")
   name              String
+  phone             String?                   @map("phone")
   role              UserRole                  @default(owner)
   branches          String[]                  @default([])
   // Cashier users are pinned to one branch (their POS terminal). For other

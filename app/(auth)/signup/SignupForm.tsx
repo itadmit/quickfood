@@ -150,6 +150,7 @@ export function SignupForm() {
 
   // Step 3
   const [ownerName, setOwnerName] = useState("");
+  const [ownerPhone, setOwnerPhone] = useState("");
   const [ownerEmail, setOwnerEmail] = useState("");
   const [ownerPassword, setOwnerPassword] = useState("");
 
@@ -218,6 +219,7 @@ export function SignupForm() {
           branch_address: branchAddress,
           branch_phone: branchPhone,
           owner_name: ownerName,
+          owner_phone: ownerPhone || undefined,
           owner_email: ownerEmail.toLowerCase(),
           owner_password: ownerPassword,
           client_type: "web",
@@ -408,6 +410,8 @@ export function SignupForm() {
           <Step3
             name={ownerName}
             setName={setOwnerName}
+            phone={ownerPhone}
+            setPhone={setOwnerPhone}
             email={ownerEmail}
             setEmail={setOwnerEmail}
             password={ownerPassword}
@@ -1275,6 +1279,8 @@ function Step2({
 function Step3({
   name,
   setName,
+  phone,
+  setPhone,
   email,
   setEmail,
   password,
@@ -1282,6 +1288,8 @@ function Step3({
 }: {
   name: string;
   setName: (v: string) => void;
+  phone: string;
+  setPhone: (v: string) => void;
   email: string;
   setEmail: (v: string) => void;
   password: string;
@@ -1301,6 +1309,19 @@ function Step3({
           autoComplete="name"
           className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
         />
+      </Field>
+      <Field label="מספר נייד אישי" hint="לא יוצג ללקוחות">
+        <input
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          dir="ltr"
+          inputMode="tel"
+          autoComplete="tel"
+          placeholder="050-1234567"
+          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
+        />
+        <p className="text-xs text-black/55 mt-1">לצורך תמיכה ועדכונים מצוות QuickFood</p>
       </Field>
       <Field label="אימייל" required>
         <input
