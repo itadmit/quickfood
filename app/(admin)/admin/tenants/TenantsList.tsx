@@ -63,6 +63,7 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
   const [items, setItems] = useState(tenants);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string; step: 1 | 2 } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   async function setStatus(id: string, status: "active" | "suspended") {
     setItems((p) => p.map((t) => (t.id === id ? { ...t, status } : t)));
@@ -76,11 +77,16 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
 
   async function confirmDelete() {
     if (!deleteConfirm) return;
+    const { id } = deleteConfirm;
     setDeleting(true);
+    setDeleteError(null);
     try {
-      const res = await fetch(`/api/v1/admin/tenants/${deleteConfirm.id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
-      setItems((p) => p.filter((t) => t.id !== deleteConfirm.id));
+      const res = await fetch(`/api/v1/admin/tenants/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`${res.status}`);
+      setItems((p) => p.filter((t) => t.id !== id));
+      setDeleteConfirm(null);
+    } catch {
+      setDeleteError("המחיקה נכשלה — נסה שנית");
       setDeleteConfirm(null);
     } finally {
       setDeleting(false);
@@ -99,6 +105,12 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
 
   return (
     <div className="space-y-5">
+      {deleteError && (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-qf-tomato-soft border border-qf-tomato/30 text-sm text-qf-tomato">
+          <span>{deleteError}</span>
+          <button type="button" onClick={() => setDeleteError(null)} className="text-qf-tomato/60 hover:text-qf-tomato text-xs">סגור</button>
+        </div>
+      )}
       <header className="flex items-end justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold">לקוחות הפלטפורמה</h1>
