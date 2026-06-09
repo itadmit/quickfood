@@ -85,10 +85,9 @@ const SignupSchema = z.object({
     .min(1, "שם הבעלים חסר")
     .max(80, "שם ארוך מדי"),
   owner_phone: z
-    .string()
+    .string({ required_error: "מספר נייד חסר" })
     .min(7, "מספר טלפון חייב להכיל לפחות 7 ספרות")
-    .max(20, "מספר טלפון ארוך מדי")
-    .optional(),
+    .max(20, "מספר טלפון ארוך מדי"),
   owner_email: z
     .string({ required_error: "כתובת מייל חסרה" })
     .email("כתובת מייל לא תקינה"),
@@ -191,7 +190,7 @@ export const POST = handler(async (req: Request) => {
             email: body.owner_email.toLowerCase(),
             passwordHash,
             name: body.owner_name,
-            phone: body.owner_phone ?? null,
+            phone: body.owner_phone,
             role: "owner",
           },
         ],

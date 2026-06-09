@@ -219,7 +219,7 @@ export function SignupForm() {
           branch_address: branchAddress,
           branch_phone: branchPhone,
           owner_name: ownerName,
-          owner_phone: ownerPhone || undefined,
+          owner_phone: ownerPhone,
           owner_email: ownerEmail.toLowerCase(),
           owner_password: ownerPassword,
           client_type: "web",
@@ -1310,18 +1310,19 @@ function Step3({
           className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
         />
       </Field>
-      <Field label="מספר נייד אישי" hint="לא יוצג ללקוחות">
+      <Field label="מספר נייד אישי" required>
         <input
           type="tel"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           dir="ltr"
+          required
+          aria-required="true"
           inputMode="tel"
           autoComplete="tel"
           placeholder="050-1234567"
           className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
         />
-        <p className="text-xs text-black/55 mt-1">לצורך תמיכה ועדכונים מצוות QuickFood</p>
       </Field>
       <Field label="אימייל" required>
         <input
