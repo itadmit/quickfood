@@ -132,46 +132,6 @@ export function RestaurantInfoModal({
             </Link>
           )}
 
-          <section>
-            <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5">
-              <IcoClock s={14} c="#7c8a82" />
-              שעות פעילות
-            </h3>
-            <ul className="text-sm space-y-1">
-              {DAY_KEYS.map((d, idx) => {
-                const day = hours[d.key];
-                const isToday = idx === todayIdx;
-                return (
-                  <li
-                    key={d.key}
-                    className={cn(
-                      "flex items-center justify-between py-1.5 px-3 rounded-lg",
-                      isToday && "bg-qf-green-soft border border-(--qf-primary)/30",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "text-qf-ink2",
-                        isToday && "text-qf-green-deep font-bold",
-                      )}
-                    >
-                      {d.label}
-                      {isToday && <span className="mr-1.5 text-xs">(היום)</span>}
-                    </span>
-                    <span
-                      className={cn(
-                        "tnum tabular-nums",
-                        day?.active ? "text-qf-ink" : "text-qf-mute",
-                      )}
-                    >
-                      {day?.active ? `${day.open} – ${day.close}` : "סגור"}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-
           <section className="space-y-2">
             <h3 className="text-sm font-bold mb-2">פרטי קשר</h3>
             <a
@@ -232,6 +192,46 @@ export function RestaurantInfoModal({
                 </div>
               )}
             </dl>
+          </section>
+
+          <section>
+            <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5">
+              <IcoClock s={14} c="#7c8a82" />
+              שעות פעילות
+            </h3>
+            <ul className="text-sm space-y-1">
+              {DAY_KEYS.map((d, idx) => {
+                const day = hours[d.key];
+                const isToday = idx === todayIdx;
+                return (
+                  <li
+                    key={d.key}
+                    className={cn(
+                      "flex items-center justify-between py-1.5 px-3 rounded-lg",
+                      isToday && "bg-qf-green-soft border border-(--qf-primary)/30",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "text-qf-ink2",
+                        isToday && "text-qf-green-deep font-bold",
+                      )}
+                    >
+                      {d.label}
+                      {isToday && <span className="mr-1.5 text-xs">(היום)</span>}
+                    </span>
+                    <span
+                      className={cn(
+                        "tnum tabular-nums",
+                        day?.active ? "text-qf-ink" : "text-qf-mute",
+                      )}
+                    >
+                      {day?.active ? `${day.open} – ${day.close}` : "סגור"}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
           </section>
         </div>
       </div>
