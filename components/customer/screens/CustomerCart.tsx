@@ -67,7 +67,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
           <h1 className="font-bold text-lg">הסל שלי</h1>
         </header>
         <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
-          <div className="w-20 h-20 rounded-full bg-qf-green-soft grid place-items-center mb-4">
+          <div className="w-20 h-20 rounded-full bg-(--qf-soft) grid place-items-center mb-4">
             <IcoBag c="var(--qf-primary)" s={36} />
           </div>
           <h2 className="font-semibold text-lg mb-1">הסל ריק</h2>

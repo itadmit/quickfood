@@ -55,7 +55,7 @@ export function ProfileLogin() {
   return (
     <div className="px-5 py-8 space-y-4 lg:max-w-md lg:mx-auto lg:p-8 lg:bg-white lg:border lg:border-qf-line lg:rounded-3xl lg:shadow-xs lg:mt-6">
       <div className="flex flex-col items-center text-center">
-        <div className="w-20 h-20 rounded-full bg-qf-green-soft grid place-items-center mb-3">
+        <div className="w-20 h-20 rounded-full bg-(--qf-soft) grid place-items-center mb-3">
           <IcoPhoneSms c="var(--qf-primary)" s={36} />
         </div>
         <h2 className="text-xl font-bold">התחברות עם טלפון</h2>

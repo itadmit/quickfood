@@ -147,7 +147,7 @@ export function ProfileLoggedIn({
                 href={`/s/${tenantSlug}/orders/${o.id}`}
                 className="block bg-white rounded-2xl border border-qf-line p-3 flex items-center gap-3"
               >
-                <div className="w-10 h-10 rounded-xl bg-qf-green-soft grid place-items-center">
+                <div className="w-10 h-10 rounded-xl bg-(--qf-soft) grid place-items-center">
                   <IcoReceipt c="var(--qf-primary)" s={20} />
                 </div>
                 <div className="flex-1 min-w-0">

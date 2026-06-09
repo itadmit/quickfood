@@ -40,7 +40,7 @@ export function MenuCartSidebar({ tenantSlug, businessType }: Props) {
 
       {lines.length === 0 ? (
         <div className="p-8 text-center text-sm text-qf-mute flex-1 flex flex-col items-center justify-center gap-3">
-          <div className="w-14 h-14 rounded-full bg-qf-green-soft grid place-items-center">
+          <div className="w-14 h-14 rounded-full bg-(--qf-soft) grid place-items-center">
             <IcoBag c="var(--qf-primary)" s={24} />
           </div>
           <div>

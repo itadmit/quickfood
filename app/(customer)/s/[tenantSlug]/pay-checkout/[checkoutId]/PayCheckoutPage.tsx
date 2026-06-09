@@ -117,7 +117,7 @@ export function PayCheckoutPage({
   if (status === "completed") {
     return (
       <div className="min-h-[80vh] max-w-md mx-auto flex flex-col items-center justify-center gap-6 p-6 text-center">
-        <div className="w-20 h-20 rounded-full bg-qf-green-soft grid place-items-center">
+        <div className="w-20 h-20 rounded-full bg-(--qf-soft) grid place-items-center">
           <svg
             viewBox="0 0 24 24"
             width="40"
