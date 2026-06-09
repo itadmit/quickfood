@@ -13,6 +13,7 @@ import { z } from "zod";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
+import { deletePrefix } from "@/lib/storage/r2";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -172,9 +173,20 @@ export const DELETE = handler(
     });
     if (!existing) return apiError("not_found", "מסעדה לא נמצאה", 404);
 
+    // Purge R2 images before removing the DB row.
+    // Direct uploads live under `{tenantId}/`, Wolt-imported images under `tenants/{tenantId}/`.
+    // Best-effort — partial R2 failures don't abort the delete.
+    const [r2Direct, r2Wolt] = await Promise.allSettled([
+      deletePrefix(`${id}/`),
+      deletePrefix(`tenants/${id}/`),
+    ]);
+    const r2Deleted =
+      (r2Direct.status === "fulfilled" ? r2Direct.value.deleted : 0) +
+      (r2Wolt.status === "fulfilled" ? r2Wolt.value.deleted : 0);
+
     // Cascade is configured on every Tenant relation, so a single delete
     // removes branches, users, orders, menus, campaigns, logs, etc.
     await prisma.tenant.delete({ where: { id } });
-    return apiJson({ deleted: { id, slug: existing.slug } });
+    return apiJson({ deleted: { id, slug: existing.slug, r2Deleted } });
   },
 );

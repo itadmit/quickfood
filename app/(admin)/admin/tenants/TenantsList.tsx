@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/format";
 import { THEMES } from "@/lib/themes";
 import { cn } from "@/lib/cn";
+import { Trash2, AlertTriangle } from "lucide-react";
 
 interface Tenant {
   id: string;
@@ -60,6 +61,8 @@ const STATUS_LABEL: Record<string, string> = {
 export function TenantsList({ tenants }: { tenants: Tenant[] }) {
   const router = useRouter();
   const [items, setItems] = useState(tenants);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string; step: 1 | 2 } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   async function setStatus(id: string, status: "active" | "suspended") {
     setItems((p) => p.map((t) => (t.id === id ? { ...t, status } : t)));
@@ -69,6 +72,19 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
       body: JSON.stringify({ status }),
     });
     router.refresh();
+  }
+
+  async function confirmDelete() {
+    if (!deleteConfirm) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/v1/admin/tenants/${deleteConfirm.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      setItems((p) => p.filter((t) => t.id !== deleteConfirm.id));
+      setDeleteConfirm(null);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   const counts = {
@@ -106,7 +122,7 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
       </div>
 
       <div className="bg-white rounded-2xl border border-qf-line-dash overflow-hidden">
-        <div className="hidden lg:grid grid-cols-[1.4fr_140px_120px_120px_120px_120px_120px] gap-3 px-5 py-3 text-xs font-medium text-qf-mute border-b border-qf-line-soft bg-qf-line-soft/40">
+        <div className="hidden lg:grid grid-cols-[1.4fr_140px_120px_120px_120px_120px_160px] gap-3 px-5 py-3 text-xs font-medium text-qf-mute border-b border-qf-line-soft bg-qf-line-soft/40">
           <div>מסעדה</div>
           <div>פעילות</div>
           <div>תפריט</div>
@@ -116,7 +132,12 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
           <div></div>
         </div>
         {items.map((t) => (
-          <TenantRow key={t.id} t={t} onSetStatus={setStatus} />
+          <TenantRow
+            key={t.id}
+            t={t}
+            onSetStatus={setStatus}
+            onDelete={(id, name) => setDeleteConfirm({ id, name, step: 1 })}
+          />
         ))}
         {items.length === 0 && (
           <div className="px-5 py-10 text-center text-sm text-qf-mute">
@@ -124,6 +145,59 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
           </div>
         )}
       </div>
+
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 w-9 h-9 rounded-full bg-qf-tomato-soft flex items-center justify-center shrink-0">
+                <AlertTriangle size={18} className="text-qf-tomato" />
+              </div>
+              <div>
+                <h2 className="font-bold text-base">מחיקת חנות</h2>
+                {deleteConfirm.step === 1 ? (
+                  <p className="text-sm text-qf-ink2 mt-1">
+                    האם למחוק את <span className="font-semibold text-qf-ink">{deleteConfirm.name}</span>?<br />
+                    פעולה זו תמחק את כל הנתונים והתמונות לצמיתות.
+                  </p>
+                ) : (
+                  <p className="text-sm text-qf-tomato font-medium mt-1">
+                    אישור אחרון — לא ניתן לבטל. מחק את <span className="font-semibold">{deleteConfirm.name}</span>?
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirm(null)}
+                disabled={deleting}
+                className="px-3.5 py-2 rounded-xl border border-qf-line-dash text-sm hover:bg-qf-line-soft"
+              >
+                ביטול
+              </button>
+              {deleteConfirm.step === 1 ? (
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirm({ ...deleteConfirm, step: 2 })}
+                  className="px-3.5 py-2 rounded-xl bg-qf-tomato text-white text-sm font-medium hover:opacity-90"
+                >
+                  כן, מחק
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={confirmDelete}
+                  disabled={deleting}
+                  className="px-3.5 py-2 rounded-xl bg-qf-tomato text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
+                >
+                  {deleting ? "מוחק…" : "מחק לצמיתות"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -131,9 +205,11 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
 function TenantRow({
   t,
   onSetStatus,
+  onDelete,
 }: {
   t: Tenant;
   onSetStatus: (id: string, status: "active" | "suspended") => void;
+  onDelete: (id: string, name: string) => void;
 }) {
   const theme = THEMES[t.themeId] ?? THEMES.fresh;
   const activity = classifyActivity(t);
@@ -262,6 +338,17 @@ function TenantRow({
       </button>
     );
 
+  const deleteButton = (cls: string) => (
+    <button
+      type="button"
+      onClick={() => onDelete(t.id, t.name)}
+      className={cn(cls, "border border-qf-tomato/30 text-qf-tomato hover:bg-qf-tomato-soft")}
+      title="מחק חנות"
+    >
+      <Trash2 size={14} />
+    </button>
+  );
+
   return (
     <>
       {/* Mobile card */}
@@ -283,11 +370,12 @@ function TenantRow({
             "flex-1 text-center px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-xs hover:bg-qf-line-soft",
           )}
           {statusButton("flex-1 text-center px-2.5 py-1.5 rounded-lg text-xs font-medium")}
+          {deleteButton("px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-center")}
         </div>
       </div>
 
       {/* Desktop grid row */}
-      <div className="hidden lg:grid grid-cols-[1.4fr_140px_120px_120px_120px_120px_120px] gap-3 px-5 py-3 items-center border-b border-qf-line-soft last:border-b-0 hover:bg-qf-line-soft/40">
+      <div className="hidden lg:grid grid-cols-[1.4fr_140px_120px_120px_120px_120px_160px] gap-3 px-5 py-3 items-center border-b border-qf-line-soft last:border-b-0 hover:bg-qf-line-soft/40">
         {nameCell}
         <div>{activityCell}</div>
         <div className="text-sm">{menuCell}</div>
@@ -299,6 +387,7 @@ function TenantRow({
             "px-2.5 py-1 rounded-lg border border-qf-line-dash text-xs hover:bg-qf-line-soft",
           )}
           {statusButton("px-2.5 py-1 rounded-lg text-xs")}
+          {deleteButton("px-2 py-1 rounded-lg text-xs flex items-center justify-center")}
         </div>
       </div>
     </>
