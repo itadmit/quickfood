@@ -13,37 +13,37 @@ import { Skeleton } from "@/components/shared/Skeleton";
 export default function CustomerHomeLoading() {
   return (
     <div className="pb-24 lg:pb-12">
-      {/* Hero - replaces the cover image / green band */}
-      <header className="relative bg-qf-green-soft text-white px-5 pt-5 pb-12 overflow-hidden rounded-b-3xl lg:rounded-none lg:px-6 lg:pt-12 lg:pb-16">
+      {/* Hero - replaces the cover image / theme band */}
+      <header className="relative bg-(--qf-primary) px-5 pt-5 pb-12 overflow-hidden rounded-b-3xl lg:rounded-none lg:px-6 lg:pt-12 lg:pb-16">
         <div className="lg:max-w-7xl lg:mx-auto">
           {/* Mobile pill + icon row */}
           <div className="flex items-center justify-between mb-4 lg:hidden">
-            <Skeleton className="h-8 w-28 rounded-full bg-white/40" />
-            <Skeleton className="h-9 w-9 rounded-full bg-white/40" />
+            <Skeleton className="h-8 w-28 rounded-full bg-white/30" />
+            <Skeleton className="h-9 w-9 rounded-full bg-white/30" />
           </div>
           {/* Mobile compact name row */}
           <div className="flex items-center gap-3 lg:hidden">
-            <Skeleton className="w-14 h-14 rounded-2xl bg-white/50" />
+            <Skeleton className="w-14 h-14 rounded-2xl bg-white/40" />
             <div className="flex-1 space-y-2">
-              <Skeleton className="h-5 w-1/2 bg-white/50" />
-              <Skeleton className="h-3 w-3/4 bg-white/40" />
+              <Skeleton className="h-5 w-1/2 bg-white/40" />
+              <Skeleton className="h-3 w-3/4 bg-white/30" />
             </div>
           </div>
           {/* Desktop name + cuisine + search */}
           <div className="hidden lg:flex items-center gap-4 mb-6">
-            <Skeleton className="w-20 h-20 rounded-2xl bg-white/40" />
+            <Skeleton className="w-20 h-20 rounded-2xl bg-white/30" />
             <div className="flex-1 space-y-3">
-              <Skeleton className="h-9 w-72 bg-white/50" />
-              <Skeleton className="h-4 w-48 bg-white/40" />
+              <Skeleton className="h-9 w-72 bg-white/40" />
+              <Skeleton className="h-4 w-48 bg-white/30" />
             </div>
           </div>
           {/* Delivery/pickup toggle */}
-          <div className="hidden lg:grid grid-cols-2 gap-1 lg:max-w-sm bg-white/20 rounded-2xl p-1 mb-4">
-            <Skeleton className="h-9 rounded-xl bg-white/50" />
-            <Skeleton className="h-9 rounded-xl bg-white/30" />
+          <div className="hidden lg:grid grid-cols-2 gap-1 lg:max-w-sm bg-white/15 rounded-2xl p-1 mb-4">
+            <Skeleton className="h-9 rounded-xl bg-white/40" />
+            <Skeleton className="h-9 rounded-xl bg-white/25" />
           </div>
           {/* Mobile search bar */}
-          <Skeleton className="lg:hidden mt-4 h-11 w-full rounded-full bg-white/50" />
+          <Skeleton className="lg:hidden mt-4 h-11 w-full rounded-full bg-white/40" />
         </div>
       </header>
 

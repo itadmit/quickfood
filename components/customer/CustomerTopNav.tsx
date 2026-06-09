@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { IcoUser, IcoMenuList, IcoHome, IcoBag, IcoSearch, IcoStar } from "@/components/shared/Icons";
 import { useCart } from "./CartProvider";
@@ -36,6 +37,20 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
   const showReviewsLink = !!tenant?.reviewsPublic;
 
   const onOrderPage = /^\/[^/]+\/orders\/[^/]+/.test(path);
+
+  const [menuActive, setMenuActive] = useState(false);
+  useEffect(() => {
+    if (!onHome) { setMenuActive(false); return; }
+    function check() {
+      const el = document.getElementById("menu-section");
+      if (!el) return;
+      setMenuActive(el.getBoundingClientRect().top <= 80);
+    }
+    check();
+    window.addEventListener("scroll", check, { passive: true });
+    return () => window.removeEventListener("scroll", check);
+  }, [onHome]);
+
   if (onOrderPage) return null;
 
   function handleMenuClick(e: React.MouseEvent) {
@@ -110,20 +125,25 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
             onClick={handleHomeClick}
             className={cn(
               "inline-flex items-center gap-2 px-3 h-10 rounded-full text-sm font-medium transition",
-              onHome
+              onHome && !menuActive
                 ? "bg-(--qf-soft) text-(--qf-deep)"
                 : "text-qf-ink2 hover:bg-qf-line-soft",
             )}
           >
-            <IcoHome c={onHome ? "var(--qf-primary)" : "#3a4a40"} s={16} />
+            <IcoHome c={onHome && !menuActive ? "var(--qf-primary)" : "#3a4a40"} s={16} />
             <span>בית</span>
           </Link>
           <Link
             href={`${homePath}#menu-section`}
             onClick={handleMenuClick}
-            className="inline-flex items-center gap-2 px-3 h-10 rounded-full text-sm font-medium text-qf-ink2 hover:bg-qf-line-soft transition"
+            className={cn(
+              "inline-flex items-center gap-2 px-3 h-10 rounded-full text-sm font-medium transition",
+              menuActive
+                ? "bg-(--qf-soft) text-(--qf-deep)"
+                : "text-qf-ink2 hover:bg-qf-line-soft",
+            )}
           >
-            <IcoMenuList c="#3a4a40" s={16} />
+            <IcoMenuList c={menuActive ? "var(--qf-primary)" : "#3a4a40"} s={16} />
             <span>תפריט</span>
           </Link>
           {showReviewsLink && (
