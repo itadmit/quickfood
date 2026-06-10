@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/format";
 import { THEMES } from "@/lib/themes";
 import { cn } from "@/lib/cn";
-import { Trash2, AlertTriangle, ExternalLink } from "lucide-react";
+import { Trash2, AlertTriangle, ExternalLink, Copy } from "lucide-react";
 
 interface Tenant {
   id: string;
@@ -64,6 +64,7 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string; step: 1 | 2 } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [duplicateOf, setDuplicateOf] = useState<Tenant | null>(null);
 
   async function setStatus(id: string, status: "active" | "suspended") {
     setItems((p) => p.map((t) => (t.id === id ? { ...t, status } : t)));
@@ -143,7 +144,7 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
       </div>
 
       <div className="bg-white rounded-2xl border border-qf-line-dash overflow-hidden">
-        <div className="hidden lg:grid grid-cols-[1.4fr_140px_120px_120px_120px_120px_160px] gap-3 px-5 py-3 text-xs font-medium text-qf-mute border-b border-qf-line-soft bg-qf-line-soft/40">
+        <div className="hidden lg:grid grid-cols-[1.4fr_140px_110px_110px_100px_110px_230px] gap-3 px-5 py-3 text-xs font-medium text-qf-mute border-b border-qf-line-soft bg-qf-line-soft/40">
           <div>מסעדה</div>
           <div>פעילות</div>
           <div>תפריט</div>
@@ -158,6 +159,7 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
             t={t}
             onSetStatus={setStatus}
             onDelete={(id, name) => setDeleteConfirm({ id, name, step: 1 })}
+            onDuplicate={(tn) => setDuplicateOf(tn)}
           />
         ))}
         {items.length === 0 && (
@@ -219,6 +221,18 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
           </div>
         </div>
       )}
+
+      {duplicateOf && (
+        <DuplicateDialog
+          source={duplicateOf}
+          onClose={() => setDuplicateOf(null)}
+          onDone={(slug) => {
+            setDuplicateOf(null);
+            router.refresh();
+            window.open(`/s/${slug}`, "_blank", "noopener");
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -227,10 +241,12 @@ function TenantRow({
   t,
   onSetStatus,
   onDelete,
+  onDuplicate,
 }: {
   t: Tenant;
   onSetStatus: (id: string, status: "active" | "suspended") => void;
   onDelete: (id: string, name: string) => void;
+  onDuplicate: (t: Tenant) => void;
 }) {
   const theme = THEMES[t.themeId] ?? THEMES.fresh;
   const activity = classifyActivity(t);
@@ -372,6 +388,18 @@ function TenantRow({
       </button>
     );
 
+  const duplicateButton = (cls: string) => (
+    <button
+      type="button"
+      onClick={() => onDuplicate(t)}
+      className={cn(cls, "border border-qf-line-dash hover:bg-qf-line-soft flex items-center justify-center")}
+      title="שכפל חנות (סניף נוסף)"
+      aria-label="שכפל חנות"
+    >
+      <Copy size={14} />
+    </button>
+  );
+
   const deleteButton = (cls: string) => (
     <button
       type="button"
@@ -404,13 +432,14 @@ function TenantRow({
             "flex-1 text-center px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-xs hover:bg-qf-line-soft",
           )}
           {storeLink("px-2.5 py-1.5 rounded-lg text-xs")}
+          {duplicateButton("px-2.5 py-1.5 rounded-lg text-xs")}
           {statusButton("flex-1 text-center px-2.5 py-1.5 rounded-lg text-xs font-medium")}
           {deleteButton("px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-center")}
         </div>
       </div>
 
       {/* Desktop grid row */}
-      <div className="hidden lg:grid grid-cols-[1.4fr_140px_120px_120px_120px_120px_160px] gap-3 px-5 py-3 items-center border-b border-qf-line-soft last:border-b-0 hover:bg-qf-line-soft/40">
+      <div className="hidden lg:grid grid-cols-[1.4fr_140px_110px_110px_100px_110px_230px] gap-3 px-5 py-3 items-center border-b border-qf-line-soft last:border-b-0 hover:bg-qf-line-soft/40">
         {nameCell}
         <div>{activityCell}</div>
         <div className="text-sm">{menuCell}</div>
@@ -421,6 +450,8 @@ function TenantRow({
           {openLink(
             "px-2.5 py-1 rounded-lg border border-qf-line-dash text-xs hover:bg-qf-line-soft",
           )}
+          {storeLink("px-2 py-1 rounded-lg text-xs")}
+          {duplicateButton("px-2 py-1 rounded-lg text-xs")}
           {statusButton("px-2.5 py-1 rounded-lg text-xs")}
           {deleteButton("px-2 py-1 rounded-lg text-xs flex items-center justify-center")}
         </div>
@@ -452,6 +483,165 @@ function StatCard({ label, value, tone, hint }: { label: string; value: number; 
       <div className={cn("text-2xl font-bold tnum", tone)}>{value}</div>
       <div className="text-xs font-medium mt-0.5">{label}</div>
       <div className="text-[10px] text-qf-mute mt-0.5">{hint}</div>
+    </div>
+  );
+}
+
+function DuplicateDialog({
+  source,
+  onClose,
+  onDone,
+}: {
+  source: Tenant;
+  onClose: () => void;
+  onDone: (slug: string) => void;
+}) {
+  const [slug, setSlug] = useState(`${source.slug}-2`);
+  const [name, setName] = useState(source.name);
+  const [ownerName, setOwnerName] = useState("");
+  const [ownerEmail, setOwnerEmail] = useState("");
+  const [ownerPassword, setOwnerPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const slugOk = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/.test(slug);
+  const canSubmit =
+    slugOk &&
+    name.trim().length > 0 &&
+    ownerName.trim().length > 0 &&
+    /\S+@\S+\.\S+/.test(ownerEmail) &&
+    ownerPassword.length >= 8;
+
+  async function submit() {
+    if (!canSubmit || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/v1/admin/tenants/${source.id}/duplicate`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          name: name.trim(),
+          owner: { name: ownerName.trim(), email: ownerEmail.trim().toLowerCase(), password: ownerPassword },
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(body?.error?.message ?? `שגיאה ${res.status}`);
+        return;
+      }
+      onDone(body.tenant.slug as string);
+    } catch {
+      setError("שגיאת רשת — נסה שוב");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 w-9 h-9 rounded-full bg-(--qf-soft) flex items-center justify-center shrink-0">
+            <Copy size={18} className="text-(--qf-deep)" />
+          </div>
+          <div>
+            <h2 className="font-bold text-base">שכפול חנות</h2>
+            <p className="text-sm text-qf-ink2 mt-1">
+              משכפל את <span className="font-semibold text-qf-ink">{source.name}</span> לחנות
+              חדשה — כל ההגדרות והתפריט. <span className="text-qf-mute">לא כולל תשלום, דומיין, חיוב והזמנות.</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <Labeled label="שם החנות החדשה">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm"
+            />
+          </Labeled>
+          <Labeled label="כתובת (slug)" hint={slugOk ? `quickfood.co.il/s/${slug}` : "אותיות קטנות, ספרות ומקפים"}>
+            <input
+              value={slug}
+              onChange={(e) => setSlug(e.target.value.toLowerCase())}
+              dir="ltr"
+              className={cn(
+                "w-full px-3 py-2 rounded-xl border outline-none text-sm",
+                slug && !slugOk ? "border-qf-tomato" : "border-qf-line-dash focus:border-(--qf-primary)",
+              )}
+            />
+          </Labeled>
+
+          <div className="pt-1 border-t border-qf-line-soft">
+            <div className="text-xs font-semibold text-qf-mute mt-3 mb-2">בעלים לחנות החדשה (לוגין נפרד)</div>
+            <div className="space-y-3">
+              <Labeled label="שם הבעלים">
+                <input
+                  value={ownerName}
+                  onChange={(e) => setOwnerName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm"
+                />
+              </Labeled>
+              <Labeled label="אימייל" hint="חייב להיות שונה מהבעלים של המקור">
+                <input
+                  value={ownerEmail}
+                  onChange={(e) => setOwnerEmail(e.target.value)}
+                  type="email"
+                  dir="ltr"
+                  className="w-full px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm"
+                />
+              </Labeled>
+              <Labeled label="סיסמה" hint="לפחות 8 תווים">
+                <input
+                  value={ownerPassword}
+                  onChange={(e) => setOwnerPassword(e.target.value)}
+                  type="text"
+                  dir="ltr"
+                  className="w-full px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm"
+                />
+              </Labeled>
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="text-sm text-qf-tomato bg-qf-tomato-soft border border-qf-tomato/30 rounded-xl px-3 py-2">
+            {error}
+          </div>
+        )}
+
+        <div className="flex gap-2 justify-end pt-1">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="px-3.5 py-2 rounded-xl border border-qf-line-dash text-sm hover:bg-qf-line-soft"
+          >
+            ביטול
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!canSubmit || busy}
+            className="px-3.5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-50"
+          >
+            {busy ? "משכפל…" : "שכפל חנות"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Labeled({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <label className="text-xs font-medium block">{label}</label>
+      {children}
+      {hint && <div className="text-[11px] text-qf-mute" dir="auto">{hint}</div>}
     </div>
   );
 }

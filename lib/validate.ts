@@ -469,6 +469,23 @@ export const TenantCreateSchema = z.object({
   }),
 });
 
+// Duplicate an existing tenant (catalog + settings) into a fresh store with
+// its own slug and owner. Payment config, custom domain, billing linkage and
+// runtime data are NOT copied - see the duplicate route.
+export const TenantDuplicateSchema = z.object({
+  slug: z
+    .string()
+    .min(2)
+    .max(40)
+    .regex(/^[a-z0-9-]+$/, "slug must be lowercase letters, digits and hyphens"),
+  name: z.string().min(1).max(120).optional(),
+  owner: z.object({
+    email: EmailSchema,
+    name: z.string().min(1).max(80),
+    password: z.string().min(8).max(128),
+  }),
+});
+
 // ─── Payments (merchant settings) ──────────────────────────────
 
 /**
