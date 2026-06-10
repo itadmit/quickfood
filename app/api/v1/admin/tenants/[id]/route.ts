@@ -186,7 +186,12 @@ export const DELETE = handler(
 
     // Cascade is configured on every Tenant relation, so a single delete
     // removes branches, users, orders, menus, campaigns, logs, etc.
-    await prisma.tenant.delete({ where: { id } });
+    try {
+      await prisma.tenant.delete({ where: { id } });
+    } catch (err) {
+      console.error("[admin] tenant delete failed", id, err);
+      throw err;
+    }
     return apiJson({ deleted: { id, slug: existing.slug, r2Deleted } });
   },
 );

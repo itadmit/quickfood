@@ -82,11 +82,20 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
     setDeleteError(null);
     try {
       const res = await fetch(`/api/v1/admin/tenants/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(`${res.status}`);
+      if (!res.ok) {
+        let msg = `שגיאה ${res.status}`;
+        try {
+          const body = await res.json();
+          if (body?.error?.message) msg = body.error.message;
+        } catch { /* ignore parse error */ }
+        setDeleteError(msg);
+        setDeleteConfirm(null);
+        return;
+      }
       setItems((p) => p.filter((t) => t.id !== id));
       setDeleteConfirm(null);
-    } catch {
-      setDeleteError("המחיקה נכשלה — נסה שנית");
+    } catch (err) {
+      setDeleteError(`המחיקה נכשלה — ${err instanceof Error ? err.message : "נסה שנית"}`);
       setDeleteConfirm(null);
     } finally {
       setDeleting(false);
