@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Sparkles, MapPin, User, Check, X, Star } from "lucide-react";
+import { Sparkles, MapPin, User, Check, X, Star, Mail } from "lucide-react";
 import { IcoArrowLeft, IcoArrowRight } from "@/components/shared/Icons";
 import { THEMES, type ThemeId } from "@/lib/themes";
 import { type BusinessType } from "@/components/shared/MenuItemImage";
@@ -1335,10 +1335,10 @@ function Step3({
           autoComplete="email"
           className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
         />
-        <div className="mt-1.5 flex items-start gap-2 px-3 py-2 rounded-lg bg-[#FFF6CC] border border-black/15">
-          <span aria-hidden className="text-base leading-none mt-0.5">!</span>
-          <p className="text-xs text-black/75 leading-relaxed">
-            <span className="font-bold">שים לב:</span> יש להזין כתובת דוא״ל אמיתית. נשלח לשם מייל לאימות וצריך ללחוץ עליו כדי להפעיל את החנות.
+        <div className="mt-2 flex items-start gap-3 px-4 py-3 rounded-xl bg-white border border-black/12 shadow-sm">
+          <Mail size={16} className="shrink-0 mt-0.5 text-black/50" />
+          <p className="text-xs text-black/70 leading-relaxed">
+            <span className="font-bold text-black/85">חשוב:</span> יש להזין כתובת דוא״ל פעילה. מיד לאחר ההרשמה נשלח אליכם מייל אימות, ולחיצה על קישור האימות תפעיל את החנות שלכם ותאפשר להתחיל לעבוד.
           </p>
         </div>
       </Field>
