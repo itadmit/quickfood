@@ -1,4 +1,4 @@
-import { handler, apiJson, apiError } from "@/lib/api-response";
+import { handler, apiJson } from "@/lib/api-response";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 
@@ -14,8 +14,12 @@ export const dynamic = "force-dynamic";
  */
 export const GET = handler(async (req: Request) => {
   const session = await getSession();
+  // A guest simply has no favorites. Return an empty list (200) rather than
+  // 401 so the storefront's on-mount fetch doesn't log a noisy Unauthorized
+  // for every anonymous visitor. The toggle (POST/DELETE) still 401s to drive
+  // the login hint.
   if (!session || session.type !== "customer") {
-    return apiError("auth_required", "צריך להתחבר", 401);
+    return apiJson({ favorites: [] });
   }
 
   const url = new URL(req.url);
