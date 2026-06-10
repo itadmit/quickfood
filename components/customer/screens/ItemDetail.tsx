@@ -762,12 +762,20 @@ export function ItemDetail({
         const remaining = Math.max(0, g.maxSelect - selected);
         const atMax = selected >= g.maxSelect;
         const freeRemaining = Math.max(0, free - selected);
+        // A maxSelect at/above the number of options is effectively "no
+        // limit" (the data often carries a 999 sentinel). Don't surface the
+        // raw cap as "4/999" / "אפשר לבחור עוד 995".
+        const unlimited = g.type === "multi" && g.maxSelect >= g.options.length;
 
         let subtitle: string;
         if (g.required) {
           const effectiveMin = Math.max(1, g.minSelect);
           if (g.type === "single") {
             subtitle = selected > 0 ? "נבחר" : "חובה לבחור 1";
+          } else if (unlimited) {
+            subtitle = selected >= effectiveMin
+              ? `הושלם · נבחרו ${selected}`
+              : `חובה לבחור לפחות ${effectiveMin} · נבחרו ${selected}`;
           } else {
             const range =
               effectiveMin === g.maxSelect
@@ -778,7 +786,15 @@ export function ItemDetail({
               : `חובה ${range} · ${selected}/${g.maxSelect}`;
           }
         } else if (g.type === "multi") {
-          if (atMax) {
+          if (unlimited) {
+            subtitle = selected > 0
+              ? (freeRemaining > 0
+                  ? `נבחרו ${selected} · ${freeRemaining} חינם נותרו`
+                  : `נבחרו ${selected}`)
+              : (free > 0
+                  ? `${free} הראשונים חינם · אפשר לבחור כמה שרוצים`
+                  : "אפשר לבחור כמה שרוצים");
+          } else if (atMax) {
             subtitle = `הגעת למקסימום · ${g.maxSelect}/${g.maxSelect}`;
           } else if (selected > 0) {
             subtitle = freeRemaining > 0
@@ -802,7 +818,7 @@ export function ItemDetail({
             subtitle={subtitle}
             counter={
               g.type === "multi" && g.maxSelect > 1
-                ? { selected, max: g.maxSelect, atMax }
+                ? { selected, max: g.maxSelect, atMax, unlimited }
                 : undefined
             }
             helpText={g.helpText}
@@ -1083,7 +1099,7 @@ function Section({
   title: string;
   subtitle?: string;
   required?: boolean;
-  counter?: { selected: number; max: number; atMax: boolean };
+  counter?: { selected: number; max: number; atMax: boolean; unlimited?: boolean };
   helpText?: string | null;
   flash?: boolean;
   children: React.ReactNode;
@@ -1104,7 +1120,7 @@ function Section({
               חובה
             </span>
           )}
-          {counter && (
+          {counter && !(counter.unlimited && counter.selected === 0) && (
             <span
               className={cn(
                 "text-[11px] tnum px-1.5 py-0.5 rounded-md font-bold",
@@ -1115,7 +1131,7 @@ function Section({
                     : "bg-qf-line-soft text-qf-mute",
               )}
             >
-              {counter.selected}/{counter.max}
+              {counter.unlimited ? counter.selected : `${counter.selected}/${counter.max}`}
             </span>
           )}
         </div>
