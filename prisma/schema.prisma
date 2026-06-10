@@ -1263,6 +1263,7 @@ model MerchantUser {
   passwordResets    PasswordResetToken[]
   emailVerifications EmailVerificationToken[]
   pushSubscriptions  MerchantUserPushSubscription[]
+  expoPushTokens     MerchantExpoPushToken[]
   posShifts         PosShift[]
   ordersAsCashier   Order[] @relation("OrderCashier")
 
@@ -1286,6 +1287,27 @@ model MerchantUserPushSubscription {
   @@index([userId])
   @@index([tenantId])
   @@map("merchant_user_push_subscriptions")
+}
+
+/// Expo push tokens for the native merchant app. Unlike web-push
+/// (endpoint/p256dh/auth) above, the native app registers a single
+/// `ExponentPushToken[...]` string; delivery goes through Expo's push
+/// service (exp.host). Tokens that Expo reports as DeviceNotRegistered
+/// are deleted so we stop retrying them.
+model MerchantExpoPushToken {
+  id         String       @id @default(uuid()) @db.Uuid
+  userId     String       @map("user_id") @db.Uuid
+  user       MerchantUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId   String?      @map("tenant_id") @db.Uuid
+  token      String       @unique
+  platform   String?
+  deviceName String?      @map("device_name")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  lastSeenAt DateTime?    @map("last_seen_at")
+
+  @@index([userId])
+  @@index([tenantId])
+  @@map("merchant_expo_push_tokens")
 }
 
 /// Short-lived tokens for the "forgot password" flow. We email a one-time
