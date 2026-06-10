@@ -341,8 +341,10 @@ export class GrowProvider extends BasePaymentProvider {
 
       body.maxPaymentNum = Math.min(Math.max(maxInstallments, 1), 12);
 
-      const commission = process.env.GROW_COMPANY_COMMISSION;
-      if (commission && Number(commission) > 0) body.companyCommission = Number(commission);
+      if (!this.config!.testMode) {
+        const commission = process.env.GROW_COMPANY_COMMISSION;
+        if (commission && Number(commission) > 0) body.companyCommission = Number(commission);
+      }
 
       // Grow PROD requires apiKey in the BODY (sandbox tolerates header).
       // Curl-tested against secure.meshulam.co.il: sending only via the
