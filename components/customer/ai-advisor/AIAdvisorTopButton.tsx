@@ -5,9 +5,11 @@ import { createPortal } from "react-dom";
 import { useCart } from "@/components/customer/CartProvider";
 
 const SCROLL_THRESHOLD = 180;
+const FLOAT_DELAY_MS = 2500;
 
 export function AIAdvisorTopButton() {
   const [scrolled, setScrolled] = useState(false);
+  const [delayed, setDelayed] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { lines, hydrated } = useCart();
   const hasCartItems = hydrated && lines.length > 0;
@@ -26,7 +28,17 @@ export function AIAdvisorTopButton() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const showFloating = scrolled && !hasCartItems;
+  // Once the customer has scrolled into the menu, wait a few seconds before
+  // floating the advisor up - so it doesn't pop the instant they cross the
+  // threshold. Once delayed, it stays available (re-shows immediately on
+  // later scrolls).
+  useEffect(() => {
+    if (!scrolled || delayed) return;
+    const t = window.setTimeout(() => setDelayed(true), FLOAT_DELAY_MS);
+    return () => window.clearTimeout(t);
+  }, [scrolled, delayed]);
+
+  const showFloating = scrolled && delayed && !hasCartItems;
 
   const floating = (
     <button
