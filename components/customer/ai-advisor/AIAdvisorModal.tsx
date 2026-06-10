@@ -323,6 +323,10 @@ export function AIAdvisorModal({
           prev.map((m) => (m.id === modelMsg.id ? { ...m, pending: false } : m)),
         );
       } catch (err) {
+        // Intentional cancel (start-new-chat / modal close aborts the
+        // in-flight request) surfaces as an AbortError / "BodyStreamBuffer
+        // was aborted" - not a real failure, so don't show it to the user.
+        if (ctrl.signal.aborted) return;
         const msg = err instanceof Error ? err.message : "תקלה";
         setError(msg);
         setMessages((prev) =>
@@ -466,8 +470,8 @@ function CartStrip({
         <button
           type="button"
           onClick={onGo}
-          className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-black text-(--qf-yolk) text-xs font-black border-2 border-black hover:bg-[#1a1a1a] transition"
-          style={{ boxShadow: "2px 2px 0 0 #000" }}
+          className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-(--qf-primary) text-white text-xs font-black border-2 border-(--qf-deep) hover:bg-(--qf-deep) transition"
+          style={{ boxShadow: "2px 2px 0 0 var(--qf-deep)" }}
         >
           מעבר לעגלה
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
