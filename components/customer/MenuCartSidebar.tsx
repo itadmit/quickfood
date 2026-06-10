@@ -20,9 +20,8 @@ interface Props {
  */
 export function MenuCartSidebar({ tenantSlug, businessType }: Props) {
   const router = useRouter();
-  const { lines, updateQuantity, remove, subtotal, branch, method, itemCount } = useCart();
+  const { lines, updateQuantity, remove, subtotal, branch, method, deliveryFee, itemCount } = useCart();
 
-  const deliveryFee = method === "delivery" ? branch?.deliveryFee ?? 0 : 0;
   const serviceFee = branch?.serviceFee ?? 0;
   const total = subtotal + deliveryFee + serviceFee;
   const minOrder = branch?.minOrder ?? 0;
@@ -124,7 +123,7 @@ export function MenuCartSidebar({ tenantSlug, businessType }: Props) {
           <div className="border-t border-qf-line px-4 py-3 space-y-1.5 text-sm">
             <Row label="סכום ביניים" value={formatPrice(subtotal)} />
             {method === "delivery" && (
-              <Row label="דמי משלוח" value={formatPrice(deliveryFee)} />
+              <Row label="דמי משלוח" value={deliveryFee === 0 ? "חינם" : formatPrice(deliveryFee)} />
             )}
             {serviceFee > 0 && <Row label="דמי שירות" value={formatPrice(serviceFee)} />}
             <div className="border-t border-qf-line-soft pt-2 mt-2 flex items-center justify-between">

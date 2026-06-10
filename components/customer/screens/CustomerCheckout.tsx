@@ -40,7 +40,7 @@ export function CustomerCheckout({
   deliveryCities?: string[];
 }) {
   const router = useRouter();
-  const { lines, method, subtotal, branch, tenant, clear, setMethod, hydrated } = useCart();
+  const { lines, method, subtotal, deliveryFee, branch, tenant, clear, setMethod, hydrated } = useCart();
 
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
@@ -169,7 +169,6 @@ export function CustomerCheckout({
     if (prefill.paymentMethod) setPaymentMethod(prefill.paymentMethod);
   }, [tenantSlug, setMethod]);
 
-  const deliveryFee = method === "delivery" ? branch?.deliveryFee ?? 0 : 0;
   const serviceFee = branch?.serviceFee ?? 0;
   const couponDiscount = couponApplied?.discount ?? 0;
   const cutleryUnitPrice = tenant.cutleryPrice ?? 0;
@@ -939,7 +938,7 @@ export function CustomerCheckout({
           <div className="mt-3 pt-3 border-t border-qf-line-soft space-y-1.5 text-sm">
             <SumRow label={`${itemCount} פריטים`} value={formatPrice(subtotal)} />
             {method === "delivery" && (
-              <SumRow label="דמי משלוח" value={formatPrice(deliveryFee)} />
+              <SumRow label="דמי משלוח" value={deliveryFee === 0 ? "חינם" : formatPrice(deliveryFee)} />
             )}
             {serviceFee > 0 && <SumRow label="דמי שירות" value={formatPrice(serviceFee)} />}
             {cutleryFee > 0 && (
@@ -1019,7 +1018,7 @@ export function CustomerCheckout({
             <div className="mt-3 pt-3 border-t border-qf-line-soft space-y-1.5 text-sm">
               <SumRow label={`${itemCount} פריטים`} value={formatPrice(subtotal)} />
               {method === "delivery" && (
-                <SumRow label="דמי משלוח" value={formatPrice(deliveryFee)} />
+                <SumRow label="דמי משלוח" value={deliveryFee === 0 ? "חינם" : formatPrice(deliveryFee)} />
               )}
               {serviceFee > 0 && <SumRow label="דמי שירות" value={formatPrice(serviceFee)} />}
             {cutleryFee > 0 && (

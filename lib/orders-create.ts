@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db/client";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
 import { isItemVisibleNow } from "@/lib/menu-availability";
+import { computeDeliveryFee } from "@/lib/delivery-fee";
 import { sendTenantPush } from "@/lib/merchant/push";
 import { sendOrderConfirmedEmail } from "@/lib/orders/notify-customer";
 import type { Prisma } from "@prisma/client";
@@ -252,7 +253,14 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     throw new CartValidationError("min_order_not_met");
   }
 
-  const deliveryFee = input.method === "delivery" ? branch.deliveryFee : 0;
+  const deliveryFee = computeDeliveryFee({
+    method: input.method,
+    baseFee: branch.deliveryFee,
+    subtotal,
+    itemCount: input.lines.reduce((n, l) => n + l.quantity, 0),
+    freeMinOrder: branch.freeDeliveryMinOrder,
+    freeMinItems: branch.freeDeliveryMinItems,
+  });
   const serviceFee = branch.serviceFee;
   const tip = input.tip ?? 0;
   const cutleryCountRaw = Math.max(0, Math.min(20, input.cutleryCount ?? 0));

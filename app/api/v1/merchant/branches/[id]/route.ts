@@ -17,6 +17,8 @@ const BranchPatch = z.object({
   min_order: z.number().int().min(0).optional(),
   delivery_fee: z.number().int().min(0).optional(),
   service_fee: z.number().int().min(0).optional(),
+  free_delivery_min_order: z.number().int().min(0).nullable().optional(),
+  free_delivery_min_items: z.number().int().min(0).nullable().optional(),
   lat: z.number().optional(),
   lng: z.number().optional(),
 });
@@ -44,6 +46,16 @@ export const PATCH = handler(async (req: Request, { params }: { params: Promise<
       minOrder: body.min_order,
       deliveryFee: body.delivery_fee,
       serviceFee: body.service_fee,
+      ...(body.free_delivery_min_order !== undefined && {
+        freeDeliveryMinOrder: body.free_delivery_min_order && body.free_delivery_min_order > 0
+          ? body.free_delivery_min_order
+          : null,
+      }),
+      ...(body.free_delivery_min_items !== undefined && {
+        freeDeliveryMinItems: body.free_delivery_min_items && body.free_delivery_min_items > 0
+          ? body.free_delivery_min_items
+          : null,
+      }),
       lat: body.lat as unknown as undefined,
       lng: body.lng as unknown as undefined,
     },

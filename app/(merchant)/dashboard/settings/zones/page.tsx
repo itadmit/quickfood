@@ -22,6 +22,10 @@ export default async function ZonesSettingsPage() {
       <SettingsHeader subtitle={`לאן מגיע המשלוח · ${branch.name}`} />
       <ZonesView
         branchId={branch.id}
+        freeDelivery={{
+          minOrder: branch.freeDeliveryMinOrder,
+          minItems: branch.freeDeliveryMinItems,
+        }}
         initial={branch.zones.map((z) => ({
           id: z.id,
           name: z.name,

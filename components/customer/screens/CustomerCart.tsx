@@ -16,7 +16,7 @@ import { CartUpsell } from "@/components/customer/CartUpsell";
 
 export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
   const router = useRouter();
-  const { lines, updateQuantity, remove, subtotal, method, branch, tenant, hydrated } = useCart();
+  const { lines, updateQuantity, remove, subtotal, method, deliveryFee, branch, tenant, hydrated } = useCart();
 
   // Wolt-style: clicking a cart line opens the item-detail modal in
   // edit mode (pre-filled with the line's selections; CTA flips to
@@ -40,7 +40,6 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
     return () => ctrl.abort();
   }, [editing, tenantSlug]);
 
-  const deliveryFee = method === "delivery" ? branch?.deliveryFee ?? 0 : 0;
   const serviceFee = branch?.serviceFee ?? 0;
   const total = subtotal + deliveryFee + serviceFee;
   const minOrder = branch?.minOrder ?? 0;
@@ -201,7 +200,9 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
         <aside className="px-5 mt-5 lg:px-0 lg:mt-0 lg:sticky lg:top-20 lg:self-start">
           <div className="bg-white border border-qf-line rounded-2xl p-4 space-y-2 text-sm shadow-xs">
             <Row label="סכום ביניים" value={formatPrice(subtotal)} />
-            {method === "delivery" && <Row label="דמי משלוח" value={formatPrice(deliveryFee)} />}
+            {method === "delivery" && (
+              <Row label="דמי משלוח" value={deliveryFee === 0 ? "חינם" : formatPrice(deliveryFee)} />
+            )}
             {serviceFee > 0 && <Row label="דמי שירות" value={formatPrice(serviceFee)} />}
             <div className="border-t border-qf-line-soft pt-2 mt-2">
               <Row bold label="סה״כ" value={formatPrice(total)} />

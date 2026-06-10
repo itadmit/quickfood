@@ -120,6 +120,8 @@ export default async function CustomerLayout({
                 minOrder: branch.minOrder,
                 status: branch.status,
                 busyEtaBoostMinutes: branch.busyEtaBoostMinutes,
+                freeDeliveryMinOrder: branch.freeDeliveryMinOrder,
+                freeDeliveryMinItems: branch.freeDeliveryMinItems,
               }
             : null
         }

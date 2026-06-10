@@ -450,6 +450,10 @@ model Branch {
   minOrder    Int              @default(0) @map("min_order")
   deliveryFee Int              @default(0) @map("delivery_fee")
   serviceFee  Int              @default(0) @map("service_fee")
+  // Free delivery thresholds. When set (>0) and the cart meets EITHER
+  // condition, the delivery fee is waived. Null/0 = that rule is off.
+  freeDeliveryMinOrder Int?     @map("free_delivery_min_order")
+  freeDeliveryMinItems Int?     @map("free_delivery_min_items")
   createdAt   DateTime         @default(now()) @map("created_at")
   updatedAt   DateTime         @updatedAt @map("updated_at")
 

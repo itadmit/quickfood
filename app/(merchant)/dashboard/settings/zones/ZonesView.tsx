@@ -18,6 +18,35 @@ interface Zone {
   active: boolean;
 }
 
+interface ZoneDraft {
+  name: string;
+  radiusKm: number;
+  citiesRaw: string;
+  deliveryFee: number;
+  minEta: number;
+  maxEta: number;
+}
+
+const EMPTY_DRAFT: ZoneDraft = {
+  name: "",
+  radiusKm: 3,
+  citiesRaw: "",
+  deliveryFee: 14,
+  minEta: 25,
+  maxEta: 35,
+};
+
+function draftFromZone(z: Zone): ZoneDraft {
+  return {
+    name: z.name,
+    radiusKm: z.radiusKm ?? 0,
+    citiesRaw: z.cities.join(", "),
+    deliveryFee: z.deliveryFee,
+    minEta: z.minEta,
+    maxEta: z.maxEta,
+  };
+}
+
 /** Split a free-text "city1, city2; city3" string into a clean array. */
 function parseCities(raw: string): string[] {
   return raw
@@ -26,38 +55,54 @@ function parseCities(raw: string): string[] {
     .filter(Boolean);
 }
 
-export function ZonesView({ branchId, initial }: { branchId: string; initial: Zone[] }) {
+export function ZonesView({
+  branchId,
+  freeDelivery,
+  initial,
+}: {
+  branchId: string;
+  freeDelivery: { minOrder: number | null; minItems: number | null };
+  initial: Zone[];
+}) {
   const router = useRouter();
   const [zones, setZones] = useState(initial);
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    radiusKm: 3,
-    citiesRaw: "",
-    deliveryFee: 14,
-    minEta: 25,
-    maxEta: 35,
-  });
+  const [addForm, setAddForm] = useState<ZoneDraft>(EMPTY_DRAFT);
   const [busy, setBusy] = useState(false);
-  /** Per-zone draft city text (only set while a row is in edit mode). */
-  const [editingCitiesFor, setEditingCitiesFor] = useState<string | null>(null);
-  const [citiesDraft, setCitiesDraft] = useState("");
-  const [savingCities, setSavingCities] = useState(false);
+
+  /** Per-zone full-edit state (name/radius/fee/eta/cities). */
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<ZoneDraft>(EMPTY_DRAFT);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  /** Free-delivery thresholds (0 = rule off). */
+  const [fd, setFd] = useState({
+    minOrder: freeDelivery.minOrder ?? 0,
+    minItems: freeDelivery.minItems ?? 0,
+  });
+  const [savingFd, setSavingFd] = useState(false);
+
+  const [pendingDelete, setPendingDelete] = useState<Zone | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
+  function pushToast(kind: ToastKind, message: string) {
+    setToast({ id: Date.now(), kind, message });
+  }
 
   async function add() {
-    if (!form.name) return;
+    if (!addForm.name) return;
     setBusy(true);
     try {
       const res = await fetch(`/api/v1/merchant/branches/${branchId}/zones`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          name: form.name,
-          radius_km: form.radiusKm,
-          cities: parseCities(form.citiesRaw),
-          delivery_fee: form.deliveryFee,
-          min_eta: form.minEta,
-          max_eta: form.maxEta,
+          name: addForm.name,
+          radius_km: addForm.radiusKm > 0 ? addForm.radiusKm : undefined,
+          cities: parseCities(addForm.citiesRaw),
+          delivery_fee: addForm.deliveryFee,
+          min_eta: addForm.minEta,
+          max_eta: addForm.maxEta,
           active: true,
         }),
       });
@@ -69,19 +114,19 @@ export function ZonesView({ branchId, initial }: { branchId: string; initial: Zo
       const data = (await res.json()) as { zone: { id: string; name: string } };
       const newZone: Zone = {
         id: data.zone.id,
-        name: form.name,
-        radiusKm: form.radiusKm,
-        cities: parseCities(form.citiesRaw),
-        deliveryFee: form.deliveryFee,
-        minEta: form.minEta,
-        maxEta: form.maxEta,
+        name: addForm.name,
+        radiusKm: addForm.radiusKm > 0 ? addForm.radiusKm : null,
+        cities: parseCities(addForm.citiesRaw),
+        deliveryFee: addForm.deliveryFee,
+        minEta: addForm.minEta,
+        maxEta: addForm.maxEta,
         active: true,
       };
       setZones((p) =>
         [...p, newZone].sort((a, b) => a.name.localeCompare(b.name, "he-IL")),
       );
       setAdding(false);
-      setForm({ name: "", radiusKm: 3, citiesRaw: "", deliveryFee: 14, minEta: 25, maxEta: 35 });
+      setAddForm(EMPTY_DRAFT);
       pushToast("ok", "האזור נוצר");
       router.refresh();
     } catch {
@@ -91,27 +136,56 @@ export function ZonesView({ branchId, initial }: { branchId: string; initial: Zo
     }
   }
 
-  function startEditingCities(z: Zone) {
-    setEditingCitiesFor(z.id);
-    setCitiesDraft(z.cities.join(", "));
+  function startEdit(z: Zone) {
+    setEditingId(z.id);
+    setEditForm(draftFromZone(z));
   }
 
-  async function saveCities(zoneId: string) {
-    const cities = parseCities(citiesDraft);
-    setSavingCities(true);
+  async function saveEdit(id: string) {
+    if (!editForm.name) return;
+    setSavingEdit(true);
     try {
-      const res = await fetch(`/api/v1/merchant/zones/${zoneId}`, {
+      const cities = parseCities(editForm.citiesRaw);
+      const res = await fetch(`/api/v1/merchant/zones/${id}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ cities }),
+        body: JSON.stringify({
+          name: editForm.name,
+          radius_km: editForm.radiusKm > 0 ? editForm.radiusKm : undefined,
+          cities,
+          delivery_fee: editForm.deliveryFee,
+          min_eta: editForm.minEta,
+          max_eta: editForm.maxEta,
+        }),
       });
-      if (res.ok) {
-        setZones((p) => p.map((z) => (z.id === zoneId ? { ...z, cities } : z)));
-        setEditingCitiesFor(null);
-        setCitiesDraft("");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        pushToast("err", body?.error?.message ?? "עדכון האזור נכשל");
+        return;
       }
+      setZones((p) =>
+        p
+          .map((z) =>
+            z.id === id
+              ? {
+                  ...z,
+                  name: editForm.name,
+                  radiusKm: editForm.radiusKm > 0 ? editForm.radiusKm : null,
+                  cities,
+                  deliveryFee: editForm.deliveryFee,
+                  minEta: editForm.minEta,
+                  maxEta: editForm.maxEta,
+                }
+              : z,
+          )
+          .sort((a, b) => a.name.localeCompare(b.name, "he-IL")),
+      );
+      setEditingId(null);
+      pushToast("ok", "האזור עודכן");
+    } catch {
+      pushToast("err", "שגיאת רשת - בדוק חיבור ונסה שוב");
     } finally {
-      setSavingCities(false);
+      setSavingEdit(false);
     }
   }
 
@@ -124,11 +198,24 @@ export function ZonesView({ branchId, initial }: { branchId: string; initial: Zo
     });
   }
 
-  const [pendingDelete, setPendingDelete] = useState<Zone | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [toast, setToast] = useState<ToastState | null>(null);
-  function pushToast(kind: ToastKind, message: string) {
-    setToast({ id: Date.now(), kind, message });
+  async function saveFreeDelivery() {
+    setSavingFd(true);
+    try {
+      const res = await fetch(`/api/v1/merchant/branches/${branchId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          free_delivery_min_order: fd.minOrder > 0 ? fd.minOrder : null,
+          free_delivery_min_items: fd.minItems > 0 ? fd.minItems : null,
+        }),
+      });
+      pushToast(res.ok ? "ok" : "err", res.ok ? "נשמר" : "השמירה נכשלה");
+      if (res.ok) router.refresh();
+    } catch {
+      pushToast("err", "שגיאת רשת - בדוק חיבור ונסה שוב");
+    } finally {
+      setSavingFd(false);
+    }
   }
 
   function startDelete(z: Zone) {
@@ -155,6 +242,54 @@ export function ZonesView({ branchId, initial }: { branchId: string; initial: Zo
 
   return (
     <div className="space-y-4">
+      {/* Free delivery rules */}
+      <div className="bg-white rounded-2xl border border-qf-line-dash">
+        <header className="px-4 lg:px-5 py-4 border-b border-qf-line-soft">
+          <div className="font-semibold">משלוח חינם</div>
+          <div className="text-xs text-qf-mute">
+            כשהעגלה עומדת באחד התנאים - דמי המשלוח מתאפסים אוטומטית. השאר 0 כדי לבטל תנאי.
+          </div>
+        </header>
+        <div className="px-4 lg:px-5 py-4 grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+          <Field label="משלוח חינם בקנייה מעל (₪)">
+            <div className="flex items-center border border-qf-line-dash rounded-xl focus-within:border-(--qf-primary)">
+              <span className="px-3 text-qf-mute">₪</span>
+              <input
+                type="number"
+                min={0}
+                value={fd.minOrder}
+                onChange={(e) =>
+                  setFd((x) => ({ ...x, minOrder: parseInt(e.target.value, 10) || 0 }))
+                }
+                className="flex-1 py-2.5 outline-none bg-transparent tnum"
+              />
+            </div>
+          </Field>
+          <Field label="או בקנייה מעל (מספר פריטים)">
+            <div className="flex items-center border border-qf-line-dash rounded-xl focus-within:border-(--qf-primary)">
+              <input
+                type="number"
+                min={0}
+                value={fd.minItems}
+                onChange={(e) =>
+                  setFd((x) => ({ ...x, minItems: parseInt(e.target.value, 10) || 0 }))
+                }
+                className="flex-1 px-3 py-2.5 outline-none bg-transparent tnum"
+              />
+              <span className="px-3 text-qf-mute text-sm">פריטים</span>
+            </div>
+          </Field>
+          <button
+            type="button"
+            onClick={saveFreeDelivery}
+            disabled={savingFd}
+            className="px-4 py-2.5 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
+          >
+            {savingFd ? "שומר..." : "שמירה"}
+          </button>
+        </div>
+      </div>
+
       <div className="bg-white rounded-2xl border border-qf-line-dash">
         <header className="px-4 lg:px-5 py-4 border-b border-qf-line-soft flex items-center justify-between gap-2">
           <div>
@@ -172,69 +307,12 @@ export function ZonesView({ branchId, initial }: { branchId: string; initial: Zo
 
         {adding && (
           <div className="px-4 lg:px-5 py-4 border-b border-qf-line-soft space-y-3 bg-qf-line-soft/40">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-2 items-end">
-              <Field label="שם">
-                <input
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="מרכז ת״א"
-                  className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm"
-                />
-              </Field>
-              <Field label="רדיוס (ק״מ)">
-                <input
-                  type="number"
-                  min={0.1}
-                  step={0.5}
-                  value={form.radiusKm}
-                  onChange={(e) => setForm({ ...form, radiusKm: parseFloat(e.target.value) || 0 })}
-                  className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
-                />
-              </Field>
-              <Field label="דמי משלוח">
-                <input
-                  type="number"
-                  min={0}
-                  value={form.deliveryFee}
-                  onChange={(e) =>
-                    setForm({ ...form, deliveryFee: parseInt(e.target.value, 10) || 0 })
-                  }
-                  className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
-                />
-              </Field>
-              <Field label="ETA מינ׳">
-                <input
-                  type="number"
-                  min={0}
-                  value={form.minEta}
-                  onChange={(e) => setForm({ ...form, minEta: parseInt(e.target.value, 10) || 0 })}
-                  className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
-                />
-              </Field>
-              <Field label="ETA מקס׳">
-                <input
-                  type="number"
-                  min={0}
-                  value={form.maxEta}
-                  onChange={(e) => setForm({ ...form, maxEta: parseInt(e.target.value, 10) || 0 })}
-                  className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
-                />
-              </Field>
-            </div>
-            <Field label="ערים בכיסוי (מפרידים בפסיק)">
-              <textarea
-                value={form.citiesRaw}
-                onChange={(e) => setForm({ ...form, citiesRaw: e.target.value })}
-                rows={2}
-                placeholder="תל אביב יפו, רמת גן, גבעתיים"
-                className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm resize-none"
-              />
-            </Field>
+            <ZoneFields draft={addForm} onChange={setAddForm} />
             <div className="flex justify-end">
               <button
                 type="button"
                 onClick={add}
-                disabled={!form.name || busy}
+                disabled={!addForm.name || busy}
                 className="px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm disabled:opacity-60"
               >
                 {busy ? "יוצר..." : "צור אזור"}
@@ -249,110 +327,101 @@ export function ZonesView({ branchId, initial }: { branchId: string; initial: Zo
           </div>
         ) : (
           <div className="divide-y divide-qf-line-soft">
-            {zones.map((z) => (
-              <div
-                key={z.id}
-                className="px-4 lg:px-5 py-3 space-y-2"
-              >
-                <div className="grid grid-cols-[1fr_auto] gap-3 items-center">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 items-center">
-                    <div>
-                      <div className="font-medium">{z.name}</div>
-                      <div className="text-xs text-qf-mute tnum">
-                        {z.radiusKm ? `רדיוס ${z.radiusKm} ק״מ` : "ללא רדיוס"}
-                      </div>
-                    </div>
-                    <div className="text-sm tnum">₪{z.deliveryFee}</div>
-                    <div className="text-sm text-qf-ink2 tnum">
-                      {z.minEta}–{z.maxEta} דק׳
-                    </div>
+            {zones.map((z) =>
+              editingId === z.id ? (
+                <div
+                  key={z.id}
+                  className="px-4 lg:px-5 py-4 space-y-3 bg-qf-line-soft/40"
+                >
+                  <ZoneFields draft={editForm} onChange={setEditForm} />
+                  <div className="flex items-center gap-2 justify-end">
                     <button
                       type="button"
-                      onClick={() => toggleActive(z)}
-                      className={cn(
-                        "text-xs px-2 py-1 rounded-md inline-block w-fit",
-                        z.active
-                          ? "bg-qf-green-soft text-qf-green-deep"
-                          : "bg-qf-line-soft text-qf-mute",
-                      )}
+                      onClick={() => setEditingId(null)}
+                      className="px-3 py-1.5 rounded-lg text-sm text-qf-ink2 hover:bg-qf-line-soft"
                     >
-                      {z.active ? "פעיל" : "מושבת"}
+                      ביטול
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => saveEdit(z.id)}
+                      disabled={!editForm.name || savingEdit}
+                      className="px-4 py-1.5 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm disabled:opacity-60"
+                    >
+                      {savingEdit ? "שומר..." : "שמור שינויים"}
                     </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => startDelete(z)}
-                    className="w-8 h-8 rounded-lg hover:bg-qf-tomato-soft text-qf-mute hover:text-qf-tomato"
-                    aria-label="הסר אזור"
-                    title="הסר אזור"
-                  >
-                    <IcoClose s={14} />
-                  </button>
                 </div>
-
-                {/* Cities - display chips, click "ערוך" to edit inline */}
-                {editingCitiesFor === z.id ? (
-                  <div className="space-y-2 bg-qf-line-soft/60 rounded-xl p-3 border border-qf-line-dash">
-                    <label className="text-xs font-medium block text-qf-ink2">
-                      ערים בכיסוי (מפרידים בפסיק)
-                    </label>
-                    <textarea
-                      value={citiesDraft}
-                      onChange={(e) => setCitiesDraft(e.target.value)}
-                      rows={2}
-                      placeholder="תל אביב יפו, רמת גן, גבעתיים"
-                      className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm bg-white resize-none"
-                    />
-                    <div className="flex items-center gap-2 justify-end">
+              ) : (
+                <div key={z.id} className="px-4 lg:px-5 py-3 space-y-2">
+                  <div className="grid grid-cols-[1fr_auto] gap-3 items-center">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 items-center">
+                      <div>
+                        <div className="font-medium">{z.name}</div>
+                        <div className="text-xs text-qf-mute tnum">
+                          {z.radiusKm ? `רדיוס ${z.radiusKm} ק״מ` : "ללא רדיוס"}
+                        </div>
+                      </div>
+                      <div className="text-sm tnum">₪{z.deliveryFee}</div>
+                      <div className="text-sm text-qf-ink2 tnum">
+                        {z.minEta}–{z.maxEta} דק׳
+                      </div>
                       <button
                         type="button"
-                        onClick={() => {
-                          setEditingCitiesFor(null);
-                          setCitiesDraft("");
-                        }}
-                        className="px-3 py-1.5 rounded-lg text-sm text-qf-ink2 hover:bg-qf-line-soft"
+                        onClick={() => toggleActive(z)}
+                        className={cn(
+                          "text-xs px-2 py-1 rounded-md inline-block w-fit",
+                          z.active
+                            ? "bg-qf-green-soft text-qf-green-deep"
+                            : "bg-qf-line-soft text-qf-mute",
+                        )}
                       >
-                        ביטול
+                        {z.active ? "פעיל" : "מושבת"}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => startEdit(z)}
+                        className="text-xs text-(--qf-deep) hover:underline px-2 py-1"
+                      >
+                        ערוך
                       </button>
                       <button
                         type="button"
-                        onClick={() => saveCities(z.id)}
-                        disabled={savingCities}
-                        className="px-3 py-1.5 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm disabled:opacity-60"
+                        onClick={() => startDelete(z)}
+                        className="w-8 h-8 rounded-lg hover:bg-qf-tomato-soft text-qf-mute hover:text-qf-tomato grid place-items-center"
+                        aria-label="הסר אזור"
+                        title="הסר אזור"
                       >
-                        {savingCities ? "שומר..." : "שמור ערים"}
+                        <IcoClose s={14} />
                       </button>
                     </div>
                   </div>
-                ) : z.cities.length === 0 ? (
-                  <button
-                    type="button"
-                    onClick={() => startEditingCities(z)}
-                    className="text-xs text-(--qf-deep) hover:underline"
-                  >
-                    + הוסף ערים לאזור הזה
-                  </button>
-                ) : (
-                  <div className="flex flex-wrap gap-1.5 items-center">
-                    {z.cities.map((c) => (
-                      <span
-                        key={c}
-                        className="text-xs bg-qf-line-soft text-qf-ink2 px-2 py-1 rounded-md"
-                      >
-                        {c}
-                      </span>
-                    ))}
+
+                  {z.cities.length === 0 ? (
                     <button
                       type="button"
-                      onClick={() => startEditingCities(z)}
-                      className="text-xs text-(--qf-deep) hover:underline px-1"
+                      onClick={() => startEdit(z)}
+                      className="text-xs text-(--qf-deep) hover:underline"
                     >
-                      ערוך
+                      + הוסף ערים לאזור הזה
                     </button>
-                  </div>
-                )}
-              </div>
-            ))}
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      {z.cities.map((c) => (
+                        <span
+                          key={c}
+                          className="text-xs bg-qf-line-soft text-qf-ink2 px-2 py-1 rounded-md"
+                        >
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ),
+            )}
           </div>
         )}
       </div>
@@ -375,6 +444,75 @@ export function ZonesView({ branchId, initial }: { branchId: string; initial: Zo
       />
       <Toast toast={toast} onDismiss={() => setToast(null)} />
     </div>
+  );
+}
+
+function ZoneFields({
+  draft,
+  onChange,
+}: {
+  draft: ZoneDraft;
+  onChange: (d: ZoneDraft) => void;
+}) {
+  return (
+    <>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 items-end">
+        <Field label="שם">
+          <input
+            value={draft.name}
+            onChange={(e) => onChange({ ...draft, name: e.target.value })}
+            placeholder="מרכז ת״א"
+            className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm"
+          />
+        </Field>
+        <Field label="רדיוס (ק״מ)">
+          <input
+            type="number"
+            min={0.1}
+            step={0.5}
+            value={draft.radiusKm}
+            onChange={(e) => onChange({ ...draft, radiusKm: parseFloat(e.target.value) || 0 })}
+            className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
+          />
+        </Field>
+        <Field label="דמי משלוח">
+          <input
+            type="number"
+            min={0}
+            value={draft.deliveryFee}
+            onChange={(e) => onChange({ ...draft, deliveryFee: parseInt(e.target.value, 10) || 0 })}
+            className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
+          />
+        </Field>
+        <Field label="ETA מינ׳">
+          <input
+            type="number"
+            min={0}
+            value={draft.minEta}
+            onChange={(e) => onChange({ ...draft, minEta: parseInt(e.target.value, 10) || 0 })}
+            className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
+          />
+        </Field>
+        <Field label="ETA מקס׳">
+          <input
+            type="number"
+            min={0}
+            value={draft.maxEta}
+            onChange={(e) => onChange({ ...draft, maxEta: parseInt(e.target.value, 10) || 0 })}
+            className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
+          />
+        </Field>
+      </div>
+      <Field label="ערים בכיסוי (מפרידים בפסיק)">
+        <textarea
+          value={draft.citiesRaw}
+          onChange={(e) => onChange({ ...draft, citiesRaw: e.target.value })}
+          rows={2}
+          placeholder="תל אביב יפו, רמת גן, גבעתיים"
+          className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm bg-white resize-none"
+        />
+      </Field>
+    </>
   );
 }
 

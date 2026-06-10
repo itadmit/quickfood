@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { computeDeliveryFee } from "@/lib/delivery-fee";
 
 export type CartLineSource = "menu" | "ai_advisor" | "upsell" | "reorder";
 
@@ -39,6 +40,9 @@ interface CartContextValue extends CartState {
   setMethod: (m: "delivery" | "pickup") => void;
   subtotal: number;
   itemCount: number;
+  /** Delivery fee for the current method/cart, with free-delivery
+   *  thresholds already applied. Mirrors the server calculation. */
+  deliveryFee: number;
   tenant: TenantInfo;
   branch: BranchInfo | null;
   /** True once localStorage has been read on mount. Until then,
@@ -73,6 +77,8 @@ interface BranchInfo {
   minOrder: number;
   status: "open" | "busy" | "closed";
   busyEtaBoostMinutes: number;
+  freeDeliveryMinOrder?: number | null;
+  freeDeliveryMinItems?: number | null;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -135,6 +141,16 @@ export function CartProvider({
       return acc + unit * l.quantity;
     }, 0);
     const itemCount = state.lines.reduce((acc, l) => acc + l.quantity, 0);
+    const deliveryFee = branch
+      ? computeDeliveryFee({
+          method: state.method,
+          baseFee: branch.deliveryFee,
+          subtotal,
+          itemCount,
+          freeMinOrder: branch.freeDeliveryMinOrder,
+          freeMinItems: branch.freeDeliveryMinItems,
+        })
+      : 0;
     return {
       ...state,
       add: (line) => {
@@ -169,6 +185,7 @@ export function CartProvider({
       setMethod: (m) => setState((s) => ({ ...s, method: m })),
       subtotal,
       itemCount,
+      deliveryFee,
       tenant,
       branch,
       hydrated,
