@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/format";
 import { THEMES } from "@/lib/themes";
 import { cn } from "@/lib/cn";
-import { Trash2, AlertTriangle } from "lucide-react";
+import { Trash2, AlertTriangle, ExternalLink } from "lucide-react";
 
 interface Tenant {
   id: string;
@@ -328,6 +328,19 @@ function TenantRow({
     </Link>
   );
 
+  const storeLink = (cls: string) => (
+    <Link
+      href={`/s/${t.slug}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cn(cls, "border border-qf-line-dash hover:bg-qf-line-soft flex items-center justify-center")}
+      title="צפה בחנות"
+      aria-label="צפה בחנות"
+    >
+      <ExternalLink size={14} />
+    </Link>
+  );
+
   const statusButton = (cls: string) =>
     t.status === "active" ? (
       <button
@@ -381,6 +394,7 @@ function TenantRow({
           {openLink(
             "flex-1 text-center px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-xs hover:bg-qf-line-soft",
           )}
+          {storeLink("px-2.5 py-1.5 rounded-lg text-xs")}
           {statusButton("flex-1 text-center px-2.5 py-1.5 rounded-lg text-xs font-medium")}
           {deleteButton("px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-center")}
         </div>
