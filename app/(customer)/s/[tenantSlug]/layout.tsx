@@ -34,6 +34,9 @@ export async function generateMetadata({
     title,
     description,
     alternates: { canonical: url },
+    ...(tenant.logoUrl
+      ? { icons: { icon: tenant.logoUrl, apple: tenant.logoUrl } }
+      : {}),
     openGraph: {
       type: "website",
       locale: "he_IL",
