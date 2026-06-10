@@ -255,7 +255,7 @@ export function SignupForm() {
         { email: ownerEmail.toLowerCase(), phone: branchPhone },
       );
       const dest = woltUrl
-        ? `/dashboard/settings/advanced?wolt=${encodeURIComponent(woltUrl)}&ack=1&autostart=1`
+        ? `/dashboard?wolt=${encodeURIComponent(woltUrl)}&ack=1&autostart=1`
         : (data.redirect ?? "/dashboard");
       router.push(dest);
       router.refresh();

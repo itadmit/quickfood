@@ -44,11 +44,13 @@ export function WoltImportClient({
   initialUrl,
   initialAck,
   autoStart,
+  redirectOnDone,
 }: {
   lastImport: LastImport | null;
   initialUrl?: string;
   initialAck?: boolean;
   autoStart?: boolean;
+  redirectOnDone?: string;
 }) {
   const router = useRouter();
   const [stage, setStage] = useState<Stage>("form");
@@ -135,7 +137,11 @@ export function WoltImportClient({
       }
       setResult(body as CommitResult);
       setStage("done");
-      router.refresh();
+      if (redirectOnDone) {
+        router.push(redirectOnDone);
+      } else {
+        router.refresh();
+      }
     } finally {
       setBusy(false);
     }

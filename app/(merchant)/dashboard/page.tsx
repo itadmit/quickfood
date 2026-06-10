@@ -6,6 +6,7 @@ import { summary, hourly, topItems, type Range } from "@/lib/analytics";
 import { fullName } from "@/lib/format";
 import { DashboardView } from "./DashboardView";
 import { DashboardViewV2 } from "@/components/merchant/v2/DashboardViewV2";
+import { WoltImportModal } from "./WoltImportModal";
 import { roleHome } from "@/lib/auth/merchant-access";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +14,7 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ range?: string }>;
+  searchParams: Promise<{ range?: string; wolt?: string; ack?: string; autostart?: string }>;
 }) {
   const session = await getSession();
   if (!session || session.type !== "merchant" || !session.tenantId) {
@@ -24,7 +25,7 @@ export default async function DashboardPage({
   const home = roleHome(session.role);
   if (home !== "/dashboard") redirect(home);
 
-  const raw = (await searchParams).range;
+  const { range: raw, wolt, ack, autostart } = await searchParams;
   const allowed = ["today", "yesterday", "7d", "30d"] as const;
   type Quick = (typeof allowed)[number];
   const range: Quick = allowed.includes(raw as Quick) ? (raw as Quick) : "today";
@@ -74,37 +75,53 @@ export default async function DashboardPage({
     createdAt: o.createdAt.toISOString(),
   }));
 
+  const woltModal = wolt ? (
+    <WoltImportModal
+      initialUrl={decodeURIComponent(wolt)}
+      initialAck={ack === "1"}
+      autoStart={autostart === "1"}
+    />
+  ) : null;
+
   if (tenant?.dashboardVersion === "v2") {
     const firstName = (merchant?.name ?? "").split(/\s+/)[0] ?? "";
     return (
-      <DashboardViewV2
-        range={range}
-        summary={sum}
-        hourly={hr}
-        topItems={items}
-        recentOrders={recent}
-        merchantFirstName={firstName}
-        hasNoMenuItems={menuItemCount === 0}
-        setupState={{
-          brandingDone: !!(tenant?.logoUrl || tenant?.about || tenant?.cuisineType),
-          categoriesDone: categoryCount > 0,
-          menuItemsDone: menuItemCount > 0,
-          branchId: primaryBranch?.id ?? null,
-          initialStoreName: tenant?.name ?? "",
-          initialCuisineType: tenant?.cuisineType ?? "",
-          initialBranchName: primaryBranch?.name ?? "",
-          initialBranchAddress: primaryBranch?.address ?? "",
-          initialBranchPhone: primaryBranch?.phone ?? "",
-          initialMinOrder: primaryBranch?.minOrder ?? 0,
-          initialDeliveryFee: primaryBranch?.deliveryFee ?? 0,
-          initialAcceptsCash: tenant?.acceptsCash ?? true,
-          initialGrowActive: paymentConfig?.isActive ?? false,
-          initialGrowUserId: ((paymentConfig?.credentials ?? {}) as { userId?: string }).userId ?? "",
-          initialBranchHours: (primaryBranch?.hours ?? {}) as Record<string, { open: string; close: string; active: boolean }>,
-        }}
-      />
+      <>
+        {woltModal}
+        <DashboardViewV2
+          range={range}
+          summary={sum}
+          hourly={hr}
+          topItems={items}
+          recentOrders={recent}
+          merchantFirstName={firstName}
+          hasNoMenuItems={menuItemCount === 0}
+          setupState={{
+            brandingDone: !!(tenant?.logoUrl || tenant?.about || tenant?.cuisineType),
+            categoriesDone: categoryCount > 0,
+            menuItemsDone: menuItemCount > 0,
+            branchId: primaryBranch?.id ?? null,
+            initialStoreName: tenant?.name ?? "",
+            initialCuisineType: tenant?.cuisineType ?? "",
+            initialBranchName: primaryBranch?.name ?? "",
+            initialBranchAddress: primaryBranch?.address ?? "",
+            initialBranchPhone: primaryBranch?.phone ?? "",
+            initialMinOrder: primaryBranch?.minOrder ?? 0,
+            initialDeliveryFee: primaryBranch?.deliveryFee ?? 0,
+            initialAcceptsCash: tenant?.acceptsCash ?? true,
+            initialGrowActive: paymentConfig?.isActive ?? false,
+            initialGrowUserId: ((paymentConfig?.credentials ?? {}) as { userId?: string }).userId ?? "",
+            initialBranchHours: (primaryBranch?.hours ?? {}) as Record<string, { open: string; close: string; active: boolean }>,
+          }}
+        />
+      </>
     );
   }
 
-  return <DashboardView range={range} summary={sum} hourly={hr} topItems={items} recentOrders={recent} />;
+  return (
+    <>
+      {woltModal}
+      <DashboardView range={range} summary={sum} hourly={hr} topItems={items} recentOrders={recent} />
+    </>
+  );
 }
