@@ -4,9 +4,14 @@ import { getSession } from "@/lib/auth/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const POLL_MS = 2_000;
 const COURIER_LOCATION_INTERVAL_MS = 30_000;
+// Recycle the stream shortly before maxDuration so the function exits cleanly
+// and releases its Neon connection. EventSource reconnects automatically and
+// the next snapshot re-syncs state, so nothing is lost across the gap.
+const STREAM_TTL_MS = 55_000;
 
 export async function GET(req: Request, { params }: { params: Promise<{ orderId: string }> }) {
   const { orderId } = await params;
@@ -68,8 +73,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ orderId:
     lastEventAt = initial.createdAt;
     let nextLocationPushAt = Date.now() + COURIER_LOCATION_INTERVAL_MS;
     let lastCourierKey = `${initial.courier?.currentLat ?? ""},${initial.courier?.currentLng ?? ""}`;
+    const deadline = Date.now() + STREAM_TTL_MS;
 
-    while (true) {
+    while (Date.now() < deadline) {
       await wait(POLL_MS);
       const events = await prisma.orderEvent.findMany({
         where: { orderId, createdAt: { gt: lastEventAt } },

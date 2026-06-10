@@ -5,8 +5,15 @@ import { HIDE_UNPAID_NONCASH } from "@/lib/orders-visible";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const POLL_MS = 2_000;
+// Recycle the stream shortly before the platform's maxDuration so the
+// function exits cleanly and releases its Neon connection, instead of
+// lingering (or being killed mid-write) and starving the pool. The browser
+// EventSource reconnects automatically; the client refetches on connect and
+// dedups by order id, so the brief gap never drops or double-counts orders.
+const STREAM_TTL_MS = 55_000;
 
 export async function GET(req: Request) {
   const session = await getSession();
@@ -17,8 +24,9 @@ export async function GET(req: Request) {
 
   return createSseStream(req, async function* (): AsyncGenerator<SseEvent> {
     let lastSeen = new Date();
+    const deadline = Date.now() + STREAM_TTL_MS;
 
-    while (true) {
+    while (Date.now() < deadline) {
       await wait(POLL_MS);
 
       // New orders since lastSeen. Skip non-cash orders that are still
