@@ -4,6 +4,7 @@ import "./globals.css";
 import { RouteProgress } from "@/components/shared/RouteProgress";
 import { ScrollToTop } from "@/components/shared/ScrollToTop";
 import { MetaPixel } from "@/components/marketing/MetaPixel";
+import { GoogleAnalytics } from "@/components/marketing/GoogleAnalytics";
 
 const notoHebrew = Noto_Sans_Hebrew({
   subsets: ["hebrew", "latin"],
@@ -157,6 +158,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_SCHEMA) }}
         />
         <MetaPixel />
+        <GoogleAnalytics />
         <RouteProgress />
         <ScrollToTop />
         {children}

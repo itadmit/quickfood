@@ -12,6 +12,7 @@ import { WoltTermsTrigger } from "@/components/shared/wolt/WoltTermsModal";
 import { StorefrontPreviewPhone } from "@/components/shared/wolt/StorefrontPreviewPhone";
 import { cn } from "@/lib/cn";
 import { track } from "@/lib/fb/pixel";
+import { gaEvent } from "@/lib/ga/gtag";
 
 type SlugStatus = "idle" | "checking" | "available" | "taken" | "invalid" | "reserved" | "too_short";
 
@@ -191,6 +192,7 @@ export function SignupForm() {
   async function submit() {
     setBusy(true);
     setError(null);
+    gaEvent("signup_start", { business_type: businessType, method: woltUrl ? "wolt" : "manual" });
     try {
       const venueExtras =
         woltPreview
@@ -254,6 +256,12 @@ export function SignupForm() {
         { content_name: businessType, currency: "ILS", value: 299 },
         { email: ownerEmail.toLowerCase(), phone: branchPhone },
       );
+      gaEvent("sign_up", {
+        method: woltUrl ? "wolt" : "manual",
+        business_type: businessType,
+        currency: "ILS",
+        value: 299,
+      });
       const dest = woltUrl
         ? `/dashboard?wolt=${encodeURIComponent(woltUrl)}&ack=1&autostart=1`
         : (data.redirect ?? "/dashboard");
