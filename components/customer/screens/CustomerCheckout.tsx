@@ -975,7 +975,7 @@ export function CustomerCheckout({
         <aside className="hidden lg:block lg:col-start-2 lg:sticky lg:top-20 lg:self-start">
           <Card>
             <CardTitle>סיכום הזמנה</CardTitle>
-            <ul className="mt-3 divide-y divide-qf-line-soft max-h-72 overflow-y-auto">
+            <ul className="mt-3 divide-y divide-qf-line-soft">
               {lines.map((l) => {
                 const opts = l.options.reduce((a, o) => a + o.priceDelta, 0);
                 const unit = l.basePrice + l.sizeDelta + opts;

@@ -53,9 +53,6 @@ export function AIAdvisorTopButton() {
           : "opacity-0 translate-y-3 pointer-events-none gap-0 p-1.5")
       }
     >
-      <span className="grid w-6 h-6 place-items-center shrink-0">
-        <Sparkle />
-      </span>
       <span
         className={
           "text-sm font-bold whitespace-nowrap overflow-hidden transition-[max-width,opacity] duration-500 ease-out text-(--qf-deep) " +
@@ -63,6 +60,9 @@ export function AIAdvisorTopButton() {
         }
       >
         יועץ AI
+      </span>
+      <span className="grid w-6 h-6 place-items-center shrink-0">
+        <Sparkle />
       </span>
     </button>
   );
