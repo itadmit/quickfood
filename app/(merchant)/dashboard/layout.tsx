@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import QRCode from "qrcode";
-import { getSession } from "@/lib/auth/session";
+import { getSession, ADMIN_RETURN_COOKIE } from "@/lib/auth/session";
+import { verifyAccess } from "@/lib/auth/jwt";
 import { prisma } from "@/lib/db/client";
+import { ImpersonationBanner } from "@/components/merchant/ImpersonationBanner";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import { Sidebar } from "@/components/merchant/Sidebar";
 import { Topbar } from "@/components/merchant/Topbar";
@@ -97,6 +100,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // verified the email; the trial timer keeps ticking either way.
   const emailVerified = !!user.emailVerifiedAt;
 
+  // Platform admin "logged in as" this store - the signed return cookie lets
+  // them pop back to /admin via the banner.
+  const adminReturn = (await cookies()).get(ADMIN_RETURN_COOKIE)?.value;
+  const impersonating = adminReturn
+    ? (await verifyAccess(adminReturn))?.role === "platform_admin"
+    : false;
+
   return (
     <ThemeProvider themeId={tenant.themeId}>
       {isV2 ? (
@@ -119,6 +129,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             backgroundSize: "22px 22px",
           }}
         >
+          {impersonating && <ImpersonationBanner />}
           <EmailVerificationBanner
             emailVerifiedAt={user.emailVerifiedAt?.toISOString() ?? null}
             email={user.email}
@@ -179,6 +190,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
       ) : (
         <div className="min-h-screen bg-qf-bg-dash text-qf-ink flex flex-col overflow-x-clip">
+          {impersonating && <ImpersonationBanner />}
           <EmailVerificationBanner
             emailVerifiedAt={user.emailVerifiedAt?.toISOString() ?? null}
             email={user.email}

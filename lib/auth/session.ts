@@ -6,6 +6,10 @@ import { prisma } from "@/lib/db/client";
 
 export const ACCESS_COOKIE = "qf_access";
 export const REFRESH_COOKIE = "qf_refresh";
+// Holds the platform-admin's own (signed) access token while they impersonate
+// a tenant, so they can restore their admin session. Separate from the live
+// session cookies, which point at the impersonated merchant.
+export const ADMIN_RETURN_COOKIE = "qf_admin_orig";
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -104,6 +108,27 @@ export async function clearSessionCookies(): Promise<void> {
   const jar = await cookies();
   jar.delete(ACCESS_COOKIE);
   jar.delete(REFRESH_COOKIE);
+}
+
+export async function setAdminReturnCookie(token: string): Promise<void> {
+  const jar = await cookies();
+  jar.set(ADMIN_RETURN_COOKIE, token, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 4, // 4h impersonation window
+  });
+}
+
+export async function readAdminReturnToken(): Promise<string | null> {
+  const jar = await cookies();
+  return jar.get(ADMIN_RETURN_COOKIE)?.value ?? null;
+}
+
+export async function clearAdminReturnCookie(): Promise<void> {
+  const jar = await cookies();
+  jar.delete(ADMIN_RETURN_COOKIE);
 }
 
 export async function issueTokensForCustomer(customerId: string) {

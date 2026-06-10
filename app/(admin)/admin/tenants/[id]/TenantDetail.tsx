@@ -163,6 +163,25 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
     }
   }
 
+  async function loginAsUser() {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/v1/admin/tenants/${t.id}/impersonate`, {
+        method: "POST",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        flash(data?.error?.message ?? "ההתחברות נכשלה");
+        setSaving(false);
+        return;
+      }
+      window.location.href = data?.redirect ?? "/dashboard";
+    } catch {
+      flash("שגיאת רשת");
+      setSaving(false);
+    }
+  }
+
   async function toggleStatus() {
     const next: Status = t.status === "active" ? "suspended" : "active";
     setSaving(true);
@@ -334,6 +353,14 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
           >
             צפה בחנות
           </Link>
+          <button
+            type="button"
+            onClick={loginAsUser}
+            disabled={saving}
+            className="px-3 py-1.5 rounded-lg bg-qf-ink text-white text-sm font-medium hover:opacity-90 disabled:opacity-60"
+          >
+            התחבר כמשתמש
+          </button>
           <button
             type="button"
             onClick={toggleStatus}
