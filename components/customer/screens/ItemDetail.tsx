@@ -310,8 +310,12 @@ export function ItemDetail({
     setPicks((prev) => {
       const next = { ...prev };
       const current = new Set(next[group.id] ?? []);
-      if (group.type === "single") {
-        next[group.id] = new Set([optionId]);
+      if (group.type === "single" || group.maxSelect === 1) {
+        // Radio behavior: one tap swaps the choice. Re-tapping the selected
+        // option clears it only when the group is optional; a required group
+        // always keeps a pick.
+        next[group.id] =
+          current.has(optionId) && !group.required ? new Set() : new Set([optionId]);
       } else {
         if (current.has(optionId)) {
           current.delete(optionId);
@@ -804,14 +808,17 @@ export function ItemDetail({
             helpText={g.helpText}
             flash={flashGroupId === g.id}
           >
-            {g.options.map((o) => {
+            {/* A group capped at one pick (single, or multi with maxSelect 1)
+                behaves like a radio - one tap swaps the choice. */}
+            {(() => {
+              const isSingle = g.type === "single" || g.maxSelect === 1;
+              return g.options.map((o) => {
               const checked = picks[g.id]?.has(o.id) ?? false;
-              // `atMax` only blocks new picks for MULTI groups. For
-              // single-select (radio) the new tap always replaces the
-              // current selection, so blocking the row would leave the
-              // customer stuck on their first choice with no way back -
-              // exactly the "selected one, can't switch" bug.
-              const blocked = g.type === "multi" && !checked && atMax;
+              // `atMax` only blocks new picks for genuine multi-select groups
+              // (maxSelect > 1). For radio groups the new tap always replaces
+              // the current selection, so blocking the row would leave the
+              // customer stuck on their first choice - the "can't switch" bug.
+              const blocked = !isSingle && !checked && atMax;
               return (
                 <Row
                   key={o.id}
@@ -831,10 +838,11 @@ export function ItemDetail({
                         : `-${formatPrice(-o.priceDelta)}`
                   }
                   priceTone="delta"
-                  radio={g.type === "single"}
+                  radio={isSingle}
                 />
               );
-            })}
+            });
+            })()}
           </Section>
         );
       })}
