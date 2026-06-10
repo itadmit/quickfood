@@ -372,12 +372,14 @@ function Hero() {
           <Link href="/signup" className={`${styles.btn} ${styles.btnTomato} ${styles.btnLg}`}>
             QuickFood, תפתחו לי חנות
           </Link>
-          <a
-            href="#pricing"
+          <Link
+            href="/s/pizzaninja-gedera"
+            target="_blank"
+            rel="noopener noreferrer"
             className={`${styles.btn} ${styles.btnGhost} ${styles.btnGhostOutline} ${styles.btnLg}`}
           >
-            כמה זה עולה <IcoArrowLeft c="currentColor" s={14} />
-          </a>
+            חנות דמו <IcoArrowLeft c="currentColor" s={14} />
+          </Link>
         </div>
 
         <div className={styles.heroStats}>
