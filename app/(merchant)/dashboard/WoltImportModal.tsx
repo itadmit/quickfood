@@ -251,7 +251,7 @@ function DoneStage({
   return (
     <>
       <div className="w-16 h-16 rounded-2xl bg-black border-2 border-black grid place-items-center shadow-[0_4px_0_#000]">
-        <IcoCheck c="#F8CB1E" s={30} />
+        <IcoCheck c="#34C759" s={30} />
       </div>
 
       <div>
