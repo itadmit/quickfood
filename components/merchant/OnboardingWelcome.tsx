@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   IcoArrowLeft,
@@ -33,9 +33,21 @@ export function OnboardingWelcome({
   initialOpen: boolean;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(initialOpen);
+  const searchParams = useSearchParams();
+  const hasWoltParam = !!searchParams.get("wolt");
+  const [open, setOpen] = useState(initialOpen && !hasWoltParam);
   const [step, setStep] = useState<Step>(1);
   const [busy, setBusy] = useState<"scratch" | "wolt" | "later" | null>(null);
+
+  useEffect(() => {
+    if (hasWoltParam && initialOpen) {
+      fetch("/api/v1/merchant/tenant", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ onboarding_dismissed: true }),
+      }).catch(() => {});
+    }
+  }, [hasWoltParam, initialOpen]);
 
   useEffect(() => {
     function onOpen() {
