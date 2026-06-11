@@ -49,6 +49,7 @@ interface OptionGroup {
   includedFree?: number;
   helpText?: string | null;
   allowHalf?: boolean;
+  splitPrice?: boolean;
   maxPerSide?: number | null;
   options: Option[];
 }
@@ -279,7 +280,7 @@ export function ItemDetail({
         for (const o of picked) {
           const placement = gHalf[o.id];
           const baseDelta = freedIds.has(o.id) ? 0 : o.priceDelta;
-          const delta = placement !== "full" ? baseDelta / 2 : baseDelta;
+          const delta = placement !== "full" && g.splitPrice ? baseDelta / 2 : baseDelta;
           oDelta += delta;
         }
       } else {
@@ -391,7 +392,7 @@ export function ItemDetail({
         for (const o of picked) {
           const placement = gHalf[o.id]!;
           const baseDelta = freedIds.has(o.id) ? 0 : o.priceDelta;
-          const effectiveDelta = placement !== "full" ? baseDelta / 2 : baseDelta;
+          const effectiveDelta = placement !== "full" && g.splitPrice ? baseDelta / 2 : baseDelta;
           selectedOpts.push({ groupId: g.id, optionId: o.id, name: o.name, groupName: g.name, priceDelta: effectiveDelta, half: placement });
         }
       } else {
@@ -745,7 +746,7 @@ export function ItemDetail({
             >
               {g.options.map((o) => {
                 const placement = gHalf[o.id] as HalfPlacement | undefined;
-                const halfPrice = o.priceDelta / 2;
+                const halfPrice = g.splitPrice ? o.priceDelta / 2 : o.priceDelta;
 
                 const wouldExceed = (p: HalfPlacement) => {
                   if (cap == null) return false;
@@ -775,7 +776,9 @@ export function ItemDetail({
                       <div className="text-sm font-medium">{o.name}</div>
                       {o.priceDelta > 0 && (
                         <div className="text-xs text-qf-ink2 mt-0.5">
-                          {`שלם +${formatPrice(o.priceDelta)} · חצי +${formatPrice(halfPrice)}`}
+                          {g.splitPrice
+                            ? `שלם +${formatPrice(o.priceDelta)} · חצי +${formatPrice(halfPrice)}`
+                            : `+${formatPrice(o.priceDelta)}`}
                         </div>
                       )}
                     </div>

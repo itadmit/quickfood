@@ -49,6 +49,7 @@ export default async function ItemEditPage({
     includedFree: s.includedFree,
     helpText: s.helpText,
     allowHalf: s.allowHalf,
+    splitPrice: s.splitPrice,
     maxPerSide: s.maxPerSide,
     optionsCount: s.options.length,
     options: s.options.map((o) => ({ name: o.name, priceDelta: o.priceDelta })),
@@ -115,6 +116,7 @@ export default async function ItemEditPage({
           includedFree: g.includedFree,
           helpText: g.helpText,
           allowHalf: g.allowHalf,
+          splitPrice: g.splitPrice,
           maxPerSide: g.maxPerSide,
           templateSetId: g.templateSetId,
           options: g.options.map((o) => ({

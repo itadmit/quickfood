@@ -32,6 +32,7 @@ export default async function ModifiersPage() {
         includedFree: s.includedFree,
         helpText: s.helpText,
         allowHalf: s.allowHalf,
+        splitPrice: s.splitPrice,
         maxPerSide: s.maxPerSide,
         position: s.position,
         attachedCount: s._count.attachedTo,

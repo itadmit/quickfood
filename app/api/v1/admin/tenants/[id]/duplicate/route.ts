@@ -177,6 +177,7 @@ export const POST = handler(
               helpText: set.helpText,
               position: set.position,
               allowHalf: set.allowHalf,
+              splitPrice: set.splitPrice,
               maxPerSide: set.maxPerSide,
               externalSource: set.externalSource,
               externalId: set.externalId,
@@ -264,6 +265,7 @@ export const POST = handler(
                   helpText: g.helpText,
                   position: g.position,
                   allowHalf: g.allowHalf,
+                  splitPrice: g.splitPrice,
                   maxPerSide: g.maxPerSide,
                   templateSetId: g.templateSetId
                     ? (setMap.get(g.templateSetId) ?? null)

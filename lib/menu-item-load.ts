@@ -66,6 +66,7 @@ async function _fetch(tenantSlug: string, itemId: string) {
           includedFree: fromSet?.includedFree ?? g.includedFree,
           helpText: fromSet?.helpText ?? g.helpText,
           allowHalf: g.allowHalf || (fromSet?.allowHalf ?? false),
+          splitPrice: g.splitPrice || (fromSet?.splitPrice ?? false),
           maxPerSide: g.maxPerSide ?? fromSet?.maxPerSide ?? null,
           options: opts
             .filter((o) => o.available)

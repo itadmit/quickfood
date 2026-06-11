@@ -29,6 +29,7 @@ interface ModifierSet {
   includedFree: number;
   helpText: string | null;
   allowHalf: boolean;
+  splitPrice: boolean;
   maxPerSide: number | null;
   position: number;
   attachedCount: number;
@@ -52,6 +53,7 @@ const EMPTY: NewModifierSet = {
   includedFree: 0,
   helpText: null,
   allowHalf: false,
+  splitPrice: false,
   maxPerSide: null,
   position: 0,
   attachedCount: 0,
@@ -90,6 +92,7 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
       included_free: editing.includedFree,
       help_text: editing.helpText,
       allow_half: editing.allowHalf,
+      split_price: editing.splitPrice,
       max_per_side: editing.maxPerSide,
       position: editing.position,
       options: editing.options.map((o) => ({
@@ -125,6 +128,7 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
       includedFree: editing.includedFree,
       helpText: editing.helpText,
       allowHalf: editing.allowHalf,
+      splitPrice: editing.splitPrice,
       maxPerSide: editing.maxPerSide,
       position: editing.position,
       attachedCount: editing.id ? editing.attachedCount : 0,
@@ -397,6 +401,7 @@ function SetEditor({
                   minSelect: set.required ? 1 : 0,
                   includedFree: 0,
                   allowHalf: false,
+                  splitPrice: false,
                   maxPerSide: null,
                 });
               } else {
@@ -479,6 +484,18 @@ function SetEditor({
             />
             <span>חצי/חצי - לקוח יכול לבחור כל תוספת לחצי בלבד (פיצה ועוד)</span>
           </label>
+          {set.allowHalf && (
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={set.splitPrice}
+                onChange={(e) =>
+                  onChange({ ...set, splitPrice: e.target.checked })
+                }
+              />
+              <span>חצי תוספת = חצי מחיר (אם כבוי, תוספת על חצי עולה מחיר מלא)</span>
+            </label>
+          )}
           {set.allowHalf && (
             <label className="flex flex-col gap-1 text-xs max-w-xs">
               <span className="text-qf-mute" title="כמה תוספות מותר לבחור על כל חצי. 'שלם' נספרת בשני הצדדים. ריק = ללא הגבלה לפי צד.">

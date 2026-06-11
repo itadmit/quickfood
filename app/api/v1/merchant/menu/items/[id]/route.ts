@@ -60,6 +60,7 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
         included_free: g.includedFree,
         help_text: g.helpText,
         allow_half: g.allowHalf,
+        split_price: g.splitPrice,
         max_per_side: g.maxPerSide,
         template_set_id: g.templateSetId,
         options: g.options.map((o) => ({
@@ -146,6 +147,7 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
         includedFree: g.included_free,
         helpText: g.help_text ?? null,
         allowHalf: g.allow_half,
+        splitPrice: g.split_price,
         maxPerSide: g.max_per_side ?? null,
         templateSetId: g.template_set_id ?? null,
         position: gi,

@@ -30,6 +30,7 @@ export const GET = handler(async () => {
       included_free: s.includedFree,
       help_text: s.helpText,
       allow_half: s.allowHalf,
+      split_price: s.splitPrice,
       max_per_side: s.maxPerSide,
       position: s.position,
       attached_count: s._count.attachedTo,
@@ -62,6 +63,7 @@ export const POST = handler(async (req: Request) => {
       includedFree: body.included_free,
       helpText: body.help_text ?? null,
       allowHalf: body.allow_half,
+      splitPrice: body.split_price,
       maxPerSide: body.max_per_side ?? null,
       position: body.position,
       options: {

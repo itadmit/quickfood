@@ -177,6 +177,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       const effectiveMin = fromSet?.minSelect ?? group.minSelect;
       const effectiveMax = fromSet?.maxSelect ?? group.maxSelect;
       const effectiveFree = fromSet?.includedFree ?? group.includedFree;
+      const effectiveSplit = group.splitPrice || (fromSet?.splitPrice ?? false);
       const availableOptions = effectiveOptions.filter((o) => o.available);
       const picksInGroup = availableOptions.filter((o) => optionIds.has(o.id));
 
@@ -205,7 +206,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         const o = paid[i];
         const baseDelta = i < effectiveFree ? 0 : o.priceDelta;
         const half = placements[o.id];
-        const effectiveDelta = half && half !== "full" ? baseDelta / 2 : baseDelta;
+        const effectiveDelta = half && half !== "full" && effectiveSplit ? baseDelta / 2 : baseDelta;
         selectedOptions.push({
           group_id: group.id,
           option_id: o.id,
@@ -217,7 +218,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       }
       for (const o of [...negative, ...zero]) {
         const half = placements[o.id];
-        const effectiveDelta = half && half !== "full" ? o.priceDelta / 2 : o.priceDelta;
+        const effectiveDelta = half && half !== "full" && effectiveSplit ? o.priceDelta / 2 : o.priceDelta;
         selectedOptions.push({
           group_id: group.id,
           option_id: o.id,

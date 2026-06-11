@@ -32,6 +32,7 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
       included_free: set.includedFree,
       help_text: set.helpText,
       allow_half: set.allowHalf,
+      split_price: set.splitPrice,
       max_per_side: set.maxPerSide,
       position: set.position,
       attached_count: set._count.attachedTo,
@@ -71,6 +72,7 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
         includedFree: body.included_free,
         helpText: body.help_text ?? null,
         allowHalf: body.allow_half,
+        splitPrice: body.split_price,
         maxPerSide: body.max_per_side ?? null,
         position: body.position,
       },
@@ -107,6 +109,7 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
         includedFree: body.included_free,
         helpText: body.help_text ?? null,
         allowHalf: body.allow_half,
+        splitPrice: body.split_price,
         maxPerSide: body.max_per_side ?? null,
       },
     });

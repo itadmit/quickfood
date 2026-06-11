@@ -35,6 +35,7 @@ interface OptionGroup {
   includedFree?: number;
   helpText?: string | null;
   allowHalf?: boolean;
+  splitPrice?: boolean;
   maxPerSide?: number | null;
   options: Option[];
 }
@@ -183,7 +184,7 @@ export function PosItemConfigModal({
         for (const o of picked) {
           const placement = gHalf[o.id];
           const baseDelta = freedIds.has(o.id) ? 0 : o.priceDelta;
-          oDelta += placement !== "full" ? baseDelta / 2 : baseDelta;
+          oDelta += placement !== "full" && g.splitPrice ? baseDelta / 2 : baseDelta;
         }
       } else {
         const sel = picks[g.id] ?? new Set();
@@ -270,7 +271,7 @@ export function PosItemConfigModal({
         for (const o of picked) {
           const placement = gHalf[o.id]!;
           const baseDelta = freedIds.has(o.id) ? 0 : o.priceDelta;
-          const effectiveDelta = placement !== "full" ? baseDelta / 2 : baseDelta;
+          const effectiveDelta = placement !== "full" && g.splitPrice ? baseDelta / 2 : baseDelta;
           selectedOpts.push({
             groupId: g.id,
             optionId: o.id,
@@ -409,7 +410,7 @@ export function PosItemConfigModal({
                 <div className="space-y-1.5">
                   {g.options.map((o) => {
                     const placement = gHalf[o.id];
-                    const halfPrice = o.priceDelta / 2;
+                    const halfPrice = g.splitPrice ? o.priceDelta / 2 : o.priceDelta;
                     const wouldExceed = (p: HalfPlacement) => {
                       if (cap == null) return false;
                       if (placement === p) return false;
@@ -434,7 +435,9 @@ export function PosItemConfigModal({
                           <div className="text-sm font-medium truncate">{o.name}</div>
                           {o.priceDelta > 0 && (
                             <div className="text-[11px] text-qf-mute tnum">
-                              שלם +{formatPrice(o.priceDelta)} · חצי +{formatPrice(halfPrice)}
+                              {g.splitPrice
+                                ? `שלם +${formatPrice(o.priceDelta)} · חצי +${formatPrice(halfPrice)}`
+                                : `+${formatPrice(o.priceDelta)}`}
                             </div>
                           )}
                         </div>

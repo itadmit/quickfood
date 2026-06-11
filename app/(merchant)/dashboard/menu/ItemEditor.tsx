@@ -44,6 +44,7 @@ interface OptionGroup {
   includedFree: number;
   helpText: string | null;
   allowHalf: boolean;
+  splitPrice: boolean;
   maxPerSide: number | null;
   templateSetId: string | null;
   options: Option[];
@@ -59,6 +60,7 @@ export interface ModifierSetSummary {
   includedFree: number;
   helpText: string | null;
   allowHalf: boolean;
+  splitPrice: boolean;
   maxPerSide: number | null;
   optionsCount: number;
   options?: { name: string; priceDelta: number }[];
@@ -180,6 +182,7 @@ export function ItemEditor({
           includedFree: 0,
           helpText: null,
           allowHalf: false,
+          splitPrice: false,
           maxPerSide: null,
           templateSetId: null,
           options: [],
@@ -204,6 +207,7 @@ export function ItemEditor({
           includedFree: set.includedFree,
           helpText: set.helpText,
           allowHalf: set.allowHalf,
+          splitPrice: set.splitPrice,
           maxPerSide: set.maxPerSide,
           templateSetId: set.id,
           options: [],
@@ -257,6 +261,7 @@ export function ItemEditor({
           included_free: g.includedFree,
           help_text: g.helpText,
           allow_half: g.allowHalf,
+          split_price: g.splitPrice,
           max_per_side: g.maxPerSide,
           template_set_id: g.templateSetId,
           options: g.options.map((o) => ({
@@ -1132,6 +1137,18 @@ function GroupEditor({
             />
             <span>חצי/חצי - לקוח יכול לבחור כל תוספת לחצי בלבד</span>
           </label>
+          {group.allowHalf && (
+            <label className="col-span-3 inline-flex items-center gap-2 px-0.5 py-0.5">
+              <input
+                type="checkbox"
+                checked={group.splitPrice}
+                onChange={(e) =>
+                  onChange({ ...group, splitPrice: e.target.checked })
+                }
+              />
+              <span>חצי תוספת = חצי מחיר (אם כבוי, תוספת על חצי עולה מחיר מלא)</span>
+            </label>
+          )}
           {group.allowHalf && (
             <label className="col-span-3 flex flex-col gap-1">
               <span className="text-qf-mute" title="כמה תוספות מותר לבחור על כל חצי בנפרד. שדרגו לתוסי 'שלם' נספרת בשני הצדדים. ריק = ללא הגבלה לפי צד.">
