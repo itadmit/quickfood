@@ -362,7 +362,7 @@ function SetEditor({
         <div className="flex items-center gap-3">
           {set.attachedCount > 0 && (
             <span className="text-[11px] text-qf-mute leading-tight max-w-[200px]">
-              שינויים כאן יחולו אוטומטית על {set.attachedCount} הפריטים שמחוברים לקטלוג
+              שינויים כאן יחולו אוטומטית על {set.attachedCount} הפריטים שמחוברים לקטלוג תוספות זה
             </span>
           )}
           <div className="flex gap-2 shrink-0">
