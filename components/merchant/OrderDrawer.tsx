@@ -16,6 +16,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { formatPrice, formatDateTime, formatRelativeMinutes } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { openPassPrnt } from "@/lib/star-passprnt";
 
 const EDITABLE_STATUSES = new Set([
   "pending",
@@ -526,6 +527,13 @@ export function OrderDrawer({
             >
               <IcoPrinter s={14} /> הדפסה
             </button>
+            <button
+              type="button"
+              onClick={() => openPassPrnt(buildReceiptHtml(order))}
+              className="px-3 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm inline-flex items-center gap-2"
+            >
+              <IcoPrinter s={14} /> מדפסת קופה
+            </button>
             {order.status !== "refunded" && order.status !== "cancelled" && (
               <button
                 type="button"
@@ -712,6 +720,92 @@ function PrintReceipt({ order }: { order: OrderDetail }) {
       )}
     </div>
   );
+}
+
+function esc(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// HTML for Star PassPRNT (rendered by the app at 576 dots = 80mm).
+// Mirrors PrintReceipt; big fonts because thermal paper is read at arm's length.
+function buildReceiptHtml(order: OrderDetail): string {
+  const addr = order.delivery_address;
+  const row = (label: string, value: string, cls = "") =>
+    `<div class="row ${cls}"><span>${label}</span><span>${value}</span></div>`;
+
+  const addressHtml =
+    order.method === "delivery" && (addr || order.delivery_notes)
+      ? `<div class="muted">${
+          addr
+            ? esc(
+                `${addr.street}, ${addr.city}` +
+                  (addr.floor ? ` · קומה ${addr.floor}` : "") +
+                  (addr.apartment ? ` · דירה ${addr.apartment}` : ""),
+              ) + (addr.notes ? `<br>${esc(addr.notes)}` : "")
+            : esc(order.delivery_notes ?? "")
+        }</div>`
+      : "";
+
+  const itemsHtml = order.items
+    .map((it) => {
+      const opts =
+        Array.isArray(it.options) && (it.options as unknown[]).length > 0
+          ? `<div class="muted">${esc(renderOptions(it.options))}</div>`
+          : "";
+      const notes = it.notes ? `<div class="muted">הערה: ${esc(it.notes)}</div>` : "";
+      return `<div class="item">${row(
+        `${it.quantity}× ${esc(it.name)}${it.size ? ` · ${esc(it.size)}` : ""}`,
+        formatPrice(it.total_price),
+      )}${opts}${notes}</div>`;
+    })
+    .join("");
+
+  const sums = [
+    row("סכום ביניים", formatPrice(order.subtotal), "muted"),
+    order.method === "delivery" && order.delivery_fee > 0
+      ? row("דמי משלוח", formatPrice(order.delivery_fee), "muted")
+      : "",
+    order.service_fee > 0 ? row("דמי שירות", formatPrice(order.service_fee), "muted") : "",
+    order.cutlery_count > 0
+      ? row(
+          `סכו"ם × ${order.cutlery_count}`,
+          order.cutlery_fee > 0 ? formatPrice(order.cutlery_fee) : "חינם",
+          "muted",
+        )
+      : "",
+    order.tip > 0 ? row("טיפ לשליח", formatPrice(order.tip), "muted") : "",
+    order.discount > 0 ? row("הנחה", `-${formatPrice(order.discount)}`, "muted") : "",
+  ].join("");
+
+  return `<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8"><style>
+body{margin:0;padding:8px 4px;font-family:-apple-system,sans-serif;color:#000;width:568px}
+h1{font-size:44px;margin:0 0 4px;text-align:center}
+.row{display:flex;justify-content:space-between;gap:12px;font-size:27px;line-height:1.35}
+.row span:first-child{word-break:break-word}
+.row span:last-child{white-space:nowrap}
+.muted{font-size:24px;line-height:1.35}
+.item{margin-bottom:8px}
+.rule{border-top:3px dashed #000;margin:10px 0}
+.total{font-size:36px;font-weight:bold}
+.center{text-align:center;font-size:24px}
+</style></head><body>
+<h1>#${esc(order.number)}</h1>
+<div class="row muted"><span>${formatDateTime(order.created_at)}</span><span>${
+    order.method === "delivery" ? "משלוח" : "איסוף"
+  }</span></div>
+<div class="rule"></div>
+<div class="row"><span>${esc(order.customer?.name || "אורח")}</span></div>
+${order.customer?.phone ? `<div class="muted">${esc(order.customer.phone)}</div>` : ""}
+${addressHtml}
+<div class="rule"></div>
+${itemsHtml}
+<div class="rule"></div>
+${sums}
+<div class="rule"></div>
+${row("סה״כ", formatPrice(order.total), "total")}
+${row("תשלום", PAYMENT_METHOD_LABEL[order.payment_method] ?? esc(order.payment_method), "muted")}
+${order.customer_notes ? `<div class="rule"></div><div class="muted">${esc(order.customer_notes)}</div>` : ""}
+</body></html>`;
 }
 
 function TimelineRow({ label, at, done }: { label: string; at: string; done?: boolean }) {

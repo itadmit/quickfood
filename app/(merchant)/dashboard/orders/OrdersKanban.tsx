@@ -6,6 +6,7 @@ import { IcoClock, IcoPhone, IcoPrinter, IcoFlame, IcoRefresh, IcoUndo, IcoClose
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { consumePassPrntResult } from "@/lib/star-passprnt";
 import { OrderDrawer } from "@/components/merchant/OrderDrawer";
 import { ManualOrderModal } from "@/components/merchant/ManualOrderModal";
 import { AssignCourierModal } from "@/components/merchant/AssignCourierModal";
@@ -392,6 +393,13 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
   function pushToast(kind: ToastKind, message: string) {
     setToast({ id: Date.now(), kind, message });
   }
+
+  useEffect(() => {
+    const result = consumePassPrntResult();
+    if (!result) return;
+    if (result.ok) pushToast("ok", "הקבלה הודפסה");
+    else pushToast("err", `ההדפסה נכשלה${result.message ? `: ${result.message}` : ""}`);
+  }, []);
 
   function nextStatusFor(o: OrderRow): Status | "delivered" {
     const col = COLUMNS.find((c) => c.status.includes(o.status));
