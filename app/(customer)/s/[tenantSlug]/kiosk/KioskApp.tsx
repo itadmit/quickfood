@@ -222,7 +222,14 @@ export function KioskApp({
   // Latched once per cart cycle so the same prompt doesn't pop a
   // second time after the user skipped it. Reset on `reset()`.
   const [checkoutPromptShown, setCheckoutPromptShown] = useState(false);
-  const [activeCat, setActiveCat] = useState<string>(categories[0]?.id ?? "");
+  // Categories and items are loaded separately, so a category with no
+  // available items would otherwise render as an empty tab. Only show
+  // categories that actually have at least one item.
+  const visibleCategories = useMemo(
+    () => categories.filter((c) => items.some((it) => it.categoryId === c.id)),
+    [categories, items],
+  );
+  const [activeCat, setActiveCat] = useState<string>(visibleCategories[0]?.id ?? "");
   const [pickItemId, setPickItemId] = useState<string | null>(null);
   // Pencil-icon edit from cart. Stash the line, open ItemDetail in edit mode.
   const [editingLine, setEditingLine] = useState<CartLine | null>(null);
@@ -315,7 +322,7 @@ export function KioskApp({
     clear();
     setPickItemId(null);
     setQuery("");
-    setActiveCat(categories[0]?.id ?? "");
+    setActiveCat(visibleCategories[0]?.id ?? "");
     setState("start");
     setDiningMode(null);
     setCartOpen(false);
@@ -348,7 +355,7 @@ export function KioskApp({
     setKbdTarget(null);
     setHelpOpen(false);
     setPendingBundleSwap(null);
-  }, [clear, categories]);
+  }, [clear, visibleCategories]);
 
   // Fetch matching bundle offers whenever the cart changes. The
   // server filters to bundles whose triggers are present + addons
@@ -1806,10 +1813,10 @@ export function KioskApp({
         {/* Side category nav. Vertical list, large touch targets,
             collapsed scroll. Hidden when a search query is active -
             the search results span every category anyway. */}
-        {!query && categories.length > 0 && (
+        {!query && visibleCategories.length > 0 && (
           <nav className="w-56 lg:w-64 shrink-0 border-e border-qf-line-soft bg-white overflow-y-auto py-4">
             <ul className="space-y-1 px-3">
-              {categories.map((c) => {
+              {visibleCategories.map((c) => {
                 const active = activeCat === c.id;
                 return (
                   <li key={c.id}>
