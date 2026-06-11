@@ -23,7 +23,7 @@ export default async function TenantsListPage() {
         take: 1,
       },
       merchantUsers: {
-        select: { lastLoginAt: true, emailVerifiedAt: true, role: true },
+        select: { lastLoginAt: true, emailVerifiedAt: true, role: true, phone: true },
       },
       orders: {
         select: { createdAt: true },
@@ -58,6 +58,10 @@ export default async function TenantsListPage() {
         ownerVerified: t.merchantUsers.some(
           (u) => u.role === "owner" && !!u.emailVerifiedAt,
         ),
+        ownerPhone:
+          t.merchantUsers.find((u) => u.role === "owner" && u.phone)?.phone ??
+          t.merchantUsers.find((u) => u.phone)?.phone ??
+          null,
         lastOrderAt: t.orders[0]?.createdAt.toISOString() ?? null,
         createdAt: t.createdAt.toISOString(),
       }))}

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/format";
 import { THEMES } from "@/lib/themes";
 import { cn } from "@/lib/cn";
-import { Trash2, AlertTriangle, ExternalLink, Copy, MoreVertical } from "lucide-react";
+import { Trash2, AlertTriangle, ExternalLink, Copy, MoreVertical, Phone } from "lucide-react";
 import { useRef, useEffect } from "react";
 
 interface Tenant {
@@ -26,6 +26,7 @@ interface Tenant {
   lastLoginAt: string | null;
   lastOrderAt: string | null;
   ownerVerified: boolean;
+  ownerPhone: string | null;
   createdAt: string;
 }
 
@@ -252,6 +253,13 @@ function TenantRow({
   const theme = THEMES[t.themeId] ?? THEMES.fresh;
   const activity = classifyActivity(t);
 
+  const statusTone =
+    t.status === "active"
+      ? "bg-qf-green-soft text-qf-green-deep"
+      : t.status === "suspended"
+        ? "bg-qf-tomato-soft text-qf-tomato"
+        : "bg-qf-yolk-soft text-qf-ink2";
+
   const nameCell = (
     <Link
       href={`/admin/tenants/${t.id}`}
@@ -263,34 +271,40 @@ function TenantRow({
       >
         {t.name.slice(0, 2)}
       </div>
-      <div className="min-w-0">
-        <div className="font-medium truncate group-hover:text-(--qf-deep)">
-          {t.name}
-        </div>
-        <div
-          className="text-[11px] text-qf-mute flex items-center gap-1.5 flex-wrap"
-          dir="ltr"
-        >
-          <span>/{t.slug}</span>
-          <span>·</span>
+      <div className="min-w-0 leading-tight">
+        <div className="flex items-center gap-2">
+          <span className="font-medium truncate group-hover:text-(--qf-deep)">
+            {t.name}
+          </span>
           <span
             className={cn(
-              "px-1.5 py-px rounded",
-              t.status === "active"
-                ? "bg-qf-green-soft text-qf-green-deep"
-                : t.status === "suspended"
-                  ? "bg-qf-tomato-soft text-qf-tomato"
-                  : "bg-qf-yolk-soft text-qf-ink2",
+              "shrink-0 px-1.5 py-px rounded text-[10px] font-medium",
+              statusTone,
             )}
           >
             {STATUS_LABEL[t.status] ?? t.status}
           </span>
-          {!t.ownerVerified && (
-            <span className="px-1.5 py-px rounded bg-qf-tomato-soft text-qf-tomato font-medium">
-              מייל לא אומת
-            </span>
+        </div>
+        <div
+          className="text-[11px] text-qf-mute flex items-center gap-1.5 mt-0.5"
+          dir="ltr"
+        >
+          <span className="truncate">/{t.slug}</span>
+          {t.ownerPhone && (
+            <>
+              <span className="text-qf-line">·</span>
+              <span className="inline-flex items-center gap-1 text-qf-ink2 tnum shrink-0">
+                <Phone size={10} />
+                {t.ownerPhone}
+              </span>
+            </>
           )}
         </div>
+        {!t.ownerVerified && (
+          <span className="inline-block mt-1 px-1.5 py-px rounded bg-qf-tomato-soft text-qf-tomato text-[10px] font-medium">
+            מייל לא אומת
+          </span>
+        )}
       </div>
     </Link>
   );
@@ -467,7 +481,7 @@ function TenantRow({
       </div>
 
       {/* Desktop grid row */}
-      <div className="hidden lg:grid grid-cols-[1.5fr_130px_90px_90px_90px_120px_auto] gap-3 px-5 py-3 items-center border-b border-qf-line-soft last:border-b-0 hover:bg-qf-line-soft/30 transition-colors">
+      <div className="hidden lg:grid grid-cols-[1.5fr_130px_90px_90px_90px_120px_auto] gap-3 px-5 py-3.5 items-start border-b border-qf-line-soft last:border-b-0 hover:bg-qf-line-soft/30 transition-colors">
         {nameCell}
         <div>{activityCell}</div>
         <div className="text-sm">{menuCell}</div>
