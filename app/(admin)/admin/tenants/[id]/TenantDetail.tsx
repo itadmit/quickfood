@@ -13,6 +13,7 @@ interface TenantUser {
   id: string;
   email: string;
   name: string;
+  phone: string | null;
   role: string;
   lastLoginAt: string | null;
   emailVerifiedAt: string | null;
@@ -594,19 +595,28 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-qf-mute" dir="ltr">
-                  {u.email}
+                <div
+                  className="text-xs text-qf-mute flex items-center gap-2 mt-0.5"
+                  dir="ltr"
+                >
+                  <span className="truncate">{u.email}</span>
+                  {u.phone && (
+                    <>
+                      <span className="text-qf-line">·</span>
+                      <span className="tnum shrink-0">{u.phone}</span>
+                    </>
+                  )}
                 </div>
               </div>
-              <div className="text-xs text-qf-mute">
+              <div className="text-xs text-qf-mute sm:w-24 shrink-0">
                 {ROLE_LABEL[u.role] ?? u.role}
               </div>
-              <div className="text-xs text-qf-mute">
+              <div className="text-xs text-qf-mute sm:w-40 shrink-0">
                 {u.lastLoginAt
                   ? `כניסה אחרונה ${formatDate(u.lastLoginAt)}`
                   : "טרם נכנס"}
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 shrink-0 sm:justify-end">
                 {u.emailVerifiedAt ? (
                   <button
                     type="button"
@@ -661,7 +671,7 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
                 </div>
                 <div className="text-xs text-qf-mute">{b.address}</div>
               </div>
-              <div className="text-xs text-qf-mute tnum" dir="ltr">
+              <div className="text-xs text-qf-mute tnum sm:w-40 shrink-0" dir="ltr">
                 {b.phone}
               </div>
             </div>
