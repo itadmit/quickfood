@@ -359,21 +359,28 @@ function SetEditor({
         <h2 className="font-semibold">
           {set.id ? "עריכת קטלוג" : "קטלוג חדש"}
         </h2>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 rounded-xl bg-white border-2 border-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5"
-          >
-            ביטול
-          </button>
-          <button
-            type="button"
-            onClick={onSave}
-            className="px-4 py-2 rounded-xl bg-black text-[#F8CB1E] border-2 border-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/90"
-          >
-            שמור קטלוג
-          </button>
+        <div className="flex items-center gap-3">
+          {set.attachedCount > 0 && (
+            <span className="text-[11px] text-qf-mute leading-tight max-w-[200px]">
+              שינויים כאן יחולו אוטומטית על {set.attachedCount} הפריטים שמחוברים לקטלוג
+            </span>
+          )}
+          <div className="flex gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-4 py-2 rounded-xl bg-white border-2 border-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5"
+            >
+              ביטול
+            </button>
+            <button
+              type="button"
+              onClick={onSave}
+              className="px-4 py-2 rounded-xl bg-black text-[#F8CB1E] border-2 border-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/90"
+            >
+              שמור קטלוג
+            </button>
+          </div>
         </div>
       </header>
 
@@ -514,11 +521,6 @@ function SetEditor({
                 className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
               />
             </label>
-          )}
-          {set.attachedCount > 0 && (
-            <p className="text-[11px] text-qf-mute">
-              שינוי כאן יחול אוטומטית על {set.attachedCount} הפריטים שמחוברים לקטלוג.
-            </p>
           )}
         </div>
       )}
