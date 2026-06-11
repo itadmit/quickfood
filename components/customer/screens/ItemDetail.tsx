@@ -200,12 +200,22 @@ export function ItemDetail({
     }
   }
 
-  const heroImage = item.images?.[0];
+  const images = item.images ?? [];
+  const [activeImage, setActiveImage] = useState(0);
+  const heroImage = images[activeImage] ?? images[0];
   const canZoom = !!heroImage;
+  const heroTrackRef = useRef<HTMLDivElement | null>(null);
+  function onHeroScroll() {
+    const el = heroTrackRef.current;
+    if (!el || el.clientWidth === 0) return;
+    const idx = Math.round(Math.abs(el.scrollLeft) / el.clientWidth);
+    setActiveImage(Math.min(images.length - 1, Math.max(0, idx)));
+  }
 
   const closeTimerRef = useRef<number | null>(null);
-  function openLightbox() {
+  function openLightbox(index?: number) {
     if (!canZoom) return;
+    if (typeof index === "number") setActiveImage(index);
     if (closeTimerRef.current) {
       window.clearTimeout(closeTimerRef.current);
       closeTimerRef.current = null;
@@ -476,10 +486,56 @@ export function ItemDetail({
 
       {/* Hero */}
       <div className="relative">
-        {canZoom ? (
+        {images.length > 1 ? (
+          <div
+            className={cn(
+              "relative overflow-hidden bg-qf-line-soft",
+              inModal
+                ? "h-64 sm:h-80 lg:h-105"
+                : "h-72 lg:h-96 rounded-b-3xl lg:rounded-none",
+            )}
+          >
+            <div
+              ref={heroTrackRef}
+              onScroll={onHeroScroll}
+              className="flex h-full w-full overflow-x-auto snap-x snap-mandatory scrollbar-none [&::-webkit-scrollbar]:hidden"
+            >
+              {images.map((src, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => openLightbox(i)}
+                  aria-label="הגדל תמונה"
+                  className="relative shrink-0 w-full h-full snap-center cursor-zoom-in"
+                >
+                  <MenuItemImage
+                    src={src}
+                    alt={item.name}
+                    businessType={businessType}
+                    size={520}
+                    rounded="none"
+                    fill
+                  />
+                </button>
+              ))}
+            </div>
+            <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-black/30 to-transparent pointer-events-none" />
+            <div className="absolute bottom-3 inset-x-0 flex justify-center gap-1.5 pointer-events-none">
+              {images.map((_, i) => (
+                <span
+                  key={i}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all duration-200",
+                    i === activeImage ? "w-5 bg-white" : "w-1.5 bg-white/60",
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+        ) : canZoom ? (
           <button
             type="button"
-            onClick={openLightbox}
+            onClick={() => openLightbox(0)}
             aria-label="הגדל תמונה"
             className={cn(
               "relative overflow-hidden bg-qf-line-soft block w-full text-start cursor-zoom-in",
