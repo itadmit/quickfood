@@ -529,7 +529,14 @@ export function OrderDrawer({
             </button>
             <button
               type="button"
-              onClick={() => openPassPrnt(buildReceiptHtml(order))}
+              onClick={() =>
+                openPassPrnt(buildReceiptHtml(order), () =>
+                  pushToast(
+                    "err",
+                    "אפליקציית Star PassPRNT לא נמצאה במכשיר. התקן אותה מחנות האפליקציות, הצמד את המדפסת בבלוטות' ונסה שוב.",
+                  ),
+                )
+              }
               className="px-3 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm inline-flex items-center gap-2"
             >
               <IcoPrinter s={14} /> מדפסת קופה

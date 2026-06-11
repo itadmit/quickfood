@@ -1,12 +1,26 @@
 const PASSPRNT_SCHEME = "starpassprnt://v1/print/nopreview";
 const RECEIPT_WIDTH_DOTS = 576;
 
-export function openPassPrnt(html: string): void {
+export function openPassPrnt(html: string, onUnhandled?: () => void): void {
   const back = `${window.location.origin}${window.location.pathname}`;
   const url =
     `${PASSPRNT_SCHEME}?back=${encodeURIComponent(back)}` +
     `&size=${RECEIPT_WIDTH_DOTS}` +
     `&html=${encodeURIComponent(html)}`;
+
+  if (onUnhandled) {
+    const onLeave = () => {
+      if (document.visibilityState !== "hidden") return;
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onLeave);
+    };
+    const timer = window.setTimeout(() => {
+      document.removeEventListener("visibilitychange", onLeave);
+      onUnhandled();
+    }, 2500);
+    document.addEventListener("visibilitychange", onLeave);
+  }
+
   window.location.href = url;
 }
 
