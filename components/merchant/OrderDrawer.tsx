@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   IcoClose,
   IcoPhone,
@@ -104,6 +105,10 @@ export function OrderDrawer({
 }) {
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  // Portal the print receipt to <body> so the print stylesheet can hide
+  // everything else and the receipt is the only thing on the page.
+  const [printMounted, setPrintMounted] = useState(false);
+  useEffect(() => setPrintMounted(true), []);
   const [confirmRefund, setConfirmRefund] = useState(false);
   const [refundReason, setRefundReason] = useState("");
   const [refunding, setRefunding] = useState(false);
@@ -603,7 +608,7 @@ export function OrderDrawer({
       />
       <Toast toast={toast} onDismiss={() => setToast(null)} />
 
-      {order && <PrintReceipt order={order} />}
+      {order && printMounted && createPortal(<PrintReceipt order={order} />, document.body)}
     </div>
   );
 }

@@ -365,17 +365,16 @@ label[for][class*="shadow-[0_"] {
   body {
     background: white;
   }
-  body * {
-    visibility: hidden;
-  }
-  .qf-print-receipt,
-  .qf-print-receipt * {
-    visibility: visible;
+  /* The receipt is portaled to <body>, so hiding every other top-level node
+     leaves the printed document exactly the receipt's height - one page. The
+     old visibility:hidden trick kept the (tall) dashboard occupying the page
+     layout, so the absolutely-positioned receipt repeated across 3 pages. */
+  body > *:not(.qf-print-receipt) {
+    display: none !important;
   }
   .qf-print-receipt {
     display: block;
-    position: absolute;
-    inset: 0 auto auto 0;
+    position: static;
     width: 80mm;
     margin: 0;
     padding: 0;
