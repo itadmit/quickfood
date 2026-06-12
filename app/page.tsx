@@ -490,16 +490,24 @@ function PrinterShowcase() {
 
         <div className={`${styles.qfoodCard} ${styles.qfoodCardMist} ${styles.printerCard}`}>
           <div className={styles.qfoodCardBody}>
-            <span className={styles.qfoodCardTag}>חיבור למדפסת</span>
+            <span className={styles.qfoodCardTag}>חיבור מהיר למדפסות קבלות</span>
             <h3 className={styles.qfoodCardHeading}>
-              המדפסת שכבר יש לך במסעדה? מתחברת בשתי דקות.
+              מההזמנה באתר - ישר למדפסת.
             </h3>
+            <p className={styles.printerLead}>
+              קוויקפוד כבר מתממשקת עם המדפסת שיש לכם בעסק.
+            </p>
             <p className={styles.qfoodCardCopy}>
-              בוחרים בהגדרות את סוג המדפסת - Star (זו שוולט מספקים), Epson,
-              מדפסת בלוטות׳ אחרת או כל מדפסת WiFi רגילה - והמערכת מדריכה אתכם
-              צעד-צעד: איזו אפליקציה להוריד ואיך להצמיד. מאותו רגע כל הזמנה
-              מודפסת במטבח בלחיצה: פריטים, תוספות, הערות לטבח וכתובת המשלוח.
-              בלי מחשב, בלי ראוטר, בלי טכנאי.
+              בחרו את סוג המדפסת בהגדרות - Star, Epson, מדפסת Bluetooth או כל
+              מדפסת WiFi נתמכת - והמערכת תלווה אתכם שלב אחר שלב בתהליך החיבור,
+              כולל הנחיות ברורות לגבי האפליקציה הנדרשת וההגדרות המתאימות.
+            </p>
+            <p className={styles.qfoodCardCopy}>
+              מרגע החיבור, כל הזמנה שמתקבלת באתר מודפסת באופן מיידי עם כל
+              הפרטים החשובים: פריטים, תוספות, הערות להזמנה וכתובת המשלוח.
+            </p>
+            <p className={styles.printerNoFuss}>
+              בלי מחשב, בלי ראוטר, בלי התקנות מורכבות ובלי צורך בטכנאי.
             </p>
             <p className={styles.printerCaption}>
               בסרטון: חיבור חי בפיצרייה אמיתית - מהזמנה באתר ועד קבלה ביד.

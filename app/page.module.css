@@ -1237,6 +1237,21 @@
 .printerCard {
   margin-top: 56px;
 }
+.printerCard .qfoodCardCopy {
+  margin-bottom: 12px;
+}
+.printerLead {
+  margin: 0 0 14px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.printerNoFuss {
+  margin: 4px 0 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ink);
+}
 .printerCaption {
   margin: 18px 0 0;
   font-size: 13.5px;

@@ -50,9 +50,10 @@
 .playTriangle {
   width: 0;
   height: 0;
-  border-block: 14px solid transparent;
-  border-inline-start: 22px solid var(--ink, #000);
-  margin-inline-start: 5px;
+  border-top: 14px solid transparent;
+  border-bottom: 14px solid transparent;
+  border-left: 22px solid var(--ink, #000);
+  margin-left: 5px;
 }
 
 .iframe {
