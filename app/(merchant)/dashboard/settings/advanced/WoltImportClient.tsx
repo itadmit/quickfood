@@ -12,7 +12,7 @@ import {
   type VenueApplyFlags,
   type VenueField,
 } from "@/components/shared/wolt/VenueInfoPicker";
-import { WoltTermsTrigger } from "@/components/shared/wolt/WoltTermsModal";
+import { WoltTermsTrigger, WoltTermsGateModal } from "@/components/shared/wolt/WoltTermsModal";
 import type { ImportPreview } from "@/lib/wolt-import/types";
 
 interface LastImport {
@@ -56,6 +56,7 @@ export function WoltImportClient({
   const [stage, setStage] = useState<Stage>("form");
   const [url, setUrl] = useState(initialUrl ?? "");
   const [acknowledged, setAcknowledged] = useState(!!initialAck);
+  const [gate, setGate] = useState<"checkbox" | "import" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -64,12 +65,8 @@ export function WoltImportClient({
     about: false, address: false, phone: false, hours: false, cover: false, logo: false,
   });
 
-  async function runPreview(targetUrl: string, ack: boolean): Promise<void> {
+  async function runPreview(targetUrl: string): Promise<void> {
     setError(null);
-    if (!ack) {
-      setError("יש לאשר שאתם בעלי החנות לפני שמייבאים");
-      return;
-    }
     setBusy(true);
     try {
       const res = await fetch("/api/v1/merchant/import/wolt/preview", {
@@ -93,7 +90,11 @@ export function WoltImportClient({
 
   async function onPreview(e: React.FormEvent) {
     e.preventDefault();
-    await runPreview(url, acknowledged);
+    if (!acknowledged) {
+      setGate("import");
+      return;
+    }
+    await runPreview(url);
   }
 
   // Auto-start the preview when arriving from the signup hand-off
@@ -105,7 +106,7 @@ export function WoltImportClient({
     if (autoStart && initialUrl && initialAck && stage === "form" && !busy) {
       autoFiredRef.current = true;
       queueMicrotask(() => {
-        void runPreview(initialUrl, true);
+        void runPreview(initialUrl);
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -197,13 +198,15 @@ export function WoltImportClient({
             <input
               type="checkbox"
               checked={acknowledged}
-              onChange={(e) => setAcknowledged(e.target.checked)}
+              onChange={(e) =>
+                e.target.checked ? setGate("checkbox") : setAcknowledged(false)
+              }
               className="mt-1 accent-(--qf-primary)"
             />
             <span className="text-sm leading-relaxed">
               אני בעל/ת החנות. התוכן (שמות, תמונות, מחירים, תוספות) שייך לי
-              ואני מאשר/ת ייבוא שלו ל-QuickFood. הייבוא הזה באחריותי הבלעדית
-              מול Wolt וצדדים שלישיים - ראו{" "}
+              ולא לוולט, ואני מאשר/ת ייבוא שלו ל-QuickFood. הייבוא הזה
+              באחריותי הבלעדית מול Wolt וצדדים שלישיים - ראו{" "}
               <WoltTermsTrigger className="underline font-semibold" />.
             </span>
           </label>
@@ -216,12 +219,24 @@ export function WoltImportClient({
 
           <button
             type="submit"
-            disabled={busy || !url || !acknowledged}
+            disabled={busy || !url}
             className="bg-(--qf-primary) hover:bg-(--qf-deep) text-white font-semibold px-5 py-2.5 rounded-xl text-sm disabled:opacity-60 transition"
           >
             {busy ? "טוען..." : "שלוף תפריט"}
           </button>
         </form>
+
+        {gate && (
+          <WoltTermsGateModal
+            onClose={() => setGate(null)}
+            onConfirm={() => {
+              const fromImport = gate === "import";
+              setAcknowledged(true);
+              setGate(null);
+              if (fromImport) void runPreview(url);
+            }}
+          />
+        )}
       </div>
     );
   }
