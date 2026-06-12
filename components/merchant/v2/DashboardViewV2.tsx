@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { IcoChart, IcoTrend, IcoArrowLeft, IcoMenuBook, IcoGear, IcoCheck, IcoMenuList, IcoClock, IcoCreditCard, IcoArrowRight, IcoClose } from "@/components/shared/Icons";
 import { Modal } from "@/components/shared/Modal";
+import { GrowNudgeModal } from "@/components/merchant/v2/GrowNudgeModal";
 import { MenuItemImage } from "@/components/shared/MenuItemImage";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -172,6 +173,13 @@ export function DashboardViewV2({
           </div>
         </div>
       </section>
+
+      {/* ─── GROW CLEARING NUDGE ────────────────────────────────── */}
+      {/* Menu already started but no active clearing - one-time popup
+          pushing the Grow quick-signup form. */}
+      {!hasNoMenuItems && setupState && !setupState.initialGrowActive && (
+        <GrowNudgeModal />
+      )}
 
       {/* ─── SETUP WIZARD TRIGGER ───────────────────────────────── */}
       {hasNoMenuItems && setupState && (

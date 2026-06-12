@@ -8,6 +8,7 @@ import { createCustomer, BillingHubError } from "@/lib/billing-hub/client";
 import { sendEmail } from "@/lib/email/send";
 import { welcomeEmail, merchantSignupAdminEmail } from "@/lib/email/templates";
 import { sendVerificationEmail } from "@/lib/auth/email-verification";
+import { publish } from "@/lib/qstash/client";
 
 const TRIAL_DAYS = 7;
 
@@ -245,6 +246,7 @@ export const POST = handler(async (req: Request) => {
   // if Resend hiccups. Verification carries the "activate" CTA and is the
   // main email the merchant cares about; the welcome runs alongside so
   // existing copy keeps working until we consolidate.
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://quickfood.co.il").replace(/\/$/, "");
   void (async () => {
     try {
       await sendVerificationEmail({
@@ -258,7 +260,6 @@ export const POST = handler(async (req: Request) => {
       console.warn("[signup] verification email failed", err);
     }
     try {
-      const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://quickfood.co.il").replace(/\/$/, "");
       const { html, text } = welcomeEmail({
         ownerName: owner.name,
         businessName: tenant.name,
@@ -278,7 +279,6 @@ export const POST = handler(async (req: Request) => {
       console.warn("[signup] welcome email failed", err);
     }
     try {
-      const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://quickfood.co.il").replace(/\/$/, "");
       const { html, text } = merchantSignupAdminEmail({
         businessName: tenant.name,
         slug: tenant.slug,
@@ -304,6 +304,18 @@ export const POST = handler(async (req: Request) => {
       }
     } catch (err) {
       console.warn("[signup] admin notify email failed", err);
+    }
+    // One hour after signup, a QStash job checks where the merchant got to
+    // (menu started? clearing connected?) and sends a tailored follow-up.
+    try {
+      await publish({
+        url: `${appUrl}/api/internal/jobs/send-signup-followup`,
+        body: { tenantId: tenant.id },
+        delay: 60 * 60,
+        deduplicationId: `signup-followup:${tenant.id}`,
+      });
+    } catch (err) {
+      console.warn("[signup] follow-up email schedule failed", err);
     }
   })();
 

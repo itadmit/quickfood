@@ -214,6 +214,63 @@ export function welcomeEmail({
   });
 }
 
+export function signupFollowupEmail({
+  ownerName,
+  businessName,
+  dashboardUrl,
+  hasMenuItems,
+  hasPayments,
+  growSignupUrl,
+  supportPhone = "972552554432",
+}: {
+  ownerName: string;
+  businessName: string;
+  dashboardUrl: string;
+  /** Tenant already has at least one menu item - flips the opening copy. */
+  hasMenuItems: boolean;
+  /** Tenant already has an active clearing provider - hides the Grow pitch. */
+  hasPayments: boolean;
+  growSignupUrl: string;
+  /** Israeli mobile in E.164 without the +. Default is the QuickFood support line. */
+  supportPhone?: string;
+}) {
+  const waText = `שלום, אני *${ownerName}* במערכת קוויק פוד אשמח לעזרה`;
+  const waUrl = `https://wa.me/${supportPhone}?text=${encodeURIComponent(waText)}`;
+
+  const opener = hasMenuItems
+    ? `ראינו שכבר התחלת להזין את התפריט של <strong>${escape(businessName)}</strong> - מעולה, זה החלק הכי גדול בהקמה.`
+    : `עברה שעה מאז שפתחת את <strong>${escape(businessName)}</strong> ב-QuickFood, ורצינו לבדוק שהכל זורם. אם משהו מסתבך בהקמת התפריט - אפשר גם לייבא הכל מוולט בלחיצה אחת מהדשבורד.`;
+
+  const growBox = `<div dir="rtl" style="margin:4px 0 0;padding:18px;border:2px solid ${BRAND.line};border-radius:14px;background:${BRAND.cream};direction:rtl;text-align:right;">
+      <div style="font-size:16px;font-weight:900;color:${BRAND.ink};margin:0 0 6px;">עוד לא חיברת חברת סליקה?</div>
+      <p dir="rtl" style="margin:0;line-height:1.65;color:${BRAND.ink2};font-size:14px;direction:rtl;text-align:right;">כדי לקבל תשלומים באשראי, Bit ו-Apple Pay צריך חשבון סליקה - ואנחנו ממליצים על Grow. משאירים פרטים בטופס הקצר, ו-Grow ישלחו אליך את כל הטפסים דיגיטלית. בלי ניירת ובלי התרוצצויות.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:16px auto 0;">
+        <tr>
+          <td align="center" bgcolor="${BRAND.yellow}" style="background-color:${BRAND.yellow};border-radius:12px;border:2px solid ${BRAND.line};">
+            <a href="${escape(growSignupUrl)}" target="_blank" rel="noopener" style="display:inline-block;padding:13px 30px;font-family:inherit;font-size:14px;font-weight:800;color:${BRAND.ink};text-decoration:none;border-radius:10px;letter-spacing:.2px;">הרשמה מהירה ל-Grow</a>
+          </td>
+        </tr>
+      </table>
+    </div>`;
+
+  return renderRtlEmail({
+    subject: `${ownerName}, איך מתקדמת ההקמה של ${businessName}?`,
+    preheader: "שעה עברה מההרשמה - באנו לבדוק שהכל זורם ולעזור אם צריך.",
+    heading: `${ownerName}, איך הולך?`,
+    raw: true,
+    paragraphs: [
+      opener,
+      ...(hasPayments ? [] : [growBox]),
+    ],
+    button: { href: dashboardUrl, label: "כניסה לדשבורד" },
+    tail: `<p dir="rtl" style="margin:22px 0 0;line-height:1.5;color:${BRAND.ink2};font-size:15px;font-weight:700;direction:rtl;text-align:center;">נתקעת או שיש שאלה?</p>`,
+    whatsappButton: {
+      href: waUrl,
+      label: "לחצו כאן למעבר לתמיכה מהירה בוואטסאפ!",
+    },
+  });
+}
+
 export function merchantSignupAdminEmail({
   businessName,
   slug,
