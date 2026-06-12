@@ -8,7 +8,7 @@ import { IcoArrowLeft, IcoArrowRight } from "@/components/shared/Icons";
 import { THEMES, type ThemeId } from "@/lib/themes";
 import { type BusinessType } from "@/components/shared/MenuItemImage";
 import { BusinessTypeSelect } from "@/components/shared/BusinessTypeSelect";
-import { WoltTermsTrigger } from "@/components/shared/wolt/WoltTermsModal";
+import { WoltTermsTrigger, WoltTermsGateModal } from "@/components/shared/wolt/WoltTermsModal";
 import { StorefrontPreviewPhone } from "@/components/shared/wolt/StorefrontPreviewPhone";
 import { cn } from "@/lib/cn";
 import { track } from "@/lib/fb/pixel";
@@ -503,16 +503,22 @@ function Step0Url({
 }) {
   const [busy, setBusy] = useState(false);
   const [ack, setAck] = useState(false);
+  const [gate, setGate] = useState<"checkbox" | "import" | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function requestImport() {
+    if (!woltUrl.trim() || busy) return;
+    if (!ack) {
+      setGate("import");
+      return;
+    }
+    void fetchPreview();
+  }
 
   async function fetchPreview() {
     const url = woltUrl.trim();
     if (!url || busy) return;
-    if (!ack) {
-      setError("יש לאשר שאתם בעלי החנות לפני שמייבאים");
-      return;
-    }
     setBusy(true);
     setError(null);
     try {
@@ -563,7 +569,7 @@ function Step0Url({
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  fetchPreview();
+                  requestImport();
                 }
               }}
               dir="ltr"
@@ -573,17 +579,24 @@ function Step0Url({
             />
           </Field>
 
-          <label className="flex items-start gap-2.5 cursor-pointer rounded-xl border-2 border-black bg-[#FFFBEC] px-3 py-2.5">
+          <label
+            className={cn(
+              "flex items-start gap-2.5 cursor-pointer rounded-xl border-2 border-black px-3 py-2.5 transition",
+              ack ? "bg-[#FFF6CC]" : "bg-[#FFFBEC]",
+            )}
+          >
             <input
               type="checkbox"
               checked={ack}
-              onChange={(e) => setAck(e.target.checked)}
+              onChange={(e) =>
+                e.target.checked ? setGate("checkbox") : setAck(false)
+              }
               className="mt-0.5 w-4 h-4 accent-black"
             />
             <span className="text-xs text-black/80 leading-relaxed">
               אני בעל/ת החנות. התוכן (שמות, תמונות, מחירים, תוספות) שייך לי
-              ואני מאשר/ת ייבוא שלו ל-QuickFood. הייבוא הזה באחריותי הבלעדית
-              מול Wolt וצדדים שלישיים - ראו{" "}
+              ולא לוולט, ואני מאשר/ת ייבוא שלו ל-QuickFood. הייבוא הזה
+              באחריותי הבלעדית מול Wolt וצדדים שלישיים - ראו{" "}
               <WoltTermsTrigger />.
             </span>
           </label>
@@ -591,8 +604,8 @@ function Step0Url({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={fetchPreview}
-              disabled={!woltUrl.trim() || !ack || busy}
+              onClick={requestImport}
+              disabled={!woltUrl.trim() || busy}
               className="flex-1 px-5 py-3 rounded-xl bg-[#F8CB1E] hover:bg-[#ffd84a] text-black text-base font-black border-2 border-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
             >
               {busy ? (
@@ -638,6 +651,18 @@ function Step0Url({
         className="block w-full text-center py-3 rounded-xl bg-white border-2 border-black hover:bg-[#FFFBEC] text-sm font-bold text-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition"
       >
 הרשמה רגילה       </button>
+
+      {gate && (
+        <WoltTermsGateModal
+          onClose={() => setGate(null)}
+          onConfirm={() => {
+            const fromImport = gate === "import";
+            setAck(true);
+            setGate(null);
+            if (fromImport) void fetchPreview();
+          }}
+        />
+      )}
     </div>
   );
 }
