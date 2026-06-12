@@ -6,7 +6,7 @@ import { IcoClock, IcoPhone, IcoPrinter, IcoFlame, IcoRefresh, IcoUndo, IcoClose
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
-import { consumePassPrntResult } from "@/lib/star-passprnt";
+import { consumePassPrntResult, type ReceiptPrinterType } from "@/lib/receipt-print";
 import { OrderDrawer } from "@/components/merchant/OrderDrawer";
 import { ManualOrderModal } from "@/components/merchant/ManualOrderModal";
 import { AssignCourierModal } from "@/components/merchant/AssignCourierModal";
@@ -126,7 +126,13 @@ const PREVIOUS_STATUS: Partial<Record<Status, Status>> = {
   ready: "preparing",
 };
 
-export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
+export function OrdersKanban({
+  initial,
+  receiptPrinter = "airprint",
+}: {
+  initial: OrderRow[];
+  receiptPrinter?: ReceiptPrinterType;
+}) {
   const [orders, setOrders] = useState<OrderRow[]>(initial);
   // `now` stays null until after mount so SSR and the first client paint
   // agree on the "elapsed minutes" text (React #418 protection). The card
@@ -472,6 +478,7 @@ export function OrdersKanban({ initial }: { initial: OrderRow[] }) {
       {drawerOrderId && (
         <OrderDrawer
           orderId={drawerOrderId}
+          receiptPrinter={receiptPrinter}
           onClose={() => setDrawerOrderId(null)}
           onAdvance={(id) => {
             const o = orders.find((x) => x.id === id);

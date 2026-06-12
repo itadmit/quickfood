@@ -16,7 +16,11 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { formatPrice, formatDateTime, formatRelativeMinutes } from "@/lib/format";
 import { cn } from "@/lib/cn";
-import { openPassPrnt } from "@/lib/star-passprnt";
+import {
+  printReceipt,
+  formatSelectedOptions,
+  type ReceiptPrinterType,
+} from "@/lib/receipt-print";
 
 const EDITABLE_STATUSES = new Set([
   "pending",
@@ -99,10 +103,12 @@ export function OrderDrawer({
   orderId,
   onClose,
   onAdvance,
+  receiptPrinter = "airprint",
 }: {
   orderId: string;
   onClose: () => void;
   onAdvance: (id: string) => void;
+  receiptPrinter?: ReceiptPrinterType;
 }) {
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -412,7 +418,7 @@ export function OrderDrawer({
                           </div>
                           {it.size && <div className="text-xs text-qf-mute">{it.size}</div>}
                           {Array.isArray(it.options) && (it.options as unknown[]).length > 0 && (
-                            <div className="text-xs text-qf-mute">{renderOptions(it.options)}</div>
+                            <div className="text-xs text-qf-mute">{formatSelectedOptions(it.options)}</div>
                           )}
                           {it.notes && (
                             <div className="text-xs text-qf-yolk mt-0.5">הערה: {it.notes}</div>
@@ -527,20 +533,22 @@ export function OrderDrawer({
             >
               <IcoPrinter s={14} /> הדפסה
             </button>
-            <button
-              type="button"
-              onClick={() =>
-                openPassPrnt(buildReceiptHtml(order), () =>
-                  pushToast(
-                    "err",
-                    "אפליקציית Star PassPRNT לא נמצאה במכשיר. התקן אותה מחנות האפליקציות, הצמד את המדפסת בבלוטות' ונסה שוב.",
-                  ),
-                )
-              }
-              className="px-3 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm inline-flex items-center gap-2"
-            >
-              <IcoPrinter s={14} /> מדפסת קופה
-            </button>
+            {receiptPrinter !== "airprint" && (
+              <button
+                type="button"
+                onClick={() =>
+                  printReceipt(order, receiptPrinter, () =>
+                    pushToast(
+                      "err",
+                      "אפליקציית ההדפסה לא נמצאה במכשיר. הוראות התקנה: הגדרות ← מדפסת קבלות.",
+                    ),
+                  )
+                }
+                className="px-3 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm inline-flex items-center gap-2"
+              >
+                <IcoPrinter s={14} /> מדפסת קופה
+              </button>
+            )}
             {order.status !== "refunded" && order.status !== "cancelled" && (
               <button
                 type="button"
@@ -670,7 +678,7 @@ function PrintReceipt({ order }: { order: OrderDetail }) {
             <span>{formatPrice(it.total_price)}</span>
           </div>
           {Array.isArray(it.options) && (it.options as unknown[]).length > 0 && (
-            <div className="qf-pr-muted">{renderOptions(it.options)}</div>
+            <div className="qf-pr-muted">{formatSelectedOptions(it.options)}</div>
           )}
           {it.notes && <div className="qf-pr-muted">הערה: {it.notes}</div>}
         </div>
@@ -729,92 +737,6 @@ function PrintReceipt({ order }: { order: OrderDetail }) {
   );
 }
 
-function esc(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-// HTML for Star PassPRNT (rendered by the app at 576 dots = 80mm).
-// Mirrors PrintReceipt; big fonts because thermal paper is read at arm's length.
-function buildReceiptHtml(order: OrderDetail): string {
-  const addr = order.delivery_address;
-  const row = (label: string, value: string, cls = "") =>
-    `<div class="row ${cls}"><span>${label}</span><span>${value}</span></div>`;
-
-  const addressHtml =
-    order.method === "delivery" && (addr || order.delivery_notes)
-      ? `<div class="muted">${
-          addr
-            ? esc(
-                `${addr.street}, ${addr.city}` +
-                  (addr.floor ? ` · קומה ${addr.floor}` : "") +
-                  (addr.apartment ? ` · דירה ${addr.apartment}` : ""),
-              ) + (addr.notes ? `<br>${esc(addr.notes)}` : "")
-            : esc(order.delivery_notes ?? "")
-        }</div>`
-      : "";
-
-  const itemsHtml = order.items
-    .map((it) => {
-      const opts =
-        Array.isArray(it.options) && (it.options as unknown[]).length > 0
-          ? `<div class="muted">${esc(renderOptions(it.options))}</div>`
-          : "";
-      const notes = it.notes ? `<div class="muted">הערה: ${esc(it.notes)}</div>` : "";
-      return `<div class="item">${row(
-        `${it.quantity}× ${esc(it.name)}${it.size ? ` · ${esc(it.size)}` : ""}`,
-        formatPrice(it.total_price),
-      )}${opts}${notes}</div>`;
-    })
-    .join("");
-
-  const sums = [
-    row("סכום ביניים", formatPrice(order.subtotal), "muted"),
-    order.method === "delivery" && order.delivery_fee > 0
-      ? row("דמי משלוח", formatPrice(order.delivery_fee), "muted")
-      : "",
-    order.service_fee > 0 ? row("דמי שירות", formatPrice(order.service_fee), "muted") : "",
-    order.cutlery_count > 0
-      ? row(
-          `סכו"ם × ${order.cutlery_count}`,
-          order.cutlery_fee > 0 ? formatPrice(order.cutlery_fee) : "חינם",
-          "muted",
-        )
-      : "",
-    order.tip > 0 ? row("טיפ לשליח", formatPrice(order.tip), "muted") : "",
-    order.discount > 0 ? row("הנחה", `-${formatPrice(order.discount)}`, "muted") : "",
-  ].join("");
-
-  return `<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8"><style>
-body{margin:0;padding:8px 4px;font-family:-apple-system,sans-serif;color:#000;width:568px}
-h1{font-size:44px;margin:0 0 4px;text-align:center}
-.row{display:flex;justify-content:space-between;gap:12px;font-size:27px;line-height:1.35}
-.row span:first-child{word-break:break-word}
-.row span:last-child{white-space:nowrap}
-.muted{font-size:24px;line-height:1.35}
-.item{margin-bottom:8px}
-.rule{border-top:3px dashed #000;margin:10px 0}
-.total{font-size:36px;font-weight:bold}
-.center{text-align:center;font-size:24px}
-</style></head><body>
-<h1>#${esc(order.number)}</h1>
-<div class="row muted"><span>${formatDateTime(order.created_at)}</span><span>${
-    order.method === "delivery" ? "משלוח" : "איסוף"
-  }</span></div>
-<div class="rule"></div>
-<div class="row"><span>${esc(order.customer?.name || "אורח")}</span></div>
-${order.customer?.phone ? `<div class="muted">${esc(order.customer.phone)}</div>` : ""}
-${addressHtml}
-<div class="rule"></div>
-${itemsHtml}
-<div class="rule"></div>
-${sums}
-<div class="rule"></div>
-${row("סה״כ", formatPrice(order.total), "total")}
-${row("תשלום", PAYMENT_METHOD_LABEL[order.payment_method] ?? esc(order.payment_method), "muted")}
-${order.customer_notes ? `<div class="rule"></div><div class="muted">${esc(order.customer_notes)}</div>` : ""}
-</body></html>`;
-}
-
 function TimelineRow({ label, at, done }: { label: string; at: string; done?: boolean }) {
   return (
     <li className="flex items-center gap-2">
@@ -828,36 +750,6 @@ function TimelineRow({ label, at, done }: { label: string; at: string; done?: bo
       <span className="text-qf-mute tnum">· {formatDateTime(at)}</span>
     </li>
   );
-}
-
-// Groups option list entries by (name, half) and renders as
-// "name (חצי א׳)" with " ×N" suffix when the same selection
-// appears more than once. Without this, an item that picked the
-// same modifier in two different groups (very common with
-// Wolt-imported menus that have redundant rubrics) shows up as
-// "עגבניה · עגבניה" and looks like a glitch to the merchant.
-function renderOptions(options: unknown): string {
-  if (!Array.isArray(options)) return "";
-  const list = options as Array<{ name?: string; half?: string }>;
-  const groups = new Map<string, { name: string; half?: string; count: number }>();
-  for (const o of list) {
-    if (!o?.name) continue;
-    const key = `${o.name}|${o.half ?? ""}`;
-    const existing = groups.get(key);
-    if (existing) existing.count += 1;
-    else groups.set(key, { name: o.name, half: o.half, count: 1 });
-  }
-  return Array.from(groups.values())
-    .map((g) => {
-      const base =
-        g.half === "left"
-          ? `${g.name} (חצי א׳)`
-          : g.half === "right"
-            ? `${g.name} (חצי ב׳)`
-            : g.name;
-      return g.count > 1 ? `${base} ×${g.count}` : base;
-    })
-    .join(" · ");
 }
 
 function SumRow({ label, value, bold }: { label: string; value: string; bold?: boolean }) {

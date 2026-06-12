@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 import { fullName } from "@/lib/format";
 import { OrdersKanban } from "./OrdersKanban";
+import type { ReceiptPrinterType } from "@/lib/receipt-print";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,11 @@ export default async function OrdersPage() {
   if (!session || session.type !== "merchant" || !session.tenantId) {
     redirect("/dashboard/login");
   }
+
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: session.tenantId },
+    select: { receiptPrinter: true },
+  });
 
   const orders = await prisma.order.findMany({
     where: {
@@ -76,7 +82,12 @@ export default async function OrdersPage() {
     }),
   }));
 
-  return <OrdersKanban initial={initial} />;
+  return (
+    <OrdersKanban
+      initial={initial}
+      receiptPrinter={(tenant?.receiptPrinter ?? "airprint") as ReceiptPrinterType}
+    />
+  );
 }
 
 export type KanbanStatus = "pending" | "confirmed" | "preparing" | "in_oven" | "ready" | "out_for_delivery";

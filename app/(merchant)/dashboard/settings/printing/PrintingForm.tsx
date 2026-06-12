@@ -1,0 +1,281 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { IcoCheck, IcoClose, IcoPrinter } from "@/components/shared/Icons";
+import { SettingsSaveBar } from "@/components/merchant/SettingsSaveBar";
+import type { ReceiptPrinterType } from "@/lib/receipt-print";
+
+interface PrinterOption {
+  type: ReceiptPrinterType;
+  title: string;
+  sub: string;
+  badge?: string;
+}
+
+const OPTIONS: PrinterOption[] = [
+  {
+    type: "star",
+    title: "Star Micronics",
+    sub: "mC-Print3 · TSP100 · TSP650 ועוד. זו המדפסת שוולט מספקים למסעדות.",
+    badge: "הנפוצה בישראל",
+  },
+  {
+    type: "epson",
+    title: "Epson TM",
+    sub: "TM-m30 · TM-T20 · TM-T88 ועוד.",
+  },
+  {
+    type: "escpos",
+    title: "מדפסת בלוטות' אחרת",
+    sub: "מדפסות קבלות גנריות (ESC/POS). עובד מטאבלט אנדרואיד בלבד.",
+  },
+  {
+    type: "airprint",
+    title: "מדפסת רגילה (WiFi / AirPrint)",
+    sub: "מדפסת משרדית או מדפסת קבלות עם WiFi. הדפסה דרך חלון ההדפסה של המכשיר.",
+  },
+];
+
+interface AppLinks {
+  appName: string;
+  ios?: string;
+  android?: string;
+}
+
+const APP_LINKS: Partial<Record<ReceiptPrinterType, AppLinks>> = {
+  star: {
+    appName: "Star PassPRNT",
+    ios: "https://apps.apple.com/us/app/star-passprnt/id979827520",
+    android: "https://play.google.com/store/apps/details?id=jp.star_m.passprnt",
+  },
+  epson: {
+    appName: "Epson TM Print Assistant",
+    ios: "https://apps.apple.com/us/app/epson-tm-print-assistant/id1324935555",
+    android: "https://play.google.com/store/apps/details?id=com.epson.tmassistant",
+  },
+  escpos: {
+    appName: "RawBT",
+    android: "https://play.google.com/store/apps/details?id=ru.a402d.rawbtprinter",
+  },
+};
+
+export function PrintingForm({ initial }: { initial: ReceiptPrinterType }) {
+  const router = useRouter();
+  const [selected, setSelected] = useState<ReceiptPrinterType>(initial);
+  const [saving, setSaving] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
+  const [toast, setToast] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
+
+  async function save() {
+    setSaving(true);
+    setToast(null);
+    try {
+      const res = await fetch("/api/v1/merchant/tenant", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ receipt_printer: selected }),
+      });
+      const data = (await res.json()) as { error?: { message?: string } };
+      if (res.ok) {
+        setToast({ kind: "ok", msg: "נשמר" });
+        router.refresh();
+        if (selected !== "airprint" && selected !== initial) setShowGuide(true);
+      } else {
+        setToast({ kind: "err", msg: data.error?.message ?? "שמירה נכשלה" });
+      }
+    } catch {
+      setToast({ kind: "err", msg: "שגיאת רשת" });
+    } finally {
+      setSaving(false);
+      setTimeout(() => setToast(null), 3000);
+    }
+  }
+
+  return (
+    <>
+      <div className="space-y-5">
+        <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
+          <div>
+            <h2 className="font-semibold text-base lg:text-lg">איזו מדפסת קבלות יש לכם?</h2>
+            <p className="text-sm text-qf-mute mt-0.5">
+              לפי הבחירה, כפתור ההדפסה בפרטי ההזמנה ידע לשלוח את הקבלה למדפסת הנכונה.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {OPTIONS.map((opt) => {
+              const active = selected === opt.type;
+              return (
+                <button
+                  key={opt.type}
+                  type="button"
+                  onClick={() => setSelected(opt.type)}
+                  aria-pressed={active}
+                  className={
+                    "w-full flex items-start gap-3 p-3.5 rounded-xl border-2 text-start transition " +
+                    (active
+                      ? "border-(--qf-primary) bg-qf-green-soft"
+                      : "border-qf-line-dash bg-white hover:bg-qf-line-soft")
+                  }
+                >
+                  <div className="w-10 h-10 rounded-lg bg-white border border-qf-line-dash grid place-items-center shrink-0">
+                    <IcoPrinter s={20} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium flex items-center gap-2">
+                      {opt.title}
+                      {opt.badge && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-qf-yolk-soft border border-qf-yolk/40">
+                          {opt.badge}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-qf-mute mt-0.5">{opt.sub}</div>
+                  </div>
+                  <div
+                    className={
+                      "w-5 h-5 rounded-md border-2 shrink-0 mt-0.5 grid place-items-center transition " +
+                      (active ? "border-(--qf-primary) bg-(--qf-primary)" : "border-qf-line-dash")
+                    }
+                    aria-hidden
+                  >
+                    {active && <IcoCheck c="#fff" s={12} />}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {selected !== "airprint" && (
+            <button
+              type="button"
+              onClick={() => setShowGuide(true)}
+              className="w-full px-3.5 py-2.5 rounded-xl border-2 border-black bg-white font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5"
+            >
+              איך מחברים? הוראות התקנה
+            </button>
+          )}
+        </div>
+      </div>
+
+      {showGuide && <GuideModal type={selected} onClose={() => setShowGuide(false)} />}
+      <SettingsSaveBar saving={saving} onSave={save} toast={toast} />
+    </>
+  );
+}
+
+function GuideModal({ type, onClose }: { type: ReceiptPrinterType; onClose: () => void }) {
+  const links = APP_LINKS[type];
+  const option = OPTIONS.find((o) => o.type === type);
+  if (!links || !option) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <header className="flex items-center justify-between gap-3 px-5 py-4 border-b border-qf-line-soft">
+          <h3 className="font-bold text-lg">חיבור מדפסת {option.title}</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg hover:bg-qf-line-soft grid place-items-center text-qf-mute"
+            aria-label="סגור"
+          >
+            <IcoClose s={16} />
+          </button>
+        </header>
+
+        <div className="p-5 space-y-4 text-sm max-h-[70vh] overflow-y-auto">
+          <GuideStep n={1} title={`מתקינים את האפליקציה ${links.appName} (חינם)`}>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {links.ios && (
+                <a
+                  href={links.ios}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-lg border border-qf-line-dash text-xs font-medium hover:bg-qf-line-soft"
+                >
+                  App Store (אייפד / אייפון)
+                </a>
+              )}
+              {links.android && (
+                <a
+                  href={links.android}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-lg border border-qf-line-dash text-xs font-medium hover:bg-qf-line-soft"
+                >
+                  Google Play (אנדרואיד)
+                </a>
+              )}
+            </div>
+            {!links.ios && (
+              <p className="text-xs text-qf-tomato mt-2">
+                שימו לב: האפשרות הזו עובדת מטאבלט / טלפון אנדרואיד בלבד.
+              </p>
+            )}
+          </GuideStep>
+
+          <GuideStep n={2} title="מצמידים את המדפסת בבלוטות'">
+            מדליקים את המדפסת, נכנסים להגדרות הבלוטות׳ של המכשיר ומצמידים אותה
+            (Pair). פעולה חד-פעמית.
+          </GuideStep>
+
+          <GuideStep n={3} title="מדפיסים פעם ראשונה">
+            פותחים הזמנה בדשבורד ולוחצים על &quot;מדפסת קופה&quot;. בפעם הראשונה
+            {type === "escpos"
+              ? " נכנסים פעם אחת לאפליקציית RawBT ובוחרים את המדפסת כברירת מחדל."
+              : " האפליקציה תבקש לבחור את המדפסת מהרשימה - בוחרים אותה והיא נשמרת להבא."}
+          </GuideStep>
+
+          <div className="rounded-xl bg-qf-green-soft/40 border border-qf-green-deep/20 px-4 py-3 space-y-1.5">
+            <div className="font-bold text-qf-green-deep text-xs">טיפים</div>
+            <ul className="text-xs text-qf-ink2 space-y-1 list-disc ps-4">
+              <li>
+                באנדרואיד: שמרו את הדשבורד במסך הבית (&quot;הוסף למסך הבית&quot; בדפדפן) -
+                ההדפסה תעבוד בלי שאלת אישור בכל פעם.
+              </li>
+              {type === "epson" && (
+                <li>באייפד/אייפון: אחרי ההדפסה חוזרים ידנית לדפדפן (מגבלה של אפליקציית Epson).</li>
+              )}
+              <li>הקבלה יוצאת ברוחב 80 מ&quot;מ. נייר תרמי סטנדרטי.</li>
+            </ul>
+          </div>
+        </div>
+
+        <footer className="px-5 py-3 border-t border-qf-line-soft">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full px-3.5 py-2.5 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium"
+          >
+            הבנתי, סגור
+          </button>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+function GuideStep({
+  n,
+  title,
+  children,
+}: {
+  n: number;
+  title: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="w-7 h-7 rounded-full bg-(--qf-primary) text-white grid place-items-center font-bold text-xs shrink-0">
+        {n}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="font-semibold">{title}</div>
+        <div className="text-qf-ink2 text-xs mt-0.5 leading-relaxed">{children}</div>
+      </div>
+    </div>
+  );
+}

@@ -351,6 +351,12 @@ model Tenant {
   // Advanced → Appearance.
   dashboardVersion String @default("v2") @map("dashboard_version") @db.VarChar(10)
 
+  // Receipt printer family for the orders dashboard print button.
+  // airprint = OS print dialog (window.print), star = Star PassPRNT app,
+  // epson = Epson TM Print Assistant app, escpos = generic Bluetooth
+  // ESC/POS printer via the RawBT Android app.
+  receiptPrinter String @default("airprint") @map("receipt_printer") @db.VarChar(10)
+
   // Reviews configuration
   reviewsEnabled      Boolean       @default(true) @map("reviews_enabled")
   reviewsPublic       Boolean       @default(true) @map("reviews_public")

@@ -55,6 +55,7 @@ export const PATCH = handler(async (req: Request) => {
       cutleryFreeAbove: body.cutlery_free_above,
       onboardingDismissedAt: body.onboarding_dismissed ? new Date() : undefined,
       dashboardVersion: body.dashboard_version,
+      receiptPrinter: body.receipt_printer,
       kioskWelcomeText: body.kiosk_welcome_text,
       kioskIdleSeconds: body.kiosk_idle_seconds,
       kioskCollectPhone: body.kiosk_collect_phone,
