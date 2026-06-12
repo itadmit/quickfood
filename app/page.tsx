@@ -226,7 +226,7 @@ function HowItWorks() {
       <div className={styles.container}>
         <div className={styles.sectionEyebrow}>איך זה עובד</div>
         <h2 className={styles.sectionTitle}>
-          5 דקות. <em>שלוש פעולות.</em>
+          5 דקות. <em>מחברים ומתחילים לעבוד.</em>
         </h2>
         <div className={styles.howGrid}>
           {steps.map((s, i) => (
@@ -267,7 +267,7 @@ function FaqSchema() {
     ],
     [
       "מה עם וואטסאפ ו-SMS?",
-      "מייל אנחנו שולחים ללא הגבלה, חינם. וואטסאפ ו-SMS - חבילות שמתחילות מ-₪39, ונשלפות אוטומטית לאישור הזמנה, ׳יצא לדרך׳ ולבקשת ביקורת. הוואטסאפ עובד מהמספר שלך (דרך iBot Chat), לא ממספר משותף.",
+      "מייל - חינם ובלי הגבלה. וואטסאפ ו-SMS - חבילות שמתחילות מ-₪39, ונשלפות אוטומטית לאישור הזמנה, ׳יצא לדרך׳ ולבקשת ביקורת. הוואטסאפ עובד מהמספר שלך (דרך iBot Chat), לא ממספר משותף.",
     ],
     [
       "אוספים ביקורות אוטומטית?",
@@ -469,7 +469,7 @@ function Math() {
             <div className={styles.problemNum}>המשמרת</div>
             <h3>מערכת הזמנות חכמה.</h3>
             <p>
-              סטטוס משתנה לכל הזמנה בלחיצת כפתור באפליקציית הקופה שלנו. ממשק פשוט וקל שעושה סדר ומשקף גם ללקוח בכל רגע איפה ההזמנה שלו בזמן אמת. <strong>חדש:</strong> בשעת עומס המערכת מזהה אוטומטית ומעלה את הזמן המשוער להכנת המנה.
+              סטטוס משתנה לכל הזמנה בלחיצת כפתור באפליקציית הקופה. ממשק פשוט וקל שעושה סדר ומשקף גם ללקוח בכל רגע איפה ההזמנה שלו בזמן אמת. <strong>חדש:</strong> בשעת עומס המערכת מזהה אוטומטית ומעלה את הזמן המשוער להכנת המנה.
             </p>
           </div>
         </div>
@@ -498,9 +498,8 @@ function PrinterShowcase() {
               קוויקפוד כבר מתממשקת עם המדפסת שיש לכם בעסק.
             </p>
             <p className={styles.qfoodCardCopy}>
-              בחרו את סוג המדפסת בהגדרות - Star, Epson, מדפסת Bluetooth או כל
-              מדפסת WiFi נתמכת - והמערכת תלווה אתכם שלב אחר שלב בתהליך החיבור,
-              כולל הנחיות ברורות לגבי האפליקציה הנדרשת וההגדרות המתאימות.
+              Star, Epson, מדפסת Bluetooth או כל מדפסת WiFi נתמכת - והמערכת
+              מראה בדיוק מה להוריד ומה להגדיר. בוחר מדפסת. מחבר. מתחיל לעבוד.
             </p>
             <p className={styles.qfoodCardCopy}>
               מרגע החיבור, כל הזמנה שמתקבלת באתר מודפסת באופן מיידי עם כל
@@ -547,8 +546,8 @@ function Features() {
             tone="peach"
             layout="decor-start"
             tag="יועץ AI"
-            heading="לקוח לא יודע מה להזמין? היועץ של החנות יודע."
-            body="היועץ מכיר את התפריט, את ההזמנות הקודמות ואת ההעדפות של הלקוח - וממליץ בעברית ישר לעגלה. 'ארוחה לזוג עד 120 ש״ח'? יש. אתה רק מפעיל."
+            heading="לא יודע מה להזמין? היועץ כבר יעזור לו."
+            body="'ארוחה לזוג עד ₪120', 'משהו טבעוני', 'כמו בפעם שעברה' - והוא כבר מוסיף לעגלה. אתה רק מפעיל."
             icon="sparkles"
           />
 
@@ -1048,7 +1047,7 @@ function Faq() {
             <details className={styles.faqItem}>
               <summary>מה עם וואטסאפ וSMS?</summary>
               <p>
-                מייל אנחנו שולחים ללא הגבלה, חינם. וואטסאפ ו-SMS - חבילות שמתחילות מ-₪39, ונשלפות אוטומטית לאישור הזמנה, ׳יצא לדרך׳ ולבקשת ביקורת. הוואטסאפ עובד מהמספר שלך (דרך iBot Chat), לא ממספר משותף.
+                מייל - חינם ובלי הגבלה. וואטסאפ ו-SMS - חבילות שמתחילות מ-₪39, ונשלפות אוטומטית לאישור הזמנה, ׳יצא לדרך׳ ולבקשת ביקורת. הוואטסאפ עובד מהמספר שלך (דרך iBot Chat), לא ממספר משותף.
               </p>
             </details>
             <details className={styles.faqItem}>
@@ -1110,7 +1109,7 @@ function FinalCta() {
             </p>
             <div className={styles.finalCtaActions}>
               <Link href="/signup" className={`${styles.btn} ${styles.btnLg} ${styles.btnInk}`}>
-                QuickFood, תפתחו לי חנות <IcoArrowLeft c="currentColor" s={14} />
+                התחילו 7 ימים חינם <IcoArrowLeft c="currentColor" s={14} />
               </Link>
               <span className={styles.finalCtaDivider}>או</span>
               <a href="#talk" className={`${styles.btn} ${styles.btnLg} ${styles.btnGhost} ${styles.btnGhostOutline}`}>

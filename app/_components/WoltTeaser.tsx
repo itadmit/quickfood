@@ -77,9 +77,8 @@ export default function WoltTeaser() {
               תראה ב-Quick&nbsp;Food.
             </h2>
             <p className={styles.sub}>
-              הדביקו את כתובת החנות שלכם ב-Wolt. נציג לכם תוך כמה שניות הדמיה
-              של האתר שלכם בעיצוב Quick Food, בלי להירשם, בלי לשלם, בלי כאבי
-              ראש. כלום לא נשמר אצלנו.
+              מדביקים כתובת - ורואים תוך כמה שניות איך החנות שלכם תיראה
+              ב-Quick Food. בלי להירשם, בלי לשלם, בלי כאב ראש.
             </p>
 
             <label className={styles.field}>
@@ -110,7 +109,7 @@ export default function WoltTeaser() {
               </div>
               {error && <span className={styles.error}>{error}</span>}
               <span className={styles.disclaimer}>
-                ההדמיה היא להמחשה בלבד - לא נוצרת חנות, שום פריט לא נשמר אצלנו.
+                ההדמיה היא להמחשה בלבד - לא נוצרת חנות ושום פריט לא נשמר.
                 התוכן מוצג מתוך עמוד Wolt הציבורי שלכם.
               </span>
             </label>
