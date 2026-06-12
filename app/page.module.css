@@ -1230,6 +1230,38 @@
   .qfoodCardDecor svg { width: 84px; height: 84px; }
 }
 
+/* Printer showcase - body text on the start side, vertical YouTube
+   short in a phone-shaped shell on the end side. The shell carries the
+   same bold-card language (2px ink border + hard shadow) so the video
+   reads as part of the design, not an embed. */
+.printerCard {
+  margin-top: 56px;
+}
+.printerCaption {
+  margin: 18px 0 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  opacity: 0.6;
+}
+.printerVideoShell {
+  position: relative;
+  flex: 0 0 270px;
+  aspect-ratio: 9 / 16;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 2px solid var(--ink);
+  box-shadow: 0 6px 0 var(--ink);
+  background: #000;
+}
+@media (max-width: 900px) {
+  .printerVideoShell {
+    order: -1;
+    flex: none;
+    width: min(270px, 76vw);
+    margin: 0 auto;
+  }
+}
+
 /* Tones - all white cards with quiet borders for the Linen & Bone
    direction. The card layouts (wide / decor-end / decor-start) still
    alternate, but the color story is whitespace, not pastels. The

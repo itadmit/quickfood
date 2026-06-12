@@ -4,6 +4,7 @@ import { Rubik, JetBrains_Mono } from "next/font/google";
 import Link from "next/link";
 import { IcoArrowLeft } from "@/components/shared/Icons";
 import Typewriter from "./_components/Typewriter";
+import { LiteYouTube } from "./_components/LiteYouTube";
 import VerticalRotator from "./_components/VerticalRotator";
 import {
   Store,
@@ -127,6 +128,7 @@ export default function LandingPage() {
       <WoltTeaser />
       <Math />
       <Features />
+      <PrinterShowcase />
       <GrowPartner />
       <CustomerShowcase />
       <Pricing />
@@ -469,6 +471,45 @@ function Math() {
             <p>
               סטטוס משתנה לכל הזמנה בלחיצת כפתור באפליקציית הקופה שלנו. ממשק פשוט וקל שעושה סדר ומשקף גם ללקוח בכל רגע איפה ההזמנה שלו בזמן אמת. <strong>חדש:</strong> בשעת עומס המערכת מזהה אוטומטית ומעלה את הזמן המשוער להכנת המנה.
             </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── PRINTER SHOWCASE ──────────────────────────────────── */
+function PrinterShowcase() {
+  return (
+    <section id="printer" className={styles.section}>
+      <div className={styles.container}>
+        <div className={styles.sectionEyebrow}>מהאתר ישר למטבח</div>
+        <h2 className={styles.sectionTitle}>
+          הזמנה נכנסת באתר. <em>הקבלה כבר במטבח.</em>
+        </h2>
+
+        <div className={`${styles.qfoodCard} ${styles.qfoodCardMist} ${styles.printerCard}`}>
+          <div className={styles.qfoodCardBody}>
+            <span className={styles.qfoodCardTag}>חיבור למדפסת</span>
+            <h3 className={styles.qfoodCardHeading}>
+              המדפסת שכבר יש לך במסעדה? מתחברת בשתי דקות.
+            </h3>
+            <p className={styles.qfoodCardCopy}>
+              בוחרים בהגדרות את סוג המדפסת - Star (זו שוולט מספקים), Epson,
+              מדפסת בלוטות׳ אחרת או כל מדפסת WiFi רגילה - והמערכת מדריכה אתכם
+              צעד-צעד: איזו אפליקציה להוריד ואיך להצמיד. מאותו רגע כל הזמנה
+              מודפסת במטבח בלחיצה: פריטים, תוספות, הערות לטבח וכתובת המשלוח.
+              בלי מחשב, בלי ראוטר, בלי טכנאי.
+            </p>
+            <p className={styles.printerCaption}>
+              בסרטון: חיבור חי בפיצרייה אמיתית - מהזמנה באתר ועד קבלה ביד.
+            </p>
+          </div>
+          <div className={styles.printerVideoShell}>
+            <LiteYouTube
+              videoId="0kxe75kJ31o"
+              title="חיבור מדפסת Star למערכת QuickFood בפיצרייה - הדגמה חיה"
+            />
           </div>
         </div>
       </div>
