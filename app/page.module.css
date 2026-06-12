@@ -2157,6 +2157,12 @@
   text-transform: uppercase;
   color: var(--mute);
 }
+.finalCtaNote {
+  margin: 12px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--mute);
+}
 
 /* Lead form sits below the close-section copy. Limit width so the
    black-bordered card doesn't span the full container and dwarf the

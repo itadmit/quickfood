@@ -226,7 +226,7 @@ function HowItWorks() {
       <div className={styles.container}>
         <div className={styles.sectionEyebrow}>איך זה עובד</div>
         <h2 className={styles.sectionTitle}>
-          5 דקות. <em>מחברים ומתחילים לעבוד.</em>
+          5 דקות. <em>ומתחילים למכור.</em>
         </h2>
         <div className={styles.howGrid}>
           {steps.map((s, i) => (
@@ -546,7 +546,7 @@ function Features() {
             tone="peach"
             layout="decor-start"
             tag="יועץ AI"
-            heading="לא יודע מה להזמין? היועץ כבר יעזור לו."
+            heading="לא יודע מה להזמין? היועץ כבר ידאג לזה."
             body="'ארוחה לזוג עד ₪120', 'משהו טבעוני', 'כמו בפעם שעברה' - והוא כבר מוסיף לעגלה. אתה רק מפעיל."
             icon="sparkles"
           />
@@ -1105,7 +1105,7 @@ function FinalCta() {
               5 דקות. <em>וזה כבר שלך.</em>
             </h2>
             <p>
-              בלי כרטיס אשראי, בלי התחייבות, בלי שיחת מכירה. תפתח חנות, תקבל הזמנה אחת, ותראה איך זה מרגיש כשהמנה הולכת ישר מהמטבח שלך ללקוח שלך - עם השם שלך בלבד.
+              תפתח חנות, תקבל הזמנה אחת, ותראה איך זה מרגיש כשהמנה הולכת ישר מהמטבח שלך ללקוח שלך - עם השם שלך בלבד.
             </p>
             <div className={styles.finalCtaActions}>
               <Link href="/signup" className={`${styles.btn} ${styles.btnLg} ${styles.btnInk}`}>
@@ -1116,6 +1116,7 @@ function FinalCta() {
                 נדבר קודם <IcoArrowLeft c="currentColor" s={14} />
               </a>
             </div>
+            <p className={styles.finalCtaNote}>בלי כרטיס אשראי. בלי התחייבות.</p>
           </div>
         </div>
 

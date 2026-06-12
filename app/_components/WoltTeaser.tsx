@@ -78,7 +78,7 @@ export default function WoltTeaser() {
             </h2>
             <p className={styles.sub}>
               מדביקים כתובת - ורואים תוך כמה שניות איך החנות שלכם תיראה
-              ב-Quick Food. בלי להירשם, בלי לשלם, בלי כאב ראש.
+              ב-Quick Food. בלי להירשם. בלי לשלם. בלי כאב ראש.
             </p>
 
             <label className={styles.field}>
