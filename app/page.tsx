@@ -188,10 +188,10 @@ function TrustStrip() {
           <div className={styles.trustDivider} aria-hidden />
           <div className={styles.trustPromises}>
             <span className={styles.trustPromise}>
-              <strong>7 ימים על חשבוננו</strong>
+              <strong>7 ימים ניסיון ללא תשלום</strong>
             </span>
             <span className={styles.trustPromise}>בלי כרטיס אשראי</span>
-            <span className={styles.trustPromise}>ביטול בקליק</span>
+            <span className={styles.trustPromise}>ביטול בכל רגע</span>
           </div>
         </div>
       </div>
@@ -367,33 +367,33 @@ function Hero() {
           </span>
         </h1>
         <p className={styles.headlineSmall}>
-          וולט מביא לך לקוחות חדשים. אצלנו הקבועים שלך מזמינים ישירות - על הדומיין שלך, בלי 30% עמלה על אותו לקוח שכבר מכיר אותך. פלטפורמה שנבנתה מהיום הראשון לעולם המזון: מהתפריט עד הקבלה, מהמטבח עד הביקורת.
+          QuickFood מאפשרת ללקוחות להזמין ישירות מהאתר שלך, בדומיין שלך ובמיתוג שלך. מערכת אחת שמרכזת את כל תהליך ההזמנה - מהתפריט, דרך התשלום ועד להדפסה במטבח. אתר הזמנות מקצועי למסעדות, פיצריות ובתי קפה, עם סליקה, משלוחים, איסוף עצמי, מסך מטבח וניהול חכם - פשוט להפעלה ומוכן לעבודה תוך דקות.
         </p>
 
         <div className={styles.heroCta}>
           <Link href="/signup" className={`${styles.btn} ${styles.btnTomato} ${styles.btnLg}`}>
-            QuickFood, תפתחו לי חנות
+            התחילו 7 ימים חינם
           </Link>
           <a
             href="#pricing"
             className={`${styles.btn} ${styles.btnGhost} ${styles.btnGhostOutline} ${styles.btnLg}`}
           >
-            כמה זה עולה <IcoArrowLeft c="currentColor" s={14} />
+            צפו במחיר <IcoArrowLeft c="currentColor" s={14} />
           </a>
         </div>
 
         <div className={styles.heroStats}>
           <div className={styles.heroStat}>
             <div className={styles.heroStatN}>₪299</div>
-            <div className={styles.heroStatL}>לחודש. מחיר קבוע לכל החיים.</div>
+            <div className={styles.heroStatL}>לחודש. מחיר קבוע וברור.</div>
           </div>
           <div className={styles.heroStat}>
             <div className={styles.heroStatN}>0.5%</div>
-            <div className={styles.heroStatL}>על הלקוח שכבר מכיר אותך.</div>
+            <div className={styles.heroStatL}>עמלת מערכת בלבד על הזמנות.</div>
           </div>
           <div className={styles.heroStat}>
             <div className={styles.heroStatN}>5 דק׳</div>
-            <div className={styles.heroStatL}>מהרישום ועד חנות חיה.</div>
+            <div className={styles.heroStatL}>מהרישום ועד אתר הזמנות פעיל.</div>
           </div>
         </div>
       </div>
