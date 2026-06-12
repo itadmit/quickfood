@@ -211,14 +211,21 @@ export async function verifySignature(req: Request, rawBody: string): Promise<bo
       .update(`${encodedHeader}.${encodedPayload}`)
       .digest("base64url");
     if (encodedSig === expected) {
-      // Validate body hash matches what we got.
+      // Validate body hash matches what we got. QStash's `body` claim is
+      // base64url WITH trailing `=` padding while Node's "base64url" digest
+      // is unpadded - normalize both sides before comparing, otherwise every
+      // signature fails on the padding char.
       const payload = decodePayload(encodedPayload);
       if (!payload) return false;
       const expectedBodyHash = crypto
         .createHash("sha256")
         .update(rawBody)
         .digest("base64url");
-      if (payload.body !== expectedBodyHash) return false;
+      const claimedBodyHash = (payload.body ?? "")
+        .replace(/=+$/, "")
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_");
+      if (claimedBodyHash !== expectedBodyHash) return false;
       // Validate exp/nbf.
       const now = Math.floor(Date.now() / 1000);
       if (typeof payload.exp === "number" && now > payload.exp) return false;
