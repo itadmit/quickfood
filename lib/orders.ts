@@ -1,4 +1,5 @@
 import { OrderStatus } from "@prisma/client";
+import { after } from "next/server";
 import { prisma } from "@/lib/db/client";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
 import { scheduleReviewReminder } from "@/lib/reviews/schedule";
@@ -192,72 +193,73 @@ export async function advanceStatus(
   // or double-paths are safe. Cancellations don't reverse - known
   // trade-off; merchants are deterred via a cancellation email to the
   // customer (see refund route).
-  if (
-    order.paymentMethod === "cash" &&
-    order.status === "pending" &&
-    to !== "pending" &&
-    to !== "cancelled"
-  ) {
-    void recordOrderCommission(orderId).catch((err) => {
-      console.error("[commission] record failed", err);
-    });
-  }
+  after(async () => {
+    if (
+      order.paymentMethod === "cash" &&
+      order.status === "pending" &&
+      to !== "pending" &&
+      to !== "cancelled"
+    ) {
+      await recordOrderCommission(orderId).catch((err) => {
+        console.error("[commission] record failed", err);
+      });
+    }
 
-  if (to === "delivered") {
-    void scheduleReviewReminder(orderId).catch((err) => {
-      console.error("[reviews] schedule failed", err);
-    });
-    void notifyCustomerDelivered(orderId).catch((err) => {
-      console.error("[courier] notify delivered failed", err);
-    });
-  }
+    if (to === "delivered") {
+      await scheduleReviewReminder(orderId).catch((err) => {
+        console.error("[reviews] schedule failed", err);
+      });
+      await notifyCustomerDelivered(orderId).catch((err) => {
+        console.error("[courier] notify delivered failed", err);
+      });
+    }
 
-  if (to === "out_for_delivery" && options?.courierId && options.courierId !== order.courierId) {
-    void notifyCourierAssigned(orderId, options.courierId).catch((err) => {
-      console.error("[courier] assign notify failed", err);
-    });
-  }
+    if (to === "out_for_delivery" && options?.courierId && options.courierId !== order.courierId) {
+      await notifyCourierAssigned(orderId, options.courierId).catch((err) => {
+        console.error("[courier] assign notify failed", err);
+      });
+    }
 
-  if (order.status === "pending" && to === "confirmed") {
-    void sendTenantPush(order.tenantId, {
-      title: `הזמנה חדשה - ${order.number}`,
-      body: `${order.total} ש"ח · ${order.method === "delivery" ? "משלוח" : "איסוף"}`,
-      url: "/dashboard/orders",
-      tag: `order-${orderId}`,
-      requireInteraction: true,
-    }).catch((err) => console.warn("[push] tenant new-order failed", err));
+    if (order.status === "pending" && to === "confirmed") {
+      await sendTenantPush(order.tenantId, {
+        title: `הזמנה חדשה - ${order.number}`,
+        body: `${order.total} ש"ח · ${order.method === "delivery" ? "משלוח" : "איסוף"}`,
+        url: "/dashboard/orders",
+        tag: `order-${orderId}`,
+        requireInteraction: true,
+      }).catch((err) => console.warn("[push] tenant new-order failed", err));
 
-    void sendOrderConfirmedEmail(orderId).catch((err) =>
-      console.warn("[email] order confirmed failed", err),
-    );
-  }
+      await sendOrderConfirmedEmail(orderId).catch((err) =>
+        console.warn("[email] order confirmed failed", err),
+      );
+    }
 
-  // Fire webhooks (best-effort, non-blocking)
-  if (to === "cancelled") {
-    void dispatchWebhook({
-      tenantId: order.tenantId,
-      eventType: "order.cancelled",
-      payload: {
-        order_id: orderId,
-        reason: options?.reason,
-        cancelled_at: now.toISOString(),
-      },
-    });
-    void sendOrderCancelledEmail(orderId, { reason: options?.reason ?? null }).catch(
-      (err) => console.warn("[email] order cancelled failed", err),
-    );
-  } else {
-    void dispatchWebhook({
-      tenantId: order.tenantId,
-      eventType: "order.status_changed",
-      payload: {
-        order_id: orderId,
-        from: order.status,
-        to,
-        changed_at: now.toISOString(),
-      },
-    });
-  }
+    if (to === "cancelled") {
+      await dispatchWebhook({
+        tenantId: order.tenantId,
+        eventType: "order.cancelled",
+        payload: {
+          order_id: orderId,
+          reason: options?.reason,
+          cancelled_at: now.toISOString(),
+        },
+      }).catch((err) => console.warn("[webhook] dispatch failed", err));
+      await sendOrderCancelledEmail(orderId, { reason: options?.reason ?? null }).catch(
+        (err) => console.warn("[email] order cancelled failed", err),
+      );
+    } else {
+      await dispatchWebhook({
+        tenantId: order.tenantId,
+        eventType: "order.status_changed",
+        payload: {
+          order_id: orderId,
+          from: order.status,
+          to,
+          changed_at: now.toISOString(),
+        },
+      }).catch((err) => console.warn("[webhook] dispatch failed", err));
+    }
+  });
 
   return updated;
 }
