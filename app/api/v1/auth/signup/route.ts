@@ -9,6 +9,7 @@ import { sendEmail } from "@/lib/email/send";
 import { welcomeEmail, merchantSignupAdminEmail } from "@/lib/email/templates";
 import { sendVerificationEmail } from "@/lib/auth/email-verification";
 import { publish } from "@/lib/qstash/client";
+import { after } from "next/server";
 
 const TRIAL_DAYS = 7;
 
@@ -247,7 +248,7 @@ export const POST = handler(async (req: Request) => {
   // main email the merchant cares about; the welcome runs alongside so
   // existing copy keeps working until we consolidate.
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://quickfood.co.il").replace(/\/$/, "");
-  void (async () => {
+  after(async () => {
     try {
       await sendVerificationEmail({
         userId: owner.id,
@@ -317,7 +318,7 @@ export const POST = handler(async (req: Request) => {
     } catch (err) {
       console.warn("[signup] follow-up email schedule failed", err);
     }
-  })();
+  });
 
   const userPayload = {
     id: owner.id,
