@@ -45,6 +45,8 @@ interface OptionGroup {
   helpText: string | null;
   allowHalf: boolean;
   splitPrice: boolean;
+  bundleCount: number;
+  bundlePrice: number;
   maxPerSide: number | null;
   templateSetId: string | null;
   options: Option[];
@@ -61,6 +63,8 @@ export interface ModifierSetSummary {
   helpText: string | null;
   allowHalf: boolean;
   splitPrice: boolean;
+  bundleCount: number;
+  bundlePrice: number;
   maxPerSide: number | null;
   optionsCount: number;
   options?: { name: string; priceDelta: number }[];
@@ -183,6 +187,8 @@ export function ItemEditor({
           helpText: null,
           allowHalf: false,
           splitPrice: false,
+          bundleCount: 0,
+          bundlePrice: 0,
           maxPerSide: null,
           templateSetId: null,
           options: [],
@@ -208,6 +214,8 @@ export function ItemEditor({
           helpText: set.helpText,
           allowHalf: set.allowHalf,
           splitPrice: set.splitPrice,
+          bundleCount: set.bundleCount,
+          bundlePrice: set.bundlePrice,
           maxPerSide: set.maxPerSide,
           templateSetId: set.id,
           options: [],
@@ -262,6 +270,8 @@ export function ItemEditor({
           help_text: g.helpText,
           allow_half: g.allowHalf,
           split_price: g.splitPrice,
+          bundle_count: g.bundleCount,
+          bundle_price: g.bundlePrice,
           max_per_side: g.maxPerSide,
           template_set_id: g.templateSetId,
           options: g.options.map((o) => ({
@@ -1206,6 +1216,36 @@ function GroupEditor({
               className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum text-base lg:text-sm"
             />
           </label>
+          <div className="col-span-3 rounded-lg bg-qf-line-soft/40 border border-qf-line-dash p-2.5 grid grid-cols-2 gap-2">
+            <div className="col-span-2 text-qf-mute text-[11px] leading-tight">
+              מבצע (לא חובה): X הבחירות הראשונות יחד עולות Y₪, מעבר לזה מחיר רגיל. למשל 2 ב-5₪. גובר על ״כלולות חינם״.
+            </div>
+            <label className="flex flex-col gap-1">
+              <span className="text-qf-mute">כמות במבצע (X)</span>
+              <input
+                type="number"
+                min={0}
+                placeholder="0 = ללא מבצע"
+                value={group.bundleCount || ""}
+                onChange={(e) =>
+                  onChange({ ...group, bundleCount: Math.max(0, parseInt(e.target.value, 10) || 0) })
+                }
+                className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum text-base lg:text-sm"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-qf-mute">מחיר המבצע (Y, ₪)</span>
+              <input
+                type="number"
+                min={0}
+                value={group.bundlePrice || ""}
+                onChange={(e) =>
+                  onChange({ ...group, bundlePrice: Math.max(0, parseInt(e.target.value, 10) || 0) })
+                }
+                className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum text-base lg:text-sm"
+              />
+            </label>
+          </div>
         </div>
       )}
       <textarea

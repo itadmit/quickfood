@@ -12,6 +12,7 @@ import {
   type CartLineSource,
 } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
+import { priceGroupOptions, type PricedOption, type GroupPricingConfig } from "@/lib/option-pricing";
 import { cn } from "@/lib/cn";
 
 const KIOSK_NOTE_PRESETS = [
@@ -50,6 +51,8 @@ interface OptionGroup {
   helpText?: string | null;
   allowHalf?: boolean;
   splitPrice?: boolean;
+  bundleCount?: number;
+  bundlePrice?: number;
   maxPerSide?: number | null;
   options: Option[];
 }
@@ -261,41 +264,43 @@ export function ItemDetail({
     return () => observer.disconnect();
   }, []);
 
+  function pickedOptions(g: OptionGroup): PricedOption[] {
+    if (g.allowHalf) {
+      const gHalf = halfPicks[g.id] ?? {};
+      return g.options
+        .filter((o) => gHalf[o.id])
+        .map((o) => ({ id: o.id, priceDelta: o.priceDelta, half: gHalf[o.id] }));
+    }
+    const selected = picks[g.id] ?? new Set<string>();
+    return g.options
+      .filter((o) => selected.has(o.id))
+      .map((o) => ({ id: o.id, priceDelta: o.priceDelta }));
+  }
+
+  function groupPricingConfig(g: OptionGroup): GroupPricingConfig {
+    return {
+      includedFree: g.includedFree ?? 0,
+      bundleCount: g.bundleCount ?? 0,
+      bundlePrice: g.bundlePrice ?? 0,
+      splitPrice: g.splitPrice ?? false,
+    };
+  }
+
+  function withBundleNote(g: OptionGroup, subtitle: string | null | undefined): string | undefined {
+    if (!g.bundleCount || !g.bundlePrice) return subtitle ?? undefined;
+    const note = `מבצע: ${g.bundleCount} ב-${formatPrice(g.bundlePrice)}`;
+    return subtitle ? `${note} · ${subtitle}` : note;
+  }
+
   const total = useMemo(() => {
     const size = item.sizes.find((s) => s.id === sizeId);
     const sDelta = size?.priceDelta ?? 0;
     let oDelta = 0;
     for (const g of item.optionGroups) {
-      if (g.allowHalf) {
-        const gHalf = halfPicks[g.id] ?? {};
-        const picked = g.options.filter((o) => gHalf[o.id]);
-        // Mirror server: free slots applied to the cheapest PAID picks
-        // (by full priceDelta), then any survivor gets halved if its
-        // placement is not "full".
-        const paidSorted = picked
-          .filter((o) => o.priceDelta > 0)
-          .sort((a, b) => a.priceDelta - b.priceDelta);
-        const free = g.includedFree ?? 0;
-        const freedIds = new Set(paidSorted.slice(0, free).map((o) => o.id));
-        for (const o of picked) {
-          const placement = gHalf[o.id];
-          const baseDelta = freedIds.has(o.id) ? 0 : o.priceDelta;
-          const delta = placement !== "full" && g.splitPrice ? baseDelta / 2 : baseDelta;
-          oDelta += delta;
-        }
-      } else {
-        const selected = picks[g.id] ?? new Set();
-        const paidSelections = g.options
-          .filter((o) => selected.has(o.id) && o.priceDelta > 0)
-          .sort((a, b) => a.priceDelta - b.priceDelta);
-        const free = g.includedFree ?? 0;
-        for (let i = 0; i < paidSelections.length; i++) {
-          if (i >= free) oDelta += paidSelections[i].priceDelta;
-        }
-        for (const o of g.options) {
-          if (selected.has(o.id) && o.priceDelta < 0) oDelta += o.priceDelta;
-        }
-      }
+      const picked = pickedOptions(g);
+      if (picked.length === 0) continue;
+      const charges = priceGroupOptions(picked, groupPricingConfig(g));
+      for (const c of charges.values()) oDelta += c;
     }
     return (item.basePrice + sDelta + oDelta) * quantity;
   }, [item, sizeId, picks, halfPicks, quantity]);
@@ -381,30 +386,20 @@ export function ItemDetail({
     const size = item.sizes.find((s) => s.id === sizeId);
     const selectedOpts: Array<{ groupId: string; optionId: string; name: string; groupName: string; priceDelta: number; half?: HalfPlacement }> = [];
     for (const g of item.optionGroups) {
-      if (g.allowHalf) {
-        const gHalf = halfPicks[g.id] ?? {};
-        const picked = g.options.filter((o) => gHalf[o.id]);
-        const paidSorted = picked
-          .filter((o) => o.priceDelta > 0)
-          .sort((a, b) => a.priceDelta - b.priceDelta);
-        const free = g.includedFree ?? 0;
-        const freedIds = new Set(paidSorted.slice(0, free).map((o) => o.id));
-        for (const o of picked) {
-          const placement = gHalf[o.id]!;
-          const baseDelta = freedIds.has(o.id) ? 0 : o.priceDelta;
-          const effectiveDelta = placement !== "full" && g.splitPrice ? baseDelta / 2 : baseDelta;
-          selectedOpts.push({ groupId: g.id, optionId: o.id, name: o.name, groupName: g.name, priceDelta: effectiveDelta, half: placement });
-        }
-      } else {
-        const sel = picks[g.id] ?? new Set();
-        const picked = g.options.filter((o) => sel.has(o.id));
-        const free = g.includedFree ?? 0;
-        const paidSorted = picked.filter((o) => o.priceDelta > 0).sort((a, b) => a.priceDelta - b.priceDelta);
-        const freedIds = new Set(paidSorted.slice(0, free).map((o) => o.id));
-        for (const o of picked) {
-          const effectiveDelta = freedIds.has(o.id) ? 0 : o.priceDelta;
-          selectedOpts.push({ groupId: g.id, optionId: o.id, name: o.name, groupName: g.name, priceDelta: effectiveDelta });
-        }
+      const picked = pickedOptions(g);
+      if (picked.length === 0) continue;
+      const charges = priceGroupOptions(picked, groupPricingConfig(g));
+      for (const o of g.options) {
+        if (!charges.has(o.id)) continue;
+        const placement = g.allowHalf ? (halfPicks[g.id]?.[o.id] as HalfPlacement | undefined) : undefined;
+        selectedOpts.push({
+          groupId: g.id,
+          optionId: o.id,
+          name: o.name,
+          groupName: g.name,
+          priceDelta: charges.get(o.id)!,
+          ...(placement ? { half: placement } : {}),
+        });
       }
     }
     const payload = {
@@ -739,7 +734,7 @@ export function ItemDetail({
               id={`group-${g.id}`}
               title={g.name}
               required={g.required}
-              subtitle={subtitle}
+              subtitle={withBundleNote(g, subtitle)}
               counter={sectionMax > 1 ? { selected, max: sectionMax, atMax } : undefined}
               helpText={g.helpText}
               flash={flashGroupId === g.id}
@@ -874,7 +869,7 @@ export function ItemDetail({
             id={`group-${g.id}`}
             title={g.name}
             required={g.required}
-            subtitle={subtitle}
+            subtitle={withBundleNote(g, subtitle)}
             counter={
               g.type === "multi" && g.maxSelect > 1
                 ? { selected, max: g.maxSelect, atMax, unlimited }

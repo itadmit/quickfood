@@ -33,6 +33,8 @@ export default async function ModifiersPage() {
         helpText: s.helpText,
         allowHalf: s.allowHalf,
         splitPrice: s.splitPrice,
+        bundleCount: s.bundleCount,
+        bundlePrice: s.bundlePrice,
         maxPerSide: s.maxPerSide,
         position: s.position,
         attachedCount: s._count.attachedTo,

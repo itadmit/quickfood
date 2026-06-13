@@ -717,6 +717,12 @@ model ItemOptionGroup {
   // a half or the whole pie ("אין דבר כזה 2.5"). true = legacy behaviour
   // where a half placement charges half the priceDelta.
   splitPrice    Boolean         @default(false) @map("split_price")
+  // Bundle deal: the first `bundleCount` paid selections together cost a flat
+  // `bundlePrice` (shekels); selections beyond that pay full price. 0 = off.
+  // E.g. bundleCount=2, bundlePrice=5 → "2 תוספות ב-5₪". Independent of
+  // includedFree (bundle wins when set).
+  bundleCount   Int             @default(0) @map("bundle_count")
+  bundlePrice   Int             @default(0) @map("bundle_price")
   // When set, this group inherits its options + config from a ModifierSet.
   // Inline `options` rows are ignored when templateSetId is non-null.
   templateSetId String?         @map("template_set_id") @db.Uuid
@@ -769,6 +775,10 @@ model ModifierSet {
   // Catalog default for splitPrice on attached groups. See
   // ItemOptionGroup.splitPrice.
   splitPrice   Boolean         @default(false) @map("split_price")
+  // Catalog default for the bundle deal on attached groups. See
+  // ItemOptionGroup.bundleCount / bundlePrice.
+  bundleCount  Int             @default(0) @map("bundle_count")
+  bundlePrice  Int             @default(0) @map("bundle_price")
   // Provenance for bulk imports - see MenuCategory.externalSource. A
   // re-import keys off (tenantId, externalSource, externalId) to upsert.
   externalSource String?       @map("external_source") @db.VarChar(20)

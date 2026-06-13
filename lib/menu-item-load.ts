@@ -56,6 +56,7 @@ async function _fetch(tenantSlug: string, itemId: string) {
       optionGroups: row.optionGroups.map((g) => {
         const fromSet = g.templateSet;
         const opts = fromSet ? fromSet.options : g.options;
+        const ownBundle = g.bundleCount > 0;
         return {
           id: g.id,
           name: fromSet?.name ?? g.name,
@@ -67,6 +68,8 @@ async function _fetch(tenantSlug: string, itemId: string) {
           helpText: fromSet?.helpText ?? g.helpText,
           allowHalf: g.allowHalf || (fromSet?.allowHalf ?? false),
           splitPrice: g.splitPrice || (fromSet?.splitPrice ?? false),
+          bundleCount: ownBundle ? g.bundleCount : (fromSet?.bundleCount ?? 0),
+          bundlePrice: ownBundle ? g.bundlePrice : (fromSet?.bundlePrice ?? 0),
           maxPerSide: g.maxPerSide ?? fromSet?.maxPerSide ?? null,
           options: opts
             .filter((o) => o.available)

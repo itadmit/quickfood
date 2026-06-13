@@ -4,6 +4,7 @@ import { isItemVisibleNow } from "@/lib/menu-availability";
 import { computeDeliveryFee } from "@/lib/delivery-fee";
 import { sendTenantPush } from "@/lib/merchant/push";
 import { sendOrderConfirmedEmail } from "@/lib/orders/notify-customer";
+import { priceGroupOptions } from "@/lib/option-pricing";
 import type { Prisma } from "@prisma/client";
 
 /**
@@ -178,6 +179,9 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       const effectiveMax = fromSet?.maxSelect ?? group.maxSelect;
       const effectiveFree = fromSet?.includedFree ?? group.includedFree;
       const effectiveSplit = group.splitPrice || (fromSet?.splitPrice ?? false);
+      const ownBundle = group.bundleCount > 0;
+      const effectiveBundleCount = ownBundle ? group.bundleCount : (fromSet?.bundleCount ?? 0);
+      const effectiveBundlePrice = ownBundle ? group.bundlePrice : (fromSet?.bundlePrice ?? 0);
       const availableOptions = effectiveOptions.filter((o) => o.available);
       const picksInGroup = availableOptions.filter((o) => optionIds.has(o.id));
 
@@ -195,30 +199,23 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         throw new CartValidationError("too_many_in_group", group.id);
       }
 
-      // Apply free-count: cheapest paid options first don't add to total.
-      const paid = picksInGroup
-        .filter((o) => o.priceDelta > 0)
-        .sort((a, b) => a.priceDelta - b.priceDelta);
-      const negative = picksInGroup.filter((o) => o.priceDelta < 0);
-      const zero = picksInGroup.filter((o) => o.priceDelta === 0);
+      const charges = priceGroupOptions(
+        picksInGroup.map((o) => ({
+          id: o.id,
+          priceDelta: o.priceDelta,
+          half: placements[o.id] ?? null,
+        })),
+        {
+          includedFree: effectiveFree,
+          bundleCount: effectiveBundleCount,
+          bundlePrice: effectiveBundlePrice,
+          splitPrice: effectiveSplit,
+        },
+      );
 
-      for (let i = 0; i < paid.length; i++) {
-        const o = paid[i];
-        const baseDelta = i < effectiveFree ? 0 : o.priceDelta;
+      for (const o of picksInGroup) {
+        const effectiveDelta = charges.get(o.id) ?? o.priceDelta;
         const half = placements[o.id];
-        const effectiveDelta = half && half !== "full" && effectiveSplit ? baseDelta / 2 : baseDelta;
-        selectedOptions.push({
-          group_id: group.id,
-          option_id: o.id,
-          name: o.name,
-          price_delta: effectiveDelta,
-          ...(half && half !== "full" ? { half } : {}),
-        });
-        optionsDelta += effectiveDelta;
-      }
-      for (const o of [...negative, ...zero]) {
-        const half = placements[o.id];
-        const effectiveDelta = half && half !== "full" && effectiveSplit ? o.priceDelta / 2 : o.priceDelta;
         selectedOptions.push({
           group_id: group.id,
           option_id: o.id,

@@ -50,6 +50,8 @@ export default async function ItemEditPage({
     helpText: s.helpText,
     allowHalf: s.allowHalf,
     splitPrice: s.splitPrice,
+    bundleCount: s.bundleCount,
+    bundlePrice: s.bundlePrice,
     maxPerSide: s.maxPerSide,
     optionsCount: s.options.length,
     options: s.options.map((o) => ({ name: o.name, priceDelta: o.priceDelta })),
@@ -117,6 +119,8 @@ export default async function ItemEditPage({
           helpText: g.helpText,
           allowHalf: g.allowHalf,
           splitPrice: g.splitPrice,
+          bundleCount: g.bundleCount,
+          bundlePrice: g.bundlePrice,
           maxPerSide: g.maxPerSide,
           templateSetId: g.templateSetId,
           options: g.options.map((o) => ({

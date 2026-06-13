@@ -30,6 +30,8 @@ interface ModifierSet {
   helpText: string | null;
   allowHalf: boolean;
   splitPrice: boolean;
+  bundleCount: number;
+  bundlePrice: number;
   maxPerSide: number | null;
   position: number;
   attachedCount: number;
@@ -54,6 +56,8 @@ const EMPTY: NewModifierSet = {
   helpText: null,
   allowHalf: false,
   splitPrice: false,
+  bundleCount: 0,
+  bundlePrice: 0,
   maxPerSide: null,
   position: 0,
   attachedCount: 0,
@@ -93,6 +97,8 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
       help_text: editing.helpText,
       allow_half: editing.allowHalf,
       split_price: editing.splitPrice,
+      bundle_count: editing.bundleCount,
+      bundle_price: editing.bundlePrice,
       max_per_side: editing.maxPerSide,
       position: editing.position,
       options: editing.options.map((o) => ({
@@ -129,6 +135,8 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
       helpText: editing.helpText,
       allowHalf: editing.allowHalf,
       splitPrice: editing.splitPrice,
+      bundleCount: editing.bundleCount,
+      bundlePrice: editing.bundlePrice,
       maxPerSide: editing.maxPerSide,
       position: editing.position,
       attachedCount: editing.id ? editing.attachedCount : 0,
@@ -409,6 +417,8 @@ function SetEditor({
                   includedFree: 0,
                   allowHalf: false,
                   splitPrice: false,
+                  bundleCount: 0,
+                  bundlePrice: 0,
                   maxPerSide: null,
                 });
               } else {
@@ -472,6 +482,41 @@ function SetEditor({
               className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
             />
           </label>
+        </div>
+      )}
+
+      {isMulti && (
+        <div className="rounded-xl bg-qf-line-soft/40 border border-qf-line-dash p-3 space-y-2">
+          <div className="text-xs text-qf-mute leading-tight">
+            מבצע (לא חובה): X הבחירות הראשונות יחד עולות Y₪, מעבר לזה מחיר רגיל. למשל 2 ב-5₪. גובר על ״כלולות חינם״.
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <label className="flex flex-col gap-1">
+              <span className="text-qf-mute">כמות במבצע (X)</span>
+              <input
+                type="number"
+                min={0}
+                placeholder="0 = ללא מבצע"
+                value={set.bundleCount || ""}
+                onChange={(e) =>
+                  onChange({ ...set, bundleCount: Math.max(0, parseInt(e.target.value, 10) || 0) })
+                }
+                className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-qf-mute">מחיר המבצע (Y, ₪)</span>
+              <input
+                type="number"
+                min={0}
+                value={set.bundlePrice || ""}
+                onChange={(e) =>
+                  onChange({ ...set, bundlePrice: Math.max(0, parseInt(e.target.value, 10) || 0) })
+                }
+                className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
+              />
+            </label>
+          </div>
         </div>
       )}
 

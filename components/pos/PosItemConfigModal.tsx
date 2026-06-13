@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CartLine } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
+import { priceGroupOptions, type PricedOption, type GroupPricingConfig } from "@/lib/option-pricing";
 import { cn } from "@/lib/cn";
 import { IcoPlus, IcoMinus, IcoClose } from "@/components/shared/Icons";
 import { TouchTextarea } from "@/components/shared/TouchInput";
@@ -36,6 +37,8 @@ interface OptionGroup {
   helpText?: string | null;
   allowHalf?: boolean;
   splitPrice?: boolean;
+  bundleCount?: number;
+  bundlePrice?: number;
   maxPerSide?: number | null;
   options: Option[];
 }
@@ -168,36 +171,37 @@ export function PosItemConfigModal({
     return null;
   }, [item, picks, halfPicks]);
 
+  function pickedOptions(g: OptionGroup): PricedOption[] {
+    if (g.allowHalf) {
+      const gHalf = halfPicks[g.id] ?? {};
+      return g.options
+        .filter((o) => gHalf[o.id])
+        .map((o) => ({ id: o.id, priceDelta: o.priceDelta, half: gHalf[o.id] }));
+    }
+    const selected = picks[g.id] ?? new Set<string>();
+    return g.options
+      .filter((o) => selected.has(o.id))
+      .map((o) => ({ id: o.id, priceDelta: o.priceDelta }));
+  }
+
+  function groupPricingConfig(g: OptionGroup): GroupPricingConfig {
+    return {
+      includedFree: g.includedFree ?? 0,
+      bundleCount: g.bundleCount ?? 0,
+      bundlePrice: g.bundlePrice ?? 0,
+      splitPrice: g.splitPrice ?? false,
+    };
+  }
+
   const lineTotal = useMemo(() => {
     if (!item) return 0;
     const sDelta = item.sizes.find((s) => s.id === sizeId)?.priceDelta ?? 0;
     let oDelta = 0;
     for (const g of item.optionGroups) {
-      if (g.allowHalf) {
-        const gHalf = halfPicks[g.id] ?? {};
-        const picked = g.options.filter((o) => gHalf[o.id]);
-        const paidSorted = picked
-          .filter((o) => o.priceDelta > 0)
-          .sort((a, b) => a.priceDelta - b.priceDelta);
-        const free = g.includedFree ?? 0;
-        const freedIds = new Set(paidSorted.slice(0, free).map((o) => o.id));
-        for (const o of picked) {
-          const placement = gHalf[o.id];
-          const baseDelta = freedIds.has(o.id) ? 0 : o.priceDelta;
-          oDelta += placement !== "full" && g.splitPrice ? baseDelta / 2 : baseDelta;
-        }
-      } else {
-        const sel = picks[g.id] ?? new Set();
-        const picked = g.options.filter((o) => sel.has(o.id));
-        const paidSorted = picked
-          .filter((o) => o.priceDelta > 0)
-          .sort((a, b) => a.priceDelta - b.priceDelta);
-        const free = g.includedFree ?? 0;
-        const freedIds = new Set(paidSorted.slice(0, free).map((o) => o.id));
-        for (const o of picked) {
-          oDelta += freedIds.has(o.id) ? 0 : o.priceDelta;
-        }
-      }
+      const picked = pickedOptions(g);
+      if (picked.length === 0) continue;
+      const charges = priceGroupOptions(picked, groupPricingConfig(g));
+      for (const c of charges.values()) oDelta += c;
     }
     return (item.basePrice + sDelta + oDelta) * quantity;
   }, [item, sizeId, picks, halfPicks, quantity]);
@@ -260,45 +264,20 @@ export function PosItemConfigModal({
     const size = item.sizes.find((s) => s.id === sizeId);
     const selectedOpts: CartLine["options"] = [];
     for (const g of item.optionGroups) {
-      if (g.allowHalf) {
-        const gHalf = halfPicks[g.id] ?? {};
-        const picked = g.options.filter((o) => gHalf[o.id]);
-        const paidSorted = picked
-          .filter((o) => o.priceDelta > 0)
-          .sort((a, b) => a.priceDelta - b.priceDelta);
-        const free = g.includedFree ?? 0;
-        const freedIds = new Set(paidSorted.slice(0, free).map((o) => o.id));
-        for (const o of picked) {
-          const placement = gHalf[o.id]!;
-          const baseDelta = freedIds.has(o.id) ? 0 : o.priceDelta;
-          const effectiveDelta = placement !== "full" && g.splitPrice ? baseDelta / 2 : baseDelta;
-          selectedOpts.push({
-            groupId: g.id,
-            optionId: o.id,
-            name: o.name,
-            groupName: g.name,
-            priceDelta: effectiveDelta,
-            half: placement,
-          });
-        }
-      } else {
-        const sel = picks[g.id] ?? new Set();
-        const picked = g.options.filter((o) => sel.has(o.id));
-        const paidSorted = picked
-          .filter((o) => o.priceDelta > 0)
-          .sort((a, b) => a.priceDelta - b.priceDelta);
-        const free = g.includedFree ?? 0;
-        const freedIds = new Set(paidSorted.slice(0, free).map((o) => o.id));
-        for (const o of picked) {
-          const baseDelta = freedIds.has(o.id) ? 0 : o.priceDelta;
-          selectedOpts.push({
-            groupId: g.id,
-            optionId: o.id,
-            name: o.name,
-            groupName: g.name,
-            priceDelta: baseDelta,
-          });
-        }
+      const picked = pickedOptions(g);
+      if (picked.length === 0) continue;
+      const charges = priceGroupOptions(picked, groupPricingConfig(g));
+      for (const o of g.options) {
+        if (!charges.has(o.id)) continue;
+        const placement = g.allowHalf ? halfPicks[g.id]?.[o.id] : undefined;
+        selectedOpts.push({
+          groupId: g.id,
+          optionId: o.id,
+          name: o.name,
+          groupName: g.name,
+          priceDelta: charges.get(o.id)!,
+          ...(placement ? { half: placement } : {}),
+        });
       }
     }
     onConfirm({
