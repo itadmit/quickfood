@@ -44,6 +44,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               אנליטיקס
             </Link>
             <Link
+              href="/admin/grow-leads"
+              className="px-3 py-1.5 rounded-lg hover:bg-qf-line-soft whitespace-nowrap"
+            >
+              לידים לסליקה
+            </Link>
+            <Link
               href="/admin/tenants/new"
               className="px-3 py-1.5 rounded-lg hover:bg-qf-line-soft whitespace-nowrap"
             >
