@@ -2341,25 +2341,37 @@
 .kioskPop {
   position: relative;
   width: 100%;
-  max-width: 420px;
+  max-width: 680px;
   background: #fff;
   border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
   animation: kioskPopIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
 }
-.kioskPopHead {
+.kioskPopVisual {
   background: #F8CB1E;
-  padding: 22px 24px 18px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 20px;
 }
 .kioskPopImg {
   display: block;
   width: auto;
-  height: 150px;
-  margin: 0 auto 10px;
+  height: 280px;
+  max-width: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 16px 28px rgba(0, 0, 0, 0.25));
+}
+.kioskPopContent {
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: start;
+  justify-content: center;
 }
 .kioskPopBadge {
   display: inline-block;
@@ -2373,15 +2385,20 @@
   border-radius: 999px;
 }
 .kioskPopTitle {
-  margin: 12px 0 0;
-  font-size: 22px;
+  margin: 14px 0 0;
+  font-size: 24px;
   font-weight: 800;
   color: #0A0A0A;
   line-height: 1.25;
 }
-.kioskPopBody { padding: 20px 24px 24px; text-align: center; }
-.kioskPopText { font-size: 14px; color: var(--mute); line-height: 1.6; margin: 0 0 18px; }
-.kioskPopActions { display: flex; flex-direction: column; gap: 10px; }
+.kioskPopText { font-size: 14px; color: var(--mute); line-height: 1.6; margin: 14px 0 22px; }
+.kioskPopActions { display: flex; flex-direction: column; gap: 10px; align-self: stretch; }
+@media (max-width: 600px) {
+  .kioskPop { grid-template-columns: 1fr; max-width: 380px; }
+  .kioskPopVisual { padding: 22px 20px 0; }
+  .kioskPopImg { height: 190px; }
+  .kioskPopContent { padding: 22px 24px 26px; align-items: center; text-align: center; }
+}
 .kioskPopCta {
   display: inline-block;
   background: #0A0A0A;
