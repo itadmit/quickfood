@@ -54,6 +54,9 @@ export default function KioskPromoPopup() {
               אולי אחר כך
             </button>
           </div>
+          <p className={styles.kioskPopNote}>
+            מסופק ממשק הקיוסק (התוכנה). המעמד והמסוף בתמונה להמחשה בלבד.
+          </p>
         </div>
       </div>
     </div>

@@ -901,6 +901,12 @@ function KioskSection() {
               </a>
             </div>
           </div>
+
+          <div className={styles.growFootnote}>
+            <strong>מה כלול:</strong> QuickFood מספקת את <strong>ממשק הקיוסק</strong> -
+            התוכנה שרצה על טאבלט / מסך שכבר יש לכם. המעמד, הטאבלט ומסוף הסליקה הפיזי
+            בתמונה הם להמחשה בלבד ואינם כלולים בשירות.
+          </div>
         </div>
       </div>
     </section>

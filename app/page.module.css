@@ -2393,6 +2393,7 @@
 }
 .kioskPopText { font-size: 14px; color: var(--mute); line-height: 1.6; margin: 14px 0 22px; }
 .kioskPopActions { display: flex; flex-direction: column; gap: 10px; align-self: stretch; }
+.kioskPopNote { font-size: 11px; color: var(--mute); line-height: 1.5; margin: 14px 0 0; }
 @media (max-width: 600px) {
   .kioskPop { grid-template-columns: 1fr; max-width: 380px; }
   .kioskPopVisual { padding: 22px 20px 0; }
