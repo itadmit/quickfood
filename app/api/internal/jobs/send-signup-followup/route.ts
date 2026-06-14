@@ -67,7 +67,7 @@ export const POST = handler(async (req: Request) => {
     dashboardUrl: `${appUrl}/dashboard`,
     hasMenuItems: menuItemCount > 0,
     hasPayments: growConfig?.isActive ?? false,
-    growSignupUrl: GROW_SIGNUP_URL,
+    growSignupUrl: `${appUrl}${GROW_SIGNUP_URL}`,
   });
 
   const result = await sendEmail({

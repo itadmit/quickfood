@@ -430,6 +430,7 @@ model Tenant {
   emailLogs        EmailLog[]
   modifierSets     ModifierSet[]
   woltImports      WoltImport[]
+  growLeads        GrowLead[]
   posShifts        PosShift[]
 
   @@index([slug])
@@ -1781,4 +1782,21 @@ model WoltImport {
 
   @@index([tenantId, createdAt(sort: Desc)])
   @@map("wolt_imports")
+}
+
+model GrowLead {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String?  @map("tenant_id") @db.Uuid
+  tenant         Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  businessNumber String   @map("business_number")
+  businessName   String   @map("business_name")
+  phone          String
+  website        String?
+  status         String   @default("pending")
+  airtableRowId  String?  @map("airtable_row_id")
+  error          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@map("grow_leads")
 }
