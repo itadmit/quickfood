@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import styles from "../page.module.css";
 
 const DISMISS_KEY = "qf:kiosk-promo:dismissed";
@@ -28,6 +29,13 @@ export default function KioskPromoPopup() {
           ✕
         </button>
         <div className={styles.kioskPopHead}>
+          <Image
+            src="/img/kiosk.png"
+            alt="עמדת קיוסק QuickFood"
+            width={105}
+            height={150}
+            className={styles.kioskPopImg}
+          />
           <span className={styles.kioskPopBadge}>חדש</span>
           <h2 className={styles.kioskPopTitle}>
             עמדת קיוסק מתנה

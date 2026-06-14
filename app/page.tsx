@@ -853,40 +853,54 @@ function KioskSection() {
         </p>
 
         <div className={styles.kioskCard}>
-          <div className={styles.kioskGift}>
-            <span className={styles.kioskGiftTag}>מתנה</span>
-            <span className={styles.kioskGiftText}>
-              <strong>3 חודשים ללא עלות</strong> - מפעילים את הקיוסק בחשבון שלכם,
-              ומתנסים על חשבוננו.
-            </span>
+          <div className={styles.kioskSplit}>
+            <div className={styles.kioskVisual}>
+              <Image
+                src="/img/kiosk.png"
+                alt="עמדת קיוסק QuickFood עם מסך, קורא אשראי ומדפסת"
+                width={300}
+                height={430}
+                className={styles.kioskImg}
+              />
+            </div>
+
+            <div className={styles.kioskContent}>
+              <div className={styles.kioskGift}>
+                <span className={styles.kioskGiftTag}>מתנה</span>
+                <span className={styles.kioskGiftText}>
+                  <strong>3 חודשים ללא עלות</strong> - מפעילים את הקיוסק בחשבון
+                  שלכם, ומתנסים על חשבוננו.
+                </span>
+              </div>
+
+              <ul className={styles.growList}>
+                <li>
+                  <strong>הזמנה עצמית בלי תור</strong>
+                  <span>הלקוח בוחר, מתאים תוספות ומשלם מהמסך - הצוות מתפנה למטבח ולשירות במקום לרשום הזמנות.</span>
+                </li>
+                <li>
+                  <strong>אותו תפריט, אותו עיצוב</strong>
+                  <span>הקיוסק מסונכרן עם האתר והדשבורד - עדכנת מחיר או פריט? זה משתנה גם בעמדה, אוטומטית.</span>
+                </li>
+                <li>
+                  <strong>רץ על כל טאבלט</strong>
+                  <span>בלי חומרה ייעודית ובלי התקנה - פותחים את הכתובת בטאבלט, וזהו. איפוס אוטומטי למסך הפתיחה אחרי חוסר פעילות.</span>
+                </li>
+                <li>
+                  <strong>תשלום מלא מהמסך</strong>
+                  <span>אשראי, Bit, Apple Pay ו-Google Pay ישירות בעמדה - ההזמנה והתשלום נסגרים במקום.</span>
+                </li>
+                <li>
+                  <strong>ישר לדשבורד ולמטבח</strong>
+                  <span>כל הזמנה מהקיוסק נכנסת לאותו זרם הזמנות כמו האתר - אותה הדפסה למטבח, אותו מעקב חי.</span>
+                </li>
+              </ul>
+
+              <a href="#talk" className={styles.kioskPopCta} style={{ alignSelf: "flex-start" }}>
+                רוצה להפעיל קיוסק
+              </a>
+            </div>
           </div>
-
-          <ul className={styles.growList}>
-            <li>
-              <strong>הזמנה עצמית בלי תור</strong>
-              <span>הלקוח בוחר, מתאים תוספות ומשלם מהמסך - הצוות מתפנה למטבח ולשירות במקום לרשום הזמנות.</span>
-            </li>
-            <li>
-              <strong>אותו תפריט, אותו עיצוב</strong>
-              <span>הקיוסק מסונכרן עם האתר והדשבורד - עדכנת מחיר או פריט? זה משתנה גם בעמדה, אוטומטית.</span>
-            </li>
-            <li>
-              <strong>רץ על כל טאבלט</strong>
-              <span>בלי חומרה ייעודית ובלי התקנה - פותחים את הכתובת בטאבלט, וזהו. איפוס אוטומטי למסך הפתיחה אחרי חוסר פעילות.</span>
-            </li>
-            <li>
-              <strong>תשלום מלא מהמסך</strong>
-              <span>אשראי, Bit, Apple Pay ו-Google Pay ישירות בעמדה - ההזמנה והתשלום נסגרים במקום.</span>
-            </li>
-            <li>
-              <strong>ישר לדשבורד ולמטבח</strong>
-              <span>כל הזמנה מהקיוסק נכנסת לאותו זרם הזמנות כמו האתר - אותה הדפסה למטבח, אותו מעקב חי.</span>
-            </li>
-          </ul>
-
-          <a href="#talk" className={styles.kioskPopCta} style={{ alignSelf: "flex-start" }}>
-            רוצה להפעיל קיוסק
-          </a>
         </div>
       </div>
     </section>
