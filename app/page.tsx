@@ -856,10 +856,10 @@ function KioskSection() {
           <div className={styles.kioskSplit}>
             <div className={styles.kioskVisual}>
               <Image
-                src="/img/kiosk.png"
-                alt="ממשק לעמדת קיוסק QuickFood עם מסך, קורא אשראי ומדפסת"
-                width={540}
-                height={770}
+                src="/img/kiosk-tablet.png"
+                alt="ממשק לעמדת קיוסק QuickFood על טאבלט"
+                width={640}
+                height={504}
                 className={styles.kioskImg}
               />
             </div>
