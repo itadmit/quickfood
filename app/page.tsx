@@ -6,6 +6,7 @@ import { IcoArrowLeft } from "@/components/shared/Icons";
 import Typewriter from "./_components/Typewriter";
 import { LiteYouTube } from "./_components/LiteYouTube";
 import VerticalRotator from "./_components/VerticalRotator";
+import KioskPromoPopup from "./_components/KioskPromoPopup";
 import {
   Store,
   Flame,
@@ -129,6 +130,7 @@ export default function LandingPage() {
       <Math />
       <Features />
       <PrinterShowcase />
+      <KioskSection />
       <GrowPartner />
       <CustomerShowcase />
       <Pricing />
@@ -136,6 +138,7 @@ export default function LandingPage() {
       <FinalCta />
       <Footer />
       <ScrollAnimations />
+      <KioskPromoPopup />
     </div>
   );
 }
@@ -835,6 +838,61 @@ function CustomerShowcase() {
    as a partnership benefit (better terms than going direct) while
    making it explicit that Grow is a third party and any other
    processor still works - we don't lock you in. */
+function KioskSection() {
+  return (
+    <section id="kiosk" className={styles.section}>
+      <div className={styles.container}>
+        <div className={styles.sectionEyebrow}>חדש · עמדת קיוסק</div>
+        <h2 className={styles.sectionTitle}>
+          עמדת הזמנה עצמית. <em>הלקוח מזמין ומשלם לבד.</em>
+        </h2>
+        <p className={styles.sectionLede}>
+          טאבלט בכניסה למסעדה הופך לעמדת קיוסק - אותו תפריט, אותו עיצוב, מסונכרן
+          עם הדשבורד. הלקוחות מזמינים ומשלמים בלי תור ובלי טעויות, וההזמנה נכנסת
+          ישר למטבח.
+        </p>
+
+        <div className={styles.kioskCard}>
+          <div className={styles.kioskGift}>
+            <span className={styles.kioskGiftTag}>מתנה</span>
+            <span className={styles.kioskGiftText}>
+              <strong>3 חודשים ללא עלות</strong> - מפעילים את הקיוסק בחשבון שלכם,
+              ומתנסים על חשבוננו.
+            </span>
+          </div>
+
+          <ul className={styles.growList}>
+            <li>
+              <strong>הזמנה עצמית בלי תור</strong>
+              <span>הלקוח בוחר, מתאים תוספות ומשלם מהמסך - הצוות מתפנה למטבח ולשירות במקום לרשום הזמנות.</span>
+            </li>
+            <li>
+              <strong>אותו תפריט, אותו עיצוב</strong>
+              <span>הקיוסק מסונכרן עם האתר והדשבורד - עדכנת מחיר או פריט? זה משתנה גם בעמדה, אוטומטית.</span>
+            </li>
+            <li>
+              <strong>רץ על כל טאבלט</strong>
+              <span>בלי חומרה ייעודית ובלי התקנה - פותחים את הכתובת בטאבלט, וזהו. איפוס אוטומטי למסך הפתיחה אחרי חוסר פעילות.</span>
+            </li>
+            <li>
+              <strong>תשלום מלא מהמסך</strong>
+              <span>אשראי, Bit, Apple Pay ו-Google Pay ישירות בעמדה - ההזמנה והתשלום נסגרים במקום.</span>
+            </li>
+            <li>
+              <strong>ישר לדשבורד ולמטבח</strong>
+              <span>כל הזמנה מהקיוסק נכנסת לאותו זרם הזמנות כמו האתר - אותה הדפסה למטבח, אותו מעקב חי.</span>
+            </li>
+          </ul>
+
+          <a href="#talk" className={styles.kioskPopCta} style={{ alignSelf: "flex-start" }}>
+            רוצה להפעיל קיוסק
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function GrowPartner() {
   return (
     <section id="grow" className={styles.section}>

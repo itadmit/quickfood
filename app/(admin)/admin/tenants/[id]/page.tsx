@@ -55,6 +55,7 @@ export default async function TenantDetailPage({
         vatNumber: tenant.vatNumber,
         customDomain: tenant.customDomain,
         acceptsCash: tenant.acceptsCash,
+        kioskEnabled: tenant.kioskEnabled,
         smsCreditsRemaining: tenant.smsCreditsRemaining,
         whatsappToken: tenant.whatsappToken,
         whatsappInstanceId: tenant.whatsappInstanceId,

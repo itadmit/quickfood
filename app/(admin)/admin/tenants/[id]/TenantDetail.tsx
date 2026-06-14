@@ -39,6 +39,7 @@ interface InitialData {
   vatNumber: string | null;
   customDomain: string | null;
   acceptsCash: boolean;
+  kioskEnabled: boolean;
   smsCreditsRemaining: number;
   whatsappToken: string | null;
   whatsappInstanceId: string | null;
@@ -126,6 +127,7 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
           vat_number: t.vatNumber ?? "",
           custom_domain: t.customDomain ?? "",
           accepts_cash: t.acceptsCash,
+          kiosk_enabled: t.kioskEnabled,
           whatsapp_token: t.whatsappToken ?? "",
           whatsapp_instance_id: t.whatsappInstanceId ?? "",
         }),
@@ -507,6 +509,13 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
               checked={t.acceptsCash}
               onChange={(v) => set("acceptsCash", v)}
               aria-label="מקבל מזומן"
+            />
+          </Field>
+          <Field label="עמדת קיוסק" hint="כשפעיל, /s/<slug>/kiosk זמין למסעדה.">
+            <Toggle
+              checked={t.kioskEnabled}
+              onChange={(v) => set("kioskEnabled", v)}
+              aria-label="עמדת קיוסק"
             />
           </Field>
         </div>

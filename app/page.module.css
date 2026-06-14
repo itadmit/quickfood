@@ -2258,3 +2258,141 @@
     transition: none;
   }
 }
+
+/* ─── KIOSK SECTION ───────────────────────────────────────── */
+.kioskCard {
+  margin-top: 48px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  padding: 36px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  position: relative;
+  overflow: hidden;
+}
+.kioskCard::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #F8CB1E 0%, #FFE08A 60%, transparent 100%);
+}
+.kioskGift {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #FFF7DC;
+  border: 1px solid #F0D24E;
+  border-radius: 18px;
+  padding: 16px 20px;
+}
+.kioskGiftTag {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--ink);
+  color: #F8CB1E;
+  padding: 4px 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.kioskGiftText { font-size: 14px; color: var(--ink); }
+.kioskGiftText strong { font-weight: 800; }
+@media (max-width: 640px) {
+  .kioskCard { padding: 28px 24px; gap: 22px; }
+  .kioskGift { flex-direction: column; align-items: flex-start; gap: 8px; }
+}
+
+/* ─── KIOSK PROMO POPUP ───────────────────────────────────── */
+.kioskPopOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(10, 10, 10, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: kioskPopFade 0.2s ease;
+}
+.kioskPop {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  animation: kioskPopIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.kioskPopHead {
+  background: #F8CB1E;
+  padding: 22px 24px 18px;
+  text-align: center;
+}
+.kioskPopBadge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: #0A0A0A;
+  color: #F8CB1E;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+.kioskPopTitle {
+  margin: 12px 0 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0A0A0A;
+  line-height: 1.25;
+}
+.kioskPopBody { padding: 20px 24px 24px; text-align: center; }
+.kioskPopText { font-size: 14px; color: var(--mute); line-height: 1.6; margin: 0 0 18px; }
+.kioskPopActions { display: flex; flex-direction: column; gap: 10px; }
+.kioskPopCta {
+  display: inline-block;
+  background: #0A0A0A;
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 13px 20px;
+  border-radius: 14px;
+  text-align: center;
+}
+.kioskPopDismiss {
+  background: none;
+  border: none;
+  color: var(--mute);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px;
+}
+.kioskPopClose {
+  position: absolute;
+  inset-block-start: 12px;
+  inset-inline-end: 12px;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(0, 0, 0, 0.12);
+  color: #0A0A0A;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+@keyframes kioskPopFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes kioskPopIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kioskPopOverlay, .kioskPop { animation: none; }
+}
