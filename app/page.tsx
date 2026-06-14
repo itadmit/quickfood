@@ -858,8 +858,8 @@ function KioskSection() {
               <Image
                 src="/img/kiosk.png"
                 alt="עמדת קיוסק QuickFood עם מסך, קורא אשראי ומדפסת"
-                width={300}
-                height={430}
+                width={460}
+                height={655}
                 className={styles.kioskImg}
               />
             </div>

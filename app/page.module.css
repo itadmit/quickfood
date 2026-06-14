@@ -2305,21 +2305,21 @@
 .kioskGiftText strong { font-weight: 800; }
 .kioskSplit {
   display: grid;
-  grid-template-columns: minmax(0, 300px) 1fr;
-  gap: 40px;
+  grid-template-columns: minmax(0, 460px) 1fr;
+  gap: 48px;
   align-items: center;
 }
 .kioskVisual { display: flex; justify-content: center; }
 .kioskImg {
   width: 100%;
-  max-width: 300px;
+  max-width: 460px;
   height: auto;
-  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.22));
+  filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.24));
 }
 .kioskContent { display: flex; flex-direction: column; gap: 24px; }
-@media (max-width: 760px) {
-  .kioskSplit { grid-template-columns: 1fr; gap: 24px; }
-  .kioskImg { max-width: 220px; }
+@media (max-width: 860px) {
+  .kioskSplit { grid-template-columns: 1fr; gap: 28px; }
+  .kioskImg { max-width: 320px; }
 }
 @media (max-width: 640px) {
   .kioskCard { padding: 28px 24px; gap: 22px; }
