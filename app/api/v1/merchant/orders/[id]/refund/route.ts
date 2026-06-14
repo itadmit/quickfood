@@ -3,8 +3,9 @@ import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
 import { sendOrderCancelledEmail } from "@/lib/orders/notify-customer";
+import { getConfiguredProvider } from "@/lib/payments/factory";
 import { z } from "zod";
-import type { Prisma } from "@prisma/client";
+import { PaymentTransactionStatus, type Prisma } from "@prisma/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,12 +22,12 @@ const RefundSchema = z.object({
  * POST /api/v1/merchant/orders/:id/refund
  *
  * Marks the order as refunded server-side and fires an `order.refunded`
- * webhook so external POS / accounting can react. For CARD payments, the
- * actual money refund still needs to happen in the Grow Payments dashboard
- * - the merchant clicks "החזר תשלום" in Grow, then "סמן כהוחזר" here. We
- * don't auto-call Grow from this endpoint because Grow's refund API
- * requires their own auth handshake; keeping it manual avoids partial-
- * refund edge cases and makes the source-of-truth obvious (= Grow).
+ * webhook so external POS / accounting can react. For CARD payments we call
+ * the provider's refund API directly (Grow needs the original
+ * transactionToken, stored on the charge transaction at payment time). If the
+ * provider refund fails we abort and don't mark the order refunded, so the
+ * money state stays truthful. If no provider/transaction is available we fall
+ * back to recording the refund only (merchant settles manually in Grow).
  *
  * For CASH payments the refund happens in real life; this endpoint just
  * records it.
@@ -56,6 +57,42 @@ export const POST = handler(
 
     if (order.status === "refunded") {
       return apiError("conflict", "ההזמנה כבר סומנה כהוחזרה", 409);
+    }
+
+    // For non-cash payments, perform the real money refund through the provider
+    // API before recording anything. Grow requires the original transactionToken
+    // (stored on the charge transaction). If the provider call fails we abort.
+    let refundedViaProvider = false;
+    if (order.paymentMethod !== "cash") {
+      const txn = await prisma.paymentTransaction.findFirst({
+        where: { orderId: id, status: PaymentTransactionStatus.success },
+        orderBy: { createdAt: "desc" },
+      });
+
+      if (txn?.providerTransactionId) {
+        const provider = await getConfiguredProvider(session.tenantId, txn.provider);
+        if (provider) {
+          const result = await provider.refund({
+            providerTransactionId: txn.providerTransactionId,
+            providerToken: txn.providerToken ?? undefined,
+            amount: txn.amount, // exactly what the provider charged (symmetric to charge)
+          });
+
+          if (!result.success) {
+            return apiError(
+              "refund_failed",
+              result.errorMessage || "החזר התשלום נכשל בספק התשלום",
+              400,
+            );
+          }
+
+          await prisma.paymentTransaction.update({
+            where: { id: txn.id },
+            data: { refundedAmount: txn.amount },
+          });
+          refundedViaProvider = true;
+        }
+      }
     }
 
     // If we're refunding an already-delivered order, the courier's
@@ -134,7 +171,7 @@ export const POST = handler(
       payment_method: order.paymentMethod,
       // Tell the UI what to display to the merchant about the money flow.
       money_action_required:
-        order.paymentMethod !== "cash"
+        order.paymentMethod !== "cash" && !refundedViaProvider
           ? "החזר את הסכום ידנית בלוח הבקרה של Grow Payments"
           : null,
     });
