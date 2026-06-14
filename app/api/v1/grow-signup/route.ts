@@ -14,7 +14,7 @@ const GrowSignupSchema = z.object({
     .string()
     .trim()
     .regex(/^0\d{8,9}$/, { message: "מספר טלפון לא תקין" }),
-  website: z.string().trim().max(200).optional().or(z.literal("")),
+  website: z.string().trim().min(3, { message: "לינק לאתר חובה" }).max(200),
 });
 
 export const POST = handler(async (req: Request) => {

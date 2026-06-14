@@ -127,7 +127,7 @@ export function ConnectPaymentForm({ prefill }: Props) {
 
         <div>
           <label className={LABEL_CLS} htmlFor="website">
-            לינק לאתר <span className="font-normal text-black/40">(לא חובה)</span>
+            לינק לאתר
           </label>
           <input
             id="website"
@@ -135,6 +135,7 @@ export function ConnectPaymentForm({ prefill }: Props) {
             value={website}
             onChange={(e) => setWebsite(e.target.value)}
             placeholder="example.co.il"
+            required
           />
         </div>
 
