@@ -97,6 +97,7 @@ export default async function DashboardPage({
           merchantFirstName={firstName}
           hasNoMenuItems={menuItemCount === 0}
           setupState={{
+            tenantId: session.tenantId,
             brandingDone: !!(tenant?.logoUrl || tenant?.about || tenant?.cuisineType),
             categoriesDone: categoryCount > 0,
             menuItemsDone: menuItemCount > 0,

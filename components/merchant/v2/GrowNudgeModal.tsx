@@ -6,25 +6,24 @@ import { Modal } from "@/components/shared/Modal";
 import { IcoCreditCard, IcoClose, IcoArrowLeft } from "@/components/shared/Icons";
 import { GROW_SIGNUP_URL } from "@/lib/grow-signup";
 
-const DISMISS_KEY = "qf:grow-nudge:dismissed";
-
 /**
  * One-time dashboard nudge for merchants who already entered menu items but
  * have no active clearing provider: connect card payments via Grow's quick
- * signup form. Dismissal is remembered in localStorage; once Grow is active
- * the render condition in DashboardViewV2 stops mounting it anyway.
+ * signup form. Dismissal is remembered in localStorage per tenant; once Grow
+ * is active the render condition in DashboardViewV2 stops mounting it anyway.
  */
-export function GrowNudgeModal() {
+export function GrowNudgeModal({ tenantId }: { tenantId: string }) {
   const [open, setOpen] = useState(false);
+  const dismissKey = `qf:grow-nudge:dismissed:${tenantId}`;
 
   useEffect(() => {
-    if (localStorage.getItem(DISMISS_KEY)) return;
+    if (localStorage.getItem(dismissKey)) return;
     const t = setTimeout(() => setOpen(true), 900);
     return () => clearTimeout(t);
-  }, []);
+  }, [dismissKey]);
 
   function dismiss() {
-    localStorage.setItem(DISMISS_KEY, "1");
+    localStorage.setItem(dismissKey, "1");
     setOpen(false);
   }
 

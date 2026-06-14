@@ -73,6 +73,7 @@ const WIZARD_DAYS = [
 const DEFAULT_HOURS: DayHours = { open: "11:00", close: "23:00", active: true };
 
 interface SetupState {
+  tenantId: string;
   brandingDone: boolean;
   categoriesDone: boolean;
   menuItemsDone: boolean;
@@ -178,7 +179,7 @@ export function DashboardViewV2({
       {/* Menu already started but no active clearing - one-time popup
           pushing the Grow quick-signup form. */}
       {!hasNoMenuItems && setupState && !setupState.initialGrowActive && (
-        <GrowNudgeModal />
+        <GrowNudgeModal tenantId={setupState.tenantId} />
       )}
 
       {/* ─── SETUP WIZARD TRIGGER ───────────────────────────────── */}
