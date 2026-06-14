@@ -52,8 +52,9 @@ export function GrowNudgeModal({ tenantId }: { tenantId: string }) {
 
         <div className="p-6 space-y-4">
           <p className="text-sm text-black/75 leading-relaxed">
-            כדי שהלקוחות יוכלו לשלם באשראי, Bit ו-Apple Pay צריך לחבר חברת
-            סליקה - ואנחנו ממליצים על <span className="font-black text-black">Grow</span>.
+            כדי שהלקוחות יוכלו לשלם באשראי, PayBox, Bit, Apple Pay ו-Google Pay
+            צריך לחבר חברת סליקה - ואנחנו ממליצים על{" "}
+            <span className="font-black text-black">Grow</span>.
           </p>
           <div className="rounded-xl border-2 border-black bg-[#FFFBEC] p-4 shadow-[0_2px_0_#000]">
             <p className="text-sm font-bold text-black leading-relaxed">
