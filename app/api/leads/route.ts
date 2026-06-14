@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { checkRate } from "@/lib/api/rate-limit";
+import { prisma } from "@/lib/db/client";
 import { sendEmail } from "@/lib/email/send";
 import { leadEmail } from "@/lib/email/templates";
 
@@ -48,6 +49,19 @@ export const POST = handler(async (req: Request) => {
     return apiJson({ ok: true });
   }
 
+  const stored = await prisma.marketingLead.create({
+    data: {
+      name: data.name,
+      restaurant: data.restaurant || null,
+      phone: data.phone || null,
+      email: data.email,
+      message: data.message || null,
+      source: data.source,
+      ip,
+    },
+    select: { id: true },
+  });
+
   const { html, text } = leadEmail({
     name: data.name,
     restaurant: data.restaurant || undefined,
@@ -68,6 +82,11 @@ export const POST = handler(async (req: Request) => {
     kind: "lead",
     refKind: "lead_source",
     refId: data.source,
+  });
+
+  await prisma.marketingLead.update({
+    where: { id: stored.id },
+    data: { emailStatus: result.status },
   });
 
   if (result.status !== "sent") {

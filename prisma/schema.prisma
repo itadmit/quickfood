@@ -1800,3 +1800,19 @@ model GrowLead {
   @@index([tenantId, createdAt(sort: Desc)])
   @@map("grow_leads")
 }
+
+model MarketingLead {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  restaurant  String?
+  phone       String?
+  email       String
+  message     String?
+  source      String   @default("unknown")
+  ip          String?
+  emailStatus String?  @map("email_status")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt(sort: Desc)])
+  @@map("marketing_leads")
+}
