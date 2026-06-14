@@ -12,22 +12,25 @@ export const metadata: Metadata = {
 
 export default async function ConnectPaymentPage() {
   const session = await getSession();
-  let prefill = { businessName: "", businessNumber: "", phone: "" };
+  let prefill = { businessName: "", businessNumber: "", phone: "", website: "" };
 
   if (session?.type === "merchant" && session.tenantId) {
     const tenant = await prisma.tenant.findUnique({
       where: { id: session.tenantId },
       select: {
         name: true,
+        slug: true,
         vatNumber: true,
         branches: { take: 1, orderBy: { createdAt: "asc" }, select: { phone: true } },
       },
     });
     if (tenant) {
+      const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://quickfood.co.il").replace(/\/$/, "");
       prefill = {
         businessName: tenant.name ?? "",
         businessNumber: tenant.vatNumber ?? "",
         phone: tenant.branches[0]?.phone ?? "",
+        website: tenant.slug ? `${appUrl}/s/${tenant.slug}` : "",
       };
     }
   }

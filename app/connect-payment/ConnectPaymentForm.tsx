@@ -5,7 +5,7 @@ import { QuickFoodLogo } from "@/components/shared/QuickFoodLogo";
 import { IcoCreditCard, IcoCheck } from "@/components/shared/Icons";
 
 interface Props {
-  prefill: { businessName: string; businessNumber: string; phone: string };
+  prefill: { businessName: string; businessNumber: string; phone: string; website: string };
 }
 
 const FIELD_CLS =
@@ -16,7 +16,7 @@ export function ConnectPaymentForm({ prefill }: Props) {
   const [businessName, setBusinessName] = useState(prefill.businessName);
   const [businessNumber, setBusinessNumber] = useState(prefill.businessNumber);
   const [phone, setPhone] = useState(prefill.phone);
-  const [website, setWebsite] = useState("");
+  const [website, setWebsite] = useState(prefill.website);
   const [status, setStatus] = useState<"idle" | "sending" | "done">("idle");
   const [error, setError] = useState<string | null>(null);
 
