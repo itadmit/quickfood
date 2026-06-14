@@ -842,7 +842,7 @@ function KioskSection() {
   return (
     <section id="kiosk" className={styles.section}>
       <div className={styles.container}>
-        <div className={styles.sectionEyebrow}>חדש · עמדת קיוסק</div>
+        <div className={styles.sectionEyebrow}>חדש · ממשק לעמדת קיוסק</div>
         <h2 className={styles.sectionTitle}>
           עמדת הזמנה עצמית. <em>הלקוח מזמין ומשלם לבד.</em>
         </h2>
@@ -857,9 +857,9 @@ function KioskSection() {
             <div className={styles.kioskVisual}>
               <Image
                 src="/img/kiosk.png"
-                alt="עמדת קיוסק QuickFood עם מסך, קורא אשראי ומדפסת"
-                width={460}
-                height={655}
+                alt="ממשק לעמדת קיוסק QuickFood עם מסך, קורא אשראי ומדפסת"
+                width={540}
+                height={770}
                 className={styles.kioskImg}
               />
             </div>

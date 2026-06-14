@@ -28,9 +28,9 @@ export default function KioskPromoPopup() {
         <div className={styles.kioskPopVisual}>
           <Image
             src="/img/kiosk.png"
-            alt="עמדת קיוסק QuickFood"
-            width={280}
-            height={400}
+            alt="ממשק לעמדת קיוסק QuickFood"
+            width={360}
+            height={515}
             className={styles.kioskPopImg}
           />
         </div>
@@ -38,9 +38,9 @@ export default function KioskPromoPopup() {
         <div className={styles.kioskPopContent}>
           <span className={styles.kioskPopBadge}>חדש</span>
           <h2 className={styles.kioskPopTitle}>
-            עמדת קיוסק מתנה
+            ממשק לעמדת קיוסק
             <br />
-            ללא עלות ל-3 חודשים
+            מתנה ללא עלות ל-3 חודשים
           </h2>
           <p className={styles.kioskPopText}>
             הלקוחות מזמינים ומשלמים לבד מהמסך - בלי תור, בלי טעויות. רץ על כל

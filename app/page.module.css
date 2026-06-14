@@ -2305,14 +2305,14 @@
 .kioskGiftText strong { font-weight: 800; }
 .kioskSplit {
   display: grid;
-  grid-template-columns: minmax(0, 460px) 1fr;
+  grid-template-columns: minmax(0, 540px) 1fr;
   gap: 48px;
   align-items: center;
 }
 .kioskVisual { display: flex; justify-content: center; }
 .kioskImg {
   width: 100%;
-  max-width: 460px;
+  max-width: 540px;
   height: auto;
   filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.24));
 }
@@ -2341,14 +2341,14 @@
 .kioskPop {
   position: relative;
   width: 100%;
-  max-width: 680px;
+  max-width: 720px;
   background: #fff;
   border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
   animation: kioskPopIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1.05fr;
 }
 .kioskPopVisual {
   background: #F8CB1E;
@@ -2360,7 +2360,7 @@
 .kioskPopImg {
   display: block;
   width: auto;
-  height: 280px;
+  height: 380px;
   max-width: 100%;
   object-fit: contain;
   filter: drop-shadow(0 16px 28px rgba(0, 0, 0, 0.25));
