@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import QRCode from "qrcode";
@@ -109,6 +110,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <ThemeProvider themeId={tenant.themeId}>
+      <Script
+        src="https://quick-accessibility.vercel.app/widget/v1.js"
+        data-a11y-key="5ezqwew2ypzj38js"
+        strategy="afterInteractive"
+      />
       {isV2 ? (
         // `dash-v2` is the hook that retunes the design tokens (qf-bg,
         // qf-ink, qf-line, qf-green → cream / black / yellow) for every
