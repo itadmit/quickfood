@@ -187,7 +187,7 @@ export function RestaurantInfoModal({
                 <div className="flex items-center justify-between py-2">
                   <dt className="text-qf-mute">זמן משלוח משוער</dt>
                   <dd className="tnum font-medium">
-                    {deliveryEta.min}–{deliveryEta.max} דק&apos;
+                    {deliveryEta.min}-{deliveryEta.max} דק&apos;
                   </dd>
                 </div>
               )}
@@ -226,7 +226,7 @@ export function RestaurantInfoModal({
                         day?.active ? "text-qf-ink" : "text-qf-mute",
                       )}
                     >
-                      {day?.active ? `${day.open} – ${day.close}` : "סגור"}
+                      {day?.active ? `${day.open} - ${day.close}` : "סגור"}
                     </span>
                   </li>
                 );

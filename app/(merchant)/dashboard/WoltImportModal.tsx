@@ -235,7 +235,7 @@ function CommittingStage() {
       <div className="qf-spinner h-10 w-10 border-black/30 border-t-black" />
       <div className="font-bold text-black text-lg">מייבא תפריט ומעלה תמונות...</div>
       <div className="text-sm text-black/60 max-w-xs">
-        זה יכול לקחת 20–60 שניות. אל תסגרו את הדף.
+        זה יכול לקחת 20-60 שניות. אל תסגרו את הדף.
       </div>
     </div>
   );

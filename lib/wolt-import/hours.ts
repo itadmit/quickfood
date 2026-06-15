@@ -97,7 +97,7 @@ export function hoursPreviewSummary(
   return DAYS_ORDER.map((d) => ({
     day: d,
     label: HE_LABELS[d],
-    display: hours[d].active ? `${hours[d].open}–${hours[d].close}` : "סגור",
+    display: hours[d].active ? `${hours[d].open}-${hours[d].close}` : "סגור",
     active: hours[d].active,
   }));
 }

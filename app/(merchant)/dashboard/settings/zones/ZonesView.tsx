@@ -364,7 +364,7 @@ export function ZonesView({
                       </div>
                       <div className="text-sm tnum">₪{z.deliveryFee}</div>
                       <div className="text-sm text-qf-ink2 tnum">
-                        {z.minEta}–{z.maxEta} דק׳
+                        {z.minEta}-{z.maxEta} דק׳
                       </div>
                       <button
                         type="button"

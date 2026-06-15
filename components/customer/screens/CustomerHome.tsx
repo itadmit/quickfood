@@ -159,8 +159,8 @@ export function CustomerHome({
   }
   const baseEta = deliveryEta ?? { min: 25, max: 35 };
   const etaLabel = busy
-    ? `${baseEta.min + busyBoost}–${baseEta.max + busyBoost} דק'`
-    : `${baseEta.min}–${baseEta.max} דק'`;
+    ? `${baseEta.min + busyBoost}-${baseEta.max + busyBoost} דק'`
+    : `${baseEta.min}-${baseEta.max} דק'`;
 
 
   // Entry alerts. Busy is once-per-day, dismissable; closed shows every

@@ -610,7 +610,7 @@ function SetupTrigger({ state, onOpen }: { state: SetupState; onOpen: () => void
             <div className="font-black text-base text-black">הקמת החנות</div>
             <div className="text-xs text-black/55 mt-0.5">
               {doneCount === 0
-                ? "בואו נגדיר את החנות יחד — 5 דקות ואתם מוכנים"
+                ? "בואו נגדיר את החנות יחד - 5 דקות ואתם מוכנים"
                 : `${doneCount} מתוך ${total} שלבים הושלמו`}
             </div>
           </div>
@@ -1029,7 +1029,7 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
                               dir="ltr"
                               className="flex-1 min-w-0 text-xs border border-black/20 rounded-lg px-2 py-1 outline-none"
                             />
-                            <span className="text-xs text-black/35">—</span>
+                            <span className="text-xs text-black/35">-</span>
                             <input
                               type="time"
                               value={h.close}
@@ -1056,7 +1056,7 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
               <WizardSectionHeader
                 icon={<IcoMenuBook c="#000" s={18} />}
                 title="צרו קטגוריה ראשונה"
-                sub="קטגוריות מסדרות את התפריט — פיצות, תוספות, שתייה..."
+                sub="קטגוריות מסדרות את התפריט - פיצות, תוספות, שתייה..."
               />
               <WizardField label="שם הקטגוריה">
                 <input

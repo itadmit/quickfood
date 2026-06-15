@@ -262,7 +262,7 @@ export function OrderTracking({
             ? "תודה על ההזמנה!"
             : isDelivered
               ? "נמסר בהצלחה"
-              : "25–35"
+              : "25-35"
         }
         subhead={
           isJustPlaced

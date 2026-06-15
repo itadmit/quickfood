@@ -885,7 +885,7 @@ export function ItemEditor({
                       ? "חובה לבחור 1"
                       : g.minSelect === g.maxSelect
                         ? `חובה ${g.minSelect}`
-                        : `חובה ${g.minSelect}–${g.maxSelect}`
+                        : `חובה ${g.minSelect}-${g.maxSelect}`
                     : g.type === "multi"
                       ? g.includedFree > 0
                         ? `${g.includedFree} הראשונים חינם · עד ${g.maxSelect}`

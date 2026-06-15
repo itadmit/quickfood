@@ -60,14 +60,14 @@ export default async function MarketingLeadsPage() {
               {leads.map((l) => (
                 <tr key={l.id} className="border-b border-qf-line-soft last:border-0 align-top">
                   <td className="px-4 py-3 font-medium text-qf-ink whitespace-nowrap">{l.name}</td>
-                  <td className="px-4 py-3">{l.restaurant || <span className="text-qf-mute">—</span>}</td>
+                  <td className="px-4 py-3">{l.restaurant || <span className="text-qf-mute">-</span>}</td>
                   <td className="px-4 py-3 whitespace-nowrap" dir="ltr">
                     {l.phone ? (
                       <a href={`tel:${l.phone}`} className="text-qf-ink hover:underline">
                         {l.phone}
                       </a>
                     ) : (
-                      <span className="text-qf-mute">—</span>
+                      <span className="text-qf-mute">-</span>
                     )}
                   </td>
                   <td className="px-4 py-3" dir="ltr">
@@ -79,7 +79,7 @@ export default async function MarketingLeadsPage() {
                     {l.message ? (
                       <span className="line-clamp-3 whitespace-pre-wrap">{l.message}</span>
                     ) : (
-                      <span className="text-qf-mute">—</span>
+                      <span className="text-qf-mute">-</span>
                     )}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">

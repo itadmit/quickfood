@@ -116,7 +116,7 @@ export function NewTenantForm() {
               className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono"
             />
           </Field>
-          <Field label="אות לוגו (1–2 תווים)">
+          <Field label="אות לוגו (1-2 תווים)">
             <input
               value={logoLetter}
               onChange={(e) => setLogoLetter(e.target.value.slice(0, 2))}

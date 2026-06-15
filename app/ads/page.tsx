@@ -25,7 +25,7 @@ export default function AdsPageA() {
           לקוחות רוצים להזמין. תנו להם דרך ישירה לעשות את זה.
         </p>
         <p style={{ fontSize: 13, color: INK_COLOR, fontWeight: 500, lineHeight: 1.4 }}>
-          אתר הזמנות · משלוחים · תשלומים — במערכת אחת.
+          אתר הזמנות · משלוחים · תשלומים - במערכת אחת.
         </p>
       </div>
 

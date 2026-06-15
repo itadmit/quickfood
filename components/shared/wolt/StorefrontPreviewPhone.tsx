@@ -153,7 +153,7 @@ export function StorefrontPreviewPhone({
             <span className={styles.infoSep}>·</span>
             <span className={styles.infoItem}>
               <ClockIcon />
-              25–35 דק&apos;
+              25-35 דק&apos;
             </span>
             <span className={styles.infoSep}>·</span>
             <span className={styles.infoItem}>

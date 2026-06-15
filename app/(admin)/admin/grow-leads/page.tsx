@@ -95,7 +95,7 @@ export default async function GrowLeadsPage() {
                           {l.website}
                         </a>
                       ) : (
-                        <span className="text-qf-mute">—</span>
+                        <span className="text-qf-mute">-</span>
                       )}
                     </td>
                     <td className="px-4 py-3">

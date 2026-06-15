@@ -178,7 +178,7 @@ export default async function AdminAnalyticsPage({
 }
 
 function DeltaBadge({ delta }: { delta: number }) {
-  if (delta === 0) return <span className="text-[11px] text-qf-mute">—</span>;
+  if (delta === 0) return <span className="text-[11px] text-qf-mute">-</span>;
   const up = delta > 0;
   return (
     <span

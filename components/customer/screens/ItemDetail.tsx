@@ -723,7 +723,7 @@ export function ItemDetail({
           const subtitle = g.required
             ? totalDistinct >= minHalf
               ? counterLabel ?? `הושלם · ${totalDistinct}/${g.maxSelect}`
-              : counterLabel ?? `חובה ${minHalf}–${g.maxSelect} · ${totalDistinct}/${g.maxSelect}`
+              : counterLabel ?? `חובה ${minHalf}-${g.maxSelect} · ${totalDistinct}/${g.maxSelect}`
             : atMax
               ? counterLabel ?? `הגעת למקסימום · ${g.maxSelect}/${g.maxSelect}`
               : counterLabel ?? `אפשר לבחור עד ${g.maxSelect} · כל תוספת ניתן לקבוע לחצי פיצה`;
@@ -834,7 +834,7 @@ export function ItemDetail({
             const range =
               effectiveMin === g.maxSelect
                 ? `${effectiveMin}`
-                : `${effectiveMin}–${g.maxSelect}`;
+                : `${effectiveMin}-${g.maxSelect}`;
             subtitle = selected >= effectiveMin
               ? `הושלם · ${selected}/${g.maxSelect}`
               : `חובה ${range} · ${selected}/${g.maxSelect}`;

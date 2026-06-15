@@ -98,7 +98,7 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
       setItems((p) => p.filter((t) => t.id !== id));
       setDeleteConfirm(null);
     } catch (err) {
-      setDeleteError(`המחיקה נכשלה — ${err instanceof Error ? err.message : "נסה שנית"}`);
+      setDeleteError(`המחיקה נכשלה - ${err instanceof Error ? err.message : "נסה שנית"}`);
       setDeleteConfirm(null);
     } finally {
       setDeleting(false);
@@ -187,7 +187,7 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
                   </p>
                 ) : (
                   <p className="text-sm text-qf-tomato font-medium mt-1">
-                    אישור אחרון — לא ניתן לבטל. מחק את <span className="font-semibold">{deleteConfirm.name}</span>?
+                    אישור אחרון - לא ניתן לבטל. מחק את <span className="font-semibold">{deleteConfirm.name}</span>?
                   </p>
                 )}
               </div>
@@ -606,7 +606,7 @@ function DuplicateDialog({
       }
       onDone(body.tenant.slug as string);
     } catch {
-      setError("שגיאת רשת — נסה שוב");
+      setError("שגיאת רשת - נסה שוב");
     } finally {
       setBusy(false);
     }
@@ -623,7 +623,7 @@ function DuplicateDialog({
             <h2 className="font-bold text-base">שכפול חנות</h2>
             <p className="text-sm text-qf-ink2 mt-1">
               משכפל את <span className="font-semibold text-qf-ink">{source.name}</span> לחנות
-              חדשה — כל ההגדרות והתפריט. <span className="text-qf-mute">לא כולל תשלום, דומיין, חיוב והזמנות.</span>
+              חדשה - כל ההגדרות והתפריט. <span className="text-qf-mute">לא כולל תשלום, דומיין, חיוב והזמנות.</span>
             </p>
           </div>
         </div>

@@ -773,10 +773,10 @@ function CustomerShowcase() {
       <div className={styles.container}>
         <div className={styles.sectionEyebrow}>סיפור הצלחה</div>
         <h2 className={styles.sectionTitle}>
-          פיצה נינג׳ה. <em>מאפליקציות המשלוחים לאתר משלהם — תוך יום.</em>
+          פיצה נינג׳ה. <em>מאפליקציות המשלוחים לאתר משלהם - תוך יום.</em>
         </h2>
         <p className={styles.sectionLede}>
-          פיצה נינג׳ה היו על וולט. החליטו לפתוח ערוץ ישיר ללקוחות הקבועים שלהם — חיברו דומיין פרטי, הגדירו Grow Payments (אשראי, Bit, Apple Pay), ייבאו את התפריט המלא בקליק אחד.
+          פיצה נינג׳ה היו על וולט. החליטו לפתוח ערוץ ישיר ללקוחות הקבועים שלהם - חיברו דומיין פרטי, הגדירו Grow Payments (אשראי, Bit, Apple Pay), ייבאו את התפריט המלא בקליק אחד.
         </p>
 
         <div className={styles.showcaseWrap}>

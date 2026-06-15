@@ -77,7 +77,7 @@ export async function platformOverview(range: Range): Promise<PlatformOverview> 
   const tenantMap = new Map(tenants.map((t) => [t.id, t]));
   const leaderboard = topIds.map(([id, v]) => ({
     id,
-    name: tenantMap.get(id)?.name ?? "—",
+    name: tenantMap.get(id)?.name ?? "-",
     slug: tenantMap.get(id)?.slug ?? "",
     gmv: v.gmv,
     orders: v.orders,

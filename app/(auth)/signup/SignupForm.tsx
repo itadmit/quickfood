@@ -69,8 +69,8 @@ function buildHoursPayload(hours: WoltDayHours[]) {
     saturday: { open: "20:00", close: "01:00", active: false },
   };
   for (const h of hours) {
-    if (!h.active || !h.display.includes("–")) continue;
-    const [openRaw, closeRaw] = h.display.split("–");
+    if (!h.active || !/[-–]/.test(h.display)) continue;
+    const [openRaw, closeRaw] = h.display.split(/[-–]/);
     const open = openRaw?.trim();
     const close = closeRaw?.trim();
     if (open && close && /^\d{2}:\d{2}$/.test(open) && /^\d{2}:\d{2}$/.test(close)) {

@@ -43,7 +43,7 @@ export function ShopShareModal({
   }
 
   function shareWhatsApp() {
-    const text = `${tenantName} — להזמנות אונליין: ${storefrontUrl}`;
+    const text = `${tenantName} - להזמנות אונליין: ${storefrontUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   }
 
@@ -52,7 +52,7 @@ export function ShopShareModal({
     try {
       await navigator.share({
         title: tenantName,
-        text: `${tenantName} — להזמנות אונליין`,
+        text: `${tenantName} - להזמנות אונליין`,
         url: storefrontUrl,
       });
     } catch {

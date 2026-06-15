@@ -326,7 +326,7 @@ export function WoltImportClient({
         <div className="qf-spinner h-9 w-9" />
         <div className="text-sm font-medium">מייבא תפריט והעלאת תמונות...</div>
         <div className="text-xs text-qf-mute">
-          זה יכול לקחת 20–60 שניות תלוי בכמות התמונות. אל תסגרו את הדף.
+          זה יכול לקחת 20-60 שניות תלוי בכמות התמונות. אל תסגרו את הדף.
         </div>
       </div>
     );

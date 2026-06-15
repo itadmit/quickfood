@@ -61,7 +61,7 @@ export function SidebarV2({
         <div className="min-w-0">
           <div className="font-black text-black">שעת שיא קרבה</div>
           <div className="text-black/70 leading-snug">
-            היערכו לעומס בשעות 19–21
+            היערכו לעומס בשעות 19-21
           </div>
         </div>
       </div>

@@ -471,7 +471,7 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
                       onChange={(e) =>
                         setEditing((prev) => prev && { ...prev, subtitle: e.target.value })
                       }
-                      placeholder="לדוגמה: 1+1 על קלאסיות · כל יום 14:00–17:00"
+                      placeholder="לדוגמה: 1+1 על קלאסיות · כל יום 14:00-17:00"
                       className="w-full border border-qf-line rounded-xl px-3 py-2.5 text-sm outline-none focus:border-(--qf-primary)"
                     />
                     <p className="text-[11px] text-qf-mute mt-1">
