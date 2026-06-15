@@ -3,12 +3,13 @@ import Image from "next/image";
 import Script from "next/script";
 import { Rubik, JetBrains_Mono } from "next/font/google";
 import Link from "next/link";
-import { IcoArrowLeft } from "@/components/shared/Icons";
+import { IcoArrowLeft, IcoWhatsApp } from "@/components/shared/Icons";
 import Typewriter from "./_components/Typewriter";
 import { LiteYouTube } from "./_components/LiteYouTube";
 import VerticalRotator from "./_components/VerticalRotator";
 import KioskPromoPopup from "./_components/KioskPromoPopup";
 import BottomCtaPopup from "./_components/BottomCtaPopup";
+import { WhatsAppFAB } from "./_components/WhatsAppFAB";
 import {
   Store,
   Flame,
@@ -131,11 +132,9 @@ export default function LandingPage() {
       <Hero />
       <TrustStrip />
       <SuitedFor />
-      <HowItWorks />
       <WoltTeaser />
-      <Math />
+      <BornForFood />
       <Features />
-      <ManageShowcase />
       <PrinterShowcase />
       <KioskSection />
       <GrowPartner />
@@ -147,6 +146,7 @@ export default function LandingPage() {
       <ScrollAnimations />
       <KioskPromoPopup />
       <BottomCtaPopup />
+      <WhatsAppFAB />
     </div>
   );
 }
@@ -204,52 +204,6 @@ function TrustStrip() {
             <span className={styles.trustPromise}>בלי כרטיס אשראי</span>
             <span className={styles.trustPromise}>ביטול בכל רגע</span>
           </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─── HOW IT WORKS ────────────────────────────────────────
-   The three concrete steps a new merchant goes through. Big numbered
-   discs, one-line each, no jargon. Wolt + Apple Pay both lead with a
-   pattern like this on their merchant landings. */
-function HowItWorks() {
-  const steps = [
-    {
-      n: "1",
-      title: "הרשמה ב-2 דקות",
-      body: "אימייל, סיסמה וכמה פרטים על העסק. דקה וחצי ואתם בפנים. בלי שיחות מכירה ובלי כאב ראש.",
-    },
-    {
-      n: "2",
-      title: "מייבאים תפריט מוולט בקליק",
-      body: "מדביקים כתובת חנות בוולט, ומקבלים את כל הקטגוריות, הפריטים, התמונות, הלוגו, השעות והתוספות. או הוספה ידנית בעורך אחד.",
-    },
-    {
-      n: "3",
-      title: "החנות עולה לאוויר",
-      body: "יש לך דומיין משלך? חבר אותו בקלות. אין לך? קבל דומיין מקוצר ו-QR code מתנה עלינו - ותתחיל למכור!",
-    },
-  ];
-  return (
-    <section className={styles.howItWorks}>
-      <div className={styles.container}>
-        <div className={styles.sectionEyebrow}>איך זה עובד</div>
-        <h2 className={styles.sectionTitle}>
-          5 דקות. <em>ומתחילים למכור.</em>
-        </h2>
-        <div className={styles.howGrid}>
-          {steps.map((s, i) => (
-            <article key={s.n} className={styles.howStep}>
-              <div className={styles.howNum} aria-hidden>{s.n}</div>
-              <h3 className={styles.howStepTitle}>{s.title}</h3>
-              <p className={styles.howStepBody}>{s.body}</p>
-              {i < steps.length - 1 && (
-                <div className={styles.howConnector} aria-hidden />
-              )}
-            </article>
-          ))}
         </div>
       </div>
     </section>
@@ -451,37 +405,68 @@ function SuitedFor() {
   );
 }
 
-/* ─── WHY FOOD-FIRST ─────────────────────────────────────── */
-function Math() {
+/* ─── BORN FOR FOOD ──────────────────────────────────────────
+   Merged section: the "5 דקות / how it works" onboarding promise
+   folded into the "נולד למזון" food-first story, then proven with
+   two real tablet shots in alternating image/text rows. Replaces the
+   old HowItWorks + Math + ManageShowcase sections (page was too long). */
+function BornForFood() {
   return (
-    <section className={styles.section}>
+    <section className={styles.section} id="manage">
       <div className={styles.container}>
         <div className={styles.sectionEyebrow}>נולד למזון</div>
         <h2 className={styles.sectionTitle}>
           לא חנות אונליין שמנסה למכור מנות. <em>תפריט שמדבר את השפה של המטבח.</em>
         </h2>
+        <p className={styles.sectionLede}>
+          ומתחילים למכור תוך 5 דקות - הרשמה, ייבוא התפריט מוולט בקליק, והחנות
+          באוויר. משם, כל המסעדה מנוהלת ממסך אחד.
+        </p>
+        <div className={styles.bffSteps}>
+          <span className={styles.bffStep}>הרשמה ב-2 דקות</span>
+          <span className={styles.bffStep}>ייבוא תפריט מוולט בקליק</span>
+          <span className={styles.bffStep}>החנות עולה לאוויר</span>
+        </div>
 
-        <div className={styles.problemGrid}>
-          <div className={`${styles.problemCard} ${styles.problemCardPeach}`}>
-            <div className={styles.problemNum}>התפריט</div>
-            <h3>גדלים, תוספות, חצי-חצי, רטבים בצד.</h3>
-            <p>
-              כל פריט נבנה עם גדלים (אישית · משפחתית · XL), קבוצות אפשרויות (סוג בצק, רטב צד, מילוי), תוספות עם תמחור לכל יחידה ומגבלת מקסימום. הלקוח רואה את הסכום מתעדכן בכל קליק. אתה רואה בקבלה בדיוק &quot;בלי בצל, חתוך ל-8&quot;.
-            </p>
+        <div className={styles.bffRows}>
+          <div className={styles.bffRow}>
+            <figure className={styles.bffImgWrap}>
+              <Image
+                src="/showcase/dashboard.png"
+                alt="דשבורד QuickFood - הכנסות, הזמנות ופריטים מובילים במבט אחד"
+                width={1280}
+                height={960}
+                className={styles.manageImg}
+              />
+            </figure>
+            <div className={styles.bffText}>
+              <h3 className={styles.bffRowTitle}>כל המסעדה שלך. מסך אחד.</h3>
+              <p className={styles.bffRowBody}>
+                דשבורד שמראה הכל במבט - הכנסות, מספר הזמנות, ערך הזמנה ממוצע,
+                זמן הכנה ממוצע, פריטים מובילים והזמנות לפי שעה. בלי אקסלים, בלי
+                לנחש. אתה יודע בדיוק מה עובד ומתי.
+              </p>
+            </div>
           </div>
-          <div className={`${styles.problemCard} ${styles.problemCardMist}`}>
-            <div className={styles.problemNum}>המטבח</div>
-            <h3>זמן הכנה לכל מנה. סטטוסים אמיתיים.</h3>
-            <p>
-              3 דק׳ לסלט, 11 לפיצה - אתה מגדיר פר-פריט, האפליקציה מחשבת זמן משוער להכנת המנה. סטטוסים שאתה מכיר: "בתנור", "בטיגון", "מוכן", "יצא לדרך". לא "processing" של חברת שילוח.
-            </p>
-          </div>
-          <div className={`${styles.problemCard} ${styles.problemCardLilac}`}>
-            <div className={styles.problemNum}>המשמרת</div>
-            <h3>מערכת הזמנות חכמה.</h3>
-            <p>
-              סטטוס משתנה לכל הזמנה בלחיצת כפתור באפליקציית הקופה. ממשק פשוט וקל שעושה סדר ומשקף גם ללקוח בכל רגע איפה ההזמנה שלו בזמן אמת. <strong>חדש:</strong> בשעת עומס המערכת מזהה אוטומטית ומעלה את הזמן המשוער להכנת המנה.
-            </p>
+
+          <div className={styles.bffRow}>
+            <div className={styles.bffText}>
+              <h3 className={styles.bffRowTitle}>הזמנות חיות שזזות עם המטבח.</h3>
+              <p className={styles.bffRowBody}>
+                סטטוסים שאתה מכיר - חדשה, בהכנה, מוכן, יצא למשלוח. הסטטוס משתנה
+                בלחיצה, מתעדכן ללקוח בזמן אמת, וזמן ההכנה מתארך אוטומטית בשעת
+                עומס. לא &quot;processing&quot; של חברת שילוח - השפה של המטבח שלך.
+              </p>
+            </div>
+            <figure className={styles.bffImgWrap}>
+              <Image
+                src="/showcase/live-orders.png"
+                alt="לוח הזמנות חיות של QuickFood - ניהול הזמנות לפי שלבים"
+                width={1280}
+                height={960}
+                className={styles.manageImg}
+              />
+            </figure>
           </div>
         </div>
       </div>
@@ -650,54 +635,6 @@ function Features() {
           <MiniCell tag="הודעות" title="הודעות חנות + אלרגנים" body="׳חסר היום: גבינת בופלו׳, התראת אלרגן על פריט - מנוהל מההגדרות ומופיע בחנות מיד." />
           <MiniCell tag="קמפיינים" title="פופאפ מבצע לחנות" body="מעלים תמונה + לינק, נפתח ללקוח ברגע שנכנס לחנות. דחיפה לליל שישי, מבצע חמישי-שישי, השקת פריט חדש - בלי לערוך תפריט." />
           <MiniCell tag="זמינות" title="פריט לפי שעה / יום / מלאי" body="ארוחות בוקר עד 11, עסקיות בין 14 ל-17, 20 יחידות והפריט נעלם להיום. הכל מתוזמן אוטומטית." />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─── BACKOFFICE SHOWCASE ───────────────────────────────────
-   Two real tablet shots - the dashboard ("control room") and the
-   live-orders kanban. Sits after Features so the reader has just
-   read *what* they get and now sees the actual product in-hand. */
-function ManageShowcase() {
-  return (
-    <section className={styles.section} id="manage">
-      <div className={styles.container}>
-        <div className={styles.sectionEyebrow}>חדר הבקרה שלך</div>
-        <h2 className={styles.sectionTitle}>
-          כל המסעדה שלך. <em>מסך אחד.</em>
-        </h2>
-        <p className={styles.sectionLede}>
-          דשבורד שמראה לך הכל במבט - הכנסות, הזמנות, פריטים מובילים - ולוח
-          הזמנות חי שזז עם המטבח, מהזמנה חדשה ועד שיצאה למשלוח.
-        </p>
-
-        <div className={styles.manageGrid}>
-          <figure className={styles.manageShot}>
-            <Image
-              src="/showcase/dashboard.png"
-              alt="דשבורד QuickFood - הכנסות, הזמנות ופריטים מובילים במבט אחד"
-              width={1280}
-              height={960}
-              className={styles.manageImg}
-            />
-            <figcaption className={styles.manageCaption}>
-              דשבורד - התמונה המלאה בזמן אמת
-            </figcaption>
-          </figure>
-          <figure className={styles.manageShot}>
-            <Image
-              src="/showcase/live-orders.png"
-              alt="לוח הזמנות חיות של QuickFood - ניהול הזמנות לפי שלבים"
-              width={1280}
-              height={960}
-              className={styles.manageImg}
-            />
-            <figcaption className={styles.manageCaption}>
-              הזמנות חיות - חדשה, בהכנה, מוכן, יצא למשלוח
-            </figcaption>
-          </figure>
         </div>
       </div>
     </section>
@@ -1162,7 +1099,14 @@ function Faq() {
             <p className={styles.faqIntro}>
               לא מצאת תשובה? כתוב לנו ב-WhatsApp ונחזור תוך שעה.
             </p>
-            <a href="#" className={`${styles.btn} ${styles.btnInk}`} style={{ marginTop: 24 }}>
+            <a
+              href="https://wa.me/972552554432?text=%D7%A9%D7%9C%D7%95%D7%9D%2C%20%D7%94%D7%92%D7%A2%D7%AA%D7%99%20%D7%9E%D7%90%D7%AA%D7%A8%20%D7%A7%D7%95%D7%95%D7%99%D7%A7%20%D7%A4%D7%95%D7%93%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A7%D7%91%D7%9C%20%D7%A4%D7%A8%D7%98%D7%99%D7%9D"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${styles.btn} ${styles.btnInk}`}
+              style={{ marginTop: 24, display: "inline-flex", alignItems: "center", gap: 8 }}
+            >
+              <IcoWhatsApp c="currentColor" s={18} />
               WhatsApp לתמיכה
             </a>
           </div>

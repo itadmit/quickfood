@@ -9,7 +9,7 @@ import { useEffect } from "react";
  * `opacity` + `translateY` based on that attribute.
  *
  * The selectors here are CSS-module hashed at build time (the class
- * tokens we use are `${styles.howStep}` etc.), but the underlying
+ * tokens we use are `${styles.bffRow}` etc.), but the underlying
  * generated class names always start with the source name - so we
  * match on `[class*="howStep"]` etc. instead of literal class names.
  * That keeps the observer in sync without importing the styles map.
@@ -23,8 +23,7 @@ export default function ScrollAnimations() {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     const selectors = [
-      '[class*="howStep"]',
-      '[class*="problemCard"]',
+      '[class*="bffRow"]',
       '[class*="qfoodCard"]',
       '[class*="miniCell"]',
       '[class*="priceCard"]',

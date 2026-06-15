@@ -618,88 +618,6 @@
   .trustPromises { gap: 10px; }
 }
 
-/* ─── HOW IT WORKS ──────────────────────────────────────── */
-.howItWorks {
-  padding: 96px 0 80px;
-  background: var(--cream);
-  border-bottom: 1px solid var(--line);
-  text-align: center;
-}
-.howItWorks .sectionEyebrow {
-  display: inline-block;
-  margin-bottom: 18px;
-}
-.howItWorks .sectionTitle {
-  margin: 0 auto 64px;
-  max-width: 24ch;
-}
-.howGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  position: relative;
-  max-width: 1080px;
-  margin: 0 auto;
-}
-.howStep {
-  position: relative;
-  background: var(--paper);
-  border: 3px solid var(--ink);
-  border-radius: 24px;
-  padding: 36px 28px 32px;
-  text-align: center;
-  box-shadow: 0 6px 0 var(--ink);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-}
-.howStep:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 9px 0 var(--ink);
-}
-.howNum {
-  width: 56px; height: 56px;
-  border-radius: 14px;
-  background: var(--ink);
-  color: var(--tomato);
-  font-family: var(--font-rubik), "Rubik", sans-serif;
-  font-weight: 900;
-  font-size: 26px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 18px;
-  line-height: 1;
-  border: 3px solid var(--ink);
-  box-shadow: 0 3px 0 var(--ink);
-}
-.howStepTitle {
-  font-family: var(--font-rubik), "Rubik", sans-serif;
-  font-weight: 800;
-  font-size: 22px;
-  letter-spacing: -0.02em;
-  margin: 0 0 10px;
-  color: var(--ink);
-}
-.howStepBody {
-  font-size: 14.5px;
-  line-height: 1.6;
-  color: var(--ink-2);
-  margin: 0;
-  max-width: 30ch;
-  margin-inline: auto;
-}
-/* Connector line - hidden in the bold-tile treatment; the heavy black
-   shadows underneath each card carry the rhythm now. Kept defined so
-   the JSX still has a class to attach without throwing. */
-.howConnector {
-  display: none;
-}
-@media (max-width: 900px) {
-  .howItWorks { padding: 56px 0 48px; }
-  .howGrid { grid-template-columns: 1fr; gap: 12px; }
-  .howItWorks .sectionTitle { margin-bottom: 32px; font-size: clamp(32px, 8vw, 56px); }
-  .howStep { padding: 28px 24px 24px; box-shadow: 0 4px 0 var(--ink); }
-  .howNum { width: 48px; height: 48px; font-size: 22px; }
-}
 
 /* "Suited for" - single rotating food type, big and bold. Reads as one
    answer-line: who is this product for? */
@@ -929,73 +847,6 @@
   .growPriceNote { flex-basis: 100%; }
 }
 
-/* ─── PROBLEM ────────────────────────────────────────────── */
-/* Three pastel cards instead of the old black block - same palette
-   family as the Wolt-style stacked feature section. */
-.problemGrid {
-  margin-top: 56px;
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
-}
-@media (max-width: 900px) {
-  .problemGrid { grid-template-columns: 1fr; }
-}
-.problemCard {
-  border-radius: 20px;
-  padding: 40px 44px;
-  background: var(--paper);
-  /* Same bold-card language as the welcome-overlay tiles and the
-     HowItWorks steps: 2px black border + hard black shadow. */
-  border: 2px solid var(--ink);
-  box-shadow: 0 5px 0 var(--ink);
-  color: var(--ink-2);
-}
-@media (max-width: 900px) {
-  .problemCard {
-    padding: 32px 24px;
-    margin-inline: 4px;
-  }
-}
-.problemCardPeach,
-.problemCardLilac { background: var(--paper); }
-/* Middle "QuickFood" card - yellow anchor in the math comparison.
-   Inverted shadow trick: tomato bg with black shadow underneath
-   keeps it visually anchored without leaning on a different border. */
-.problemCardMist {
-  background: var(--tomato);
-  border-color: var(--ink);
-  color: var(--ink);
-}
-.problemCardMist h3,
-.problemCardMist p { color: var(--ink); }
-.problemCardPeach .problemNum,
-.problemCardLilac .problemNum { background: var(--cream-2); color: var(--ink); }
-.problemCardMist .problemNum {
-  background: var(--ink);
-  color: var(--tomato);
-}
-.problemNum {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-rubik), "Rubik", sans-serif;
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.12em;
-  padding: 8px 14px;
-  border-radius: 8px;
-  background: var(--cream-2);
-  color: var(--ink);
-  margin-bottom: 24px;
-  line-height: 1;
-}
-.problemCard h3 {
-  font-family: var(--font-rubik), "Rubik", sans-serif;
-  font-weight: 700; font-size: 22px;
-  line-height: 1.25; letter-spacing: -0.02em;
-  margin: 0 0 14px;
-  color: var(--ink);
-}
-.problemCard p { margin: 0; font-size: 15px; line-height: 1.65; color: var(--ink-2); }
 
 /* ─── PRODUCT SHOWCASE ──────────────────────────────────── */
 .showcase { background: var(--cream); }
@@ -2208,8 +2059,7 @@
   .ldKanban { grid-template-columns: 1fr 1fr; }
   .ldCol:nth-child(n+3) { display: none; }
   .section { padding: 48px 0; }
-  .showcaseHead, .showcaseGrid, .problemGrid { grid-template-columns: 1fr; gap: 22px; }
-  .problemCard { padding: 28px 22px; }
+  .showcaseHead, .showcaseGrid { grid-template-columns: 1fr; gap: 22px; }
   .bento { grid-template-columns: 1fr 1fr; grid-auto-rows: 160px; }
   .bWide { grid-column: span 2; }
   .bTall { grid-row: span 1; }
@@ -2228,8 +2078,7 @@
    when it crosses ~15% of the viewport, triggering the transition
    to the resting state. Pure CSS transitions = no jank, no JS
    animation library, and cross-browser. */
-.howStep,
-.problemCard,
+.bffRow,
 .qfoodCard,
 .miniCell,
 .priceCard {
@@ -2239,8 +2088,7 @@
     opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
     transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.howStep[data-in-view="true"],
-.problemCard[data-in-view="true"],
+.bffRow[data-in-view="true"],
 .qfoodCard[data-in-view="true"],
 .miniCell[data-in-view="true"],
 .priceCard[data-in-view="true"] {
@@ -2248,8 +2096,7 @@
   transform: translateY(0);
 }
 @media (prefers-reduced-motion: reduce) {
-  .howStep,
-  .problemCard,
+  .bffRow,
   .qfoodCard,
   .miniCell,
   .priceCard {
@@ -2530,19 +2377,35 @@
   .kioskPopOverlay, .kioskPop { animation: none; }
 }
 
-/* ─── BACKOFFICE SHOWCASE ─────────────────────────────────── */
-.manageGrid {
-  margin-top: 48px;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 28px;
+/* ─── BORN FOR FOOD (merged section) ──────────────────────── */
+.bffSteps {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
-.manageShot {
-  margin: 0;
+.bffStep {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 16px;
+}
+.bffRows {
+  margin-top: 56px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 64px;
 }
+.bffRow {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 56px;
+  align-items: center;
+}
+.bffImgWrap { margin: 0; }
 .manageImg {
   width: 100%;
   height: auto;
@@ -2552,12 +2415,24 @@
   border: 1px solid var(--line);
   box-shadow: 0 24px 60px -28px rgba(10, 10, 10, 0.45);
 }
-.manageCaption {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--ink-2);
-  text-align: center;
+.bffRowTitle {
+  font-family: var(--font-rubik), "Rubik", sans-serif;
+  font-weight: 900;
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0 0 16px;
 }
+.bffRowBody {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--ink-2);
+  max-width: 46ch;
+}
+.bffRowBody strong { font-weight: 800; color: var(--ink); }
 @media (max-width: 860px) {
-  .manageGrid { grid-template-columns: 1fr; gap: 36px; }
+  .bffRows { gap: 44px; }
+  .bffRow { grid-template-columns: 1fr; gap: 22px; }
+  .bffImgWrap { order: -1; }
 }
