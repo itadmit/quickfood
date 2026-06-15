@@ -135,6 +135,7 @@ export default function LandingPage() {
       <WoltTeaser />
       <Math />
       <Features />
+      <ManageShowcase />
       <PrinterShowcase />
       <KioskSection />
       <GrowPartner />
@@ -649,6 +650,54 @@ function Features() {
           <MiniCell tag="הודעות" title="הודעות חנות + אלרגנים" body="׳חסר היום: גבינת בופלו׳, התראת אלרגן על פריט - מנוהל מההגדרות ומופיע בחנות מיד." />
           <MiniCell tag="קמפיינים" title="פופאפ מבצע לחנות" body="מעלים תמונה + לינק, נפתח ללקוח ברגע שנכנס לחנות. דחיפה לליל שישי, מבצע חמישי-שישי, השקת פריט חדש - בלי לערוך תפריט." />
           <MiniCell tag="זמינות" title="פריט לפי שעה / יום / מלאי" body="ארוחות בוקר עד 11, עסקיות בין 14 ל-17, 20 יחידות והפריט נעלם להיום. הכל מתוזמן אוטומטית." />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── BACKOFFICE SHOWCASE ───────────────────────────────────
+   Two real tablet shots - the dashboard ("control room") and the
+   live-orders kanban. Sits after Features so the reader has just
+   read *what* they get and now sees the actual product in-hand. */
+function ManageShowcase() {
+  return (
+    <section className={styles.section} id="manage">
+      <div className={styles.container}>
+        <div className={styles.sectionEyebrow}>חדר הבקרה שלך</div>
+        <h2 className={styles.sectionTitle}>
+          כל המסעדה שלך. <em>מסך אחד.</em>
+        </h2>
+        <p className={styles.sectionLede}>
+          דשבורד שמראה לך הכל במבט - הכנסות, הזמנות, פריטים מובילים - ולוח
+          הזמנות חי שזז עם המטבח, מהזמנה חדשה ועד שיצאה למשלוח.
+        </p>
+
+        <div className={styles.manageGrid}>
+          <figure className={styles.manageShot}>
+            <Image
+              src="/showcase/dashboard.png"
+              alt="דשבורד QuickFood - הכנסות, הזמנות ופריטים מובילים במבט אחד"
+              width={1280}
+              height={960}
+              className={styles.manageImg}
+            />
+            <figcaption className={styles.manageCaption}>
+              דשבורד - התמונה המלאה בזמן אמת
+            </figcaption>
+          </figure>
+          <figure className={styles.manageShot}>
+            <Image
+              src="/showcase/live-orders.png"
+              alt="לוח הזמנות חיות של QuickFood - ניהול הזמנות לפי שלבים"
+              width={1280}
+              height={960}
+              className={styles.manageImg}
+            />
+            <figcaption className={styles.manageCaption}>
+              הזמנות חיות - חדשה, בהכנה, מוכן, יצא למשלוח
+            </figcaption>
+          </figure>
         </div>
       </div>
     </section>

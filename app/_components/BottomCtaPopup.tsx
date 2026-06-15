@@ -46,7 +46,9 @@ export default function BottomCtaPopup() {
         </button>
 
         <h2 className={styles.bottomCtaTitle}>
-          אכלנו לך <mark>את הראש</mark>?!
+          אכלנו לך
+          <br />
+          <mark>את הראש</mark>?!
         </h2>
 
         <p className={styles.bottomCtaText}>
