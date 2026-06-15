@@ -508,10 +508,13 @@ function DeltaPill({
 //   • dashed + muted        = canceled (closed unsuccessfully)
 const STATUS_META: Record<
   string,
-  { label: string; tone: "idle" | "active" | "transit" | "done" | "canceled" }
+  {
+    label: string;
+    tone: "waiting" | "approved" | "idle" | "active" | "transit" | "done" | "canceled";
+  }
 > = {
-  pending: { label: "ממתינה", tone: "idle" },
-  confirmed: { label: "אושרה", tone: "idle" },
+  pending: { label: "ממתינה", tone: "waiting" },
+  confirmed: { label: "אושרה", tone: "approved" },
   preparing: { label: "בהכנה", tone: "active" },
   in_oven: { label: "בתנור", tone: "active" },
   ready: { label: "מוכנה", tone: "active" },
@@ -525,6 +528,28 @@ function RecentStatusChipV2({ status }: { status: string }) {
 
   const base =
     "hidden sm:inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide px-2 py-1 rounded-md border-2";
+
+  if (meta.tone === "waiting") {
+    return (
+      <span
+        className={cn(base, "border-black text-black")}
+        style={{ backgroundColor: "#fff1d6" }}
+      >
+        {meta.label}
+      </span>
+    );
+  }
+
+  if (meta.tone === "approved") {
+    return (
+      <span
+        className={cn(base, "border-black")}
+        style={{ backgroundColor: "#e7f5ec", color: "#0a5d2d" }}
+      >
+        {meta.label}
+      </span>
+    );
+  }
 
   if (meta.tone === "active") {
     return (
