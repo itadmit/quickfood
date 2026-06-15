@@ -1258,6 +1258,13 @@ function Footer() {
             <h5>מסמכים</h5>
             <Link href="/terms">תנאי שימוש</Link>
             <Link href="/privacy">פרטיות</Link>
+            <a
+              href="https://quick-accessibility.vercel.app/s/5ezqwew2ypzj38js"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              מדיניות הנגשה
+            </a>
             <Link href="/sla">SLA</Link>
             <Link href="/status">סטטוס מערכת</Link>
             <Link href="/docs/pos">API Docs</Link>
