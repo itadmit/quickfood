@@ -524,14 +524,16 @@ const STATUS_META: Record<
     tone: "waiting" | "approved" | "idle" | "active" | "transit" | "done" | "canceled";
   }
 > = {
-  pending: { label: "ממתינה", tone: "waiting" },
-  confirmed: { label: "אושרה", tone: "approved" },
+  pending: { label: "חדשה", tone: "waiting" },
+  confirmed: { label: "חדשה", tone: "waiting" },
   preparing: { label: "בהכנה", tone: "active" },
-  in_oven: { label: "בתנור", tone: "active" },
-  ready: { label: "מוכנה", tone: "active" },
-  out_for_delivery: { label: "בדרך", tone: "transit" },
-  delivered: { label: "נמסרה", tone: "done" },
+  in_oven: { label: "בהכנה", tone: "active" },
+  ready: { label: "מוכן", tone: "approved" },
+  out_for_delivery: { label: "יצא למשלוח", tone: "transit" },
+  delivered: { label: "נמסר", tone: "done" },
+  cancelled: { label: "בוטלה", tone: "canceled" },
   canceled: { label: "בוטלה", tone: "canceled" },
+  refunded: { label: "הוחזרה", tone: "canceled" },
 };
 
 function RecentStatusChipV2({ status }: { status: string }) {
