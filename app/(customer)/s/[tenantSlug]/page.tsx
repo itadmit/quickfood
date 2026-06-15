@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { resolveTenantBySlug } from "@/lib/slug";
+import { storefrontCanonical } from "@/lib/storefront-url";
 import { prisma } from "@/lib/db/client";
 import { getSession } from "@/lib/auth/session";
 import { CustomerHome } from "@/components/customer/screens/CustomerHome";
@@ -40,7 +41,7 @@ export async function generateMetadata({
   const title = `${item.name} · ${tenant.name}`;
   const description =
     item.description?.trim() || `הזמינו ${item.name} מ${tenant.name}`;
-  const url = `/s/${tenant.slug}?item=${itemId}`;
+  const url = storefrontCanonical(tenant, `?item=${itemId}`);
 
   return {
     title,

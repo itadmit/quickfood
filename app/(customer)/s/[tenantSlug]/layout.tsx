@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { resolveTenantBySlug } from "@/lib/slug";
+import { storefrontCanonical } from "@/lib/storefront-url";
 import { prisma } from "@/lib/db/client";
 import { getSession } from "@/lib/auth/session";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
@@ -28,7 +29,7 @@ export async function generateMetadata({
     tenant.cuisineType ||
     `הזמינו אונליין מ${tenant.name}`;
   const previewImage = tenant.logoUrl || tenant.coverImage || null;
-  const url = `/s/${tenant.slug}`;
+  const url = storefrontCanonical(tenant);
 
   return {
     title,
