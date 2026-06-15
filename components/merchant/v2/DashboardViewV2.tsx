@@ -235,8 +235,8 @@ export function DashboardViewV2({
       </div>
 
       {/* ─── CHART + TOP ITEMS ──────────────────────────────────── */}
-      <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-3 lg:gap-4">
-        <Card>
+      <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-3 lg:gap-4 items-stretch">
+        <Card className="flex flex-col">
           <header className="flex items-center justify-between mb-4">
             <div>
               <CardTitle>הזמנות לפי שעה</CardTitle>
@@ -250,7 +250,7 @@ export function DashboardViewV2({
             <IcoChart c="#000" s={22} />
           </header>
           {hasHourly ? (
-            <div className="flex items-end gap-1.5 h-48 overflow-x-auto no-scrollbar">
+            <div className="flex items-end gap-1.5 flex-1 min-h-48 overflow-x-auto no-scrollbar">
               {hours.map((h) => {
                 const c = hourly.current[h] ?? 0;
                 const p = hourly.previous[h] ?? 0;
@@ -289,7 +289,7 @@ export function DashboardViewV2({
             <EmptyState text="עוד אין הזמנות בטווח שנבחר" />
           ) : (
             <ol className="space-y-3">
-              {topItems.map((it, i) => {
+              {topItems.slice(0, 5).map((it, i) => {
                 const max = topItems[0]?.count ?? 1;
                 const pct = max > 0 ? (it.count / max) * 100 : 0;
                 return (
@@ -378,9 +378,20 @@ export function DashboardViewV2({
     The bold-black-shadow treatment is reserved for the hero + the
     primary KPI tile + the active sidebar item. Reusing it on every
     card was visually exhausting. */
-function Card({ children }: { children: React.ReactNode }) {
+function Card({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <section className="bg-white rounded-2xl border border-black/10 p-4 lg:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+    <section
+      className={cn(
+        "bg-white rounded-2xl border border-black/10 p-4 lg:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]",
+        className,
+      )}
+    >
       {children}
     </section>
   );
@@ -557,7 +568,10 @@ function RecentStatusChipV2({ status }: { status: string }) {
         className={cn(base, "border-black text-black")}
         style={{ backgroundColor: "#F8CB1E" }}
       >
-        <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
+        <span className="relative inline-flex w-1.5 h-1.5">
+          <span className="absolute inline-flex w-full h-full rounded-full bg-green-500 opacity-75 animate-ping" />
+          <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-green-600" />
+        </span>
         {meta.label}
       </span>
     );
