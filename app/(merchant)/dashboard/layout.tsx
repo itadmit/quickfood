@@ -17,6 +17,7 @@ import { EmailVerificationBanner } from "@/components/merchant/EmailVerification
 import { TrialGate } from "@/components/merchant/TrialGate";
 import { OnboardingWelcome } from "@/components/merchant/OnboardingWelcome";
 import { SupportFAB } from "@/components/merchant/SupportFAB";
+import { DashboardFooter } from "@/components/merchant/DashboardFooter";
 import { MerchantPushSubscribe } from "@/components/merchant/MerchantPushSubscribe";
 import { RoleRouteGuard } from "@/components/merchant/RoleRouteGuard";
 
@@ -184,6 +185,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               </div>
             </main>
           </div>
+          <DashboardFooter />
           <TrialGate
             trialExpired={trialExpired}
             hasPaymentMethod={hasPaymentMethod}
@@ -236,6 +238,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               </div>
             </main>
           </div>
+          <DashboardFooter />
           <TrialGate
             trialExpired={trialExpired}
             hasPaymentMethod={hasPaymentMethod}
