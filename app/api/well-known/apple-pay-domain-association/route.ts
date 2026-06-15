@@ -20,6 +20,7 @@
 
 import { prisma } from "@/lib/db/client";
 import { PaymentProvider } from "@prisma/client";
+import { GROW_APPLE_PAY_DOMAIN_DEV, GROW_APPLE_PAY_DOMAIN_PROD } from "@/lib/payments/grow-apple-pay-domain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,23 +56,23 @@ export async function GET(req: Request): Promise<Response> {
           },
         });
       }
-      // Tenant matched a custom domain but hasn't uploaded their file yet.
-      return new Response("Apple Pay not configured for this domain", { status: 404 });
+      // Tenant matched but never uploaded a per-tenant file — fall through to
+      // the platform blob below. ONE Grow file works for every domain.
     }
   }
 
-  // Step 2 - platform domain fallback (env)
+  // Step 2 - platform Grow blob (one per environment, embedded in code).
+  // Env vars are honored only as an optional override; the embedded blob is
+  // the reliable source of truth so an empty/missing env can't break Apple Pay.
   const isProd =
     process.env.VERCEL_ENV === "production" ||
     process.env.NODE_ENV === "production";
 
-  const content = isProd
-    ? process.env.APPLE_PAY_DOMAIN_ASSOCIATION_PROD
-    : process.env.APPLE_PAY_DOMAIN_ASSOCIATION_DEV;
-
-  if (!content) {
-    return new Response("Apple Pay domain association not configured", { status: 404 });
-  }
+  const content =
+    (isProd
+      ? process.env.APPLE_PAY_DOMAIN_ASSOCIATION_PROD
+      : process.env.APPLE_PAY_DOMAIN_ASSOCIATION_DEV) ||
+    (isProd ? GROW_APPLE_PAY_DOMAIN_PROD : GROW_APPLE_PAY_DOMAIN_DEV);
 
   return new Response(content, {
     headers: {
