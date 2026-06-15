@@ -72,6 +72,30 @@ const WIZARD_DAYS = [
 
 const DEFAULT_HOURS: DayHours = { open: "11:00", close: "23:00", active: true };
 
+const CHART_BODY_PX = 168;
+
+function operatingHourRange(branchHours?: Record<string, DayHours>): number[] {
+  let start = 24;
+  let end = -1;
+  if (branchHours) {
+    for (const d of Object.values(branchHours)) {
+      if (!d?.active) continue;
+      const open = parseInt(String(d.open).slice(0, 2), 10);
+      let close = parseInt(String(d.close).slice(0, 2), 10);
+      if (close === 0) close = 23; // midnight close -> end of day
+      if (!Number.isNaN(open)) start = Math.min(start, open);
+      if (!Number.isNaN(close)) end = Math.max(end, close);
+    }
+  }
+  if (start > end) {
+    start = 11;
+    end = 23;
+  }
+  start = Math.max(0, Math.min(23, start));
+  end = Math.max(start, Math.min(23, end));
+  return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+}
+
 interface SetupState {
   tenantId: string;
   brandingDone: boolean;
@@ -114,9 +138,8 @@ export function DashboardViewV2({
   const [wizardOpen, setWizardOpen] = useState(false);
 
   const maxBar = Math.max(1, ...hourly.current, ...hourly.previous);
-  const hours = Array.from({ length: 13 }, (_, i) => 11 + i);
-  const hasHourly =
-    hourly.current.some((v) => v > 0) || hourly.previous.some((v) => v > 0);
+  const hours = operatingHourRange(setupState?.initialBranchHours);
+  const hasHourly = hours.some((h) => (hourly.current[h] ?? 0) > 0 || (hourly.previous[h] ?? 0) > 0);
 
   return (
     <div className="space-y-5">
@@ -250,21 +273,21 @@ export function DashboardViewV2({
             <IcoChart c="#000" s={22} />
           </header>
           {hasHourly ? (
-            <div className="flex items-end gap-1.5 flex-1 min-h-48 overflow-x-auto no-scrollbar">
+            <div className="flex items-end gap-1.5 flex-1 overflow-x-auto no-scrollbar" style={{ minHeight: CHART_BODY_PX + 24 }}>
               {hours.map((h) => {
                 const c = hourly.current[h] ?? 0;
                 const p = hourly.previous[h] ?? 0;
                 return (
-                  <div key={h} className="flex-1 flex flex-col items-center min-w-7">
-                    <div className="flex-1 flex items-end gap-0.5 w-full justify-center">
+                  <div key={h} className="flex-1 flex flex-col items-center justify-end min-w-7 h-full">
+                    <div className="flex items-end gap-0.5 w-full justify-center" style={{ height: CHART_BODY_PX }}>
                       <div
                         className="w-2.5 bg-black/20 rounded-t"
-                        style={{ height: `${(p / maxBar) * 100}%` }}
+                        style={{ height: `${(p / maxBar) * CHART_BODY_PX}px` }}
                         title={`${h}:00 prev: ${p}`}
                       />
                       <div
                         className="w-2.5 bg-black rounded-t"
-                        style={{ height: `${(c / maxBar) * 100}%` }}
+                        style={{ height: `${(c / maxBar) * CHART_BODY_PX}px` }}
                         title={`${h}:00 cur: ${c}`}
                       />
                     </div>

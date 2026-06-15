@@ -139,21 +139,21 @@ export function DashboardView({
             <IcoChart c="#7c8a82" s={20} />
           </header>
           {hasHourly ? (
-            <div className="flex items-end gap-1.5 h-48 overflow-x-auto no-scrollbar">
+            <div className="flex items-end gap-1.5 overflow-x-auto no-scrollbar" style={{ height: 192 }}>
               {hours.map((h) => {
                 const c = hourly.current[h] ?? 0;
                 const p = hourly.previous[h] ?? 0;
                 return (
-                  <div key={h} className="flex-1 flex flex-col items-center min-w-7">
-                    <div className="flex-1 flex items-end gap-0.5 w-full justify-center">
+                  <div key={h} className="flex-1 flex flex-col items-center justify-end min-w-7 h-full">
+                    <div className="flex items-end gap-0.5 w-full justify-center" style={{ height: 168 }}>
                       <div
                         className="w-2.5 bg-(--qf-primary)/30 rounded-t"
-                        style={{ height: `${(p / maxBar) * 100}%` }}
+                        style={{ height: `${(p / maxBar) * 168}px` }}
                         title={`${h}:00 prev: ${p}`}
                       />
                       <div
                         className="w-2.5 bg-(--qf-primary) rounded-t"
-                        style={{ height: `${(c / maxBar) * 100}%` }}
+                        style={{ height: `${(c / maxBar) * 168}px` }}
                         title={`${h}:00 cur: ${c}`}
                       />
                     </div>

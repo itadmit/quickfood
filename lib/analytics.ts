@@ -105,6 +105,16 @@ export async function hourly(tenantId: string, range: Range) {
   return { current: cur, previous: prev };
 }
 
+const ISRAEL_HOUR_FMT = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Jerusalem",
+  hour: "2-digit",
+  hour12: false,
+});
+
+function israelHour(d: Date): number {
+  return parseInt(ISRAEL_HOUR_FMT.format(d), 10) % 24;
+}
+
 async function bucketByHour(tenantId: string, from: Date, to: Date): Promise<number[]> {
   const rows = await prisma.order.findMany({
     where: {
@@ -116,8 +126,7 @@ async function bucketByHour(tenantId: string, from: Date, to: Date): Promise<num
   });
   const buckets = new Array(24).fill(0);
   for (const r of rows) {
-    const h = r.createdAt.getHours();
-    buckets[h]++;
+    buckets[israelHour(r.createdAt)]++;
   }
   return buckets;
 }
@@ -416,7 +425,7 @@ export async function insights(tenantId: string, range: Range): Promise<Insight[
   // 1. Peak hour
   if (orders.length >= 5) {
     const buckets = new Array(24).fill(0);
-    for (const o of orders) buckets[o.createdAt.getHours()]++;
+    for (const o of orders) buckets[israelHour(o.createdAt)]++;
     const peakHour = buckets.indexOf(Math.max(...buckets));
     const peakShare = Math.round((buckets[peakHour] / orders.length) * 100);
     if (peakShare >= 15) {
