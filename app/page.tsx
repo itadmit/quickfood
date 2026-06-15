@@ -8,6 +8,7 @@ import Typewriter from "./_components/Typewriter";
 import { LiteYouTube } from "./_components/LiteYouTube";
 import VerticalRotator from "./_components/VerticalRotator";
 import KioskPromoPopup from "./_components/KioskPromoPopup";
+import BottomCtaPopup from "./_components/BottomCtaPopup";
 import {
   Store,
   Flame,
@@ -68,8 +69,7 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   // Title bakes in (a) Hebrew brand spellings users actually type into
   // Google ("קוויקפוד", "קוויק פוד"), (b) the dominant intent phrase
-  // "אתר הזמנות למסעדה", and (c) the most-searched verticals so
-  // long-tail like "מערכת הזמנות לפיצרייה" hits an exact match.
+
   title:
     "QuickFood · קוויקפוד - אתר הזמנות למסעדה | חנות אונליין לפיצרייה, המבורגרייה, סושייה",
   description:
@@ -145,6 +145,7 @@ export default function LandingPage() {
       <Footer />
       <ScrollAnimations />
       <KioskPromoPopup />
+      <BottomCtaPopup />
     </div>
   );
 }

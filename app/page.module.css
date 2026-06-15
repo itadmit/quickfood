@@ -2432,6 +2432,95 @@
   line-height: 1;
   cursor: pointer;
 }
+/* ─── BOTTOM-OF-PAGE CTA POPUP ────────────────────────────── */
+.bottomCtaOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  background: rgba(10, 10, 10, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: kioskPopFade 0.2s ease;
+}
+.bottomCtaCard {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  background: #fff;
+  border: 2px solid #0A0A0A;
+  border-radius: 28px;
+  box-shadow: 0 8px 0 #0A0A0A, 0 30px 60px rgba(0, 0, 0, 0.3);
+  padding: 48px 40px 40px;
+  text-align: center;
+  animation: kioskPopIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.bottomCtaClose {
+  position: absolute;
+  inset-block-start: 16px;
+  inset-inline-end: 16px;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 2px solid #0A0A0A;
+  background: #fff;
+  color: #0A0A0A;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.bottomCtaTitle {
+  font-family: var(--font-rubik), system-ui, sans-serif;
+  font-weight: 900;
+  font-size: clamp(34px, 7vw, 52px);
+  line-height: 1.05;
+  color: #0A0A0A;
+  margin: 0;
+}
+.bottomCtaTitle mark {
+  background: #F8CB1E;
+  color: #0A0A0A;
+  padding: 0 10px;
+  border-radius: 10px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.bottomCtaText {
+  font-size: clamp(16px, 2.6vw, 19px);
+  line-height: 1.6;
+  color: var(--ink2, #2b2b2b);
+  margin: 22px auto 4px;
+  max-width: 440px;
+  font-weight: 500;
+}
+.bottomCtaText strong { font-weight: 800; color: #0A0A0A; }
+.bottomCtaSub {
+  font-size: 14px;
+  color: var(--mute);
+  margin: 6px 0 26px;
+}
+.bottomCtaBtn {
+  display: inline-block;
+  background: #0A0A0A;
+  color: #F8CB1E;
+  font-family: var(--font-rubik), system-ui, sans-serif;
+  font-weight: 900;
+  font-size: 18px;
+  padding: 16px 32px;
+  border-radius: 16px;
+  border: 2px solid #0A0A0A;
+  box-shadow: 0 4px 0 #C9A20F;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.bottomCtaBtn:active { transform: translateY(2px); box-shadow: none; }
+@media (max-width: 480px) {
+  .bottomCtaCard { padding: 40px 24px 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bottomCtaOverlay, .bottomCtaCard { animation: none; }
+}
+
 @keyframes kioskPopFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes kioskPopIn {
   from { opacity: 0; transform: translateY(16px) scale(0.96); }
