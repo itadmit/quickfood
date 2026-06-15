@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Script from "next/script";
 import { Rubik, JetBrains_Mono } from "next/font/google";
 import Link from "next/link";
 import { IcoArrowLeft } from "@/components/shared/Icons";
@@ -120,6 +121,11 @@ export const metadata: Metadata = {
 export default function LandingPage() {
   return (
     <div className={`${styles.root} ${rubik.variable} ${mono.variable}`}>
+      <Script
+        src="https://quick-accessibility.vercel.app/widget/v1.js"
+        data-a11y-key="5ezqwew2ypzj38js"
+        strategy="afterInteractive"
+      />
       <FaqSchema />
       <Nav />
       <Hero />
