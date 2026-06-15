@@ -86,6 +86,33 @@ async function resolveTenantSlug(host: string): Promise<string | null> {
   return slug;
 }
 
+// slug → custom domain, ONLY when the domain is `active` (verified end-to-end
+// via Vercel). Used for the reverse redirect: a visit to the platform URL
+// `/s/{slug}` is sent to the merchant's own domain so it's the single
+// canonical address. Gated on `active` so we never bounce a visitor to a
+// domain whose DNS/SSL isn't live yet (which would be a dead end).
+type DomainEntry = { domain: string | null; expiresAt: number };
+const slugDomainCache = new Map<string, DomainEntry>();
+
+async function resolveActiveCustomDomain(slug: string): Promise<string | null> {
+  const cached = slugDomainCache.get(slug);
+  const now = Date.now();
+  if (cached && cached.expiresAt > now) return cached.domain;
+
+  if (!sql) return null;
+
+  const rows = (await sql`
+    SELECT custom_domain FROM tenants
+    WHERE slug = ${slug}
+      AND custom_domain IS NOT NULL
+      AND custom_domain_status = 'active'
+    LIMIT 1
+  `) as Array<{ custom_domain: string }>;
+  const domain = rows[0]?.custom_domain ?? null;
+  slugDomainCache.set(slug, { domain, expiresAt: now + CACHE_TTL_MS });
+  return domain;
+}
+
 // Stamp every custom-domain response with headers that tell the CDN
 // "don't cache this, and if you do, key by Host." A stale 404 cached at
 // the edge during the pending window is the #1 thing that breaks the
@@ -104,7 +131,25 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     request.headers.get("host")?.toLowerCase().split(":")[0] ||
     "";
 
-  if (isPlatformHost(host)) return NextResponse.next();
+  if (isPlatformHost(host)) {
+    // Reverse redirect: when a storefront is reached via the platform URL
+    // (quickfood.co.il/s/{slug}) but the merchant has a live custom domain,
+    // send the visitor to their own domain so it stays the single canonical
+    // address. Temporary (307) on purpose - if the merchant later removes the
+    // domain, no permanent redirect is cached against the platform URL.
+    const m = request.nextUrl.pathname.match(/^\/s\/([^/]+)(\/.*)?$/);
+    if (m) {
+      const slug = m[1];
+      const rest = m[2] ?? "";
+      const domain = await resolveActiveCustomDomain(slug);
+      if (domain && domain.toLowerCase() !== host) {
+        const dest = new URL(`https://${domain}${rest}`);
+        dest.search = request.nextUrl.search;
+        return applyNoCacheHeaders(NextResponse.redirect(dest, 307));
+      }
+    }
+    return NextResponse.next();
+  }
 
   const slug = await resolveTenantSlug(host);
 
