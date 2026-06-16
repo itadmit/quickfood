@@ -535,7 +535,7 @@ export function CustomerHome({
                   type="button"
                   onClick={() => setInfoOpen(true)}
                   aria-label="פרטי המסעדה"
-                  className="inline-flex items-center gap-1.5 text-(--qf-deep) hover:underline whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 text-qf-ink2 hover:underline whitespace-nowrap"
                 >
                   <IcoInfo s={15} c="currentColor" />
                   <span className="hidden lg:inline text-xs font-bold">פרטי המסעדה</span>
