@@ -304,7 +304,7 @@ export function ImageUploader({
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="aspect-square rounded-xl border-2 border-dashed border-black/40 hover:border-black hover:bg-qf-green-soft/40 grid place-items-center text-qf-mute text-xs transition-colors"
+            className="aspect-square rounded-xl border-2 border-black shadow-[0_2px_0_#000] hover:shadow-[0_3px_0_#000] hover:-translate-y-px hover:bg-qf-green-soft/40 grid place-items-center text-qf-mute text-xs transition-all"
           >
             <div className="flex flex-col items-center gap-1">
               <IcoPlus c="#7c8a82" s={20} />
