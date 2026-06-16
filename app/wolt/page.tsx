@@ -7,7 +7,6 @@ import { WhatsAppFAB } from "../_components/WhatsAppFAB";
 import ScrollAnimations from "../_components/ScrollAnimations";
 import {
   LayoutGrid,
-  MonitorSmartphone,
   RefreshCw,
   ChefHat,
   BarChart3,
@@ -15,6 +14,8 @@ import {
   Plug,
   Bell,
   Layers,
+  ShoppingBag,
+  ArrowLeft,
   type LucideIcon,
 } from "lucide-react";
 import styles from "../page.module.css";
@@ -145,6 +146,144 @@ function MiniCell({ tag, title, body }: { tag: string; title: string; body: stri
   );
 }
 
+const INK = "#111111";
+const WOLT_BLUE = "#00C2E8";
+
+/* Flow diagram: Wolt order -> your board -> kitchen -> status back to Wolt.
+   Horizontal on desktop (RTL, arrows point left), stacked on mobile. */
+function FlowDiagram() {
+  const nodes: { Icon: LucideIcon; title: string; sub: string; accent?: boolean }[] = [
+    { Icon: ShoppingBag, title: "הזמנה מ-Wolt", sub: "לקוח מזמין בוולט", accent: true },
+    { Icon: LayoutGrid, title: "הלוח שלך", sub: "נכנסת לקאנבן אוטומטית" },
+    { Icon: ChefHat, title: "המטבח", sub: "יוצאת להכנה כמו כל הזמנה" },
+    { Icon: RefreshCw, title: "סטטוס חוזר ל-Wolt", sub: "אישור ומוכן מסונכרנים" },
+  ];
+  return (
+    <div className="flex flex-col sm:flex-row items-stretch justify-center gap-3 sm:gap-2 mt-8">
+      {nodes.map((n, i) => (
+        <div key={n.title} className="flex flex-col sm:flex-row items-center gap-3 sm:gap-2">
+          <div
+            className="flex-1 w-full sm:w-44 rounded-2xl bg-white p-4 text-center"
+            style={{ border: `2px solid ${INK}`, boxShadow: `0 5px 0 ${INK}` }}
+          >
+            <div
+              className="w-11 h-11 mx-auto rounded-xl flex items-center justify-center mb-2"
+              style={{
+                background: n.accent ? WOLT_BLUE : "#F5C84B",
+                border: `2px solid ${INK}`,
+              }}
+            >
+              <n.Icon size={20} strokeWidth={2.2} color={INK} />
+            </div>
+            <div className="font-extrabold text-black text-sm">{n.title}</div>
+            <div className="text-[11px] text-black/55 mt-0.5 leading-snug">{n.sub}</div>
+          </div>
+          {i < nodes.length - 1 && (
+            <ArrowLeft
+              size={22}
+              strokeWidth={2.6}
+              color={INK}
+              className="shrink-0 -rotate-90 sm:rotate-0"
+              aria-hidden
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* Mockup of the unified Kanban: a Wolt order card next to a direct
+   (your-site) order card on the same board. Illustrative only. */
+function BoardMockup() {
+  return (
+    <div className="max-w-3xl mx-auto mt-10">
+      <div
+        className="rounded-2xl bg-white overflow-hidden"
+        style={{ border: `2px solid ${INK}`, boxShadow: `0 6px 0 ${INK}` }}
+      >
+        <div
+          className="flex items-center gap-2 px-4 py-3"
+          style={{ background: "#F5C84B", borderBottom: `2px solid ${INK}` }}
+        >
+          <span className="w-3 h-3 rounded-full" style={{ background: INK, opacity: 0.85 }} />
+          <span className="w-3 h-3 rounded-full" style={{ background: INK, opacity: 0.5 }} />
+          <span className="w-3 h-3 rounded-full" style={{ background: INK, opacity: 0.25 }} />
+          <span className="font-extrabold text-black text-sm ms-2">הזמנות פעילות</span>
+          <span className="ms-auto text-[11px] font-bold text-black/55">פיצרייה ורדה</span>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-3 p-4" style={{ background: "#FAF6EA" }}>
+          <OrderCard
+            channel="Wolt"
+            channelBg={WOLT_BLUE}
+            number="W-2381"
+            customer="דניאל כהן"
+            items="פיצה משפחתית ×1 · קולה זירו ×2"
+            status="חדשה"
+            price="₪96"
+          />
+          <OrderCard
+            channel="האתר שלך"
+            channelBg={INK}
+            number="PV-1043"
+            customer="מאיה לוי"
+            items="פיצה ביאנקה ×1 · תוספת גבינה"
+            status="בהכנה"
+            price="₪74"
+          />
+        </div>
+      </div>
+      <p className="text-center text-[11px] text-black/45 mt-2">להמחשה - וולט והאתר שלך על אותו לוח, אותו מטבח.</p>
+    </div>
+  );
+}
+
+function OrderCard({
+  channel,
+  channelBg,
+  number,
+  customer,
+  items,
+  status,
+  price,
+}: {
+  channel: string;
+  channelBg: string;
+  number: string;
+  customer: string;
+  items: string;
+  status: string;
+  price: string;
+}) {
+  return (
+    <div
+      className="rounded-xl bg-white p-3.5 text-right"
+      style={{ border: `2px solid ${INK}`, boxShadow: `0 3px 0 ${INK}` }}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <span
+          className="text-[11px] font-extrabold px-2 py-0.5 rounded-md text-white"
+          style={{ background: channelBg }}
+        >
+          {channel}
+        </span>
+        <span className="text-xs font-bold text-black/50 tnum" dir="ltr">
+          #{number}
+        </span>
+      </div>
+      <div className="font-bold text-black text-sm">{customer}</div>
+      <div className="text-xs text-black/55 leading-relaxed mt-0.5 mb-2.5">{items}</div>
+      <div className="flex items-center justify-between">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-black/70">
+          <span className="w-2 h-2 rounded-full" style={{ background: "#F5C84B", border: `1.5px solid ${INK}` }} />
+          {status}
+        </span>
+        <span className="font-extrabold text-black tnum">{price}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function WoltLandingPage() {
   return (
     <div className={`${styles.root} ${rubik.variable} ${mono.variable}`}>
@@ -199,6 +338,13 @@ export default function WoltLandingPage() {
         </div>
       </header>
 
+      {/* ── BOARD MOCKUP ── */}
+      <section className={styles.section} style={{ paddingTop: 0 }}>
+        <div className={styles.container}>
+          <BoardMockup />
+        </div>
+      </section>
+
       {/* ── PROBLEM ── */}
       <section className={styles.section}>
         <div className={styles.container}>
@@ -220,6 +366,7 @@ export default function WoltLandingPage() {
           <h2 className={styles.sectionTitle}>
             הזמנה מוולט - <em>בלי להרים אצבע.</em>
           </h2>
+          <FlowDiagram />
           <div className={styles.qfoodStack}>
             <StepCard
               n="1"
