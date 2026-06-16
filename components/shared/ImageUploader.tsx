@@ -236,7 +236,7 @@ export function ImageUploader({
         {value.map((url, idx) => (
           <div
             key={url + idx}
-            className="relative aspect-square rounded-xl overflow-hidden border border-qf-line-dash group"
+            className="relative aspect-square rounded-xl overflow-hidden border-2 border-black shadow-[0_2px_0_#000] group"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -304,7 +304,7 @@ export function ImageUploader({
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="aspect-square rounded-xl border-2 border-dashed border-qf-line-dash hover:border-(--qf-primary) hover:bg-qf-green-soft/40 grid place-items-center text-qf-mute text-xs"
+            className="aspect-square rounded-xl border-2 border-dashed border-black/40 hover:border-black hover:bg-qf-green-soft/40 grid place-items-center text-qf-mute text-xs transition-colors"
           >
             <div className="flex flex-col items-center gap-1">
               <IcoPlus c="#7c8a82" s={20} />
@@ -394,7 +394,7 @@ function UploadingTile({ progress, name }: { progress: number; name: string }) {
 
   return (
     <div
-      className="aspect-square rounded-xl border border-qf-line-dash bg-qf-line-soft/60 grid place-items-center"
+      className="aspect-square rounded-xl border-2 border-black shadow-[0_2px_0_#000] bg-qf-line-soft/60 grid place-items-center"
       role="status"
       aria-label={`מעלה ${name}, ${pct} אחוזים`}
     >
