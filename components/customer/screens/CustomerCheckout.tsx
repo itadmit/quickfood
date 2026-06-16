@@ -506,9 +506,15 @@ export function CustomerCheckout({
       : null;
 
   const paymentInFlight = !!pendingPayment;
+  // Zone-aware minimum (branch.minOrder already resolves to the customer's
+  // zone via the cart). Block placing the order below it - matches the
+  // server's min_order_not_met guard so the customer is told up-front.
+  const minOrder = branch?.minOrder ?? 0;
+  const belowMin = minOrder > 0 && subtotal < minOrder;
   const canPlace =
     !busy &&
     !paymentInFlight &&
+    !belowMin &&
     !!paymentMethod &&
     !!firstName &&
     !!phone &&
@@ -1074,11 +1080,16 @@ export function CustomerCheckout({
                 <div className="font-bold tnum text-lg">{formatPrice(total)}</div>
               </div>
             </div>
+            {belowMin && (
+              <div className="mt-4 bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm rounded-xl px-3 py-2 text-center">
+                חסר {formatPrice(minOrder - subtotal)} לסכום מינימום ({formatPrice(minOrder)})
+              </div>
+            )}
             <button
               type="button"
               onClick={onPlaceClick}
               disabled={!canPlace}
-              className="w-full mt-4 bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-14 text-base font-semibold flex items-center justify-between shadow-sm shadow-(--qf-primary)/25 transition"
+              className="w-full mt-3 bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-14 text-base font-semibold flex items-center justify-between shadow-sm shadow-(--qf-primary)/25 transition"
             >
               <span className="inline-flex items-center gap-2">
                 {(busy || paymentInFlight) && (
@@ -1105,6 +1116,11 @@ export function CustomerCheckout({
 
       {/* Fixed CTA - mobile only (desktop uses the sidebar above). */}
       <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 max-w-md mx-auto bg-white border-t border-qf-line px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        {belowMin && (
+          <div className="mb-2 bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm rounded-xl px-3 py-2 text-center">
+            חסר {formatPrice(minOrder - subtotal)} לסכום מינימום ({formatPrice(minOrder)})
+          </div>
+        )}
         <button
           type="button"
           onClick={onPlaceClick}
