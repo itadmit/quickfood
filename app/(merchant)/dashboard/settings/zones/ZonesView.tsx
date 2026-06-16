@@ -484,7 +484,7 @@ function ZoneFields({
             className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
           />
         </Field>
-        <Field label="ETA מינ׳">
+        <Field label="זמן משלוח משוער מינ׳">
           <input
             type="number"
             min={0}
@@ -493,7 +493,7 @@ function ZoneFields({
             className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
           />
         </Field>
-        <Field label="ETA מקס׳">
+        <Field label="זמן משלוח משוער מקס׳">
           <input
             type="number"
             min={0}
