@@ -85,6 +85,7 @@ enum OrderSource {
   reorder
   kiosk
   pos
+  wolt
 }
 
 /// How a specific line landed in the cart. A single order can mix
@@ -96,6 +97,7 @@ enum OrderItemSource {
   ai_advisor
   upsell
   reorder
+  wolt
 }
 
 enum CourierStatus {
@@ -430,6 +432,7 @@ model Tenant {
   emailLogs        EmailLog[]
   modifierSets     ModifierSet[]
   woltImports      WoltImport[]
+  woltConnections  WoltConnection[]
   growLeads        GrowLead[]
   posShifts        PosShift[]
 
@@ -912,6 +915,13 @@ model Order {
   paymentStatus   PaymentStatus @default(pending) @map("payment_status")
   paymentIntentId String?       @map("payment_intent_id")
 
+  /// Provenance for orders ingested from an external marketplace (Wolt and
+  /// friends). externalSource = "wolt"; externalId = the marketplace order
+  /// id. The unique pair makes the order webhook idempotent - a retried
+  /// delivery upserts instead of creating a duplicate order.
+  externalSource String? @map("external_source") @db.VarChar(20)
+  externalId     String? @map("external_id") @db.VarChar(64)
+
   /// Tax invoice / receipt landed via Grow's async invoice callback (the
   /// `invoiceNotifyUrl` we pass on createPaymentProcess). Both stay NULL
   /// for cash orders + for tenants without invoice generation enabled in
@@ -972,6 +982,7 @@ model Order {
   paymentTxns     PaymentTransaction[]
 
   @@unique([tenantId, number])
+  @@unique([tenantId, externalSource, externalId])
   @@index([tenantId, status, createdAt(sort: Desc)])
   @@index([customerId, createdAt(sort: Desc)])
   @@index([posShiftId])
@@ -1802,6 +1813,29 @@ model WoltImport {
 
   @@index([tenantId, createdAt(sort: Desc)])
   @@map("wolt_imports")
+}
+
+/// Per-tenant Wolt Marketplace connection established via SSIO (OAuth 2.0).
+/// One row per connected Wolt venue. Holds the rotating access/refresh
+/// tokens so the order webhook + Order API calls (accept/reject/ready) can
+/// authenticate on behalf of the merchant. Tokens are short-lived: access
+/// ~1h, refresh ~30d single-use - see lib/wolt/oauth.ts.
+model WoltConnection {
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  venueId         String   @map("venue_id") @db.VarChar(64)
+  status          String   @default("active")
+  accessToken     String?  @map("access_token")
+  refreshToken    String?  @map("refresh_token")
+  tokenExpiresAt  DateTime? @map("token_expires_at")
+  lastOrderAt     DateTime? @map("last_order_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, venueId])
+  @@index([venueId])
+  @@map("wolt_connections")
 }
 
 model GrowLead {
