@@ -1306,6 +1306,18 @@ function GroupEditor({
         placeholder="טקסט עזר (אופציונלי) - ׳בחר רטב לצד׳"
         className="w-full px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-xs bg-white resize-none"
       />
+      {group.options.length > 0 && (
+        <div className="flex items-center gap-2 text-[10px] font-medium text-qf-mute px-0.5">
+          <span className="w-5 shrink-0" aria-hidden />
+          <span className="w-9 shrink-0" aria-hidden />
+          <span className="flex-1 min-w-0">אפשרות</span>
+          <span className="w-16 text-center shrink-0">{group.customHalfPrice ? "מלא" : "מחיר"}</span>
+          {group.customHalfPrice && <span className="w-16 text-center shrink-0">חצי</span>}
+          <span className="w-6 shrink-0" aria-hidden />
+          <span className="w-12 shrink-0" aria-hidden />
+          <span className="w-8 shrink-0" aria-hidden />
+        </div>
+      )}
       <DragList
         items={group.options}
         onReorder={(next) => onChange({ ...group, options: next })}
@@ -1413,7 +1425,7 @@ function GroupEditor({
                 })
               }
               className={cn(
-                "text-[10px] font-semibold px-2 py-1 rounded-md transition shrink-0",
+                "text-[10px] font-semibold w-12 text-center py-1 rounded-md transition shrink-0",
                 o.available
                   ? "bg-qf-green-soft text-qf-green-deep"
                   : "bg-qf-tomato-soft text-qf-tomato",
