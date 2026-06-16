@@ -152,12 +152,18 @@ const WOLT_BLUE = "#00C2E8";
 /* Flow diagram: Wolt order -> your board -> kitchen -> status back to Wolt.
    Horizontal on desktop (RTL, arrows point left), stacked on mobile. */
 function FlowDiagram() {
-  const nodes: { Icon: LucideIcon; title: string; sub: string; accent?: boolean }[] = [
+  const nodes: { Icon: LucideIcon; title: string; sub: string; accent?: boolean; split?: boolean }[] = [
     { Icon: ShoppingBag, title: "הזמנה מ-Wolt", sub: "לקוח מזמין בוולט", accent: true },
-    { Icon: LayoutGrid, title: "הלוח שלך", sub: "נכנסת לקאנבן אוטומטית" },
+    { Icon: LayoutGrid, title: "הלוח שלך", sub: "נכנסת ללוח ההזמנות אוטומטית", split: true },
     { Icon: ChefHat, title: "המטבח", sub: "יוצאת להכנה כמו כל הזמנה" },
     { Icon: RefreshCw, title: "סטטוס חוזר ל-Wolt", sub: "אישור ומוכן מסונכרנים" },
   ];
+  const iconBg = (n: { accent?: boolean; split?: boolean }) =>
+    n.split
+      ? `linear-gradient(135deg, #F5C84B 0%, #F5C84B 50%, ${WOLT_BLUE} 50%, ${WOLT_BLUE} 100%)`
+      : n.accent
+        ? WOLT_BLUE
+        : "#F5C84B";
   return (
     <div className="flex flex-col sm:flex-row items-stretch justify-center gap-3 sm:gap-2 mt-8">
       {nodes.map((n, i) => (
@@ -169,7 +175,7 @@ function FlowDiagram() {
             <div
               className="w-11 h-11 mx-auto rounded-xl flex items-center justify-center mb-2"
               style={{
-                background: n.accent ? WOLT_BLUE : "#F5C84B",
+                background: iconBg(n),
                 border: `2px solid ${INK}`,
               }}
             >
@@ -210,7 +216,14 @@ function BoardMockup() {
           <span className="w-3 h-3 rounded-full" style={{ background: INK, opacity: 0.5 }} />
           <span className="w-3 h-3 rounded-full" style={{ background: INK, opacity: 0.25 }} />
           <span className="font-extrabold text-black text-sm ms-2">הזמנות פעילות</span>
-          <span className="ms-auto text-[11px] font-bold text-black/55">פיצרייה ורדה</span>
+          <span className="relative flex w-2.5 h-2.5 ms-1" aria-hidden>
+            <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75 animate-ping" />
+            <span className="relative inline-flex rounded-full w-2.5 h-2.5 bg-green-500" style={{ border: "1.5px solid rgba(0,0,0,0.25)" }} />
+          </span>
+          <span className="ms-auto inline-flex items-center gap-1.5 text-[11px] font-bold text-black/55">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            חי
+          </span>
         </div>
         <div className="grid sm:grid-cols-2 gap-3 p-4" style={{ background: "#FAF6EA" }}>
           <OrderCard
@@ -291,7 +304,7 @@ export default function WoltLandingPage() {
 
       {/* ── HERO ── */}
       <header className={styles.hero}>
-        <div className={styles.container}>
+        <div className={styles.container} style={{ textAlign: "center" }}>
           <div className={styles.eyebrow}>
             <span className={styles.eyebrowDot}>בקרוב</span>
             אינטגרציה רשמית עם Wolt
@@ -303,13 +316,13 @@ export default function WoltLandingPage() {
               <em>מסך אחד.</em>
             </span>
           </h1>
-          <p className={styles.headlineSmall}>
+          <p className={styles.headlineSmall} style={{ marginInline: "auto" }}>
             QuickFood מתחברת ישירות ל-Wolt ומושכת את ההזמנות שלך פנימה - אל אותו לוח ניהול
             ואל אותו מסך מטבח שבהם אתה כבר עובד. ההזמנה מוולט נוחתת אצלך בקליק, אתה מאשר, והסטטוס
             חוזר לוולט אוטומטית. בלי טאבלט נפרד, בלי לקפוץ בין מסכים, בלי להקליד הזמנות מחדש.
           </p>
 
-          <div className={styles.heroCta}>
+          <div className={styles.heroCta} style={{ justifyContent: "center" }}>
             <a href="#join" className={`${styles.btn} ${styles.btnTomato} ${styles.btnLg}`}>
               הצטרפו ראשונים
             </a>
@@ -340,19 +353,19 @@ export default function WoltLandingPage() {
 
       {/* ── BOARD MOCKUP ── */}
       <section className={styles.section} style={{ paddingTop: 0 }}>
-        <div className={styles.container}>
+        <div className={styles.container} style={{ textAlign: "center" }}>
           <BoardMockup />
         </div>
       </section>
 
       {/* ── PROBLEM ── */}
       <section className={styles.section}>
-        <div className={styles.container}>
+        <div className={styles.container} style={{ textAlign: "center" }}>
           <div className={styles.sectionEyebrow}>המצב היום</div>
-          <h2 className={styles.sectionTitle}>
+          <h2 className={styles.sectionTitle} style={{ marginInline: "auto" }}>
             טאבלט של וולט. האתר שלך. הטלפון. <em>שלושה מסכים, מטבח אחד.</em>
           </h2>
-          <p className={styles.headlineSmall}>
+          <p className={styles.headlineSmall} style={{ marginInline: "auto" }}>
             כל ערוץ עם המכשיר שלו, הצליל שלו וההיגיון שלו. הזמנות מתפספסות, זמני הכנה מתפזרים,
             והצוות רץ בין מסכים בשעת לחץ. לאחד את הכל למקום אחד זה לא מותרות - זה השקט של המטבח.
           </p>
@@ -361,9 +374,9 @@ export default function WoltLandingPage() {
 
       {/* ── HOW IT WORKS ── */}
       <section id="how" className={styles.section}>
-        <div className={styles.container}>
+        <div className={styles.container} style={{ textAlign: "center" }}>
           <div className={styles.sectionEyebrow}>איך זה עובד</div>
-          <h2 className={styles.sectionTitle}>
+          <h2 className={styles.sectionTitle} style={{ marginInline: "auto" }}>
             הזמנה מוולט - <em>בלי להרים אצבע.</em>
           </h2>
           <FlowDiagram />
@@ -392,9 +405,9 @@ export default function WoltLandingPage() {
 
       {/* ── HIGHLIGHTS ── */}
       <section className={styles.section}>
-        <div className={styles.container}>
+        <div className={styles.container} style={{ textAlign: "center" }}>
           <div className={styles.sectionEyebrow}>מה מקבלים</div>
-          <h2 className={styles.sectionTitle}>
+          <h2 className={styles.sectionTitle} style={{ marginInline: "auto" }}>
             ערוץ אחד נוסף. <em>אפס בלגן נוסף.</em>
           </h2>
           <div className={styles.qfoodStack}>
@@ -461,12 +474,12 @@ export default function WoltLandingPage() {
 
       {/* ── PARTNER NOT COMPETITOR ── */}
       <section className={styles.section}>
-        <div className={styles.container}>
+        <div className={styles.container} style={{ textAlign: "center" }}>
           <div className={styles.sectionEyebrow}>שותף, לא מתחרה</div>
-          <h2 className={styles.sectionTitle}>
+          <h2 className={styles.sectionTitle} style={{ marginInline: "auto" }}>
             לא לבחור בין וולט לבית. <em>פשוט לנהל את שניהם ממקום אחד.</em>
           </h2>
-          <p className={styles.headlineSmall}>
+          <p className={styles.headlineSmall} style={{ marginInline: "auto" }}>
             וולט מביא לך לקוחות חדשים, האתר שלך שומר את הקבועים שלך. QuickFood מחברת ביניהם
             למסך אחד - כדי שתפסיק לנהל מסכים ותתחיל לנהל מסעדה. מחברים ומתחילים לעבוד.
           </p>
@@ -475,7 +488,7 @@ export default function WoltLandingPage() {
 
       {/* ── JOIN ── */}
       <section className={styles.finalCta}>
-        <div className={styles.container}>
+        <div className={styles.container} style={{ textAlign: "center" }}>
           <div className={styles.finalCtaCard}>
             <div className={styles.finalCtaBody}>
               <span className={styles.finalCtaTag}>גישה מוקדמת</span>
@@ -502,7 +515,7 @@ export default function WoltLandingPage() {
 
       {/* ── FOOTER ── */}
       <footer className={styles.footer}>
-        <div className={styles.container}>
+        <div className={styles.container} style={{ textAlign: "center" }}>
           <div className={styles.footBottom}>
             <span>© 2026 Quickshop Ltd. כל הזכויות שמורות.</span>
             <Link href="/">QuickFood</Link>
