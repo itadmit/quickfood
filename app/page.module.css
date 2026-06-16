@@ -1517,6 +1517,7 @@
   padding: 11px 16px;
   background: var(--cream-2);
   border-bottom: 2px solid var(--line);
+  direction: ltr;
 }
 .showcaseUrlDots {
   display: flex;
@@ -1531,6 +1532,7 @@
 }
 .showcaseUrlField {
   flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -1538,10 +1540,17 @@
   border: 1.5px solid var(--line);
   border-radius: 8px;
   padding: 5px 12px;
-  font-size: 13px;
+  font-size: clamp(10px, 3vw, 13px);
   font-weight: 600;
   color: var(--ink-2);
   font-family: var(--font-mono), "JetBrains Mono", monospace;
+}
+.showcaseUrlText {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .showcaseUrlIcon { color: var(--mute); flex-shrink: 0; }
 .showcaseLiveChip {

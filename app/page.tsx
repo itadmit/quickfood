@@ -785,7 +785,7 @@ function CustomerShowcase() {
                   <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
                   <path d="M8 1.5C8 1.5 5.5 4 5.5 8s2.5 6.5 2.5 6.5M8 1.5C8 1.5 10.5 4 10.5 8S8 14.5 8 14.5M1.5 8h13" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                 </svg>
-                quickfood.co.il/s/pizzaninja-gedera
+                <span className={styles.showcaseUrlText}>quickfood.co.il/s/pizzaninja-gedera</span>
                 <span className={styles.showcaseLiveChip}>LIVE</span>
               </div>
             </div>
