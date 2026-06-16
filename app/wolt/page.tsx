@@ -153,10 +153,10 @@ const WOLT_BLUE = "#00C2E8";
    Horizontal on desktop (RTL, arrows point left), stacked on mobile. */
 function FlowDiagram() {
   const nodes: { Icon: LucideIcon; title: string; sub: string; accent?: boolean; split?: boolean }[] = [
-    { Icon: ShoppingBag, title: "הזמנה מ-Wolt", sub: "לקוח מזמין בוולט", accent: true },
+    { Icon: ShoppingBag, title: "הזמנה מ-Wolt", sub: "לקוח מזמין ב-Wolt", accent: true },
     { Icon: LayoutGrid, title: "הלוח שלך", sub: "נכנסת ללוח ההזמנות אוטומטית", split: true },
     { Icon: ChefHat, title: "המטבח", sub: "יוצאת להכנה כמו כל הזמנה" },
-    { Icon: RefreshCw, title: "וולט מתעדכן לבד", sub: "הלקוח של וולט מעודכן בזמן אמת", accent: true },
+    { Icon: RefreshCw, title: "Wolt מתעדכן לבד", sub: "הלקוח של Wolt מעודכן בזמן אמת", accent: true },
   ];
   const iconBg = (n: { accent?: boolean; split?: boolean }) =>
     n.split
@@ -246,7 +246,7 @@ function BoardMockup() {
           />
         </div>
       </div>
-      <p className="text-center text-[11px] text-black/45 mt-2">להמחשה - וולט והאתר שלך על אותו לוח, אותו מטבח.</p>
+      <p className="text-center text-[11px] text-black/45 mt-2">להמחשה - Wolt והאתר שלך על אותו לוח, אותו מטבח.</p>
     </div>
   );
 }
@@ -307,19 +307,21 @@ export default function WoltLandingPage() {
         <div className={styles.container} style={{ textAlign: "center" }}>
           <div className={styles.eyebrow}>
             <span className={styles.eyebrowDot}>בקרוב</span>
-            חיבור רשמי לוולט
+            החיבור הרשמי של QuickFood ל-Wolt
           </div>
           <h1 className={styles.headline}>
-            <span className={styles.stack}>הזמנות מוולט.</span>
-            <span className={styles.stack}>הזמנות מהאתר שלך.</span>
+            <span className={styles.stack}>כל ההזמנות שלך.</span>
+            <span className={styles.stack}>מסך אחד.</span>
             <span className={styles.stack}>
-              <em>מסך אחד.</em>
+              <em>אפס כאב ראש.</em>
             </span>
           </h1>
           <p className={styles.headlineSmall} style={{ marginInline: "auto" }}>
-            ההזמנות מוולט נכנסות ישר למסך שאתה כבר עובד איתו - יחד עם ההזמנות מהאתר שלך.
-            רואים הכל במקום אחד, המטבח מקבל הכל אוטומטית, ובוולט הכל מתעדכן לבד. בלי טאבלט
-            נפרד, בלי לקפוץ בין מסכים, בלי להקליד הזמנות מחדש.
+            כל הזמנה מ-Wolt נכנסת אוטומטית ללוח של QuickFood, יחד עם ההזמנות מהאתר שלך.
+            המטבח עובד ממקום אחד, Wolt מתעדכן לבד, ואתה מפסיק לקפוץ בין מסכים.
+          </p>
+          <p className={styles.headlineSmall} style={{ marginInline: "auto", fontWeight: 700 }}>
+            בלי טאבלט נוסף. בלי להקליד הזמנות מחדש. בלי לקפוץ בין מסכים. פשוט עובדים מתוך QuickFood.
           </p>
 
           <div className={styles.heroCta} style={{ justifyContent: "center" }}>
@@ -336,16 +338,16 @@ export default function WoltLandingPage() {
 
           <div className={styles.heroStats}>
             <div className={styles.heroStat}>
-              <div className={styles.heroStatN}>מסך אחד</div>
-              <div className={styles.heroStatL}>וולט והאתר שלך ביחד.</div>
+              <div className={styles.heroStatN}>לוח אחד</div>
+              <div className={styles.heroStatL}>כל ההזמנות במקום אחד.</div>
             </div>
             <div className={styles.heroStat}>
               <div className={styles.heroStatN}>זמן אמת</div>
-              <div className={styles.heroStatL}>הזמנות וולט נכנסות מיד למסך.</div>
+              <div className={styles.heroStatL}>כל הזמנה נכנסת מיד ללוח.</div>
             </div>
             <div className={styles.heroStat}>
-              <div className={styles.heroStatN}>אוטומטי</div>
-              <div className={styles.heroStatL}>וולט מתעדכן לבד, בלי טאבלט.</div>
+              <div className={styles.heroStatN}>בלי טאבלט</div>
+              <div className={styles.heroStatL}>עובדים רק על QuickFood.</div>
             </div>
           </div>
         </div>
@@ -363,11 +365,12 @@ export default function WoltLandingPage() {
         <div className={styles.container} style={{ textAlign: "center" }}>
           <div className={styles.sectionEyebrow}>המצב היום</div>
           <h2 className={styles.sectionTitle} style={{ marginInline: "auto" }}>
-            טאבלט של וולט. האתר שלך. הטלפון. <em>שלושה מסכים, מטבח אחד.</em>
+            טאבלט של Wolt. האתר שלך. הטלפון. <em>שלושה מסכים, מטבח אחד. וזה עוד ביום רגוע.</em>
           </h2>
           <p className={styles.headlineSmall} style={{ marginInline: "auto" }}>
             כל ערוץ עם המכשיר שלו, הצליל שלו וההיגיון שלו. הזמנות מתפספסות, זמני הכנה מתפזרים,
-            והצוות רץ בין מסכים בשעת לחץ. לאחד את הכל למקום אחד זה לא מותרות - זה השקט של המטבח.
+            והצוות רץ בין מסכים בשעת לחץ. לאחד את הכל למקום אחד זה לא מותרות. זה מה שמאפשר
+            למטבח לעבוד בלי טעויות.
           </p>
         </div>
       </section>
@@ -377,27 +380,27 @@ export default function WoltLandingPage() {
         <div className={styles.container} style={{ textAlign: "center" }}>
           <div className={styles.sectionEyebrow}>איך זה עובד</div>
           <h2 className={styles.sectionTitle} style={{ marginInline: "auto" }}>
-            הזמנה מוולט - <em>בלי להרים אצבע.</em>
+            הזמנה מ-Wolt. <em>בלי לגעת בטאבלט.</em>
           </h2>
           <FlowDiagram />
           <div className={styles.qfoodStack}>
             <StepCard
               n="1"
               Icon={Plug}
-              title="מחברים את וולט פעם אחת."
-              body="לחיצה אחת בדשבורד מחברת את חשבון הוולט שלך ל-QuickFood. חיבור רשמי ומאובטח, בלי סיסמאות משותפות ובלי טאבלט נוסף."
+              title="מחברים את Wolt פעם אחת."
+              body="לחיצה אחת בדשבורד מחברת את חשבון ה-Wolt שלך ל-QuickFood. חיבור רשמי ומאובטח, בלי סיסמאות משותפות ובלי טאבלט נוסף."
             />
             <StepCard
               n="2"
               Icon={LayoutGrid}
               title="ההזמנה נכנסת ישר ללוח שלך."
-              body="כל הזמנה מוולט מופיעה לבד בלוח ההזמנות ובמטבח, לצד ההזמנות מהאתר שלך. אותם פריטים, אותו צוות, בלי להקליד כלום."
+              body="כל הזמנה מ-Wolt מופיעה לבד בלוח ההזמנות ובמטבח, לצד ההזמנות מהאתר שלך. אותם פריטים, אותו צוות, בלי להקליד כלום."
             />
             <StepCard
               n="3"
               Icon={RefreshCw}
-              title="אתה מכין כרגיל - וולט מתעדכן לבד."
-              body="מקבל את ההזמנה ומכין אותה כמו תמיד. וולט מתעדכן מעצמו, הלקוח שם רואה מה קורה, ואתה לא נוגע בטאבלט."
+              title="אתה עובד ב-QuickFood. Wolt כבר מסתדר לבד."
+              body="מקבל את ההזמנה ומכין אותה כמו תמיד. Wolt מתעדכן מעצמו, הלקוח שם רואה מה קורה, ואתה לא נוגע בטאבלט."
             />
           </div>
         </div>
@@ -408,7 +411,7 @@ export default function WoltLandingPage() {
         <div className={styles.container} style={{ textAlign: "center" }}>
           <div className={styles.sectionEyebrow}>מה מקבלים</div>
           <h2 className={styles.sectionTitle} style={{ marginInline: "auto" }}>
-            ערוץ אחד נוסף. <em>אפס בלגן נוסף.</em>
+            עוד ערוץ מכירה. <em>בלי עוד כאב ראש.</em>
           </h2>
           <div className={styles.qfoodStack}>
             <FeatureCard
@@ -416,8 +419,8 @@ export default function WoltLandingPage() {
               layout="decor-end"
               Icon={LayoutGrid}
               tag="לוח מאוחד"
-              heading="כל ההזמנות בלוח אחד - וולט והאתר שלך יחד."
-              body="הזמנות וולט מסומנות בבירור על אותו לוח שאתה כבר מכיר. בלי מסך נפרד, בלי להחליט כל פעם איפה להסתכל."
+              heading="כל ההזמנות בלוח אחד - Wolt והאתר שלך יחד."
+              body="הזמנות Wolt מסומנות בבירור על אותו לוח שאתה כבר מכיר. בלי מסך נפרד, בלי להחליט כל פעם איפה להסתכל."
             />
             <FeatureCard
               tone="sand"
@@ -425,30 +428,30 @@ export default function WoltLandingPage() {
               Icon={ChefHat}
               tag="מסך מטבח"
               heading="המטבח רואה הכל במקום אחד."
-              body="הזמנת וולט נכנסת למסך המטבח כמו כל הזמנה אחרת - אותם פריטים, אותן הערות, אותו זמן הכנה. הצוות לא לומד מערכת חדשה."
+              body="הזמנת Wolt נכנסת למסך המטבח כמו כל הזמנה אחרת - אותם פריטים, אותן הערות, אותו זמן הכנה. הצוות לא לומד מערכת חדשה."
             />
             <FeatureCard
               tone="peach"
               layout="decor-end"
               Icon={Bell}
               tag="עדכון אוטומטי"
-              heading="וולט מתעדכן לבד, בלי לגעת בטאבלט."
-              body="אתה עובד רק במערכת אחת, ווולט מתעדכן מעצמו. בלי לעדכן ידנית בשני מקומות, בלי לשכוח."
+              heading="Wolt מתעדכן לבד, בלי לגעת בטאבלט."
+              body="אתה עובד רק במערכת אחת, ו-Wolt מתעדכן מעצמו. בלי לעבוד פעמיים על אותה הזמנה, בלי לשכוח."
             />
             <FeatureCard
               tone="lilac"
               layout="decor-start"
               Icon={Layers}
               tag="תפריט אחד"
-              heading="מתחבר לתפריט שכבר יש לך."
-              body="הזמנת וולט מתחברת לפריטים שכבר במערכת שלך, כך שהדוחות והמלאי מדויקים על כל ההזמנות - מכל הערוצים."
+              heading="לא צריך לנהל שני תפריטים."
+              body="הזמנת Wolt מתחברת לפריטים שכבר במערכת שלך, כך שהדוחות והמלאי מדויקים על כל ההזמנות - מכל הערוצים."
             />
             <FeatureCard
               tone="sand"
               layout="decor-end"
               Icon={BarChart3}
               tag="דוחות במקום אחד"
-              heading="כמה מגיע מוולט, כמה ישירות - במבט אחד."
+              heading="כמה מגיע מ-Wolt, כמה ישירות - במבט אחד."
               body="הכנסות, מספר הזמנות ושעות העומס - לכל ערוץ בנפרד ולכולם יחד. תמונה אחת אמיתית של העסק, בלי לאסוף נתונים מכמה מקומות."
             />
             <FeatureCard
@@ -456,17 +459,17 @@ export default function WoltLandingPage() {
               layout="decor-start"
               Icon={Store}
               tag="האתר שלך במרכז"
-              heading="וולט מצטרף. האתר שלך נשאר הבית."
-              body="הקבועים שלך מזמינים ישירות מהאתר שלך - בלי עמלות גבוהות, והזמנות וולט פשוט מגיעות לאותו מקום. גם וגם, בלי להתפשר."
+              heading="האתר שלך נשאר הבית."
+              body="Wolt מביא לקוחות חדשים. האתר שלך בונה את העסק שלך. QuickFood מאפשרת לנהל את שניהם מאותו מקום."
             />
           </div>
 
           <div className={styles.miniGrid}>
-            <MiniCell tag="התראות" title="צליל לכל הזמנה חדשה" body="הזמנת וולט מצלצלת כמו כל הזמנה - הצוות יודע מיד, בלי לבהות בטאבלט." />
-            <MiniCell tag="קבלות" title="הדפסה אוטומטית למטבח" body="הזמנת וולט יוצאת למדפסת או למסך המטבח בדיוק כמו הזמנה מהאתר שלך." />
-            <MiniCell tag="היסטוריה" title="הכל בהיסטוריה אחת" body="חיפוש, סינון ודוחות על כל ההזמנות - וולט והאתר - מאותו מסך." />
+            <MiniCell tag="התראות" title="צליל לכל הזמנה חדשה" body="הזמנת Wolt מצלצלת כמו כל הזמנה - הצוות יודע מיד, בלי לבהות בטאבלט." />
+            <MiniCell tag="קבלות" title="הדפסה אוטומטית למטבח" body="הזמנת Wolt יוצאת למדפסת או למסך המטבח בדיוק כמו הזמנה מהאתר שלך." />
+            <MiniCell tag="היסטוריה" title="הכל בהיסטוריה אחת" body="חיפוש, סינון ודוחות על כל ההזמנות - Wolt והאתר - מאותו מסך." />
             <MiniCell tag="ללא הקלדה" title="סוף להקלדה ידנית" body="ההזמנה נכנסת מלאה ומדויקת - פריטים, תוספות והערות - בלי להקליד מחדש." />
-            <MiniCell tag="אמין" title="חיבור רשמי ומאובטח" body="חיבור רשמי מול וולט, בלי סיסמאות משותפות ובלי פתרונות עוקפים." />
+            <MiniCell tag="אמין" title="חיבור רשמי ומאובטח" body="חיבור רשמי מול Wolt, בלי סיסמאות משותפות ובלי פתרונות עוקפים." />
             <MiniCell tag="ערוצים נוספים" title="בנוי לעוד ערוצים" body="בעתיד נחבר גם ערוצי משלוח נוספים - אותו לוח, אותו מטבח." />
           </div>
         </div>
@@ -477,11 +480,17 @@ export default function WoltLandingPage() {
         <div className={styles.container} style={{ textAlign: "center" }}>
           <div className={styles.sectionEyebrow}>שותף, לא מתחרה</div>
           <h2 className={styles.sectionTitle} style={{ marginInline: "auto" }}>
-            לא לבחור בין וולט לבית. <em>פשוט לנהל את שניהם ממקום אחד.</em>
+            Wolt ו-QuickFood <em>עובדות ביחד.</em>
           </h2>
           <p className={styles.headlineSmall} style={{ marginInline: "auto" }}>
-            וולט מביא לך לקוחות חדשים, האתר שלך שומר את הקבועים שלך. QuickFood מחברת ביניהם
-            למסך אחד - כדי שתפסיק לנהל מסכים ותתחיל לנהל מסעדה. מחברים ומתחילים לעבוד.
+            אתה לא צריך לבחור בין Wolt להזמנות ישירות. Wolt מביא לקוחות חדשים, האתר שלך מגדיל
+            את הרווחיות, ו-QuickFood מרכזת את הכל למסך אחד.
+          </p>
+          <p
+            className={styles.headlineSmall}
+            style={{ marginInline: "auto", fontWeight: 800, color: "var(--ink)" }}
+          >
+            מהיום אתם לא מנהלים את Wolt ואת האתר שלכם. אתם פשוט מנהלים את המסעדה.
           </p>
         </div>
       </section>
@@ -493,10 +502,10 @@ export default function WoltLandingPage() {
             <div className={styles.finalCtaBody}>
               <span className={styles.finalCtaTag}>גישה מוקדמת</span>
               <h2>
-                רוצה להיות מהראשונים? <em>נשמור לך מקום.</em>
+                תהיו בין המסעדות הראשונות <em>שמנהלות גם את Wolt וגם את האתר ממסך אחד.</em>
               </h2>
               <p>
-                אנחנו משיקים את החיבור הרשמי לוולט בקרוב. השאר פרטים ונחבר אותך ברגע שזה עולה -
+                אנחנו משיקים את החיבור הרשמי ל-Wolt בקרוב. השאר פרטים ונחבר אותך ברגע שזה עולה -
                 ליווי אישי בהקמה, בלי התעסקות.
               </p>
             </div>
@@ -506,7 +515,7 @@ export default function WoltLandingPage() {
             <LeadForm
               source="wolt"
               heading="הצטרפו לגישה המוקדמת"
-              subheading="השאר פרטים ונעדכן אותך ברגע שהחיבור לוולט פתוח לחנות שלך. בלי שיחת מכירה אגרסיבית."
+              subheading="השאר פרטים ונעדכן אותך ברגע שהחיבור ל-Wolt פתוח לחנות שלך. בלי שיחת מכירה אגרסיבית."
               submitLabel="שמרו לי מקום"
             />
           </div>
