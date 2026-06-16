@@ -4,6 +4,7 @@ import { Rubik, JetBrains_Mono } from "next/font/google";
 import { IcoArrowLeft } from "@/components/shared/Icons";
 import { LeadForm } from "@/components/marketing/LeadForm";
 import { WhatsAppFAB } from "../_components/WhatsAppFAB";
+import ScrollAnimations from "../_components/ScrollAnimations";
 import {
   LayoutGrid,
   MonitorSmartphone,
@@ -362,6 +363,7 @@ export default function WoltLandingPage() {
         </div>
       </footer>
 
+      <ScrollAnimations />
       <WhatsAppFAB />
     </div>
   );
