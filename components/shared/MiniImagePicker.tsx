@@ -145,7 +145,7 @@ export function MiniImagePicker({
         <button
           type="button"
           onClick={() => onChange(null)}
-          className="absolute -top-1 -inset-e-1 w-5 h-5 rounded-full bg-qf-tomato text-white grid place-items-center opacity-0 group-hover:opacity-100 transition shadow"
+          className="absolute -top-1 -inset-e-1 w-5 h-5 rounded-full bg-qf-tomato text-white grid place-items-center shadow ring-2 ring-white/80"
           aria-label="הסר תמונה"
           title="הסר תמונה"
         >
