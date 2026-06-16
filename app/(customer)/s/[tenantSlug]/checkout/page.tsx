@@ -19,12 +19,16 @@ export default async function CheckoutPage({
   // Each query wrapped in its own try so one bad lookup doesn't kill the
   // whole checkout page render. (Both are non-critical - checkout still
   // works without them, just with sane defaults.)
-  let settings: { reviewsChannel: string; reviewsEnabled: boolean } | null = null;
+  let settings: {
+    reviewsChannel: string;
+    reviewsEnabled: boolean;
+    pickupEnabled: boolean;
+  } | null = null;
   let growConfig: { testMode: boolean; isActive: boolean } | null = null;
   try {
     settings = await prisma.tenant.findUnique({
       where: { id: tenant.id },
-      select: { reviewsChannel: true, reviewsEnabled: true },
+      select: { reviewsChannel: true, reviewsEnabled: true, pickupEnabled: true },
     });
   } catch (err) {
     console.error("[checkout/page] tenant settings lookup failed", err);
@@ -93,6 +97,7 @@ export default async function CheckoutPage({
       growEnabled={growEnabled}
       growTestMode={growTestMode}
       deliveryCities={deliveryCities}
+      pickupEnabled={settings?.pickupEnabled ?? true}
     />
   );
 }

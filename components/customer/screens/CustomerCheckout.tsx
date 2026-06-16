@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { IcoChev, IcoArrowLeft, IcoBag } from "@/components/shared/Icons";
+import { IcoChev, IcoArrowLeft, IcoBag, IcoPin } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
@@ -32,12 +32,14 @@ export function CustomerCheckout({
   growEnabled = false,
   growTestMode = true,
   deliveryCities = [],
+  pickupEnabled = true,
 }: {
   tenantSlug: string;
   requireEmail?: boolean;
   growEnabled?: boolean;
   growTestMode?: boolean;
   deliveryCities?: string[];
+  pickupEnabled?: boolean;
 }) {
   const router = useRouter();
   const { lines, method, subtotal, deliveryFee, branch, tenant, clear, setMethod, hydrated } = useCart();
@@ -589,7 +591,32 @@ export function CustomerCheckout({
           </div>
         </Card>
 
-        {/* 2. Delivery / pickup */}
+        {/* 2. Fulfillment method. Only shown when the merchant offers BOTH
+            delivery (has zones) and pickup - otherwise the method is fixed
+            and a single-option toggle is just noise. Switching here flips
+            the cart method, which re-renders the address/pickup card below
+            and drops the delivery fee for pickup. */}
+        {deliveryCities.length > 0 && pickupEnabled && (
+          <Card>
+            <CardTitle>שיטת קבלה</CardTitle>
+            <div className="grid grid-cols-2 gap-2 mt-3">
+              <Pill active={method === "delivery"} onClick={() => setMethod("delivery")}>
+                <span className="inline-flex items-center gap-1.5">
+                  <IcoPin c="currentColor" s={15} />
+                  משלוח
+                </span>
+              </Pill>
+              <Pill active={method === "pickup"} onClick={() => setMethod("pickup")}>
+                <span className="inline-flex items-center gap-1.5">
+                  <IcoBag c="currentColor" s={15} />
+                  איסוף עצמי
+                </span>
+              </Pill>
+            </div>
+          </Card>
+        )}
+
+        {/* 3. Delivery / pickup */}
         {method === "delivery" ? (
           <Card>
             <CardTitle>כתובת משלוח</CardTitle>
