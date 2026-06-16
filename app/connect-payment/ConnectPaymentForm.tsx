@@ -109,7 +109,7 @@ export function ConnectPaymentForm({ prefill }: Props) {
 
         <div>
           <label className={LABEL_CLS} htmlFor="phone">
-            טלפון
+            טלפון נייד
           </label>
           <input
             id="phone"
@@ -118,10 +118,11 @@ export function ConnectPaymentForm({ prefill }: Props) {
             onChange={(e) => setPhone(e.target.value)}
             inputMode="tel"
             placeholder="0501234567"
+            pattern="05\d{8}"
             required
           />
           <p className="text-[11px] text-black/45 mt-1">
-            חשוב: זה המספר שממנו תמלאו את טופס ההרשמה של Grow.
+            חשוב: הזינו מספר נייד - Grow ישלחו אליו SMS עם לינק להשלמת ההרשמה.
           </p>
         </div>
 

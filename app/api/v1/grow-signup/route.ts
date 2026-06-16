@@ -13,7 +13,7 @@ const GrowSignupSchema = z.object({
   phone: z
     .string()
     .trim()
-    .regex(/^0\d{8,9}$/, { message: "מספר טלפון לא תקין" }),
+    .regex(/^05\d{8}$/, { message: "יש להזין מספר נייד תקין (05XXXXXXXX)" }),
   website: z.string().trim().min(3, { message: "לינק לאתר חובה" }).max(200),
 });
 
