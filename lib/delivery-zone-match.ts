@@ -13,6 +13,8 @@ export interface ZoneForMatch {
   deliveryFee: number;
   minOrder: number;
   freeDeliveryAbove: number | null;
+  minEta: number;
+  maxEta: number;
 }
 
 function norm(s: string): string {

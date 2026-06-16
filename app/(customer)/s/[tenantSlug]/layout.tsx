@@ -135,6 +135,8 @@ export default async function CustomerLayout({
           deliveryFee: z.deliveryFee,
           minOrder: z.minOrder,
           freeDeliveryAbove: z.freeDeliveryAbove,
+          minEta: z.minEta,
+          maxEta: z.maxEta,
         }))}
       >
         <MenuSearchProvider>

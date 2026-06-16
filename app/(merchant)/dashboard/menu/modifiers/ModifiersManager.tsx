@@ -460,7 +460,7 @@ function SetEditor({
               onChange={(e) =>
                 onChange({ ...set, minSelect: Math.max(0, parseInt(e.target.value, 10) || 0) })
               }
-              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
+              className="px-2.5 py-1.5 rounded-xl border border-qf-line-dash bg-white tnum"
             />
           </label>
           <label className="flex flex-col gap-1 text-xs">
@@ -472,7 +472,7 @@ function SetEditor({
               onChange={(e) =>
                 onChange({ ...set, maxSelect: Math.max(1, parseInt(e.target.value, 10) || 1) })
               }
-              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
+              className="px-2.5 py-1.5 rounded-xl border border-qf-line-dash bg-white tnum"
             />
           </label>
         </div>
@@ -490,7 +490,7 @@ function SetEditor({
               onChange={(e) =>
                 onChange({ ...set, includedFree: Math.max(0, parseInt(e.target.value, 10) || 0) })
               }
-              className="w-20 px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum shrink-0"
+              className="w-20 px-2.5 py-1.5 rounded-xl border border-qf-line-dash bg-white tnum shrink-0"
             />
           </label>
           <label className="flex items-center gap-2">
@@ -517,7 +517,7 @@ function SetEditor({
                   onChange={(e) =>
                     onChange({ ...set, bundleCount: Math.max(1, parseInt(e.target.value, 10) || 1) })
                   }
-                  className="w-16 px-2 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
+                  className="w-16 px-2 py-1.5 rounded-xl border border-qf-line-dash bg-white tnum"
                 />
                 <span className="text-qf-mute">במחיר</span>
                 <input
@@ -527,7 +527,7 @@ function SetEditor({
                   onChange={(e) =>
                     onChange({ ...set, bundlePrice: Math.max(0, parseInt(e.target.value, 10) || 0) })
                   }
-                  className="w-16 px-2 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
+                  className="w-16 px-2 py-1.5 rounded-xl border border-qf-line-dash bg-white tnum"
                 />
                 <span className="text-qf-mute">₪</span>
               </div>
@@ -601,7 +601,7 @@ function SetEditor({
                     const parsed = raw === "" ? null : Math.max(1, parseInt(raw, 10) || 1);
                     onChange({ ...set, maxPerSide: parsed });
                   }}
-                  className="w-24 px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum shrink-0"
+                  className="w-24 px-2.5 py-1.5 rounded-xl border border-qf-line-dash bg-white tnum shrink-0"
                 />
               </label>
             </div>
@@ -698,7 +698,7 @@ function SetEditor({
                     })
                   }
                   className={cn(
-                    "flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white",
+                    "flex-1 min-w-0 px-2.5 py-1.5 rounded-xl border border-qf-line-dash text-sm bg-white",
                     !o.available && "opacity-50",
                   )}
                 />
@@ -713,7 +713,7 @@ function SetEditor({
                       ),
                     })
                   }
-                  className="w-16 px-2 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white tnum shrink-0"
+                  className="w-16 px-2 py-1.5 rounded-xl border border-qf-line-dash text-sm bg-white tnum shrink-0"
                   title={set.customHalfPrice ? "מחיר שלם (₪)" : "מחיר נוסף (₪)"}
                   placeholder={set.customHalfPrice ? "שלם" : undefined}
                 />
@@ -732,7 +732,7 @@ function SetEditor({
                         ),
                       });
                     }}
-                    className="w-16 px-2 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white tnum shrink-0"
+                    className="w-16 px-2 py-1.5 rounded-xl border border-qf-line-dash text-sm bg-white tnum shrink-0"
                     title="מחיר על חצי (₪)"
                     placeholder="חצי"
                   />

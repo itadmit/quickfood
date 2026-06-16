@@ -127,7 +127,7 @@ export function CustomerHome({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { method, setMethod } = useCart();
+  const { method, setMethod, deliveryEta: zoneEta, branch: cartBranch } = useCart();
   const open = branch?.status === "open";
   const busy = branch?.status === "busy";
   const closed = branch?.status === "closed";
@@ -157,7 +157,12 @@ export function CustomerHome({
     openLabel = `סגור · נפתח ${hoursStatus.nextOpen.dayLabel} ${hoursStatus.nextOpen.time}`;
     openLabelTone = "closed";
   }
-  const baseEta = deliveryEta ?? { min: 25, max: 35 };
+  // A matched delivery zone's values (ETA / fee / minimum) override the
+  // store-wide defaults so the home screen matches the cart + server.
+  const effectiveDeliveryEta = zoneEta ?? deliveryEta;
+  const baseEta = effectiveDeliveryEta ?? { min: 25, max: 35 };
+  const displayDeliveryFee = (cartBranch ?? branch)?.deliveryFee ?? 0;
+  const displayMinOrder = (cartBranch ?? branch)?.minOrder ?? 0;
   const etaLabel = busy
     ? `${baseEta.min + busyBoost}-${baseEta.max + busyBoost} דק'`
     : `${baseEta.min}-${baseEta.max} דק'`;
@@ -499,14 +504,14 @@ export function CustomerHome({
             <span className="text-qf-line hidden sm:inline">·</span>
             <span className="hidden sm:inline-flex items-center gap-1.5 text-qf-ink2">
               <IcoBike s={14} c="#7c8a82" />
-              <span>{branch ? formatPrice(branch.deliveryFee) : "-"}</span>
+              <span>{branch ? formatPrice(displayDeliveryFee) : "-"}</span>
             </span>
-            {branch && branch.minOrder > 0 && (
+            {branch && displayMinOrder > 0 && (
               <>
                 <span className="text-qf-line">·</span>
                 <span className="inline-flex items-center gap-1.5 text-qf-ink2 tnum">
                   <span className="text-qf-mute text-xs">מינ׳</span>
-                  <span>{formatPrice(branch.minOrder)}</span>
+                  <span>{formatPrice(displayMinOrder)}</span>
                 </span>
               </>
             )}
@@ -765,11 +770,11 @@ export function CustomerHome({
           address={branch.address}
           phone={branch.phone ?? ""}
           hours={(branch.hours ?? {}) as BranchHours}
-          minOrder={branch.minOrder}
-          deliveryFee={branch.deliveryFee}
+          minOrder={displayMinOrder}
+          deliveryFee={displayDeliveryFee}
           serviceFee={branch.serviceFee ?? 0}
           rating={ratingSummary}
-          deliveryEta={deliveryEta}
+          deliveryEta={effectiveDeliveryEta}
           onClose={() => setInfoOpen(false)}
         />
       )}

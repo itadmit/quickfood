@@ -45,6 +45,9 @@ interface CartContextValue extends CartState {
   /** Delivery fee for the current method/cart, with free-delivery
    *  thresholds already applied. Mirrors the server calculation. */
   deliveryFee: number;
+  /** Delivery-time range for the customer's resolved zone, or null when no
+   *  zone matches (caller falls back to the store-wide default). */
+  deliveryEta: { min: number; max: number } | null;
   tenant: TenantInfo;
   branch: BranchInfo | null;
   /** True once localStorage has been read on mount. Until then,
@@ -229,6 +232,7 @@ export function CartProvider({
       subtotal,
       itemCount,
       deliveryFee,
+      deliveryEta: matchedZone ? { min: matchedZone.minEta, max: matchedZone.maxEta } : null,
       tenant,
       branch: effectiveBranch,
       hydrated,
