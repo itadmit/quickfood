@@ -157,7 +157,7 @@ const WOLT_BLUE = "#00C2E8";
 function FlowArrow({ delay }: { delay: number }) {
   return (
     <span className={styles.flowArrow} style={{ alignSelf: "center" }} aria-hidden>
-      <span className={`${styles.flowArrowIcon} sm:hidden`}>
+      <span className={`${styles.flowArrowIcon} inline-flex sm:hidden`}>
         <ArrowDown size={22} strokeWidth={2.6} color={INK} className={styles.flowArrowBase} />
         <ArrowDown
           size={22}

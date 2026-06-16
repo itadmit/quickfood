@@ -2439,7 +2439,10 @@
 
 /* ─── WOLT FLOW DIAGRAM ARROW FILL SWEEP ──────────────────── */
 .flowArrow { display: inline-flex; }
-.flowArrowIcon { position: relative; display: inline-flex; }
+/* No `display` here on purpose - the Tailwind hidden / sm:inline-flex utilities
+   on each icon control which orientation shows. Setting display in the module
+   would win on source order and break the responsive swap. */
+.flowArrowIcon { position: relative; }
 /* Faint base arrow, always visible so the shape never disappears. */
 .flowArrowBase { opacity: 0.2; }
 /* Bold arrow layered on top, revealed/wiped by clip-path in flow direction. */
