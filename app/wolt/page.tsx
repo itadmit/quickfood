@@ -211,7 +211,7 @@ function FlowDiagram() {
                 border: `2px solid ${INK}`,
               }}
             >
-              <n.Icon size={20} strokeWidth={2.2} color={INK} />
+              <n.Icon size={20} strokeWidth={2.2} color={n.accent ? "#fff" : INK} />
             </div>
             <div className="font-extrabold text-black text-sm">{n.title}</div>
             <div className="text-[11px] text-black/55 mt-0.5 leading-snug">{n.sub}</div>
