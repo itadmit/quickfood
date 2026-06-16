@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/client";
 import { uploadBytes } from "@/lib/storage/r2";
 import { fetchImage } from "./fetch";
 import { woltScheduleToHours } from "./hours";
+import { WOLT_IMPORT_TERMS_VERSION } from "./terms";
 import type {
   ApplyVenueInfo,
   WoltCategory,
@@ -19,6 +20,8 @@ type ImportError = { context: string; message: string };
 
 export interface CommitOptions {
   applyVenueInfo?: ApplyVenueInfo;
+  /** Merchant user id that triggered the commit (audit trail). */
+  importedByUserId?: string;
 }
 
 /**
@@ -293,6 +296,8 @@ export async function commitImport(
       imagesUploaded: 0,
       errors: errors.length > 0 ? (errors as unknown as Prisma.InputJsonValue) : Prisma.JsonNull,
       committedAt: new Date(),
+      importedByUserId: opts.importedByUserId ?? null,
+      termsVersion: WOLT_IMPORT_TERMS_VERSION,
     },
   });
 

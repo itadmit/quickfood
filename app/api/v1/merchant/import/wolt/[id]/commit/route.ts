@@ -53,7 +53,10 @@ export const POST = handler(
     // failed images without rebuilding from scratch.
 
     try {
-      const result = await commitImport(id, { applyVenueInfo });
+      const result = await commitImport(id, {
+        applyVenueInfo,
+        importedByUserId: session.userId,
+      });
       return apiJson({ import_id: id, ...result });
     } catch (err) {
       await prisma.woltImport.update({
