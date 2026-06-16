@@ -11,7 +11,7 @@ import { cn } from "@/lib/cn";
 import { recordRecentOrder } from "@/lib/recent-orders-storage";
 import { recordOrderToken } from "@/lib/order-access-storage";
 import { takeCheckoutPrefill } from "@/lib/checkout-prefill";
-import { readDeliveryChoice } from "@/lib/delivery-city-storage";
+import { readDeliveryChoice, writeDeliveryChoice } from "@/lib/delivery-city-storage";
 import { CitySelect } from "@/components/customer/CitySelect";
 import { GrowPaymentSdk, renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
 import { BusyAlertModal } from "@/components/customer/BranchStatusModal";
@@ -637,7 +637,13 @@ export function CustomerCheckout({
                   <CitySelect
                     cities={deliveryCities}
                     value={city}
-                    onChange={setCity}
+                    onChange={(c) => {
+                      setCity(c);
+                      // Keep the remembered delivery choice in sync so the cart
+                      // summary's zone-based fee/minimum matches what the server
+                      // will charge for this city.
+                      if (c) writeDeliveryChoice(tenantSlug, { kind: "delivery", city: c });
+                    }}
                   />
                 </Field>
               </div>
