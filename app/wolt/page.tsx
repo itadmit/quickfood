@@ -188,8 +188,8 @@ export default function WoltLandingPage() {
               <div className={styles.heroStatL}>כל הערוצים, לוח ומטבח אחד.</div>
             </div>
             <div className={styles.heroStat}>
-              <div className={styles.heroStatN}>0 טאבלטים</div>
-              <div className={styles.heroStatL}>סוף לקפיצה בין מכשירים.</div>
+              <div className={styles.heroStatN}>זמן אמת</div>
+              <div className={styles.heroStatL}>הזמנות וולט נכנסות מיד למסך.</div>
             </div>
             <div className={styles.heroStat}>
               <div className={styles.heroStatN}>סנכרון</div>
