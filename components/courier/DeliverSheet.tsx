@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { convertImageToWebP } from "@/lib/image/convert-to-webp";
 
 export function DeliverSheet({
   orderId,
@@ -25,10 +26,13 @@ export function DeliverSheet({
   const [error, setError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
-  async function handlePhoto(file: File) {
+  async function handlePhoto(original: File) {
     setUploadingPhoto(true);
     setError(null);
     try {
+      // Compress + re-encode to WebP in the browser so we upload a light file
+      // (proof photos come straight off the phone camera, often 5MB+).
+      const file = await convertImageToWebP(original);
       const fd = new FormData();
       fd.append("file", file);
       fd.append("order_id", orderId);
