@@ -75,9 +75,10 @@ export const IcoClock = ({ c = "#11231a", s = 14, className }: IconProps) => (
 
 export const IcoBike = ({ c = "#11231a", s = 16, className }: IconProps) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
-    <circle cx="5.5" cy="17" r="3" stroke={c} strokeWidth="1.5" />
-    <circle cx="18.5" cy="17" r="3" stroke={c} strokeWidth="1.5" />
-    <path d="M5.5 17l4-7h6l3 7M14 5h2l1 3" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="5.5" cy="17.5" r="3.5" stroke={c} strokeWidth="1.5" />
+    <circle cx="18.5" cy="17.5" r="3.5" stroke={c} strokeWidth="1.5" />
+    <circle cx="15" cy="5" r="1" stroke={c} strokeWidth="1.5" />
+    <path d="M12 17.5V14l-3-3 4-3 2 3h2" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
