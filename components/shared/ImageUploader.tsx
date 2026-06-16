@@ -47,6 +47,9 @@ export function ImageUploader({
   const [confirmIdx, setConfirmIdx] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  // URLs whose image failed to load (dead link) - shown as a clean
+  // placeholder instead of the browser's broken-image glyph.
+  const [brokenUrls, setBrokenUrls] = useState<Set<string>>(new Set());
 
   function updateProgress(id: string, progress: number) {
     setUploading((prev) =>
@@ -238,12 +241,26 @@ export function ImageUploader({
             key={url + idx}
             className="relative aspect-square rounded-xl overflow-hidden border-2 border-black shadow-[0_2px_0_#000] group"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={url}
-              alt=""
-              className="w-full h-full object-cover"
-            />
+            {brokenUrls.has(url) ? (
+              <div className="w-full h-full grid place-items-center bg-qf-line-soft/60 text-qf-mute text-[11px] text-center px-2 gap-1">
+                <IcoClose c="#c2421f" s={18} />
+                <span>התמונה לא נמצאה</span>
+              </div>
+            ) : (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={url}
+                alt=""
+                className="w-full h-full object-cover"
+                onError={() =>
+                  setBrokenUrls((prev) => {
+                    const next = new Set(prev);
+                    next.add(url);
+                    return next;
+                  })
+                }
+              />
+            )}
             {idx === 0 && (
               <span className="absolute top-1.5 inset-s-1.5 bg-(--qf-primary) text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
                 ראשית
