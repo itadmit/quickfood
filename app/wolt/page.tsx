@@ -365,12 +365,12 @@ export default function WoltLandingPage() {
         <div className={styles.container} style={{ textAlign: "center" }}>
           <div className={styles.sectionEyebrow}>המצב היום</div>
           <h2 className={styles.sectionTitle} style={{ marginInline: "auto" }}>
-            טאבלט של Wolt. האתר שלך. הטלפון. <em>שלושה מסכים, מטבח אחד. וזה עוד ביום רגוע.</em>
+            יש לך רק מטבח אחד. <em>אז למה לנהל כמה מסכים?</em>
           </h2>
           <p className={styles.headlineSmall} style={{ marginInline: "auto" }}>
-            כל ערוץ עם המכשיר שלו, הצליל שלו וההיגיון שלו. הזמנות מתפספסות, זמני הכנה מתפזרים,
-            והצוות רץ בין מסכים בשעת לחץ. לאחד את הכל למקום אחד זה לא מותרות. זה מה שמאפשר
-            למטבח לעבוד בלי טעויות.
+            הזמנות מ-Wolt, הזמנות מהאתר, כל הזמנה מגיעה ממקום אחר, הצוות קופץ בין מסכים,
+            ובשעות הלחץ קל לפספס. QuickFood מרכזת את כל ההזמנות ללוח אחד, כדי שכל הצוות
+            יעבוד מאותו מקום.
           </p>
         </div>
       </section>
