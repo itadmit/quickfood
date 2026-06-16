@@ -16,6 +16,7 @@ import {
   Layers,
   ShoppingBag,
   ArrowLeft,
+  ArrowDown,
   type LucideIcon,
 } from "lucide-react";
 import styles from "../page.module.css";
@@ -149,6 +150,37 @@ function MiniCell({ tag, title, body }: { tag: string; title: string; body: stri
 const INK = "#111111";
 const WOLT_BLUE = "#00C2E8";
 
+/* Connector arrow with a "fill" sweep: a faint arrow with a bold colour that
+   wipes through it in the flow direction - leftward on desktop (RTL), downward
+   on the stacked mobile layout. Separate down/left glyphs (not a rotated one)
+   so the clip-path fill direction stays correct. */
+function FlowArrow({ delay }: { delay: number }) {
+  return (
+    <span className={styles.flowArrow} style={{ alignSelf: "center" }} aria-hidden>
+      <span className={`${styles.flowArrowIcon} sm:hidden`}>
+        <ArrowDown size={22} strokeWidth={2.6} color={INK} className={styles.flowArrowBase} />
+        <ArrowDown
+          size={22}
+          strokeWidth={2.6}
+          color={INK}
+          className={`${styles.flowArrowFill} ${styles.flowArrowFillY}`}
+          style={{ animationDelay: `${delay}s` }}
+        />
+      </span>
+      <span className={`${styles.flowArrowIcon} hidden sm:inline-flex`}>
+        <ArrowLeft size={22} strokeWidth={2.6} color={INK} className={styles.flowArrowBase} />
+        <ArrowLeft
+          size={22}
+          strokeWidth={2.6}
+          color={INK}
+          className={`${styles.flowArrowFill} ${styles.flowArrowFillX}`}
+          style={{ animationDelay: `${delay}s` }}
+        />
+      </span>
+    </span>
+  );
+}
+
 /* Flow diagram: Wolt order -> your board -> kitchen -> status back to Wolt.
    Horizontal on desktop (RTL, arrows point left), stacked on mobile. */
 function FlowDiagram() {
@@ -184,20 +216,7 @@ function FlowDiagram() {
             <div className="font-extrabold text-black text-sm">{n.title}</div>
             <div className="text-[11px] text-black/55 mt-0.5 leading-snug">{n.sub}</div>
           </div>
-          {i < nodes.length - 1 && (
-            <span
-              className={styles.flowArrow}
-              style={{ animationDelay: `${i * 0.2}s`, alignSelf: "center" }}
-              aria-hidden
-            >
-              <ArrowLeft
-                size={22}
-                strokeWidth={2.6}
-                color={INK}
-                className="shrink-0 -rotate-90 sm:rotate-0"
-              />
-            </span>
-          )}
+          {i < nodes.length - 1 && <FlowArrow delay={i * 0.25} />}
         </div>
       ))}
     </div>

@@ -2437,15 +2437,29 @@
   .bffImgWrap { order: -1; }
 }
 
-/* ─── WOLT FLOW DIAGRAM ARROW NUDGE ───────────────────────── */
-@keyframes qf-flow-nudge {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(-5px); }
+/* ─── WOLT FLOW DIAGRAM ARROW FILL SWEEP ──────────────────── */
+.flowArrow { display: inline-flex; }
+.flowArrowIcon { position: relative; display: inline-flex; }
+/* Faint base arrow, always visible so the shape never disappears. */
+.flowArrowBase { opacity: 0.2; }
+/* Bold arrow layered on top, revealed/wiped by clip-path in flow direction. */
+.flowArrowFill { position: absolute; inset: 0; display: inline-flex; }
+.flowArrowFillY { animation: qf-fill-down 1.6s ease-in-out infinite; }
+.flowArrowFillX { animation: qf-fill-left 1.6s ease-in-out infinite; }
+/* Mobile (stacked): colour fills top->down, then exits downward. */
+@keyframes qf-fill-down {
+  0%   { clip-path: inset(0 0 100% 0); }
+  45%  { clip-path: inset(0 0 0 0); }
+  70%  { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(100% 0 0 0); }
 }
-.flowArrow {
-  display: inline-flex;
-  animation: qf-flow-nudge 1.5s ease-in-out infinite;
+/* Desktop (RTL): colour fills right->left, then exits to the left. */
+@keyframes qf-fill-left {
+  0%   { clip-path: inset(0 0 0 100%); }
+  45%  { clip-path: inset(0 0 0 0); }
+  70%  { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(0 100% 0 0); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .flowArrow { animation: none; }
+  .flowArrowFillY, .flowArrowFillX { animation: none; clip-path: none; }
 }
