@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { convertImageToWebP } from "@/lib/image/convert-to-webp";
 
 const ACCEPT = "image/jpeg,image/png,image/webp";
-const MAX_BYTES = 5_000_000;
+const MAX_BYTES = 10_000_000;
 
 /**
  * Compact single-image picker - used in the option-row context where there's
@@ -31,7 +31,7 @@ export function MiniImagePicker({
 
   async function pick(original: File) {
     if (original.size > MAX_BYTES) {
-      alert("הקובץ גדול מ-5MB");
+      alert("הקובץ גדול מ-10MB");
       return;
     }
     if (!ACCEPT.split(",").includes(original.type)) {

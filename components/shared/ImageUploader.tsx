@@ -4,9 +4,10 @@ import { useRef, useState } from "react";
 import { IcoPlus, IcoClose, IcoArrowLeft, IcoArrowRight } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 import { convertImageToWebP } from "@/lib/image/convert-to-webp";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/components/shared/Modal";
 
 const ACCEPT = "image/jpeg,image/png,image/webp";
-const MAX_BYTES = 5_000_000; // 5MB
+const MAX_BYTES = 10_000_000; // 10MB (pre-compression; we re-encode to WebP client-side)
 
 interface Props {
   type: "menu_item_image" | "logo" | "cover_image" | "review_photo" | "campaign_image";
@@ -41,6 +42,11 @@ export function ImageUploader({
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState<PendingUpload[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Index pending a delete-confirmation, plus the in-flight + error state of
+  // the actual R2 deletion.
+  const [confirmIdx, setConfirmIdx] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   function updateProgress(id: string, progress: number) {
     setUploading((prev) =>
@@ -87,7 +93,7 @@ export function ImageUploader({
     id: string,
   ): Promise<string | null> {
     if (original.size > MAX_BYTES) {
-      setError(`קובץ ${original.name} גדול מ-5MB`);
+      setError(`קובץ ${original.name} גדול מ-10MB`);
       return null;
     }
     if (!ACCEPT.split(",").includes(original.type)) {
@@ -172,8 +178,31 @@ export function ImageUploader({
     }
   }
 
-  function remove(idx: number) {
-    onChange(value.filter((_, i) => i !== idx));
+  async function confirmDelete() {
+    if (confirmIdx == null) return;
+    const url = value[confirmIdx];
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch("/api/v1/upload/delete", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        setDeleteError(e?.error?.message ?? "מחיקת התמונה נכשלה");
+        setDeleting(false);
+        return;
+      }
+    } catch {
+      setDeleteError("מחיקת התמונה נכשלה - בדוק חיבור ונסה שוב");
+      setDeleting(false);
+      return;
+    }
+    onChange(value.filter((_, i) => i !== confirmIdx));
+    setDeleting(false);
+    setConfirmIdx(null);
   }
 
   function makePrimary(idx: number) {
@@ -220,6 +249,19 @@ export function ImageUploader({
                 ראשית
               </span>
             )}
+            {/* Always-visible red delete badge - removes from the product AND R2. */}
+            <button
+              type="button"
+              onClick={() => {
+                setDeleteError(null);
+                setConfirmIdx(idx);
+              }}
+              className="absolute top-1.5 inset-e-1.5 w-6 h-6 rounded-full grid place-items-center bg-qf-tomato text-white shadow-md ring-2 ring-white/80 hover:scale-110 transition"
+              aria-label="מחק תמונה"
+              title="מחק תמונה"
+            >
+              <IcoClose c="#fff" s={12} />
+            </button>
             <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-1.5 opacity-0 group-hover:opacity-100 transition flex items-center justify-between gap-1 text-white text-[10px]">
               <div className="flex gap-0.5">
                 <button
@@ -241,25 +283,15 @@ export function ImageUploader({
                   <IcoArrowLeft c="#fff" s={12} />
                 </button>
               </div>
-              <div className="flex gap-0.5">
-                {idx !== 0 && (
-                  <button
-                    type="button"
-                    onClick={() => makePrimary(idx)}
-                    className="px-1.5 py-0.5 rounded bg-white/20 hover:bg-white/30"
-                  >
-                    ראשית
-                  </button>
-                )}
+              {idx !== 0 && (
                 <button
                   type="button"
-                  onClick={() => remove(idx)}
-                  className="w-6 h-6 rounded grid place-items-center bg-qf-tomato/80 hover:bg-qf-tomato"
-                  aria-label="הסר"
+                  onClick={() => makePrimary(idx)}
+                  className="px-1.5 py-0.5 rounded bg-white/20 hover:bg-white/30"
                 >
-                  <IcoClose c="#fff" s={12} />
+                  ראשית
                 </button>
-              </div>
+              )}
             </div>
           </div>
         ))}
@@ -283,7 +315,7 @@ export function ImageUploader({
       </div>
 
       <div className="text-[11px] text-qf-mute">
-        עד {max} תמונות · jpg/png/webp · עד 5MB · התמונה הראשונה היא הראשית בתצוגת המוצר
+        עד {max} תמונות · jpg/png/webp · עד 10MB · התמונה הראשונה היא הראשית בתצוגת המוצר
       </div>
 
       {error && (
@@ -291,6 +323,56 @@ export function ImageUploader({
           {error}
         </div>
       )}
+
+      <Modal
+        open={confirmIdx !== null}
+        onClose={() => {
+          if (!deleting) setConfirmIdx(null);
+        }}
+        size="sm"
+        ariaLabel="מחיקת תמונה"
+      >
+        <ModalHeader title="למחוק את התמונה?" />
+        <ModalBody>
+          <div className="flex gap-3">
+            {confirmIdx !== null && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={value[confirmIdx]}
+                alt=""
+                className="w-16 h-16 rounded-xl object-cover border border-qf-line-dash shrink-0"
+              />
+            )}
+            <p className="text-sm text-qf-ink2 leading-relaxed">
+              התמונה תימחק לחלוטין מהאחסון (R2) ולא ניתן יהיה לשחזר אותה.
+              להמשיך?
+            </p>
+          </div>
+          {deleteError && (
+            <div className="mt-3 text-xs bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato rounded-lg px-2 py-1.5">
+              {deleteError}
+            </div>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <button
+            type="button"
+            onClick={() => setConfirmIdx(null)}
+            disabled={deleting}
+            className="px-4 py-2 rounded-xl text-sm font-medium text-qf-ink2 hover:bg-qf-line-soft disabled:opacity-50"
+          >
+            ביטול
+          </button>
+          <button
+            type="button"
+            onClick={confirmDelete}
+            disabled={deleting}
+            className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-qf-tomato hover:opacity-90 disabled:opacity-50"
+          >
+            {deleting ? "מוחק..." : "מחק לצמיתות"}
+          </button>
+        </ModalFooter>
+      </Modal>
     </div>
   );
 }

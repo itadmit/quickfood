@@ -435,7 +435,7 @@ export const UploadInitSchema = z.object({
   type: z.enum(["menu_item_image", "logo", "cover_image", "review_photo", "campaign_image"]),
   filename: z.string().min(1).max(200),
   mime_type: z.enum(["image/jpeg", "image/png", "image/webp"]),
-  size_bytes: z.number().int().min(1).max(5_000_000).optional(),
+  size_bytes: z.number().int().min(1).max(10_000_000).optional(),
 });
 
 // ─── Admin (Platform) ──────────────────────────────────────────

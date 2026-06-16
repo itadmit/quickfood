@@ -4,6 +4,7 @@ import {
   PutObjectCommand,
   ListObjectsV2Command,
   DeleteObjectsCommand,
+  DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
@@ -35,6 +36,36 @@ function client() {
 export function publicUrlFor(key: string): string {
   if (!PUBLIC_URL) return `https://${ACCOUNT_ID}.r2.cloudflarestorage.com/${BUCKET}/${key}`;
   return `${PUBLIC_URL.replace(/\/$/, "")}/${key}`;
+}
+
+/**
+ * Reverse of {@link publicUrlFor}: recover the object key from a stored public
+ * URL. Returns null for URLs that aren't ours (foreign CDN, data URI, etc.) so
+ * callers never attempt to delete something outside our bucket.
+ */
+export function keyFromPublicUrl(url: string): string | null {
+  if (!url) return null;
+  try {
+    const path = new URL(url).pathname.replace(/^\/+/, "");
+    if (!path) return null;
+    if (PUBLIC_URL) {
+      const base = new URL(PUBLIC_URL.replace(/\/$/, ""));
+      if (new URL(url).host !== base.host) return null;
+      const basePath = base.pathname.replace(/^\/+|\/+$/g, "");
+      return basePath && path.startsWith(`${basePath}/`)
+        ? path.slice(basePath.length + 1)
+        : path;
+    }
+    // Fallback form: <account>.r2.cloudflarestorage.com/<bucket>/<key>
+    return path.startsWith(`${BUCKET}/`) ? path.slice(BUCKET.length + 1) : path;
+  } catch {
+    return null;
+  }
+}
+
+/** Delete a single object by key. Best-effort - resolves even if absent. */
+export async function deleteObject(key: string): Promise<void> {
+  await client().send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
 }
 
 export async function createUploadUrl(opts: {
