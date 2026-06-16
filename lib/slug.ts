@@ -10,7 +10,11 @@ export const resolveTenantBySlug = cache(async (slug: string) => {
   return prisma.tenant.findUnique({
     where: { slug },
     include: {
-      branches: { where: { isPrimary: true }, take: 1 },
+      branches: {
+        where: { isPrimary: true },
+        take: 1,
+        include: { zones: { where: { active: true } } },
+      },
     },
   });
 });

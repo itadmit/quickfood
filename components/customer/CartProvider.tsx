@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { computeDeliveryFee } from "@/lib/delivery-fee";
+import { matchZoneByCity, type ZoneForMatch } from "@/lib/delivery-zone-match";
+import { readDeliveryChoice, DELIVERY_CHOICE_EVENT } from "@/lib/delivery-city-storage";
 
 export type CartLineSource = "menu" | "ai_advisor" | "upsell" | "reorder";
 
@@ -96,14 +98,34 @@ function storageKey(tenantSlug: string) {
 export function CartProvider({
   tenant,
   branch,
+  zones = [],
   children,
 }: {
   tenant: TenantInfo;
   branch: BranchInfo | null;
+  /** Active delivery zones - used to resolve per-zone fee/minimum once the
+   *  customer has picked a delivery city. */
+  zones?: ZoneForMatch[];
   children: React.ReactNode;
 }) {
   const [state, setState] = useState<CartState>({ lines: [], method: "delivery" });
   const [hydrated, setHydrated] = useState(false);
+  // The customer's chosen delivery city (localStorage). Re-read on the
+  // same-tab change event so the cart's fee/minimum update live.
+  const [deliveryCity, setDeliveryCity] = useState<string | null>(null);
+  useEffect(() => {
+    const sync = () => {
+      const choice = readDeliveryChoice(tenant.slug);
+      setDeliveryCity(choice?.kind === "delivery" ? choice.city : null);
+    };
+    sync();
+    window.addEventListener(DELIVERY_CHOICE_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(DELIVERY_CHOICE_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, [tenant.slug]);
 
   // Hydrate from localStorage - synchronous setState here is intentional
   // (one-time hydration on mount) and the lint rule does not apply.
@@ -141,14 +163,35 @@ export function CartProvider({
       return acc + unit * l.quantity;
     }, 0);
     const itemCount = state.lines.reduce((acc, l) => acc + l.quantity, 0);
-    const deliveryFee = branch
+
+    // Per-zone economics override the branch defaults once the customer is
+    // ordering delivery to a city that maps to an active zone. Mirrors the
+    // server (orders-create) so the displayed price equals the charge.
+    const matchedZone =
+      branch && state.method === "delivery"
+        ? matchZoneByCity(zones, deliveryCity)
+        : null;
+    const effectiveBranch: BranchInfo | null = branch
+      ? {
+          ...branch,
+          deliveryFee: matchedZone ? matchedZone.deliveryFee : branch.deliveryFee,
+          minOrder:
+            matchedZone && matchedZone.minOrder > 0 ? matchedZone.minOrder : branch.minOrder,
+          freeDeliveryMinOrder:
+            matchedZone && matchedZone.freeDeliveryAbove != null && matchedZone.freeDeliveryAbove > 0
+              ? matchedZone.freeDeliveryAbove
+              : branch.freeDeliveryMinOrder,
+        }
+      : null;
+
+    const deliveryFee = effectiveBranch
       ? computeDeliveryFee({
           method: state.method,
-          baseFee: branch.deliveryFee,
+          baseFee: effectiveBranch.deliveryFee,
           subtotal,
           itemCount,
-          freeMinOrder: branch.freeDeliveryMinOrder,
-          freeMinItems: branch.freeDeliveryMinItems,
+          freeMinOrder: effectiveBranch.freeDeliveryMinOrder,
+          freeMinItems: effectiveBranch.freeDeliveryMinItems,
         })
       : 0;
     return {
@@ -187,10 +230,10 @@ export function CartProvider({
       itemCount,
       deliveryFee,
       tenant,
-      branch,
+      branch: effectiveBranch,
       hydrated,
     };
-  }, [state, tenant, branch, hydrated]);
+  }, [state, tenant, branch, zones, deliveryCity, hydrated]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

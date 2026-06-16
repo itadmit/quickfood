@@ -14,6 +14,8 @@ const CreateOrderSchema = z.object({
   tenant_slug: z.string().min(1),
   method: z.enum(["delivery", "pickup"]),
   address_id: z.string().uuid().optional(),
+  /** Chosen delivery city - resolves the per-zone fee/minimum on the server. */
+  delivery_city: z.string().max(60).optional(),
   delivery_notes: z.string().max(200).optional(),
   customer_notes: z.string().max(500).optional(),
   payment_method: z.enum(["card", "cash", "apple_pay", "google_pay", "bit"]).default("cash"),
@@ -98,6 +100,7 @@ export const POST = handler(async (req: Request) => {
       marketingConsent: body.marketing_consent,
       method: body.method,
       addressId: body.address_id ?? null,
+      deliveryCity: body.delivery_city ?? null,
       deliveryNotes: body.delivery_notes ?? null,
       customerNotes: body.customer_notes ?? null,
       paymentMethod: body.payment_method,

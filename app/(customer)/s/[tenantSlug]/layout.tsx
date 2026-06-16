@@ -129,6 +129,13 @@ export default async function CustomerLayout({
               }
             : null
         }
+        zones={(branch?.zones ?? []).map((z) => ({
+          name: z.name,
+          cities: z.cities,
+          deliveryFee: z.deliveryFee,
+          minOrder: z.minOrder,
+          freeDeliveryAbove: z.freeDeliveryAbove,
+        }))}
       >
         <MenuSearchProvider>
           {/* Mobile = phone-sized column with shadow (max-w-md).

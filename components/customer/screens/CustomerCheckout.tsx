@@ -367,6 +367,7 @@ export function CustomerCheckout({
         body: JSON.stringify({
           tenant_slug: tenantSlug,
           method,
+          delivery_city: method === "delivery" ? city || undefined : undefined,
           payment_method: paymentMethod,
           tip,
           cutlery_count: cutleryCount,

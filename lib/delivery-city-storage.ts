@@ -16,6 +16,11 @@
 const KEY_PREFIX = "qf:delivery-city:";
 const PICKUP_SENTINEL = "__pickup__";
 
+/** Same-tab notification that the delivery choice changed (the native
+ *  `storage` event only fires in OTHER tabs). Listeners recompute zone-based
+ *  pricing. */
+export const DELIVERY_CHOICE_EVENT = "qf:delivery-choice-changed";
+
 function key(tenantSlug: string) {
   return `${KEY_PREFIX}${tenantSlug}`;
 }
@@ -46,6 +51,11 @@ export function writeDeliveryChoice(tenantSlug: string, choice: DeliveryChoice):
     }
     const value = choice.kind === "pickup" ? PICKUP_SENTINEL : choice.city;
     window.localStorage.setItem(key(tenantSlug), value);
+  } catch {
+    /* ignore */
+  }
+  try {
+    window.dispatchEvent(new Event(DELIVERY_CHOICE_EVENT));
   } catch {
     /* ignore */
   }

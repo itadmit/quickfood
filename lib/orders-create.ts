@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db/client";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
 import { isItemVisibleNow } from "@/lib/menu-availability";
 import { computeDeliveryFee } from "@/lib/delivery-fee";
+import { matchZoneByCity } from "@/lib/delivery-zone-match";
 import { sendTenantPush } from "@/lib/merchant/push";
 import { sendOrderConfirmedEmail } from "@/lib/orders/notify-customer";
 import { priceGroupOptions } from "@/lib/option-pricing";
@@ -42,6 +43,10 @@ export interface CreateOrderInput {
   marketingConsent?: boolean;
   method: "delivery" | "pickup";
   addressId?: string | null;
+  /** Customer's chosen delivery city - matched against the branch's active
+   *  zones to apply per-zone fee / minimum / free-delivery. Falls back to
+   *  branch-level values when absent or no zone matches. */
+  deliveryCity?: string | null;
   deliveryNotes?: string | null;
   customerNotes?: string | null;
   paymentMethod: "cash" | "card" | "apple_pay" | "google_pay" | "bit";
@@ -97,7 +102,13 @@ export class CartValidationError extends Error {
 export async function createOrder(input: CreateOrderInput): Promise<CreateOrderResult> {
   const tenant = await prisma.tenant.findUnique({
     where: { slug: input.tenantSlug },
-    include: { branches: { where: { isPrimary: true }, take: 1 } },
+    include: {
+      branches: {
+        where: { isPrimary: true },
+        take: 1,
+        include: { zones: { where: { active: true } } },
+      },
+    },
   });
   if (!tenant) throw new CartValidationError("tenant_not_found");
   if (tenant.status !== "active") throw new CartValidationError("tenant_inactive");
@@ -250,16 +261,31 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     });
   }
 
-  if (!input.kiosk && subtotal < branch.minOrder) {
+  // Per-zone delivery economics: when the order's city resolves to an active
+  // zone, that zone's fee / minimum / free-delivery threshold override the
+  // branch defaults. No match (or no city) keeps the branch-level behaviour.
+  const matchedZone =
+    input.method === "delivery"
+      ? matchZoneByCity(branch.zones, input.deliveryCity)
+      : null;
+  const effectiveMinOrder =
+    matchedZone && matchedZone.minOrder > 0 ? matchedZone.minOrder : branch.minOrder;
+  const effectiveDeliveryFee = matchedZone ? matchedZone.deliveryFee : branch.deliveryFee;
+  const effectiveFreeMinOrder =
+    matchedZone && matchedZone.freeDeliveryAbove != null && matchedZone.freeDeliveryAbove > 0
+      ? matchedZone.freeDeliveryAbove
+      : branch.freeDeliveryMinOrder;
+
+  if (!input.kiosk && subtotal < effectiveMinOrder) {
     throw new CartValidationError("min_order_not_met");
   }
 
   const deliveryFee = computeDeliveryFee({
     method: input.method,
-    baseFee: branch.deliveryFee,
+    baseFee: effectiveDeliveryFee,
     subtotal,
     itemCount: input.lines.reduce((n, l) => n + l.quantity, 0),
-    freeMinOrder: branch.freeDeliveryMinOrder,
+    freeMinOrder: effectiveFreeMinOrder,
     freeMinItems: branch.freeDeliveryMinItems,
   });
   const serviceFee = branch.serviceFee;
