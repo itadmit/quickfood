@@ -256,7 +256,7 @@ export function ImageUploader({
                 setDeleteError(null);
                 setConfirmIdx(idx);
               }}
-              className="absolute top-1.5 inset-e-1.5 w-6 h-6 rounded-full grid place-items-center bg-qf-tomato text-white shadow-md ring-2 ring-white/80 hover:scale-110 transition"
+              className="absolute top-1.5 inset-e-1.5 w-6 h-6 rounded-full grid place-items-center bg-qf-tomato text-white border-2 border-black shadow-[0_2px_0_#000] hover:scale-110 transition"
               aria-label="מחק תמונה"
               title="מחק תמונה"
             >
