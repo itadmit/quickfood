@@ -36,9 +36,9 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "QuickFood + Wolt - כל ההזמנות במסך אחד | אינטגרציה רשמית עם Wolt",
+  title: "QuickFood + Wolt - כל ההזמנות במסך אחד | חיבור רשמי לוולט",
   description:
-    "QuickFood מאחדת את ההזמנות מוולט, מהאתר שלך ומכל ערוץ אחר למסך ניהול אחד ולמסך מטבח אחד. הזמנת וולט נכנסת ישר לקאנבן שלך, אתה מאשר - והסטטוס חוזר לוולט אוטומטית. סוף לקפיצה בין טאבלטים.",
+    "QuickFood מאחדת את ההזמנות מוולט, מהאתר שלך ומכל ערוץ אחר למסך אחד ולמטבח אחד. הזמנת וולט נכנסת ישר ללוח ההזמנות שלך, ווולט מתעדכן לבד. סוף לקפיצה בין טאבלטים.",
   keywords: [
     "אינטגרציה עם וולט",
     "ניהול הזמנות וולט",
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     siteName: "QuickFood",
     title: "QuickFood + Wolt - כל ההזמנות במסך אחד",
     description:
-      "הזמנות וולט נכנסות ישר לקאנבן ולמסך המטבח שלך, לצד ההזמנות מהאתר שלך. אתה מאשר - והסטטוס חוזר לוולט. מסך אחד לכל הערוצים.",
+      "הזמנות וולט נכנסות ישר ללוח ההזמנות ולמטבח שלך, לצד ההזמנות מהאתר שלך. ווולט מתעדכן לבד. מסך אחד לכל הערוצים.",
   },
 };
 
@@ -156,7 +156,7 @@ function FlowDiagram() {
     { Icon: ShoppingBag, title: "הזמנה מ-Wolt", sub: "לקוח מזמין בוולט", accent: true },
     { Icon: LayoutGrid, title: "הלוח שלך", sub: "נכנסת ללוח ההזמנות אוטומטית", split: true },
     { Icon: ChefHat, title: "המטבח", sub: "יוצאת להכנה כמו כל הזמנה" },
-    { Icon: RefreshCw, title: "סטטוס חוזר ל-Wolt", sub: "אישור ומוכן מסונכרנים" },
+    { Icon: RefreshCw, title: "וולט מתעדכן לבד", sub: "הלקוח של וולט מעודכן בזמן אמת", accent: true },
   ];
   const iconBg = (n: { accent?: boolean; split?: boolean }) =>
     n.split
@@ -307,7 +307,7 @@ export default function WoltLandingPage() {
         <div className={styles.container} style={{ textAlign: "center" }}>
           <div className={styles.eyebrow}>
             <span className={styles.eyebrowDot}>בקרוב</span>
-            אינטגרציה רשמית עם Wolt
+            חיבור רשמי לוולט
           </div>
           <h1 className={styles.headline}>
             <span className={styles.stack}>הזמנות מוולט.</span>
@@ -317,9 +317,9 @@ export default function WoltLandingPage() {
             </span>
           </h1>
           <p className={styles.headlineSmall} style={{ marginInline: "auto" }}>
-            QuickFood מתחברת ישירות ל-Wolt ומושכת את ההזמנות שלך פנימה - אל אותו לוח ניהול
-            ואל אותו מסך מטבח שבהם אתה כבר עובד. ההזמנה מוולט נוחתת אצלך בקליק, אתה מאשר, והסטטוס
-            חוזר לוולט אוטומטית. בלי טאבלט נפרד, בלי לקפוץ בין מסכים, בלי להקליד הזמנות מחדש.
+            ההזמנות מוולט נכנסות ישר למסך שאתה כבר עובד איתו - יחד עם ההזמנות מהאתר שלך.
+            רואים הכל במקום אחד, המטבח מקבל הכל אוטומטית, ובוולט הכל מתעדכן לבד. בלי טאבלט
+            נפרד, בלי לקפוץ בין מסכים, בלי להקליד הזמנות מחדש.
           </p>
 
           <div className={styles.heroCta} style={{ justifyContent: "center" }}>
@@ -336,16 +336,16 @@ export default function WoltLandingPage() {
 
           <div className={styles.heroStats}>
             <div className={styles.heroStat}>
-              <div className={styles.heroStatN}>מסך 1</div>
-              <div className={styles.heroStatL}>כל הערוצים, לוח ומטבח אחד.</div>
+              <div className={styles.heroStatN}>מסך אחד</div>
+              <div className={styles.heroStatL}>וולט והאתר שלך ביחד.</div>
             </div>
             <div className={styles.heroStat}>
               <div className={styles.heroStatN}>זמן אמת</div>
               <div className={styles.heroStatL}>הזמנות וולט נכנסות מיד למסך.</div>
             </div>
             <div className={styles.heroStat}>
-              <div className={styles.heroStatN}>סנכרון</div>
-              <div className={styles.heroStatL}>סטטוס חוזר לוולט אוטומטית.</div>
+              <div className={styles.heroStatN}>אוטומטי</div>
+              <div className={styles.heroStatL}>וולט מתעדכן לבד, בלי טאבלט.</div>
             </div>
           </div>
         </div>
@@ -391,13 +391,13 @@ export default function WoltLandingPage() {
               n="2"
               Icon={LayoutGrid}
               title="ההזמנה נכנסת ישר ללוח שלך."
-              body="כל הזמנה מוולט נוחתת אוטומטית בקאנבן ובמסך המטבח - לצד ההזמנות מהאתר שלך. אותו זרם עבודה, אותם פריטים, אותו צוות."
+              body="כל הזמנה מוולט מופיעה לבד בלוח ההזמנות ובמטבח, לצד ההזמנות מהאתר שלך. אותם פריטים, אותו צוות, בלי להקליד כלום."
             />
             <StepCard
               n="3"
               Icon={RefreshCw}
-              title="אתה מאשר - והסטטוס חוזר לוולט."
-              body="מאשר, 'בהכנה', 'מוכן' - הכל מתעדכן בוולט בזמן אמת מאותו מסך. הלקוח בוולט מקבל את העדכון, אתה לא נוגע בטאבלט."
+              title="אתה מכין כרגיל - וולט מתעדכן לבד."
+              body="מקבל את ההזמנה ומכין אותה כמו תמיד. וולט מתעדכן מעצמו, הלקוח שם רואה מה קורה, ואתה לא נוגע בטאבלט."
             />
           </div>
         </div>
@@ -416,7 +416,7 @@ export default function WoltLandingPage() {
               layout="decor-end"
               Icon={LayoutGrid}
               tag="לוח מאוחד"
-              heading="כל ההזמנות בקאנבן אחד - וולט והאתר שלך יחד."
+              heading="כל ההזמנות בלוח אחד - וולט והאתר שלך יחד."
               body="הזמנות וולט מסומנות בבירור על אותו לוח שאתה כבר מכיר. בלי מסך נפרד, בלי להחליט כל פעם איפה להסתכל."
             />
             <FeatureCard
@@ -431,25 +431,25 @@ export default function WoltLandingPage() {
               tone="peach"
               layout="decor-end"
               Icon={Bell}
-              tag="סנכרון סטטוס"
-              heading="אישור ומוכן - חוזרים לוולט לבד."
-              body="כשאתה מקדם הזמנה אצלנו, וולט מתעדכנת אוטומטית. בלי כפל עבודה ובלי לזכור לעדכן בשני מקומות."
+              tag="עדכון אוטומטי"
+              heading="וולט מתעדכן לבד, בלי לגעת בטאבלט."
+              body="אתה עובד רק במערכת אחת, ווולט מתעדכן מעצמו. בלי לעדכן ידנית בשני מקומות, בלי לשכוח."
             />
             <FeatureCard
               tone="lilac"
               layout="decor-start"
               Icon={Layers}
               tag="תפריט אחד"
-              heading="הפריטים מתחברים לתפריט שכבר יש לך."
-              body="הזמנת וולט מתחברת לפריטים הקיימים במערכת שלך, כך שדוחות, מלאי וניתוחים מדברים שפה אחת על פני כל הערוצים."
+              heading="מתחבר לתפריט שכבר יש לך."
+              body="הזמנת וולט מתחברת לפריטים שכבר במערכת שלך, כך שהדוחות והמלאי מדויקים על כל ההזמנות - מכל הערוצים."
             />
             <FeatureCard
               tone="sand"
               layout="decor-end"
               Icon={BarChart3}
-              tag="אנליטיקה חוצת-ערוצים"
+              tag="דוחות במקום אחד"
               heading="כמה מגיע מוולט, כמה ישירות - במבט אחד."
-              body="הכנסות, הזמנות ושעות שיא לכל ערוץ בנפרד ובמצטבר. סוף-סוף תמונה אחת אמיתית של העסק, לא טבלאות נפרדות."
+              body="הכנסות, מספר הזמנות ושעות העומס - לכל ערוץ בנפרד ולכולם יחד. תמונה אחת אמיתית של העסק, בלי לאסוף נתונים מכמה מקומות."
             />
             <FeatureCard
               tone="peach"
@@ -457,7 +457,7 @@ export default function WoltLandingPage() {
               Icon={Store}
               tag="האתר שלך במרכז"
               heading="וולט מצטרף. האתר שלך נשאר הבית."
-              body="הקבועים מזמינים ישירות מהאתר שלך בלי עמלת מרקטפלייס, והזמנות וולט פשוט זורמות לאותו מקום. גם וגם, בלי להתפשר."
+              body="הקבועים שלך מזמינים ישירות מהאתר שלך - בלי עמלות גבוהות, והזמנות וולט פשוט מגיעות לאותו מקום. גם וגם, בלי להתפשר."
             />
           </div>
 
@@ -466,8 +466,8 @@ export default function WoltLandingPage() {
             <MiniCell tag="קבלות" title="הדפסה אוטומטית למטבח" body="הזמנת וולט יוצאת למדפסת או למסך המטבח בדיוק כמו הזמנה מהאתר שלך." />
             <MiniCell tag="היסטוריה" title="הכל בהיסטוריה אחת" body="חיפוש, סינון ודוחות על כל ההזמנות - וולט והאתר - מאותו מסך." />
             <MiniCell tag="ללא הקלדה" title="סוף להקלדה ידנית" body="ההזמנה נכנסת מלאה ומדויקת - פריטים, תוספות והערות - בלי להקליד מחדש." />
-            <MiniCell tag="אמין" title="חיבור רשמי ומאובטח" body="אינטגרציה רשמית מול וולט, בלי סיסמאות משותפות ובלי פתרונות עקיפים." />
-            <MiniCell tag="ערוצים נוספים" title="בנוי לעוד ערוצים" body="המנוע נבנה לאחד גם ערוצי משלוח נוספים בעתיד - אותו לוח, אותו מטבח." />
+            <MiniCell tag="אמין" title="חיבור רשמי ומאובטח" body="חיבור רשמי מול וולט, בלי סיסמאות משותפות ובלי פתרונות עוקפים." />
+            <MiniCell tag="ערוצים נוספים" title="בנוי לעוד ערוצים" body="בעתיד נחבר גם ערוצי משלוח נוספים - אותו לוח, אותו מטבח." />
           </div>
         </div>
       </section>
