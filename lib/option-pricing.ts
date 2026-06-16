@@ -3,6 +3,9 @@ export type OptionPlacement = "left" | "right" | "full";
 export interface PricedOption {
   id: string;
   priceDelta: number;
+  // Explicit price when placed on a single half. Used only when the group's
+  // customHalfPrice is on. null/undefined falls back to priceDelta.
+  halfPriceDelta?: number | null;
   half?: OptionPlacement | null;
 }
 
@@ -11,6 +14,9 @@ export interface GroupPricingConfig {
   bundleCount?: number;
   bundlePrice?: number;
   splitPrice?: boolean;
+  // Third half-pricing mode: half placements charge the option's explicit
+  // halfPriceDelta (X) instead of deriving from priceDelta. Wins over splitPrice.
+  customHalfPrice?: boolean;
 }
 
 // Single source of truth for per-option add-on pricing inside one group.
@@ -24,9 +30,14 @@ export interface GroupPricingConfig {
 //      delta). Picks beyond the bundle pay full price. No repeat / no stacking.
 //      includedFree is ignored while a bundle is active.
 //   2. Otherwise includedFree: the cheapest `includedFree` paid picks are free.
-//   3. splitPrice only matters for half/half placements outside the bundle:
-//      a non-"full" placement halves that pick's charge. Bundle picks are
-//      charged via the cap and are never additionally halved.
+//   3. Half-placement pricing (a non-"full" placement) applies outside the
+//      bundle, in this precedence:
+//        - customHalfPrice on  -> charge the option's halfPriceDelta (X),
+//          falling back to priceDelta when it's null; a freed pick (base 0)
+//          stays free.
+//        - else splitPrice on  -> halve that pick's charge.
+//        - else                -> full charge (no half discount).
+//      Bundle picks are charged via the cap and are never additionally halved.
 export function priceGroupOptions(
   picks: PricedOption[],
   cfg: GroupPricingConfig,
@@ -35,9 +46,13 @@ export function priceGroupOptions(
   const bundleCount = cfg.bundleCount ?? 0;
   const bundlePrice = cfg.bundlePrice ?? 0;
   const split = cfg.splitPrice ?? false;
+  const customHalf = cfg.customHalfPrice ?? false;
 
-  const withHalf = (p: PricedOption, base: number) =>
-    p.half && p.half !== "full" && split ? base / 2 : base;
+  const withHalf = (p: PricedOption, base: number) => {
+    if (!p.half || p.half === "full") return base;
+    if (customHalf) return base === 0 ? 0 : p.halfPriceDelta ?? p.priceDelta;
+    return split ? base / 2 : base;
+  };
 
   const out = new Map<string, number>();
   const paid = picks

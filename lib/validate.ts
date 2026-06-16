@@ -136,6 +136,7 @@ export const ItemSizeInputSchema = z.object({
 export const ItemOptionInputSchema = z.object({
   name: z.string().min(1).max(60),
   price_delta: z.number().int().default(0),
+  half_price_delta: z.number().int().min(0).nullable().optional(),
   is_default: z.boolean().default(false),
   available: z.boolean().default(true),
   image_url: z.string().url().nullable().optional(),
@@ -202,6 +203,7 @@ export const ItemOptionGroupInputSchema = z
     help_text: z.string().max(200).nullable().optional(),
     allow_half: z.boolean().default(false),
     split_price: z.boolean().default(false),
+    custom_half_price: z.boolean().default(false),
     bundle_count: z.number().int().min(0).default(0),
     bundle_price: z.number().int().min(0).default(0),
     max_per_side: z.number().int().min(1).nullable().optional(),
@@ -222,6 +224,7 @@ export const ModifierSetInputSchema = z
     help_text: z.string().max(200).nullable().optional(),
     allow_half: z.boolean().default(false),
     split_price: z.boolean().default(false),
+    custom_half_price: z.boolean().default(false),
     bundle_count: z.number().int().min(0).default(0),
     bundle_price: z.number().int().min(0).default(0),
     max_per_side: z.number().int().min(1).nullable().optional(),

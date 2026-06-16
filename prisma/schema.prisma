@@ -718,6 +718,11 @@ model ItemOptionGroup {
   // a half or the whole pie ("אין דבר כזה 2.5"). true = legacy behaviour
   // where a half placement charges half the priceDelta.
   splitPrice    Boolean         @default(false) @map("split_price")
+  // Third half-pricing mode: when true, a half placement charges the option's
+  // explicit `halfPriceDelta` (X) instead of deriving from priceDelta (Y).
+  // Wins over splitPrice. The 3-way editor maps: full=(both false),
+  // half=(splitPrice), custom=(customHalfPrice).
+  customHalfPrice Boolean       @default(false) @map("custom_half_price")
   // Bundle deal: the first `bundleCount` paid selections together cost a flat
   // `bundlePrice` (shekels); selections beyond that pay full price. 0 = off.
   // E.g. bundleCount=2, bundlePrice=5 → "2 תוספות ב-5₪". Independent of
@@ -742,6 +747,10 @@ model ItemOption {
   group      ItemOptionGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
   name       String
   priceDelta Int             @default(0) @map("price_delta")
+  // Explicit price (shekels) when this option is placed on a single half, used
+  // only when the parent group has customHalfPrice=true. NULL falls back to
+  // priceDelta.
+  halfPriceDelta Int?         @map("half_price_delta")
   isDefault  Boolean         @default(false) @map("is_default")
   available  Boolean         @default(true)
   imageUrl   String?         @map("image_url")
@@ -776,6 +785,9 @@ model ModifierSet {
   // Catalog default for splitPrice on attached groups. See
   // ItemOptionGroup.splitPrice.
   splitPrice   Boolean         @default(false) @map("split_price")
+  // Catalog default for customHalfPrice on attached groups. See
+  // ItemOptionGroup.customHalfPrice.
+  customHalfPrice Boolean      @default(false) @map("custom_half_price")
   // Catalog default for the bundle deal on attached groups. See
   // ItemOptionGroup.bundleCount / bundlePrice.
   bundleCount  Int             @default(0) @map("bundle_count")
@@ -801,6 +813,9 @@ model ModifierSetOption {
   set        ModifierSet @relation(fields: [setId], references: [id], onDelete: Cascade)
   name       String
   priceDelta Int         @default(0) @map("price_delta")
+  // Explicit half-placement price (shekels) when the parent set has
+  // customHalfPrice=true. NULL falls back to priceDelta. See ItemOption.
+  halfPriceDelta Int?     @map("half_price_delta")
   isDefault  Boolean     @default(false) @map("is_default")
   available  Boolean     @default(true)
   imageUrl   String?     @map("image_url")
@@ -1779,6 +1794,11 @@ model WoltImport {
   rawVenue           Json?            @map("raw_venue")
   createdAt          DateTime         @default(now()) @map("created_at")
   committedAt        DateTime?        @map("committed_at")
+  // Audit trail: who triggered the commit and which version of the Wolt
+  // import terms was in effect at that moment. Stamped server-side so it
+  // can't be spoofed by the client - evidence the merchant requested it.
+  importedByUserId   String?          @map("imported_by_user_id")
+  termsVersion       String?          @map("terms_version")
 
   @@index([tenantId, createdAt(sort: Desc)])
   @@map("wolt_imports")

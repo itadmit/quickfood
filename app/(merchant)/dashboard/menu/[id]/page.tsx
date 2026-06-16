@@ -33,7 +33,7 @@ export default async function ItemEditPage({
       include: {
         options: {
           orderBy: { position: "asc" },
-          select: { id: true, name: true, priceDelta: true },
+          select: { id: true, name: true, priceDelta: true, halfPriceDelta: true },
         },
       },
     }),
@@ -50,11 +50,12 @@ export default async function ItemEditPage({
     helpText: s.helpText,
     allowHalf: s.allowHalf,
     splitPrice: s.splitPrice,
+    customHalfPrice: s.customHalfPrice,
     bundleCount: s.bundleCount,
     bundlePrice: s.bundlePrice,
     maxPerSide: s.maxPerSide,
     optionsCount: s.options.length,
-    options: s.options.map((o) => ({ name: o.name, priceDelta: o.priceDelta })),
+    options: s.options.map((o) => ({ name: o.name, priceDelta: o.priceDelta, halfPriceDelta: o.halfPriceDelta })),
   }));
 
   if (isNew) {
@@ -119,6 +120,7 @@ export default async function ItemEditPage({
           helpText: g.helpText,
           allowHalf: g.allowHalf,
           splitPrice: g.splitPrice,
+          customHalfPrice: g.customHalfPrice,
           bundleCount: g.bundleCount,
           bundlePrice: g.bundlePrice,
           maxPerSide: g.maxPerSide,
@@ -126,6 +128,7 @@ export default async function ItemEditPage({
           options: g.options.map((o) => ({
             name: o.name,
             priceDelta: o.priceDelta,
+            halfPriceDelta: o.halfPriceDelta,
             isDefault: o.isDefault,
             available: o.available,
             imageUrl: o.imageUrl,

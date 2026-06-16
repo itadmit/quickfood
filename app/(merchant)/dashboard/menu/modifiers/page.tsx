@@ -33,6 +33,7 @@ export default async function ModifiersPage() {
         helpText: s.helpText,
         allowHalf: s.allowHalf,
         splitPrice: s.splitPrice,
+        customHalfPrice: s.customHalfPrice,
         bundleCount: s.bundleCount,
         bundlePrice: s.bundlePrice,
         maxPerSide: s.maxPerSide,
@@ -41,6 +42,7 @@ export default async function ModifiersPage() {
         options: s.options.map((o) => ({
           name: o.name,
           priceDelta: o.priceDelta,
+          halfPriceDelta: o.halfPriceDelta,
           isDefault: o.isDefault,
           available: o.available,
           imageUrl: o.imageUrl,

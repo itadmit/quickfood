@@ -179,6 +179,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       const effectiveMax = fromSet?.maxSelect ?? group.maxSelect;
       const effectiveFree = fromSet?.includedFree ?? group.includedFree;
       const effectiveSplit = group.splitPrice || (fromSet?.splitPrice ?? false);
+      const effectiveCustomHalf = group.customHalfPrice || (fromSet?.customHalfPrice ?? false);
       const ownBundle = group.bundleCount > 0;
       const effectiveBundleCount = ownBundle ? group.bundleCount : (fromSet?.bundleCount ?? 0);
       const effectiveBundlePrice = ownBundle ? group.bundlePrice : (fromSet?.bundlePrice ?? 0);
@@ -203,6 +204,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         picksInGroup.map((o) => ({
           id: o.id,
           priceDelta: o.priceDelta,
+          halfPriceDelta: o.halfPriceDelta,
           half: placements[o.id] ?? null,
         })),
         {
@@ -210,6 +212,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
           bundleCount: effectiveBundleCount,
           bundlePrice: effectiveBundlePrice,
           splitPrice: effectiveSplit,
+          customHalfPrice: effectiveCustomHalf,
         },
       );
 

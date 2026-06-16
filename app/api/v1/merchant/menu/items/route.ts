@@ -147,6 +147,12 @@ export const POST = handler(async (req: Request) => {
           maxSelect: g.max_select,
           includedFree: g.included_free,
           helpText: g.help_text ?? null,
+          allowHalf: g.allow_half,
+          splitPrice: g.split_price,
+          customHalfPrice: g.custom_half_price,
+          bundleCount: g.bundle_count,
+          bundlePrice: g.bundle_price,
+          maxPerSide: g.max_per_side ?? null,
           templateSetId: g.template_set_id ?? null,
           position: gi,
           options: {

@@ -14,6 +14,7 @@ import { cn } from "@/lib/cn";
 interface SetOption {
   name: string;
   priceDelta: number;
+  halfPriceDelta: number | null;
   isDefault: boolean;
   available: boolean;
   imageUrl: string | null;
@@ -30,6 +31,7 @@ interface ModifierSet {
   helpText: string | null;
   allowHalf: boolean;
   splitPrice: boolean;
+  customHalfPrice: boolean;
   bundleCount: number;
   bundlePrice: number;
   maxPerSide: number | null;
@@ -56,6 +58,7 @@ const EMPTY: NewModifierSet = {
   helpText: null,
   allowHalf: false,
   splitPrice: false,
+  customHalfPrice: false,
   bundleCount: 0,
   bundlePrice: 0,
   maxPerSide: null,
@@ -97,6 +100,7 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
       help_text: editing.helpText,
       allow_half: editing.allowHalf,
       split_price: editing.splitPrice,
+      custom_half_price: editing.customHalfPrice,
       bundle_count: editing.bundleCount,
       bundle_price: editing.bundlePrice,
       max_per_side: editing.maxPerSide,
@@ -104,6 +108,7 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
       options: editing.options.map((o) => ({
         name: o.name,
         price_delta: o.priceDelta,
+        half_price_delta: editing.customHalfPrice ? (o.halfPriceDelta ?? null) : null,
         is_default: o.isDefault,
         available: o.available,
         image_url: o.imageUrl,
@@ -135,6 +140,7 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
       helpText: editing.helpText,
       allowHalf: editing.allowHalf,
       splitPrice: editing.splitPrice,
+      customHalfPrice: editing.customHalfPrice,
       bundleCount: editing.bundleCount,
       bundlePrice: editing.bundlePrice,
       maxPerSide: editing.maxPerSide,
@@ -417,6 +423,7 @@ function SetEditor({
                   includedFree: 0,
                   allowHalf: false,
                   splitPrice: false,
+                  customHalfPrice: false,
                   bundleCount: 0,
                   bundlePrice: 0,
                   maxPerSide: null,
@@ -443,7 +450,7 @@ function SetEditor({
       </label>
 
       {isMulti && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <label className="flex flex-col gap-1 text-xs">
             <span className="text-qf-mute">מינ׳ בחירות</span>
             <input
@@ -468,10 +475,14 @@ function SetEditor({
               className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
             />
           </label>
-          <label className="flex flex-col gap-1 text-xs">
-            <span className="text-qf-mute" title="כמה תוספות כלולות במחיר לפני שמחייבים">
-              כלולות חינם
-            </span>
+        </div>
+      )}
+
+      {isMulti && (
+        <div className="rounded-xl bg-qf-line-soft/40 border border-qf-line-dash p-3 space-y-2.5 text-sm">
+          <div className="font-semibold">תמחור והנחות</div>
+          <label className="flex items-center justify-between gap-2">
+            <span className="text-qf-mute text-xs">כלולות חינם · N הראשונות חינם, 0 = הכל בתשלום</span>
             <input
               type="number"
               min={0}
@@ -479,50 +490,58 @@ function SetEditor({
               onChange={(e) =>
                 onChange({ ...set, includedFree: Math.max(0, parseInt(e.target.value, 10) || 0) })
               }
-              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
+              className="w-20 px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum shrink-0"
             />
           </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={set.bundleCount > 0}
+              onChange={(e) =>
+                onChange({
+                  ...set,
+                  bundleCount: e.target.checked ? set.bundleCount || 2 : 0,
+                })
+              }
+            />
+            <span>מבצע כמות</span>
+          </label>
+          {set.bundleCount > 0 && (
+            <div className="ps-6 space-y-1.5 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-qf-mute">כמות</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={set.bundleCount}
+                  onChange={(e) =>
+                    onChange({ ...set, bundleCount: Math.max(1, parseInt(e.target.value, 10) || 1) })
+                  }
+                  className="w-16 px-2 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
+                />
+                <span className="text-qf-mute">במחיר</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={set.bundlePrice || ""}
+                  onChange={(e) =>
+                    onChange({ ...set, bundlePrice: Math.max(0, parseInt(e.target.value, 10) || 0) })
+                  }
+                  className="w-16 px-2 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
+                />
+                <span className="text-qf-mute">₪</span>
+              </div>
+              <div className="text-qf-mute leading-tight">
+                {set.bundleCount} תוספות יחד ב-{set.bundlePrice}₪ · גובר על ״כלולות חינם״
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {isMulti && (
-        <div className="rounded-xl bg-qf-line-soft/40 border border-qf-line-dash p-3 space-y-2">
-          <div className="text-xs text-qf-mute leading-tight">
-            מבצע (לא חובה): X הבחירות הראשונות יחד עולות Y₪, מעבר לזה מחיר רגיל. למשל 2 ב-5₪. גובר על ״כלולות חינם״.
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <label className="flex flex-col gap-1">
-              <span className="text-qf-mute">כמות במבצע (X)</span>
-              <input
-                type="number"
-                min={0}
-                placeholder="0 = ללא מבצע"
-                value={set.bundleCount || ""}
-                onChange={(e) =>
-                  onChange({ ...set, bundleCount: Math.max(0, parseInt(e.target.value, 10) || 0) })
-                }
-                className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-qf-mute">מחיר המבצע (Y, ₪)</span>
-              <input
-                type="number"
-                min={0}
-                value={set.bundlePrice || ""}
-                onChange={(e) =>
-                  onChange({ ...set, bundlePrice: Math.max(0, parseInt(e.target.value, 10) || 0) })
-                }
-                className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
-              />
-            </label>
-          </div>
-        </div>
-      )}
-
-      {isMulti && (
-        <div className="rounded-xl bg-qf-line-soft/40 border border-qf-line-dash p-3 space-y-2">
-          <label className="flex items-center gap-2 text-sm">
+        <div className="rounded-xl bg-qf-line-soft/40 border border-qf-line-dash p-3 space-y-2 text-sm">
+          <label className="flex items-center gap-2">
             <input
               type="checkbox"
               checked={set.allowHalf}
@@ -531,41 +550,61 @@ function SetEditor({
                   ...set,
                   allowHalf: e.target.checked,
                   maxPerSide: e.target.checked ? set.maxPerSide : null,
+                  splitPrice: e.target.checked ? set.splitPrice : false,
+                  customHalfPrice: e.target.checked ? set.customHalfPrice : false,
                 })
               }
             />
-            <span>חצי/חצי - לקוח יכול לבחור כל תוספת לחצי בלבד (פיצה ועוד)</span>
+            <span>אפשר תוספת על חצי (פיצה ועוד)</span>
           </label>
           {set.allowHalf && (
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={set.splitPrice}
-                onChange={(e) =>
-                  onChange({ ...set, splitPrice: e.target.checked })
-                }
-              />
-              <span>חצי תוספת = חצי מחיר (אם כבוי, תוספת על חצי עולה מחיר מלא)</span>
-            </label>
-          )}
-          {set.allowHalf && (
-            <label className="flex flex-col gap-1 text-xs max-w-xs">
-              <span className="text-qf-mute" title="כמה תוספות מותר לבחור על כל חצי. 'שלם' נספרת בשני הצדדים. ריק = ללא הגבלה לפי צד.">
-                מקסימום תוספות לצד (אופציונלי)
-              </span>
-              <input
-                type="number"
-                min={1}
-                placeholder="ללא הגבלה לפי צד"
-                value={set.maxPerSide ?? ""}
-                onChange={(e) => {
-                  const raw = e.target.value.trim();
-                  const parsed = raw === "" ? null : Math.max(1, parseInt(raw, 10) || 1);
-                  onChange({ ...set, maxPerSide: parsed });
-                }}
-                className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum"
-              />
-            </label>
+            <div className="ps-6 space-y-2.5">
+              <div className="space-y-1 text-xs">
+                <div className="text-qf-mute">תמחור על חצי:</div>
+                {([
+                  ["full", "מחיר מלא", "חצי עולה כמו שלם"],
+                  ["half", "חצי מחיר", "חצי = 50% מהשלם"],
+                  ["custom", "מחיר מותאם", "שלם וחצי מחירים נפרדים לכל תוספת"],
+                ] as const).map(([mode, label, hint]) => {
+                  const current = set.customHalfPrice ? "custom" : set.splitPrice ? "half" : "full";
+                  return (
+                    <label key={mode} className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="half-mode"
+                        checked={current === mode}
+                        onChange={() =>
+                          onChange({
+                            ...set,
+                            splitPrice: mode === "half",
+                            customHalfPrice: mode === "custom",
+                          })
+                        }
+                      />
+                      <span className="font-medium">{label}</span>
+                      <span className="text-qf-mute">· {hint}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              <label className="flex items-center justify-between gap-2 text-xs">
+                <span className="text-qf-mute" title="כמה תוספות מותר לבחור על כל חצי. 'שלם' נספרת בשני הצדדים. ריק = ללא הגבלה לפי צד.">
+                  מקסימום תוספות לצד
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  placeholder="ללא הגבלה"
+                  value={set.maxPerSide ?? ""}
+                  onChange={(e) => {
+                    const raw = e.target.value.trim();
+                    const parsed = raw === "" ? null : Math.max(1, parseInt(raw, 10) || 1);
+                    onChange({ ...set, maxPerSide: parsed });
+                  }}
+                  className="w-24 px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum shrink-0"
+                />
+              </label>
+            </div>
           )}
         </div>
       )}
@@ -595,6 +634,7 @@ function SetEditor({
                   {
                     name: "אפשרות חדשה",
                     priceDelta: 0,
+                    halfPriceDelta: null,
                     isDefault: false,
                     available: true,
                     imageUrl: null,
@@ -663,8 +703,29 @@ function SetEditor({
                     })
                   }
                   className="w-16 px-2 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white tnum shrink-0"
-                  title="מחיר נוסף (₪)"
+                  title={set.customHalfPrice ? "מחיר שלם (₪)" : "מחיר נוסף (₪)"}
+                  placeholder={set.customHalfPrice ? "שלם" : undefined}
                 />
+                {set.customHalfPrice && (
+                  <input
+                    type="number"
+                    min={0}
+                    value={o.halfPriceDelta ?? ""}
+                    onChange={(e) => {
+                      const raw = e.target.value.trim();
+                      const parsed = raw === "" ? null : Math.max(0, parseInt(raw, 10) || 0);
+                      onChange({
+                        ...set,
+                        options: set.options.map((x, i) =>
+                          i === oi ? { ...x, halfPriceDelta: parsed } : x,
+                        ),
+                      });
+                    }}
+                    className="w-16 px-2 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white tnum shrink-0"
+                    title="מחיר על חצי (₪)"
+                    placeholder="חצי"
+                  />
+                )}
                 <label
                   className="text-xs inline-flex items-center justify-center w-6 h-8 shrink-0"
                   title="ברירת מחדל"

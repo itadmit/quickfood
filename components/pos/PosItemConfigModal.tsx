@@ -22,6 +22,7 @@ interface Option {
   id: string;
   name: string;
   priceDelta: number;
+  halfPriceDelta?: number | null;
   isDefault: boolean;
   imageUrl?: string | null;
 }
@@ -37,6 +38,7 @@ interface OptionGroup {
   helpText?: string | null;
   allowHalf?: boolean;
   splitPrice?: boolean;
+  customHalfPrice?: boolean;
   bundleCount?: number;
   bundlePrice?: number;
   maxPerSide?: number | null;
@@ -176,12 +178,12 @@ export function PosItemConfigModal({
       const gHalf = halfPicks[g.id] ?? {};
       return g.options
         .filter((o) => gHalf[o.id])
-        .map((o) => ({ id: o.id, priceDelta: o.priceDelta, half: gHalf[o.id] }));
+        .map((o) => ({ id: o.id, priceDelta: o.priceDelta, halfPriceDelta: o.halfPriceDelta, half: gHalf[o.id] }));
     }
     const selected = picks[g.id] ?? new Set<string>();
     return g.options
       .filter((o) => selected.has(o.id))
-      .map((o) => ({ id: o.id, priceDelta: o.priceDelta }));
+      .map((o) => ({ id: o.id, priceDelta: o.priceDelta, halfPriceDelta: o.halfPriceDelta }));
   }
 
   function groupPricingConfig(g: OptionGroup): GroupPricingConfig {
@@ -190,6 +192,7 @@ export function PosItemConfigModal({
       bundleCount: g.bundleCount ?? 0,
       bundlePrice: g.bundlePrice ?? 0,
       splitPrice: g.splitPrice ?? false,
+      customHalfPrice: g.customHalfPrice ?? false,
     };
   }
 
@@ -389,7 +392,11 @@ export function PosItemConfigModal({
                 <div className="space-y-1.5">
                   {g.options.map((o) => {
                     const placement = gHalf[o.id];
-                    const halfPrice = g.splitPrice ? o.priceDelta / 2 : o.priceDelta;
+                    const halfPrice = g.customHalfPrice
+                      ? (o.halfPriceDelta ?? o.priceDelta)
+                      : g.splitPrice
+                        ? o.priceDelta / 2
+                        : o.priceDelta;
                     const wouldExceed = (p: HalfPlacement) => {
                       if (cap == null) return false;
                       if (placement === p) return false;
@@ -414,7 +421,7 @@ export function PosItemConfigModal({
                           <div className="text-sm font-medium truncate">{o.name}</div>
                           {o.priceDelta > 0 && (
                             <div className="text-[11px] text-qf-mute tnum">
-                              {g.splitPrice
+                              {g.splitPrice || g.customHalfPrice
                                 ? `שלם +${formatPrice(o.priceDelta)} · חצי +${formatPrice(halfPrice)}`
                                 : `+${formatPrice(o.priceDelta)}`}
                             </div>

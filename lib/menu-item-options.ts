@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/client";
 interface InlineOption {
   name: string;
   priceDelta: number;
+  halfPriceDelta: number | null;
   isDefault: boolean;
   available: boolean;
   imageUrl: string | null;
@@ -11,6 +12,7 @@ interface InlineOption {
 interface IncomingOption {
   name: string;
   price_delta: number;
+  half_price_delta?: number | null;
   is_default: boolean;
   available: boolean;
   image_url?: string | null;
@@ -32,6 +34,7 @@ export async function resolveGroupOptions(
       g.options.map((o) => ({
         name: o.name,
         priceDelta: o.price_delta,
+        halfPriceDelta: o.half_price_delta ?? null,
         isDefault: o.is_default,
         available: o.available,
         imageUrl: o.image_url ?? null,
@@ -44,6 +47,7 @@ export async function resolveGroupOptions(
       setId: true,
       name: true,
       priceDelta: true,
+      halfPriceDelta: true,
       isDefault: true,
       available: true,
       imageUrl: true,
@@ -55,6 +59,7 @@ export async function resolveGroupOptions(
     bySet.get(r.setId)!.push({
       name: r.name,
       priceDelta: r.priceDelta,
+      halfPriceDelta: r.halfPriceDelta,
       isDefault: r.isDefault,
       available: r.available,
       imageUrl: r.imageUrl,
@@ -67,6 +72,7 @@ export async function resolveGroupOptions(
     return g.options.map((o) => ({
       name: o.name,
       priceDelta: o.price_delta,
+      halfPriceDelta: o.half_price_delta ?? null,
       isDefault: o.is_default,
       available: o.available,
       imageUrl: o.image_url ?? null,

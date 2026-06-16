@@ -178,6 +178,7 @@ export const POST = handler(
               position: set.position,
               allowHalf: set.allowHalf,
               splitPrice: set.splitPrice,
+              customHalfPrice: set.customHalfPrice,
               bundleCount: set.bundleCount,
               bundlePrice: set.bundlePrice,
               maxPerSide: set.maxPerSide,
@@ -187,6 +188,7 @@ export const POST = handler(
                 create: set.options.map((o) => ({
                   name: o.name,
                   priceDelta: o.priceDelta,
+                  halfPriceDelta: o.halfPriceDelta,
                   isDefault: o.isDefault,
                   available: o.available,
                   imageUrl: o.imageUrl,
@@ -268,6 +270,7 @@ export const POST = handler(
                   position: g.position,
                   allowHalf: g.allowHalf,
                   splitPrice: g.splitPrice,
+                  customHalfPrice: g.customHalfPrice,
                   bundleCount: g.bundleCount,
                   bundlePrice: g.bundlePrice,
                   maxPerSide: g.maxPerSide,
@@ -278,6 +281,7 @@ export const POST = handler(
                     create: g.options.map((o) => ({
                       name: o.name,
                       priceDelta: o.priceDelta,
+                      halfPriceDelta: o.halfPriceDelta,
                       isDefault: o.isDefault,
                       available: o.available,
                       imageUrl: o.imageUrl,

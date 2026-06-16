@@ -30,6 +30,7 @@ interface Size {
 interface Option {
   name: string;
   priceDelta: number;
+  halfPriceDelta: number | null;
   isDefault: boolean;
   available: boolean;
   imageUrl: string | null;
@@ -45,6 +46,7 @@ interface OptionGroup {
   helpText: string | null;
   allowHalf: boolean;
   splitPrice: boolean;
+  customHalfPrice: boolean;
   bundleCount: number;
   bundlePrice: number;
   maxPerSide: number | null;
@@ -63,11 +65,12 @@ export interface ModifierSetSummary {
   helpText: string | null;
   allowHalf: boolean;
   splitPrice: boolean;
+  customHalfPrice: boolean;
   bundleCount: number;
   bundlePrice: number;
   maxPerSide: number | null;
   optionsCount: number;
-  options?: { name: string; priceDelta: number }[];
+  options?: { name: string; priceDelta: number; halfPriceDelta?: number | null }[];
 }
 
 interface ItemData {
@@ -187,6 +190,7 @@ export function ItemEditor({
           helpText: null,
           allowHalf: false,
           splitPrice: false,
+          customHalfPrice: false,
           bundleCount: 0,
           bundlePrice: 0,
           maxPerSide: null,
@@ -214,6 +218,7 @@ export function ItemEditor({
           helpText: set.helpText,
           allowHalf: set.allowHalf,
           splitPrice: set.splitPrice,
+          customHalfPrice: set.customHalfPrice,
           bundleCount: set.bundleCount,
           bundlePrice: set.bundlePrice,
           maxPerSide: set.maxPerSide,
@@ -270,6 +275,7 @@ export function ItemEditor({
           help_text: g.helpText,
           allow_half: g.allowHalf,
           split_price: g.splitPrice,
+          custom_half_price: g.customHalfPrice,
           bundle_count: g.bundleCount,
           bundle_price: g.bundlePrice,
           max_per_side: g.maxPerSide,
@@ -277,6 +283,7 @@ export function ItemEditor({
           options: g.options.map((o) => ({
             name: o.name,
             price_delta: o.priceDelta,
+            half_price_delta: g.customHalfPrice ? (o.halfPriceDelta ?? null) : null,
             is_default: o.isDefault,
             available: o.available,
             image_url: o.imageUrl,
@@ -1132,119 +1139,162 @@ function GroupEditor({
       {/* Limits row - only relevant for multi. min_select also matters for
           single+required (effectively 1) but we keep the UI simple. */}
       {group.type === "multi" && (
-        <div className="grid grid-cols-3 gap-2 text-xs">
-          <label className="col-span-3 inline-flex items-center gap-2 px-0.5 py-0.5">
-            <input
-              type="checkbox"
-              checked={group.allowHalf}
-              onChange={(e) =>
-                onChange({
-                  ...group,
-                  allowHalf: e.target.checked,
-                  maxPerSide: e.target.checked ? group.maxPerSide : null,
-                })
-              }
-            />
-            <span>חצי/חצי - לקוח יכול לבחור כל תוספת לחצי בלבד</span>
-          </label>
-          {group.allowHalf && (
-            <label className="col-span-3 inline-flex items-center gap-2 px-0.5 py-0.5">
+        <div className="space-y-2.5 text-xs">
+          {/* Selection limits */}
+          <div className="grid grid-cols-2 gap-2">
+            <label className="flex flex-col gap-1">
+              <span className="text-qf-mute">מינ׳ בחירות</span>
               <input
-                type="checkbox"
-                checked={group.splitPrice}
+                type="number"
+                min={0}
+                value={group.minSelect}
                 onChange={(e) =>
-                  onChange({ ...group, splitPrice: e.target.checked })
+                  onChange({ ...group, minSelect: Math.max(0, parseInt(e.target.value, 10) || 0) })
                 }
+                className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum text-base lg:text-sm"
               />
-              <span>חצי תוספת = חצי מחיר (אם כבוי, תוספת על חצי עולה מחיר מלא)</span>
             </label>
-          )}
-          {group.allowHalf && (
-            <label className="col-span-3 flex flex-col gap-1">
-              <span className="text-qf-mute" title="כמה תוספות מותר לבחור על כל חצי בנפרד. שדרגו לתוסי 'שלם' נספרת בשני הצדדים. ריק = ללא הגבלה לפי צד.">
-                מקסימום תוספות לצד
-              </span>
+            <label className="flex flex-col gap-1">
+              <span className="text-qf-mute">מקס׳ בחירות</span>
               <input
                 type="number"
                 min={1}
-                placeholder="ללא הגבלה לפי צד"
-                value={group.maxPerSide ?? ""}
-                onChange={(e) => {
-                  const raw = e.target.value.trim();
-                  const parsed = raw === "" ? null : Math.max(1, parseInt(raw, 10) || 1);
-                  onChange({ ...group, maxPerSide: parsed });
-                }}
-                className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum text-base lg:text-sm"
-              />
-            </label>
-          )}
-          <label className="flex flex-col gap-1">
-            <span className="text-qf-mute">מינ׳ בחירות</span>
-            <input
-              type="number"
-              min={0}
-              value={group.minSelect}
-              onChange={(e) =>
-                onChange({ ...group, minSelect: Math.max(0, parseInt(e.target.value, 10) || 0) })
-              }
-              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum text-base lg:text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-qf-mute">מקס׳ בחירות</span>
-            <input
-              type="number"
-              min={1}
-              value={group.maxSelect}
-              onChange={(e) =>
-                onChange({ ...group, maxSelect: Math.max(1, parseInt(e.target.value, 10) || 1) })
-              }
-              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum text-base lg:text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-qf-mute" title="כמה בחירות כלולות במחיר לפני שמחייבים">
-              כלולות חינם
-            </span>
-            <input
-              type="number"
-              min={0}
-              value={group.includedFree}
-              onChange={(e) =>
-                onChange({ ...group, includedFree: Math.max(0, parseInt(e.target.value, 10) || 0) })
-              }
-              className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum text-base lg:text-sm"
-            />
-          </label>
-          <div className="col-span-3 rounded-lg bg-qf-line-soft/40 border border-qf-line-dash p-2.5 grid grid-cols-2 gap-2">
-            <div className="col-span-2 text-qf-mute text-[11px] leading-tight">
-              מבצע (לא חובה): X הבחירות הראשונות יחד עולות Y₪, מעבר לזה מחיר רגיל. למשל 2 ב-5₪. גובר על ״כלולות חינם״.
-            </div>
-            <label className="flex flex-col gap-1">
-              <span className="text-qf-mute">כמות במבצע (X)</span>
-              <input
-                type="number"
-                min={0}
-                placeholder="0 = ללא מבצע"
-                value={group.bundleCount || ""}
+                value={group.maxSelect}
                 onChange={(e) =>
-                  onChange({ ...group, bundleCount: Math.max(0, parseInt(e.target.value, 10) || 0) })
+                  onChange({ ...group, maxSelect: Math.max(1, parseInt(e.target.value, 10) || 1) })
                 }
                 className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum text-base lg:text-sm"
               />
             </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-qf-mute">מחיר המבצע (Y, ₪)</span>
+          </div>
+
+          {/* Pricing & discounts */}
+          <div className="rounded-lg bg-white/60 border border-qf-line-dash p-2.5 space-y-2">
+            <div className="font-semibold text-qf-ink">תמחור והנחות</div>
+            <label className="flex items-center justify-between gap-2">
+              <span className="text-qf-mute">כלולות חינם · N הראשונות חינם, 0 = הכל בתשלום</span>
               <input
                 type="number"
                 min={0}
-                value={group.bundlePrice || ""}
+                value={group.includedFree}
                 onChange={(e) =>
-                  onChange({ ...group, bundlePrice: Math.max(0, parseInt(e.target.value, 10) || 0) })
+                  onChange({ ...group, includedFree: Math.max(0, parseInt(e.target.value, 10) || 0) })
                 }
-                className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum text-base lg:text-sm"
+                className="w-20 px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum text-base lg:text-sm shrink-0"
               />
             </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={group.bundleCount > 0}
+                onChange={(e) =>
+                  onChange({
+                    ...group,
+                    bundleCount: e.target.checked ? group.bundleCount || 2 : 0,
+                  })
+                }
+              />
+              <span>מבצע כמות</span>
+            </label>
+            {group.bundleCount > 0 && (
+              <div className="ps-6 space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-qf-mute">כמות</span>
+                  <input
+                    type="number"
+                    min={1}
+                    value={group.bundleCount}
+                    onChange={(e) =>
+                      onChange({ ...group, bundleCount: Math.max(1, parseInt(e.target.value, 10) || 1) })
+                    }
+                    className="w-16 px-2 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum text-base lg:text-sm"
+                  />
+                  <span className="text-qf-mute">במחיר</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={group.bundlePrice || ""}
+                    onChange={(e) =>
+                      onChange({ ...group, bundlePrice: Math.max(0, parseInt(e.target.value, 10) || 0) })
+                    }
+                    className="w-16 px-2 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum text-base lg:text-sm"
+                  />
+                  <span className="text-qf-mute">₪</span>
+                </div>
+                <div className="text-[11px] text-qf-mute leading-tight">
+                  {group.bundleCount} תוספות יחד ב-{group.bundlePrice}₪ · גובר על ״כלולות חינם״
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Half / half */}
+          <div className="rounded-lg bg-white/60 border border-qf-line-dash p-2.5 space-y-2">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={group.allowHalf}
+                onChange={(e) =>
+                  onChange({
+                    ...group,
+                    allowHalf: e.target.checked,
+                    maxPerSide: e.target.checked ? group.maxPerSide : null,
+                    splitPrice: e.target.checked ? group.splitPrice : false,
+                    customHalfPrice: e.target.checked ? group.customHalfPrice : false,
+                  })
+                }
+              />
+              <span>אפשר תוספת על חצי (פיצה ועוד)</span>
+            </label>
+            {group.allowHalf && (
+              <div className="ps-6 space-y-2">
+                <div className="space-y-1">
+                  <div className="text-qf-mute">תמחור על חצי:</div>
+                  {([
+                    ["full", "מחיר מלא", "חצי עולה כמו שלם"],
+                    ["half", "חצי מחיר", "חצי = 50% מהשלם"],
+                    ["custom", "מחיר מותאם", "שלם וחצי מחירים נפרדים לכל תוספת"],
+                  ] as const).map(([mode, label, hint]) => {
+                    const current = group.customHalfPrice ? "custom" : group.splitPrice ? "half" : "full";
+                    return (
+                      <label key={mode} className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name={`half-${group.name}`}
+                          checked={current === mode}
+                          onChange={() =>
+                            onChange({
+                              ...group,
+                              splitPrice: mode === "half",
+                              customHalfPrice: mode === "custom",
+                            })
+                          }
+                        />
+                        <span className="font-medium">{label}</span>
+                        <span className="text-qf-mute">· {hint}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <label className="flex items-center justify-between gap-2">
+                  <span className="text-qf-mute" title="כמה תוספות מותר לבחור על כל חצי בנפרד. 'שלם' נספרת בשני הצדדים. ריק = ללא הגבלה לפי צד.">
+                    מקסימום תוספות לצד
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    placeholder="ללא הגבלה"
+                    value={group.maxPerSide ?? ""}
+                    onChange={(e) => {
+                      const raw = e.target.value.trim();
+                      const parsed = raw === "" ? null : Math.max(1, parseInt(raw, 10) || 1);
+                      onChange({ ...group, maxPerSide: parsed });
+                    }}
+                    className="w-24 px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum text-base lg:text-sm shrink-0"
+                  />
+                </label>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1307,8 +1357,29 @@ function GroupEditor({
                 })
               }
               className="w-16 px-2 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white tnum shrink-0"
-              title="מחיר נוסף (₪)"
+              title={group.customHalfPrice ? "מחיר שלם (₪)" : "מחיר נוסף (₪)"}
+              placeholder={group.customHalfPrice ? "שלם" : undefined}
             />
+            {group.customHalfPrice && (
+              <input
+                type="number"
+                min={0}
+                value={o.halfPriceDelta ?? ""}
+                onChange={(e) => {
+                  const raw = e.target.value.trim();
+                  const parsed = raw === "" ? null : Math.max(0, parseInt(raw, 10) || 0);
+                  onChange({
+                    ...group,
+                    options: group.options.map((x, idx) =>
+                      idx === oi ? { ...x, halfPriceDelta: parsed } : x,
+                    ),
+                  });
+                }}
+                className="w-16 px-2 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white tnum shrink-0"
+                title="מחיר על חצי (₪)"
+                placeholder="חצי"
+              />
+            )}
             <label
               className="text-xs inline-flex items-center justify-center w-6 h-8 shrink-0"
               title="ברירת מחדל"
@@ -1374,6 +1445,7 @@ function GroupEditor({
               {
                 name: "אפשרות חדשה",
                 priceDelta: 0,
+                halfPriceDelta: null,
                 isDefault: false,
                 available: true,
                 imageUrl: null,
