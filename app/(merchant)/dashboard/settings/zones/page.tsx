@@ -32,6 +32,8 @@ export default async function ZonesSettingsPage() {
           radiusKm: z.radiusKm ? Number(z.radiusKm) : null,
           cities: z.cities,
           deliveryFee: z.deliveryFee,
+          minOrder: z.minOrder,
+          freeDeliveryAbove: z.freeDeliveryAbove,
           minEta: z.minEta,
           maxEta: z.maxEta,
           active: z.active,

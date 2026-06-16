@@ -13,6 +13,8 @@ interface Zone {
   radiusKm: number | null;
   cities: string[];
   deliveryFee: number;
+  minOrder: number;
+  freeDeliveryAbove: number | null;
   minEta: number;
   maxEta: number;
   active: boolean;
@@ -23,6 +25,8 @@ interface ZoneDraft {
   radiusKm: number;
   citiesRaw: string;
   deliveryFee: number;
+  minOrder: number;
+  freeDeliveryAbove: number;
   minEta: number;
   maxEta: number;
 }
@@ -32,6 +36,8 @@ const EMPTY_DRAFT: ZoneDraft = {
   radiusKm: 3,
   citiesRaw: "",
   deliveryFee: 14,
+  minOrder: 0,
+  freeDeliveryAbove: 0,
   minEta: 25,
   maxEta: 35,
 };
@@ -42,6 +48,8 @@ function draftFromZone(z: Zone): ZoneDraft {
     radiusKm: z.radiusKm ?? 0,
     citiesRaw: z.cities.join(", "),
     deliveryFee: z.deliveryFee,
+    minOrder: z.minOrder,
+    freeDeliveryAbove: z.freeDeliveryAbove ?? 0,
     minEta: z.minEta,
     maxEta: z.maxEta,
   };
@@ -101,6 +109,8 @@ export function ZonesView({
           radius_km: addForm.radiusKm > 0 ? addForm.radiusKm : undefined,
           cities: parseCities(addForm.citiesRaw),
           delivery_fee: addForm.deliveryFee,
+          min_order: addForm.minOrder,
+          free_delivery_above: addForm.freeDeliveryAbove > 0 ? addForm.freeDeliveryAbove : null,
           min_eta: addForm.minEta,
           max_eta: addForm.maxEta,
           active: true,
@@ -118,6 +128,8 @@ export function ZonesView({
         radiusKm: addForm.radiusKm > 0 ? addForm.radiusKm : null,
         cities: parseCities(addForm.citiesRaw),
         deliveryFee: addForm.deliveryFee,
+        minOrder: addForm.minOrder,
+        freeDeliveryAbove: addForm.freeDeliveryAbove > 0 ? addForm.freeDeliveryAbove : null,
         minEta: addForm.minEta,
         maxEta: addForm.maxEta,
         active: true,
@@ -154,6 +166,8 @@ export function ZonesView({
           radius_km: editForm.radiusKm > 0 ? editForm.radiusKm : undefined,
           cities,
           delivery_fee: editForm.deliveryFee,
+          min_order: editForm.minOrder,
+          free_delivery_above: editForm.freeDeliveryAbove > 0 ? editForm.freeDeliveryAbove : null,
           min_eta: editForm.minEta,
           max_eta: editForm.maxEta,
         }),
@@ -173,6 +187,8 @@ export function ZonesView({
                   radiusKm: editForm.radiusKm > 0 ? editForm.radiusKm : null,
                   cities,
                   deliveryFee: editForm.deliveryFee,
+                  minOrder: editForm.minOrder,
+                  freeDeliveryAbove: editForm.freeDeliveryAbove > 0 ? editForm.freeDeliveryAbove : null,
                   minEta: editForm.minEta,
                   maxEta: editForm.maxEta,
                 }
@@ -481,6 +497,26 @@ function ZoneFields({
             min={0}
             value={draft.deliveryFee}
             onChange={(e) => onChange({ ...draft, deliveryFee: parseInt(e.target.value, 10) || 0 })}
+            className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
+          />
+        </Field>
+        <Field label="מינימום הזמנה (₪)">
+          <input
+            type="number"
+            min={0}
+            placeholder="0 = ללא מינימום"
+            value={draft.minOrder || ""}
+            onChange={(e) => onChange({ ...draft, minOrder: parseInt(e.target.value, 10) || 0 })}
+            className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
+          />
+        </Field>
+        <Field label="משלוח חינם בקנייה מעל (₪)">
+          <input
+            type="number"
+            min={0}
+            placeholder="0 = ללא"
+            value={draft.freeDeliveryAbove || ""}
+            onChange={(e) => onChange({ ...draft, freeDeliveryAbove: parseInt(e.target.value, 10) || 0 })}
             className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
           />
         </Field>

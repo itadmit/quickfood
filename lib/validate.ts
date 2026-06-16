@@ -353,6 +353,10 @@ export const DeliveryZoneInputSchema = z.object({
   /** Cities this zone delivers to. Trimmed + deduped on the server. */
   cities: z.array(z.string().min(1).max(60)).max(200).optional(),
   delivery_fee: z.number().int().min(0),
+  /** Per-zone minimum order (shekels). 0 = no minimum for this zone. */
+  min_order: z.number().int().min(0).default(0),
+  /** Free delivery when subtotal reaches this (shekels). null/0 = off. */
+  free_delivery_above: z.number().int().min(0).nullable().optional(),
   min_eta: z.number().int().min(0),
   max_eta: z.number().int().min(0),
   active: z.boolean().default(true),

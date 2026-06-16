@@ -495,6 +495,11 @@ model DeliveryZone {
   /// type freely; the picker also offers a curated suggestion list.
   cities      String[] @default([])
   deliveryFee Int      @map("delivery_fee")
+  // Per-zone minimum order (shekels); 0 = no minimum. Overrides the
+  // branch-level floor when the order resolves to this zone.
+  minOrder    Int      @default(0) @map("min_order")
+  // Per-zone free-delivery threshold (shekels); NULL/0 = off.
+  freeDeliveryAbove Int? @map("free_delivery_above")
   minEta      Int      @map("min_eta")
   maxEta      Int      @map("max_eta")
   active      Boolean  @default(true)

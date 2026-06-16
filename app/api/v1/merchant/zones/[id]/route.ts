@@ -28,6 +28,8 @@ export const PATCH = handler(async (req: Request, { params }: { params: Promise<
       radiusKm: body.radius_km,
       ...(body.cities !== undefined && { cities: normalizeCities(body.cities) }),
       deliveryFee: body.delivery_fee,
+      minOrder: body.min_order,
+      freeDeliveryAbove: body.free_delivery_above,
       minEta: body.min_eta,
       maxEta: body.max_eta,
       active: body.active,

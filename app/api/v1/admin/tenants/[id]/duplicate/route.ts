@@ -152,6 +152,8 @@ export const POST = handler(
                   ...(z.geometry != null ? { geometry: z.geometry as object } : {}),
                   cities: z.cities,
                   deliveryFee: z.deliveryFee,
+                  minOrder: z.minOrder,
+                  freeDeliveryAbove: z.freeDeliveryAbove,
                   minEta: z.minEta,
                   maxEta: z.maxEta,
                   active: z.active,
