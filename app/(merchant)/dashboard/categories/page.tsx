@@ -11,7 +11,7 @@ export default async function CategoriesPage() {
     redirect("/dashboard/login");
   }
 
-  const [categories, itemCounts] = await Promise.all([
+  const [categories, itemCounts, tenant] = await Promise.all([
     prisma.menuCategory.findMany({
       where: { tenantId: session.tenantId },
       orderBy: { position: "asc" },
@@ -21,6 +21,10 @@ export default async function CategoriesPage() {
       where: { tenantId: session.tenantId },
       _count: { _all: true },
     }),
+    prisma.tenant.findUnique({
+      where: { id: session.tenantId },
+      select: { themeId: true },
+    }),
   ]);
 
   const counts = Object.fromEntries(
@@ -29,6 +33,7 @@ export default async function CategoriesPage() {
 
   return (
     <CategoriesView
+      themeId={tenant?.themeId}
       categories={categories.map((c) => ({
         id: c.id,
         name: c.name,

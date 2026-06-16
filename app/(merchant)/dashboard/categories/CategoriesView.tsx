@@ -13,6 +13,7 @@ import {
   CATEGORY_COLORS,
   DEFAULT_ICON,
   DEFAULT_COLOR,
+  THEME_DEFAULT_CATEGORY_COLOR,
   resolveCategoryStyle,
   type CategoryIconKey,
   type CategoryColorKey,
@@ -49,8 +50,18 @@ const EMPTY_DRAFT: Draft = {
   upsellBeforeCheckout: false,
 };
 
-export function CategoriesView({ categories }: { categories: CategoryRow[] }) {
+export function CategoriesView({
+  categories,
+  themeId,
+}: {
+  categories: CategoryRow[];
+  themeId?: string | null;
+}) {
   const router = useRouter();
+  // Default category color follows the tenant's chosen template, not a fixed
+  // green - so categories the merchant never recolored match the storefront.
+  const themeDefaultColor: CategoryColorKey =
+    THEME_DEFAULT_CATEGORY_COLOR[themeId ?? ""] ?? DEFAULT_COLOR;
   const [editing, setEditing] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,12 +99,13 @@ export function CategoriesView({ categories }: { categories: CategoryRow[] }) {
     setError(null);
     setEditing({
       ...EMPTY_DRAFT,
+      color: themeDefaultColor,
       position: orderedCategories.length,
     });
   }
 
   function openEdit(c: CategoryRow) {
-    const style = resolveCategoryStyle(c.icon, c.color);
+    const style = resolveCategoryStyle(c.icon, c.color, themeDefaultColor);
     setError(null);
     setEditing({
       id: c.id,
@@ -199,7 +211,7 @@ export function CategoriesView({ categories }: { categories: CategoryRow[] }) {
             getKey={(c) => c.id}
           >
             {(c, _i, drag) => {
-              const style = resolveCategoryStyle(c.icon, c.color);
+              const style = resolveCategoryStyle(c.icon, c.color, themeDefaultColor);
               const Icon = style.Icon;
               return (
                 <div

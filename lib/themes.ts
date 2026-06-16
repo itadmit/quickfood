@@ -154,6 +154,14 @@ export function themeVars(id: ThemeId): Record<string, string> {
     "--qf-soft": t.soft,
     "--qf-line": t.line,
     "--qf-on-primary": t.onPrimary,
+    // The `qf-green-*` palette is the brand accent across the storefront
+    // (success flashes, soft fills, the add-to-cart confirmation). Re-point
+    // it at the tenant's theme so every brand-colored surface follows the
+    // chosen template instead of staying forest-green.
+    "--color-qf-green": t.primary,
+    "--color-qf-green-deep": t.deep,
+    "--color-qf-green-soft": t.soft,
+    "--color-qf-green-line": t.line,
   };
 }
 
