@@ -344,8 +344,7 @@ export function ImageUploader({
               />
             )}
             <p className="text-sm text-qf-ink2 leading-relaxed">
-              התמונה תימחק לחלוטין מהאחסון (R2) ולא ניתן יהיה לשחזר אותה.
-              להמשיך?
+              התמונה תימחק לחלוטין ולא ניתן יהיה לשחזר אותה. להמשיך?
             </p>
           </div>
           {deleteError && (
