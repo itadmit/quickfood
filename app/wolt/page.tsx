@@ -167,9 +167,9 @@ function FlowDiagram() {
   return (
     <div className="flex flex-col sm:flex-row items-stretch justify-center gap-3 sm:gap-2 mt-8">
       {nodes.map((n, i) => (
-        <div key={n.title} className="flex flex-col sm:flex-row items-center gap-3 sm:gap-2">
+        <div key={n.title} className="flex flex-col sm:flex-row items-center sm:items-stretch gap-3 sm:gap-2">
           <div
-            className="flex-1 w-full sm:w-44 rounded-2xl bg-white p-4 text-center"
+            className="flex-1 w-full sm:w-44 self-stretch rounded-2xl bg-white p-4 text-center flex flex-col justify-center"
             style={{ border: `2px solid ${INK}`, boxShadow: `0 5px 0 ${INK}` }}
           >
             <div
@@ -185,13 +185,18 @@ function FlowDiagram() {
             <div className="text-[11px] text-black/55 mt-0.5 leading-snug">{n.sub}</div>
           </div>
           {i < nodes.length - 1 && (
-            <ArrowLeft
-              size={22}
-              strokeWidth={2.6}
-              color={INK}
-              className="shrink-0 -rotate-90 sm:rotate-0"
+            <span
+              className={styles.flowArrow}
+              style={{ animationDelay: `${i * 0.2}s`, alignSelf: "center" }}
               aria-hidden
-            />
+            >
+              <ArrowLeft
+                size={22}
+                strokeWidth={2.6}
+                color={INK}
+                className="shrink-0 -rotate-90 sm:rotate-0"
+              />
+            </span>
           )}
         </div>
       ))}
@@ -380,7 +385,7 @@ export default function WoltLandingPage() {
         <div className={styles.container} style={{ textAlign: "center" }}>
           <div className={styles.sectionEyebrow}>איך זה עובד</div>
           <h2 className={styles.sectionTitle} style={{ marginInline: "auto" }}>
-            הזמנה מ-Wolt. <em>בלי לגעת בטאבלט.</em>
+            הזמנה מ-Wolt. <em>אצלך בדשבורד.</em>
           </h2>
           <FlowDiagram />
           <div className={styles.qfoodStack}>

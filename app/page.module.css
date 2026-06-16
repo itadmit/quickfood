@@ -2436,3 +2436,16 @@
   .bffRow { grid-template-columns: 1fr; gap: 22px; }
   .bffImgWrap { order: -1; }
 }
+
+/* ─── WOLT FLOW DIAGRAM ARROW NUDGE ───────────────────────── */
+@keyframes qf-flow-nudge {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-5px); }
+}
+.flowArrow {
+  display: inline-flex;
+  animation: qf-flow-nudge 1.5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .flowArrow { animation: none; }
+}
