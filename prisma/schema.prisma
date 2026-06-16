@@ -456,6 +456,10 @@ model Branch {
   // displays surface "+N דק' (עומס)" and the busy-alert modal warns the
   // customer at entry + before checkout.
   busyEtaBoostMinutes Int      @default(15) @map("busy_eta_boost_minutes")
+  // Default delivery ETA range (minutes) shown in the store header when no
+  // delivery zone defines its own min/max. Editable in branding settings.
+  defaultEtaMin Int            @default(25) @map("default_eta_min")
+  defaultEtaMax Int            @default(35) @map("default_eta_max")
   hours       Json             @default("{}")
   minOrder    Int              @default(0) @map("min_order")
   deliveryFee Int              @default(0) @map("delivery_fee")

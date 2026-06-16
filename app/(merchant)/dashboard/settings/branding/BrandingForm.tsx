@@ -38,6 +38,8 @@ interface Branch {
   deliveryFee: number;
   serviceFee: number;
   busyEtaBoostMinutes: number;
+  defaultEtaMin: number;
+  defaultEtaMax: number;
 }
 
 function deriveLogoLetter(name: string): string {
@@ -80,6 +82,8 @@ export function BrandingForm({
   const [deliveryFee, setDeliveryFee] = useState(branch?.deliveryFee ?? 0);
   const [serviceFee, setServiceFee] = useState(branch?.serviceFee ?? 0);
   const [busyEtaBoost, setBusyEtaBoost] = useState(branch?.busyEtaBoostMinutes ?? 0);
+  const [etaMin, setEtaMin] = useState(branch?.defaultEtaMin ?? 25);
+  const [etaMax, setEtaMax] = useState(branch?.defaultEtaMax ?? 35);
 
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
@@ -122,6 +126,8 @@ export function BrandingForm({
               delivery_fee: deliveryFee,
               service_fee: serviceFee,
               busy_eta_boost_minutes: busyEtaBoost,
+              default_eta_min: etaMin,
+              default_eta_max: etaMax,
             }),
           })
         : Promise.resolve({ ok: true } as Response);
@@ -222,6 +228,39 @@ export function BrandingForm({
                 <NumberField value={serviceFee} onChange={setServiceFee} disabled={!branch} />
               </Field>
             </div>
+
+            <Field label="זמן הגעה משוער (דקות)">
+              <div className="flex items-center gap-2 max-w-[280px]">
+                <div className="flex items-center border border-qf-line-dash rounded-xl focus-within:border-(--qf-primary) flex-1">
+                  <span className="px-3 text-qf-mute text-sm">מ-</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={240}
+                    value={etaMin}
+                    onChange={(e) => setEtaMin(Math.max(0, Math.min(240, parseInt(e.target.value, 10) || 0)))}
+                    disabled={!branch}
+                    className="flex-1 w-full py-2.5 outline-none bg-transparent tnum disabled:text-qf-mute"
+                  />
+                </div>
+                <span className="text-qf-mute text-sm">עד</span>
+                <div className="flex items-center border border-qf-line-dash rounded-xl focus-within:border-(--qf-primary) flex-1">
+                  <input
+                    type="number"
+                    min={0}
+                    max={240}
+                    value={etaMax}
+                    onChange={(e) => setEtaMax(Math.max(0, Math.min(240, parseInt(e.target.value, 10) || 0)))}
+                    disabled={!branch}
+                    className="flex-1 w-full py-2.5 ps-3 outline-none bg-transparent tnum disabled:text-qf-mute"
+                  />
+                  <span className="px-3 text-qf-mute text-sm">דק&apos;</span>
+                </div>
+              </div>
+              <p className="text-[11px] text-qf-mute mt-1.5 leading-snug">
+                הטווח שמוצג ללקוח בכותרת החנות (למשל &quot;25-35 דק&apos;&quot;). אזור משלוח עם זמן משלו גובר על ברירת המחדל הזו.
+              </p>
+            </Field>
 
             <Field label="תוספת זמן הגעה בעומס (דקות)">
               <div className="flex items-center border border-qf-line-dash rounded-xl focus-within:border-(--qf-primary) max-w-[240px]">

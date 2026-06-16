@@ -58,6 +58,8 @@ export default async function BrandingPage() {
           deliveryFee: branch.deliveryFee,
           serviceFee: branch.serviceFee,
           busyEtaBoostMinutes: branch.busyEtaBoostMinutes,
+          defaultEtaMin: branch.defaultEtaMin,
+          defaultEtaMax: branch.defaultEtaMax,
         } : null}
         storefrontUrl={storefrontUrl}
         qrDataUrl={qrDataUrl}

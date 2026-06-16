@@ -207,7 +207,12 @@ export default async function HomePage({
         min: Math.min(...etaZones.map((z) => z.minEta)),
         max: Math.max(...etaZones.map((z) => z.maxEta)),
       }
-    : null;
+    : tenant.branches[0]
+      ? {
+          min: tenant.branches[0].defaultEtaMin,
+          max: tenant.branches[0].defaultEtaMax,
+        }
+      : null;
 
   const menuItems = allMenuItems.filter((i) => isItemVisibleNow(i));
   const categories = allCategories.slice(0, 8);
