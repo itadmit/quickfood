@@ -26,6 +26,9 @@ const CreateOrderSchema = z.object({
   guest_first_name: z.string().min(1).max(40).optional(),
   guest_last_name: z.string().max(40).optional(),
   customer_email: z.string().email().optional(),
+  // Customer ticked the "I accept the terms" box at checkout. Recorded as
+  // proof of consent (Order.termsAcceptedAt) for payment-processor compliance.
+  terms_accepted: z.boolean().optional(),
   // Explicit opt-in to marketing/promotional comms - only persisted
   // when true; never silently flips an existing yes back to no.
   marketing_consent: z.boolean().optional(),
@@ -97,6 +100,7 @@ export const POST = handler(async (req: Request) => {
       guestFirstName: body.guest_first_name,
       guestLastName: body.guest_last_name,
       customerEmail: body.customer_email,
+      termsAccepted: body.terms_accepted,
       marketingConsent: body.marketing_consent,
       method: body.method,
       addressId: body.address_id ?? null,

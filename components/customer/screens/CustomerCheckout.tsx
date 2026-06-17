@@ -54,6 +54,8 @@ export function CustomerCheckout({
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
+  const [country, setCountry] = useState("ישראל");
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [deliveryNotes, setDeliveryNotes] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
   const [availableMethods, setAvailableMethods] = useState<CustomerPaymentMethod[]>([]);
@@ -355,9 +357,17 @@ export function CustomerCheckout({
       setError("מספר הטלפון אינו תקין. דוגמה: 050-1234567");
       return;
     }
-    if (requireEmail && !emailLooksValid) {
+    if (emailRequired && !emailLooksValid) {
       setEmailTouched(true);
       setError("כתובת המייל אינה תקינה");
+      return;
+    }
+    if (lastNameRequired && !lastName.trim()) {
+      setError("נא למלא שם משפחה");
+      return;
+    }
+    if (!termsAccepted) {
+      setError("יש לאשר את התקנון ותנאי השימוש");
       return;
     }
     setBusy(true);
@@ -393,6 +403,7 @@ export function CustomerCheckout({
           guest_first_name: firstName || undefined,
           guest_last_name: lastName || undefined,
           customer_email: email.trim() || undefined,
+          terms_accepted: termsAccepted,
           lines: lines.map((l) => {
             const placements: Record<string, "left" | "right" | "full"> = {};
             for (const o of l.options) {
@@ -491,6 +502,12 @@ export function CustomerCheckout({
 
   const emailLooksValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
+  // Online (Grow) payments are the actual "payment page" the card processor
+  // audits - those require full contact details. Cash stays lenient.
+  const onlinePayment = !!paymentMethod && paymentMethod !== "cash";
+  const emailRequired = requireEmail || onlinePayment;
+  const lastNameRequired = onlinePayment;
+
   function validateIsraeliPhone(raw: string): boolean {
     const digits = raw.replace(/[^\d+]/g, "");
     if (/^\+?972[5][0-9]{8}$/.test(digits)) return true;
@@ -505,7 +522,7 @@ export function CustomerCheckout({
         ? "נדרש מספר טלפון"
         : null;
   const emailError =
-    requireEmail && emailTouched && email.trim() && !emailLooksValid
+    emailRequired && emailTouched && email.trim() && !emailLooksValid
       ? "כתובת מייל לא תקינה"
       : null;
 
@@ -523,8 +540,32 @@ export function CustomerCheckout({
     !!firstName &&
     !!phone &&
     phoneLooksValid &&
+    termsAccepted &&
     (method !== "delivery" || (!!address && !!city)) &&
-    (!requireEmail || emailLooksValid);
+    (!lastNameRequired || !!lastName.trim()) &&
+    (!emailRequired || emailLooksValid);
+
+  const termsConsent = (
+    <label className="flex items-start gap-2 text-xs text-qf-ink2 leading-relaxed cursor-pointer">
+      <input
+        type="checkbox"
+        checked={termsAccepted}
+        onChange={(e) => setTermsAccepted(e.target.checked)}
+        className="mt-0.5 w-4 h-4 shrink-0 accent-(--qf-primary)"
+      />
+      <span>
+        קראתי ואני מאשר/ת את{" "}
+        <Link
+          href={`/s/${tenantSlug}/terms`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-(--qf-deep) underline underline-offset-2"
+        >
+          התקנון ותנאי השימוש
+        </Link>
+      </span>
+    </label>
+  );
 
   return (
     <div className="pb-32 bg-qf-bg/40 min-h-screen lg:bg-transparent lg:pb-12">
@@ -552,7 +593,7 @@ export function CustomerCheckout({
                 autoComplete="given-name"
               />
             </Field>
-            <Field label="שם משפחה">
+            <Field label="שם משפחה" required={lastNameRequired}>
               <Input
                 value={lastName}
                 onChange={setLastName}
@@ -577,28 +618,38 @@ export function CustomerCheckout({
                 />
               </Field>
             </div>
-            {requireEmail && (
-              <div className="col-span-2">
-                <Field label="דוא״ל" required error={emailError}>
-                  <Input
-                    value={email}
-                    onChange={(v) => {
-                      setEmail(v);
-                      if (!emailTouched) setEmailTouched(true);
-                    }}
-                    onBlur={() => setEmailTouched(true)}
-                    placeholder="you@example.com"
-                    dir="ltr"
-                    inputMode="email"
-                    autoComplete="email"
-                    invalid={!!emailError}
-                  />
-                </Field>
+            <div className="col-span-2">
+              <Field label="דוא״ל" required={emailRequired} error={emailError}>
+                <Input
+                  value={email}
+                  onChange={(v) => {
+                    setEmail(v);
+                    if (!emailTouched) setEmailTouched(true);
+                  }}
+                  onBlur={() => setEmailTouched(true)}
+                  placeholder="you@example.com"
+                  dir="ltr"
+                  inputMode="email"
+                  autoComplete="email"
+                  invalid={!!emailError}
+                />
+              </Field>
+              {requireEmail && (
                 <div className="text-xs text-qf-mute mt-1">
                   נשלח אליך מייל קצר לאחר ההזמנה כדי שתוכל לדרג אותה
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+            <div className="col-span-2">
+              <Field label="מדינה" required>
+                <Input
+                  value={country}
+                  onChange={setCountry}
+                  placeholder="ישראל"
+                  autoComplete="country-name"
+                />
+              </Field>
+            </div>
           </div>
         </Card>
 
@@ -1103,6 +1154,7 @@ export function CustomerCheckout({
                 חסר {formatPrice(minOrder - subtotal)} לסכום מינימום ({formatPrice(minOrder)})
               </div>
             )}
+            <div className="mt-3">{termsConsent}</div>
             <button
               type="button"
               onClick={onPlaceClick}
@@ -1139,6 +1191,7 @@ export function CustomerCheckout({
             חסר {formatPrice(minOrder - subtotal)} לסכום מינימום ({formatPrice(minOrder)})
           </div>
         )}
+        <div className="mb-2.5">{termsConsent}</div>
         <button
           type="button"
           onClick={onPlaceClick}

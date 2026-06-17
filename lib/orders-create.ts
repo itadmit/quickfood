@@ -36,6 +36,10 @@ export interface CreateOrderInput {
   // the order is placed by a logged-in customer. Required when the tenant's
   // reviewsChannel === 'email' (enforced one layer up).
   customerEmail?: string;
+  /// Customer accepted the storefront terms at checkout. Stamps
+  /// Order.termsAcceptedAt as proof of consent for payment-processor
+  /// compliance (Grow). Storefront enforces the checkbox before submit.
+  termsAccepted?: boolean;
   /// Explicit opt-in to marketing/promotional comms (email + SMS).
   /// Captured per-order - only ever flipped to TRUE, never silently to
   /// false on subsequent orders (a customer who opted in once stays
@@ -535,6 +539,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       customerFirstNameSnap: input.guestFirstName ?? null,
       customerLastNameSnap: input.guestLastName ?? null,
       customerEmailSnap: input.customerEmail?.trim().toLowerCase() || null,
+      termsAcceptedAt: input.termsAccepted ? new Date() : null,
       subtotal,
       deliveryFee,
       serviceFee,

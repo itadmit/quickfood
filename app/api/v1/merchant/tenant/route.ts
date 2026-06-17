@@ -46,6 +46,7 @@ export const PATCH = handler(async (req: Request) => {
       cuisineType: body.cuisine_type,
       about: body.about,
       vatNumber: body.vat_number,
+      termsText: body.terms_text,
       checkoutShowTracking: body.checkout_show_tracking,
       scheduledOrdersEnabled: body.scheduled_orders_enabled,
       pickupEnabled: body.pickup_enabled,

@@ -257,6 +257,10 @@ model Tenant {
   /// Populated by the Wolt importer from the venue description.
   about                String?        @db.Text
   vatNumber            String?        @map("vat_number")
+  /// Merchant-editable storefront legal terms (תקנון). When null the
+  /// storefront renders an auto-generated default built from the business
+  /// details. Required for Grow payment-processor compliance.
+  termsText            String?        @db.Text @map("terms_text")
   status               TenantStatus   @default(active)
   planId               String?        @map("plan_id") @db.Uuid
   plan                 Plan?          @relation(fields: [planId], references: [id])
@@ -953,6 +957,9 @@ model Order {
   customerFirstNameSnap String? @map("customer_first_name_snap")
   customerLastNameSnap  String? @map("customer_last_name_snap")
   customerEmailSnap     String? @map("customer_email_snap")
+  /// When the customer ticked "I accept the terms" at checkout. Proof of
+  /// consent for Grow payment-processor compliance.
+  termsAcceptedAt       DateTime? @map("terms_accepted_at")
 
   estimatedReadyAt    DateTime? @map("estimated_ready_at")
   estimatedDeliveryAt DateTime? @map("estimated_delivery_at")

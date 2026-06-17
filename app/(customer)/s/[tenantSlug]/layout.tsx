@@ -13,6 +13,7 @@ import { AIAdvisorFAB } from "@/components/customer/ai-advisor/AIAdvisorFAB";
 import { AIAdvisorPromoPopup } from "@/components/customer/ai-advisor/AIAdvisorPromoPopup";
 import { FloatingCartCTA } from "@/components/customer/FloatingCartCTA";
 import { CustomerChromeGate } from "@/components/customer/CustomerChromeGate";
+import { CustomerFooter } from "@/components/customer/CustomerFooter";
 
 export async function generateMetadata({
   params,
@@ -162,6 +163,9 @@ export default async function CustomerLayout({
                 />
               </CustomerChromeGate>
             )}
+            <CustomerChromeGate>
+              <CustomerFooter tenantSlug={tenant.slug} tenantName={tenant.name} />
+            </CustomerChromeGate>
           </div>
           {modal}
           <CustomerChromeGate>
