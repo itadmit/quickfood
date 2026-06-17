@@ -165,6 +165,9 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
                 <span className="font-bold text-(--qf-deep)">ב-69₪ לחודש + 1% בלבד! ללא עמלת הקמת מסוף חדש!</span>{" "}
                 ממלאים פרטים קצרים והם חוזרים אליך.
               </div>
+              <div className="text-[10px] text-qf-mute mt-1.5 leading-snug">
+                * התשלום עבור שירותי הסליקה נגבה ישירות על ידי חברת Grow Payments, אינו קשור ל-QuickFood וכפוף לאישור החברה.
+              </div>
             </div>
             <Link
               href={GROW_SIGNUP_URL}
