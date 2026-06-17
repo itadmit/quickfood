@@ -149,6 +149,9 @@ type ModifierShape = {
   max_select: number;
   included_free: number;
   options: { name: string }[];
+  // When set, the group's options come from a shared ModifierSet resolved
+  // server-side, so an empty inline `options` array is expected and valid.
+  template_set_id?: string | null;
 };
 
 function coerceSingleSelection<T extends ModifierShape>(d: T): T {
@@ -183,7 +186,7 @@ const modifierConstraints = <T extends ModifierShape>(d: T, ctx: z.RefinementCtx
       path: ["min_select"],
     });
   }
-  if (d.required && d.options.length === 0) {
+  if (d.required && d.options.length === 0 && !d.template_set_id) {
     ctx.addIssue({
       code: "custom",
       message: "קבוצת חובה חייבת לכלול לפחות אפשרות אחת",
