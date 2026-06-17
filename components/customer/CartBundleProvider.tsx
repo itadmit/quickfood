@@ -16,6 +16,9 @@ export interface BundleSuggestion {
   description: string | null;
   image_url: string | null;
   mode: "linked" | "legacy";
+  /** Legacy bundle whose items are ALL already in the cart - the deal price
+   *  should auto-apply silently rather than prompt an "add" offer. */
+  already_satisfied: boolean;
   bundle_price: number;
   full_price: number;
   savings: number;
@@ -106,7 +109,7 @@ export function CartBundleProvider({
     const ctrl = new AbortController();
     const itemIds = Array.from(new Set(lines.map((l) => l.itemId))).join(",");
     fetch(
-      `/api/v1/customer/cart-bundles?tenant=${encodeURIComponent(tenantSlug)}&items=${itemIds}`,
+      `/api/v1/customer/cart-bundles?tenant=${encodeURIComponent(tenantSlug)}&items=${itemIds}&include_satisfied=1`,
       { signal: ctrl.signal },
     )
       .then((r) => (r.ok ? r.json() : { bundles: [] }))
@@ -115,12 +118,20 @@ export function CartBundleProvider({
     return () => ctrl.abort();
   }, [lines, tenantSlug]);
 
-  // Reconcile: an accepted bundle that re-appears as a suggestion is no
-  // longer satisfied (an addon was removed) - un-accept so the displayed
-  // total matches what the server will actually charge.
+  // Reconcile accepted state against the latest cart:
+  //  - a legacy bundle whose items are ALL in the cart auto-applies its
+  //    deal price (no click needed) - this is the "I built the combo
+  //    myself" case the merchant expects to just work.
+  //  - an accepted bundle that re-surfaces as an unsatisfied *offer* (an
+  //    addon was removed) gets un-accepted so the displayed total matches
+  //    what the server will charge.
   useEffect(() => {
     for (const b of suggestions) {
-      if (acceptedIds.has(b.id)) unacceptBundle(b.id);
+      if (b.already_satisfied) {
+        if (!acceptedIds.has(b.id)) acceptBundle(b.id, b.savings);
+      } else if (acceptedIds.has(b.id)) {
+        unacceptBundle(b.id);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [suggestions]);
@@ -131,7 +142,7 @@ export function CartBundleProvider({
   useEffect(() => {
     if (!popupAllowed || popup || linkedConfig) return;
     const next = suggestions.find(
-      (b) => !acceptedIds.has(b.id) && !shownPopupIds.current.has(b.id),
+      (b) => !b.already_satisfied && !acceptedIds.has(b.id) && !shownPopupIds.current.has(b.id),
     );
     if (!next) return;
     shownPopupIds.current.add(next.id);
@@ -143,7 +154,12 @@ export function CartBundleProvider({
   const acceptLegacy = useCallback(
     (b: BundleSuggestion) => {
       for (const a of b.addons ?? []) {
-        for (let i = 0; i < a.qty; i++) {
+        // Only add the shortfall - a bundle item the customer already has
+        // (e.g. the trigger pizza that's also part of the deal) shouldn't
+        // be duplicated.
+        const have = lines.filter((l) => l.itemId === a.item_id).length;
+        const toAdd = Math.max(0, a.qty - have);
+        for (let i = 0; i < toAdd; i++) {
           add({
             itemId: a.item_id,
             name: a.name,
@@ -162,7 +178,7 @@ export function CartBundleProvider({
       }
       acceptBundle(b.id, b.savings);
     },
-    [add, acceptBundle],
+    [add, acceptBundle, lines],
   );
 
   const acceptLinked = useCallback(
@@ -223,7 +239,7 @@ export function CartBundleProvider({
     }
   }
 
-  const offers = suggestions.filter((b) => !acceptedIds.has(b.id));
+  const offers = suggestions.filter((b) => !b.already_satisfied && !acceptedIds.has(b.id));
 
   return (
     <BundleContext.Provider value={{ offers, accept }}>

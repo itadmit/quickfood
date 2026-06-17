@@ -17,6 +17,11 @@ export const GET = handler(async (req: Request) => {
   const url = new URL(req.url);
   const slug = url.searchParams.get("tenant");
   const itemsParam = url.searchParams.get("items") ?? "";
+  // Storefront opt-in: also return legacy bundles whose items are ALL
+  // already in the cart, flagged already_satisfied, so the client can
+  // auto-apply the deal price. The kiosk omits this flag and keeps the
+  // old "don't re-pitch what's already there" behavior.
+  const includeSatisfied = url.searchParams.get("include_satisfied") === "1";
   if (!slug) return apiError("validation_error", "missing tenant", 422);
 
   const tenant = await resolveTenantBySlug(slug);
@@ -114,6 +119,7 @@ export const GET = handler(async (req: Request) => {
           bundle_price: b.linkedItem.basePrice,
           full_price: triggerSum,
           savings,
+          already_satisfied: false,
           linked_item: {
             id: b.linkedItem.id,
             name: b.linkedItem.name,
@@ -131,7 +137,9 @@ export const GET = handler(async (req: Request) => {
       const availableAddons = b.addons.filter((a) => a.item.available);
       if (availableAddons.length === 0) return null;
       const allInCart = availableAddons.every((a) => inCart.has(a.itemId));
-      if (allInCart) return null;
+      // Kiosk (no include_satisfied) skips bundles already fully in cart.
+      // Storefront opts in and gets them flagged so it can auto-apply.
+      if (allInCart && !includeSatisfied) return null;
       const fullPrice = availableAddons.reduce(
         (acc, a) => acc + a.item.basePrice * a.qty,
         0,
@@ -143,6 +151,7 @@ export const GET = handler(async (req: Request) => {
         description: b.description,
         image_url: b.imageUrl,
         mode: "legacy" as const,
+        already_satisfied: allInCart,
         bundle_price: b.bundlePrice,
         full_price: fullPrice,
         savings,
