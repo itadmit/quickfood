@@ -14,7 +14,7 @@ import {
 
 export function NewOrderChime() {
   const [muted, setMuted] = useState(false);
-  const [sound, setSound] = useState<ChimeId>("classic");
+  const [sound, setSound] = useState<ChimeId>("1");
   const [pickerOpen, setPickerOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
