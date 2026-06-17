@@ -32,6 +32,15 @@ interface Props {
 
 type Status = "open" | "busy" | "closed";
 
+interface NotifItem {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  href: string;
+  created_at: string;
+}
+
 const STATUS_LABELS: Record<Status, string> = {
   open: "פתוח",
   busy: "עומס",
@@ -82,9 +91,10 @@ export function TopbarV2({
   const [statusBusy, setStatusBusy] = useState(false);
   // Single discriminated state for the two dropdowns so they're mutually
   // exclusive - opening one auto-closes the other. Set to null to close.
-  const [openMenu, setOpenMenu] = useState<"status" | "user" | null>(null);
+  const [openMenu, setOpenMenu] = useState<"status" | "user" | "bell" | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [notifications, setNotifications] = useState<NotifItem[]>([]);
   const headerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -116,7 +126,9 @@ export function TopbarV2({
       fetch("/api/v1/merchant/notifications")
         .then((r) => r.json())
         .then((d) => {
-          if (alive) setUnread(d.unread_count ?? 0);
+          if (!alive) return;
+          setUnread(d.unread_count ?? 0);
+          setNotifications(d.notifications ?? []);
         })
         .catch(() => {});
     }
@@ -262,20 +274,74 @@ export function TopbarV2({
           </button>
         )}
 
-        {/* Bell - single click jumps straight to orders (no dropdown in v2) */}
-        <Link
-          href="/dashboard/orders"
-          aria-label="צפייה בהזמנות"
-          title="צפייה בהזמנות"
-          className="relative w-10 h-10 rounded-xl border-2 border-black bg-white hover:bg-[#F8CB1E] grid place-items-center transition active:scale-95 shadow-[0_2px_0_#000]"
-        >
-          <IcoBell c="#000" s={18} />
-          {unread > 0 && (
-            <span className="absolute -top-1.5 -inset-e-1.5 min-w-5 h-5 px-1 rounded-full bg-black text-[#F8CB1E] text-[10px] font-black grid place-items-center tnum ring-2 ring-[#FFF2C9] pointer-events-none">
-              {unread > 99 ? "99+" : unread}
-            </span>
+        {/* Bell - opens a notifications dropdown (new orders / failed webhooks) */}
+        <div className="relative">
+          <button
+            type="button"
+            data-topbar-trigger="bell"
+            onClick={() => setOpenMenu(openMenu === "bell" ? null : "bell")}
+            aria-label="התראות"
+            title="התראות"
+            className="relative w-10 h-10 rounded-xl border-2 border-black bg-white hover:bg-[#F8CB1E] grid place-items-center transition active:scale-95 shadow-[0_2px_0_#000]"
+          >
+            <IcoBell c="#000" s={18} />
+            {unread > 0 && (
+              <span className="absolute -top-1.5 -inset-e-1.5 min-w-5 h-5 px-1 rounded-full bg-black text-[#F8CB1E] text-[10px] font-black grid place-items-center tnum ring-2 ring-[#FFF2C9] pointer-events-none">
+                {unread > 99 ? "99+" : unread}
+              </span>
+            )}
+          </button>
+          {openMenu === "bell" && (
+            <div
+              data-topbar-panel="bell"
+              className="absolute inset-e-0 mt-2 w-80 max-w-[calc(100vw-1.5rem)] bg-white border-2 border-black rounded-2xl shadow-[0_4px_0_#000] overflow-hidden z-50"
+            >
+              <header className="px-4 py-2.5 flex items-center justify-between border-b-2 border-black bg-[#F8CB1E]">
+                <div className="font-black text-sm">התראות</div>
+                <span className="text-xs font-bold tnum">{unread} חדשות</span>
+              </header>
+              <div className="max-h-96 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-8 text-center text-sm text-black/60">
+                    אין התראות חדשות
+                  </div>
+                ) : (
+                  notifications.map((n) => (
+                    <Link
+                      key={n.id}
+                      href={n.href}
+                      onClick={() => setOpenMenu(null)}
+                      className="block px-4 py-3 border-b border-black/10 last:border-b-0 hover:bg-[#FFF2C9] transition"
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <span
+                          className={cn(
+                            "mt-1.5 w-2 h-2 rounded-full shrink-0",
+                            n.type === "webhook_failed" ? "bg-[#DC2626]" : "bg-[#0e7a3c]",
+                          )}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="font-bold text-sm">{n.title}</div>
+                          <div className="text-xs text-black/60 truncate">{n.body}</div>
+                          <div className="text-[10px] text-black/45 mt-0.5">
+                            {timeAgo(n.created_at)}
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))
+                )}
+              </div>
+              <Link
+                href="/dashboard/orders"
+                onClick={() => setOpenMenu(null)}
+                className="block px-4 py-2.5 text-center text-sm font-black border-t-2 border-black bg-white hover:bg-[#F8CB1E] transition"
+              >
+                לכל ההזמנות
+              </Link>
+            </div>
           )}
-        </Link>
+        </div>
 
         {/* Share storefront - replaces the eye on mobile (eye is hidden
             below lg), and sits alongside it on desktop. Opens a modal
@@ -348,6 +414,16 @@ export function TopbarV2({
       />
     </header>
   );
+}
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diff / 60_000);
+  if (min < 1) return "עכשיו";
+  if (min < 60) return `לפני ${min} ד׳`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `לפני ${hr} ש׳`;
+  return `לפני ${Math.floor(hr / 24)} י׳`;
 }
 
 function roleLabel(role: string): string {
