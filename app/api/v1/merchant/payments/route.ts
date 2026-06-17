@@ -28,6 +28,7 @@ interface GrowCredentials {
 
 interface GrowSettings {
   maxInstallments?: number;
+  bankTransferEnabled?: boolean;
   [k: string]: unknown;
 }
 
@@ -68,6 +69,7 @@ export const GET = handler(async () => {
       page_code: credentials.pageCode ?? "",
       api_key: credentials.apiKey ?? "",
       max_installments: settings.maxInstallments ?? 1,
+      bank_transfer_enabled: settings.bankTransferEnabled ?? false,
       apple_pay_domain_association: config?.applePayDomainAssociation ?? "",
     },
   });
@@ -142,6 +144,9 @@ export const PATCH = handler(async (req: Request) => {
     const nextSettings: GrowSettings = { ...prevSettings };
     if (body.grow.max_installments !== undefined) {
       nextSettings.maxInstallments = body.grow.max_installments;
+    }
+    if (body.grow.bank_transfer_enabled !== undefined) {
+      nextSettings.bankTransferEnabled = body.grow.bank_transfer_enabled;
     }
 
     // Production needs at minimum a userId (platform supplies apiKey +

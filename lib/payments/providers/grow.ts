@@ -350,6 +350,20 @@ export class GrowProvider extends BasePaymentProvider {
         body.maxPaymentNum = Math.min(maxInstallments, 12);
       }
 
+      // Bank transfer (Grow transactionType 15) is off by default - it's a
+      // poor fit for food orders. When the merchant hasn't explicitly enabled
+      // it we whitelist the consumer methods only; selecting transactionType
+      // is "which methods to display", so omitting 15 hides it. When enabled
+      // we send nothing and Grow shows whatever the account has (incl. 15).
+      const bankTransferEnabled =
+        this.config!.settings?.bankTransferEnabled === true;
+      if (!bankTransferEnabled) {
+        // 1=credit card, 5=PayBox, 6=Bit, 13=Apple Pay, 14=Google Pay
+        [1, 5, 6, 13, 14].forEach((t, i) => {
+          body[`transactionType[${i}]`] = t;
+        });
+      }
+
       if (!this.config!.testMode) {
         const commission = process.env.GROW_COMPANY_COMMISSION;
         if (commission && Number(commission) > 0) body.companyCommission = Number(commission);

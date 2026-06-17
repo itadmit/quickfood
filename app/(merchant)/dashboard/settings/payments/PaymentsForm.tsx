@@ -15,6 +15,7 @@ interface GrowState {
   page_code: string;
   api_key: string;
   max_installments: number;
+  bank_transfer_enabled: boolean;
   apple_pay_domain_association: string;
 }
 
@@ -100,6 +101,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
             page_code: v.grow.page_code || undefined,
             api_key: v.grow.api_key || undefined,
             max_installments: v.grow.max_installments,
+            bank_transfer_enabled: v.grow.bank_transfer_enabled,
             apple_pay_domain_association: canEditApplePay
               ? v.grow.apple_pay_domain_association
               : undefined,
@@ -269,6 +271,16 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
                   </option>
                 ))}
               </select>
+            </Field>
+            <Field
+              label="העברה בנקאית"
+              hint="הצגת אפשרות העברה בנקאית בארנק התשלום של Grow. כבוי כברירת מחדל - פחות מתאים להזמנות אוכל."
+            >
+              <Toggle
+                checked={v.grow.bank_transfer_enabled}
+                onChange={(b) => setGrow("bank_transfer_enabled", b)}
+                label={v.grow.bank_transfer_enabled ? "מוצגת" : "מוסתרת"}
+              />
             </Field>
           </div>
 
