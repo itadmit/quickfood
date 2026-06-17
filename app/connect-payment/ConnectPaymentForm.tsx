@@ -69,7 +69,13 @@ export function ConnectPaymentForm({ prefill }: Props) {
           <div className="text-[11px] text-black/60">קבלת תשלומים באשראי, Bit ו-Apple Pay</div>
         </div>
         <a href="/" aria-label="QuickFood" className="shrink-0">
-          <img src="/quickfood-mark-white.png" alt="QuickFood" width={96} height={24} className="h-6 w-auto" />
+          <img
+            src="/quickfood-mark-white.png"
+            alt="QuickFood"
+            width={40}
+            height={40}
+            className="w-10 h-10 rounded-xl border-2 border-black shadow-[0_3px_0_#000] block"
+          />
         </a>
       </div>
 
