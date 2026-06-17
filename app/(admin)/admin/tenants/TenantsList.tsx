@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/format";
 import { THEMES } from "@/lib/themes";
 import { cn } from "@/lib/cn";
-import { Trash2, AlertTriangle, ExternalLink, Copy, MoreVertical, Phone } from "lucide-react";
+import { Trash2, AlertTriangle, ExternalLink, Copy, MoreVertical, Phone, LogIn, MessageCircle } from "lucide-react";
 import { useRef, useEffect } from "react";
 
 interface Tenant {
@@ -27,6 +27,7 @@ interface Tenant {
   lastOrderAt: string | null;
   ownerVerified: boolean;
   ownerPhone: string | null;
+  ownerEmail: string | null;
   createdAt: string;
 }
 
@@ -67,6 +68,7 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [duplicateOf, setDuplicateOf] = useState<Tenant | null>(null);
+  const [messageTo, setMessageTo] = useState<Tenant | null>(null);
 
   async function setStatus(id: string, status: "active" | "suspended") {
     setItems((p) => p.map((t) => (t.id === id ? { ...t, status } : t)));
@@ -146,7 +148,7 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
       </div>
 
       <div className="bg-white rounded-2xl border border-qf-line-dash overflow-hidden">
-        <div className="hidden lg:grid grid-cols-[1.5fr_130px_90px_90px_90px_120px_auto] gap-3 px-5 py-2.5 text-xs font-medium text-qf-mute border-b border-qf-line-soft bg-qf-line-soft/40">
+        <div className="hidden lg:grid grid-cols-[1.5fr_130px_90px_90px_90px_120px_170px] gap-3 px-5 py-2.5 text-xs font-medium text-qf-mute border-b border-qf-line-soft bg-qf-line-soft/40">
           <div>מסעדה</div>
           <div>פעילות</div>
           <div>תפריט</div>
@@ -162,6 +164,7 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
             onSetStatus={setStatus}
             onDelete={(id, name) => setDeleteConfirm({ id, name, step: 1 })}
             onDuplicate={(tn) => setDuplicateOf(tn)}
+            onMessage={(tn) => setMessageTo(tn)}
           />
         ))}
         {items.length === 0 && (
@@ -235,6 +238,13 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
           }}
         />
       )}
+
+      {messageTo && (
+        <MessageDialog
+          tenant={messageTo}
+          onClose={() => setMessageTo(null)}
+        />
+      )}
     </div>
   );
 }
@@ -244,14 +254,34 @@ function TenantRow({
   onSetStatus,
   onDelete,
   onDuplicate,
+  onMessage,
 }: {
   t: Tenant;
   onSetStatus: (id: string, status: "active" | "suspended") => void;
   onDelete: (id: string, name: string) => void;
   onDuplicate: (t: Tenant) => void;
+  onMessage: (t: Tenant) => void;
 }) {
   const theme = THEMES[t.themeId] ?? THEMES.fresh;
   const activity = classifyActivity(t);
+  const [impersonating, setImpersonating] = useState(false);
+
+  async function impersonate() {
+    if (impersonating) return;
+    setImpersonating(true);
+    try {
+      const res = await fetch(`/api/v1/admin/tenants/${t.id}/impersonate`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        window.location.href = "/dashboard";
+        return;
+      }
+      setImpersonating(false);
+    } catch {
+      setImpersonating(false);
+    }
+  }
 
   const statusTone =
     t.status === "active"
@@ -439,6 +469,24 @@ function TenantRow({
       </Link>
       <button
         type="button"
+        onClick={impersonate}
+        disabled={impersonating}
+        className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-qf-line-soft rounded-lg w-full text-right disabled:opacity-50"
+      >
+        <LogIn size={14} className="text-qf-mute" />
+        {impersonating ? "מתחבר…" : "התחבר כמשתמש"}
+      </button>
+      <button
+        type="button"
+        onClick={() => onMessage(t)}
+        className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-qf-line-soft rounded-lg w-full text-right"
+      >
+        <MessageCircle size={14} className="text-qf-mute" />
+        שלח הודעה
+      </button>
+      <div className="my-1 border-t border-qf-line-soft" />
+      <button
+        type="button"
         onClick={() => onDuplicate(t)}
         className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-qf-line-soft rounded-lg w-full text-right"
       >
@@ -481,7 +529,7 @@ function TenantRow({
       </div>
 
       {/* Desktop grid row */}
-      <div className="hidden lg:grid grid-cols-[1.5fr_130px_90px_90px_90px_120px_auto] gap-3 px-5 py-3.5 items-start border-b border-qf-line-soft last:border-b-0 hover:bg-qf-line-soft/30 transition-colors">
+      <div className="hidden lg:grid grid-cols-[1.5fr_130px_90px_90px_90px_120px_170px] gap-3 px-5 py-3.5 items-start border-b border-qf-line-soft last:border-b-0 hover:bg-qf-line-soft/30 transition-colors">
         {nameCell}
         <div>{activityCell}</div>
         <div className="text-sm">{menuCell}</div>
@@ -702,6 +750,121 @@ function DuplicateDialog({
             className="px-3.5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-50"
           >
             {busy ? "משכפל…" : "שכפל חנות"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function defaultMessage(t: Tenant): string {
+  return [
+    "היי מה קורה?",
+    "אני *מישל* מקוויק פוד,",
+    "תודה שנרשמת לשירות שלנו! 😀",
+    "קוויק פוד מאפשרת לך להקים אתר הזמנות משלך בתוך מספר דקות.",
+    "",
+    "אשמח ללוות אותך בהקמת החנות, הזנת התפריט והתוספות והחיבור לסליקה.",
+    "",
+    "בנוסף, מצרפת לך כאן את הלינק לדשבורד ההזמנות:",
+    "https://quickfood.co.il/dashboard/",
+    "",
+    `המייל שלך: ${t.ownerEmail ?? "(לא נמצא מייל)"}`,
+    "סיסמה אני לא אשלח כאן, אבל אם אינך זוכר תגיד לי ואחליף סיסמה.",
+  ].join("\n");
+}
+
+function MessageDialog({ tenant, onClose }: { tenant: Tenant; onClose: () => void }) {
+  const [body, setBody] = useState(() => defaultMessage(tenant));
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+
+  const noPhone = !tenant.ownerPhone;
+
+  async function send() {
+    if (busy || noPhone || body.trim().length === 0) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/v1/admin/tenants/${tenant.id}/message`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ body }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data?.error?.message ?? `שגיאה ${res.status}`);
+        return;
+      }
+      setSent(true);
+      setTimeout(onClose, 1200);
+    } catch {
+      setError("שגיאת רשת - נסה שוב");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 w-9 h-9 rounded-full bg-qf-green-soft flex items-center justify-center shrink-0">
+            <MessageCircle size={18} className="text-qf-green-deep" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="font-bold text-base">שליחת הודעה ב-WhatsApp</h2>
+            <p className="text-sm text-qf-ink2 mt-1">
+              ל<span className="font-semibold text-qf-ink">{tenant.name}</span>
+              {tenant.ownerPhone ? (
+                <span className="text-qf-mute tnum" dir="ltr"> · {tenant.ownerPhone}</span>
+              ) : null}
+            </p>
+          </div>
+        </div>
+
+        {noPhone ? (
+          <div className="text-sm text-qf-tomato bg-qf-tomato-soft border border-qf-tomato/30 rounded-xl px-3 py-2">
+            לבעל החנות אין מספר טלפון - לא ניתן לשלוח הודעה.
+          </div>
+        ) : (
+          <textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            rows={12}
+            dir="rtl"
+            className="w-full px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm leading-relaxed resize-y"
+          />
+        )}
+
+        {error && (
+          <div className="text-sm text-qf-tomato bg-qf-tomato-soft border border-qf-tomato/30 rounded-xl px-3 py-2">
+            {error}
+          </div>
+        )}
+        {sent && (
+          <div className="text-sm text-qf-green-deep bg-qf-green-soft border border-qf-green-deep/20 rounded-xl px-3 py-2">
+            ההודעה נשלחה.
+          </div>
+        )}
+
+        <div className="flex gap-2 justify-end pt-1">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="px-3.5 py-2 rounded-xl border border-qf-line-dash text-sm hover:bg-qf-line-soft"
+          >
+            ביטול
+          </button>
+          <button
+            type="button"
+            onClick={send}
+            disabled={busy || noPhone || sent || body.trim().length === 0}
+            className="px-3.5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-50"
+          >
+            {busy ? "שולח…" : "שלח הודעה"}
           </button>
         </div>
       </div>
