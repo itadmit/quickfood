@@ -6,7 +6,7 @@ export type Range = "today" | "yesterday" | "7d" | "30d" | "custom";
 
 export function rangeBounds(range: Range, custom?: { from?: Date; to?: Date }) {
   const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const today = israelStartOfDay(now);
   switch (range) {
     case "today": {
       return { from: today, to: now, previousFrom: dayBack(today, 1), previousTo: today };
@@ -47,8 +47,50 @@ export function rangeBounds(range: Range, custom?: { from?: Date; to?: Date }) {
   }
 }
 
+const ANALYTICS_TZ = "Asia/Jerusalem";
+
+/** Israel's UTC offset (ms, positive = ahead of UTC) at the given instant. */
+function israelOffsetMs(at: Date): number {
+  const p = new Intl.DateTimeFormat("en-US", {
+    timeZone: ANALYTICS_TZ,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  })
+    .formatToParts(at)
+    .reduce((a, x) => {
+      a[x.type] = x.value;
+      return a;
+    }, {} as Record<string, string>);
+  const hour = p.hour === "24" ? 0 : Number(p.hour);
+  const asUtc = Date.UTC(+p.year, +p.month - 1, +p.day, hour, +p.minute, +p.second);
+  return asUtc - at.getTime();
+}
+
+/** UTC instant of the Israel-local midnight for the day containing `at`. */
+function israelStartOfDay(at: Date): Date {
+  const p = new Intl.DateTimeFormat("en-CA", {
+    timeZone: ANALYTICS_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+    .formatToParts(at)
+    .reduce((a, x) => {
+      a[x.type] = x.value;
+      return a;
+    }, {} as Record<string, string>);
+  const utcMidnight = Date.UTC(+p.year, +p.month - 1, +p.day, 0, 0, 0);
+  return new Date(utcMidnight - israelOffsetMs(new Date(utcMidnight)));
+}
+
+/** N Israel-days before `d` (an Israel midnight), DST-safe via midday snap. */
 function dayBack(d: Date, n: number) {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate() - n);
+  return israelStartOfDay(new Date(d.getTime() - n * 86_400_000 + 12 * 3_600_000));
 }
 
 // Orders that count toward the dashboard: any real order placed, EXCEPT
