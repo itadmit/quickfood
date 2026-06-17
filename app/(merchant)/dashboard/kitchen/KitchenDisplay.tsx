@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { IcoBell, IcoClock, IcoRefresh, IcoCheck } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
+import { playChime, getSelectedChime, unlockChimeAudio } from "@/lib/order-chime";
 
 type KitchenStatus = "pending" | "confirmed" | "preparing" | "in_oven" | "ready";
 
@@ -63,8 +64,6 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
   const [now, setNow] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [soundMuted, setSoundMuted] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioUnlockedRef = useRef(false);
   // Mirror of soundMuted so playChime (reached from the memoized refresh)
   // always reads the live value rather than a closed-over stale one.
   const soundMutedRef = useRef(false);
@@ -129,15 +128,7 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
       const hasUnseen = next.some((o) => !seenIdsRef.current.has(o.id));
       for (const o of next) seenIdsRef.current.add(o.id);
       if (hasUnseen && !soundMutedRef.current) {
-        const el = audioRef.current;
-        if (el) {
-          try {
-            el.currentTime = 0;
-            void el.play();
-          } catch {
-            /* ignore */
-          }
-        }
+        playChime(getSelectedChime());
       }
       setOrders(next);
     } finally {
@@ -200,31 +191,16 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refresh]);
 
-  // Audio - same /sounds/new.mp3 as NewOrderChime so the UX matches.
-  // iOS/Chrome block autoplay until a user gesture; unlock on the
-  // first click anywhere.
+  // Chime is shared with the orders board (NewOrderChime) - same selected
+  // sound, synthesized or the classic file. iOS/Chrome block autoplay until
+  // a user gesture; unlock the audio context on the first interaction.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const saved = localStorage.getItem("qf_kitchen_chime_muted");
     setSoundMuted(saved === "1");
     soundMutedRef.current = saved === "1";
-    const el = new Audio("/sounds/new.mp3");
-    el.preload = "auto";
-    audioRef.current = el;
     function unlock() {
-      const target = audioRef.current;
-      if (!target || audioUnlockedRef.current) return;
-      target.muted = true;
-      target.play()
-        .then(() => {
-          target.pause();
-          target.currentTime = 0;
-          target.muted = false;
-          audioUnlockedRef.current = true;
-        })
-        .catch(() => {
-          /* ignore */
-        });
+      unlockChimeAudio();
     }
     window.addEventListener("click", unlock, { once: true });
     window.addEventListener("keydown", unlock, { once: true });
