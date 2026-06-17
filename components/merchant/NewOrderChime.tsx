@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { IcoBell, IcoChevDown } from "@/components/shared/Icons";
+import { IcoBell } from "@/components/shared/Icons";
 import {
   CHIME_ENABLED_KEY,
   CHIME_SOUND_KEY,
@@ -70,8 +70,10 @@ export function NewOrderChime() {
   function pick(id: ChimeId) {
     setSound(id);
     localStorage.setItem(CHIME_SOUND_KEY, id);
-    unlockChimeAudio();
-    playChime(id); // preview the chosen sound
+    // The click is a user gesture, so playing here both previews the sound
+    // and unlocks this element for autoplay. Do NOT call unlockChimeAudio()
+    // here - its muted play+pause races with (and silences) this preview.
+    playChime(id);
   }
 
   return (
@@ -92,15 +94,10 @@ export function NewOrderChime() {
       <button
         type="button"
         onClick={() => setPickerOpen((v) => !v)}
-        title="בחירת צליל"
-        aria-label="בחירת צליל"
-        className={`inline-flex items-center px-1.5 py-1.5 rounded-e-lg border border-s-0 ${
-          enabled
-            ? "border-qf-green-deep bg-qf-green-soft text-qf-green-deep"
-            : "border-qf-line-dash text-qf-mute hover:bg-qf-line-soft"
-        }`}
+        title="החלפת צליל"
+        className="inline-flex items-center px-2.5 py-1.5 rounded-e-lg border border-s-0 border-qf-line-dash text-xs font-medium text-qf-ink2 hover:bg-qf-line-soft"
       >
-        <IcoChevDown c={enabled ? "var(--qf-deep)" : "#7c8a82"} s={14} />
+        החלפת צליל
       </button>
       {pickerOpen && (
         <div className="absolute top-full inset-e-0 mt-1.5 w-44 bg-white border border-qf-line-dash rounded-xl shadow-lg p-1 z-50">

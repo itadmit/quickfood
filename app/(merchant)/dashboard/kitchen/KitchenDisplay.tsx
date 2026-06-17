@@ -3,7 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { IcoBell, IcoClock, IcoRefresh, IcoCheck } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
-import { playChime, getSelectedChime, unlockChimeAudio } from "@/lib/order-chime";
+import {
+  playChime,
+  getSelectedChime,
+  unlockChimeAudio,
+  CHIME_OPTIONS,
+  CHIME_SOUND_KEY,
+  type ChimeId,
+} from "@/lib/order-chime";
 
 type KitchenStatus = "pending" | "confirmed" | "preparing" | "in_oven" | "ready";
 
@@ -64,6 +71,9 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
   const [now, setNow] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [soundMuted, setSoundMuted] = useState(false);
+  const [sound, setSound] = useState<ChimeId>("1");
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement | null>(null);
   // Mirror of soundMuted so playChime (reached from the memoized refresh)
   // always reads the live value rather than a closed-over stale one.
   const soundMutedRef = useRef(false);
@@ -199,6 +209,7 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
     const saved = localStorage.getItem("qf_kitchen_chime_muted");
     setSoundMuted(saved === "1");
     soundMutedRef.current = saved === "1";
+    setSound(getSelectedChime());
     function unlock() {
       unlockChimeAudio();
     }
@@ -216,6 +227,25 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
     soundMutedRef.current = next;
     localStorage.setItem("qf_kitchen_chime_muted", next ? "1" : "0");
   }
+
+  function pickSound(id: ChimeId) {
+    setSound(id);
+    localStorage.setItem(CHIME_SOUND_KEY, id);
+    // The click is a user gesture - playing previews AND unlocks the element.
+    // Calling unlockChimeAudio() here would pause (silence) this preview.
+    playChime(id);
+  }
+
+  useEffect(() => {
+    if (!pickerOpen) return;
+    function onDoc(e: MouseEvent) {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setPickerOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [pickerOpen]);
 
   async function toggleItem(orderId: string, itemId: string, prepared: boolean) {
     // Optimistic flip so the cook's tap feels immediate. SSE-driven
@@ -275,6 +305,37 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
             <IcoBell c={soundMuted ? "#7c8a82" : "var(--qf-deep)"} s={16} />
             {soundMuted ? "סאונד מושתק" : "סאונד פעיל"}
           </button>
+          <div ref={pickerRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setPickerOpen((v) => !v)}
+              title="החלפת צליל"
+              className="inline-flex items-center px-3 py-2.5 rounded-xl border-2 border-qf-line-dash bg-white text-sm font-bold text-qf-ink2 hover:bg-black/5"
+            >
+              החלפת צליל
+            </button>
+            {pickerOpen && (
+              <div className="absolute top-full inset-e-0 mt-1.5 w-44 bg-white border-2 border-black rounded-xl shadow-[0_4px_0_#000] p-1 z-50">
+                <div className="px-2.5 py-1.5 text-[11px] font-black text-qf-mute">
+                  צליל התראה
+                </div>
+                {CHIME_OPTIONS.map((o) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    onClick={() => pickSound(o.id)}
+                    className={cn(
+                      "w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg text-sm hover:bg-black/5",
+                      o.id === sound ? "font-black text-qf-ink" : "text-qf-ink2",
+                    )}
+                  >
+                    <span>{o.label}</span>
+                    {o.id === sound && <span className="text-qf-green-deep text-xs">●</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <button
             type="button"
             onClick={refresh}
