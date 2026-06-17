@@ -13,10 +13,11 @@ import { ItemDetailModal } from "@/components/customer/ItemDetailModal";
 import { ItemDetail } from "@/components/customer/screens/ItemDetail";
 import ItemModalSkeleton from "@/components/customer/ItemModalSkeleton";
 import { CartUpsell } from "@/components/customer/CartUpsell";
+import { CartBundleOffers } from "@/components/customer/CartBundleOffers";
 
 export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
   const router = useRouter();
-  const { lines, updateQuantity, remove, subtotal, method, deliveryFee, branch, tenant, hydrated } = useCart();
+  const { lines, updateQuantity, remove, subtotal, method, deliveryFee, branch, tenant, hydrated, bundleDiscount } = useCart();
 
   // Wolt-style: clicking a cart line opens the item-detail modal in
   // edit mode (pre-filled with the line's selections; CTA flips to
@@ -41,7 +42,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
   }, [editing, tenantSlug]);
 
   const serviceFee = branch?.serviceFee ?? 0;
-  const total = subtotal + deliveryFee + serviceFee;
+  const total = Math.max(0, subtotal + deliveryFee + serviceFee - bundleDiscount);
   const minOrder = branch?.minOrder ?? 0;
   const meetsMin = subtotal >= minOrder;
 
@@ -193,6 +194,11 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
         })}
       </div>
 
+          <CartBundleOffers
+            tenantSlug={tenantSlug}
+            businessType={(tenant.businessType as BusinessType) ?? "general"}
+          />
+
           <CartUpsell tenantSlug={tenantSlug} />
         </div>
 
@@ -200,6 +206,9 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
         <aside className="px-5 mt-5 lg:px-0 lg:mt-0 lg:sticky lg:top-20 lg:self-start">
           <div className="bg-white border border-qf-line rounded-2xl p-4 space-y-2 text-sm shadow-xs">
             <Row label="סכום ביניים" value={formatPrice(subtotal)} />
+            {bundleDiscount > 0 && (
+              <Row label="הנחת מבצע" value={`-${formatPrice(bundleDiscount)}`} />
+            )}
             {method === "delivery" && (
               <Row label="דמי משלוח" value={deliveryFee === 0 ? "חינם" : formatPrice(deliveryFee)} />
             )}

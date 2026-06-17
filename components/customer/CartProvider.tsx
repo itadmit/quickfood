@@ -27,9 +27,18 @@ export interface CartLine {
   source?: CartLineSource;
 }
 
+/** A bundle offer the customer accepted on the cart screen. We keep the
+ *  savings alongside the id so the cart/checkout summaries can show the
+ *  discount before the server recomputes it authoritatively at order time. */
+export interface AcceptedBundle {
+  id: string;
+  savings: number;
+}
+
 export interface CartState {
   lines: CartLine[];
   method: "delivery" | "pickup";
+  acceptedBundles: AcceptedBundle[];
 }
 
 interface CartContextValue extends CartState {
@@ -40,6 +49,14 @@ interface CartContextValue extends CartState {
   remove: (lineId: string) => void;
   clear: () => void;
   setMethod: (m: "delivery" | "pickup") => void;
+  /** Bundle offers the customer accepted. Threaded to the order create
+   *  call as `applied_bundle_ids`; the server re-verifies + discounts. */
+  acceptedBundles: AcceptedBundle[];
+  acceptBundle: (id: string, savings: number) => void;
+  unacceptBundle: (id: string) => void;
+  /** Sum of accepted-bundle savings, capped at subtotal. Subtracted from
+   *  the displayed total so the cart matches what the server will charge. */
+  bundleDiscount: number;
   subtotal: number;
   itemCount: number;
   /** Delivery fee for the current method/cart, with free-delivery
@@ -111,7 +128,7 @@ export function CartProvider({
   zones?: ZoneForMatch[];
   children: React.ReactNode;
 }) {
-  const [state, setState] = useState<CartState>({ lines: [], method: "delivery" });
+  const [state, setState] = useState<CartState>({ lines: [], method: "delivery", acceptedBundles: [] });
   const [hydrated, setHydrated] = useState(false);
   // The customer's chosen delivery city (localStorage). Re-read on the
   // same-tab change event so the cart's fee/minimum update live.
@@ -141,6 +158,7 @@ export function CartProvider({
         setState({
           lines: parsed.lines ?? [],
           method: parsed.method ?? "delivery",
+          acceptedBundles: parsed.acceptedBundles ?? [],
         });
       }
     } catch {
@@ -166,6 +184,10 @@ export function CartProvider({
       return acc + unit * l.quantity;
     }, 0);
     const itemCount = state.lines.reduce((acc, l) => acc + l.quantity, 0);
+    const bundleDiscount = Math.min(
+      subtotal,
+      state.acceptedBundles.reduce((acc, b) => acc + Math.max(0, b.savings), 0),
+    );
 
     // Per-zone economics override the branch defaults once the customer is
     // ordering delivery to a city that maps to an active zone. Mirrors the
@@ -227,8 +249,21 @@ export function CartProvider({
         })),
       remove: (lineId) =>
         setState((s) => ({ ...s, lines: s.lines.filter((l) => l.lineId !== lineId) })),
-      clear: () => setState((s) => ({ ...s, lines: [] })),
+      clear: () => setState((s) => ({ ...s, lines: [], acceptedBundles: [] })),
       setMethod: (m) => setState((s) => ({ ...s, method: m })),
+      acceptBundle: (id, savings) =>
+        setState((s) =>
+          s.acceptedBundles.some((b) => b.id === id)
+            ? s
+            : { ...s, acceptedBundles: [...s.acceptedBundles, { id, savings }] },
+        ),
+      unacceptBundle: (id) =>
+        setState((s) => ({
+          ...s,
+          acceptedBundles: s.acceptedBundles.filter((b) => b.id !== id),
+        })),
+      acceptedBundles: state.acceptedBundles,
+      bundleDiscount,
       subtotal,
       itemCount,
       deliveryFee,

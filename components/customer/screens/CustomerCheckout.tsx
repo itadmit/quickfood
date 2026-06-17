@@ -42,7 +42,7 @@ export function CustomerCheckout({
   pickupEnabled?: boolean;
 }) {
   const router = useRouter();
-  const { lines, method, subtotal, deliveryFee, branch, tenant, clear, setMethod, hydrated } = useCart();
+  const { lines, method, subtotal, deliveryFee, branch, tenant, clear, setMethod, hydrated, acceptedBundles, bundleDiscount } = useCart();
 
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
@@ -181,7 +181,10 @@ export function CustomerCheckout({
     tenant.cutleryEnabled && cutleryCount > 0 && !cutleryFreeUnlocked
       ? cutleryUnitPrice * cutleryCount
       : 0;
-  const total = subtotal + deliveryFee + serviceFee + cutleryFee + tip - couponDiscount;
+  const total = Math.max(
+    0,
+    subtotal + deliveryFee + serviceFee + cutleryFee + tip - couponDiscount - bundleDiscount,
+  );
 
   /**
    * Re-validate when subtotal changes (line added/removed), since a coupon
@@ -373,6 +376,7 @@ export function CustomerCheckout({
           cutlery_count: cutleryCount,
           scheduled_for: scheduledIso() ?? undefined,
           coupon_code: couponApplied?.code ?? undefined,
+          applied_bundle_ids: acceptedBundles.length > 0 ? acceptedBundles.map((b) => b.id) : undefined,
           customer_notes: customerNotes || undefined,
           delivery_notes:
             method === "delivery" && (address || city || floor || apartment)
@@ -988,6 +992,13 @@ export function CustomerCheckout({
               />
             )}
             {tip > 0 && <SumRow label="טיפ לשליח" value={formatPrice(tip)} />}
+            {bundleDiscount > 0 && (
+              <SumRow
+                label="הנחת מבצע"
+                value={`−${formatPrice(bundleDiscount)}`}
+                tone="discount"
+              />
+            )}
             {couponApplied && (
               <SumRow
                 label={`קופון ${couponApplied.code}`}
@@ -1068,6 +1079,13 @@ export function CustomerCheckout({
               />
             )}
               {tip > 0 && <SumRow label="טיפ לשליח" value={formatPrice(tip)} />}
+            {bundleDiscount > 0 && (
+              <SumRow
+                label="הנחת מבצע"
+                value={`−${formatPrice(bundleDiscount)}`}
+                tone="discount"
+              />
+            )}
             {couponApplied && (
               <SumRow
                 label={`קופון ${couponApplied.code}`}
