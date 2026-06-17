@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db/client";
 import { getSession } from "@/lib/auth/session";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import { CartProvider } from "@/components/customer/CartProvider";
+import { CartBundleProvider } from "@/components/customer/CartBundleProvider";
+import type { BusinessType } from "@/components/shared/MenuItemImage";
 import { MenuSearchProvider } from "@/components/customer/MenuSearchProvider";
 import { CustomerTopNav } from "@/components/customer/CustomerTopNav";
 import { ReviewPromptModal } from "@/components/customer/ReviewPromptModal";
@@ -140,6 +142,7 @@ export default async function CustomerLayout({
           maxEta: z.maxEta,
         }))}
       >
+        <CartBundleProvider tenantSlug={tenant.slug} businessType={tenant.businessType as BusinessType}>
         <MenuSearchProvider>
           {/* Mobile = phone-sized column with shadow (max-w-md).
               Desktop (lg+) = top nav appears, the wrapper widens and screens
@@ -190,6 +193,7 @@ export default async function CustomerLayout({
             {isOwnMerchant && <MerchantPreviewBar tenantName={tenant.name} />}
           </CustomerChromeGate>
         </MenuSearchProvider>
+        </CartBundleProvider>
       </CartProvider>
     </ThemeProvider>
   );

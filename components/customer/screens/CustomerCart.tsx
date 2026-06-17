@@ -195,7 +195,6 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
       </div>
 
           <CartBundleOffers
-            tenantSlug={tenantSlug}
             businessType={(tenant.businessType as BusinessType) ?? "general"}
           />
 
