@@ -6,8 +6,7 @@ import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/format";
 import { THEMES } from "@/lib/themes";
 import { cn } from "@/lib/cn";
-import { Trash2, AlertTriangle, ExternalLink, Copy, MoreVertical, Phone, LogIn, MessageCircle } from "lucide-react";
-import { useRef, useEffect } from "react";
+import { Trash2, AlertTriangle, ExternalLink, Copy, Phone, LogIn, MessageCircle } from "lucide-react";
 
 interface Tenant {
   id: string;
@@ -148,7 +147,7 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
       </div>
 
       <div className="bg-white rounded-2xl border border-qf-line-dash overflow-hidden">
-        <div className="hidden lg:grid grid-cols-[1.5fr_130px_90px_90px_90px_120px_170px] gap-3 px-5 py-2.5 text-xs font-medium text-qf-mute border-b border-qf-line-soft bg-qf-line-soft/40">
+        <div className="hidden lg:grid grid-cols-[1.5fr_130px_90px_90px_90px_120px_300px] gap-3 px-5 py-2.5 text-xs font-medium text-qf-mute border-b border-qf-line-soft bg-qf-line-soft/40">
           <div>מסעדה</div>
           <div>פעילות</div>
           <div>תפריט</div>
@@ -456,53 +455,39 @@ function TenantRow({
     </button>
   );
 
-  const moreMenu = (
-    <MoreMenu>
-      <Link
-        href={`/s/${t.slug}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-qf-line-soft rounded-lg"
-      >
-        <ExternalLink size={14} className="text-qf-mute" />
-        צפה בחנות
-      </Link>
-      <button
-        type="button"
-        onClick={impersonate}
-        disabled={impersonating}
-        className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-qf-line-soft rounded-lg w-full text-right disabled:opacity-50"
-      >
-        <LogIn size={14} className="text-qf-mute" />
-        {impersonating ? "מתחבר…" : "התחבר כמשתמש"}
-      </button>
-      <button
-        type="button"
-        onClick={() => onMessage(t)}
-        className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-qf-line-soft rounded-lg w-full text-right"
-      >
-        <MessageCircle size={14} className="text-qf-mute" />
-        שלח הודעה
-      </button>
-      <div className="my-1 border-t border-qf-line-soft" />
-      <button
-        type="button"
-        onClick={() => onDuplicate(t)}
-        className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-qf-line-soft rounded-lg w-full text-right"
-      >
-        <Copy size={14} className="text-qf-mute" />
-        שכפל חנות
-      </button>
-      <div className="my-1 border-t border-qf-line-soft" />
-      <button
-        type="button"
-        onClick={() => onDelete(t.id, t.name)}
-        className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-qf-tomato-soft text-qf-tomato rounded-lg w-full text-right"
-      >
-        <Trash2 size={14} />
-        מחק חנות
-      </button>
-    </MoreMenu>
+  const impersonateButton = (cls: string) => (
+    <button
+      type="button"
+      onClick={impersonate}
+      disabled={impersonating}
+      className={cn(cls, "border border-qf-line-dash hover:bg-qf-line-soft inline-flex items-center gap-1 disabled:opacity-50")}
+    >
+      <LogIn size={13} className="text-qf-mute" />
+      {impersonating ? "מתחבר…" : "התחבר כ-"}
+    </button>
+  );
+
+  const messageButton = (cls: string) => (
+    <button
+      type="button"
+      onClick={() => onMessage(t)}
+      className={cn(cls, "border border-qf-line-dash hover:bg-qf-line-soft inline-flex items-center gap-1")}
+    >
+      <MessageCircle size={13} className="text-qf-mute" />
+      שלח הודעה
+    </button>
+  );
+
+  const actions = (textCls: string, iconCls: string) => (
+    <>
+      {openLink(cn(textCls, "border border-qf-line-dash hover:bg-qf-line-soft"))}
+      {impersonateButton(textCls)}
+      {messageButton(textCls)}
+      {statusButton(textCls)}
+      {storeLink(iconCls)}
+      {duplicateButton(iconCls)}
+      {deleteButton(cn(iconCls, "flex items-center justify-center"))}
+    </>
   );
 
   return (
@@ -521,63 +506,24 @@ function TenantRow({
             <span className="text-qf-mute">{lastLoginCell}</span>
           </LabeledCell>
         </div>
-        <div className="flex gap-2 items-center">
-          {openLink("flex-1 text-center px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-xs hover:bg-qf-line-soft")}
-          {statusButton("flex-1 text-center px-2.5 py-1.5 rounded-lg text-xs font-medium")}
-          {moreMenu}
+        <div className="flex flex-wrap gap-2 items-center">
+          {actions("px-2.5 py-1.5 rounded-lg text-xs font-medium", "w-8 h-8 rounded-lg text-xs")}
         </div>
       </div>
 
       {/* Desktop grid row */}
-      <div className="hidden lg:grid grid-cols-[1.5fr_130px_90px_90px_90px_120px_170px] gap-3 px-5 py-3.5 items-start border-b border-qf-line-soft last:border-b-0 hover:bg-qf-line-soft/30 transition-colors">
+      <div className="hidden lg:grid grid-cols-[1.5fr_130px_90px_90px_90px_120px_300px] gap-3 px-5 py-3.5 items-start border-b border-qf-line-soft last:border-b-0 hover:bg-qf-line-soft/30 transition-colors">
         {nameCell}
         <div>{activityCell}</div>
         <div className="text-sm">{menuCell}</div>
         <div className="text-sm tnum">{ordersCell}</div>
         <div className="text-sm">{woltCell}</div>
         <div className="text-xs text-qf-mute">{lastLoginCell}</div>
-        <div className="flex gap-1.5 justify-end items-center">
-          {openLink("px-3 py-1.5 rounded-lg border border-qf-line-dash text-xs hover:bg-qf-line-soft font-medium")}
-          {statusButton("px-3 py-1.5 rounded-lg text-xs font-medium")}
-          {moreMenu}
+        <div className="flex flex-wrap gap-1.5 justify-end items-center">
+          {actions("px-2.5 py-1.5 rounded-lg text-xs font-medium", "w-7 h-7 rounded-lg text-xs")}
         </div>
       </div>
     </>
-  );
-}
-
-function MoreMenu({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function onClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
-  }, [open]);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-7 h-7 rounded-lg border border-qf-line-dash hover:bg-qf-line-soft flex items-center justify-center text-qf-mute hover:text-qf-ink transition-colors"
-        aria-label="אפשרויות נוספות"
-      >
-        <MoreVertical size={14} />
-      </button>
-      {open && (
-        <div
-          className="absolute left-0 top-full mt-1 z-50 bg-white border border-qf-line-dash rounded-xl shadow-lg p-1 min-w-[160px]"
-          onClick={() => setOpen(false)}
-        >
-          {children}
-        </div>
-      )}
-    </div>
   );
 }
 
