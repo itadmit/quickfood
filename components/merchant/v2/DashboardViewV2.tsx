@@ -9,6 +9,7 @@ import { GrowNudgeModal } from "@/components/merchant/v2/GrowNudgeModal";
 import { MenuItemImage } from "@/components/shared/MenuItemImage";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { OrderStatusBadgeV2 } from "@/components/merchant/OrderStatusBadgeV2";
 
 interface KPI {
   count?: number;
@@ -384,7 +385,7 @@ export function DashboardViewV2({
                     {formatRelative(o.createdAt)}
                   </div>
                 </div>
-                <RecentStatusChipV2 status={o.status} />
+                <OrderStatusBadgeV2 status={o.status} className="hidden sm:inline-flex" />
                 <div className="text-sm font-black tnum w-20 text-end">
                   {formatPrice(o.total)}
                 </div>
@@ -533,118 +534,6 @@ function DeltaPill({
   );
 }
 
-// Each status maps to a visual semantic in the cyan/black/white palette.
-// The system reads at a glance:
-//   • white + black border  = idle (waiting on someone)
-//   • cyan + black border   = active right now (kitchen in motion)
-//   • dot prefix            = en route (movement implied)
-//   • black + cyan text     = done well (success)
-//   • dashed + muted        = canceled (closed unsuccessfully)
-const STATUS_META: Record<
-  string,
-  {
-    label: string;
-    tone: "waiting" | "approved" | "idle" | "active" | "transit" | "done" | "canceled";
-  }
-> = {
-  pending: { label: "חדשה", tone: "waiting" },
-  confirmed: { label: "חדשה", tone: "waiting" },
-  preparing: { label: "בהכנה", tone: "active" },
-  in_oven: { label: "בהכנה", tone: "active" },
-  ready: { label: "מוכן", tone: "approved" },
-  out_for_delivery: { label: "יצא למשלוח", tone: "transit" },
-  delivered: { label: "נמסר", tone: "done" },
-  cancelled: { label: "בוטלה", tone: "canceled" },
-  canceled: { label: "בוטלה", tone: "canceled" },
-  refunded: { label: "הוחזרה", tone: "canceled" },
-};
-
-function RecentStatusChipV2({ status }: { status: string }) {
-  const meta = STATUS_META[status] ?? { label: status, tone: "idle" as const };
-
-  const base =
-    "hidden sm:inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide px-2 py-1 rounded-md border-2";
-
-  if (meta.tone === "waiting") {
-    return (
-      <span
-        className={cn(base, "border-black text-black")}
-        style={{ backgroundColor: "#fff1d6" }}
-      >
-        {meta.label}
-      </span>
-    );
-  }
-
-  if (meta.tone === "approved") {
-    return (
-      <span
-        className={cn(base, "border-black")}
-        style={{ backgroundColor: "#e7f5ec", color: "#0a5d2d" }}
-      >
-        {meta.label}
-      </span>
-    );
-  }
-
-  if (meta.tone === "active") {
-    return (
-      <span
-        className={cn(base, "border-black text-black")}
-        style={{ backgroundColor: "#F8CB1E" }}
-      >
-        <span className="relative inline-flex w-1.5 h-1.5">
-          <span className="absolute inline-flex w-full h-full rounded-full bg-green-500 opacity-75 animate-ping" />
-          <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-green-600" />
-        </span>
-        {meta.label}
-      </span>
-    );
-  }
-
-  if (meta.tone === "transit") {
-    return (
-      <span className={cn(base, "border-black bg-white text-black")}>
-        <span
-          className="w-1.5 h-1.5 rounded-full"
-          style={{ backgroundColor: "#F8CB1E" }}
-        />
-        {meta.label}
-      </span>
-    );
-  }
-
-  if (meta.tone === "done") {
-    return (
-      <span
-        className={cn(base, "border-black bg-black")}
-        style={{ color: "#F8CB1E" }}
-      >
-        {meta.label}
-      </span>
-    );
-  }
-
-  if (meta.tone === "canceled") {
-    return (
-      <span
-        className={cn(
-          base,
-          "border-dashed border-black/30 bg-transparent text-black/45 line-through decoration-black/40",
-        )}
-      >
-        {meta.label}
-      </span>
-    );
-  }
-
-  // idle (pending, confirmed) - clean black-bordered white pill
-  return (
-    <span className={cn(base, "border-black bg-white text-black")}>
-      {meta.label}
-    </span>
-  );
-}
 
 function kpiHeadline(s: Summary): string {
   const orders = s.orders.count ?? 0;

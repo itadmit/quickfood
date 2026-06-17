@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { OrderStatusBadgeV2 } from "@/components/merchant/OrderStatusBadgeV2";
 
 type Status =
   | "pending"
@@ -42,18 +43,6 @@ interface Meta {
   per_page: number;
   total_pages: number;
 }
-
-const STATUS_LABEL: Record<Status, string> = {
-  pending: "ממתינה",
-  confirmed: "אושרה",
-  preparing: "בהכנה",
-  in_oven: "בתנור",
-  ready: "מוכנה",
-  out_for_delivery: "במשלוח",
-  delivered: "נמסרה",
-  cancelled: "בוטלה",
-  refunded: "הוחזרה",
-};
 
 const STATUS_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "", label: "כל הסטטוסים" },
@@ -414,7 +403,7 @@ export function OrdersHistoryView() {
                         {o.method === "delivery" ? "משלוח" : "איסוף"}
                       </td>
                       <td className="px-3 py-2">
-                        <StatusPill status={o.status} />
+                        <OrderStatusBadgeV2 status={o.status} />
                       </td>
                       <td className="px-3 py-2 text-qf-ink2 whitespace-nowrap">
                         {PAYMENT_LABEL[o.payment_method] ?? o.payment_method}
@@ -531,26 +520,3 @@ function ReviewCell({
   );
 }
 
-function StatusPill({ status }: { status: Status }) {
-  const tone: Record<Status, string> = {
-    pending: "bg-qf-yolk-soft text-qf-ink",
-    confirmed: "bg-qf-green-soft text-qf-green-deep",
-    preparing: "bg-qf-yolk-soft text-qf-ink",
-    in_oven: "bg-qf-yolk-soft text-qf-ink",
-    ready: "bg-qf-green-soft text-qf-green-deep",
-    out_for_delivery: "bg-qf-green-soft text-qf-green-deep",
-    delivered: "bg-qf-line-soft text-qf-ink2",
-    cancelled: "bg-qf-tomato-soft text-qf-tomato",
-    refunded: "bg-qf-tomato-soft text-qf-tomato",
-  };
-  return (
-    <span
-      className={cn(
-        "inline-block px-2 py-0.5 rounded-md text-xs font-medium whitespace-nowrap",
-        tone[status],
-      )}
-    >
-      {STATUS_LABEL[status]}
-    </span>
-  );
-}

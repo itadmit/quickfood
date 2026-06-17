@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db/client";
 import { Prisma } from "@prisma/client";
+import { HIDE_UNPAID_NONCASH } from "@/lib/orders-visible";
 
 export type Range = "today" | "yesterday" | "7d" | "30d" | "custom";
 
@@ -50,7 +51,15 @@ function dayBack(d: Date, n: number) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() - n);
 }
 
-const TERMINAL_STATUSES = ["delivered", "ready", "out_for_delivery"] as const;
+// Orders that count toward the dashboard: any real order placed, EXCEPT
+// cancelled/refunded and card orders abandoned at the payment screen. This
+// deliberately includes in-progress orders (new / confirmed / preparing /
+// ready / out-for-delivery / delivered) so the dashboard reflects live
+// activity during service, not only orders that already went out the door.
+const COUNTED: Prisma.OrderWhereInput = {
+  status: { notIn: ["cancelled", "refunded"] },
+  NOT: HIDE_UNPAID_NONCASH,
+};
 
 export async function summary(tenantId: string, range: Range) {
   const { from, to, previousFrom, previousTo } = rangeBounds(range);
@@ -75,7 +84,7 @@ async function aggregateBucket(tenantId: string, from: Date, to: Date) {
   const where: Prisma.OrderWhereInput = {
     tenantId,
     createdAt: { gte: from, lt: to },
-    status: { in: ["delivered", "ready", "out_for_delivery"] },
+    ...COUNTED,
   };
   const rows = await prisma.order.findMany({
     where,
@@ -120,7 +129,7 @@ async function bucketByHour(tenantId: string, from: Date, to: Date): Promise<num
     where: {
       tenantId,
       createdAt: { gte: from, lt: to },
-      status: { in: [...TERMINAL_STATUSES] },
+      ...COUNTED,
     },
     select: { createdAt: true },
   });
@@ -140,7 +149,7 @@ export async function topItems(tenantId: string, range: Range, limit = 5) {
       order: {
         tenantId,
         createdAt: { gte: from, lt: to },
-        status: { in: [...TERMINAL_STATUSES] },
+        ...COUNTED,
       },
       menuItemId: { not: null },
     },
@@ -190,7 +199,7 @@ export async function channelBreakdown(tenantId: string, range: Range) {
     where: {
       tenantId,
       createdAt: { gte: from, lt: to },
-      status: { in: [...TERMINAL_STATUSES] },
+      ...COUNTED,
     },
     select: { source: true, total: true },
   });
@@ -224,7 +233,7 @@ export async function channelBreakdown(tenantId: string, range: Range) {
       order: {
         tenantId,
         createdAt: { gte: from, lt: to },
-        status: { in: [...TERMINAL_STATUSES] },
+        ...COUNTED,
       },
     },
     select: { totalPrice: true, orderId: true },
@@ -247,7 +256,7 @@ export async function customerSegments(tenantId: string, range: Range) {
     where: {
       tenantId,
       createdAt: { gte: from, lt: to },
-      status: { in: [...TERMINAL_STATUSES] },
+      ...COUNTED,
     },
     select: { customerId: true, customerPhoneSnap: true, total: true, createdAt: true },
   });
@@ -284,7 +293,7 @@ export async function customerSegments(tenantId: string, range: Range) {
             tenantId,
             customerId: { in: customerIds },
             createdAt: { lt: from },
-            status: { in: [...TERMINAL_STATUSES] },
+            ...COUNTED,
           },
           select: { customerId: true },
           distinct: ["customerId"],
@@ -296,7 +305,7 @@ export async function customerSegments(tenantId: string, range: Range) {
             tenantId,
             customerPhoneSnap: { in: phones },
             createdAt: { lt: from },
-            status: { in: [...TERMINAL_STATUSES] },
+            ...COUNTED,
           },
           select: { customerPhoneSnap: true },
           distinct: ["customerPhoneSnap"],
@@ -407,7 +416,7 @@ export async function insights(tenantId: string, range: Range): Promise<Insight[
       where: {
         tenantId,
         createdAt: { gte: from, lt: to },
-        status: { in: [...TERMINAL_STATUSES] },
+        ...COUNTED,
       },
       select: {
         total: true,
