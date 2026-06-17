@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { IcoChev, IcoArrowLeft, IcoBag, IcoPin, IcoClose } from "@/components/shared/Icons";
 import { Modal, ModalBody } from "@/components/shared/Modal";
 import { LegalText } from "@/components/shared/LegalText";
+import { THEMES, type ThemeId } from "@/lib/themes";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
@@ -549,6 +550,11 @@ export function CustomerCheckout({
     (method !== "delivery" || (!!address && !!city)) &&
     (!lastNameRequired || !!lastName.trim()) &&
     (!emailRequired || emailLooksValid);
+
+  // The terms modal is portaled to <body>, outside the storefront's
+  // ThemeProvider, so CSS vars like --qf-primary fall back to the default
+  // theme there. Resolve the tenant's actual theme colors to hex instead.
+  const themeColors = THEMES[(tenant?.themeId as ThemeId)] ?? THEMES.fresh;
 
   const termsConsent = (
     <label className="flex items-start gap-2 text-xs text-qf-ink2 leading-relaxed cursor-pointer">
@@ -1264,14 +1270,15 @@ export function CustomerCheckout({
       >
         <div
           className="sticky top-0 z-10 flex items-center justify-between gap-3 px-5 py-4 border-b-2 border-black"
-          style={{ backgroundColor: "var(--qf-primary)" }}
+          style={{ backgroundColor: themeColors.primary }}
         >
           <h2 className="font-bold text-lg text-white">תקנון ותנאי שימוש</h2>
           <button
             type="button"
             onClick={() => setTermsOpen(false)}
             aria-label="סגור"
-            className="shrink-0 w-10 h-10 rounded-full bg-white text-(--qf-deep) grid place-items-center border-2 border-black shadow-[0_2px_0_#000] active:translate-y-px active:shadow-none transition"
+            className="shrink-0 w-10 h-10 rounded-full bg-white grid place-items-center border-2 border-black shadow-[0_2px_0_#000] active:translate-y-px active:shadow-none transition"
+            style={{ color: themeColors.deep }}
           >
             <IcoClose s={22} />
           </button>
