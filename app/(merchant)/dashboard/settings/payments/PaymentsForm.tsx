@@ -161,7 +161,9 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
             <div className="flex-1 min-w-0">
               <div className="font-semibold text-sm text-qf-ink">אין לך עדיין סליקה?</div>
               <div className="text-xs text-qf-ink2 mt-0.5">
-                הירשם ל-Grow ותתחיל לקבל אשראי, PayBox, Bit, Apple Pay ו-Google Pay. ממלאים פרטים קצרים והם חוזרים אליך.
+                הירשם ל-Grow ותתחיל לקבל אשראי, PayBox, Bit, Apple Pay ו-Google Pay.{" "}
+                <span className="font-bold text-(--qf-deep)">ב-69₪ לחודש + 1% בלבד! ללא עמלת הקמת מסוף חדש!</span>{" "}
+                ממלאים פרטים קצרים והם חוזרים אליך.
               </div>
             </div>
             <Link

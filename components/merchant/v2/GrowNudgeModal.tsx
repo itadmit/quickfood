@@ -56,6 +56,10 @@ export function GrowNudgeModal({ tenantId }: { tenantId: string }) {
             צריך לחבר חברת סליקה - ואנחנו ממליצים על{" "}
             <span className="font-black text-black">Grow</span>.
           </p>
+          <div className="rounded-xl border-2 border-black bg-[#F8CB1E] px-4 py-2.5 text-center shadow-[0_2px_0_#000] space-y-0.5">
+            <div className="font-black text-black text-base">ב-69₪ לחודש + 1% בלבד!</div>
+            <div className="font-bold text-black text-sm">ללא עמלת הקמת מסוף חדש!</div>
+          </div>
           <div className="rounded-xl border-2 border-black bg-[#FFFBEC] p-4 shadow-[0_2px_0_#000]">
             <p className="text-sm font-bold text-black leading-relaxed">
               משאירים פרטים בטופס הקצר, ו-Grow ישלחו אליכם את כל הטפסים
