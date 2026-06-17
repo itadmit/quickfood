@@ -180,7 +180,7 @@ function TenantRow({
       </div>
       <div className="min-w-0 leading-tight">
         <div className="flex items-center gap-2">
-          <span className="font-medium truncate group-hover:text-(--qf-deep)">
+          <span className="text-base font-semibold truncate group-hover:text-(--qf-deep)">
             {t.name}
           </span>
           <span
@@ -229,9 +229,10 @@ function TenantRow({
 
   const menuCell =
     t.menuItemsCount > 0 ? (
-      <span className="tnum">
-        {t.menuItemsCount} <span className="text-xs text-qf-mute">פריטים</span>
-      </span>
+      <div className="leading-tight">
+        <span className="tnum">{t.menuItemsCount}</span>
+        <div className="text-xs text-qf-mute">פריטים</div>
+      </div>
     ) : (
       <span className="text-xs text-qf-tomato">אין תפריט</span>
     );
