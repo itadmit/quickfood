@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/format";
 import { THEMES } from "@/lib/themes";
 import { cn } from "@/lib/cn";
-import { Trash2, AlertTriangle, ExternalLink, Copy, Phone, LogIn, MessageCircle } from "lucide-react";
+import { Phone, LogIn, MessageCircle } from "lucide-react";
 
 interface Tenant {
   id: string;
@@ -61,50 +61,8 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export function TenantsList({ tenants }: { tenants: Tenant[] }) {
-  const router = useRouter();
-  const [items, setItems] = useState(tenants);
-  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string; step: 1 | 2 } | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [duplicateOf, setDuplicateOf] = useState<Tenant | null>(null);
+  const [items] = useState(tenants);
   const [messageTo, setMessageTo] = useState<Tenant | null>(null);
-
-  async function setStatus(id: string, status: "active" | "suspended") {
-    setItems((p) => p.map((t) => (t.id === id ? { ...t, status } : t)));
-    await fetch(`/api/v1/admin/tenants/${id}/suspend`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-    router.refresh();
-  }
-
-  async function confirmDelete() {
-    if (!deleteConfirm) return;
-    const { id } = deleteConfirm;
-    setDeleting(true);
-    setDeleteError(null);
-    try {
-      const res = await fetch(`/api/v1/admin/tenants/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        let msg = `שגיאה ${res.status}`;
-        try {
-          const body = await res.json();
-          if (body?.error?.message) msg = body.error.message;
-        } catch { /* ignore parse error */ }
-        setDeleteError(msg);
-        setDeleteConfirm(null);
-        return;
-      }
-      setItems((p) => p.filter((t) => t.id !== id));
-      setDeleteConfirm(null);
-    } catch (err) {
-      setDeleteError(`המחיקה נכשלה - ${err instanceof Error ? err.message : "נסה שנית"}`);
-      setDeleteConfirm(null);
-    } finally {
-      setDeleting(false);
-    }
-  }
 
   const counts = {
     total: items.length,
@@ -118,12 +76,6 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
 
   return (
     <div className="space-y-5">
-      {deleteError && (
-        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-qf-tomato-soft border border-qf-tomato/30 text-sm text-qf-tomato">
-          <span>{deleteError}</span>
-          <button type="button" onClick={() => setDeleteError(null)} className="text-qf-tomato/60 hover:text-qf-tomato text-xs">סגור</button>
-        </div>
-      )}
       <header className="flex items-end justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold">לקוחות הפלטפורמה</h1>
@@ -160,9 +112,6 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
           <TenantRow
             key={t.id}
             t={t}
-            onSetStatus={setStatus}
-            onDelete={(id, name) => setDeleteConfirm({ id, name, step: 1 })}
-            onDuplicate={(tn) => setDuplicateOf(tn)}
             onMessage={(tn) => setMessageTo(tn)}
           />
         ))}
@@ -172,71 +121,6 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
           </div>
         )}
       </div>
-
-      {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 w-9 h-9 rounded-full bg-qf-tomato-soft flex items-center justify-center shrink-0">
-                <AlertTriangle size={18} className="text-qf-tomato" />
-              </div>
-              <div>
-                <h2 className="font-bold text-base">מחיקת חנות</h2>
-                {deleteConfirm.step === 1 ? (
-                  <p className="text-sm text-qf-ink2 mt-1">
-                    האם למחוק את <span className="font-semibold text-qf-ink">{deleteConfirm.name}</span>?<br />
-                    פעולה זו תמחק את כל הנתונים והתמונות לצמיתות.
-                  </p>
-                ) : (
-                  <p className="text-sm text-qf-tomato font-medium mt-1">
-                    אישור אחרון - לא ניתן לבטל. מחק את <span className="font-semibold">{deleteConfirm.name}</span>?
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button
-                type="button"
-                onClick={() => setDeleteConfirm(null)}
-                disabled={deleting}
-                className="px-3.5 py-2 rounded-xl border border-qf-line-dash text-sm hover:bg-qf-line-soft"
-              >
-                ביטול
-              </button>
-              {deleteConfirm.step === 1 ? (
-                <button
-                  type="button"
-                  onClick={() => setDeleteConfirm({ ...deleteConfirm, step: 2 })}
-                  className="px-3.5 py-2 rounded-xl bg-qf-tomato text-white text-sm font-medium hover:opacity-90"
-                >
-                  כן, מחק
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={confirmDelete}
-                  disabled={deleting}
-                  className="px-3.5 py-2 rounded-xl bg-qf-tomato text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
-                >
-                  {deleting ? "מוחק…" : "מחק לצמיתות"}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {duplicateOf && (
-        <DuplicateDialog
-          source={duplicateOf}
-          onClose={() => setDuplicateOf(null)}
-          onDone={(slug) => {
-            setDuplicateOf(null);
-            router.refresh();
-            window.open(`/s/${slug}`, "_blank", "noopener");
-          }}
-        />
-      )}
 
       {messageTo && (
         <MessageDialog
@@ -250,15 +134,9 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
 
 function TenantRow({
   t,
-  onSetStatus,
-  onDelete,
-  onDuplicate,
   onMessage,
 }: {
   t: Tenant;
-  onSetStatus: (id: string, status: "active" | "suspended") => void;
-  onDelete: (id: string, name: string) => void;
-  onDuplicate: (t: Tenant) => void;
   onMessage: (t: Tenant) => void;
 }) {
   const theme = THEMES[t.themeId] ?? THEMES.fresh;
@@ -397,64 +275,6 @@ function TenantRow({
     </Link>
   );
 
-  const storeLink = (cls: string) => (
-    <Link
-      href={`/s/${t.slug}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={cn(cls, "border border-qf-line-dash hover:bg-qf-line-soft flex items-center justify-center")}
-      title="צפה בחנות"
-      aria-label="צפה בחנות"
-    >
-      <ExternalLink size={14} />
-    </Link>
-  );
-
-  const statusButton = (cls: string) =>
-    t.status === "active" ? (
-      <button
-        type="button"
-        onClick={() => onSetStatus(t.id, "suspended")}
-        className={cn(
-          cls,
-          "border border-qf-tomato/40 text-qf-tomato hover:bg-qf-tomato-soft",
-        )}
-      >
-        השעה
-      </button>
-    ) : (
-      <button
-        type="button"
-        onClick={() => onSetStatus(t.id, "active")}
-        className={cn(cls, "bg-(--qf-primary) text-white")}
-      >
-        הפעל
-      </button>
-    );
-
-  const duplicateButton = (cls: string) => (
-    <button
-      type="button"
-      onClick={() => onDuplicate(t)}
-      className={cn(cls, "border border-qf-line-dash hover:bg-qf-line-soft flex items-center justify-center")}
-      title="שכפל חנות (סניף נוסף)"
-      aria-label="שכפל חנות"
-    >
-      <Copy size={14} />
-    </button>
-  );
-
-  const deleteButton = (cls: string) => (
-    <button
-      type="button"
-      onClick={() => onDelete(t.id, t.name)}
-      className={cn(cls, "border border-qf-tomato/30 text-qf-tomato hover:bg-qf-tomato-soft")}
-      title="מחק חנות"
-    >
-      <Trash2 size={14} />
-    </button>
-  );
-
   const impersonateButton = (cls: string) => (
     <button
       type="button"
@@ -478,15 +298,11 @@ function TenantRow({
     </button>
   );
 
-  const actions = (textCls: string, iconCls: string) => (
+  const actions = (textCls: string) => (
     <>
       {openLink(cn(textCls, "border border-qf-line-dash hover:bg-qf-line-soft"))}
       {impersonateButton(textCls)}
       {messageButton(textCls)}
-      {statusButton(textCls)}
-      {storeLink(iconCls)}
-      {duplicateButton(iconCls)}
-      {deleteButton(cn(iconCls, "flex items-center justify-center"))}
     </>
   );
 
@@ -507,7 +323,7 @@ function TenantRow({
           </LabeledCell>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
-          {actions("px-2.5 py-1.5 rounded-lg text-xs font-medium", "w-8 h-8 rounded-lg text-xs")}
+          {actions("px-2.5 py-1.5 rounded-lg text-xs font-medium")}
         </div>
       </div>
 
@@ -520,7 +336,7 @@ function TenantRow({
         <div className="text-sm">{woltCell}</div>
         <div className="text-xs text-qf-mute">{lastLoginCell}</div>
         <div className="flex flex-wrap gap-1.5 justify-end items-center">
-          {actions("px-2.5 py-1.5 rounded-lg text-xs font-medium", "w-7 h-7 rounded-lg text-xs")}
+          {actions("px-2.5 py-1.5 rounded-lg text-xs font-medium")}
         </div>
       </div>
     </>
@@ -554,155 +370,6 @@ function StatCard({ label, value, tone, hint }: { label: string; value: number; 
   );
 }
 
-function DuplicateDialog({
-  source,
-  onClose,
-  onDone,
-}: {
-  source: Tenant;
-  onClose: () => void;
-  onDone: (slug: string) => void;
-}) {
-  const [slug, setSlug] = useState(`${source.slug}-2`);
-  const [name, setName] = useState(source.name);
-  const [ownerName, setOwnerName] = useState("");
-  const [ownerEmail, setOwnerEmail] = useState("");
-  const [ownerPassword, setOwnerPassword] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const slugOk = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/.test(slug);
-  const canSubmit =
-    slugOk &&
-    name.trim().length > 0 &&
-    ownerName.trim().length > 0 &&
-    /\S+@\S+\.\S+/.test(ownerEmail) &&
-    ownerPassword.length >= 8;
-
-  async function submit() {
-    if (!canSubmit || busy) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/v1/admin/tenants/${source.id}/duplicate`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          slug,
-          name: name.trim(),
-          owner: { name: ownerName.trim(), email: ownerEmail.trim().toLowerCase(), password: ownerPassword },
-        }),
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(body?.error?.message ?? `שגיאה ${res.status}`);
-        return;
-      }
-      onDone(body.tenant.slug as string);
-    } catch {
-      setError("שגיאת רשת - נסה שוב");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 w-9 h-9 rounded-full bg-(--qf-soft) flex items-center justify-center shrink-0">
-            <Copy size={18} className="text-(--qf-deep)" />
-          </div>
-          <div>
-            <h2 className="font-bold text-base">שכפול חנות</h2>
-            <p className="text-sm text-qf-ink2 mt-1">
-              משכפל את <span className="font-semibold text-qf-ink">{source.name}</span> לחנות
-              חדשה - כל ההגדרות והתפריט. <span className="text-qf-mute">לא כולל תשלום, דומיין, חיוב והזמנות.</span>
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <Labeled label="שם החנות החדשה">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm"
-            />
-          </Labeled>
-          <Labeled label="כתובת (slug)" hint={slugOk ? `quickfood.co.il/s/${slug}` : "אותיות קטנות, ספרות ומקפים"}>
-            <input
-              value={slug}
-              onChange={(e) => setSlug(e.target.value.toLowerCase())}
-              dir="ltr"
-              className={cn(
-                "w-full px-3 py-2 rounded-xl border outline-none text-sm",
-                slug && !slugOk ? "border-qf-tomato" : "border-qf-line-dash focus:border-(--qf-primary)",
-              )}
-            />
-          </Labeled>
-
-          <div className="pt-1 border-t border-qf-line-soft">
-            <div className="text-xs font-semibold text-qf-mute mt-3 mb-2">בעלים לחנות החדשה (לוגין נפרד)</div>
-            <div className="space-y-3">
-              <Labeled label="שם הבעלים">
-                <input
-                  value={ownerName}
-                  onChange={(e) => setOwnerName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm"
-                />
-              </Labeled>
-              <Labeled label="אימייל" hint="חייב להיות שונה מהבעלים של המקור">
-                <input
-                  value={ownerEmail}
-                  onChange={(e) => setOwnerEmail(e.target.value)}
-                  type="email"
-                  dir="ltr"
-                  className="w-full px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm"
-                />
-              </Labeled>
-              <Labeled label="סיסמה" hint="לפחות 8 תווים">
-                <input
-                  value={ownerPassword}
-                  onChange={(e) => setOwnerPassword(e.target.value)}
-                  type="text"
-                  dir="ltr"
-                  className="w-full px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm"
-                />
-              </Labeled>
-            </div>
-          </div>
-        </div>
-
-        {error && (
-          <div className="text-sm text-qf-tomato bg-qf-tomato-soft border border-qf-tomato/30 rounded-xl px-3 py-2">
-            {error}
-          </div>
-        )}
-
-        <div className="flex gap-2 justify-end pt-1">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={busy}
-            className="px-3.5 py-2 rounded-xl border border-qf-line-dash text-sm hover:bg-qf-line-soft"
-          >
-            ביטול
-          </button>
-          <button
-            type="button"
-            onClick={submit}
-            disabled={!canSubmit || busy}
-            className="px-3.5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-50"
-          >
-            {busy ? "משכפל…" : "שכפל חנות"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function defaultMessage(t: Tenant): string {
   return [
     "היי מה קורה?",
@@ -721,12 +388,41 @@ function defaultMessage(t: Tenant): string {
 }
 
 function MessageDialog({ tenant, onClose }: { tenant: Tenant; onClose: () => void }) {
+  const router = useRouter();
   const [body, setBody] = useState(() => defaultMessage(tenant));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const [phone, setPhone] = useState(tenant.ownerPhone ?? "");
+  const [savedPhone, setSavedPhone] = useState<string | null>(tenant.ownerPhone);
+  const [savingPhone, setSavingPhone] = useState(false);
 
-  const noPhone = !tenant.ownerPhone;
+  const noPhone = !savedPhone;
+  const phoneOk = /^0?\d{8,14}$/.test(phone.replace(/[\s-]/g, ""));
+
+  async function savePhone() {
+    if (savingPhone || !phoneOk) return;
+    setSavingPhone(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/v1/admin/tenants/${tenant.id}/owner-phone`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ phone: phone.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data?.error?.message ?? `שגיאה ${res.status}`);
+        return;
+      }
+      setSavedPhone(data?.phone ?? phone.trim());
+      router.refresh();
+    } catch {
+      setError("שגיאת רשת - נסה שוב");
+    } finally {
+      setSavingPhone(false);
+    }
+  }
 
   async function send() {
     if (busy || noPhone || body.trim().length === 0) return;
@@ -736,7 +432,7 @@ function MessageDialog({ tenant, onClose }: { tenant: Tenant; onClose: () => voi
       const res = await fetch(`/api/v1/admin/tenants/${tenant.id}/message`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ body }),
+        body: JSON.stringify({ body, to: savedPhone ?? undefined }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -763,16 +459,36 @@ function MessageDialog({ tenant, onClose }: { tenant: Tenant; onClose: () => voi
             <h2 className="font-bold text-base">שליחת הודעה ב-WhatsApp</h2>
             <p className="text-sm text-qf-ink2 mt-1">
               ל<span className="font-semibold text-qf-ink">{tenant.name}</span>
-              {tenant.ownerPhone ? (
-                <span className="text-qf-mute tnum" dir="ltr"> · {tenant.ownerPhone}</span>
+              {savedPhone ? (
+                <span className="text-qf-mute tnum" dir="ltr"> · {savedPhone}</span>
               ) : null}
             </p>
           </div>
         </div>
 
         {noPhone ? (
-          <div className="text-sm text-qf-tomato bg-qf-tomato-soft border border-qf-tomato/30 rounded-xl px-3 py-2">
-            לבעל החנות אין מספר טלפון - לא ניתן לשלוח הודעה.
+          <div className="space-y-2">
+            <div className="text-sm text-qf-ink2">
+              לבעל החנות אין מספר טלפון. הזן מספר ושמור כדי להמשיך.
+            </div>
+            <div className="flex gap-2">
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                type="tel"
+                dir="ltr"
+                placeholder="0501234567"
+                className="flex-1 px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm tnum"
+              />
+              <button
+                type="button"
+                onClick={savePhone}
+                disabled={savingPhone || !phoneOk}
+                className="px-3.5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-50 shrink-0"
+              >
+                {savingPhone ? "שומר…" : "שמור מספר"}
+              </button>
+            </div>
           </div>
         ) : (
           <textarea
@@ -818,12 +534,3 @@ function MessageDialog({ tenant, onClose }: { tenant: Tenant; onClose: () => voi
   );
 }
 
-function Labeled({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1">
-      <label className="text-xs font-medium block">{label}</label>
-      {children}
-      {hint && <div className="text-[11px] text-qf-mute" dir="auto">{hint}</div>}
-    </div>
-  );
-}

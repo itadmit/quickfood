@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { Toggle } from "@/components/shared/Toggle";
+import { Copy } from "lucide-react";
 
 type Status = "active" | "suspended" | "trial";
 
@@ -101,6 +102,7 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [showDuplicate, setShowDuplicate] = useState(false);
 
   function set<K extends keyof InitialData>(k: K, v: InitialData[K]) {
     setT((x) => ({ ...x, [k]: v }));
@@ -363,6 +365,15 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
             className="px-3 py-1.5 rounded-lg bg-qf-ink text-white text-sm font-medium hover:opacity-90 disabled:opacity-60"
           >
             התחבר כמשתמש
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowDuplicate(true)}
+            disabled={saving}
+            className="px-3 py-1.5 rounded-lg border border-qf-line-dash text-sm hover:bg-qf-line-soft inline-flex items-center gap-1.5"
+          >
+            <Copy size={14} className="text-qf-mute" />
+            שכפל
           </button>
           <button
             type="button"
@@ -692,6 +703,177 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
           )}
         </div>
       </Section>
+
+      {showDuplicate && (
+        <DuplicateDialog
+          source={{ id: t.id, slug: t.slug, name: t.name }}
+          onClose={() => setShowDuplicate(false)}
+          onDone={(slug) => {
+            setShowDuplicate(false);
+            router.refresh();
+            window.open(`/s/${slug}`, "_blank", "noopener");
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function DuplicateDialog({
+  source,
+  onClose,
+  onDone,
+}: {
+  source: { id: string; slug: string; name: string };
+  onClose: () => void;
+  onDone: (slug: string) => void;
+}) {
+  const [slug, setSlug] = useState(`${source.slug}-2`);
+  const [name, setName] = useState(source.name);
+  const [ownerName, setOwnerName] = useState("");
+  const [ownerEmail, setOwnerEmail] = useState("");
+  const [ownerPassword, setOwnerPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const slugOk = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/.test(slug);
+  const canSubmit =
+    slugOk &&
+    name.trim().length > 0 &&
+    ownerName.trim().length > 0 &&
+    /\S+@\S+\.\S+/.test(ownerEmail) &&
+    ownerPassword.length >= 8;
+
+  async function submit() {
+    if (!canSubmit || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/v1/admin/tenants/${source.id}/duplicate`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          name: name.trim(),
+          owner: { name: ownerName.trim(), email: ownerEmail.trim().toLowerCase(), password: ownerPassword },
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(body?.error?.message ?? `שגיאה ${res.status}`);
+        return;
+      }
+      onDone(body.tenant.slug as string);
+    } catch {
+      setError("שגיאת רשת - נסה שוב");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 w-9 h-9 rounded-full bg-(--qf-soft) flex items-center justify-center shrink-0">
+            <Copy size={18} className="text-(--qf-deep)" />
+          </div>
+          <div>
+            <h2 className="font-bold text-base">שכפול חנות</h2>
+            <p className="text-sm text-qf-ink2 mt-1">
+              משכפל את <span className="font-semibold text-qf-ink">{source.name}</span> לחנות
+              חדשה - כל ההגדרות והתפריט. <span className="text-qf-mute">לא כולל תשלום, דומיין, חיוב והזמנות.</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <Labeled label="שם החנות החדשה">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm"
+            />
+          </Labeled>
+          <Labeled label="כתובת (slug)" hint={slugOk ? `quickfood.co.il/s/${slug}` : "אותיות קטנות, ספרות ומקפים"}>
+            <input
+              value={slug}
+              onChange={(e) => setSlug(e.target.value.toLowerCase())}
+              dir="ltr"
+              className={cn(
+                "w-full px-3 py-2 rounded-xl border outline-none text-sm",
+                slug && !slugOk ? "border-qf-tomato" : "border-qf-line-dash focus:border-(--qf-primary)",
+              )}
+            />
+          </Labeled>
+
+          <div className="pt-1 border-t border-qf-line-soft">
+            <div className="text-xs font-semibold text-qf-mute mt-3 mb-2">בעלים לחנות החדשה (לוגין נפרד)</div>
+            <div className="space-y-3">
+              <Labeled label="שם הבעלים">
+                <input
+                  value={ownerName}
+                  onChange={(e) => setOwnerName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm"
+                />
+              </Labeled>
+              <Labeled label="אימייל" hint="חייב להיות שונה מהבעלים של המקור">
+                <input
+                  value={ownerEmail}
+                  onChange={(e) => setOwnerEmail(e.target.value)}
+                  type="email"
+                  dir="ltr"
+                  className="w-full px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm"
+                />
+              </Labeled>
+              <Labeled label="סיסמה" hint="לפחות 8 תווים">
+                <input
+                  value={ownerPassword}
+                  onChange={(e) => setOwnerPassword(e.target.value)}
+                  type="text"
+                  dir="ltr"
+                  className="w-full px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm"
+                />
+              </Labeled>
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="text-sm text-qf-tomato bg-qf-tomato-soft border border-qf-tomato/30 rounded-xl px-3 py-2">
+            {error}
+          </div>
+        )}
+
+        <div className="flex gap-2 justify-end pt-1">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="px-3.5 py-2 rounded-xl border border-qf-line-dash text-sm hover:bg-qf-line-soft"
+          >
+            ביטול
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!canSubmit || busy}
+            className="px-3.5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-50"
+          >
+            {busy ? "משכפל…" : "שכפל חנות"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Labeled({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <label className="text-xs font-medium block">{label}</label>
+      {children}
+      {hint && <div className="text-[11px] text-qf-mute" dir="auto">{hint}</div>}
     </div>
   );
 }
