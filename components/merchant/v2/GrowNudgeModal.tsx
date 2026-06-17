@@ -56,19 +56,14 @@ export function GrowNudgeModal({ tenantId }: { tenantId: string }) {
             צריך לחבר חברת סליקה - ואנחנו ממליצים על{" "}
             <span className="font-black text-black">Grow</span>.
           </p>
-          <div className="rounded-xl border-2 border-black bg-[#F8CB1E] px-4 py-2.5 text-center shadow-[0_2px_0_#000] space-y-0.5">
-            <div className="font-black text-black text-base">ב-69₪ לחודש + 1% בלבד!</div>
-            <div className="font-bold text-black text-sm">ללא עמלת הקמת מסוף חדש!</div>
+          <div className="rounded-2xl border-2 border-black bg-[#F8CB1E] px-4 py-3 text-center shadow-[0_2px_0_#000]">
+            <div className="font-black text-black text-lg">ב-69₪ לחודש + 1% בלבד!</div>
+            <div className="font-bold text-black/80 text-xs mt-0.5">ללא עמלת הקמת מסוף חדש</div>
           </div>
-          <p className="text-[10px] text-black/45 leading-snug">
-            * התשלום עבור שירותי הסליקה נגבה ישירות על ידי חברת Grow Payments, אינו קשור ל-QuickFood וכפוף לאישור החברה.
+          <p className="text-sm text-black/75 leading-relaxed">
+            משאירים פרטים בטופס הקצר, ו-Grow ישלחו אליכם את כל הטפסים דיגיטלית -
+            בלי ניירת ובלי התרוצצויות.
           </p>
-          <div className="rounded-xl border-2 border-black bg-[#FFFBEC] p-4 shadow-[0_2px_0_#000]">
-            <p className="text-sm font-bold text-black leading-relaxed">
-              משאירים פרטים בטופס הקצר, ו-Grow ישלחו אליכם את כל הטפסים
-              דיגיטלית. בלי ניירת ובלי התרוצצויות.
-            </p>
-          </div>
           <p className="text-xs text-black/50">
             כבר יש לכם חשבון Grow?{" "}
             <Link
@@ -78,6 +73,9 @@ export function GrowNudgeModal({ tenantId }: { tenantId: string }) {
             >
               חברו אותו בהגדרות התשלומים
             </Link>
+          </p>
+          <p className="text-[10px] text-black/40 leading-snug pt-1 border-t border-black/10">
+            * התשלום עבור שירותי הסליקה נגבה ישירות על ידי חברת Grow Payments, אינו קשור ל-QuickFood וכפוף לאישור החברה.
           </p>
         </div>
 
