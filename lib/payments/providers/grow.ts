@@ -339,7 +339,16 @@ export class GrowProvider extends BasePaymentProvider {
         // only after confirming Grow has fixed the validator.
       };
 
-      body.maxPaymentNum = Math.min(Math.max(maxInstallments, 1), 12);
+      // Grow: `paymentNum` is the single-payment baseline; `maxPaymentNum`
+      // lets the customer pick UP TO that many installments and MUST be >= 2
+      // ("between 2 and the value"). Sending maxPaymentNum=1 - or omitting
+      // paymentNum entirely - makes the "1 תשלום" option in the wallet error
+      // out. So always set the single-payment baseline, and only advertise
+      // installments when the merchant actually allows >= 2.
+      body.paymentNum = 1;
+      if (maxInstallments >= 2) {
+        body.maxPaymentNum = Math.min(maxInstallments, 12);
+      }
 
       if (!this.config!.testMode) {
         const commission = process.env.GROW_COMPANY_COMMISSION;
