@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { QuickFoodLogo } from "@/components/shared/QuickFoodLogo";
 import { IcoCreditCard, IcoCheck } from "@/components/shared/Icons";
 
 interface Props {
@@ -69,7 +68,9 @@ export function ConnectPaymentForm({ prefill }: Props) {
           <div className="font-black text-base text-black">חיבור סליקה</div>
           <div className="text-[11px] text-black/60">קבלת תשלומים באשראי, Bit ו-Apple Pay</div>
         </div>
-        <QuickFoodLogo href="/" size={28} showWordmark={false} />
+        <a href="/" aria-label="QuickFood" className="shrink-0">
+          <img src="/quickfood-mark-white.png" alt="QuickFood" width={96} height={24} className="h-6 w-auto" />
+        </a>
       </div>
 
       <div className="p-6 space-y-4">
