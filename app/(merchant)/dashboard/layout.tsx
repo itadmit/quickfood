@@ -21,6 +21,7 @@ import { DashboardFooter } from "@/components/merchant/DashboardFooter";
 import { MerchantPushSubscribe } from "@/components/merchant/MerchantPushSubscribe";
 import { RoleRouteGuard } from "@/components/merchant/RoleRouteGuard";
 import { TermsAckGate } from "@/components/merchant/TermsAckGate";
+import { TermsAckBanner } from "@/components/merchant/TermsAckBanner";
 
 export const metadata: Metadata = {
   manifest: "/manifest-merchant.webmanifest",
@@ -142,6 +143,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             emailVerifiedAt={user.emailVerifiedAt?.toISOString() ?? null}
             email={user.email}
           />
+          <TermsAckBanner acknowledged={!!tenant.termsAcknowledgedAt} />
           {emailVerified && (
             <BillingSetupBanner
               hasPaymentMethod={hasPaymentMethod}
@@ -204,6 +206,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             emailVerifiedAt={user.emailVerifiedAt?.toISOString() ?? null}
             email={user.email}
           />
+          <TermsAckBanner acknowledged={!!tenant.termsAcknowledgedAt} />
           {emailVerified && (
             <BillingSetupBanner
               hasPaymentMethod={hasPaymentMethod}

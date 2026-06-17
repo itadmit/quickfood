@@ -25,6 +25,10 @@ export const GET = handler(async () => {
       where: {
         tenantId: session.tenantId,
         status: { in: ["pending", "confirmed"] },
+        // Orders the merchant hid from the live board (X on the kanban card)
+        // shouldn't keep pinging the bell - hiding it = "I dealt with it".
+        // Without this the bell shows 1 while the board shows 0.
+        kanbanHiddenAt: null,
         // Skip card-pending orders that haven't confirmed payment yet -
         // no need to notify the merchant about an order the customer
         // may still abandon at the QR screen.
