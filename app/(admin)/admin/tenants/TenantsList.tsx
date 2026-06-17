@@ -99,7 +99,7 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
       </div>
 
       <div className="bg-white rounded-2xl border border-qf-line-dash overflow-hidden">
-        <div className="hidden lg:grid grid-cols-[1.5fr_130px_90px_90px_90px_120px_300px] gap-3 px-5 py-2.5 text-xs font-medium text-qf-mute border-b border-qf-line-soft bg-qf-line-soft/40">
+        <div className="hidden lg:grid grid-cols-[2fr_120px_84px_84px_84px_110px_240px] gap-3 px-5 py-2.5 text-xs font-medium text-qf-mute border-b border-qf-line-soft bg-qf-line-soft/40">
           <div>מסעדה</div>
           <div>פעילות</div>
           <div>תפריט</div>
@@ -179,8 +179,8 @@ function TenantRow({
         {t.name.slice(0, 2)}
       </div>
       <div className="min-w-0 leading-tight">
-        <div className="flex items-center gap-2">
-          <span className="text-base font-semibold truncate group-hover:text-(--qf-deep)">
+        <div className="flex items-start gap-2 flex-wrap">
+          <span className="text-base font-semibold break-words group-hover:text-(--qf-deep)">
             {t.name}
           </span>
           <span
@@ -329,7 +329,7 @@ function TenantRow({
       </div>
 
       {/* Desktop grid row */}
-      <div className="hidden lg:grid grid-cols-[1.5fr_130px_90px_90px_90px_120px_300px] gap-3 px-5 py-3.5 items-start border-b border-qf-line-soft last:border-b-0 hover:bg-qf-line-soft/30 transition-colors">
+      <div className="hidden lg:grid grid-cols-[2fr_120px_84px_84px_84px_110px_240px] gap-3 px-5 py-3.5 items-start border-b border-qf-line-soft last:border-b-0 hover:bg-qf-line-soft/30 transition-colors">
         {nameCell}
         <div>{activityCell}</div>
         <div className="text-sm">{menuCell}</div>
