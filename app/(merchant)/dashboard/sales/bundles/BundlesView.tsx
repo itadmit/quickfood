@@ -113,7 +113,9 @@ export function BundlesView({
         active: editing.active,
         trigger_item_ids: editing.triggerItemIds,
         linked_item_id: editing.linkedItemId,
-        addon_items: editing.linkedItemId ? [] : editing.addonItems,
+        addon_items: editing.linkedItemId
+          ? []
+          : editing.addonItems.map((a) => ({ item_id: a.itemId, qty: a.qty })),
       }),
     });
     setSaving(false);
