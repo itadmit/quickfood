@@ -261,6 +261,11 @@ model Tenant {
   /// storefront renders an auto-generated default built from the business
   /// details. Required for Grow payment-processor compliance.
   termsText            String?        @db.Text @map("terms_text")
+  /// When the merchant explicitly reviewed + approved their storefront terms.
+  /// The dashboard hard-blocks until this is set: the merchant must open the
+  /// terms editor and accept responsibility for the content (shifts content
+  /// liability away from the platform).
+  termsAcknowledgedAt  DateTime?      @map("terms_acknowledged_at")
   status               TenantStatus   @default(active)
   planId               String?        @map("plan_id") @db.Uuid
   plan                 Plan?          @relation(fields: [planId], references: [id])

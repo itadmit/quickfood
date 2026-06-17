@@ -285,6 +285,7 @@ export const TenantPatchSchema = z.object({
   about: z.string().max(2000).nullable().optional(),
   vat_number: z.string().max(20).optional(),
   terms_text: z.string().max(20000).nullable().optional(),
+  terms_acknowledged: z.boolean().optional(),
   checkout_show_tracking: z.boolean().optional(),
   scheduled_orders_enabled: z.boolean().optional(),
   pickup_enabled: z.boolean().optional(),

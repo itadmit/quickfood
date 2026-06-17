@@ -16,7 +16,7 @@ export default async function LegalSettingsPage() {
   const [tenant, branch] = await Promise.all([
     prisma.tenant.findUnique({
       where: { id: session.tenantId },
-      select: { id: true, name: true, slug: true, vatNumber: true, termsText: true },
+      select: { id: true, name: true, slug: true, vatNumber: true, termsText: true, termsAcknowledgedAt: true },
     }),
     prisma.branch.findFirst({
       where: { tenantId: session.tenantId, isPrimary: true },
@@ -41,6 +41,7 @@ export default async function LegalSettingsPage() {
         slug={tenant.slug}
         termsText={tenant.termsText}
         defaultText={defaultText}
+        acknowledgedAt={tenant.termsAcknowledgedAt?.toISOString() ?? null}
       />
     </div>
   );

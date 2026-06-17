@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { IcoChev, IcoArrowLeft, IcoBag, IcoPin } from "@/components/shared/Icons";
+import { IcoChev, IcoArrowLeft, IcoBag, IcoPin, IcoClose } from "@/components/shared/Icons";
+import { Modal, ModalBody } from "@/components/shared/Modal";
+import { LegalText } from "@/components/shared/LegalText";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
@@ -33,6 +35,7 @@ export function CustomerCheckout({
   growTestMode = true,
   deliveryCities = [],
   pickupEnabled = true,
+  termsText = "",
 }: {
   tenantSlug: string;
   requireEmail?: boolean;
@@ -40,6 +43,7 @@ export function CustomerCheckout({
   growTestMode?: boolean;
   deliveryCities?: string[];
   pickupEnabled?: boolean;
+  termsText?: string;
 }) {
   const router = useRouter();
   const { lines, method, subtotal, deliveryFee, branch, tenant, clear, setMethod, hydrated, acceptedBundles, bundleDiscount } = useCart();
@@ -56,6 +60,7 @@ export function CustomerCheckout({
   const [emailTouched, setEmailTouched] = useState(false);
   const [country, setCountry] = useState("ישראל");
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
   const [deliveryNotes, setDeliveryNotes] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
   const [availableMethods, setAvailableMethods] = useState<CustomerPaymentMethod[]>([]);
@@ -555,14 +560,16 @@ export function CustomerCheckout({
       />
       <span>
         קראתי ואני מאשר/ת את{" "}
-        <Link
-          href={`/s/${tenantSlug}/terms`}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            setTermsOpen(true);
+          }}
           className="font-medium text-(--qf-deep) underline underline-offset-2"
         >
           התקנון ותנאי השימוש
-        </Link>
+        </button>
       </span>
     </label>
   );
@@ -1247,6 +1254,32 @@ export function CustomerCheckout({
           onClose={ackBusyAndPlace}
         />
       )}
+
+      <Modal
+        open={termsOpen}
+        onClose={() => setTermsOpen(false)}
+        size="2xl"
+        ariaLabel="תקנון ותנאי שימוש"
+        className="border-2 border-black shadow-[0_10px_40px_rgba(0,0,0,0.45)] overflow-hidden"
+      >
+        <div
+          className="sticky top-0 z-10 flex items-center justify-between gap-3 px-5 py-4 border-b-2 border-black"
+          style={{ backgroundColor: "var(--qf-primary)" }}
+        >
+          <h2 className="font-bold text-lg text-white">תקנון ותנאי שימוש</h2>
+          <button
+            type="button"
+            onClick={() => setTermsOpen(false)}
+            aria-label="סגור"
+            className="shrink-0 w-10 h-10 rounded-full bg-white text-(--qf-deep) grid place-items-center border-2 border-black shadow-[0_2px_0_#000] active:translate-y-px active:shadow-none transition"
+          >
+            <IcoClose s={22} />
+          </button>
+        </div>
+        <ModalBody>
+          <LegalText text={termsText} />
+        </ModalBody>
+      </Modal>
     </div>
   );
 }

@@ -20,6 +20,7 @@ import { SupportFAB } from "@/components/merchant/SupportFAB";
 import { DashboardFooter } from "@/components/merchant/DashboardFooter";
 import { MerchantPushSubscribe } from "@/components/merchant/MerchantPushSubscribe";
 import { RoleRouteGuard } from "@/components/merchant/RoleRouteGuard";
+import { TermsAckGate } from "@/components/merchant/TermsAckGate";
 
 export const metadata: Metadata = {
   manifest: "/manifest-merchant.webmanifest",
@@ -250,6 +251,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <SupportFAB merchantName={user.name} hasNoMenuItems={hasNoMenuItems} />
         </div>
       )}
+      {/* Gate kicks in once the store has a menu (i.e. they're "finishing"
+          it) - a brand-new empty store sees the onboarding flow first, not
+          the terms wall. */}
+      <TermsAckGate acknowledged={!!tenant.termsAcknowledgedAt || hasNoMenuItems} />
     </ThemeProvider>
   );
 }

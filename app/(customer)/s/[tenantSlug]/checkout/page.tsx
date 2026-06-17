@@ -3,6 +3,7 @@ import ReactDOM from "react-dom";
 import { PaymentProvider } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
+import { resolveTerms } from "@/lib/legal/terms";
 import { CustomerCheckout } from "@/components/customer/screens/CustomerCheckout";
 
 export const dynamic = "force-dynamic";
@@ -68,6 +69,15 @@ export default async function CheckoutPage({
     });
   }
 
+  const termsText = resolveTerms(tenant.termsText, {
+    businessName: tenant.name,
+    vatNumber: tenant.vatNumber,
+    address: tenant.branches[0]?.address ?? null,
+    phone: tenant.branches[0]?.phone ?? null,
+    email: tenant.branches[0]?.email ?? null,
+    supportsDelivery: (tenant.branches[0]?.zones?.length ?? 0) > 0,
+  });
+
   const branchId = tenant.branches[0]?.id;
   const deliveryCities: string[] = [];
   if (branchId) {
@@ -98,6 +108,7 @@ export default async function CheckoutPage({
       growTestMode={growTestMode}
       deliveryCities={deliveryCities}
       pickupEnabled={settings?.pickupEnabled ?? true}
+      termsText={termsText}
     />
   );
 }
