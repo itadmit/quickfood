@@ -635,6 +635,7 @@ function Step0Url({
               type="button"
               onClick={() => {
                 setExpanded(false);
+                setWoltUrl("");
                 setError(null);
               }}
               disabled={busy}
