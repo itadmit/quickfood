@@ -415,6 +415,13 @@ model Tenant {
   // saved payment method, the dashboard is fully locked.
   trialEndsAt             DateTime? @map("trial_ends_at")
 
+  // Meta click/browser ids captured from the _fbp/_fbc cookies at signup.
+  // Reused when the merchant later pays so the server-side Purchase event
+  // (fired from the billing webhook, which has no browser context) can be
+  // matched back to the same person who fired CompleteRegistration.
+  fbp                     String?   @map("fb_fbp")
+  fbc                     String?   @map("fb_fbc")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

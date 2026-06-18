@@ -10,6 +10,7 @@ import { welcomeEmail, merchantSignupAdminEmail } from "@/lib/email/templates";
 import { verifyPhoneVerify } from "@/lib/auth/jwt";
 import { toE164 } from "@/lib/format";
 import { publish } from "@/lib/qstash/client";
+import { readFbCookies } from "@/lib/fb/capi";
 import { after } from "next/server";
 
 const TRIAL_DAYS = 7;
@@ -238,6 +239,11 @@ export const POST = handler(async (req: Request) => {
   // the trial expires the whole dashboard locks until they pay.
   const trialEndsAt = new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
 
+  // Stash the Meta browser/click ids so the server-side Purchase event (fired
+  // later from the billing webhook, which has no browser context) can match
+  // the payment back to this signup.
+  const { fbp, fbc } = readFbCookies(req.headers.get("cookie"));
+
   // Create the billing-hub customer up-front so we have an id to reference
   // when the merchant later clicks "complete billing setup". Best-effort -
   // signup must not fail just because the hub is briefly unreachable.
@@ -251,7 +257,7 @@ export const POST = handler(async (req: Request) => {
     });
     await prisma.tenant.update({
       where: { id: tenant.id },
-      data: { billingCustomerId: customer.id, trialEndsAt },
+      data: { billingCustomerId: customer.id, trialEndsAt, fbp, fbc },
     });
   } catch (err) {
     if (err instanceof BillingHubError) {
@@ -262,7 +268,7 @@ export const POST = handler(async (req: Request) => {
     // Even if the hub call failed, we still want the local trial to start.
     await prisma.tenant.update({
       where: { id: tenant.id },
-      data: { trialEndsAt },
+      data: { trialEndsAt, fbp, fbc },
     });
   }
 

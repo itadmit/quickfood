@@ -24,6 +24,8 @@ import {
   BillingHubError,
 } from "@/lib/billing-hub/client";
 import { REVIEWS_WHATSAPP_PLAN_CODE } from "@/lib/billing-hub/plans";
+import { sendCapiEvent } from "@/lib/fb/capi";
+import { after } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,6 +35,9 @@ const BASE_PLAN_CODE = "quickfood_base";
 // Defer the hub's automatic billing so the merchant isn't charged again
 // before the cycle is over.
 const BASE_TRIAL_DAYS_AFTER_SETUP = 30;
+// Net (ex-VAT) base-plan price reported as the Purchase conversion value, kept
+// in step with the CompleteRegistration value so Meta sees a consistent funnel.
+const BASE_PLAN_VALUE_ILS = 299;
 
 interface WebhookEvent {
   event: string;
@@ -51,6 +56,18 @@ async function findTenantByCustomerId(customerId: string) {
       smsCreditsRemaining: true,
       reviewsWhatsappSubscriptionId: true,
       reviewsChannel: true,
+      fbp: true,
+      fbc: true,
+      merchantUsers: {
+        where: { role: "owner" },
+        take: 1,
+        select: { email: true, phone: true },
+      },
+      branches: {
+        where: { isPrimary: true },
+        take: 1,
+        select: { phone: true },
+      },
     },
   });
 }
@@ -74,6 +91,11 @@ export const POST = handler(async (req: Request) => {
       if (!tenant) break;
 
       const paymentMethodId = d.payment_method_id ?? d.id ?? null;
+      // First time a token lands = the trial→paid conversion (fires whether
+      // the merchant paid during or after the trial - both routes save the
+      // payment method here). Guard on the pre-update value so retries / card
+      // updates don't re-fire it.
+      const isFirstSetup = !tenant.billingPaymentMethodId;
       if (paymentMethodId) {
         await prisma.tenant.update({
           where: { id: tenant.id },
@@ -83,6 +105,35 @@ export const POST = handler(async (req: Request) => {
             // trial so the dashboard banner / lock disappear.
             billingSetupCompletedAt: new Date(),
           },
+        });
+      }
+
+      // Report the paid conversion to Meta server-side. The webhook has no
+      // browser context, so we lean on the hashed owner email/phone plus the
+      // fbp/fbc stashed at signup to match it back to CompleteRegistration. A
+      // deterministic event_id makes duplicate webhooks a no-op for Meta.
+      if (paymentMethodId && isFirstSetup) {
+        const owner = tenant.merchantUsers[0];
+        const branchPhone = tenant.branches[0]?.phone;
+        after(async () => {
+          try {
+            await sendCapiEvent({
+              eventName: "Purchase",
+              eventId: `purchase:${tenant.id}`,
+              params: {
+                currency: "ILS",
+                value: BASE_PLAN_VALUE_ILS,
+                content_name: BASE_PLAN_CODE,
+              },
+              email: owner?.email,
+              phones: [owner?.phone, branchPhone],
+              externalId: tenant.id,
+              fbp: tenant.fbp,
+              fbc: tenant.fbc,
+            });
+          } catch (err) {
+            console.warn("[billing-webhook] Purchase CAPI failed", err);
+          }
         });
       }
 
