@@ -63,6 +63,18 @@ const METHOD_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "pickup", label: "איסוף" },
 ];
 
+// Payment filter. Default "settled" hides abandoned card/wallet carts
+// (never-paid orders the customer dropped at the payment screen) while
+// keeping cash orders, which legitimately sit at "ממתין" until collected.
+const PAYMENT_FILTER_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "settled", label: "ללא נטושות" },
+  { value: "", label: "כל התשלומים" },
+  { value: "paid", label: "שולמו" },
+  { value: "pending", label: "ממתין תשלום" },
+  { value: "refunded", label: "הוחזרו" },
+  { value: "failed", label: "נכשלו" },
+];
+
 const PAYMENT_LABEL: Record<string, string> = {
   cash: "מזומן",
   card: "כרטיס",
@@ -103,6 +115,7 @@ function formatDateTime(iso: string): string {
 export function OrdersHistoryView() {
   const [status, setStatus] = useState<string>("");
   const [method, setMethod] = useState<string>("");
+  const [payment, setPayment] = useState<string>("settled");
   const [from, setFrom] = useState<string>(isoDaysAgo(30));
   const [to, setTo] = useState<string>(todayIso());
   const [search, setSearch] = useState<string>("");
@@ -225,7 +238,7 @@ export function OrdersHistoryView() {
   // Reset to page 1 whenever any filter changes.
   useEffect(() => {
     setPage(1);
-  }, [status, method, from, to, debouncedSearch]);
+  }, [status, method, payment, from, to, debouncedSearch]);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -234,6 +247,7 @@ export function OrdersHistoryView() {
     const params = new URLSearchParams();
     if (status) params.set("status", status);
     if (method) params.set("method", method);
+    if (payment) params.set("payment", payment);
     if (from) params.set("from", from);
     if (to) params.set("to", to);
     if (debouncedSearch) params.set("search", debouncedSearch);
@@ -258,7 +272,7 @@ export function OrdersHistoryView() {
       })
       .finally(() => setLoading(false));
     return () => ctrl.abort();
-  }, [status, method, from, to, debouncedSearch, page, perPage]);
+  }, [status, method, payment, from, to, debouncedSearch, page, perPage]);
 
   const summary = useMemo(() => {
     const totalRev = orders.reduce(
@@ -273,7 +287,7 @@ export function OrdersHistoryView() {
       <PageHeader
         chip="תפעול"
         title="היסטוריית הזמנות"
-        subtitle={`${meta.total} הזמנות תואמות לסינון · הכנסה בעמוד הנוכחי ${formatPrice(summary.totalRev)}`}
+        subtitle={`${meta.total} הזמנות תואמות לסינון · ${formatPrice(summary.totalRev)} הכנסה מהזמנות שנמסרו (בעמוד זה)`}
         actions={
           <Link
             href="/dashboard/orders"
@@ -284,7 +298,18 @@ export function OrdersHistoryView() {
         }
       />
 
-      <div className="bg-white rounded-2xl border border-qf-line-dash p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+      <div className="bg-white rounded-2xl border border-qf-line-dash p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
+        <select
+          value={payment}
+          onChange={(e) => setPayment(e.target.value)}
+          className="px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm bg-white"
+        >
+          {PAYMENT_FILTER_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}

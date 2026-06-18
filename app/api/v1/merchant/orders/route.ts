@@ -1,7 +1,7 @@
 import { handler, apiJson } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
-import { OrderStatus, OrderMethod, Prisma } from "@prisma/client";
+import { OrderStatus, OrderMethod, PaymentStatus, Prisma } from "@prisma/client";
 import { ORDER_INCLUDE, serializeOrder } from "@/lib/orders-serialize";
 import { HIDE_UNPAID_NONCASH } from "@/lib/orders-visible";
 
@@ -31,6 +31,12 @@ export const GET = handler(async (req: Request) => {
   const url = new URL(req.url);
   const status = url.searchParams.get("status");
   const method = url.searchParams.get("method");
+  // Payment filter for the history view. `settled` (the history default)
+  // hides abandoned card/wallet carts (pending + non-cash) while keeping
+  // cash orders, which legitimately sit at payment_status=pending until the
+  // merchant collects. The explicit paid/pending/refunded/failed values map
+  // straight to paymentStatus.
+  const payment = url.searchParams.get("payment");
   const from = url.searchParams.get("from");
   const to = url.searchParams.get("to");
   const search = url.searchParams.get("search")?.trim() ?? "";
@@ -53,6 +59,17 @@ export const GET = handler(async (req: Request) => {
 
   if (method && (Object.values(OrderMethod) as string[]).includes(method)) {
     where.method = method as OrderMethod;
+  }
+
+  if (payment === "settled") {
+    // Hide abandoned non-cash carts. Combine via AND so it composes with the
+    // status=active NOT clause without clobbering it.
+    where.AND = [
+      ...(Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []),
+      { NOT: HIDE_UNPAID_NONCASH },
+    ];
+  } else if (payment && (Object.values(PaymentStatus) as string[]).includes(payment)) {
+    where.paymentStatus = payment as PaymentStatus;
   }
 
   // Date window - `from` / `to` are ISO date strings (YYYY-MM-DD or full
