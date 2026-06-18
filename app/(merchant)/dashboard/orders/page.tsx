@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 import { fullName } from "@/lib/format";
 import { OrdersKanban } from "./OrdersKanban";
+import { HIDE_UNPAID_NONCASH } from "@/lib/orders-visible";
 import type { ReceiptPrinterType } from "@/lib/receipt-print";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,10 @@ export default async function OrdersPage() {
       // filter - without this the SSR seeds the Kanban with hidden
       // cards on every full page reload, undoing the X click.
       kanbanHiddenAt: null,
+      // Same exclusion the API/realtime feeds apply: a card/wallet order
+      // abandoned at the payment screen (status=pending, non-cash, unpaid)
+      // must not seed into the live Kanban as a "new" order.
+      NOT: HIDE_UNPAID_NONCASH,
     },
     include: {
       items: {
