@@ -137,6 +137,8 @@ export function WoltImportModal({
           <span className="text-black/60 text-xs font-semibold">{stepLabel[stage]}</span>
         </div>
 
+        {stage === "done" && <Confetti />}
+
         {stage === "loading" && <LoadingStage />}
         {stage === "preview" && preview && (
           <PreviewStage preview={preview} onConfirm={onCommit} onClose={onClose} />
@@ -229,11 +231,28 @@ function PreviewStage({
   );
 }
 
+const COMMIT_MESSAGES = [
+  "מכינים את התפריט...",
+  "מעלים את התמונות...",
+  "מסדרים קטגוריות ותוספות...",
+  "מתאימים מחירים לשקלים...",
+  "כמעט שם...",
+];
+
 function CommittingStage() {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => {
+      setI((p) => (p + 1) % COMMIT_MESSAGES.length);
+    }, 2200);
+    return () => clearInterval(id);
+  }, []);
   return (
     <div className="py-8 flex flex-col items-center gap-4">
       <div className="qf-spinner h-10 w-10 border-black/30 border-t-black" />
-      <div className="font-bold text-black text-lg">מייבא תפריט ומעלה תמונות...</div>
+      <div key={i} className="font-bold text-black text-lg qf-fade-in">
+        {COMMIT_MESSAGES[i]}
+      </div>
       <div className="text-sm text-black/60 max-w-xs">
         זה יכול לקחת 20-60 שניות. אל תסגרו את הדף.
       </div>
@@ -250,7 +269,7 @@ function DoneStage({
 }) {
   return (
     <>
-      <div className="w-16 h-16 rounded-2xl bg-black border-2 border-black grid place-items-center shadow-[0_4px_0_#000]">
+      <div className="w-16 h-16 rounded-2xl bg-white border-2 border-black grid place-items-center shadow-[0_4px_0_#000]">
         <IcoCheck c="#34C759" s={30} />
       </div>
 
@@ -321,5 +340,56 @@ function StatCard({ value, label }: { value: number; label: string }) {
       <div className="text-2xl font-black text-black tnum">{value}</div>
       <div className="text-xs text-black/60 font-semibold mt-0.5">{label}</div>
     </div>
+  );
+}
+
+// Lightweight celebratory confetti - spawns falling pieces via the Web
+// Animations API (no library, no global keyframes). Self-cleans on unmount.
+function Confetti() {
+  const ref = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const host = ref.current;
+    if (!host || typeof host.animate !== "function") return;
+    const colors = ["#F8CB1E", "#34C759", "#000000", "#f9af72", "#2666c4", "#c2421f"];
+    const w = host.clientWidth || 480;
+    const h = host.clientHeight || 360;
+    const anims: Animation[] = [];
+    for (let n = 0; n < 90; n++) {
+      const piece = document.createElement("div");
+      const size = 6 + Math.random() * 8;
+      piece.style.cssText =
+        `position:absolute;top:-16px;left:${Math.random() * w}px;width:${size}px;` +
+        `height:${size * 0.55}px;background:${colors[n % colors.length]};` +
+        `border-radius:1px;will-change:transform,opacity;`;
+      host.appendChild(piece);
+      const driftX = (Math.random() * 2 - 1) * 120;
+      const rot = (Math.random() * 2 - 1) * 900;
+      anims.push(
+        piece.animate(
+          [
+            { transform: "translate(0,0) rotate(0deg)", opacity: 1 },
+            {
+              transform: `translate(${driftX}px, ${h * 0.72}px) rotate(${rot * 0.7}deg)`,
+              opacity: 1,
+              offset: 0.8,
+            },
+            { transform: `translate(${driftX * 1.2}px, ${h + 40}px) rotate(${rot}deg)`, opacity: 0 },
+          ],
+          {
+            duration: 1900 + Math.random() * 1500,
+            delay: Math.random() * 350,
+            easing: "cubic-bezier(.18,.7,.4,1)",
+            fill: "forwards",
+          },
+        ),
+      );
+    }
+    return () => {
+      anims.forEach((a) => a.cancel());
+      host.replaceChildren();
+    };
+  }, []);
+  return (
+    <div ref={ref} aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden z-30" />
   );
 }

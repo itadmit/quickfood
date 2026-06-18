@@ -71,6 +71,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
   });
   const hasNoMenuItems = menuItemCount === 0;
 
+  // A store that already pulled its menu from Wolt is not "new" - never nudge
+  // it back into the onboarding / Wolt-import flow even if the item count
+  // briefly reads 0 (write-then-read lag right after a commit).
+  const hasCompletedWoltImport =
+    (await prisma.woltImport.count({
+      where: { tenantId: tenant.id, status: "committed" },
+    })) > 0;
+  const showOnboarding = hasNoMenuItems && !hasCompletedWoltImport;
+
   const base = (process.env.NEXT_PUBLIC_APP_URL ?? "https://quickfood.co.il").replace(/\/$/, "");
   const storefrontUrl = tenant.customDomain
     ? `https://${tenant.customDomain}`
@@ -154,7 +163,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
                   }
                 : null
             }
-            showImportShortcut={hasNoMenuItems}
+            showImportShortcut={showOnboarding}
             storefrontUrl={storefrontUrl}
             storefrontQrDataUrl={storefrontQrDataUrl}
           />
@@ -182,7 +191,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           />
           <OnboardingWelcome
             merchantName={user.name}
-            initialOpen={!tenant.onboardingDismissedAt && hasNoMenuItems}
+            initialOpen={!tenant.onboardingDismissedAt && showOnboarding}
           />
           <SupportFAB merchantName={user.name} hasNoMenuItems={hasNoMenuItems} />
         </div>
@@ -211,7 +220,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
                   }
                 : null
             }
-            showImportShortcut={hasNoMenuItems}
+            showImportShortcut={showOnboarding}
           />
           <div className="flex-1 flex">
             <Sidebar tenant={{ name: tenant.name, logoLetter: tenant.logoLetter, branchName: tenant.branches[0]?.name ?? "" }} role={user.role} />
@@ -230,7 +239,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           />
           <OnboardingWelcome
             merchantName={user.name}
-            initialOpen={!tenant.onboardingDismissedAt && hasNoMenuItems}
+            initialOpen={!tenant.onboardingDismissedAt && showOnboarding}
           />
           <SupportFAB merchantName={user.name} hasNoMenuItems={hasNoMenuItems} />
         </div>
