@@ -66,7 +66,13 @@ export async function sendRawSms(to: string, body: string): Promise<SendRawSmsRe
     providerMsg = err instanceof Error ? err.message : "fetch_failed";
   }
 
-  // sms4free: status > 0 ⇒ delivered. Anything ≤ 0 is a failure.
+  // sms4free: status > 0 ⇒ ACCEPTED for delivery (returns the recipient
+  // count). Note this is "accepted", not "delivered" - an unverified
+  // alphanumeric sender can be accepted here yet dropped by the carrier, so
+  // we log the provider's exact code/message to diagnose silent non-delivery.
+  console.log(
+    `[sms-raw] to=${recipient} sender=${DEFAULT_SENDER} code=${providerCode} msg=${providerMsg || "-"}`,
+  );
   if (providerCode > 0) {
     return { status: "sent", providerCode, providerMsg };
   }

@@ -78,5 +78,8 @@ export const POST = handler(async (req: Request) => {
     sent: true,
     retry_in: THROTTLE_SECONDS,
     expires_in: Math.max(0, Math.floor((expiresAt.getTime() - Date.now()) / 1000)),
+    // Surfaced for diagnostics - sms4free's "accepted" doesn't guarantee
+    // delivery (unverified sender gets dropped). Visible in the Network tab.
+    provider_msg: res.providerMsg || undefined,
   });
 });
