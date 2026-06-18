@@ -261,32 +261,38 @@ function OtpInput({
   }
 
   return (
-    <div dir="ltr" className="flex items-center justify-center gap-2">
-      {Array.from({ length }).map((_, i) => (
-        <input
-          key={i}
-          ref={(el) => {
-            refs.current[i] = el;
-          }}
-          type="text"
-          inputMode="numeric"
-          autoComplete={i === 0 ? "one-time-code" : "off"}
-          maxLength={1}
-          disabled={disabled}
-          value={value[i] ?? ""}
-          onChange={(e) => handleChange(i, e.target.value)}
-          onKeyDown={(e) => handleKeyDown(i, e)}
-          onFocus={(e) => e.target.select()}
-          aria-label={`ספרה ${i + 1}`}
-          className={cn(
-            "w-11 h-14 rounded-xl bg-[#FFFBEC] text-center text-2xl font-mono font-black text-black outline-none transition border-2 border-b-4",
-            disabled && "opacity-60",
-            invalid
-              ? "border-qf-tomato"
-              : "border-black/20 border-b-black focus:border-black focus:bg-white focus:shadow-[0_0_0_3px_#F8CB1E]",
-          )}
-        />
-      ))}
+    <div dir="ltr" className="flex items-center justify-center gap-2.5">
+      {Array.from({ length }).map((_, i) => {
+        const filled = !!value[i];
+        return (
+          <input
+            key={i}
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
+            type="text"
+            inputMode="numeric"
+            autoComplete={i === 0 ? "one-time-code" : "off"}
+            maxLength={1}
+            disabled={disabled}
+            value={value[i] ?? ""}
+            onChange={(e) => handleChange(i, e.target.value)}
+            onKeyDown={(e) => handleKeyDown(i, e)}
+            onFocus={(e) => e.target.select()}
+            aria-label={`ספרה ${i + 1}`}
+            className={cn(
+              "w-11 h-14 rounded-xl bg-white text-center text-2xl font-semibold text-qf-ink caret-(--qf-primary) outline-none focus-visible:outline-none border transition-all duration-150",
+              "focus:border-(--qf-primary) focus:shadow-[0_0_0_3px_rgba(248,203,30,0.35)]",
+              disabled && "opacity-50",
+              invalid
+                ? "border-qf-tomato/70 focus:border-qf-tomato focus:shadow-[0_0_0_3px_rgba(194,66,31,0.18)]"
+                : filled
+                  ? "border-qf-ink/25"
+                  : "border-qf-line",
+            )}
+          />
+        );
+      })}
     </div>
   );
 }
