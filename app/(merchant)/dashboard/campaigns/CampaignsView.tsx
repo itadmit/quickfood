@@ -260,7 +260,7 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
                 c.isActive ? "border-qf-line-dash" : "border-qf-line opacity-70",
               )}
             >
-              <div className="h-44 bg-qf-line-soft relative overflow-hidden shrink-0">
+              <div className="h-56 bg-qf-line-soft relative overflow-hidden shrink-0">
                 {c.kind === "banner" && c.style === "text" ? (
                   <ThumbTextBanner
                     title={c.title}
@@ -273,7 +273,7 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
                   <img
                     src={c.imageUrl}
                     alt={c.title}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-contain"
                   />
                 ) : null}
                 <span

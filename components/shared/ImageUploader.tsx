@@ -410,7 +410,7 @@ function UploadingTile({ progress, name }: { progress: number; name: string }) {
 
   return (
     <div
-      className="aspect-square rounded-xl border-2 border-black shadow-[0_2px_0_#000] bg-qf-line-soft/60 grid place-items-center"
+      className="aspect-square rounded-xl border-2 border-black shadow-[0_2px_0_#000] bg-qf-line-soft/60 grid place-items-center overflow-hidden p-2"
       role="status"
       aria-label={`מעלה ${name}, ${pct} אחוזים`}
     >
