@@ -628,7 +628,7 @@ function Step0Url({
                   <span>שולפים מוולט…</span>
                 </>
               ) : (
-                "שלוף את החנות"
+                "המשך הרשמה"
               )}
             </button>
             <button
@@ -653,7 +653,12 @@ function Step0Url({
         </div>
       )}
 
-      <div className="relative flex items-center gap-3 py-1">
+      <div
+        className={cn(
+          "relative flex items-center gap-3 py-1 transition-opacity",
+          woltUrl.trim() && "opacity-40",
+        )}
+      >
         <div className="flex-1 h-0.5 bg-black/15" />
         <span className="text-xs font-bold text-black/55 tracking-wider">או</span>
         <div className="flex-1 h-0.5 bg-black/15" />
@@ -662,9 +667,11 @@ function Step0Url({
       <button
         type="button"
         onClick={onSkip}
-        className="block w-full text-center py-3 rounded-xl bg-white border-2 border-black hover:bg-[#FFFBEC] text-sm font-bold text-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition"
+        disabled={!!woltUrl.trim()}
+        className="block w-full text-center py-3 rounded-xl bg-white border-2 border-black hover:bg-[#FFFBEC] text-sm font-bold text-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:shadow-[0_3px_0_#000] disabled:active:translate-y-0"
       >
-הרשמה רגילה       </button>
+        הרשמה רגילה
+      </button>
 
       {gate && (
         <WoltTermsGateModal
@@ -1100,7 +1107,7 @@ function WoltVsQuickFoodTip({
           (מסומן בכוכב למעלה) - סכו״ם חד״פ
         </>
       ),
-      tip: "בקוויק פוד זה מובנה בצ׳ק־אאוט כקליק אחד של הלקוח (חינם או בתוספת תשלום, עם רף מינימום). אין צורך לסחוב פריט כזה בתפריט.",
+      tip: "בקוויק פוד זה מובנה בצ׳ק־אאוט כקליק אחד של הלקוח (חינם או בתוספת תשלום, עם רף מקסימום). אין צורך להזין פריט כזה לתפריט.",
     });
   }
   if (noticeCount > 0) {
