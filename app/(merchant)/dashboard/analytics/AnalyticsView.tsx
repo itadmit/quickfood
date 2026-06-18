@@ -61,6 +61,12 @@ interface Insight {
   metric?: string;
 }
 
+interface VisitorStats {
+  visits: KPI;
+  unique_visitors: KPI;
+  unique_customers: KPI;
+}
+
 const RANGES: Array<{ key: "today" | "yesterday" | "7d" | "30d"; label: string }> = [
   { key: "today", label: "היום" },
   { key: "yesterday", label: "אתמול" },
@@ -83,6 +89,7 @@ export function AnalyticsView({
   segments,
   ops,
   insights,
+  visitors,
 }: {
   range: "today" | "yesterday" | "7d" | "30d";
   summary: Summary;
@@ -92,6 +99,7 @@ export function AnalyticsView({
   segments: Segments;
   ops: Ops;
   insights: Insight[];
+  visitors: VisitorStats;
 }) {
   const router = useRouter();
 
@@ -150,6 +158,28 @@ export function AnalyticsView({
           }
           delta={null}
           subline={`${segments.returning.customers} מתוך ${segments.total.customers}`}
+        />
+      </section>
+
+      {/* TRAFFIC ROW - first-party storefront visits */}
+      <section className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        <KpiCard
+          label="מבקרים בחנות"
+          value={String(visitors.unique_visitors.value ?? 0)}
+          delta={visitors.unique_visitors.delta}
+          subline="גולשים שונים שנכנסו לאתר"
+        />
+        <KpiCard
+          label="לקוחות מזוהים"
+          value={String(visitors.unique_customers.value ?? 0)}
+          delta={visitors.unique_customers.delta}
+          subline="מתוכם מחוברים לחשבון"
+        />
+        <KpiCard
+          label="כניסות"
+          value={String(visitors.visits.value ?? 0)}
+          delta={visitors.visits.delta}
+          subline="סה״כ פתיחות של האתר"
         />
       </section>
 

@@ -8,6 +8,7 @@ import {
   customerSegments,
   operationalHealth,
   insights,
+  visitorStats,
   type Range,
 } from "@/lib/analytics";
 import { AnalyticsView } from "./AnalyticsView";
@@ -34,7 +35,7 @@ export default async function AnalyticsPage({
   const range: Quick = allowed.includes(raw as Quick) ? (raw as Quick) : "7d";
   const apiRange: Range = range;
 
-  const [sum, hr, items, channels, segments, ops, ins] = await Promise.all([
+  const [sum, hr, items, channels, segments, ops, ins, visitors] = await Promise.all([
     summary(session.tenantId, apiRange),
     hourly(session.tenantId, apiRange),
     topItems(session.tenantId, apiRange, 8),
@@ -42,6 +43,7 @@ export default async function AnalyticsPage({
     customerSegments(session.tenantId, apiRange),
     operationalHealth(session.tenantId, apiRange),
     insights(session.tenantId, apiRange),
+    visitorStats(session.tenantId, apiRange),
   ]);
 
   return (
@@ -54,6 +56,7 @@ export default async function AnalyticsPage({
       segments={segments}
       ops={ops}
       insights={ins}
+      visitors={visitors}
     />
   );
 }

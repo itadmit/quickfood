@@ -72,7 +72,7 @@ function israelOffsetMs(at: Date): number {
 }
 
 /** UTC instant of the Israel-local midnight for the day containing `at`. */
-function israelStartOfDay(at: Date): Date {
+export function israelStartOfDay(at: Date): Date {
   const p = new Intl.DateTimeFormat("en-CA", {
     timeZone: ANALYTICS_TZ,
     year: "numeric",
@@ -145,6 +145,51 @@ async function aggregateBucket(tenantId: string, from: Date, to: Date) {
 function pctDelta(current: number, previous: number): number {
   if (previous === 0) return current > 0 ? 100 : 0;
   return Math.round(((current - previous) / previous) * 100);
+}
+
+/**
+ * Storefront traffic for the range: total opens, unique visitors (distinct
+ * qf_vid cookies), and unique identified customers (distinct customerId
+ * among visitors). Sourced from the first-party StorefrontVisit table -
+ * merchant self-previews are never recorded there.
+ */
+export async function visitorStats(tenantId: string, range: Range) {
+  const { from, to, previousFrom, previousTo } = rangeBounds(range);
+  const [cur, prev] = await Promise.all([
+    visitorBucket(tenantId, from, to),
+    visitorBucket(tenantId, previousFrom, previousTo),
+  ]);
+  return {
+    visits: { value: cur.visits, delta: pctDelta(cur.visits, prev.visits) },
+    unique_visitors: {
+      value: cur.uniqueVisitors,
+      delta: pctDelta(cur.uniqueVisitors, prev.uniqueVisitors),
+    },
+    unique_customers: {
+      value: cur.uniqueCustomers,
+      delta: pctDelta(cur.uniqueCustomers, prev.uniqueCustomers),
+    },
+  };
+}
+
+async function visitorBucket(tenantId: string, from: Date, to: Date) {
+  const rows = await prisma.storefrontVisit.findMany({
+    where: { tenantId, day: { gte: from, lt: to } },
+    select: { visitorId: true, customerId: true, visits: true },
+  });
+  let visits = 0;
+  const visitors = new Set<string>();
+  const customers = new Set<string>();
+  for (const r of rows) {
+    visits += r.visits;
+    visitors.add(r.visitorId);
+    if (r.customerId) customers.add(r.customerId);
+  }
+  return {
+    visits,
+    uniqueVisitors: visitors.size,
+    uniqueCustomers: customers.size,
+  };
 }
 
 export async function hourly(tenantId: string, range: Range) {

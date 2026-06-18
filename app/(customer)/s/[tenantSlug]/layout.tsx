@@ -16,6 +16,7 @@ import { AIAdvisorPromoPopup } from "@/components/customer/ai-advisor/AIAdvisorP
 import { FloatingCartCTA } from "@/components/customer/FloatingCartCTA";
 import { CustomerChromeGate } from "@/components/customer/CustomerChromeGate";
 import { CustomerFooter } from "@/components/customer/CustomerFooter";
+import { VisitBeacon } from "@/components/customer/VisitBeacon";
 
 export async function generateMetadata({
   params,
@@ -156,6 +157,7 @@ export default async function CustomerLayout({
             />
           </CustomerChromeGate>
           <div className="max-w-md mx-auto bg-qf-bg min-h-screen relative shadow-md lg:max-w-none lg:mx-0 lg:shadow-none">
+            {!isOwnMerchant && <VisitBeacon tenantSlug={tenant.slug} />}
             {children}
             {pendingReview && (
               <CustomerChromeGate>

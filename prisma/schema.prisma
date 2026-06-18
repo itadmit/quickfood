@@ -450,6 +450,7 @@ model Tenant {
   modifierSets     ModifierSet[]
   woltImports      WoltImport[]
   menuFileImports  MenuFileImport[]
+  storefrontVisits StorefrontVisit[]
   woltConnections  WoltConnection[]
   growLeads        GrowLead[]
   posShifts        PosShift[]
@@ -1848,6 +1849,30 @@ model WoltImport {
 enum MenuFileImportSource {
   pdf
   image
+}
+
+/// First-party storefront visit tracking. One row per (tenant, visitor,
+/// Israel-day), with `visits` counting tab-session opens that day. The
+/// visitor is identified by the `qf_vid` first-party cookie; `customerId`
+/// is stamped when the visitor is a logged-in customer. Merchants viewing
+/// their own storefront are NOT recorded. Powers the dashboard's
+/// "visitors today" / "unique customers" metrics without depending on
+/// GA/Meta (which are third-party + ad-blocked).
+model StorefrontVisit {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  visitorId  String   @map("visitor_id")
+  customerId String?  @map("customer_id") @db.Uuid
+  // Israel-local midnight instant for the day this visit belongs to.
+  day        DateTime
+  visits     Int      @default(1)
+  createdAt  DateTime @default(now()) @map("created_at")
+  lastAt     DateTime @default(now()) @map("last_at")
+
+  @@unique([tenantId, visitorId, day])
+  @@index([tenantId, day])
+  @@map("storefront_visits")
 }
 
 /// AI-extracted menu import from an uploaded PDF or photo. Mirrors the
