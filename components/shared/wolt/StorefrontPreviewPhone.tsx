@@ -392,7 +392,8 @@ function BikeIcon() {
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <circle cx="5.5" cy="17.5" r="3.5" />
       <circle cx="18.5" cy="17.5" r="3.5" />
-      <path d="M15 6h3l-3 11.5M5.5 17.5l4-9h5.5" />
+      <circle cx="15" cy="5" r="1" />
+      <path d="M12 17.5V14l-3-3 4-3 2 3h2" />
     </svg>
   );
 }

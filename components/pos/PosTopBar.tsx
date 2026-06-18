@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { usePos } from "@/components/pos/PosContext";
 import { usePosCart } from "@/components/pos/PosCartProvider";
-import { IcoBag, IcoUser, IcoReceipt, IcoSearch, IcoClose, IcoChev, IcoClock } from "@/components/shared/Icons";
+import { IcoBag, IcoUser, IcoReceipt, IcoSearch, IcoClose, IcoChev, IcoClock, IcoArrowRight } from "@/components/shared/Icons";
 import { PosParkedTicketsModal } from "@/components/pos/PosParkedTicketsModal";
 import { cn } from "@/lib/cn";
 import { formatTime } from "@/lib/format";
@@ -98,6 +98,15 @@ export function PosTopBar({ onCloseShift }: { onCloseShift: () => void }) {
       </nav>
 
       <div className="ms-auto flex items-center gap-2">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5"
+          aria-label="חזרה לדשבורד"
+          title="חזרה לדשבורד"
+        >
+          <IcoArrowRight s={14} c="#000" />
+          <span className="hidden sm:inline">דשבורד</span>
+        </Link>
         {parked.length > 0 && (
           <button
             type="button"
