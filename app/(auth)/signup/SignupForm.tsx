@@ -1406,8 +1406,26 @@ function Step3({
           aria-required="true"
           minLength={8}
           autoComplete="new-password"
-          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-mono font-bold text-black placeholder:text-black/35 placeholder:font-normal tracking-widest"
+          aria-invalid={password.length > 0 && password.length < 8}
+          className={cn(
+            "w-full px-3.5 py-3 rounded-xl border-2 bg-[#FFFBEC] hover:bg-white focus:bg-white outline-none transition font-mono font-bold text-black placeholder:text-black/35 placeholder:font-normal tracking-widest",
+            password.length > 0 && password.length < 8
+              ? "border-qf-tomato focus:border-qf-tomato focus:shadow-[0_0_0_3px_rgba(194,66,31,0.25)]"
+              : "border-black focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E]",
+          )}
         />
+        {password.length > 0 &&
+          (password.length < 8 ? (
+            <p className="mt-1.5 text-xs font-bold text-qf-tomato inline-flex items-center gap-1">
+              <X size={13} strokeWidth={2.6} />
+              עוד {8 - password.length} תווים לפחות
+            </p>
+          ) : (
+            <p className="mt-1.5 text-xs font-bold text-qf-green-deep inline-flex items-center gap-1">
+              <Check size={13} strokeWidth={2.6} />
+              הסיסמה תקינה
+            </p>
+          ))}
       </Field>
     </div>
   );
