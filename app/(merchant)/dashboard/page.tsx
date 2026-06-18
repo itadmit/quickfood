@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { PaymentProvider } from "@prisma/client";
 import { summary, hourly, topItems, type Range } from "@/lib/analytics";
+import { HIDE_UNPAID_NONCASH } from "@/lib/orders-visible";
 import { fullName } from "@/lib/format";
 import { DashboardView } from "./DashboardView";
 import { DashboardViewV2 } from "@/components/merchant/v2/DashboardViewV2";
@@ -36,7 +37,10 @@ export default async function DashboardPage({
     hourly(session.tenantId, apiRange),
     topItems(session.tenantId, apiRange, 5),
     prisma.order.findMany({
-      where: { tenantId: session.tenantId },
+      // Hide card/wallet orders abandoned at the payment screen - they sit
+      // at status=pending + non-cash and were never actually paid, so they
+      // shouldn't surface as a "new" order in the recent-orders widget.
+      where: { tenantId: session.tenantId, NOT: HIDE_UNPAID_NONCASH },
       include: { customer: { select: { firstName: true, lastName: true } } },
       orderBy: { createdAt: "desc" },
       take: 6,
