@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Sparkles, MapPin, User, Check, X, Star, Mail } from "lucide-react";
+import { Sparkles, MapPin, User, Check, X, Star, Mail, ShieldCheck, MessageSquare } from "lucide-react";
 import { IcoArrowLeft, IcoArrowRight } from "@/components/shared/Icons";
 import { THEMES, type ThemeId } from "@/lib/themes";
 import { type BusinessType } from "@/components/shared/MenuItemImage";
@@ -154,6 +154,15 @@ export function SignupForm() {
   const [ownerPhone, setOwnerPhone] = useState("");
   const [ownerEmail, setOwnerEmail] = useState("");
   const [ownerPassword, setOwnerPassword] = useState("");
+  // SMS-OTP proof for the owner's mobile. Required to open the store; cleared
+  // the moment the number is edited so a verified token can't trail a changed
+  // phone.
+  const [phoneVerifyToken, setPhoneVerifyToken] = useState<string | null>(null);
+
+  function onOwnerPhoneChange(v: string) {
+    setOwnerPhone(v);
+    if (phoneVerifyToken) setPhoneVerifyToken(null);
+  }
 
   function autoSlug(v: string) {
     // simple Hebrew ← slug
@@ -187,7 +196,8 @@ export function SignupForm() {
   const canSubmit =
     ownerName.length >= 1 &&
     /\S+@\S+\.\S+/.test(ownerEmail) &&
-    ownerPassword.length >= 8;
+    ownerPassword.length >= 8 &&
+    !!phoneVerifyToken;
 
   async function submit() {
     setBusy(true);
@@ -224,6 +234,7 @@ export function SignupForm() {
           owner_phone: ownerPhone,
           owner_email: ownerEmail.toLowerCase(),
           owner_password: ownerPassword,
+          phone_verify_token: phoneVerifyToken,
           client_type: "web",
           ...venueExtras,
         }),
@@ -241,6 +252,7 @@ export function SignupForm() {
           branch_phone: 1,
           theme_id: 2,
           owner_name: 3,
+          owner_phone: 3,
           owner_email: 3,
           owner_password: 3,
         };
@@ -419,11 +431,13 @@ export function SignupForm() {
             name={ownerName}
             setName={setOwnerName}
             phone={ownerPhone}
-            setPhone={setOwnerPhone}
+            setPhone={onOwnerPhoneChange}
             email={ownerEmail}
             setEmail={setOwnerEmail}
             password={ownerPassword}
             setPassword={setOwnerPassword}
+            verified={!!phoneVerifyToken}
+            onVerified={setPhoneVerifyToken}
           />
         )}
 
@@ -1318,6 +1332,8 @@ function Step3({
   setEmail,
   password,
   setPassword,
+  verified,
+  onVerified,
 }: {
   name: string;
   setName: (v: string) => void;
@@ -1327,7 +1343,83 @@ function Step3({
   setEmail: (v: string) => void;
   password: string;
   setPassword: (v: string) => void;
+  verified: boolean;
+  onVerified: (token: string) => void;
 }) {
+  const [otpSent, setOtpSent] = useState(false);
+  const [code, setCode] = useState("");
+  const [sending, setSending] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+
+  // Resend cooldown ticker.
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
+  // Editing the number drops the code prompt (the parent also clears the
+  // verified token) so a sent code never trails a changed phone.
+  function handlePhoneChange(v: string) {
+    setPhone(v);
+    if (otpSent) setOtpSent(false);
+    if (code) setCode("");
+    if (otpError) setOtpError(null);
+  }
+
+  const phoneReady = phone.replace(/\D/g, "").length >= 9;
+
+  async function sendCode() {
+    setSending(true);
+    setOtpError(null);
+    try {
+      const res = await fetch("/api/v1/auth/signup-otp/request", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
+      const d = await res.json();
+      if (!res.ok) {
+        setOtpError(d.error?.message ?? "שליחת הקוד נכשלה");
+        return;
+      }
+      setOtpSent(true);
+      setCode("");
+      setCooldown(typeof d.retry_in === "number" ? d.retry_in : 60);
+    } catch {
+      setOtpError("שגיאת רשת. נסו שוב.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function verifyCode() {
+    setVerifying(true);
+    setOtpError(null);
+    try {
+      const res = await fetch("/api/v1/auth/signup-otp/verify", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ phone, code }),
+      });
+      const d = await res.json();
+      if (!res.ok || !d.token) {
+        setOtpError(d.error?.message ?? "הקוד שגוי או שפג תוקפו");
+        return;
+      }
+      onVerified(d.token);
+    } catch {
+      setOtpError("שגיאת רשת. נסו שוב.");
+    } finally {
+      setVerifying(false);
+    }
+  }
+
+  const btnBase =
+    "rounded-xl border-2 border-black font-black transition disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2";
+
   return (
     <div className="space-y-4">
       <p className="text-sm text-qf-ink2">
@@ -1343,19 +1435,84 @@ function Step3({
           className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
         />
       </Field>
-      <Field label="מספר נייד אישי" required>
-        <input
-          type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          dir="ltr"
-          required
-          aria-required="true"
-          inputMode="tel"
-          autoComplete="tel"
-          placeholder="050-1234567"
-          className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
-        />
+      <Field label="מספר נייד אישי" hint="נאמת אותו בקוד SMS" required>
+        <div className="relative">
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => handlePhoneChange(e.target.value)}
+            dir="ltr"
+            required
+            aria-required="true"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="050-1234567"
+            className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
+          />
+          {verified && (
+            <span className="absolute inset-y-0 start-3 flex items-center text-qf-green-deep" aria-hidden>
+              <Check size={20} strokeWidth={2.8} />
+            </span>
+          )}
+        </div>
+
+        {verified ? (
+          <div className="mt-2 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-qf-green-soft border-2 border-qf-green-deep/40">
+            <ShieldCheck size={18} className="shrink-0 text-qf-green-deep" />
+            <p className="text-sm font-bold text-qf-green-deep">מספר הנייד אומת בהצלחה</p>
+          </div>
+        ) : !otpSent ? (
+          <button
+            type="button"
+            onClick={sendCode}
+            disabled={!phoneReady || sending || cooldown > 0}
+            className={cn(btnBase, "mt-2 w-full px-4 py-3 bg-white hover:bg-[#FFFBEC] text-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000]")}
+          >
+            <MessageSquare size={16} />
+            {sending ? "שולח קוד…" : cooldown > 0 ? `שליחה חוזרת בעוד ${cooldown}` : "שליחת קוד אימות ב-SMS"}
+          </button>
+        ) : (
+          <div className="mt-2 space-y-2.5 px-4 py-3.5 rounded-xl bg-white border-2 border-black/12 shadow-sm">
+            <p className="text-xs text-black/70 leading-relaxed">
+              שלחנו קוד בן 6 ספרות אל <span dir="ltr" className="font-bold">{phone}</span>. הזינו אותו כאן:
+            </p>
+            <div className="flex items-stretch gap-2">
+              <input
+                type="text"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                dir="ltr"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="------"
+                className="flex-1 min-w-0 px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] focus:bg-white focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-mono font-bold text-black text-center tracking-[0.5em] placeholder:tracking-normal placeholder:text-black/25"
+              />
+              <button
+                type="button"
+                onClick={verifyCode}
+                disabled={code.length < 4 || verifying}
+                className={cn(btnBase, "px-5 bg-[#F8CB1E] hover:bg-[#ffd84a] text-black shadow-[0_3px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000]")}
+              >
+                {verifying ? "מאמת…" : "אימות"}
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={sendCode}
+              disabled={cooldown > 0 || sending}
+              className="text-xs font-bold text-black/65 hover:text-black disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {cooldown > 0 ? `שליחה חוזרת בעוד ${cooldown} שניות` : "לא קיבלתי קוד · שליחה חוזרת"}
+            </button>
+          </div>
+        )}
+
+        {otpError && (
+          <p className="mt-2 text-xs font-bold text-qf-tomato inline-flex items-center gap-1">
+            <X size={13} strokeWidth={2.6} />
+            {otpError}
+          </p>
+        )}
       </Field>
       <Field label="אימייל" required>
         <input
@@ -1371,7 +1528,7 @@ function Step3({
         <div className="mt-2 flex items-start gap-3 px-4 py-3 rounded-xl bg-white border border-black/12 shadow-sm">
           <Mail size={16} className="shrink-0 mt-0.5 text-black/50" />
           <p className="text-xs text-black/70 leading-relaxed">
-            <span className="font-bold text-black/85">חשוב:</span> יש להזין כתובת דוא״ל פעילה. מיד לאחר ההרשמה נשלח אליכם מייל אימות, ולחיצה על קישור האימות תפעיל את החנות שלכם ותאפשר להתחיל לעבוד.
+            נשתמש בו לחשבוניות, עדכונים חשובים ושחזור סיסמה. אין צורך לאמת אותו - את החשבון מאמתים בקוד ה-SMS לנייד.
           </p>
         </div>
       </Field>

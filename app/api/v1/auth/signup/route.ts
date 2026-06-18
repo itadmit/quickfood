@@ -7,7 +7,8 @@ import { issueTokensForMerchant, setSessionCookies } from "@/lib/auth/session";
 import { createCustomer, BillingHubError } from "@/lib/billing-hub/client";
 import { sendEmail } from "@/lib/email/send";
 import { welcomeEmail, merchantSignupAdminEmail } from "@/lib/email/templates";
-import { sendVerificationEmail } from "@/lib/auth/email-verification";
+import { verifyPhoneVerify } from "@/lib/auth/jwt";
+import { toE164 } from "@/lib/format";
 import { publish } from "@/lib/qstash/client";
 import { after } from "next/server";
 
@@ -97,6 +98,11 @@ const SignupSchema = z.object({
     .string({ required_error: "סיסמה חסרה" })
     .min(8, "סיסמה חייבת להכיל לפחות 8 תווים")
     .max(128, "סיסמה ארוכה מדי"),
+  // Proof the owner's mobile passed SMS-OTP (from /auth/signup-otp/verify).
+  // The account cannot be created without it.
+  phone_verify_token: z
+    .string({ required_error: "יש לאמת את מספר הנייד" })
+    .min(10, "יש לאמת את מספר הנייד"),
   client_type: z.enum(["web", "mobile"]).default("web"),
 
   // Optional fields populated by the signup wizard's Wolt pre-step.
@@ -132,6 +138,19 @@ export const POST = handler(async (req: Request) => {
 
   if (!isValidSlug(body.slug) || RESERVED_SLUGS.has(body.slug)) {
     return apiError("validation_error", "Slug שמור או לא תקין", 422, "slug");
+  }
+
+  // Hard gate: the personal mobile must have passed SMS-OTP, and the verified
+  // number must be the same one we're about to store on the owner account.
+  const phoneClaims = await verifyPhoneVerify(body.phone_verify_token);
+  const ownerE164 = toE164(body.owner_phone);
+  if (!phoneClaims || !ownerE164 || phoneClaims.phone !== ownerE164) {
+    return apiError(
+      "phone_not_verified",
+      "יש לאמת את מספר הנייד בקוד שנשלח ב-SMS",
+      422,
+      "owner_phone",
+    );
   }
 
   // Uniqueness checks
@@ -194,6 +213,10 @@ export const POST = handler(async (req: Request) => {
             name: body.owner_name,
             phone: body.owner_phone,
             role: "owner",
+            // Identity is now proven by SMS-OTP on the mobile, not by an
+            // email round-trip. Mark verified so the email-verification
+            // gate (dashboard banner / billing) treats the account as live.
+            emailVerifiedAt: new Date(),
           },
         ],
       },
@@ -243,23 +266,11 @@ export const POST = handler(async (req: Request) => {
     });
   }
 
-  // Verification + welcome emails - fire-and-forget; signup must not fail
-  // if Resend hiccups. Verification carries the "activate" CTA and is the
-  // main email the merchant cares about; the welcome runs alongside so
-  // existing copy keeps working until we consolidate.
+  // Welcome + admin-notify emails - fire-and-forget; signup must not fail
+  // if Resend hiccups. The account is already active (phone verified via
+  // SMS-OTP), so the email is a plain contact channel - no "activate" link.
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://quickfood.co.il").replace(/\/$/, "");
   after(async () => {
-    try {
-      await sendVerificationEmail({
-        userId: owner.id,
-        email: owner.email,
-        ownerName: owner.name,
-        businessName: tenant.name,
-        tenantId: tenant.id,
-      });
-    } catch (err) {
-      console.warn("[signup] verification email failed", err);
-    }
     try {
       const { html, text } = welcomeEmail({
         ownerName: owner.name,

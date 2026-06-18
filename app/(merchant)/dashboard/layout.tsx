@@ -13,7 +13,6 @@ import { Topbar } from "@/components/merchant/Topbar";
 import { SidebarV2 } from "@/components/merchant/v2/SidebarV2";
 import { TopbarV2 } from "@/components/merchant/v2/TopbarV2";
 import { BillingSetupBanner } from "@/components/merchant/BillingSetupBanner";
-import { EmailVerificationBanner } from "@/components/merchant/EmailVerificationBanner";
 import { TrialGate } from "@/components/merchant/TrialGate";
 import { OnboardingWelcome } from "@/components/merchant/OnboardingWelcome";
 import { SupportFAB } from "@/components/merchant/SupportFAB";
@@ -98,12 +97,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // so the merchant can flip between skins without us touching the route.
   const isV2 = tenant.dashboardVersion === "v2";
 
-  // Email verification takes precedence over the trial/billing banner -
-  // showing both at once piles two CTAs on top of each other and makes the
-  // dashboard feel anxious. Billing surfaces only after the user has
-  // verified the email; the trial timer keeps ticking either way.
-  const emailVerified = !!user.emailVerifiedAt;
-
   // Platform admin "logged in as" this store - the signed return cookie lets
   // them pop back to /admin via the banner.
   const adminReturn = (await cookies()).get(ADMIN_RETURN_COOKIE)?.value;
@@ -139,18 +132,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
           }}
         >
           {impersonating && <ImpersonationBanner />}
-          <EmailVerificationBanner
-            emailVerifiedAt={user.emailVerifiedAt?.toISOString() ?? null}
-            email={user.email}
-          />
           <TermsAckBanner acknowledged={!!tenant.termsAcknowledgedAt} />
-          {emailVerified && (
-            <BillingSetupBanner
-              hasPaymentMethod={hasPaymentMethod}
-              trialDaysLeft={trialDaysLeft}
-              trialExpired={trialExpired}
-            />
-          )}
+          <BillingSetupBanner
+            hasPaymentMethod={hasPaymentMethod}
+            trialDaysLeft={trialDaysLeft}
+            trialExpired={trialExpired}
+          />
           <TopbarV2
             user={user}
             tenantSlug={tenant.slug}
@@ -202,18 +189,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
       ) : (
         <div className="min-h-screen bg-qf-bg-dash text-qf-ink flex flex-col overflow-x-clip">
           {impersonating && <ImpersonationBanner />}
-          <EmailVerificationBanner
-            emailVerifiedAt={user.emailVerifiedAt?.toISOString() ?? null}
-            email={user.email}
-          />
           <TermsAckBanner acknowledged={!!tenant.termsAcknowledgedAt} />
-          {emailVerified && (
-            <BillingSetupBanner
-              hasPaymentMethod={hasPaymentMethod}
-              trialDaysLeft={trialDaysLeft}
-              trialExpired={trialExpired}
-            />
-          )}
+          <BillingSetupBanner
+            hasPaymentMethod={hasPaymentMethod}
+            trialDaysLeft={trialDaysLeft}
+            trialExpired={trialExpired}
+          />
           <Topbar
             user={user}
             tenantSlug={tenant.slug}
