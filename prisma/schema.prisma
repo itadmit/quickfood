@@ -449,6 +449,7 @@ model Tenant {
   emailLogs        EmailLog[]
   modifierSets     ModifierSet[]
   woltImports      WoltImport[]
+  menuFileImports  MenuFileImport[]
   woltConnections  WoltConnection[]
   growLeads        GrowLead[]
   posShifts        PosShift[]
@@ -1842,6 +1843,44 @@ model WoltImport {
 
   @@index([tenantId, createdAt(sort: Desc)])
   @@map("wolt_imports")
+}
+
+enum MenuFileImportSource {
+  pdf
+  image
+}
+
+/// AI-extracted menu import from an uploaded PDF or photo. Mirrors the
+/// Wolt import lifecycle (preview → merchant confirms/edits → commit) but
+/// the source is a file the merchant uploads rather than a Wolt URL. The
+/// extraction (categories / items / modifiers) is produced by Gemini and
+/// stashed in `extraction`; the merchant edits it client-side and the
+/// edited tree is what `commit` persists.
+model MenuFileImport {
+  id                 String               @id @default(uuid()) @db.Uuid
+  tenantId           String               @map("tenant_id") @db.Uuid
+  tenant             Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  source             MenuFileImportSource
+  status             WoltImportStatus
+  fileName           String               @map("file_name")
+  categoriesTotal    Int                  @default(0) @map("categories_total")
+  itemsTotal         Int                  @default(0) @map("items_total")
+  categoriesImported Int                  @default(0) @map("categories_imported")
+  itemsImported      Int                  @default(0) @map("items_imported")
+  // Array of { context, message } for partial failures during commit.
+  errors             Json?
+  // The raw Gemini extraction (normalized ExtractedMenu shape), kept for
+  // audit + so a re-open of the preview can re-render without re-billing
+  // a model call.
+  extraction         Json?
+  // Which model produced the extraction (e.g. "gemini-2.5-flash").
+  model              String?
+  createdAt          DateTime             @default(now()) @map("created_at")
+  committedAt        DateTime?            @map("committed_at")
+  importedByUserId   String?              @map("imported_by_user_id")
+
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@map("menu_file_imports")
 }
 
 /// Per-tenant Wolt Marketplace connection established via SSIO (OAuth 2.0).
