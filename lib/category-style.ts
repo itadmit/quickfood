@@ -140,6 +140,7 @@ export const THEME_DEFAULT_CATEGORY_COLOR: Record<string, CategoryColorKey> = {
   charcoal:  "blue",
   cobalt:    "blue",
   sunflower: "yolk",
+  apricot:   "orange",
 };
 
 // ─── Resolver ───────────────────────────────────────────────────

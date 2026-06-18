@@ -23,7 +23,7 @@ interface WoltPreview extends StorefrontPreviewData {
   menu: WoltPreviewMenu | null;
 }
 
-const SWATCHES: ThemeId[] = ["sunflower", "fresh", "tomato", "cobalt", "charcoal", "forest"];
+const SWATCHES: ThemeId[] = ["sunflower", "apricot", "fresh", "tomato", "cobalt", "charcoal", "forest"];
 
 export default function WoltTeaser() {
   const [url, setUrl] = useState("");

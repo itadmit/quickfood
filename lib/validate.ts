@@ -268,7 +268,7 @@ export const TenantPatchSchema = z.object({
   logo_letter: z.string().min(1).max(2).optional(),
   logo_url: z.string().url().nullable().optional(),
   cover_image: z.string().url().nullable().optional(),
-  theme_id: z.enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt", "sunflower"]).optional(),
+  theme_id: z.enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt", "sunflower", "apricot"]).optional(),
   business_type: z
     .enum([
       "pizza",
@@ -458,7 +458,7 @@ export const TenantCreateSchema = z.object({
   name: z.string().min(1).max(120),
   logo_letter: z.string().min(1).max(2),
   theme_id: z
-    .enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt", "sunflower"])
+    .enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt", "sunflower", "apricot"])
     .default("fresh"),
   business_type: z
     .enum([

@@ -22,7 +22,7 @@ const PatchSchema = z.object({
   name: z.string().trim().min(2).max(120).optional(),
   status: z.enum(["active", "suspended", "trial"]).optional(),
   theme_id: z
-    .enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt", "sunflower"])
+    .enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt", "sunflower", "apricot"])
     .optional(),
   business_type: z
     .enum([

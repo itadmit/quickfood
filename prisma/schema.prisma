@@ -36,6 +36,7 @@ enum ThemeId {
   charcoal
   cobalt
   sunflower
+  apricot
 }
 
 enum RestaurantStatus {

@@ -1,0 +1,1 @@
+ALTER TYPE "ThemeId" ADD VALUE IF NOT EXISTS 'apricot';

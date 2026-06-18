@@ -72,7 +72,7 @@ const SignupSchema = z.object({
     ])
     .default("general"),
   theme_id: z
-    .enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt", "sunflower"])
+    .enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt", "sunflower", "apricot"])
     .default("fresh"),
   cuisine_type: z.string().max(60, "סוג מטבח ארוך מדי").optional(),
   branch_address: z

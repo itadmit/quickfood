@@ -1290,6 +1290,7 @@ function Step2({
 }) {
   const SWATCH_ORDER: ThemeId[] = [
     "sunflower",
+    "apricot",
     "fresh",
     "tomato",
     "cobalt",

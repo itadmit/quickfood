@@ -51,7 +51,8 @@ export type ThemeId =
   | "tomato"
   | "charcoal"
   | "cobalt"
-  | "sunflower";
+  | "sunflower"
+  | "apricot";
 
 export interface Theme {
   id: ThemeId;
@@ -136,6 +137,15 @@ export const THEMES: Record<ThemeId, Theme> = {
     deep: "#d4ad19",
     soft: "#fff2c9",
     line: "#f0d97a",
+    onPrimary: "#000",
+  },
+  apricot: {
+    id: "apricot",
+    name: "כתום פסטל",
+    primary: "#f9af72",
+    deep: "#e0894a",
+    soft: "#fdeede",
+    line: "#f6d6b4",
     onPrimary: "#000",
   },
 };

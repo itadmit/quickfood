@@ -12,6 +12,7 @@ const THEME_COLOR_BY_ID: Record<string, string> = {
   charcoal: "#1f2937",
   cobalt: "#1d4ed8",
   sunflower: "#f59e0b",
+  apricot: "#f9af72",
 };
 
 /**
