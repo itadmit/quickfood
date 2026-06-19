@@ -55,15 +55,15 @@ export const POST = handler(
     });
 
     if (result.status === "sent") return apiJson({ status: result.status, to });
-    // Bad recipient / missing config are client/config issues (422), not a
-    // gateway failure - returning 502 made Cloudflare swallow the JSON and
-    // surface a bare "502" instead of the actual reason. Only a real provider
-    // failure stays 5xx.
-    const status = result.status === "failed" ? 502 : 422;
-    return apiError(
-      "send_failed",
-      STATUS_MESSAGE[result.status] ?? "השליחה נכשלה",
-      status,
-    );
+    // Always 422, never 5xx: a 502 made Cloudflare replace the JSON with its
+    // own HTML error page, so the dialog showed a bare "502" instead of the
+    // real reason (e.g. "the number isn't on WhatsApp"). Surface the provider
+    // message for a generic failure so the admin sees exactly what went wrong.
+    const base = STATUS_MESSAGE[result.status] ?? "השליחה נכשלה";
+    const message =
+      result.status === "failed" && result.providerMsg
+        ? `${base}: ${result.providerMsg}`
+        : base;
+    return apiError("send_failed", message, 422);
   },
 );
