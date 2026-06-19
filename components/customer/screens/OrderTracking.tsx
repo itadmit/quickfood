@@ -355,6 +355,16 @@ export function OrderTracking({
               <Timestamp icon label="נמסרה" t={order.deliveredAt} />
             )}
           </div>
+
+          {!isDelivered && (
+            <div className="flex items-center gap-1.5 text-[11px] text-qf-mute">
+              <span className="relative flex w-1.5 h-1.5 shrink-0">
+                <span className="absolute inline-flex w-full h-full rounded-full bg-qf-green-deep/60 animate-ping" />
+                <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-qf-green-deep" />
+              </span>
+              <span>הסטטוס מתעדכן כאן בזמן אמת - אין צורך לרענן את העמוד</span>
+            </div>
+          )}
         </div>
       </section>
 
