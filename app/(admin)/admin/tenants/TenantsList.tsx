@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/format";
 import { THEMES } from "@/lib/themes";
 import { cn } from "@/lib/cn";
-import { Phone, LogIn, MessageCircle } from "lucide-react";
+import { Phone, LogIn, MessageCircle, BadgeCheck } from "lucide-react";
 
 interface Tenant {
   id: string;
@@ -26,6 +26,7 @@ interface Tenant {
   lastOrderAt: string | null;
   ownerVerified: boolean;
   ownerPhone: string | null;
+  ownerPhoneVerified: boolean;
   ownerEmail: string | null;
   createdAt: string;
 }
@@ -203,6 +204,15 @@ function TenantRow({
               <span className="inline-flex items-center gap-1 text-qf-ink2 tnum shrink-0">
                 <Phone size={10} />
                 {t.ownerPhone}
+                {t.ownerPhoneVerified && (
+                  <BadgeCheck
+                    size={12}
+                    className="text-qf-green-deep shrink-0"
+                    aria-label="טלפון אומת ב-SMS"
+                  >
+                    <title>טלפון אומת ב-SMS</title>
+                  </BadgeCheck>
+                )}
               </span>
             </>
           )}
