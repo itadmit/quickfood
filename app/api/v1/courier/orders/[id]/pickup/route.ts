@@ -1,7 +1,7 @@
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireCourier } from "@/lib/auth/courier-session";
 import { prisma } from "@/lib/db/client";
-import { notifyCustomerOnTheWay } from "@/lib/courier/notify";
+import { notifyOrderCustomer } from "@/lib/orders/notify-order-event";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,8 +39,8 @@ export const PATCH = handler(async (_req, { params }: { params: Promise<{ id: st
       payload: { courier_id: session.courierId, ts: new Date().toISOString() },
     },
   });
-  void notifyCustomerOnTheWay(id).catch((err) => {
-    console.error("[courier] notify customer on the way failed", err);
+  void notifyOrderCustomer(id, "on_the_way").catch((err) => {
+    console.error("[notify] customer on the way failed", err);
   });
   return apiJson({ ok: true });
 });

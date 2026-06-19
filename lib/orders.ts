@@ -4,7 +4,8 @@ import { prisma } from "@/lib/db/client";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
 import { scheduleReviewReminder } from "@/lib/reviews/schedule";
 import { recordOrderCommission } from "@/lib/billing-hub/commission";
-import { notifyCourierAssigned, notifyCustomerDelivered } from "@/lib/courier/notify";
+import { notifyCourierAssigned } from "@/lib/courier/notify";
+import { notifyOrderCustomer } from "@/lib/orders/notify-order-event";
 import { sendTenantPush } from "@/lib/merchant/push";
 import { sendOrderConfirmedEmail, sendOrderCancelledEmail } from "@/lib/orders/notify-customer";
 
@@ -209,8 +210,14 @@ export async function advanceStatus(
       await scheduleReviewReminder(orderId).catch((err) => {
         console.error("[reviews] schedule failed", err);
       });
-      await notifyCustomerDelivered(orderId).catch((err) => {
-        console.error("[courier] notify delivered failed", err);
+      await notifyOrderCustomer(orderId, "delivered").catch((err) => {
+        console.error("[notify] delivered failed", err);
+      });
+    }
+
+    if (to === "ready") {
+      await notifyOrderCustomer(orderId, "ready").catch((err) => {
+        console.error("[notify] ready failed", err);
       });
     }
 
@@ -231,6 +238,9 @@ export async function advanceStatus(
 
       await sendOrderConfirmedEmail(orderId).catch((err) =>
         console.warn("[email] order confirmed failed", err),
+      );
+      await notifyOrderCustomer(orderId, "confirmed").catch((err) =>
+        console.error("[notify] confirmed failed", err),
       );
     }
 

@@ -374,6 +374,11 @@ model Tenant {
   reviewsPublic       Boolean       @default(true) @map("reviews_public")
   reviewsChannel      ReviewChannel @default(email) @map("reviews_channel")
   reviewsDelayMinutes Int           @default(60) @map("reviews_delay_minutes")
+  // Channel for transactional order notifications (confirmed / ready / on-the-way
+  // / delivered). Sent IN ADDITION to the always-on email. Same resolution as
+  // reviewsChannel: sms + own/default WhatsApp draw the credit pool;
+  // whatsapp_managed uses the platform iBot account. `email`/`off` = no paid send.
+  notifyChannel       ReviewChannel @default(email) @map("notify_channel")
   smsSender           String?       @map("sms_sender") @db.VarChar(11)
 
   // SMS + WhatsApp credit balance. Top-ups (Starter/Growth/Scale) STACK -
