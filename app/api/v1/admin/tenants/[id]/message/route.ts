@@ -55,10 +55,15 @@ export const POST = handler(
     });
 
     if (result.status === "sent") return apiJson({ status: result.status, to });
+    // Bad recipient / missing config are client/config issues (422), not a
+    // gateway failure - returning 502 made Cloudflare swallow the JSON and
+    // surface a bare "502" instead of the actual reason. Only a real provider
+    // failure stays 5xx.
+    const status = result.status === "failed" ? 502 : 422;
     return apiError(
       "send_failed",
       STATUS_MESSAGE[result.status] ?? "השליחה נכשלה",
-      502,
+      status,
     );
   },
 );

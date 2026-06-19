@@ -232,9 +232,12 @@ export async function sendWhatsApp(
   return { status: "failed", logId: log.id, providerMsg };
 }
 
-/** "05X-XXXXXXX" → "05XXXXXXXX". */
+/** "05X-XXXXXXX" / "+972 5X-XXXXXXX" / "9725X…" → "05XXXXXXXX". */
 export function normalizePhone(raw: string): string {
-  return raw.replace(/[^\d]/g, "");
+  let d = raw.replace(/[^\d]/g, "");
+  // Accept the E.164 / country-code form too: "972XXXXXXXXX" → "0XXXXXXXXX".
+  if (d.startsWith("972")) d = "0" + d.slice(3);
+  return d;
 }
 
 export function isValidIsraeliMobile(digits: string): boolean {
