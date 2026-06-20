@@ -90,6 +90,40 @@ const PAYMENT_STATUS_LABEL: Record<string, string> = {
   refunded: "הוחזר",
 };
 
+// Pending means different things by method: a cash order is collected in
+// person (so "לגבייה"), while a pending card order simply hasn't been
+// captured yet. Spell that out so the column isn't ambiguous.
+function paymentStatusText(method: string, status: string): string {
+  if (status === "pending") return method === "cash" ? "לגבייה" : "ממתין";
+  return PAYMENT_STATUS_LABEL[status] ?? status;
+}
+
+function paymentStatusTitle(method: string, status: string): string {
+  if (status === "pending") {
+    return method === "cash"
+      ? "תשלום במזומן — ייגבה מהלקוח בעת המסירה/האיסוף"
+      : "תשלום בכרטיס שטרם נגבה (בתהליך, או עגלה שננטשה לפני התשלום)";
+  }
+  if (status === "paid") return "התשלום נגבה בפועל";
+  if (status === "refunded") return "התשלום זוכה ללקוח";
+  if (status === "failed") return "התשלום נכשל";
+  return "";
+}
+
+// Plain-language tooltip for each lifecycle status (the badge itself is
+// short; this spells it out on hover).
+const STATUS_HELP: Record<string, string> = {
+  pending: "ממתינה לאישור המסעדה",
+  confirmed: "ההזמנה אושרה",
+  preparing: "בהכנה",
+  in_oven: "בתנור",
+  ready: "מוכנה לאיסוף/משלוח",
+  out_for_delivery: "יצאה למשלוח",
+  delivered: "נמסרה ללקוח",
+  cancelled: "בוטלה",
+  refunded: "הוחזרה / זוכתה",
+};
+
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -405,10 +439,10 @@ export function OrdersHistoryView() {
                             <button
                               type="button"
                               onClick={() => restoreToKanban(o.id)}
-                              title="הזמנה זו הוסתרה מהקאנבן - לחץ לשחזור"
+                              title="הזמנה זו הוסתרה מלוח ההזמנות החיות - לחץ כדי להחזיר אותה ללוח (זה לא החזר כספי)"
                               className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-qf-yolk-soft text-qf-ink2 text-[10px] font-medium hover:bg-qf-yolk-soft/80"
                             >
-                              מוסתרת · החזר
+                              מוסתרת · שחזר ללוח
                             </button>
                           )}
                         </div>
@@ -427,13 +461,16 @@ export function OrdersHistoryView() {
                       <td className="px-3 py-2 text-qf-ink2">
                         {o.method === "delivery" ? "משלוח" : "איסוף"}
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-3 py-2" title={STATUS_HELP[o.status] ?? ""}>
                         <OrderStatusBadgeV2 status={o.status} />
                       </td>
-                      <td className="px-3 py-2 text-qf-ink2 whitespace-nowrap">
+                      <td
+                        className="px-3 py-2 text-qf-ink2 whitespace-nowrap"
+                        title={paymentStatusTitle(o.payment_method, o.payment_status)}
+                      >
                         {PAYMENT_LABEL[o.payment_method] ?? o.payment_method}
                         <span className="text-xs text-qf-mute me-1">
-                          · {PAYMENT_STATUS_LABEL[o.payment_status] ?? o.payment_status}
+                          · {paymentStatusText(o.payment_method, o.payment_status)}
                         </span>
                       </td>
                       <td className="px-3 py-2 tnum font-medium text-end">
