@@ -385,8 +385,13 @@ label[for][class*="shadow-[0_"] {
 }
 @media print {
   @page {
-    size: auto;
-    margin: 8mm;
+    /* Size the page to the 80mm thermal roll. The previous `size: auto`
+       let the browser pick A4/Letter, and the 8mm page margin made the
+       80mm-wide receipt overflow the printable area - in RTL the amount
+       column (pushed left by space-between) fell into the clipped margin,
+       so totals/prices printed blank or off-paper. */
+    size: 80mm auto;
+    margin: 0;
   }
   body {
     background: white;
@@ -402,8 +407,12 @@ label[for][class*="shadow-[0_"] {
     display: block;
     position: static;
     width: 80mm;
+    box-sizing: border-box;
+    /* Inset the content from the paper edge so the amount column (pushed to
+       the left edge by space-between in RTL) clears the printer's hardware
+       margin and never gets clipped. */
+    padding: 0 4mm;
     margin: 0;
-    padding: 0;
     color: #000;
     background: #fff;
     font-family: ui-monospace, Menlo, Consolas, monospace;
