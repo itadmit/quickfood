@@ -68,6 +68,19 @@ export const POST = handler(async (req: Request) => {
   const providerParam = url.searchParams.get("provider");
   const tenantSlug = url.searchParams.get("tenant");
 
+  // Entry log: confirms whether Grow actually reaches our domain at all
+  // (diagnosing the "0/26 callbacks ever landed" issue). Every hit lands
+  // here regardless of validation outcome.
+  console.log("[payments/callback] HIT", {
+    provider: providerParam,
+    tenant: tenantSlug,
+    ip:
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      req.headers.get("x-real-ip") ??
+      null,
+    ua: req.headers.get("user-agent") ?? null,
+  });
+
   if (!providerParam) return apiError("missing_provider", "missing ?provider", 400);
   if (!tenantSlug) return apiError("missing_tenant", "missing ?tenant", 400);
 

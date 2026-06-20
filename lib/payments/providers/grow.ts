@@ -496,28 +496,24 @@ export class GrowProvider extends BasePaymentProvider {
   validateWebhook(_body: unknown, headers: Record<string, string>): WebhookValidationResult {
     this.ensureConfigured();
     const isTestMode = !!this.config!.testMode;
-    const strictlyEnforce = process.env.NODE_ENV === "production" && !isTestMode;
     const ip = this.extractClientIp(headers);
-    if (!ip) {
-      if (strictlyEnforce) {
-        return { isValid: false, error: "Unable to determine source IP" };
-      }
-      return { isValid: true };
-    }
     const allowed = isTestMode ? GROW_TEST_IPS : GROW_LIVE_IPS;
-    if (!allowed.has(ip)) {
-      // Strict enforcement is reserved for live (production + non-test)
-      // callbacks. Grow's sandbox IP pool rotates more often than we can
-      // keep the allowlist up to date - rejecting test callbacks left
-      // tenants stuck with pending payments forever (transaction never
-      // flips paid → kiosk polls forever → invoice callback never fires
-      // either). Worst case for accepting an off-list test IP is a
-      // phantom test transaction worth zero real money.
-      if (strictlyEnforce) {
-        this.logError(`Webhook rejected - IP not in live whitelist`, { ip });
-        return { isValid: false, error: `IP ${ip} not in Grow whitelist` };
-      }
-      this.log(`Webhook from off-list IP ${ip} (allowed: ${isTestMode ? "testMode" : "dev"})`);
+    // Log-only enforcement (2026-06-20). Grow's callback has NO HMAC and Grow
+    // rotates/adds its callback IPs without notice, so a hardcoded allowlist
+    // silently 401s legit callbacks and strands PAID orders at "ממתין"
+    // forever (0/26 ever confirmed in prod traced to this). We now ACCEPT
+    // every callback and log off-list IPs loudly so the list can be
+    // reconciled. The real guards remain in the handler: the unguessable
+    // providerRequestId must match an existing pending payment AND the
+    // callback amount must equal it exactly. Re-tighten by refreshing the
+    // IP set + restoring rejection once Grow's live IPs are confirmed.
+    if (!ip) {
+      this.logError("Grow callback with no determinable source IP (accepted, log-only)", {});
+    } else if (!allowed.has(ip)) {
+      this.logError("Grow callback from off-list IP (accepted, log-only)", {
+        ip,
+        mode: isTestMode ? "test" : "live",
+      });
     }
     return { isValid: true };
   }
