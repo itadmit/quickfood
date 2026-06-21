@@ -306,7 +306,7 @@ export const POST = handler(async (req: Request) => {
         branchAddress: body.branch_address,
         branchPhone: body.branch_phone,
         businessType: body.business_type,
-        dashboardUrl: `${appUrl}/admin`,
+        storeUrl: `${appUrl}/s/${tenant.slug}`,
       });
       for (const to of ADMIN_SIGNUP_NOTIFY) {
         await sendEmail({

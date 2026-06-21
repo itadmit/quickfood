@@ -280,7 +280,7 @@ export function merchantSignupAdminEmail({
   branchAddress,
   branchPhone,
   businessType,
-  dashboardUrl,
+  storeUrl,
 }: {
   businessName: string;
   slug: string;
@@ -290,7 +290,7 @@ export function merchantSignupAdminEmail({
   branchAddress: string;
   branchPhone: string;
   businessType: string;
-  dashboardUrl: string;
+  storeUrl: string;
 }) {
   const rows: Array<[string, string]> = [
     ["שם העסק", businessName],
@@ -317,7 +317,7 @@ export function merchantSignupAdminEmail({
     heading: "סוחר חדש נרשם",
     raw: true,
     paragraphs: [`נרשם עסק חדש למערכת:`, table],
-    button: { href: dashboardUrl, label: "לעמוד הניהול" },
+    button: { href: storeUrl, label: "צפייה בחנות" },
   });
 }
 
