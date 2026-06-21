@@ -136,9 +136,10 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
             const name = typeof o?.name === "string" ? o.name : null;
             if (!name) return null;
             const priceDelta = Number(o?.price_delta ?? 0) || 0;
-            return { name, price_delta: priceDelta };
+            const half = o?.half === "left" || o?.half === "right" ? o.half : undefined;
+            return { name, price_delta: priceDelta, ...(half ? { half } : {}) };
           })
-          .filter((o): o is { name: string; price_delta: number } => o !== null);
+          .filter((o): o is { name: string; price_delta: number; half?: "left" | "right" } => o !== null);
         return {
           id: it.id,
           name: it.nameSnapshot,
