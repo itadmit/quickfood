@@ -231,7 +231,7 @@ export function MenuList({
               onClick={() => setPdfImportOpen(true)}
               className="inline-flex px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5"
             >
-              ייבוא מ-PDF
+              ייבוא מתפריט (PDF/תמונה)
             </button>
             <Link
               href="/dashboard/menu/new"
