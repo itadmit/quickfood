@@ -407,13 +407,15 @@ label[for][class*="shadow-[0_"] {
   .qf-print-receipt {
     display: block;
     position: static;
-    width: 72mm;
-    max-width: 72mm;
+    width: 70mm;
+    max-width: 70mm;
     box-sizing: border-box;
     padding: 2mm;
-    /* Center the 72mm receipt on the 80mm page so neither the RTL text start
-       (right) nor the amount column (left) reaches the clipped paper edge. */
-    margin: 0 auto;
+    /* The POS80's printable window is offset ~3mm left of the paper centre, so
+       a symmetric center still clipped the rightmost Hebrew character. Push the
+       receipt left with an asymmetric margin (more on the right, less on the
+       left - the amount column on the left always had spare room). */
+    margin: 0 8mm 0 2mm;
     color: #000;
     background: #fff;
     font-family: ui-monospace, Menlo, Consolas, monospace, Arial, sans-serif;
