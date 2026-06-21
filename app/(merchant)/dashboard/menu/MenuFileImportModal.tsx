@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "@/components/shared/Modal";
 import { IcoClose, IcoCheck, IcoTrash } from "@/components/shared/Icons";
@@ -25,7 +25,17 @@ type Menu = { categories: string[]; items: Item[] };
 
 type Phase = "upload" | "extracting" | "review" | "committing" | "done";
 
-export function MenuFileImportModal({ onClose }: { onClose: () => void }) {
+export function MenuFileImportModal({
+  onClose,
+  initialFile,
+  autoStart,
+}: {
+  onClose: () => void;
+  // Pre-loaded file from the signup hand-off (PDF/photo captured before the
+  // store existed). With autoStart we kick off extraction immediately.
+  initialFile?: File | null;
+  autoStart?: boolean;
+}) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("upload");
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +55,13 @@ export function MenuFileImportModal({ onClose }: { onClose: () => void }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose, phase]);
+
+  const firedRef = useRef(false);
+  useEffect(() => {
+    if (firedRef.current || !autoStart || !initialFile) return;
+    firedRef.current = true;
+    void onFile(initialFile);
+  }, [autoStart, initialFile]);
 
   async function onFile(file: File) {
     setError(null);

@@ -8,6 +8,7 @@ import { fullName } from "@/lib/format";
 import { DashboardView } from "./DashboardView";
 import { DashboardViewV2 } from "@/components/merchant/v2/DashboardViewV2";
 import { WoltImportModal } from "./WoltImportModal";
+import { MenuFileImportAutostart } from "./MenuFileImportAutostart";
 import { roleHome } from "@/lib/auth/merchant-access";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,7 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ range?: string; wolt?: string; ack?: string; autostart?: string }>;
+  searchParams: Promise<{ range?: string; wolt?: string; ack?: string; autostart?: string; menufile?: string }>;
 }) {
   const session = await getSession();
   if (!session || session.type !== "merchant" || !session.tenantId) {
@@ -26,7 +27,7 @@ export default async function DashboardPage({
   const home = roleHome(session.role);
   if (home !== "/dashboard") redirect(home);
 
-  const { range: raw, wolt, ack, autostart } = await searchParams;
+  const { range: raw, wolt, ack, autostart, menufile } = await searchParams;
   const allowed = ["today", "yesterday", "7d", "30d"] as const;
   type Quick = (typeof allowed)[number];
   const range: Quick = allowed.includes(raw as Quick) ? (raw as Quick) : "today";
@@ -79,19 +80,21 @@ export default async function DashboardPage({
     createdAt: o.createdAt.toISOString(),
   }));
 
-  const woltModal = wolt ? (
+  const importModal = wolt ? (
     <WoltImportModal
       initialUrl={decodeURIComponent(wolt)}
       initialAck={ack === "1"}
       autoStart={autostart === "1"}
     />
+  ) : menufile === "1" ? (
+    <MenuFileImportAutostart />
   ) : null;
 
   if (tenant?.dashboardVersion === "v2") {
     const firstName = (merchant?.name ?? "").split(/\s+/)[0] ?? "";
     return (
       <>
-        {woltModal}
+        {importModal}
         <DashboardViewV2
           range={range}
           summary={sum}
@@ -125,7 +128,7 @@ export default async function DashboardPage({
 
   return (
     <>
-      {woltModal}
+      {importModal}
       <DashboardView range={range} summary={sum} hourly={hr} topItems={items} recentOrders={recent} />
     </>
   );

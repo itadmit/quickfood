@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Sparkles, MapPin, User, Check, X, Star } from "lucide-react";
+import { Sparkles, MapPin, User, Check, X, Star, Camera, FileText } from "lucide-react";
 import { IcoArrowLeft, IcoArrowRight } from "@/components/shared/Icons";
+import { CameraMenuCapture } from "@/components/shared/menu-capture/CameraMenuCapture";
+import { stashMenuFile } from "@/lib/menu-import/handoff";
 import { SignupOtpModal } from "@/components/auth/SignupOtpModal";
 import { THEMES, type ThemeId } from "@/lib/themes";
 import { type BusinessType } from "@/components/shared/MenuItemImage";
@@ -106,6 +108,12 @@ export function SignupForm() {
   });
   const [woltOverrides, setWoltOverrides] = useState<Overrides>({});
 
+  // A PDF/photo menu the merchant attached on Step 0. We don't run the AI
+  // extraction during signup (no tenant, no auth yet) - the file is stashed in
+  // IndexedDB and the dashboard auto-runs the importer after the store exists,
+  // mirroring the Wolt URL hand-off.
+  const [menuFileReady, setMenuFileReady] = useState(false);
+
   // Step 1
   const [businessName, setBusinessName] = useState("");
   const [businessType, setBusinessType] = useState<BusinessType>("general");
@@ -199,7 +207,10 @@ export function SignupForm() {
   async function submit(phoneVerifyToken: string) {
     setBusy(true);
     setError(null);
-    gaEvent("signup_start", { business_type: businessType, method: woltUrl ? "wolt" : "manual" });
+    gaEvent("signup_start", {
+      business_type: businessType,
+      method: menuFileReady ? "menu_file" : woltUrl ? "wolt" : "manual",
+    });
     try {
       const venueExtras =
         woltPreview
@@ -266,14 +277,16 @@ export function SignupForm() {
         { email: ownerEmail.toLowerCase(), phone: branchPhone },
       );
       gaEvent("sign_up", {
-        method: woltUrl ? "wolt" : "manual",
+        method: menuFileReady ? "menu_file" : woltUrl ? "wolt" : "manual",
         business_type: businessType,
         currency: "ILS",
         value: 299,
       });
-      const dest = woltUrl
-        ? `/dashboard?wolt=${encodeURIComponent(woltUrl)}&ack=1&autostart=1`
-        : (data.redirect ?? "/dashboard");
+      const dest = menuFileReady
+        ? "/dashboard?menufile=1&autostart=1"
+        : woltUrl
+          ? `/dashboard?wolt=${encodeURIComponent(woltUrl)}&ack=1&autostart=1`
+          : (data.redirect ?? "/dashboard");
       router.push(dest);
       router.refresh();
     } catch {
@@ -357,6 +370,17 @@ export function SignupForm() {
               setWoltStage("mapping");
             }}
             onSkip={() => {
+              setWoltUrl("");
+              setWoltPreview(null);
+              setStep(1);
+            }}
+            onMenuFileChosen={async (file) => {
+              try {
+                await stashMenuFile(file);
+              } catch {
+                /* if IndexedDB is unavailable we just fall back to a plain signup */
+              }
+              setMenuFileReady(true);
               setWoltUrl("");
               setWoltPreview(null);
               setStep(1);
@@ -510,22 +534,41 @@ export function SignupForm() {
 
 // ─── Step 0: optional Wolt pre-fill ────────────────────────
 
+const MENU_FILE_ACCEPT = "application/pdf,image/png,image/jpeg,image/webp";
+const MENU_FILE_MAX = 15 * 1024 * 1024;
+
 function Step0Url({
   woltUrl,
   setWoltUrl,
   onPreviewed,
   onSkip,
+  onMenuFileChosen,
 }: {
   woltUrl: string;
   setWoltUrl: (v: string) => void;
   onPreviewed: (info: WoltPreview) => void;
   onSkip: () => void;
+  onMenuFileChosen: (file: File) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [ack, setAck] = useState(false);
   const [gate, setGate] = useState<"checkbox" | "import" | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  function onFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > MENU_FILE_MAX) {
+      setError("הקובץ גדול מדי (עד 15MB)");
+      return;
+    }
+    setError(null);
+    onMenuFileChosen(file);
+  }
 
   function requestImport() {
     if (!woltUrl.trim() || busy) return;
@@ -564,22 +607,50 @@ function Step0Url({
     <div className="space-y-5">
       <div className="space-y-2">
         <h3 className="text-lg lg:text-xl font-black text-black">
-          כבר יש לכם חנות בוולט?
+          כבר יש לכם תפריט?
         </h3>
         <p className="text-sm text-black/65 leading-relaxed">
-          נייבא בשבילכם בלחיצה את שם העסק, הכתובת, הטלפון, הלוגו והתפריט
-          המלא. תוך כמה שניות תהיו עם חנות מוכנה.
+          נבנה לכם את החנות אוטומטית - בחרו מאיפה לייבא את התפריט, ותוך כמה
+          שניות תהיו עם חנות מוכנה.
         </p>
       </div>
 
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={MENU_FILE_ACCEPT}
+        onChange={onFilePicked}
+        className="hidden"
+      />
+
       {!expanded ? (
-        <button
-          type="button"
-          onClick={() => setExpanded(true)}
-          className="w-full px-5 py-3 rounded-xl bg-[#F8CB1E] hover:bg-[#ffd84a] text-black text-base font-black border-2 border-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition inline-flex items-center justify-center gap-2"
-        >
-          ייבוא מוולט
-        </button>
+        <div className="space-y-3">
+          <ImportOption
+            icon={<FileText size={20} />}
+            title="ייבוא תפריט קיים"
+            subtitle="PDF או תמונה של התפריט"
+            onClick={() => fileInputRef.current?.click()}
+          />
+          <ImportOption
+            icon={<Camera size={20} />}
+            title="צילום התפריט"
+            subtitle="צלמו את התפריט מהמסעדה"
+            onClick={() => setCameraOpen(true)}
+          />
+          <ImportOption
+            icon={
+              <span className="text-base font-black tracking-tight">W</span>
+            }
+            title="ייבוא מוולט"
+            subtitle="כבר יש לכם חנות בוולט?"
+            onClick={() => setExpanded(true)}
+          />
+          {error && (
+            <div className="bg-[#FFE2DC] border-2 border-black text-black text-sm font-bold rounded-xl px-3 py-2.5 shadow-[0_2px_0_#000]">
+              {error}
+            </div>
+          )}
+        </div>
       ) : (
         <div className="space-y-4">
           <Field label="כתובת החנות בוולט" hint="https://wolt.com/he/...">
@@ -691,7 +762,46 @@ function Step0Url({
           }}
         />
       )}
+
+      {cameraOpen && (
+        <CameraMenuCapture
+          onClose={() => setCameraOpen(false)}
+          onCapture={(file) => {
+            setCameraOpen(false);
+            onMenuFileChosen(file);
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function ImportOption({
+  icon,
+  title,
+  subtitle,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#F8CB1E] hover:bg-[#ffd84a] text-black text-start border-2 border-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition"
+    >
+      <span className="shrink-0 w-10 h-10 rounded-lg bg-black/10 grid place-items-center">
+        {icon}
+      </span>
+      <span className="flex-1 min-w-0">
+        <span className="block text-base font-black leading-tight">{title}</span>
+        <span className="block text-xs font-bold text-black/60">{subtitle}</span>
+      </span>
+      <IcoArrowLeft c="currentColor" s={16} />
+    </button>
   );
 }
 
