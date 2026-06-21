@@ -2,7 +2,6 @@ import { Prisma } from "@prisma/client";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
-import { decryptSecret } from "@/lib/crypto/secrets";
 import { extractMenuFromFile, MenuExtractError, MENU_IMPORT_MODEL } from "@/lib/menu-import/extract";
 
 export const runtime = "nodejs";
@@ -21,20 +20,11 @@ const ALLOWED: Record<string, "pdf" | "image"> = {
   "image/webp": "image",
 };
 
-// Platform key first (the import is a platform feature, ~6 agorot/menu),
-// falling back to the tenant's own configured Gemini key.
-async function resolveApiKey(tenantId: string): Promise<string | null> {
-  if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY;
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: tenantId },
-    select: { aiGeminiApiKey: true },
-  });
-  if (!tenant?.aiGeminiApiKey) return null;
-  try {
-    return decryptSecret(tenant.aiGeminiApiKey);
-  } catch {
-    return null;
-  }
+// Platform Claude key - menu extraction is a platform feature billed to us,
+// not the tenant (the tenant's aiGeminiApiKey powers the AI advisor, a
+// separate Gemini-based feature).
+function resolveApiKey(): string | null {
+  return process.env.ANTHROPIC_API_KEY || null;
 }
 
 export const POST = handler(async (req: Request) => {
@@ -63,7 +53,7 @@ export const POST = handler(async (req: Request) => {
     return apiError("too_large", "הקובץ גדול מדי (עד 15MB)", 413);
   }
 
-  const apiKey = await resolveApiKey(session.tenantId);
+  const apiKey = resolveApiKey();
   if (!apiKey) {
     return apiError(
       "ai_not_configured",

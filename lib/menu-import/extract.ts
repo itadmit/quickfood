@@ -1,7 +1,7 @@
-import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+import Anthropic from "@anthropic-ai/sdk";
 import type { ExtractedMenu } from "./types";
 
-export const MENU_IMPORT_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+export const MENU_IMPORT_MODEL = process.env.MENU_IMPORT_MODEL || "claude-opus-4-8";
 
 export class MenuExtractError extends Error {
   code: string;
@@ -11,54 +11,60 @@ export class MenuExtractError extends Error {
   }
 }
 
+// Strict JSON-schema for structured outputs: every object sets
+// additionalProperties:false and lists all its keys as required, so Claude
+// always returns valid JSON in our exact shape - no markdown fences, no prose.
 const RESPONSE_SCHEMA = {
-  type: SchemaType.OBJECT,
+  type: "object",
+  additionalProperties: false,
   properties: {
     categories: {
-      type: SchemaType.ARRAY,
+      type: "array",
       description: "כל שמות הקטגוריות בתפריט, לפי הסדר שבו הופיעו",
-      items: { type: SchemaType.STRING },
+      items: { type: "string" },
     },
     items: {
-      type: SchemaType.ARRAY,
+      type: "array",
       items: {
-        type: SchemaType.OBJECT,
+        type: "object",
+        additionalProperties: false,
         properties: {
-          name: { type: SchemaType.STRING, description: "שם המנה" },
-          description: { type: SchemaType.STRING, description: "תיאור המנה אם קיים, אחרת מחרוזת ריקה" },
-          price: { type: SchemaType.NUMBER, description: "מחיר המנה בשקלים שלמים (מספר). אם אין מחיר, 0" },
-          categoryName: { type: SchemaType.STRING, description: "שם הקטגוריה שאליה המנה שייכת" },
+          name: { type: "string", description: "שם המנה" },
+          description: { type: "string", description: "תיאור המנה אם קיים, אחרת מחרוזת ריקה" },
+          price: { type: "number", description: "מחיר המנה בשקלים שלמים (מספר). אם אין מחיר, 0" },
+          categoryName: { type: "string", description: "שם הקטגוריה שאליה המנה שייכת" },
           modifierGroups: {
-            type: SchemaType.ARRAY,
+            type: "array",
             description: "קבוצות תוספות/אפשרויות של המנה (גדלים, תוספות, רטבים). ריק אם אין.",
             items: {
-              type: SchemaType.OBJECT,
+              type: "object",
+              additionalProperties: false,
               properties: {
-                name: { type: SchemaType.STRING },
+                name: { type: "string" },
                 type: {
-                  type: SchemaType.STRING,
-                  format: "enum",
+                  type: "string",
                   enum: ["single", "multi"],
                   description: "single = בחירה אחת (למשל גודל), multi = בחירה מרובה (למשל תוספות)",
                 },
-                required: { type: SchemaType.BOOLEAN },
+                required: { type: "boolean" },
                 options: {
-                  type: SchemaType.ARRAY,
+                  type: "array",
                   items: {
-                    type: SchemaType.OBJECT,
+                    type: "object",
+                    additionalProperties: false,
                     properties: {
-                      name: { type: SchemaType.STRING },
-                      priceDelta: { type: SchemaType.NUMBER, description: "תוספת מחיר בשקלים שלמים, 0 אם כלול" },
+                      name: { type: "string" },
+                      priceDelta: { type: "number", description: "תוספת מחיר בשקלים שלמים, 0 אם כלול" },
                     },
-                    required: ["name"],
+                    required: ["name", "priceDelta"],
                   },
                 },
               },
-              required: ["name", "type", "options"],
+              required: ["name", "type", "required", "options"],
             },
           },
         },
-        required: ["name", "categoryName", "price", "modifierGroups"],
+        required: ["name", "description", "price", "categoryName", "modifierGroups"],
       },
     },
   },
@@ -78,38 +84,75 @@ const PROMPT = `אתה ממיר תפריט של מסעדה לפורמט מובנ
 
 החזר JSON בלבד לפי הסכמה.`;
 
+type ImageMediaType = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+
+function imageMediaType(mimeType: string): ImageMediaType {
+  if (mimeType === "image/jpg" || mimeType === "image/jpeg") return "image/jpeg";
+  if (mimeType === "image/png") return "image/png";
+  if (mimeType === "image/webp") return "image/webp";
+  if (mimeType === "image/gif") return "image/gif";
+  return "image/jpeg";
+}
+
+function fileBlock(mimeType: string, base64: string): Anthropic.ContentBlockParam {
+  if (mimeType === "application/pdf") {
+    return {
+      type: "document",
+      source: { type: "base64", media_type: "application/pdf", data: base64 },
+    };
+  }
+  return {
+    type: "image",
+    source: { type: "base64", media_type: imageMediaType(mimeType), data: base64 },
+  };
+}
+
 /**
- * Send an uploaded menu file (PDF or image) to Gemini and get back a
- * normalized ExtractedMenu. Uses Gemini's structured-output mode
- * (responseSchema) so the result is always valid JSON in our shape - no
- * markdown fences, no prose. Prices are rounded to integer shekels.
+ * Send an uploaded menu file (PDF or image) to Claude and get back a
+ * normalized ExtractedMenu. Uses structured outputs (output_config.format) so
+ * the result is always valid JSON in our shape - no markdown fences, no prose.
+ * Prices are rounded to integer shekels.
  */
 export async function extractMenuFromFile(opts: {
   apiKey: string;
   bytes: Buffer;
   mimeType: string;
 }): Promise<ExtractedMenu> {
-  let raw: string;
+  let raw: string | null = null;
   try {
-    const genAI = new GoogleGenerativeAI(opts.apiKey);
-    const model = genAI.getGenerativeModel({
+    const client = new Anthropic({ apiKey: opts.apiKey });
+    const message = await client.messages.create({
       model: MENU_IMPORT_MODEL,
-      generationConfig: {
-        responseMimeType: "application/json",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        responseSchema: RESPONSE_SCHEMA as any,
+      max_tokens: 16000,
+      output_config: {
+        format: { type: "json_schema", schema: RESPONSE_SCHEMA as Record<string, unknown> },
       },
+      messages: [
+        {
+          role: "user",
+          content: [fileBlock(opts.mimeType, opts.bytes.toString("base64")), { type: "text", text: PROMPT }],
+        },
+      ],
     });
-    const result = await model.generateContent([
-      { inlineData: { mimeType: opts.mimeType, data: opts.bytes.toString("base64") } },
-      { text: PROMPT },
-    ]);
-    raw = result.response.text();
+    if (message.stop_reason === "refusal") {
+      throw new MenuExtractError("refused", "המערכת דחתה את הקובץ. נסה קובץ אחר.");
+    }
+    for (const block of message.content) {
+      if (block.type === "text") {
+        raw = block.text;
+        break;
+      }
+    }
   } catch (err) {
+    if (err instanceof MenuExtractError) throw err;
     throw new MenuExtractError(
       "extract_failed",
       err instanceof Error ? err.message : "AI extraction failed",
     );
+  }
+
+  if (!raw) {
+    throw new MenuExtractError("bad_extraction", "לא הצלחנו לפענח את התפריט מהקובץ");
   }
 
   let parsed: unknown;
