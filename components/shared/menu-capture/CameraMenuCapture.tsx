@@ -28,9 +28,18 @@ type Handle = "move" | "nw" | "ne" | "sw" | "se";
 export function CameraMenuCapture({
   onCapture,
   onClose,
+  enableCrop = true,
+  aspect,
+  label = "צילום",
 }: {
   onCapture: (file: File) => void;
   onClose: () => void;
+  // Cropping is only useful for a single dish photo. A full menu page is shot
+  // edge-to-edge, so the menu-document capture passes enableCrop={false}.
+  enableCrop?: boolean;
+  // Locks the crop box to this width/height ratio (e.g. 1 = square dish photo).
+  aspect?: number;
+  label?: string;
 }) {
   const [mounted, setMounted] = useState(false);
   const [phase, setPhase] = useState<"camera" | "crop">("camera");
@@ -116,14 +125,26 @@ export function CameraMenuCapture({
     loadImage(URL.createObjectURL(file));
   }
 
-  // Seed the crop box to ~92% of the rendered image once it lays out.
+  // Seed the crop box once the image lays out. With an aspect lock (dish
+  // photo) we center a box of that ratio; otherwise ~92% of the frame.
   function onImgLoad() {
+    if (!enableCrop) return;
     const img = imgRef.current;
     if (!img) return;
     const w = img.clientWidth;
     const h = img.clientHeight;
-    const m = 0.04;
-    setCrop({ x: w * m, y: h * m, w: w * (1 - 2 * m), h: h * (1 - 2 * m) });
+    if (aspect) {
+      let bw = w * 0.86;
+      let bh = bw / aspect;
+      if (bh > h * 0.86) {
+        bh = h * 0.86;
+        bw = bh * aspect;
+      }
+      setCrop({ x: (w - bw) / 2, y: (h - bh) / 2, w: bw, h: bh });
+    } else {
+      const m = 0.04;
+      setCrop({ x: w * m, y: h * m, w: w * (1 - 2 * m), h: h * (1 - 2 * m) });
+    }
   }
 
   function clampRect(r: Rect): Rect {
@@ -172,6 +193,7 @@ export function CameraMenuCapture({
       if (d.handle === "sw" || d.handle === "se") {
         r.h += dy;
       }
+      if (aspect) r.h = r.w / aspect;
     }
     setCrop(clampRect(r));
   }
@@ -182,13 +204,15 @@ export function CameraMenuCapture({
 
   function confirm() {
     const img = imgRef.current;
-    if (!img || !crop) return;
+    if (!img) return;
+    // Full frame when cropping is off (menu document); cropped region otherwise.
+    const useCrop = enableCrop && crop;
     const scaleX = img.naturalWidth / img.clientWidth;
     const scaleY = img.naturalHeight / img.clientHeight;
-    const cx = crop.x * scaleX;
-    const cy = crop.y * scaleY;
-    const cw = crop.w * scaleX;
-    const ch = crop.h * scaleY;
+    const cx = useCrop ? crop.x * scaleX : 0;
+    const cy = useCrop ? crop.y * scaleY : 0;
+    const cw = useCrop ? crop.w * scaleX : img.naturalWidth;
+    const ch = useCrop ? crop.h * scaleY : img.naturalHeight;
     let tw = cw;
     let th = ch;
     if (Math.max(tw, th) > MAX_OUT) {
@@ -226,7 +250,7 @@ export function CameraMenuCapture({
     <div className="fixed inset-0 z-[60] bg-black/95 flex flex-col text-white">
       <div className="flex items-center justify-between px-4 py-3 shrink-0">
         <span className="text-sm font-bold">
-          {phase === "camera" ? "צילום התפריט" : "חיתוך התמונה"}
+          {phase === "camera" ? label : enableCrop ? "חיתוך התמונה" : "סקירה"}
         </span>
         <button
           type="button"
@@ -279,7 +303,7 @@ export function CameraMenuCapture({
                 className="block max-w-full max-h-[62vh] object-contain rounded-xl"
                 style={enhance ? { filter: "contrast(1.18) brightness(1.06) saturate(1.04)" } : undefined}
               />
-              {crop && (
+              {enableCrop && crop && (
                 <div
                   className="absolute border-2 border-[#F8CB1E] shadow-[0_0_0_2000px_rgba(0,0,0,0.5)]"
                   style={{ left: crop.x, top: crop.y, width: crop.w, height: crop.h }}

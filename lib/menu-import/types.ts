@@ -28,6 +28,8 @@ export interface ExtractedItem {
   price: number;
   categoryName: string;
   modifierGroups: ExtractedModifierGroup[];
+  // Optional dish photo the merchant attached on the review screen (R2 URL).
+  imageUrl?: string;
 }
 
 export interface ExtractedMenu {
@@ -60,6 +62,7 @@ const ItemSchema = z.object({
   price: z.number().int().min(0).default(0),
   categoryName: z.string().trim().min(1).max(80),
   modifierGroups: z.array(GroupSchema).default([]),
+  imageUrl: z.string().trim().max(2000).optional(),
 });
 
 export const ExtractedMenuSchema = z.object({

@@ -765,6 +765,8 @@ function Step0Url({
 
       {cameraOpen && (
         <CameraMenuCapture
+          enableCrop={false}
+          label="צילום התפריט"
           onClose={() => setCameraOpen(false)}
           onCapture={(file) => {
             setCameraOpen(false);

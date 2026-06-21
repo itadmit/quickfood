@@ -2,8 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Camera } from "lucide-react";
 import { Modal } from "@/components/shared/Modal";
 import { IcoClose, IcoCheck, IcoTrash } from "@/components/shared/Icons";
+import { CameraMenuCapture } from "@/components/shared/menu-capture/CameraMenuCapture";
+import { uploadMenuItemImage } from "@/lib/menu-import/upload-image";
 
 type Option = { name: string; priceDelta: number };
 type Group = {
@@ -20,10 +23,21 @@ type Item = {
   price: number;
   categoryName: string;
   modifierGroups: Group[];
+  imageUrl?: string;
 };
 type Menu = { categories: string[]; items: Item[] };
 
 type Phase = "upload" | "extracting" | "review" | "committing" | "done";
+
+// Rotating status lines shown while the AI reads the menu (~20-30s on a dense
+// menu) so the wait feels alive instead of one frozen spinner.
+const EXTRACT_MSGS = [
+  "קוראים את התפריט…",
+  "מזהים מנות ומחירים…",
+  "מסדרים לפי קטגוריות…",
+  "מזהים תוספות ואפשרויות…",
+  "עוד רגע, כמעט מוכן…",
+];
 
 export function MenuFileImportModal({
   onClose,
@@ -42,6 +56,13 @@ export function MenuFileImportModal({
   const [importId, setImportId] = useState<string | null>(null);
   const [menu, setMenu] = useState<Menu>({ categories: [], items: [] });
   const [expanded, setExpanded] = useState<number | null>(null);
+  // Per-item dish photo: which item's image action-sheet is open, which item is
+  // mid-capture, and which items have an upload in flight.
+  const [imgSheetFor, setImgSheetFor] = useState<number | null>(null);
+  const [cameraFor, setCameraFor] = useState<number | null>(null);
+  const [imgUploading, setImgUploading] = useState<Set<number>>(new Set());
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryForRef = useRef<number | null>(null);
   const [result, setResult] = useState<{
     categoriesImported: number;
     itemsImported: number;
@@ -63,8 +84,16 @@ export function MenuFileImportModal({
     void onFile(initialFile);
   }, [autoStart, initialFile]);
 
+  const [msgIdx, setMsgIdx] = useState(0);
+  useEffect(() => {
+    if (phase !== "extracting") return;
+    const id = setInterval(() => setMsgIdx((i) => i + 1), 2200);
+    return () => clearInterval(id);
+  }, [phase]);
+
   async function onFile(file: File) {
     setError(null);
+    setMsgIdx(0);
     setPhase("extracting");
     const form = new FormData();
     form.set("file", file);
@@ -164,11 +193,39 @@ export function MenuFileImportModal({
     }
   }
 
+  async function attachImage(i: number, file: File) {
+    setImgSheetFor(null);
+    setCameraFor(null);
+    setImgUploading((s) => new Set(s).add(i));
+    try {
+      const url = await uploadMenuItemImage(file);
+      patchItem(i, { imageUrl: url });
+    } catch {
+      setError("העלאת התמונה נכשלה, נסה שוב");
+    } finally {
+      setImgUploading((s) => {
+        const n = new Set(s);
+        n.delete(i);
+        return n;
+      });
+    }
+  }
+
+  function onGalleryPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const i = galleryForRef.current;
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    galleryForRef.current = null;
+    if (i == null || !file) return;
+    void attachImage(i, file);
+  }
+
   const categoryOptions = Array.from(
     new Set([...menu.categories, ...menu.items.map((i) => i.categoryName)].filter(Boolean)),
   );
 
   return (
+    <>
     <Modal open onClose={onClose} size="3xl" ariaLabel="ייבוא תפריט מ-PDF או תמונה">
       <header className="sticky top-0 z-10 bg-white px-5 py-4 border-b border-qf-line-soft flex items-center justify-between gap-3">
         <div className="min-w-0">
@@ -203,7 +260,12 @@ export function MenuFileImportModal({
               בלי תמונות. תוכל לערוך הכל לפני השמירה.
             </p>
             {phase === "extracting" ? (
-              <div className="text-qf-mute text-sm animate-pulse py-4">מחלץ את התפריט… זה לוקח כמה שניות</div>
+              <div className="py-4 min-h-[1.75rem] inline-flex items-center justify-center gap-2 text-qf-ink2 text-sm font-medium">
+                <span className="qf-spinner" aria-hidden />
+                <span key={msgIdx} style={{ animation: "qf-fade-in 0.4s ease" }}>
+                  {EXTRACT_MSGS[msgIdx % EXTRACT_MSGS.length]}
+                </span>
+              </div>
             ) : (
               <input
                 type="file"
@@ -219,6 +281,22 @@ export function MenuFileImportModal({
           menu.items.map((it, i) => (
             <div key={i} className="border border-qf-line-dash rounded-xl p-3 space-y-2">
               <div className="flex items-start gap-2">
+                <button
+                  type="button"
+                  onClick={() => setImgSheetFor(i)}
+                  className="shrink-0 w-12 h-12 rounded-lg border border-qf-line-dash overflow-hidden grid place-items-center bg-qf-line-soft/40 text-qf-mute"
+                  aria-label="תמונת מנה"
+                  title="הוסף תמונת מנה"
+                >
+                  {imgUploading.has(i) ? (
+                    <span className="qf-spinner" aria-hidden />
+                  ) : it.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={it.imageUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <Camera size={18} />
+                  )}
+                </button>
                 <div className="flex-1 grid grid-cols-1 sm:grid-cols-[1fr_90px_140px] gap-2">
                   <input
                     value={it.name}
@@ -361,5 +439,77 @@ export function MenuFileImportModal({
         )}
       </footer>
     </Modal>
+
+    <input
+      ref={galleryInputRef}
+      type="file"
+      accept="image/jpeg,image/png,image/webp"
+      onChange={onGalleryPick}
+      className="hidden"
+    />
+
+    <Modal
+      open={imgSheetFor !== null}
+      onClose={() => setImgSheetFor(null)}
+      size="sm"
+      ariaLabel="תמונת מנה"
+    >
+      <div className="p-5 space-y-2.5">
+        <h3 className="text-base font-bold mb-1">תמונת המנה</h3>
+        <button
+          type="button"
+          onClick={() => {
+            const i = imgSheetFor;
+            setImgSheetFor(null);
+            setCameraFor(i);
+          }}
+          className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-bold"
+        >
+          <Camera size={17} />
+          צלם מנה
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            galleryForRef.current = imgSheetFor;
+            setImgSheetFor(null);
+            galleryInputRef.current?.click();
+          }}
+          className="w-full px-4 py-3 rounded-xl border border-qf-line-dash text-sm font-medium hover:bg-qf-line-soft"
+        >
+          בחר מהגלריה
+        </button>
+        {imgSheetFor !== null && menu.items[imgSheetFor]?.imageUrl && (
+          <button
+            type="button"
+            onClick={() => {
+              patchItem(imgSheetFor, { imageUrl: undefined });
+              setImgSheetFor(null);
+            }}
+            className="w-full px-4 py-3 rounded-xl text-sm font-medium text-qf-tomato hover:bg-qf-tomato-soft"
+          >
+            הסר תמונה
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => setImgSheetFor(null)}
+          className="w-full px-4 py-2 text-sm text-qf-mute hover:text-qf-ink"
+        >
+          ביטול
+        </button>
+      </div>
+    </Modal>
+
+    {cameraFor !== null && (
+      <CameraMenuCapture
+        enableCrop
+        aspect={1}
+        label="צילום מנה"
+        onClose={() => setCameraFor(null)}
+        onCapture={(file) => attachImage(cameraFor, file)}
+      />
+    )}
+    </>
   );
 }

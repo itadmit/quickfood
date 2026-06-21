@@ -94,6 +94,8 @@ export async function commitMenuFileImport(
           basePrice: it.price,
           available: true,
           position: idx,
+          imageUrl: it.imageUrl || null,
+          images: it.imageUrl ? [it.imageUrl] : [],
           optionGroups: {
             // Drop groups with no options - a "choose one" group with nothing
             // to choose is a dead end on the storefront (and a required one
