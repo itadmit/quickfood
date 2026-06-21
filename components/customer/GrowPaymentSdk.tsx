@@ -92,6 +92,11 @@ interface GrowPaymentSdkProps {
   onError?: (message: string) => void;
   onWalletChange?: (state: "open" | "close") => void;
   onReady?: () => void;
+  // Fired the moment Grow reports a successful payment, BEFORE we navigate
+  // away. Used to empty the cart - the wallet path does a full-page redirect,
+  // so the cart's persist-effect never flushes; the caller clears storage
+  // synchronously here.
+  onSuccess?: () => void;
 }
 
 let sdkLoadingPromise: Promise<void> | null = null;
@@ -125,14 +130,15 @@ export function GrowPaymentSdk({
   onError,
   onWalletChange,
   onReady,
+  onSuccess,
 }: GrowPaymentSdkProps) {
   // Stable ref so we don't re-init the SDK every render. Grow's SDK doesn't
   // document re-init behaviour - we call init() exactly once and forward
   // events through this ref.
-  const propsRef = useRef({ thankYouUrl, onError, onWalletChange });
+  const propsRef = useRef({ thankYouUrl, onError, onWalletChange, onSuccess });
   useEffect(() => {
-    propsRef.current = { thankYouUrl, onError, onWalletChange };
-  }, [thankYouUrl, onError, onWalletChange]);
+    propsRef.current = { thankYouUrl, onError, onWalletChange, onSuccess };
+  }, [thankYouUrl, onError, onWalletChange, onSuccess]);
 
   const initializedRef = useRef(false);
   const navigatingRef = useRef(false);
@@ -159,6 +165,12 @@ export function GrowPaymentSdk({
               console.info("[grow-sdk] onSuccess", response);
               if (navigatingRef.current) return;
               navigatingRef.current = true;
+              // Empty the cart synchronously before the full-page redirect.
+              try {
+                propsRef.current.onSuccess?.();
+              } catch {
+                /* never block the redirect on a cart-clear error */
+              }
               window.location.href = propsRef.current.thankYouUrl;
             },
             onFailure: (response) => {

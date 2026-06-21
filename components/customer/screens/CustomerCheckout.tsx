@@ -1241,6 +1241,17 @@ export function CustomerCheckout({
           testMode={pendingPayment?.testMode ?? growTestMode}
           thankYouUrl={pendingPayment?.thankYouUrl ?? `/s/${tenantSlug}`}
           onReady={() => setSdkReady(true)}
+          onSuccess={() => {
+            // Empty the cart on a successful wallet payment. The SDK does a
+            // full-page redirect right after, so the persist-effect won't run -
+            // remove the stored cart synchronously, then clear React state too.
+            try {
+              localStorage.removeItem(`qf:cart:${tenantSlug}`);
+            } catch {
+              /* private mode / blocked storage - ignore */
+            }
+            clear();
+          }}
           onWalletChange={(state) => setWalletOpen(state === "open")}
           onError={(message) => {
             // Only surface the error if we actually have an in-flight
