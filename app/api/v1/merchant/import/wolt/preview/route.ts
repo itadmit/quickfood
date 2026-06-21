@@ -8,6 +8,7 @@ import {
   hoursPreviewSummary,
   woltScheduleToHours,
 } from "@/lib/wolt-import/hours";
+import { cleanImportedName } from "@/lib/wolt-import/normalize";
 import type { ImportPreview, VenueInfoPreview } from "@/lib/wolt-import/types";
 
 export const runtime = "nodejs";
@@ -47,7 +48,7 @@ export const POST = handler(async (req: Request) => {
 
     const imagesCount = menu.items.filter((i) => !!i.image).length;
     const sampleItems = menu.items.slice(0, 8).map((i) => ({
-      name: i.name,
+      name: cleanImportedName(i.name),
       image: i.image ?? null,
       price: Math.round((i.baseprice ?? 0) / 100),
     }));

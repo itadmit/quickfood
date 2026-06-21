@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { uploadBytes } from "@/lib/storage/r2";
 import { fetchImage } from "./fetch";
+import { cleanImportedName, cleanImportedText } from "./normalize";
 import { woltScheduleToHours } from "./hours";
 import { WOLT_IMPORT_TERMS_VERSION } from "./terms";
 import type {
@@ -79,7 +80,9 @@ export async function commitImport(
 
   for (const [idx, c] of menu.categories.entries()) {
     const parent = c.parent_category_id ? catByWoltId.get(c.parent_category_id) : null;
-    const displayName = parent ? `${parent.name} · ${c.name}` : c.name;
+    const cleanChild = cleanImportedName(c.name);
+    const cleanParent = parent ? cleanImportedText(parent.name) : "";
+    const displayName = cleanParent ? `${cleanParent} · ${cleanChild}` : cleanChild;
     try {
       const saved = await prisma.menuCategory.upsert({
         where: {
@@ -144,7 +147,7 @@ export async function commitImport(
         },
         create: {
           tenantId,
-          name: g.name,
+          name: cleanImportedName(g.name),
           type,
           position: idx,
           required: minSel > 0,
@@ -155,7 +158,7 @@ export async function commitImport(
           externalId: g.id,
         },
         update: {
-          name: g.name,
+          name: cleanImportedName(g.name),
           type,
           position: idx,
         },
@@ -172,13 +175,13 @@ export async function commitImport(
           },
           create: {
             setId: saved.id,
-            name: v.name,
+            name: cleanImportedName(v.name),
             priceDelta: agorotToShekel(v.price),
             position: vidx,
             externalId: v.id,
           },
           update: {
-            name: v.name,
+            name: cleanImportedName(v.name),
             priceDelta: agorotToShekel(v.price),
             position: vidx,
           },
@@ -217,8 +220,8 @@ export async function commitImport(
         create: {
           tenantId,
           categoryId: qfCategoryId,
-          name: it.name,
-          description: it.description ?? "",
+          name: cleanImportedName(it.name),
+          description: cleanImportedText(it.description),
           basePrice: agorotToShekel(it.baseprice ?? 0),
           available: it.enabled !== false,
           position: idx,
@@ -227,8 +230,8 @@ export async function commitImport(
         },
         update: {
           categoryId: qfCategoryId,
-          name: it.name,
-          description: it.description ?? "",
+          name: cleanImportedName(it.name),
+          description: cleanImportedText(it.description),
           basePrice: agorotToShekel(it.baseprice ?? 0),
           available: it.enabled !== false,
           position: idx,
@@ -250,7 +253,7 @@ export async function commitImport(
         await prisma.itemOptionGroup.create({
           data: {
             itemId: saved.id,
-            name: ref.name,
+            name: cleanImportedName(ref.name),
             type: pickGroupType(menu.options, topLevelId),
             required: (ref.minimum_total_selections ?? 0) > 0,
             minSelect: ref.minimum_total_selections ?? 0,
