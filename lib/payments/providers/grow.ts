@@ -704,6 +704,13 @@ export class GrowProvider extends BasePaymentProvider {
   }
 
   private extractClientIp(headers: Record<string, string>): string | null {
+    // quickfood.co.il sits behind Cloudflare, so x-forwarded-for's first hop
+    // is a Cloudflare edge IP (e.g. 172.69.x.x) - NOT the real caller. Grow's
+    // actual IP arrives in CF-Connecting-IP (or True-Client-IP). Prefer those
+    // so the Grow allowlist matches the real source. (Header keys are
+    // lowercased by the callback route's extractHeaders.)
+    const cf = headers["cf-connecting-ip"] || headers["true-client-ip"];
+    if (cf) return cf.split(",")[0].trim();
     const xff = headers["x-forwarded-for"] || headers["X-Forwarded-For"];
     if (xff) return xff.split(",")[0].trim();
     const real = headers["x-real-ip"] || headers["X-Real-IP"];
