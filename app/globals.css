@@ -385,13 +385,13 @@ label[for][class*="shadow-[0_"] {
 }
 @media print {
   @page {
-    /* 80mm thermal rolls only have a ~72mm printable area (576 dots @ 203dpi);
-       the remaining ~8mm is the hardware margin. Sizing the page to 72mm (not
-       the full 80mm paper width) keeps the whole receipt inside the printable
-       area. The on-screen preview honoured 80mm and looked fine, but on the
-       POS80 the leftmost ~8mm - where the RTL amount column lands via
-       space-between - fell outside the printable area and was clipped. */
-    size: 72mm auto;
+    /* Match the driver's actual paper (80mm) so the browser doesn't offset a
+       narrower page on the roll. Sizing the page narrower than the paper made
+       the POS80 place the content hard against one edge - it printed shifted
+       right, clipping the RTL text start (right) while wasting ~8mm on the
+       left. With an 80mm page + centered 72mm receipt the content sits in the
+       middle of the printable area with a safe margin on both sides. */
+    size: 80mm auto;
     margin: 0;
   }
   body {
@@ -410,10 +410,10 @@ label[for][class*="shadow-[0_"] {
     width: 72mm;
     max-width: 72mm;
     box-sizing: border-box;
-    /* Small inset inside the 72mm printable area so the amount column never
-       touches the clipped edge. */
-    padding: 3mm;
-    margin: 0;
+    padding: 2mm;
+    /* Center the 72mm receipt on the 80mm page so neither the RTL text start
+       (right) nor the amount column (left) reaches the clipped paper edge. */
+    margin: 0 auto;
     color: #000;
     background: #fff;
     font-family: ui-monospace, Menlo, Consolas, monospace, Arial, sans-serif;
