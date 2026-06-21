@@ -408,14 +408,15 @@ label[for][class*="shadow-[0_"] {
     display: block;
     position: static;
     width: 72mm;
+    max-width: 72mm;
     box-sizing: border-box;
-    /* Small inset inside the 72mm printable area so the amount column (pushed
-       to the left edge by space-between in RTL) never touches the clipped edge. */
-    padding: 0 3mm;
+    /* Small inset inside the 72mm printable area so the amount column never
+       touches the clipped edge. */
+    padding: 3mm;
     margin: 0;
     color: #000;
     background: #fff;
-    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-family: ui-monospace, Menlo, Consolas, monospace, Arial, sans-serif;
     font-size: 11pt;
     line-height: 1.35;
     direction: rtl;
@@ -430,10 +431,25 @@ label[for][class*="shadow-[0_"] {
     border-top: 1px dashed #000;
     margin: 4pt 0;
   }
+  /* Use a table, NOT flex, for label/amount rows. Some POS80-class thermal
+     drivers render `flex + RTL` with the columns reversed even though the
+     on-screen preview is correct; table-cell is honoured reliably. */
   .qf-print-receipt .qf-pr-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 4pt;
+    display: table;
+    width: 100%;
+  }
+  .qf-print-receipt .qf-pr-row > span {
+    display: table-cell;
+    vertical-align: top;
+  }
+  .qf-print-receipt .qf-pr-row > span:first-child {
+    text-align: right;
+  }
+  .qf-print-receipt .qf-pr-row > span:last-child {
+    text-align: left;
+    white-space: nowrap;
+    width: 1%;
+    padding-right: 4pt;
   }
   .qf-print-receipt .qf-pr-muted {
     font-size: 9pt;
