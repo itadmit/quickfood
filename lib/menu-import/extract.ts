@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { ExtractedMenu } from "./types";
 
-export const MENU_IMPORT_MODEL = process.env.MENU_IMPORT_MODEL || "claude-haiku-4-5";
+export const MENU_IMPORT_MODEL = process.env.MENU_IMPORT_MODEL || "claude-sonnet-4-6";
 
 export class MenuExtractError extends Error {
   code: string;
