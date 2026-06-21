@@ -67,6 +67,10 @@ export interface ReceiptOrder {
 export function formatSelectedOptions(options: unknown): string {
   if (!Array.isArray(options)) return "";
   const list = options as Array<{ name?: string; half?: string }>;
+  // Only label whole toppings "(שלם)" when the item is actually split -
+  // i.e. at least one topping sits on a half. Otherwise a plain item's
+  // toppings would all get a noisy "(שלם)" suffix.
+  const isSplit = list.some((o) => o?.half === "left" || o?.half === "right");
   const groups = new Map<string, { name: string; half?: string; count: number }>();
   for (const o of list) {
     if (!o?.name) continue;
@@ -82,7 +86,9 @@ export function formatSelectedOptions(options: unknown): string {
           ? `${g.name} (חצי א׳)`
           : g.half === "right"
             ? `${g.name} (חצי ב׳)`
-            : g.name;
+            : isSplit
+              ? `${g.name} (שלם)`
+              : g.name;
       return g.count > 1 ? `${base} ×${g.count}` : base;
     })
     .join(" · ");

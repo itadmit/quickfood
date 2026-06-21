@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { IcoBell, IcoClock, IcoRefresh, IcoCheck } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
+import { formatSelectedOptions } from "@/lib/receipt-print";
 import {
   playChime,
   getSelectedChime,
@@ -41,30 +42,6 @@ const STATUS_TONE: Record<KitchenStatus, { wrap: string; pill: string; label: st
   in_oven:    { wrap: "border-orange-400 bg-white",      pill: "bg-orange-100 text-orange-800",           label: "בתנור" },
   ready:      { wrap: "border-qf-green bg-qf-green-soft", pill: "bg-qf-green text-white",                 label: "מוכנה" },
 };
-
-// Dedupe identical option entries (same name + half) into "name ×N"
-// so a topping that lives in two modifier groups doesn't print twice.
-function renderOptions(opts: Item["options"]): string {
-  const m = new Map<string, { name: string; half?: string; count: number }>();
-  for (const o of opts) {
-    if (!o?.name) continue;
-    const k = `${o.name}|${o.half ?? ""}`;
-    const cur = m.get(k);
-    if (cur) cur.count += 1;
-    else m.set(k, { name: o.name, half: o.half, count: 1 });
-  }
-  return Array.from(m.values())
-    .map((g) => {
-      const base =
-        g.half === "left"
-          ? `${g.name} (חצי א׳)`
-          : g.half === "right"
-            ? `${g.name} (חצי ב׳)`
-            : g.name;
-      return g.count > 1 ? `${base} ×${g.count}` : base;
-    })
-    .join(" · ");
-}
 
 export function KitchenDisplay({ initial }: { initial: Order[] }) {
   const [orders, setOrders] = useState<Order[]>(initial);
@@ -393,7 +370,7 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
                 <ul className="space-y-2">
                   {o.items.map((it) => {
                     const prepared = it.preparedAt !== null;
-                    const opts = renderOptions(it.options);
+                    const opts = formatSelectedOptions(it.options);
                     return (
                       <li key={it.id}>
                         <button

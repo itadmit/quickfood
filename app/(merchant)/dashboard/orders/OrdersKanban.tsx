@@ -6,7 +6,11 @@ import { IcoClock, IcoPhone, IcoPrinter, IcoFlame, IcoRefresh, IcoUndo, IcoClose
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
-import { consumePassPrntResult, type ReceiptPrinterType } from "@/lib/receipt-print";
+import {
+  consumePassPrntResult,
+  formatSelectedOptions,
+  type ReceiptPrinterType,
+} from "@/lib/receipt-print";
 import { OrderDrawer } from "@/components/merchant/OrderDrawer";
 import { ManualOrderModal } from "@/components/merchant/ManualOrderModal";
 import { AssignCourierModal } from "@/components/merchant/AssignCourierModal";
@@ -43,31 +47,6 @@ interface OrderRow {
     options: Array<{ name: string; half?: "left" | "right" | "full" }>;
     notes: string | null;
   }>;
-}
-
-// Group selected options by display key (name + half) so a topping
-// that appears in two modifier groups shows up as "עגבניה ×2" instead
-// of "עגבניה · עגבניה" - same helper as the order drawer.
-function renderItemOptions(opts: Array<{ name?: string; half?: string }>): string {
-  const groups = new Map<string, { name: string; half?: string; count: number }>();
-  for (const o of opts) {
-    if (!o?.name) continue;
-    const key = `${o.name}|${o.half ?? ""}`;
-    const existing = groups.get(key);
-    if (existing) existing.count += 1;
-    else groups.set(key, { name: o.name, half: o.half, count: 1 });
-  }
-  return Array.from(groups.values())
-    .map((g) => {
-      const base =
-        g.half === "left"
-          ? `${g.name} (חצי א׳)`
-          : g.half === "right"
-            ? `${g.name} (חצי ב׳)`
-            : g.name;
-      return g.count > 1 ? `${base} ×${g.count}` : base;
-    })
-    .join(" · ");
 }
 
 const COLUMNS: Array<{
@@ -645,7 +624,7 @@ function Card({
 
       <ul className="text-xs space-y-1">
         {order.items.slice(0, 3).map((it) => {
-          const opts = renderItemOptions(it.options);
+          const opts = formatSelectedOptions(it.options);
           return (
             <li key={it.id} className="leading-tight">
               <div className="flex gap-1.5">

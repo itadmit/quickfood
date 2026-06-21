@@ -18,6 +18,26 @@ export const ORDER_INCLUDE = {
   review: { select: { id: true } },
 } satisfies Prisma.OrderInclude;
 
+// Single source of truth for the option shape exposed to clients (order
+// drawer, receipt, kanban, kitchen). Keeps `half` so split pizzas render
+// "(חצי א׳/ב׳)" everywhere, and drops internal ids (group_id/option_id).
+export function serializeSelectedOptions(
+  raw: unknown,
+): Array<{ name: string; price_delta: number; half?: "left" | "right" }> {
+  if (!Array.isArray(raw)) return [];
+  return (raw as Array<Record<string, unknown>>)
+    .map((o) => {
+      const name = typeof o?.name === "string" ? o.name : null;
+      if (!name) return null;
+      const priceDelta = Number(o?.price_delta ?? 0) || 0;
+      const half = o?.half === "left" || o?.half === "right" ? o.half : undefined;
+      return { name, price_delta: priceDelta, ...(half ? { half } : {}) };
+    })
+    .filter(
+      (o): o is { name: string; price_delta: number; half?: "left" | "right" } => o !== null,
+    );
+}
+
 export function serializeOrder(o: OrderWithIncludes) {
   return {
     id: o.id,
@@ -59,7 +79,7 @@ export function serializeOrder(o: OrderWithIncludes) {
       unit_price: it.unitPrice,
       total_price: it.totalPrice,
       size: it.sizeSnapshot,
-      options: it.selectedOptions,
+      options: serializeSelectedOptions(it.selectedOptions),
       notes: it.notes,
     })),
   };

@@ -1,6 +1,7 @@
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
+import { serializeSelectedOptions } from "@/lib/orders-serialize";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -127,30 +128,16 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
             last_seen_at: order.courier.lastSeenAt?.toISOString() ?? null,
           }
         : null,
-      items: order.items.map((it) => {
-        const rawOptions = Array.isArray(it.selectedOptions)
-          ? (it.selectedOptions as Array<Record<string, unknown>>)
-          : [];
-        const options = rawOptions
-          .map((o) => {
-            const name = typeof o?.name === "string" ? o.name : null;
-            if (!name) return null;
-            const priceDelta = Number(o?.price_delta ?? 0) || 0;
-            const half = o?.half === "left" || o?.half === "right" ? o.half : undefined;
-            return { name, price_delta: priceDelta, ...(half ? { half } : {}) };
-          })
-          .filter((o): o is { name: string; price_delta: number; half?: "left" | "right" } => o !== null);
-        return {
-          id: it.id,
-          name: it.nameSnapshot,
-          quantity: it.quantity,
-          unit_price: it.unitPrice,
-          total_price: it.totalPrice,
-          size: it.sizeSnapshot,
-          options,
-          notes: it.notes,
-        };
-      }),
+      items: order.items.map((it) => ({
+        id: it.id,
+        name: it.nameSnapshot,
+        quantity: it.quantity,
+        unit_price: it.unitPrice,
+        total_price: it.totalPrice,
+        size: it.sizeSnapshot,
+        options: serializeSelectedOptions(it.selectedOptions),
+        notes: it.notes,
+      })),
     },
   });
 });
