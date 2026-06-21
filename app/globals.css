@@ -385,12 +385,13 @@ label[for][class*="shadow-[0_"] {
 }
 @media print {
   @page {
-    /* Size the page to the 80mm thermal roll. The previous `size: auto`
-       let the browser pick A4/Letter, and the 8mm page margin made the
-       80mm-wide receipt overflow the printable area - in RTL the amount
-       column (pushed left by space-between) fell into the clipped margin,
-       so totals/prices printed blank or off-paper. */
-    size: 80mm auto;
+    /* 80mm thermal rolls only have a ~72mm printable area (576 dots @ 203dpi);
+       the remaining ~8mm is the hardware margin. Sizing the page to 72mm (not
+       the full 80mm paper width) keeps the whole receipt inside the printable
+       area. The on-screen preview honoured 80mm and looked fine, but on the
+       POS80 the leftmost ~8mm - where the RTL amount column lands via
+       space-between - fell outside the printable area and was clipped. */
+    size: 72mm auto;
     margin: 0;
   }
   body {
@@ -406,12 +407,11 @@ label[for][class*="shadow-[0_"] {
   .qf-print-receipt {
     display: block;
     position: static;
-    width: 80mm;
+    width: 72mm;
     box-sizing: border-box;
-    /* Inset the content from the paper edge so the amount column (pushed to
-       the left edge by space-between in RTL) clears the printer's hardware
-       margin and never gets clipped. */
-    padding: 0 4mm;
+    /* Small inset inside the 72mm printable area so the amount column (pushed
+       to the left edge by space-between in RTL) never touches the clipped edge. */
+    padding: 0 3mm;
     margin: 0;
     color: #000;
     background: #fff;
