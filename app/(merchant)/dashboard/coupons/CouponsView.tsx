@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { IcoPlus, IcoClose, IcoCheck } from "@/components/shared/Icons";
+import { IcoPlus, IcoCheck } from "@/components/shared/Icons";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { cn } from "@/lib/cn";
@@ -70,7 +70,10 @@ export function CouponsView({
   categories: Category[];
 }) {
   const router = useRouter();
-  const [list] = useState(initial);
+  // Read straight from the server prop (no useState) so router.refresh() after
+  // create/edit/delete actually re-renders the list - stashing `initial` in
+  // useState froze it at mount, leaving a freshly-created coupon invisible.
+  const list = initial;
   const [editing, setEditing] = useState<DraftCoupon | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
