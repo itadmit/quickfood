@@ -41,6 +41,10 @@ export default async function TenantsListPage() {
     themeId: t.themeId,
     cuisineType: t.cuisineType,
     plan: t.plan?.name ?? null,
+    // A live base subscription id means they're currently paying — the billing
+    // webhook clears it on cancellation, so it's an accurate "paying" signal.
+    isPaying: !!t.billingSubscriptionId,
+    trialEndsAt: t.trialEndsAt?.toISOString() ?? null,
     ordersCount: t._count.orders,
     branchesCount: t._count.branches,
     menuItemsCount: t._count.menuItems,

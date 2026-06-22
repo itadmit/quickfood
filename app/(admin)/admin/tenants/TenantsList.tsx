@@ -16,6 +16,8 @@ interface Tenant {
   themeId: keyof typeof THEMES;
   cuisineType: string | null;
   plan: string | null;
+  isPaying: boolean;
+  trialEndsAt: string | null;
   ordersCount: number;
   branchesCount: number;
   menuItemsCount: number;
@@ -38,6 +40,13 @@ function classifyActivity(t: Tenant): { level: ActivityLevel; label: string; ton
   if (t.menuItemsCount > 0) return { level: "ready", label: "תפריט מוכן", tone: "bg-(--qf-soft) text-(--qf-deep)" };
   if (t.lastLoginAt) return { level: "setup", label: "במהלך הקמה", tone: "bg-qf-yolk-soft text-qf-ink2" };
   return { level: "cold", label: "לא נכנס", tone: "bg-qf-line-soft text-qf-mute" };
+}
+
+function classifyBilling(t: Tenant): { label: string; tone: string } {
+  if (t.isPaying) return { label: "משלם", tone: "bg-qf-green-soft text-qf-green-deep" };
+  const trialActive = t.trialEndsAt ? new Date(t.trialEndsAt).getTime() > Date.now() : false;
+  if (trialActive) return { label: "בניסיון", tone: "bg-qf-yolk-soft text-qf-ink2" };
+  return { label: "ניסיון הסתיים", tone: "bg-qf-tomato-soft text-qf-tomato" };
 }
 
 function timeAgo(iso: string | null): string {
@@ -67,6 +76,7 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
 
   const counts = {
     total: items.length,
+    paying: items.filter((t) => t.isPaying).length,
     live: items.filter((t) => t.ordersCount > 0).length,
     ready: items.filter((t) => t.ordersCount === 0 && t.menuItemsCount > 0).length,
     setup: items.filter((t) => t.ordersCount === 0 && t.menuItemsCount === 0 && t.lastLoginAt).length,
@@ -90,7 +100,8 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
         </Link>
       </header>
 
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        <StatCard label="מנויים משלמים" value={counts.paying} tone="text-qf-green-deep" hint="מנוי פלטפורמה פעיל בתשלום" />
         <StatCard label="מזמינים בפועל" value={counts.live} tone="text-qf-green-deep" hint="לפחות הזמנה אחת" />
         <StatCard label="תפריט מוכן" value={counts.ready} tone="text-(--qf-deep)" hint="הוסיפו מוצרים, עדיין בלי הזמנה" />
         <StatCard label="באמצע הקמה" value={counts.setup} tone="text-qf-ink2" hint="נכנסו, אין תפריט" />
@@ -142,6 +153,7 @@ function TenantRow({
 }) {
   const theme = THEMES[t.themeId] ?? THEMES.fresh;
   const activity = classifyActivity(t);
+  const billing = classifyBilling(t);
   const [impersonating, setImpersonating] = useState(false);
 
   async function impersonate() {
@@ -191,6 +203,14 @@ function TenantRow({
             )}
           >
             {STATUS_LABEL[t.status] ?? t.status}
+          </span>
+          <span
+            className={cn(
+              "shrink-0 px-1.5 py-px rounded text-[10px] font-medium",
+              billing.tone,
+            )}
+          >
+            {billing.label}
           </span>
         </div>
         <div
