@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import QRCode from "qrcode";
@@ -8,6 +7,7 @@ import { verifyAccess } from "@/lib/auth/jwt";
 import { prisma } from "@/lib/db/client";
 import { ImpersonationBanner } from "@/components/merchant/ImpersonationBanner";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
+import { AccessibilityWidget } from "@/components/shared/AccessibilityWidget";
 import { Sidebar } from "@/components/merchant/Sidebar";
 import { Topbar } from "@/components/merchant/Topbar";
 import { SidebarV2 } from "@/components/merchant/v2/SidebarV2";
@@ -115,11 +115,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <ThemeProvider themeId={tenant.themeId}>
-      <Script
-        src="https://quick-accessibility.vercel.app/widget/v1.js"
-        data-a11y-key="5ezqwew2ypzj38js"
-        strategy="afterInteractive"
-      />
+      <AccessibilityWidget />
       {isV2 ? (
         // `dash-v2` is the hook that retunes the design tokens (qf-bg,
         // qf-ink, qf-line, qf-green → cream / black / yellow) for every

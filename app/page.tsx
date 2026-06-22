@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Script from "next/script";
 import { Rubik, JetBrains_Mono } from "next/font/google";
 import Link from "next/link";
 import { IcoArrowLeft, IcoWhatsApp } from "@/components/shared/Icons";
@@ -50,6 +49,7 @@ import ItemCustomizerMockup from "./_components/ItemCustomizerMockup";
 import ScrollAnimations from "./_components/ScrollAnimations";
 import WoltTeaser from "./_components/WoltTeaser";
 import { LeadForm } from "@/components/marketing/LeadForm";
+import { AccessibilityWidget } from "@/components/shared/AccessibilityWidget";
 import styles from "./page.module.css";
 
 const rubik = Rubik({
@@ -122,11 +122,7 @@ export const metadata: Metadata = {
 export default function LandingPage() {
   return (
     <div className={`${styles.root} ${rubik.variable} ${mono.variable}`}>
-      <Script
-        src="https://quick-accessibility.vercel.app/widget/v1.js"
-        data-a11y-key="5ezqwew2ypzj38js"
-        strategy="afterInteractive"
-      />
+      <AccessibilityWidget />
       <FaqSchema />
       <Nav />
       <Hero />
