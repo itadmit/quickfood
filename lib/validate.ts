@@ -301,6 +301,17 @@ export const TenantPatchSchema = z.object({
   onboarding_dismissed: z.literal(true).optional(),
   dashboard_version: z.enum(["v1", "v2"]).optional(),
   receipt_printer: z.enum(["airprint", "star", "epson", "escpos"]).optional(),
+  receipt_settings: z
+    .object({
+      show_customer_name: z.boolean(),
+      show_customer_phone: z.boolean(),
+      show_options: z.boolean(),
+      show_option_prices: z.boolean(),
+      show_item_notes: z.boolean(),
+      show_order_notes: z.boolean(),
+    })
+    .partial()
+    .optional(),
   // Kiosk feature settings - only the welcome text + idle reset are
   // merchant-editable. `kiosk_enabled` itself is a superadmin gate.
   kiosk_welcome_text: z.string().max(160).nullable().optional(),

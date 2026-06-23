@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { fullName } from "@/lib/format";
 import { OrdersKanban } from "./OrdersKanban";
 import { HIDE_UNPAID_NONCASH } from "@/lib/orders-visible";
-import type { ReceiptPrinterType } from "@/lib/receipt-print";
+import { resolveReceiptSettings, type ReceiptPrinterType } from "@/lib/receipt-print";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +16,7 @@ export default async function OrdersPage() {
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
-    select: { receiptPrinter: true },
+    select: { receiptPrinter: true, receiptSettings: true },
   });
 
   const orders = await prisma.order.findMany({
@@ -91,6 +91,7 @@ export default async function OrdersPage() {
     <OrdersKanban
       initial={initial}
       receiptPrinter={(tenant?.receiptPrinter ?? "airprint") as ReceiptPrinterType}
+      receiptSettings={resolveReceiptSettings(tenant?.receiptSettings)}
     />
   );
 }

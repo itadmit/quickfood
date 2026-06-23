@@ -28,6 +28,41 @@ export const PAYMENT_METHOD_LABEL: Record<string, string> = {
   bit: "ביט",
 };
 
+// Per-tenant toggles for what to print on the receipt (Tenant.receiptSettings,
+// edited under Settings → Printing). Defaults to everything on.
+export type ReceiptSettings = {
+  showCustomerName: boolean;
+  showCustomerPhone: boolean;
+  showOptions: boolean;
+  showOptionPrices: boolean;
+  showItemNotes: boolean;
+  showOrderNotes: boolean;
+};
+
+export const DEFAULT_RECEIPT_SETTINGS: ReceiptSettings = {
+  showCustomerName: true,
+  showCustomerPhone: true,
+  showOptions: true,
+  showOptionPrices: true,
+  showItemNotes: true,
+  showOrderNotes: true,
+};
+
+// Stored as snake_case JSON; a missing key means "on" so tenants created before
+// the feature (and the `{}` column default) keep the full receipt.
+export function resolveReceiptSettings(raw: unknown): ReceiptSettings {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const on = (k: string) => o[k] !== false;
+  return {
+    showCustomerName: on("show_customer_name"),
+    showCustomerPhone: on("show_customer_phone"),
+    showOptions: on("show_options"),
+    showOptionPrices: on("show_option_prices"),
+    showItemNotes: on("show_item_notes"),
+    showOrderNotes: on("show_order_notes"),
+  };
+}
+
 export interface ReceiptOrder {
   number: string;
   created_at: string;
@@ -146,7 +181,10 @@ type ReceiptLine =
   | { kind: "text"; text: string; size: "normal" | "muted" }
   | { kind: "rule" };
 
-function buildReceiptLines(order: ReceiptOrder): ReceiptLine[] {
+function buildReceiptLines(
+  order: ReceiptOrder,
+  settings: ReceiptSettings = DEFAULT_RECEIPT_SETTINGS,
+): ReceiptLine[] {
   const lines: ReceiptLine[] = [];
   const addr = order.delivery_address;
 
@@ -158,8 +196,10 @@ function buildReceiptLines(order: ReceiptOrder): ReceiptLine[] {
     size: "muted",
   });
   lines.push({ kind: "rule" });
-  lines.push({ kind: "text", text: order.customer?.name || "אורח", size: "normal" });
-  if (order.customer?.phone) {
+  if (settings.showCustomerName) {
+    lines.push({ kind: "text", text: order.customer?.name || "אורח", size: "normal" });
+  }
+  if (settings.showCustomerPhone && order.customer?.phone) {
     lines.push({ kind: "text", text: order.customer.phone, size: "muted" });
   }
   if (order.method === "delivery") {
@@ -186,13 +226,17 @@ function buildReceiptLines(order: ReceiptOrder): ReceiptLine[] {
       left: formatPrice(it.total_price),
       size: "normal",
     });
-    for (const g of groupSelectedOptions(it.options, { withPrices: true })) {
-      if (g.group) lines.push({ kind: "text", text: `${g.group}:`, size: "muted" });
-      for (const label of g.items) {
-        lines.push({ kind: "text", text: `+ ${label}`, size: "muted" });
+    if (settings.showOptions) {
+      for (const g of groupSelectedOptions(it.options, { withPrices: settings.showOptionPrices })) {
+        if (g.group) lines.push({ kind: "text", text: `${g.group}:`, size: "muted" });
+        for (const label of g.items) {
+          lines.push({ kind: "text", text: `+ ${label}`, size: "muted" });
+        }
       }
     }
-    if (it.notes) lines.push({ kind: "text", text: `הערה: ${it.notes}`, size: "muted" });
+    if (settings.showItemNotes && it.notes) {
+      lines.push({ kind: "text", text: `הערה: ${it.notes}`, size: "muted" });
+    }
   }
 
   lines.push({ kind: "rule" });
@@ -225,7 +269,7 @@ function buildReceiptLines(order: ReceiptOrder): ReceiptLine[] {
     left: PAYMENT_METHOD_LABEL[order.payment_method] ?? order.payment_method,
     size: "muted",
   });
-  if (order.customer_notes) {
+  if (settings.showOrderNotes && order.customer_notes) {
     lines.push({ kind: "rule" });
     lines.push({ kind: "text", text: order.customer_notes, size: "muted" });
   }
@@ -238,8 +282,8 @@ function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-export function buildReceiptHtml(order: ReceiptOrder): string {
-  const body = buildReceiptLines(order)
+export function buildReceiptHtml(order: ReceiptOrder, settings?: ReceiptSettings): string {
+  const body = buildReceiptLines(order, settings)
     .map((l) => {
       switch (l.kind) {
         case "title":
@@ -370,8 +414,8 @@ function layoutReceipt(
   return y + MARGIN + 10;
 }
 
-export function renderReceiptCanvas(order: ReceiptOrder): HTMLCanvasElement {
-  const lines = buildReceiptLines(order);
+export function renderReceiptCanvas(order: ReceiptOrder, settings?: ReceiptSettings): HTMLCanvasElement {
+  const lines = buildReceiptLines(order, settings);
   const measure = document.createElement("canvas");
   measure.width = W;
   measure.height = 8;
@@ -464,8 +508,8 @@ export function consumePassPrntResult(): { ok: boolean; message: string } | null
 
 // ─── Epson (TM Print Assistant) ───────────────────────────────
 
-function printEpson(order: ReceiptOrder, onUnhandled?: () => void): void {
-  const canvas = renderReceiptCanvas(order);
+function printEpson(order: ReceiptOrder, onUnhandled?: () => void, settings?: ReceiptSettings): void {
+  const canvas = renderReceiptCanvas(order, settings);
   const raster = toBase64(canvasTo1bpp(canvas));
   const xml =
     `<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">` +
@@ -481,8 +525,8 @@ function printEpson(order: ReceiptOrder, onUnhandled?: () => void): void {
 
 // ─── Generic ESC/POS via RawBT (Android only) ─────────────────
 
-function printRawBt(order: ReceiptOrder, onUnhandled?: () => void): void {
-  const canvas = renderReceiptCanvas(order);
+function printRawBt(order: ReceiptOrder, onUnhandled?: () => void, settings?: ReceiptSettings): void {
+  const canvas = renderReceiptCanvas(order, settings);
   const raster = canvasTo1bpp(canvas);
   const widthBytes = W / 8;
 
@@ -508,9 +552,9 @@ function printRawBt(order: ReceiptOrder, onUnhandled?: () => void): void {
 // has no such receipt in the DOM, so for a one-tap print straight off a card
 // we render the standalone receipt HTML into a hidden iframe and print that -
 // no dependency on the page's own print stylesheet or layout.
-export function printReceiptIframe(order: ReceiptOrder): void {
+export function printReceiptIframe(order: ReceiptOrder, settings?: ReceiptSettings): void {
   if (typeof document === "undefined") return;
-  const html = buildReceiptHtml(order);
+  const html = buildReceiptHtml(order, settings);
   const iframe = document.createElement("iframe");
   iframe.setAttribute("aria-hidden", "true");
   iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
@@ -549,16 +593,17 @@ export function printReceipt(
   order: ReceiptOrder,
   printer: ReceiptPrinterType,
   onUnhandled?: () => void,
+  settings?: ReceiptSettings,
 ): void {
   switch (printer) {
     case "star":
-      openPassPrnt(buildReceiptHtml(order), onUnhandled);
+      openPassPrnt(buildReceiptHtml(order, settings), onUnhandled);
       break;
     case "epson":
-      printEpson(order, onUnhandled);
+      printEpson(order, onUnhandled, settings);
       break;
     case "escpos":
-      printRawBt(order, onUnhandled);
+      printRawBt(order, onUnhandled, settings);
       break;
     default:
       window.print();

@@ -58,6 +58,7 @@ export const PATCH = handler(async (req: Request) => {
       onboardingDismissedAt: body.onboarding_dismissed ? new Date() : undefined,
       dashboardVersion: body.dashboard_version,
       receiptPrinter: body.receipt_printer,
+      receiptSettings: body.receipt_settings,
       kioskWelcomeText: body.kiosk_welcome_text,
       kioskIdleSeconds: body.kiosk_idle_seconds,
       kioskCollectPhone: body.kiosk_collect_phone,

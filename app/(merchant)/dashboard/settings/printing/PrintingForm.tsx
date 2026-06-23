@@ -4,7 +4,25 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoCheck, IcoClose, IcoPrinter } from "@/components/shared/Icons";
 import { SettingsSaveBar } from "@/components/merchant/SettingsSaveBar";
-import type { ReceiptPrinterType } from "@/lib/receipt-print";
+import type { ReceiptPrinterType, ReceiptSettings } from "@/lib/receipt-print";
+
+const RECEIPT_FIELDS: Array<{ key: keyof ReceiptSettings; label: string }> = [
+  { key: "showCustomerName", label: "הצג שם לקוח" },
+  { key: "showCustomerPhone", label: "הצג טלפון לקוח" },
+  { key: "showOptions", label: "הצג תוספות ואפשרויות" },
+  { key: "showOptionPrices", label: "הצג מחיר ליד כל תוספת" },
+  { key: "showItemNotes", label: "הצג הערות לפריט" },
+  { key: "showOrderNotes", label: "הצג הערת הזמנה" },
+];
+
+const SETTINGS_API_KEY: Record<keyof ReceiptSettings, string> = {
+  showCustomerName: "show_customer_name",
+  showCustomerPhone: "show_customer_phone",
+  showOptions: "show_options",
+  showOptionPrices: "show_option_prices",
+  showItemNotes: "show_item_notes",
+  showOrderNotes: "show_order_notes",
+};
 
 interface PrinterOption {
   type: ReceiptPrinterType;
@@ -60,9 +78,16 @@ const APP_LINKS: Partial<Record<ReceiptPrinterType, AppLinks>> = {
   },
 };
 
-export function PrintingForm({ initial }: { initial: ReceiptPrinterType }) {
+export function PrintingForm({
+  initial,
+  initialSettings,
+}: {
+  initial: ReceiptPrinterType;
+  initialSettings: ReceiptSettings;
+}) {
   const router = useRouter();
   const [selected, setSelected] = useState<ReceiptPrinterType>(initial);
+  const [settings, setSettings] = useState<ReceiptSettings>(initialSettings);
   const [saving, setSaving] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [toast, setToast] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
@@ -71,10 +96,13 @@ export function PrintingForm({ initial }: { initial: ReceiptPrinterType }) {
     setSaving(true);
     setToast(null);
     try {
+      const receipt_settings = Object.fromEntries(
+        RECEIPT_FIELDS.map((f) => [SETTINGS_API_KEY[f.key], settings[f.key]]),
+      );
       const res = await fetch("/api/v1/merchant/tenant", {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ receipt_printer: selected }),
+        body: JSON.stringify({ receipt_printer: selected, receipt_settings }),
       });
       const data = (await res.json()) as { error?: { message?: string } };
       if (res.ok) {
@@ -156,6 +184,42 @@ export function PrintingForm({ initial }: { initial: ReceiptPrinterType }) {
               איך מחברים? הוראות התקנה
             </button>
           )}
+        </div>
+
+        <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
+          <div>
+            <h2 className="font-semibold text-base lg:text-lg">הגדרות בון</h2>
+            <p className="text-sm text-qf-mute mt-0.5">
+              בחרו מה יודפס על הבון. כברירת מחדל הכל מסומן - אפשר לבטל ולשמור.
+            </p>
+          </div>
+
+          <div className="divide-y divide-qf-line-soft">
+            {RECEIPT_FIELDS.map((f) => {
+              const on = settings[f.key];
+              return (
+                <button
+                  key={f.key}
+                  type="button"
+                  role="switch"
+                  aria-checked={on}
+                  onClick={() => setSettings((p) => ({ ...p, [f.key]: !p[f.key] }))}
+                  className="w-full flex items-center justify-between gap-3 py-3 text-start"
+                >
+                  <span className="text-sm font-medium">{f.label}</span>
+                  <span
+                    className={
+                      "w-5 h-5 rounded-md border-2 shrink-0 grid place-items-center transition " +
+                      (on ? "border-(--qf-primary) bg-(--qf-primary)" : "border-qf-line-dash")
+                    }
+                    aria-hidden
+                  >
+                    {on && <IcoCheck c="#fff" s={12} />}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 

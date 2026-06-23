@@ -12,8 +12,10 @@ import {
   printReceipt,
   printReceiptIframe,
   RECEIPT_PRINTER_LABEL,
+  DEFAULT_RECEIPT_SETTINGS,
   type ReceiptOrder,
   type ReceiptPrinterType,
+  type ReceiptSettings,
 } from "@/lib/receipt-print";
 import { OrderDrawer } from "@/components/merchant/OrderDrawer";
 import { ManualOrderModal } from "@/components/merchant/ManualOrderModal";
@@ -142,9 +144,11 @@ const PREVIOUS_STATUS: Partial<Record<Status, Status>> = {
 export function OrdersKanban({
   initial,
   receiptPrinter = "airprint",
+  receiptSettings = DEFAULT_RECEIPT_SETTINGS,
 }: {
   initial: OrderRow[];
   receiptPrinter?: ReceiptPrinterType;
+  receiptSettings?: ReceiptSettings;
 }) {
   const [orders, setOrders] = useState<OrderRow[]>(initial);
   // `now` stays null until after mount so SSR and the first client paint
@@ -487,13 +491,17 @@ export function OrdersKanban({
         return;
       }
       if (receiptPrinter === "airprint") {
-        printReceiptIframe(detail);
+        printReceiptIframe(detail, receiptSettings);
       } else {
-        printReceipt(detail, receiptPrinter, () =>
-          pushToast(
-            "err",
-            "אפליקציית ההדפסה לא נמצאה במכשיר. הוראות התקנה: הגדרות ← מדפסת קבלות.",
-          ),
+        printReceipt(
+          detail,
+          receiptPrinter,
+          () =>
+            pushToast(
+              "err",
+              "אפליקציית ההדפסה לא נמצאה במכשיר. הוראות התקנה: הגדרות ← מדפסת קבלות.",
+            ),
+          receiptSettings,
         );
       }
     } catch {
@@ -620,6 +628,7 @@ export function OrdersKanban({
         <OrderDrawer
           orderId={drawerOrderId}
           receiptPrinter={receiptPrinter}
+          receiptSettings={receiptSettings}
           onClose={() => setDrawerOrderId(null)}
           onAdvance={(id) => {
             const o = orders.find((x) => x.id === id);

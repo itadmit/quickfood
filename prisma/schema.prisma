@@ -370,6 +370,12 @@ model Tenant {
   // ESC/POS printer via the RawBT Android app.
   receiptPrinter String @default("airprint") @map("receipt_printer") @db.VarChar(10)
 
+  // What to print on the receipt. JSON of booleans (show_customer_name,
+  // show_customer_phone, show_options, show_option_prices, show_item_notes,
+  // show_order_notes). Empty default = every section on; resolveReceiptSettings
+  // fills missing keys as true so older tenants keep the full receipt.
+  receiptSettings Json @default("{}") @map("receipt_settings")
+
   // Reviews configuration
   reviewsEnabled      Boolean       @default(true) @map("reviews_enabled")
   reviewsPublic       Boolean       @default(true) @map("reviews_public")

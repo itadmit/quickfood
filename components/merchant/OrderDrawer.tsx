@@ -19,7 +19,9 @@ import { cn } from "@/lib/cn";
 import {
   printReceipt,
   groupSelectedOptions,
+  DEFAULT_RECEIPT_SETTINGS,
   type ReceiptPrinterType,
+  type ReceiptSettings,
 } from "@/lib/receipt-print";
 
 const EDITABLE_STATUSES = new Set([
@@ -104,11 +106,13 @@ export function OrderDrawer({
   onClose,
   onAdvance,
   receiptPrinter = "airprint",
+  receiptSettings = DEFAULT_RECEIPT_SETTINGS,
 }: {
   orderId: string;
   onClose: () => void;
   onAdvance: (id: string) => void;
   receiptPrinter?: ReceiptPrinterType;
+  receiptSettings?: ReceiptSettings;
 }) {
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -537,11 +541,15 @@ export function OrderDrawer({
               <button
                 type="button"
                 onClick={() =>
-                  printReceipt(order, receiptPrinter, () =>
-                    pushToast(
-                      "err",
-                      "אפליקציית ההדפסה לא נמצאה במכשיר. הוראות התקנה: הגדרות ← מדפסת קבלות.",
-                    ),
+                  printReceipt(
+                    order,
+                    receiptPrinter,
+                    () =>
+                      pushToast(
+                        "err",
+                        "אפליקציית ההדפסה לא נמצאה במכשיר. הוראות התקנה: הגדרות ← מדפסת קבלות.",
+                      ),
+                    receiptSettings,
                   )
                 }
                 className="px-3 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm inline-flex items-center gap-2"
@@ -631,7 +639,9 @@ export function OrderDrawer({
       />
       <Toast toast={toast} onDismiss={() => setToast(null)} />
 
-      {order && printMounted && createPortal(<PrintReceipt order={order} />, document.body)}
+      {order &&
+        printMounted &&
+        createPortal(<PrintReceipt order={order} settings={receiptSettings} />, document.body)}
     </div>
   );
 }
@@ -659,10 +669,10 @@ function DetailOptionGroups({ options }: { options: unknown }) {
 }
 
 // Same vertical layout for the printed receipt (uses the print stylesheet).
-function ReceiptOptionGroups({ options }: { options: unknown }) {
+function ReceiptOptionGroups({ options, withPrices }: { options: unknown; withPrices: boolean }) {
   return (
     <>
-      {groupSelectedOptions(options, { withPrices: true }).map((g, gi) => (
+      {groupSelectedOptions(options, { withPrices }).map((g, gi) => (
         <div key={gi}>
           {g.group && <div className="qf-pr-opt-group">{g.group}:</div>}
           {g.items.map((label, ii) => (
@@ -676,7 +686,7 @@ function ReceiptOptionGroups({ options }: { options: unknown }) {
   );
 }
 
-function PrintReceipt({ order }: { order: OrderDetail }) {
+function PrintReceipt({ order, settings }: { order: OrderDetail; settings: ReceiptSettings }) {
   const addr = order.delivery_address;
   return (
     <div className="qf-print-receipt">
@@ -686,8 +696,10 @@ function PrintReceipt({ order }: { order: OrderDetail }) {
         <span>{order.method === "delivery" ? "משלוח" : "איסוף"}</span>
       </div>
       <div className="qf-pr-rule" />
-      <div>{order.customer?.name || "אורח"}</div>
-      {order.customer?.phone && <div className="qf-pr-muted">{order.customer.phone}</div>}
+      {settings.showCustomerName && <div>{order.customer?.name || "אורח"}</div>}
+      {settings.showCustomerPhone && order.customer?.phone && (
+        <div className="qf-pr-muted">{order.customer.phone}</div>
+      )}
       {order.method === "delivery" && (addr || order.delivery_notes) && (
         <div className="qf-pr-muted" style={{ marginTop: "2pt" }}>
           {addr ? (
@@ -717,10 +729,14 @@ function PrintReceipt({ order }: { order: OrderDetail }) {
             </span>
             <span>{formatPrice(it.total_price)}</span>
           </div>
-          {Array.isArray(it.options) && (it.options as unknown[]).length > 0 && (
-            <ReceiptOptionGroups options={it.options} />
+          {settings.showOptions &&
+            Array.isArray(it.options) &&
+            (it.options as unknown[]).length > 0 && (
+              <ReceiptOptionGroups options={it.options} withPrices={settings.showOptionPrices} />
+            )}
+          {settings.showItemNotes && it.notes && (
+            <div className="qf-pr-muted">הערה: {it.notes}</div>
           )}
-          {it.notes && <div className="qf-pr-muted">הערה: {it.notes}</div>}
         </div>
       ))}
       <div className="qf-pr-rule" />
@@ -767,7 +783,7 @@ function PrintReceipt({ order }: { order: OrderDetail }) {
         <span>תשלום</span>
         <span>{order.payment_method}</span>
       </div>
-      {order.customer_notes && (
+      {settings.showOrderNotes && order.customer_notes && (
         <>
           <div className="qf-pr-rule" />
           <div className="qf-pr-muted">{order.customer_notes}</div>
