@@ -237,12 +237,45 @@ function AddDomainCard({
   return (
     <section className="rounded-3xl border-2 border-black bg-white shadow-[0_3px_0_#000] p-5 lg:p-7">
       <h2 className="text-xl font-black mb-1">חיבור דומיין</h2>
-      <p className="text-sm text-black/70 mb-5 leading-relaxed">
+      <p className="text-sm text-black/70 mb-3 leading-relaxed">
         רוצה שהחנות שלך תהיה זמינה בכתובת משלך (למשל{" "}
         <span className="font-mono font-bold">order.mypizza.co.il</span>) במקום{" "}
         <span className="font-mono">{fallbackUrl}</span>? הקלד את הדומיין כאן ונדריך אותך
         בהגדרת ה-DNS. ה-SSL מונפק אוטומטית.
       </p>
+      <div className="mb-5 rounded-xl border-2 border-black bg-[#fffbea] px-4 py-3 text-sm leading-relaxed">
+        <p className="font-bold">מחברים דומיין שכבר קיים בבעלותך - אנחנו לא מוכרים דומיינים.</p>
+        <p className="text-black/70 mt-1">
+          עדיין אין לך דומיין? אפשר לרכוש אחד אצל אחד מהספקים ואז לחזור לכאן לחבר אותו:{" "}
+          <a
+            href="https://www.godaddy.com"
+            target="_blank"
+            rel="noreferrer"
+            className="font-bold underline hover:text-black"
+          >
+            GoDaddy
+          </a>
+          {", "}
+          <a
+            href="https://www.box.co.il"
+            target="_blank"
+            rel="noreferrer"
+            className="font-bold underline hover:text-black"
+          >
+            box.co.il
+          </a>
+          {", "}
+          <a
+            href="https://www.mynames.co.il"
+            target="_blank"
+            rel="noreferrer"
+            className="font-bold underline hover:text-black"
+          >
+            mynames.co.il
+          </a>
+          .
+        </p>
+      </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
         <input
