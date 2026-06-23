@@ -180,7 +180,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       }
     }
 
-    const selectedOptions: Array<{ group_id: string; option_id: string; name: string; price_delta: number; half?: string }> = [];
+    const selectedOptions: Array<{ group_id: string; group_name: string; option_id: string; name: string; price_delta: number; half?: string }> = [];
     let optionsDelta = 0;
     const optionIds = new Set(line.option_ids ?? []);
     const placements = line.option_placements ?? {};
@@ -236,6 +236,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         const half = placements[o.id];
         selectedOptions.push({
           group_id: group.id,
+          group_name: fromSet?.name ?? group.name,
           option_id: o.id,
           name: o.name,
           price_delta: effectiveDelta,

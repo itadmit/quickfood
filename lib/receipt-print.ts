@@ -64,32 +64,69 @@ export interface ReceiptOrder {
 // Groups option list entries by (name, half) and renders as
 // "name (חצי א׳)" with " ×N" suffix when the same selection
 // appears more than once.
-export function formatSelectedOptions(options: unknown): string {
+type FormatOptionsOpts = { withPrices?: boolean };
+
+type StoredOpt = { name: string; half?: string; price_delta: number; count: number };
+
+// Renders the selected options/toppings grouped by their modifier group, e.g.
+// "הגדלה להמבורגר: הגדלה ל-440 גרם +₪30 · שינויים: ללא חסה". Options carrying a
+// group_name are grouped under it; legacy entries without one fall back to a
+// flat list. Split pizzas get "(חצי א׳/ב׳)" + "(שלם)" labels per group; passing
+// withPrices appends the +/- price delta (used on order detail + receipts).
+export function formatSelectedOptions(options: unknown, opts?: FormatOptionsOpts): string {
   if (!Array.isArray(options)) return "";
-  const list = options as Array<{ name?: string; half?: string }>;
-  // Only label whole toppings "(שלם)" when the item is actually split -
-  // i.e. at least one topping sits on a half. Otherwise a plain item's
-  // toppings would all get a noisy "(שלם)" suffix.
-  const isSplit = list.some((o) => o?.half === "left" || o?.half === "right");
-  const groups = new Map<string, { name: string; half?: string; count: number }>();
+  const list = options as Array<{
+    name?: string;
+    half?: string;
+    group_name?: string;
+    price_delta?: number;
+  }>;
+  const withPrices = opts?.withPrices ?? false;
+
+  const order: string[] = [];
+  const byGroup = new Map<string, Map<string, StoredOpt>>();
   for (const o of list) {
     if (!o?.name) continue;
+    const gname = typeof o.group_name === "string" ? o.group_name : "";
+    if (!byGroup.has(gname)) {
+      byGroup.set(gname, new Map());
+      order.push(gname);
+    }
+    const inner = byGroup.get(gname)!;
     const key = `${o.name}|${o.half ?? ""}`;
-    const existing = groups.get(key);
+    const existing = inner.get(key);
     if (existing) existing.count += 1;
-    else groups.set(key, { name: o.name, half: o.half, count: 1 });
+    else
+      inner.set(key, {
+        name: o.name,
+        half: o.half,
+        price_delta: Number(o.price_delta ?? 0) || 0,
+        count: 1,
+      });
   }
-  return Array.from(groups.values())
-    .map((g) => {
-      const base =
-        g.half === "left"
-          ? `${g.name} (חצי א׳)`
-          : g.half === "right"
-            ? `${g.name} (חצי ב׳)`
-            : isSplit
-              ? `${g.name} (שלם)`
-              : g.name;
-      return g.count > 1 ? `${base} ×${g.count}` : base;
+
+  const renderOpt = (g: StoredOpt, groupSplit: boolean): string => {
+    let base =
+      g.half === "left"
+        ? `${g.name} (חצי א׳)`
+        : g.half === "right"
+          ? `${g.name} (חצי ב׳)`
+          : groupSplit
+            ? `${g.name} (שלם)`
+            : g.name;
+    if (g.count > 1) base += ` ×${g.count}`;
+    if (withPrices && g.price_delta) {
+      base += ` ${g.price_delta > 0 ? "+" : "-"}${formatPrice(Math.abs(g.price_delta))}`;
+    }
+    return base;
+  };
+
+  return order
+    .map((gname) => {
+      const inner = Array.from(byGroup.get(gname)!.values());
+      const groupSplit = inner.some((g) => g.half === "left" || g.half === "right");
+      const rendered = inner.map((g) => renderOpt(g, groupSplit)).join(", ");
+      return gname ? `${gname}: ${rendered}` : rendered;
     })
     .join(" · ");
 }
@@ -142,7 +179,7 @@ function buildReceiptLines(order: ReceiptOrder): ReceiptLine[] {
       left: formatPrice(it.total_price),
       size: "normal",
     });
-    const opts = formatSelectedOptions(it.options);
+    const opts = formatSelectedOptions(it.options, { withPrices: true });
     if (opts) lines.push({ kind: "text", text: opts, size: "muted" });
     if (it.notes) lines.push({ kind: "text", text: `הערה: ${it.notes}`, size: "muted" });
   }

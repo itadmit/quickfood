@@ -418,7 +418,9 @@ export function OrderDrawer({
                           </div>
                           {it.size && <div className="text-xs text-qf-mute">{it.size}</div>}
                           {Array.isArray(it.options) && (it.options as unknown[]).length > 0 && (
-                            <div className="text-xs text-qf-mute">{formatSelectedOptions(it.options)}</div>
+                            <div className="text-xs text-qf-mute">
+                              {formatSelectedOptions(it.options, { withPrices: true })}
+                            </div>
                           )}
                           {it.notes && (
                             <div className="text-xs text-qf-yolk mt-0.5">הערה: {it.notes}</div>
@@ -678,7 +680,7 @@ function PrintReceipt({ order }: { order: OrderDetail }) {
             <span>{formatPrice(it.total_price)}</span>
           </div>
           {Array.isArray(it.options) && (it.options as unknown[]).length > 0 && (
-            <div className="qf-pr-muted">{formatSelectedOptions(it.options)}</div>
+            <div className="qf-pr-muted">{formatSelectedOptions(it.options, { withPrices: true })}</div>
           )}
           {it.notes && <div className="qf-pr-muted">הערה: {it.notes}</div>}
         </div>

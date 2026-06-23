@@ -23,7 +23,7 @@ export const ORDER_INCLUDE = {
 // "(חצי א׳/ב׳)" everywhere, and drops internal ids (group_id/option_id).
 export function serializeSelectedOptions(
   raw: unknown,
-): Array<{ name: string; price_delta: number; half?: "left" | "right" }> {
+): Array<{ name: string; price_delta: number; half?: "left" | "right"; group_name?: string }> {
   if (!Array.isArray(raw)) return [];
   return (raw as Array<Record<string, unknown>>)
     .map((o) => {
@@ -31,10 +31,19 @@ export function serializeSelectedOptions(
       if (!name) return null;
       const priceDelta = Number(o?.price_delta ?? 0) || 0;
       const half = o?.half === "left" || o?.half === "right" ? o.half : undefined;
-      return { name, price_delta: priceDelta, ...(half ? { half } : {}) };
+      const groupName = typeof o?.group_name === "string" && o.group_name ? o.group_name : undefined;
+      return {
+        name,
+        price_delta: priceDelta,
+        ...(half ? { half } : {}),
+        ...(groupName ? { group_name: groupName } : {}),
+      };
     })
     .filter(
-      (o): o is { name: string; price_delta: number; half?: "left" | "right" } => o !== null,
+      (
+        o,
+      ): o is { name: string; price_delta: number; half?: "left" | "right"; group_name?: string } =>
+        o !== null,
     );
 }
 
