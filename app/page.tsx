@@ -23,13 +23,14 @@ import {
   Sparkles,
   Leaf,
   Users,
+  Crown,
   type LucideIcon,
 } from "lucide-react";
 
 // Tight map for the WoltCard slots - extend here when a new section
 // needs an icon. Lucide gives consistent stroke + geometry which the
 // old hand-rolled FeatureIcon set didn't.
-type IconName = "store" | "flame" | "wallet" | "star" | "chat" | "chef" | "pizza" | "pin" | "heart" | "navigation" | "sparkles" | "leaf" | "users";
+type IconName = "store" | "flame" | "wallet" | "star" | "chat" | "chef" | "pizza" | "pin" | "heart" | "navigation" | "sparkles" | "leaf" | "users" | "crown";
 const ICONS: Record<IconName, LucideIcon> = {
   store: Store,
   flame: Flame,
@@ -44,6 +45,7 @@ const ICONS: Record<IconName, LucideIcon> = {
   sparkles: Sparkles,
   leaf: Leaf,
   users: Users,
+  crown: Crown,
 };
 import ItemCustomizerMockup from "./_components/ItemCustomizerMockup";
 import ScrollAnimations from "./_components/ScrollAnimations";
@@ -130,6 +132,7 @@ export default function LandingPage() {
       <SuitedFor />
       <WoltTeaser />
       <BornForFood />
+      <LoyaltyClub />
       <Features />
       <PrinterShowcase />
       <KioskSection />
@@ -518,6 +521,43 @@ function PrinterShowcase() {
 
 /* ─── PRODUCT SHOWCASE ──────────────────────────────────── */
 /* ─── FEATURES ────────────────────────────────────────── */
+/* Loyalty club - a flagship pillar, given its own full-width section right
+   after the "manage" block so it lands before the feature firehose. The
+   anchor card is the yellow `midnight` tone; the tier + mechanic cells reuse
+   the mini-grid so the rhythm matches the rest of the page. */
+function LoyaltyClub() {
+  return (
+    <section id="loyalty" className={styles.section}>
+      <div className={styles.container}>
+        <div className={styles.sectionEyebrow}>מועדון לקוחות</div>
+        <h2 className={styles.sectionTitle}>
+          הלקוחות שחוזרים הם הרווח האמיתי. <em>תן להם סיבה לחזור.</em>
+        </h2>
+
+        <div className={styles.qfoodStack}>
+          <WoltCard
+            tone="midnight"
+            layout="decor-start"
+            tag="חדש"
+            heading="מועדון לקוחות שעובד לבד - כל שקל הופך לנקודה."
+            body="כל מי שמזמין נכנס למעקב אוטומטית, צובר נקודות לפי כמה שקנה ומטפס במסלולים. טופס הצטרפות קופץ בכניסה לחנות, וצ׳קבוקס הצטרפות יושב בצ׳קאאוט - אתה מגדיר פעם אחת והמועדון רץ לבד."
+            icon="crown"
+          />
+        </div>
+
+        <div className={styles.miniGrid}>
+          <MiniCell tag="סילבר" title="המסלול הראשון" body="כל לקוח חדש נכנס לסילבר ומתחיל לצבור מהשקל הראשון. בלי כרטיסיות, בלי אפליקציה." />
+          <MiniCell tag="גולד" title="הקבועים שלך" body="חוצים את הסף ומטפסים לגולד אוטומטית. אתה רואה בדיוק מי הם ומה הם שווים לך." />
+          <MiniCell tag="פלטינה" title="השגרירים" body="הלקוחות הכי שווים שלך, במסלול הגבוה. אלה שמחזירים את ההשקעה פי כמה." />
+          <MiniCell tag="צבירה" title="כל שקל = נקודה" body="המנגנון הכי פשוט שיש. הנקודות נצברות לפי סכום הרכישות - בלי חישובים ובלי כאב ראש." />
+          <MiniCell tag="הצטרפות" title="פופאפ בכניסה + צ׳קבוקס בצ׳קאאוט" body="שני ערוצי גיוס מובנים: טופס קופץ בכניסה לחנות, וסימון מהיר בסיום ההזמנה. מסמנים ומצטרפים." />
+          <MiniCell tag="דיוור · בקרוב" title="הודעות ישר לחברי המועדון" body="דיוור ממוקד לפי מסלול - אימייל, SMS ווואטסאפ. נפתח בקרוב עם חבילות הדיוור." />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Features() {
   return (
     <section id="features" className={styles.section}>
