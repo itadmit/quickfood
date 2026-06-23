@@ -61,20 +61,39 @@ export interface ReceiptOrder {
   }>;
 }
 
-// Groups option list entries by (name, half) and renders as
-// "name (חצי א׳)" with " ×N" suffix when the same selection
-// appears more than once.
 type FormatOptionsOpts = { withPrices?: boolean };
 
 type StoredOpt = { name: string; half?: string; price_delta: number; count: number };
 
-// Renders the selected options/toppings grouped by their modifier group, e.g.
-// "הגדלה להמבורגר: הגדלה ל-440 גרם +₪30 · שינויים: ללא חסה". Options carrying a
-// group_name are grouped under it; legacy entries without one fall back to a
-// flat list. Split pizzas get "(חצי א׳/ב׳)" + "(שלם)" labels per group; passing
-// withPrices appends the +/- price delta (used on order detail + receipts).
-export function formatSelectedOptions(options: unknown, opts?: FormatOptionsOpts): string {
-  if (!Array.isArray(options)) return "";
+/** A modifier group + its chosen options, ready for vertical rendering. */
+export type OptionGroupDisplay = { group: string; items: string[] };
+
+function renderOptLabel(g: StoredOpt, groupSplit: boolean, withPrices: boolean): string {
+  let base =
+    g.half === "left"
+      ? `${g.name} (חצי א׳)`
+      : g.half === "right"
+        ? `${g.name} (חצי ב׳)`
+        : groupSplit
+          ? `${g.name} (שלם)`
+          : g.name;
+  if (g.count > 1) base += ` ×${g.count}`;
+  if (withPrices && g.price_delta) {
+    base += ` ${g.price_delta > 0 ? "+" : "-"}${formatPrice(Math.abs(g.price_delta))}`;
+  }
+  return base;
+}
+
+// Groups the selected options by their modifier group, deduping repeats into
+// "×N" and labelling pizza halves (חצי א׳/ב׳ + שלם). Returns structured groups
+// so callers can lay them out vertically (group header + one line per option);
+// formatSelectedOptions() flattens the same data to a single string for compact
+// surfaces. Entries with no group_name collapse under an empty group key.
+export function groupSelectedOptions(
+  options: unknown,
+  opts?: FormatOptionsOpts,
+): OptionGroupDisplay[] {
+  if (!Array.isArray(options)) return [];
   const list = options as Array<{
     name?: string;
     half?: string;
@@ -105,29 +124,17 @@ export function formatSelectedOptions(options: unknown, opts?: FormatOptionsOpts
       });
   }
 
-  const renderOpt = (g: StoredOpt, groupSplit: boolean): string => {
-    let base =
-      g.half === "left"
-        ? `${g.name} (חצי א׳)`
-        : g.half === "right"
-          ? `${g.name} (חצי ב׳)`
-          : groupSplit
-            ? `${g.name} (שלם)`
-            : g.name;
-    if (g.count > 1) base += ` ×${g.count}`;
-    if (withPrices && g.price_delta) {
-      base += ` ${g.price_delta > 0 ? "+" : "-"}${formatPrice(Math.abs(g.price_delta))}`;
-    }
-    return base;
-  };
+  return order.map((gname) => {
+    const inner = Array.from(byGroup.get(gname)!.values());
+    const groupSplit = inner.some((g) => g.half === "left" || g.half === "right");
+    return { group: gname, items: inner.map((g) => renderOptLabel(g, groupSplit, withPrices)) };
+  });
+}
 
-  return order
-    .map((gname) => {
-      const inner = Array.from(byGroup.get(gname)!.values());
-      const groupSplit = inner.some((g) => g.half === "left" || g.half === "right");
-      const rendered = inner.map((g) => renderOpt(g, groupSplit)).join(", ");
-      return gname ? `${gname}: ${rendered}` : rendered;
-    })
+// Flat single-string form (for compact cards: kanban, kitchen, ESC/POS line).
+export function formatSelectedOptions(options: unknown, opts?: FormatOptionsOpts): string {
+  return groupSelectedOptions(options, opts)
+    .map((g) => (g.group ? `${g.group}: ${g.items.join(", ")}` : g.items.join(", ")))
     .join(" · ");
 }
 
@@ -179,8 +186,12 @@ function buildReceiptLines(order: ReceiptOrder): ReceiptLine[] {
       left: formatPrice(it.total_price),
       size: "normal",
     });
-    const opts = formatSelectedOptions(it.options, { withPrices: true });
-    if (opts) lines.push({ kind: "text", text: opts, size: "muted" });
+    for (const g of groupSelectedOptions(it.options, { withPrices: true })) {
+      if (g.group) lines.push({ kind: "text", text: `${g.group}:`, size: "muted" });
+      for (const label of g.items) {
+        lines.push({ kind: "text", text: `+ ${label}`, size: "muted" });
+      }
+    }
     if (it.notes) lines.push({ kind: "text", text: `הערה: ${it.notes}`, size: "muted" });
   }
 
@@ -489,6 +500,47 @@ function printRawBt(order: ReceiptOrder, onUnhandled?: () => void): void {
   const b64 = toBase64(new Uint8Array(chunks));
   const url = `intent:base64,${b64}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
   navigateToApp(url, onUnhandled);
+}
+
+// ─── AirPrint via hidden iframe ───────────────────────────────
+// The OS print path normally relies on a <PrintReceipt> mounted in the page
+// plus the print stylesheet (that's how OrderDrawer prints). The kanban card
+// has no such receipt in the DOM, so for a one-tap print straight off a card
+// we render the standalone receipt HTML into a hidden iframe and print that -
+// no dependency on the page's own print stylesheet or layout.
+export function printReceiptIframe(order: ReceiptOrder): void {
+  if (typeof document === "undefined") return;
+  const html = buildReceiptHtml(order);
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("aria-hidden", "true");
+  iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+  document.body.appendChild(iframe);
+  const doc = iframe.contentWindow?.document;
+  if (!doc) {
+    iframe.remove();
+    return;
+  }
+  doc.open();
+  doc.write(html);
+  doc.close();
+  const win = iframe.contentWindow!;
+  let removed = false;
+  const cleanup = () => {
+    if (removed) return;
+    removed = true;
+    iframe.remove();
+  };
+  win.onafterprint = () => window.setTimeout(cleanup, 500);
+  window.setTimeout(() => {
+    try {
+      win.focus();
+      win.print();
+    } catch {
+      cleanup();
+    }
+    // Safari/Firefox don't always fire onafterprint - drop the iframe anyway.
+    window.setTimeout(cleanup, 60_000);
+  }, 150);
 }
 
 // ─── Dispatch ─────────────────────────────────────────────────

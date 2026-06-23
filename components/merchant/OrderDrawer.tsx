@@ -18,7 +18,7 @@ import { formatPrice, formatDateTime, formatRelativeMinutes } from "@/lib/format
 import { cn } from "@/lib/cn";
 import {
   printReceipt,
-  formatSelectedOptions,
+  groupSelectedOptions,
   type ReceiptPrinterType,
 } from "@/lib/receipt-print";
 
@@ -418,9 +418,7 @@ export function OrderDrawer({
                           </div>
                           {it.size && <div className="text-xs text-qf-mute">{it.size}</div>}
                           {Array.isArray(it.options) && (it.options as unknown[]).length > 0 && (
-                            <div className="text-xs text-qf-mute">
-                              {formatSelectedOptions(it.options, { withPrices: true })}
-                            </div>
+                            <DetailOptionGroups options={it.options} />
                           )}
                           {it.notes && (
                             <div className="text-xs text-qf-yolk mt-0.5">הערה: {it.notes}</div>
@@ -638,6 +636,46 @@ export function OrderDrawer({
   );
 }
 
+// On-screen order detail: modifier group as a header line, each chosen option
+// on its own indented "+ …" line (instead of one long comma-joined paragraph).
+function DetailOptionGroups({ options }: { options: unknown }) {
+  return (
+    <div className="mt-0.5 space-y-1">
+      {groupSelectedOptions(options, { withPrices: true }).map((g, gi) => (
+        <div key={gi}>
+          {g.group && <div className="text-xs text-qf-mute font-medium">{g.group}:</div>}
+          <div className={g.group ? "ps-2.5" : ""}>
+            {g.items.map((label, ii) => (
+              <div key={ii} className="text-xs text-qf-mute">
+                {g.group ? "+ " : ""}
+                {label}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Same vertical layout for the printed receipt (uses the print stylesheet).
+function ReceiptOptionGroups({ options }: { options: unknown }) {
+  return (
+    <>
+      {groupSelectedOptions(options, { withPrices: true }).map((g, gi) => (
+        <div key={gi}>
+          {g.group && <div className="qf-pr-opt-group">{g.group}:</div>}
+          {g.items.map((label, ii) => (
+            <div key={ii} className="qf-pr-opt">
+              + {label}
+            </div>
+          ))}
+        </div>
+      ))}
+    </>
+  );
+}
+
 function PrintReceipt({ order }: { order: OrderDetail }) {
   const addr = order.delivery_address;
   return (
@@ -680,7 +718,7 @@ function PrintReceipt({ order }: { order: OrderDetail }) {
             <span>{formatPrice(it.total_price)}</span>
           </div>
           {Array.isArray(it.options) && (it.options as unknown[]).length > 0 && (
-            <div className="qf-pr-muted">{formatSelectedOptions(it.options, { withPrices: true })}</div>
+            <ReceiptOptionGroups options={it.options} />
           )}
           {it.notes && <div className="qf-pr-muted">הערה: {it.notes}</div>}
         </div>
