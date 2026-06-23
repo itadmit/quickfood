@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { IcoClock, IcoPhone, IcoPrinter, IcoFlame, IcoRefresh, IcoUndo, IcoClose } from "@/components/shared/Icons";
+import { IcoClock, IcoPhone, IcoPrinter, IcoFlame, IcoRefresh, IcoUndo, IcoClose, IcoBell, IcoBellOff } from "@/components/shared/Icons";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -93,6 +93,36 @@ const COLUMNS: Array<{
 
 const SLA_MINUTES_BEFORE_LATE = 15;
 
+// A "new" order (pending / confirmed - the first column) that the merchant
+// hasn't picked up yet keeps nagging: every NUDGE_INTERVAL_MS the card wiggles
+// side-to-side and the chime replays, until they either advance it out of the
+// column or tap "turn off nudge". Dismissals live per-device in localStorage so
+// a tab refresh doesn't restart the nagging on already-seen orders.
+const NUDGE_INTERVAL_MS = 120_000;
+const NUDGE_SHAKE_MS = 900;
+const NUDGE_DISMISSED_KEY = "qf_merchant_nudge_dismissed";
+const NEW_COLUMN_STATUSES: Status[] = ["pending", "confirmed"];
+
+function loadDismissedNudges(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = window.localStorage.getItem(NUDGE_DISMISSED_KEY);
+    const arr = raw ? JSON.parse(raw) : null;
+    return Array.isArray(arr) ? new Set(arr.filter((x) => typeof x === "string")) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveDismissedNudges(ids: Set<string>) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(NUDGE_DISMISSED_KEY, JSON.stringify([...ids]));
+  } catch {
+    /* ignore */
+  }
+}
+
 // Reverse map for the "חזרה שלב" undo button on each card. Only states
 // past the "new orders" column have a meaningful previous - going from
 // confirmed back to pending just un-accepts the order, which the merchant
@@ -123,6 +153,82 @@ export function OrdersKanban({
     setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), 30_000);
     return () => clearInterval(id);
+  }, []);
+
+  // Per-card nudge state. `dismissedNudges` is hydrated from localStorage after
+  // mount (empty on the server so SSR and first paint agree). `shakingIds` holds
+  // the ids currently mid-wiggle - added on each nudge tick, cleared once the
+  // animation finishes.
+  const [dismissedNudges, setDismissedNudges] = useState<Set<string>>(() => new Set());
+  const [shakingIds, setShakingIds] = useState<Set<string>>(() => new Set());
+
+  useEffect(() => {
+    setDismissedNudges(loadDismissedNudges());
+  }, []);
+
+  // The interval is set up once; it reads the latest orders/dismissals through
+  // refs so the 2-minute clock isn't reset on every refresh() or 30s now-tick.
+  const ordersRef = useRef(orders);
+  ordersRef.current = orders;
+  const dismissedRef = useRef(dismissedNudges);
+  dismissedRef.current = dismissedNudges;
+  const shakeTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      const dueIds = ordersRef.current
+        .filter((o) => NEW_COLUMN_STATUSES.includes(o.status) && !dismissedRef.current.has(o.id))
+        .map((o) => o.id);
+      if (dueIds.length === 0) return;
+      setShakingIds(new Set(dueIds));
+      // Replay the selected chime - NewOrderChime listens on this and honours
+      // the per-device mute toggle, so a muted merchant gets the wiggle only.
+      try {
+        window.dispatchEvent(new Event("qf:new-order"));
+      } catch {
+        /* ignore */
+      }
+      if (shakeTimerRef.current != null) window.clearTimeout(shakeTimerRef.current);
+      shakeTimerRef.current = window.setTimeout(() => setShakingIds(new Set()), NUDGE_SHAKE_MS);
+    }, NUDGE_INTERVAL_MS);
+    return () => {
+      window.clearInterval(id);
+      if (shakeTimerRef.current != null) window.clearTimeout(shakeTimerRef.current);
+    };
+  }, []);
+
+  // Drop dismissals for orders that have left the active board so localStorage
+  // doesn't accumulate stale ids forever.
+  useEffect(() => {
+    setDismissedNudges((prev) => {
+      if (prev.size === 0) return prev;
+      const activeIds = new Set(orders.map((o) => o.id));
+      let changed = false;
+      const next = new Set<string>();
+      for (const dismissedId of prev) {
+        if (activeIds.has(dismissedId)) next.add(dismissedId);
+        else changed = true;
+      }
+      if (!changed) return prev;
+      saveDismissedNudges(next);
+      return next;
+    });
+  }, [orders]);
+
+  const toggleNudge = useCallback((orderId: string) => {
+    setDismissedNudges((prev) => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      saveDismissedNudges(next);
+      return next;
+    });
+    setShakingIds((prev) => {
+      if (!prev.has(orderId)) return prev;
+      const next = new Set(prev);
+      next.delete(orderId);
+      return next;
+    });
   }, []);
 
   // Track orders the user just optimistically advanced. When the SSE
@@ -262,6 +368,10 @@ export function OrdersKanban({
         void refresh();
       });
       es.addEventListener("order.status_changed", () => void refresh());
+      // Refund/cancel writes an orderEvent of type "refunded" (not
+      // status_changed), so without this listener a cancelled order would linger
+      // on the board until the next reconnect/refocus refresh.
+      es.addEventListener("order.refunded", () => void refresh());
       es.onerror = () => {
         es.close();
         esRef.current = null;
@@ -447,6 +557,9 @@ export function OrdersKanban({
             key={col.title}
             {...col}
             now={now}
+            shakingIds={shakingIds}
+            dismissedNudges={dismissedNudges}
+            onToggleNudge={toggleNudge}
             onAdvance={handleAdvance}
             onSelect={(id) => setDrawerOrderId(id)}
             onHide={hideFromKanban}
@@ -493,6 +606,9 @@ function Column({
   next,
   actionLabel,
   now,
+  shakingIds,
+  dismissedNudges,
+  onToggleNudge,
   onAdvance,
   onSelect,
   onHide,
@@ -504,6 +620,9 @@ function Column({
   next: Status;
   actionLabel: string;
   now: number | null;
+  shakingIds: Set<string>;
+  dismissedNudges: Set<string>;
+  onToggleNudge: (id: string) => void;
   onAdvance: (id: string, to: Status | "delivered") => void;
   onSelect: (id: string) => void;
   onHide: (id: string) => void;
@@ -548,6 +667,9 @@ function Column({
                       : actionLabel
               }
               now={now}
+              shaking={shakingIds.has(o.id)}
+              nudgeDismissed={dismissedNudges.has(o.id)}
+              onToggleNudge={onToggleNudge}
               onAdvance={onAdvance}
               onSelect={onSelect}
               onHide={onHide}
@@ -564,6 +686,9 @@ function Card({
   next,
   actionLabel,
   now,
+  shaking,
+  nudgeDismissed,
+  onToggleNudge,
   onAdvance,
   onSelect,
   onHide,
@@ -573,10 +698,14 @@ function Card({
   actionLabel: string;
   /** `null` until the client-side timer has ticked at least once - keeps SSR and first paint identical. */
   now: number | null;
+  shaking: boolean;
+  nudgeDismissed: boolean;
+  onToggleNudge: (id: string) => void;
   onAdvance: (id: string, to: Status | "delivered") => void;
   onSelect: (id: string) => void;
   onHide: (id: string) => void;
 }) {
+  const nudgeable = NEW_COLUMN_STATUSES.includes(order.status);
   const elapsedMin =
     now != null ? Math.floor((now - new Date(order.createdAt).getTime()) / 60_000) : null;
   const isLate =
@@ -590,6 +719,7 @@ function Card({
       className={cn(
         "rounded-xl border bg-white p-3 space-y-2.5 transition cursor-pointer hover:border-(--qf-primary)",
         isLate ? "border-qf-tomato/60 ring-1 ring-qf-tomato/30" : "border-qf-line-dash",
+        shaking && "animate-qf-nudge-shake",
       )}
     >
       <header className="flex items-center justify-between gap-2">
@@ -600,6 +730,29 @@ function Card({
             paymentStatus={order.paymentStatus}
             late={isLate}
           />
+          {nudgeable && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleNudge(order.id);
+              }}
+              title={nudgeDismissed ? "נודניק כבוי - לחץ להחזרת התזכורת" : "כבה נודניק - הפסק תזכורת לכרטיס הזה"}
+              aria-label={nudgeDismissed ? "הפעל נודניק" : "כבה נודניק"}
+              className={cn(
+                "w-6 h-6 grid place-items-center rounded-md transition",
+                nudgeDismissed
+                  ? "text-qf-mute hover:text-qf-ink hover:bg-qf-line-soft"
+                  : "text-qf-green-deep hover:bg-qf-green-soft",
+              )}
+            >
+              {nudgeDismissed ? (
+                <IcoBellOff s={13} c="currentColor" />
+              ) : (
+                <IcoBell s={13} c="currentColor" />
+              )}
+            </button>
+          )}
           <button
             type="button"
             onClick={(e) => {
