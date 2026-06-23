@@ -164,6 +164,18 @@ export const IcoBell = ({ c = "#11231a", s = 18, className }: IconProps) => (
   </svg>
 );
 
+export const IcoBellOff = ({ c = "#11231a", s = 18, className }: IconProps) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
+    <path
+      d="M6 9a6 6 0 0110-4.3M18 9c0 5 2 6 2 6H8M10 19a2 2 0 004 0M4 4l16 16"
+      stroke={c}
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 export const IcoSparkle = ({ c = "#11231a", s = 18, className }: IconProps) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className={className}>
     <path

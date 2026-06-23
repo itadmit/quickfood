@@ -2,13 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { IcoClock, IcoPhone, IcoPrinter, IcoFlame, IcoRefresh, IcoUndo, IcoClose, IcoBell, IcoBellOff } from "@/components/shared/Icons";
+import { IcoClock, IcoPrinter, IcoFlame, IcoRefresh, IcoUndo, IcoClose, IcoBell, IcoBellOff } from "@/components/shared/Icons";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import {
   consumePassPrntResult,
   formatSelectedOptions,
+  printReceipt,
+  printReceiptIframe,
+  RECEIPT_PRINTER_LABEL,
+  type ReceiptOrder,
   type ReceiptPrinterType,
 } from "@/lib/receipt-print";
 import { OrderDrawer } from "@/components/merchant/OrderDrawer";
@@ -161,6 +165,7 @@ export function OrdersKanban({
   // animation finishes.
   const [dismissedNudges, setDismissedNudges] = useState<Set<string>>(() => new Set());
   const [shakingIds, setShakingIds] = useState<Set<string>>(() => new Set());
+  const [printingIds, setPrintingIds] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     setDismissedNudges(loadDismissedNudges());
@@ -169,10 +174,12 @@ export function OrdersKanban({
   // The interval is set up once; it reads the latest orders/dismissals through
   // refs so the 2-minute clock isn't reset on every refresh() or 30s now-tick.
   const ordersRef = useRef(orders);
-  ordersRef.current = orders;
   const dismissedRef = useRef(dismissedNudges);
-  dismissedRef.current = dismissedNudges;
   const shakeTimerRef = useRef<number | null>(null);
+  useEffect(() => {
+    ordersRef.current = orders;
+    dismissedRef.current = dismissedNudges;
+  }, [orders, dismissedNudges]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -461,6 +468,45 @@ export function OrdersKanban({
     }
   }
 
+  async function printOrder(orderId: string) {
+    if (printingIds.has(orderId)) return;
+    setPrintingIds((prev) => new Set(prev).add(orderId));
+    try {
+      // The card only carries a slim OrderRow; the receipt needs the full
+      // breakdown (fees, address, options), so pull the same detail the
+      // drawer uses, then hand it to the configured printer.
+      const res = await fetch(`/api/v1/customer/orders/${orderId}`, { cache: "no-store" });
+      if (!res.ok) {
+        pushToast("err", "טעינת ההזמנה להדפסה נכשלה");
+        return;
+      }
+      const data = await res.json();
+      const detail = (data.order as ReceiptOrder | null) ?? null;
+      if (!detail) {
+        pushToast("err", "ההזמנה לא נמצאה");
+        return;
+      }
+      if (receiptPrinter === "airprint") {
+        printReceiptIframe(detail);
+      } else {
+        printReceipt(detail, receiptPrinter, () =>
+          pushToast(
+            "err",
+            "אפליקציית ההדפסה לא נמצאה במכשיר. הוראות התקנה: הגדרות ← מדפסת קבלות.",
+          ),
+        );
+      }
+    } catch {
+      pushToast("err", "אין חיבור לשרת - ההדפסה נכשלה");
+    } finally {
+      setPrintingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
+    }
+  }
+
   function handleAdvance(orderId: string, to: Status | "delivered") {
     if (to === "out_for_delivery") {
       const o = orders.find((x) => x.id === orderId);
@@ -559,10 +605,13 @@ export function OrdersKanban({
             now={now}
             shakingIds={shakingIds}
             dismissedNudges={dismissedNudges}
+            printingIds={printingIds}
+            printerLabel={RECEIPT_PRINTER_LABEL[receiptPrinter]}
             onToggleNudge={toggleNudge}
             onAdvance={handleAdvance}
             onSelect={(id) => setDrawerOrderId(id)}
             onHide={hideFromKanban}
+            onPrint={printOrder}
           />
         ))}
       </div>
@@ -608,10 +657,13 @@ function Column({
   now,
   shakingIds,
   dismissedNudges,
+  printingIds,
+  printerLabel,
   onToggleNudge,
   onAdvance,
   onSelect,
   onHide,
+  onPrint,
 }: {
   title: string;
   subtitle: string;
@@ -622,10 +674,13 @@ function Column({
   now: number | null;
   shakingIds: Set<string>;
   dismissedNudges: Set<string>;
+  printingIds: Set<string>;
+  printerLabel: string;
   onToggleNudge: (id: string) => void;
   onAdvance: (id: string, to: Status | "delivered") => void;
   onSelect: (id: string) => void;
   onHide: (id: string) => void;
+  onPrint: (id: string) => void;
 }) {
   return (
     <section className="bg-white rounded-2xl border border-qf-line-dash p-3 min-h-[40vh] md:min-h-[60vh] flex flex-col">
@@ -669,10 +724,13 @@ function Column({
               now={now}
               shaking={shakingIds.has(o.id)}
               nudgeDismissed={dismissedNudges.has(o.id)}
+              printing={printingIds.has(o.id)}
+              printerLabel={printerLabel}
               onToggleNudge={onToggleNudge}
               onAdvance={onAdvance}
               onSelect={onSelect}
               onHide={onHide}
+              onPrint={onPrint}
             />
           ))
         )}
@@ -688,10 +746,13 @@ function Card({
   now,
   shaking,
   nudgeDismissed,
+  printing,
+  printerLabel,
   onToggleNudge,
   onAdvance,
   onSelect,
   onHide,
+  onPrint,
 }: {
   order: OrderRow;
   next: Status;
@@ -700,10 +761,13 @@ function Card({
   now: number | null;
   shaking: boolean;
   nudgeDismissed: boolean;
+  printing: boolean;
+  printerLabel: string;
   onToggleNudge: (id: string) => void;
   onAdvance: (id: string, to: Status | "delivered") => void;
   onSelect: (id: string) => void;
   onHide: (id: string) => void;
+  onPrint: (id: string) => void;
 }) {
   const nudgeable = NEW_COLUMN_STATUSES.includes(order.status);
   const elapsedMin =
@@ -812,6 +876,22 @@ function Card({
       <footer className="flex items-center justify-between pt-1 gap-2">
         <div className="text-sm font-semibold tnum">{formatPrice(order.total)}</div>
         <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPrint(order.id);
+            }}
+            disabled={printing}
+            title={`הדפסת קבלה · ${printerLabel}`}
+            aria-label="הדפסת קבלה"
+            className={cn(
+              "inline-flex w-8 h-8 items-center justify-center rounded-lg border border-qf-line-dash text-qf-mute hover:text-qf-ink hover:border-qf-ink/40 transition disabled:opacity-50",
+              printing && "animate-qf-pulse",
+            )}
+          >
+            <IcoPrinter s={14} />
+          </button>
           {PREVIOUS_STATUS[order.status] && (
             <button
               type="button"
@@ -839,17 +919,6 @@ function Card({
           </button>
         </div>
       </footer>
-
-      {order.customerPhone && (
-        <a
-          href={`tel:${order.customerPhone}`}
-          onClick={(e) => e.stopPropagation()}
-          className="flex items-center gap-1.5 text-xs text-qf-mute hover:text-qf-ink"
-          dir="ltr"
-        >
-          <IcoPhone c="#7c8a82" s={12} /> {order.customerPhone}
-        </a>
-      )}
     </article>
   );
 }

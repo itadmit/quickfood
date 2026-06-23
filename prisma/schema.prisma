@@ -286,10 +286,11 @@ model Tenant {
   defaultPaymentMethod PaymentMethod? @map("default_payment_method")
   allowedOrigins       String[]       @default([]) @map("allowed_origins")
 
-  // Checkout configuration. When false (default) the post-order screen is a
-  // simple e-commerce "thank you" receipt. When true it also renders the live
-  // order tracking (ETA, status timeline, SSE updates, branch contact).
-  checkoutShowTracking Boolean @default(false) @map("checkout_show_tracking")
+  // Checkout configuration. When true (default) the post-order screen renders
+  // the live order tracking (ETA, status timeline, SSE updates, branch
+  // contact). Merchants can opt out in Settings → Checkout, leaving a simple
+  // e-commerce "thank you" receipt.
+  checkoutShowTracking Boolean @default(true) @map("checkout_show_tracking")
 
   // When false, the customer can only order "as soon as possible" - the
   // schedule-for-later section is hidden from checkout. Useful for fast-food
