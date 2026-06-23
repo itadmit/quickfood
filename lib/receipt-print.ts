@@ -179,6 +179,8 @@ type ReceiptLine =
   | { kind: "title"; text: string }
   | { kind: "row"; right: string; left?: string; size: "normal" | "muted" | "total" }
   | { kind: "text"; text: string; size: "normal" | "muted" }
+  | { kind: "group"; text: string }
+  | { kind: "opt"; text: string }
   | { kind: "rule" };
 
 function buildReceiptLines(
@@ -228,9 +230,9 @@ function buildReceiptLines(
     });
     if (settings.showOptions) {
       for (const g of groupSelectedOptions(it.options, { withPrices: settings.showOptionPrices })) {
-        if (g.group) lines.push({ kind: "text", text: `${g.group}:`, size: "muted" });
+        if (g.group) lines.push({ kind: "group", text: `${g.group}:` });
         for (const label of g.items) {
-          lines.push({ kind: "text", text: `+ ${label}`, size: "muted" });
+          lines.push({ kind: "opt", text: `+ ${label}` });
         }
       }
     }
@@ -290,8 +292,12 @@ export function buildReceiptHtml(order: ReceiptOrder, settings?: ReceiptSettings
           return `<h1>${esc(l.text)}</h1>`;
         case "rule":
           return `<div class="rule"></div>`;
+        case "group":
+          return `<div class="grp">${esc(l.text)}</div>`;
+        case "opt":
+          return `<div class="opt">${esc(l.text)}</div>`;
         case "text":
-          return `<div class="${l.size === "muted" ? "muted" : "row"}">${esc(l.text)}</div>`;
+          return `<div class="${l.size === "muted" ? "muted" : ""}">${esc(l.text)}</div>`;
         case "row":
           return `<div class="row ${l.size === "total" ? "total" : l.size === "muted" ? "muted" : ""}"><span>${esc(
             l.right,
@@ -300,19 +306,27 @@ export function buildReceiptHtml(order: ReceiptOrder, settings?: ReceiptSettings
     })
     .join("\n");
 
+  // Mirrors the .qf-print-receipt rules in globals.css so the kanban one-tap
+  // print (this standalone iframe) matches the order-drawer print exactly:
+  // 72mm content centred on the 80mm page, bold group headers, table-laid rows.
   return `<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8"><style>
-body{margin:0;padding:8px 4px;font-family:-apple-system,sans-serif;color:#000;width:568px}
-h1{font-size:44px;margin:0 0 4px;text-align:center}
-.row{display:flex;justify-content:space-between;gap:12px;font-size:27px;line-height:1.35}
-.row span:first-child{word-break:break-word}
-.row span:last-child{white-space:nowrap}
-.muted{font-size:24px;line-height:1.35}
-.muted span{font-size:24px}
-.rule{border-top:3px dashed #000;margin:10px 0}
-.total{font-size:36px;font-weight:bold}
-.total span{font-size:36px}
+@page{size:80mm auto;margin:0}
+html,body{margin:0}
+.r{width:70mm;max-width:70mm;box-sizing:border-box;padding:2mm;margin:0 8mm 0 2mm;color:#000;background:#fff;font-family:ui-monospace,Menlo,Consolas,monospace,Arial,sans-serif;font-size:11pt;line-height:1.35;direction:rtl}
+h1{font-size:16pt;font-weight:800;text-align:center;margin:0 0 4pt}
+.rule{border-top:1px dashed #000;margin:4pt 0}
+.row{display:table;width:100%}
+.row>span{display:table-cell;vertical-align:top}
+.row>span:first-child{text-align:right}
+.row>span:last-child{text-align:left;white-space:nowrap;width:1%;padding-right:4pt}
+.muted{font-size:9pt}
+.total{font-size:14pt;font-weight:800}
+.grp{font-size:10.5pt;font-weight:800;margin-top:5pt;margin-bottom:1pt}
+.opt{font-size:9pt;padding-inline-start:8pt}
 </style></head><body>
+<div class="r">
 ${body}
+</div>
 </body></html>`;
 }
 
@@ -326,8 +340,10 @@ const FONTS = {
   normal: "27px -apple-system, sans-serif",
   muted: "24px -apple-system, sans-serif",
   total: "bold 36px -apple-system, sans-serif",
+  group: "bold 28px -apple-system, sans-serif",
 };
-const LINE_H = { title: 56, normal: 38, muted: 33, total: 48 };
+const LINE_H = { title: 56, normal: 38, muted: 33, total: 48, group: 42 };
+const OPT_INDENT = 18;
 
 function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
   const words = text.split(/\s+/).filter(Boolean);
@@ -389,6 +405,29 @@ function layoutReceipt(
           ctx.fillText(part, W - MARGIN, y);
         }
         y += lh;
+      }
+      continue;
+    }
+    if (l.kind === "group") {
+      ctx.font = FONTS.group;
+      y += 4; // a touch of top spacing, mirroring the HTML margin
+      for (const part of wrapText(ctx, l.text, W - MARGIN * 2)) {
+        if (draw) {
+          ctx.textAlign = "right";
+          ctx.fillText(part, W - MARGIN, y);
+        }
+        y += LINE_H.group;
+      }
+      continue;
+    }
+    if (l.kind === "opt") {
+      ctx.font = FONTS.muted;
+      for (const part of wrapText(ctx, l.text, W - MARGIN * 2 - OPT_INDENT)) {
+        if (draw) {
+          ctx.textAlign = "right";
+          ctx.fillText(part, W - MARGIN - OPT_INDENT, y);
+        }
+        y += LINE_H.muted;
       }
       continue;
     }
