@@ -464,13 +464,16 @@ label[for][class*="shadow-[0_"] {
      own indented line - keeps long topping lists readable instead of one
      wrapped paragraph. */
   .qf-print-receipt .qf-pr-opt-group {
-    font-size: 9pt;
-    font-weight: 700;
-    margin-top: 2pt;
+    font-size: 10.5pt;
+    font-weight: 800;
+    margin-top: 5pt;
+    margin-bottom: 1pt;
+    text-decoration: underline;
+    text-underline-offset: 2pt;
   }
   .qf-print-receipt .qf-pr-opt {
     font-size: 9pt;
-    padding-inline-start: 6pt;
+    padding-inline-start: 8pt;
   }
   .no-print {
     display: none !important;

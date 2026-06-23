@@ -650,10 +650,12 @@ export function OrderDrawer({
 // on its own indented "+ …" line (instead of one long comma-joined paragraph).
 function DetailOptionGroups({ options }: { options: unknown }) {
   return (
-    <div className="mt-0.5 space-y-1">
+    <div className="mt-1 space-y-1.5">
       {groupSelectedOptions(options, { withPrices: true }).map((g, gi) => (
         <div key={gi}>
-          {g.group && <div className="text-xs text-qf-mute font-medium">{g.group}:</div>}
+          {g.group && (
+            <div className="text-xs font-semibold text-qf-ink">{g.group}:</div>
+          )}
           <div className={g.group ? "ps-2.5" : ""}>
             {g.items.map((label, ii) => (
               <div key={ii} className="text-xs text-qf-mute">
