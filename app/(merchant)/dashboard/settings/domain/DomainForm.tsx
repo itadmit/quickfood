@@ -288,7 +288,7 @@ function AddDomainCard({
           onKeyDown={(e) => {
             if (e.key === "Enter" && input.trim()) add();
           }}
-          placeholder="order.mypizza.co.il"
+          placeholder="mypizza.co.il"
           dir="ltr"
           className="flex-1 rounded-xl border-2 border-black px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[#F8CB1E]"
         />
