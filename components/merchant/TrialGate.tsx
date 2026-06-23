@@ -7,7 +7,10 @@ import { IcoCreditCard, IcoArrowLeft } from "@/components/shared/Icons";
 /**
  * Full-screen lock that takes over the dashboard when the local 7-day trial
  * has expired and the merchant hasn't saved a payment method yet. Allowed to
- * pass through on /dashboard/billing so the merchant can complete payment.
+ * pass through on /dashboard/billing so the merchant can complete payment, and
+ * on /dashboard/settings/legal so they can approve the terms first - otherwise
+ * TrialGate and TermsAckGate would block each other's page and trap the
+ * merchant in a loop (each gate's CTA points at the page the other one locks).
  *
  * Rendered inside the dashboard layout, sibling to the page content; when
  * locked, it covers the rest of the layout with a fixed overlay.
@@ -25,8 +28,10 @@ export function TrialGate({
   if (hasPaymentMethod) return null;
   // No lock during the active trial.
   if (!trialExpired) return null;
-  // Always let the billing page through so the merchant can pay.
+  // Always let the billing page through so the merchant can pay, and the terms
+  // editor through so they can approve the תקנון (required before paying).
   if (pathname.startsWith("/dashboard/billing")) return null;
+  if (pathname.startsWith("/dashboard/settings/legal")) return null;
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm grid place-items-center p-4">
