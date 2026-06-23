@@ -7,6 +7,7 @@ import { IcoChev, IcoPlus, IcoMinus, IcoBag, IcoClose, IcoArrowLeft } from "@/co
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
 import { useCart, type CartLine } from "@/components/customer/CartProvider";
+import { CartLineOptions } from "@/components/customer/CartLineOptions";
 import { formatPrice } from "@/lib/format";
 import { Skeleton } from "@/components/shared/Skeleton";
 import { ItemDetailModal } from "@/components/customer/ItemDetailModal";
@@ -149,17 +150,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
                 {l.sizeName && (
                   <div className="text-xs text-qf-mute mt-0.5">{l.sizeName}</div>
                 )}
-                {l.options.map((o, i) => {
-                  const label = o.groupName ? `${o.groupName}: ${o.name}` : o.name;
-                  return (
-                    <div key={i} className="text-xs text-qf-mute mt-0.5">
-                      {label}
-                      {o.priceDelta > 0 && (
-                        <span className="text-qf-mute"> (+{formatPrice(o.priceDelta)})</span>
-                      )}
-                    </div>
-                  );
-                })}
+                <CartLineOptions options={l.options} />
                 {l.notes && (
                   <div className="text-xs text-qf-ink2 mt-0.5">הערה: {l.notes}</div>
                 )}

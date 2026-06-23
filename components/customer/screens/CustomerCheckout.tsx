@@ -9,6 +9,7 @@ import { LegalText } from "@/components/shared/LegalText";
 import { THEMES, type ThemeId } from "@/lib/themes";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { useCart } from "@/components/customer/CartProvider";
+import { CartLineOptions } from "@/components/customer/CartLineOptions";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { recordRecentOrder } from "@/lib/recent-orders-storage";
@@ -1027,15 +1028,7 @@ export function CustomerCheckout({
                     {l.sizeName && (
                       <div className="text-xs text-qf-mute mt-0.5">{l.sizeName}</div>
                     )}
-                    {l.options.map((o, i) => {
-                      const label = o.groupName ? `${o.groupName}: ${o.name}` : o.name;
-                      return (
-                        <div key={i} className="text-xs text-qf-mute mt-0.5">
-                          {label}
-                          {o.priceDelta > 0 && <span> (+{formatPrice(o.priceDelta)})</span>}
-                        </div>
-                      );
-                    })}
+                    <CartLineOptions options={l.options} />
                     <div className="text-xs text-qf-ink2 mt-1 tnum">× {l.quantity}</div>
                   </div>
                 </li>
@@ -1115,15 +1108,7 @@ export function CustomerCheckout({
                       {l.sizeName && (
                         <div className="text-xs text-qf-mute mt-0.5">{l.sizeName}</div>
                       )}
-                      {l.options.map((o, i) => {
-                        const label = o.groupName ? `${o.groupName}: ${o.name}` : o.name;
-                        return (
-                          <div key={i} className="text-xs text-qf-mute mt-0.5">
-                            {label}
-                            {o.priceDelta > 0 && <span> (+{formatPrice(o.priceDelta)})</span>}
-                          </div>
-                        );
-                      })}
+                      <CartLineOptions options={l.options} />
                       <div className="text-xs text-qf-ink2 mt-0.5 tnum">× {l.quantity}</div>
                     </div>
                   </li>

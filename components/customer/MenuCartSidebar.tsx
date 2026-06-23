@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { IcoBag, IcoPlus, IcoMinus, IcoClose, IcoArrowLeft } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { useCart } from "@/components/customer/CartProvider";
+import { CartLineOptions } from "@/components/customer/CartLineOptions";
 import { formatPrice } from "@/lib/format";
 
 interface Props {
@@ -81,17 +82,7 @@ export function MenuCartSidebar({ tenantSlug, businessType }: Props) {
                     {l.sizeName && (
                       <div className="text-[11px] text-qf-mute mt-0.5">{l.sizeName}</div>
                     )}
-                    {l.options.map((o, i) => {
-                      const label = o.groupName ? `${o.groupName}: ${o.name}` : o.name;
-                      return (
-                        <div key={i} className="text-[11px] text-qf-mute mt-0.5">
-                          {label}
-                          {o.priceDelta > 0 && (
-                            <span> (+{formatPrice(o.priceDelta)})</span>
-                          )}
-                        </div>
-                      );
-                    })}
+                    <CartLineOptions options={l.options} compact />
                     <div className="flex items-center justify-between mt-1.5">
                       <div className="flex items-center bg-qf-bg rounded-full border border-qf-line">
                         <button
