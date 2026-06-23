@@ -243,8 +243,10 @@ function AddDomainCard({
       <p className="text-sm text-black/70 mb-3 leading-relaxed">
         רוצה שהחנות שלך תהיה זמינה בכתובת משלך (למשל{" "}
         <span className="font-mono font-bold">mypizza.co.il</span>) במקום{" "}
-        <span className="font-mono">{fallbackUrl}</span>? הקלד את הדומיין כאן ונדריך אותך
-        בהגדרת ה-DNS. ה-SSL מונפק אוטומטית.
+        <span className="font-mono">{fallbackUrl}</span>?
+        <br />
+        הקלד את הדומיין הקיים שלך כאן ונדריך אותך בהגדרות. כמו כן קבל מאיתנו ללא עלות
+        גם תעודת אבטחה SSL לדומיין. וואלה, שווה!
       </p>
       <div className="mb-5 rounded-xl border-2 border-black bg-[#fffbea] px-4 py-3 text-sm leading-relaxed">
         <p className="font-bold">מחברים דומיין שכבר קיים בבעלותך - אנחנו לא מוכרים דומיינים.</p>
