@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { IcoCheck, IcoCopy, IcoClose, IcoTrash } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
@@ -236,10 +236,13 @@ function AddDomainCard({
 }) {
   return (
     <section className="rounded-3xl border-2 border-black bg-white shadow-[0_3px_0_#000] p-5 lg:p-7">
-      <h2 className="text-xl font-black mb-1">חיבור דומיין</h2>
+      <div className="flex items-start justify-between gap-3 mb-1">
+        <h2 className="text-xl font-black">חיבור דומיין</h2>
+        <DnsGuide />
+      </div>
       <p className="text-sm text-black/70 mb-3 leading-relaxed">
         רוצה שהחנות שלך תהיה זמינה בכתובת משלך (למשל{" "}
-        <span className="font-mono font-bold">order.mypizza.co.il</span>) במקום{" "}
+        <span className="font-mono font-bold">mypizza.co.il</span>) במקום{" "}
         <span className="font-mono">{fallbackUrl}</span>? הקלד את הדומיין כאן ונדריך אותך
         בהגדרת ה-DNS. ה-SSL מונפק אוטומטית.
       </p>
@@ -352,7 +355,10 @@ function ActiveDomainCard({
           <PropagationBanner polling={polling} />
           {records.length > 0 && (
             <>
-              <h3 className="text-base font-black mb-2 mt-4">הגדר את ה-DNS אצל ספק הדומיין</h3>
+              <div className="flex items-center justify-between gap-3 mb-2 mt-4">
+                <h3 className="text-base font-black">הגדר את ה-DNS אצל ספק הדומיין</h3>
+                <DnsGuide />
+              </div>
               <p className="text-sm text-black/70 mb-4 leading-relaxed">
                 הוסף את הרשומות הבאות בלוח הבקרה של ספק הדומיין שלך (GoDaddy / Cloudflare /
                 Namecheap וכו׳). לאחר שהרשומות התפרסמו, ניתן ללחוץ "בדוק חיבור"
@@ -472,6 +478,156 @@ function PropagationBanner({ polling }: { polling: boolean }) {
           (תלוי כמה זמן לוקח לספק הדומיין שלך לעדכן את הרשומות בעולם). אנחנו
           בודקים אוטומטית כל כמה שניות - אפשר להישאר בדף או לחזור מאוחר יותר.
         </div>
+      </div>
+    </div>
+  );
+}
+
+function DnsGuide() {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="shrink-0 rounded-xl border-2 border-black px-3 py-1.5 text-xs font-black bg-white hover:bg-black/[0.04] transition"
+      >
+        איך זה עובד?
+      </button>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/55 p-4"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="bg-white rounded-3xl border-2 border-black shadow-[0_3px_0_#000] w-full max-w-lg max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <header className="flex items-center justify-between gap-3 p-5 border-b-2 border-black sticky top-0 bg-white">
+              <h2 className="text-lg font-black">איך מחברים דומיין?</h2>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="סגור"
+                className="w-8 h-8 rounded-lg border-2 border-black grid place-items-center hover:bg-black/[0.04]"
+              >
+                <IcoClose c="#11231a" s={16} />
+              </button>
+            </header>
+
+            <div className="p-5 space-y-5 text-sm leading-relaxed">
+              <p className="text-black/70">
+                מחברים דומיין שכבר קיים בבעלותך. שלושה צעדים - הערכים המדויקים מופיעים
+                כאן במסך אחרי שתוסיף את הדומיין.
+              </p>
+
+              <GuideStep n={1} title="היכנס לספק הדומיין שלך">
+                איפה שקנית את הדומיין (GoDaddy / box.co.il / Cloudflare וכו׳), פתח את
+                המסך של <span className="font-bold">ניהול DNS</span> או{" "}
+                <span className="font-bold">רשומות DNS</span>.
+              </GuideStep>
+
+              <GuideStep n={2} title="הוסף את הרשומה המתאימה">
+                <div className="mb-2">
+                  בוחרים לפי סוג הכתובת. אצל רוב הספקים השדות נקראים{" "}
+                  <span className="font-mono">Type</span> /{" "}
+                  <span className="font-mono">Host</span> (או Name) /{" "}
+                  <span className="font-mono">Value</span> (או Points to). אם יש שדה
+                  TTL - אפשר להשאיר ברירת מחדל.
+                </div>
+                <div className="space-y-2.5">
+                  <ExampleDnsRow
+                    label="דומיין ראשי (mypizza.co.il)"
+                    type="A"
+                    name="@"
+                    value="76.76.21.21"
+                  />
+                  <ExampleDnsRow
+                    label="תת-דומיין (order.mypizza.co.il)"
+                    type="CNAME"
+                    name="order"
+                    value="cname.vercel-dns.com"
+                  />
+                </div>
+              </GuideStep>
+
+              <GuideStep n={3} title="שמור ותן לזה כמה דקות">
+                ההפצה בעולם לוקחת בדרך כלל בין דקה ל-30 דקות. אנחנו בודקים אוטומטית
+                ומנפיקים תעודת <span className="font-bold">SSL (https)</span> לבד - לא
+                צריך לעשות כלום נוסף.
+              </GuideStep>
+
+              <div className="rounded-xl border-2 border-black bg-[#fffbea] p-4 space-y-2">
+                <p>
+                  <span className="font-bold">רשומת A</span> - מקשרת דומיין ראשי לכתובת
+                  ה-IP של השרת שלנו.
+                </p>
+                <p>
+                  <span className="font-bold">רשומת CNAME</span> - מפנה תת-דומיין (כמו
+                  order.) לכתובת שלנו.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function GuideStep({
+  n,
+  title,
+  children,
+}: {
+  n: number;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex gap-3">
+      <div className="shrink-0 w-7 h-7 rounded-full bg-black text-[#F8CB1E] grid place-items-center text-sm font-black">
+        {n}
+      </div>
+      <div className="min-w-0">
+        <div className="font-black mb-1">{title}</div>
+        <div className="text-black/70">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function ExampleDnsRow({
+  label,
+  type,
+  name,
+  value,
+}: {
+  label: string;
+  type: "A" | "CNAME";
+  name: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-xl border-2 border-black bg-white p-3">
+      <div className="text-[11px] font-bold text-black/60 mb-2">{label}</div>
+      <div className="grid grid-cols-[64px_1fr_2fr] gap-2 items-center" dir="ltr">
+        <span className="inline-block rounded-md bg-black text-[#F8CB1E] font-mono text-xs font-black px-2 py-1 text-center">
+          {type}
+        </span>
+        <span className="font-mono text-sm break-all">{name}</span>
+        <span className="font-mono text-sm break-all">{value}</span>
       </div>
     </div>
   );
