@@ -4,7 +4,8 @@ import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { loadLoyaltyData } from "@/lib/loyalty/members";
 import { renderRtlEmail } from "@/lib/email/templates";
-import { sendPoplyEmail, sendPoplySms, poplyConfigured } from "@/lib/poply/client";
+import { sendPoplyEmail, poplyFrom, poplyConfigured } from "@/lib/poply/client";
+import { sendSms } from "@/lib/sms/send";
 import { sendWhatsApp } from "@/lib/whatsapp/send";
 
 export const runtime = "nodejs";
@@ -66,23 +67,37 @@ export const POST = handler(async (req: Request) => {
     return apiJson({ sent: 0, total: 0, skipped: 0 });
   }
 
+  const businessName = tenant?.name ?? "המסעדה";
+
   let sent = 0;
   if (body.channel === "email") {
-    const subject = body.subject?.trim() || `עדכון מ-${tenant?.name ?? "המסעדה"}`;
+    const subject = body.subject?.trim() || `עדכון מ-${businessName}`;
     const { html } = renderRtlEmail({
       subject,
       heading: subject,
       paragraphs: body.body.split("\n").filter((l) => l.trim().length > 0),
       footerNote: "קיבלת מייל זה כחבר/ה במועדון הלקוחות.",
     });
+    // Sender display name = the merchant's business name, over QuickFood's
+    // verified Poply address (POPLY_FROM_EMAIL). Falls back to the workspace
+    // default when that env isn't set.
+    const from = poplyFrom(businessName);
     sent = await chunkedSend(audience, 20, async (r) => {
-      const res = await sendPoplyEmail({ to: r.email!, subject, html });
+      const res = await sendPoplyEmail({ to: r.email!, subject, html, from });
       return res.ok;
     });
   } else if (body.channel === "sms") {
+    // SMS goes through QuickFood's own sms4free integration so the sender name
+    // is the merchant's (tenant.smsSender) and it draws the existing credit
+    // pool - Poply can't carry a per-merchant SMS sender.
     sent = await chunkedSend(audience, 20, async (r) => {
-      const res = await sendPoplySms({ to: r.phone, message: body.body });
-      return res.ok;
+      const res = await sendSms({
+        tenantId: session.tenantId!,
+        to: r.phone,
+        body: body.body,
+        kind: "loyalty_broadcast",
+      });
+      return res.status === "sent";
     });
   } else {
     sent = await chunkedSend(audience, 10, async (r) => {
