@@ -29,6 +29,7 @@ export default function LoginForm({ onUsePhone }: { onUsePhone?: () => void }) {
         | { error: { message: string } };
       if (!res.ok) {
         setError("error" in data ? data.error.message : "התחברות נכשלה");
+        setBusy(false);
         return;
       }
       const role = "user" in data ? data.user.role : "";
@@ -43,9 +44,10 @@ export default function LoginForm({ onUsePhone }: { onUsePhone?: () => void }) {
               : "/dashboard",
       );
       router.refresh();
+      // Keep the spinner on through the navigation - don't reset busy on the
+      // success path or the button flashes idle while the dashboard loads.
     } catch {
       setError("שגיאת רשת");
-    } finally {
       setBusy(false);
     }
   }

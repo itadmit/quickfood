@@ -58,15 +58,16 @@ export default function PhoneLoginForm({ onUseEmail }: { onUseEmail?: () => void
         | { error: { message: string } };
       if (!res.ok) {
         setError("error" in data ? data.error.message : "התחברות נכשלה");
+        setBusy(false);
         return;
       }
       const role = "user" in data ? data.user.role : "";
       trackCustom("Login", { role, method: "phone_otp" });
       router.push(ROLE_HOME[role] ?? "/dashboard");
       router.refresh();
+      // Keep the spinner on through navigation - the dashboard is still loading.
     } catch {
       setError("שגיאת רשת");
-    } finally {
       setBusy(false);
     }
   }
