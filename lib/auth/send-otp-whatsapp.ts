@@ -32,7 +32,7 @@ export async function sendOtpWhatsApp(
   if (!isValidIsraeliMobile(local)) return false;
 
   const msg =
-    `קוד הכניסה שלך ל-QuickFood: ${code}\n\n` +
+    `קוד הכניסה שלך לקוויק-פוד הוא:\n${code}\n` +
     `הקוד בתוקף ל-10 דקות. אם לא ביקשת קוד, אפשר להתעלם מההודעה.`;
 
   const platform = await prisma.platformSettings.findUnique({
