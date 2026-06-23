@@ -157,9 +157,17 @@ export default async function OrderTrackingPage({
             .map((o) => {
               const name = typeof o?.name === "string" ? o.name : null;
               if (!name) return null;
-              return { name, priceDelta: Number(o?.price_delta ?? 0) || 0 };
+              const groupName =
+                typeof o?.group_name === "string" && o.group_name ? o.group_name : undefined;
+              return {
+                name,
+                priceDelta: Number(o?.price_delta ?? 0) || 0,
+                ...(groupName ? { groupName } : {}),
+              };
             })
-            .filter((o): o is { name: string; priceDelta: number } => o !== null);
+            .filter(
+              (o): o is { name: string; priceDelta: number; groupName?: string } => o !== null,
+            );
           return {
             id: it.id,
             name: it.nameSnapshot,

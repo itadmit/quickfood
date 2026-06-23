@@ -384,6 +384,20 @@ label[for][class*="shadow-[0_"] {
   display: none;
 }
 @media print {
+  /* The accessibility widget mounts its launcher under <html> (#a11y-root,
+     a shadow-DOM host - NOT a <body> child), so the body>* hide rule below
+     missed it and the round button printed on top of the receipt. */
+  #a11y-root {
+    display: none !important;
+  }
+  /* Always print the receipt at true 1:1 scale, even if the a11y widget (or
+     browser) applied a page zoom/transform. The receipt itself uses absolute
+     pt units, so resetting the page zoom keeps the 72/80mm sizing exact. */
+  html,
+  body {
+    zoom: 1 !important;
+    transform: none !important;
+  }
   @page {
     /* Match the driver's actual paper (80mm) so the browser doesn't offset a
        narrower page on the roll. Sizing the page narrower than the paper made
@@ -468,8 +482,6 @@ label[for][class*="shadow-[0_"] {
     font-weight: 800;
     margin-top: 5pt;
     margin-bottom: 1pt;
-    text-decoration: underline;
-    text-underline-offset: 2pt;
   }
   .qf-print-receipt .qf-pr-opt {
     font-size: 9pt;

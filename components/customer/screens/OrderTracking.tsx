@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoPhone, IcoClock, IcoCheck, IcoStar, IcoWhatsApp } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
+import { CartLineOptions } from "@/components/customer/CartLineOptions";
 import { formatPrice, formatTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { readOrderToken } from "@/lib/order-access-storage";
@@ -18,6 +19,7 @@ const CourierMap = dynamic(
 interface OrderItemOption {
   name: string;
   priceDelta: number;
+  groupName?: string;
 }
 
 interface OrderItemRow {
@@ -468,6 +470,7 @@ export function OrderTracking({
                 {it.size && (
                   <div className="text-xs text-qf-mute">{it.size}</div>
                 )}
+                <CartLineOptions options={it.options} compact />
               </div>
               <div className="font-medium tnum shrink-0">
                 {formatPrice(it.total)}
@@ -873,21 +876,7 @@ function ThankYouView({
               {it.size && (
                 <div className="text-xs text-qf-mute">{it.size}</div>
               )}
-              {it.options.length > 0 && (
-                <ul className="mt-1 space-y-0.5">
-                  {it.options.map((o, i) => (
-                    <li
-                      key={i}
-                      className="text-xs text-qf-mute flex items-center gap-1"
-                    >
-                      <span>+ {o.name}</span>
-                      {o.priceDelta > 0 && (
-                        <span className="tnum">({formatPrice(o.priceDelta)})</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <CartLineOptions options={it.options} compact />
               {it.notes && (
                 <div className="mt-1 text-xs text-qf-yolk-deep">
                   הערה: {it.notes}

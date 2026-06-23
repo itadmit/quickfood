@@ -60,16 +60,32 @@ export function formatTime(date: Date | string): string {
   });
 }
 
+// Breaks a minute count into "D ימים H שעות M דקות", dropping zero parts and
+// putting a "ו" before the last part only when there are 3 (days+hours+mins).
+// e.g. 81 -> "שעה 21 דקות", 1583 -> "יום שעה ו23 דקות".
+export function formatElapsedMinutes(totalMins: number): string {
+  if (totalMins <= 0) return "עכשיו";
+  const days = Math.floor(totalMins / 1440);
+  const hours = Math.floor((totalMins % 1440) / 60);
+  const mins = totalMins % 60;
+
+  const parts: string[] = [];
+  if (days) parts.push(days === 1 ? "יום" : `${days} ימים`);
+  if (hours) parts.push(hours === 1 ? "שעה" : `${hours} שעות`);
+  if (mins) parts.push(mins === 1 ? "דקה" : `${mins} דקות`);
+  if (!parts.length) return "עכשיו";
+
+  if (parts.length >= 3) {
+    return `${parts.slice(0, -1).join(" ")} ו${parts[parts.length - 1]}`;
+  }
+  return parts.join(" ");
+}
+
 export function formatRelativeMinutes(from: Date | string): string {
   const d = typeof from === "string" ? new Date(from) : from;
-  const diffMs = Date.now() - d.getTime();
-  const mins = Math.max(0, Math.floor(diffMs / 60_000));
+  const mins = Math.max(0, Math.floor((Date.now() - d.getTime()) / 60_000));
   if (mins === 0) return "עכשיו";
-  if (mins < 60) return `לפני ${mins} דק'`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `לפני ${hours} שע'`;
-  const days = Math.floor(hours / 24);
-  return `לפני ${days} ימים`;
+  return `לפני ${formatElapsedMinutes(mins)}`;
 }
 
 /**

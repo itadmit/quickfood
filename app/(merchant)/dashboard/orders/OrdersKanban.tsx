@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { IcoClock, IcoPrinter, IcoFlame, IcoRefresh, IcoUndo, IcoClose, IcoBell, IcoBellOff } from "@/components/shared/Icons";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatElapsedMinutes } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import {
   consumePassPrntResult,
@@ -844,7 +844,7 @@ function Card({
       <div className="text-sm font-medium">{order.customerName}</div>
       <div className="text-xs text-qf-mute flex items-center gap-1.5">
         <IcoClock c="#7c8a82" s={12} />
-        {elapsedMin != null && <>לפני {elapsedMin} דק&apos; · </>}
+        {elapsedMin != null && <>לפני {formatElapsedMinutes(elapsedMin)} · </>}
         {order.method === "delivery" ? "משלוח" : "איסוף"}
       </div>
 
