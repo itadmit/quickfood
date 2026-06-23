@@ -8,8 +8,10 @@ export const maxDuration = 25;
 
 /**
  * Permanently delete an uploaded image from R2. Authorized by key scope:
- * upload keys are `${tenantId|userId}/${type}/...`, so a caller may only
- * delete objects under their own scope.
+ * direct uploads live under `${tenantId|userId}/${type}/...`, while
+ * Wolt-imported images live under `tenants/${tenantId}/wolt-import/...`
+ * (see lib/wolt-import/commit). A caller may only delete objects under
+ * their own tenant/user scope, in either form.
  */
 export const POST = handler(async (req: Request) => {
   const session = await requireSession();
@@ -18,7 +20,10 @@ export const POST = handler(async (req: Request) => {
   if (!key) return apiError("validation_error", "כתובת תמונה לא תקינה", 422, "url");
 
   const scope = session.tenantId ?? session.userId;
-  if (!key.startsWith(`${scope}/`)) {
+  const allowed =
+    key.startsWith(`${scope}/`) ||
+    (!!session.tenantId && key.startsWith(`tenants/${session.tenantId}/`));
+  if (!allowed) {
     return apiError("forbidden", "אין הרשאה למחוק תמונה זו", 403);
   }
 
