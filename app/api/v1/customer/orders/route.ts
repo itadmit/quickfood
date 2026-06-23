@@ -32,6 +32,9 @@ const CreateOrderSchema = z.object({
   // Explicit opt-in to marketing/promotional comms - only persisted
   // when true; never silently flips an existing yes back to no.
   marketing_consent: z.boolean().optional(),
+  // Customer ticked the loyalty-club opt-in checkbox at checkout. Enrols
+  // them into the tenant's club and implies marketing consent.
+  loyalty_consent: z.boolean().optional(),
   coupon_code: z.string().min(1).max(40).optional(),
   applied_bundle_ids: z.array(z.string().uuid()).max(10).optional(),
   // Set by the kiosk app. Bypasses the "auth or guest phone" gate after
@@ -102,6 +105,7 @@ export const POST = handler(async (req: Request) => {
       customerEmail: body.customer_email,
       termsAccepted: body.terms_accepted,
       marketingConsent: body.marketing_consent,
+      loyaltyConsent: body.loyalty_consent,
       method: body.method,
       addressId: body.address_id ?? null,
       deliveryCity: body.delivery_city ?? null,

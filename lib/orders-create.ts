@@ -6,6 +6,7 @@ import { matchZoneByCity } from "@/lib/delivery-zone-match";
 import { sendTenantPush } from "@/lib/merchant/push";
 import { sendOrderConfirmedEmail } from "@/lib/orders/notify-customer";
 import { priceGroupOptions } from "@/lib/option-pricing";
+import { ensureLoyaltyMember } from "@/lib/loyalty/membership";
 import type { Prisma } from "@prisma/client";
 
 /**
@@ -45,6 +46,10 @@ export interface CreateOrderInput {
   /// false on subsequent orders (a customer who opted in once stays
   /// opted in until they explicitly unsubscribe).
   marketingConsent?: boolean;
+  /// Customer ticked the "join the loyalty club" opt-in at checkout. Enrols
+  /// the resolved Customer into this tenant's club (loyalty_members) and
+  /// implies marketing consent. Only acts when true.
+  loyaltyConsent?: boolean;
   method: "delivery" | "pickup";
   addressId?: string | null;
   /** Customer's chosen delivery city - matched against the branch's active
@@ -566,6 +571,17 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       payload: { status: initialStatus, total } as unknown as Prisma.InputJsonValue,
     },
   });
+
+  // Loyalty club opt-in ticked at checkout - enrol the resolved customer.
+  // Best-effort; never blocks the order. Implies marketing consent.
+  if (input.loyaltyConsent && effectiveCustomerId) {
+    await ensureLoyaltyMember({
+      tenantId: tenant.id,
+      customerId: effectiveCustomerId,
+      joinSource: "checkout",
+      marketingConsent: true,
+    });
+  }
 
   // Coupon usage increment - fire-and-forget after the order commits.
   // Doing this AFTER the order create (vs in a single transaction) is fine

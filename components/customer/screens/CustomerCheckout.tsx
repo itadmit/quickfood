@@ -38,6 +38,7 @@ export function CustomerCheckout({
   deliveryCities = [],
   pickupEnabled = true,
   termsText = "",
+  loyaltyCheckout = { show: false, text: "" },
 }: {
   tenantSlug: string;
   requireEmail?: boolean;
@@ -46,6 +47,7 @@ export function CustomerCheckout({
   deliveryCities?: string[];
   pickupEnabled?: boolean;
   termsText?: string;
+  loyaltyCheckout?: { show: boolean; text: string };
 }) {
   const router = useRouter();
   const { lines, method, subtotal, deliveryFee, branch, tenant, clear, setMethod, hydrated, acceptedBundles, bundleDiscount } = useCart();
@@ -62,6 +64,7 @@ export function CustomerCheckout({
   const [emailTouched, setEmailTouched] = useState(false);
   const [country, setCountry] = useState("ישראל");
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [loyaltyConsent, setLoyaltyConsent] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
   const [deliveryNotes, setDeliveryNotes] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
@@ -411,6 +414,7 @@ export function CustomerCheckout({
           guest_last_name: lastName || undefined,
           customer_email: email.trim() || undefined,
           terms_accepted: termsAccepted,
+          loyalty_consent: loyaltyCheckout.show ? loyaltyConsent : undefined,
           lines: lines.map((l) => {
             const placements: Record<string, "left" | "right" | "full"> = {};
             for (const o of l.options) {
@@ -580,6 +584,18 @@ export function CustomerCheckout({
       </span>
     </label>
   );
+
+  const loyaltyConsentEl = loyaltyCheckout.show ? (
+    <label className="flex items-start gap-2 text-xs text-qf-ink2 leading-relaxed cursor-pointer">
+      <input
+        type="checkbox"
+        checked={loyaltyConsent}
+        onChange={(e) => setLoyaltyConsent(e.target.checked)}
+        className="mt-0.5 w-4 h-4 shrink-0 accent-(--qf-primary)"
+      />
+      <span>{loyaltyCheckout.text}</span>
+    </label>
+  ) : null;
 
   return (
     <div className="pb-32 bg-qf-bg/40 min-h-screen lg:bg-transparent lg:pb-12">
@@ -1153,6 +1169,7 @@ export function CustomerCheckout({
               </div>
             )}
             <div className="mt-3">{termsConsent}</div>
+            {loyaltyConsentEl && <div className="mt-2">{loyaltyConsentEl}</div>}
             <button
               type="button"
               onClick={onPlaceClick}
@@ -1190,6 +1207,7 @@ export function CustomerCheckout({
           </div>
         )}
         <div className="mb-2.5">{termsConsent}</div>
+        {loyaltyConsentEl && <div className="mb-2.5">{loyaltyConsentEl}</div>}
         <button
           type="button"
           onClick={onPlaceClick}

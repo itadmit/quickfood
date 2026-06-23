@@ -376,6 +376,15 @@ model Tenant {
   // fills missing keys as true so older tenants keep the full receipt.
   receiptSettings Json @default("{}") @map("receipt_settings")
 
+  // Customer loyalty club config. JSON of points rate, tier thresholds,
+  // the storefront join-form copy, and the two storefront toggles
+  // (show entry popup / show checkout opt-in checkbox). Empty default =
+  // resolveLoyaltyConfig fills sane defaults (silver/gold/platinum at
+  // 0/500/2000 points, 1 point per shekel, both toggles off). Members
+  // live in the loyalty_members table; points/tier are derived from
+  // order totals, not stored here.
+  loyaltyConfig Json @default("{}") @map("loyalty_config")
+
   // Reviews configuration
   reviewsEnabled      Boolean       @default(true) @map("reviews_enabled")
   reviewsPublic       Boolean       @default(true) @map("reviews_public")
@@ -466,6 +475,7 @@ model Tenant {
   woltConnections  WoltConnection[]
   growLeads        GrowLead[]
   posShifts        PosShift[]
+  loyaltyMembers   LoyaltyMember[]
 
   @@index([slug])
   @@map("tenants")
@@ -895,6 +905,7 @@ model Customer {
   reviews   Review[]
   apiKeys   ApiKey[]
   favorites Favorite[]
+  loyaltyMemberships LoyaltyMember[]
 
   @@map("customers")
 }
@@ -1751,6 +1762,39 @@ model PaymentTransaction {
   @@index([orderId])
   @@index([tenantId, createdAt(sort: Desc)])
   @@map("payment_transactions")
+}
+
+enum LoyaltyJoinSource {
+  // Ticked the opt-in checkbox while placing an order.
+  checkout
+  // Filled the join form in the storefront entry popup.
+  popup
+  // Added by the merchant from the dashboard.
+  manual
+}
+
+// A customer's membership in a single tenant's loyalty club. The Customer
+// table is global (phone unique platform-wide), so club membership has to
+// be a per-tenant join row. Points and tier are NOT stored here - they're
+// derived on read from the sum of the customer's order totals for this
+// tenant (each shekel = one point), so they can never drift from reality.
+model LoyaltyMember {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customerId String   @map("customer_id") @db.Uuid
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  joinSource LoyaltyJoinSource @default(checkout) @map("join_source")
+  // Explicit opt-in to privacy policy + terms + marketing content, captured
+  // at join time. Sticky-true, same convention as Customer.marketingConsent.
+  marketingConsent Boolean @default(false) @map("marketing_consent")
+
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  @@unique([tenantId, customerId])
+  @@index([tenantId, joinedAt(sort: Desc)])
+  @@map("loyalty_members")
 }
 
 enum CampaignKind {

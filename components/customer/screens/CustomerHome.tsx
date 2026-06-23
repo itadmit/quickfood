@@ -7,6 +7,7 @@ import { IcoPin, IcoSearch, IcoClock, IcoBike, IcoArrowLeft, IcoStar, IcoInfo } 
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
 import { CampaignPopup } from "@/components/customer/CampaignPopup";
+import { LoyaltyJoinPopup } from "@/components/customer/LoyaltyJoinPopup";
 import { CampaignBanner, type CampaignBannerData } from "@/components/customer/CampaignBanner";
 import { ReorderRail } from "@/components/customer/ReorderRail";
 import { CityPickerModal } from "@/components/customer/CityPickerModal";
@@ -718,6 +719,7 @@ export function CustomerHome({
 
       <BottomTabBar tenantSlug={tenant.slug} />
       <CampaignPopup tenantSlug={tenant.slug} />
+      <LoyaltyJoinPopup tenantSlug={tenant.slug} />
 
       {pickerOpen && (
         <CityPickerModal

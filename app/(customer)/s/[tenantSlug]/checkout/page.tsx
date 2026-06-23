@@ -4,6 +4,7 @@ import { PaymentProvider } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { resolveTerms } from "@/lib/legal/terms";
+import { resolveLoyaltyConfig } from "@/lib/loyalty/config";
 import { CustomerCheckout } from "@/components/customer/screens/CustomerCheckout";
 
 export const dynamic = "force-dynamic";
@@ -29,11 +30,21 @@ export default async function CheckoutPage({
   try {
     settings = await prisma.tenant.findUnique({
       where: { id: tenant.id },
-      select: { reviewsChannel: true, reviewsEnabled: true, pickupEnabled: true },
+      select: {
+        reviewsChannel: true,
+        reviewsEnabled: true,
+        pickupEnabled: true,
+        loyaltyConfig: true,
+      },
     });
   } catch (err) {
     console.error("[checkout/page] tenant settings lookup failed", err);
   }
+
+  const loyalty = resolveLoyaltyConfig(
+    (settings as { loyaltyConfig?: unknown } | null)?.loyaltyConfig,
+    tenant.name,
+  );
   try {
     growConfig = await prisma.paymentProviderConfig.findUnique({
       where: {
@@ -109,6 +120,10 @@ export default async function CheckoutPage({
       deliveryCities={deliveryCities}
       pickupEnabled={settings?.pickupEnabled ?? true}
       termsText={termsText}
+      loyaltyCheckout={{
+        show: loyalty.showCheckoutCheckbox,
+        text: loyalty.checkoutConsentText,
+      }}
     />
   );
 }
