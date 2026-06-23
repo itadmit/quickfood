@@ -1343,6 +1343,12 @@ model MerchantUser {
   passwordHash      String                    @map("password_hash")
   name              String
   phone             String?                   @map("phone")
+  // Normalised E.164 copy of `phone` (+9725XXXXXXXX), kept in sync on write.
+  // This is the lookup key for passwordless WhatsApp-OTP login - `phone` is
+  // stored in whatever shape the merchant typed (dashes, spaces, 05.. or
+  // +972..), so it can't be matched directly. NOT unique: a few owners run
+  // more than one store off the same number.
+  phoneE164         String?                   @map("phone_e164")
   role              UserRole                  @default(owner)
   branches          String[]                  @default([])
   // Cashier users are pinned to one branch (their POS terminal). For other
@@ -1363,6 +1369,7 @@ model MerchantUser {
 
   @@index([tenantId])
   @@index([branchId])
+  @@index([phoneE164])
   @@map("merchant_users")
 }
 

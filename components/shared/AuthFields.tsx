@@ -65,6 +65,45 @@ export function AuthPasswordField(props: BaseProps) {
   );
 }
 
+export function AuthPhoneField(props: BaseProps) {
+  return (
+    <FieldShell {...props} iconSide={<PhoneIcon />}>
+      <input
+        id={props.id}
+        type="tel"
+        inputMode="tel"
+        required={props.required}
+        autoComplete={props.autoComplete ?? "tel"}
+        value={props.value}
+        onChange={(e) => props.onChange(e.target.value)}
+        placeholder={props.placeholder ?? "050-0000000"}
+        dir="ltr"
+        className="flex-1 min-w-0 bg-transparent outline-none py-3 text-sm font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
+      />
+    </FieldShell>
+  );
+}
+
+export function AuthCodeField(props: BaseProps) {
+  return (
+    <FieldShell {...props} iconSide={<LockIcon />}>
+      <input
+        id={props.id}
+        type="text"
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        maxLength={6}
+        required={props.required}
+        value={props.value}
+        onChange={(e) => props.onChange(e.target.value.replace(/\D/g, "").slice(0, 6))}
+        placeholder="------"
+        dir="ltr"
+        className="flex-1 min-w-0 bg-transparent outline-none py-3 text-center text-lg font-black text-black placeholder:text-black/25 font-mono tracking-[0.5em]"
+      />
+    </FieldShell>
+  );
+}
+
 interface ShellProps extends BaseProps {
   iconSide: React.ReactNode;
   iconLeft?: React.ReactNode;
@@ -102,6 +141,19 @@ function FieldShell({
 }
 
 // ─── icons ────────────────────────────────────────────────
+
+function PhoneIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M6.5 3h3l1.5 4-2 1.5a12 12 0 005 5l1.5-2 4 1.5v3a2 2 0 01-2.2 2A16 16 0 014.5 5.2 2 2 0 016.5 3z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 function EmailIcon() {
   return (

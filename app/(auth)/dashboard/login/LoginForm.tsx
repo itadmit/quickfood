@@ -7,7 +7,7 @@ import { AuthEmailField, AuthPasswordField } from "@/components/shared/AuthField
 import { IcoArrowLeft } from "@/components/shared/Icons";
 import { trackCustom } from "@/lib/fb/pixel";
 
-export default function LoginForm() {
+export default function LoginForm({ onUsePhone }: { onUsePhone?: () => void }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -108,6 +108,16 @@ export default function LoginForm() {
         <span className="text-xs font-bold text-black/55 tracking-wider">או</span>
         <div className="flex-1 h-[2px] bg-black/15" />
       </div>
+
+      {onUsePhone && (
+        <button
+          type="button"
+          onClick={onUsePhone}
+          className="block w-full text-center py-3 rounded-xl bg-white border-2 border-black hover:bg-[#FFFBEC] text-sm font-bold text-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition"
+        >
+          התחברות עם מספר טלפון
+        </button>
+      )}
 
       <Link
         href="/signup"

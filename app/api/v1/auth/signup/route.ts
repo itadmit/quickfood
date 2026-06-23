@@ -213,6 +213,7 @@ export const POST = handler(async (req: Request) => {
             passwordHash,
             name: body.owner_name,
             phone: body.owner_phone,
+            phoneE164: ownerE164,
             role: "owner",
             // Identity is now proven by SMS-OTP on the mobile, not by an
             // email round-trip. Mark verified so the email-verification

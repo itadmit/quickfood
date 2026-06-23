@@ -1,4 +1,4 @@
-import LoginForm from "./LoginForm";
+import LoginPanel from "./LoginPanel";
 import { AuthShell } from "@/components/shared/AuthShell";
 
 export const metadata = {
@@ -13,7 +13,7 @@ export default function LoginPage() {
       subtitle="התחבר לחשבון שלך והמשך לעבוד."
       illustration="kanban"
     >
-      <LoginForm />
+      <LoginPanel />
     </AuthShell>
   );
 }
