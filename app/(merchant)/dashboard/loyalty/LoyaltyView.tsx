@@ -21,7 +21,7 @@ import type { LoyaltyMemberRow, LoyaltyStats } from "@/lib/loyalty/members";
 const TIER_STYLE: Record<LoyaltyTier, { bg: string; text: string; border: string }> = {
   silver: { bg: "#E8EAED", text: "#5B6470", border: "#C2C8D0" },
   gold: { bg: "#FBE7A1", text: "#7A5B00", border: "#E6B800" },
-  platinum: { bg: "#DCE3F2", text: "#33406B", border: "#9FB0DA" },
+  platinum: { bg: "#EAD7BE", text: "#6B4A23", border: "#C79256" },
 };
 
 function money(n: number): string {
