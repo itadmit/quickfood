@@ -170,6 +170,50 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
     }
   }
 
+  async function patchTrial(payload: Record<string, unknown>, okMsg: string) {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/v1/admin/tenants/${t.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data?.error?.message ?? "שמירה נכשלה");
+        return;
+      }
+      set("trialEndsAt", data?.tenant?.trial_ends_at ?? t.trialEndsAt);
+      set(
+        "billingSetupCompletedAt",
+        data?.tenant?.billing_setup_completed_at ?? t.billingSetupCompletedAt,
+      );
+      flash(okMsg);
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // "2026-07-01" (date input) → end-of-day ISO in the admin's local TZ, so the
+  // trial covers the whole chosen day before the gate locks.
+  function setTrialDate(value: string) {
+    if (!value) {
+      patchTrial({ trial_ends_at: null }, "תאריך הניסיון נמחק");
+      return;
+    }
+    const iso = new Date(`${value}T23:59:59`).toISOString();
+    patchTrial({ trial_ends_at: iso }, "תאריך סיום הניסיון עודכן");
+  }
+
+  function setPaying(paying: boolean) {
+    patchTrial(
+      { is_paying: paying },
+      paying ? "סומן כלקוח משלם" : "הוחזר לסטטוס ניסיון",
+    );
+  }
+
   async function loginAsUser() {
     setSaving(true);
     try {
@@ -322,6 +366,15 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
     trialEndsAtMs !== null
       ? Math.max(0, Math.ceil((trialEndsAtMs - Date.now()) / 86_400_000))
       : null;
+  const isPaying = t.billingSetupCompletedAt !== null;
+  // YYYY-MM-DD for the native date picker (local TZ).
+  const trialDateValue = t.trialEndsAt
+    ? (() => {
+        const d = new Date(t.trialEndsAt);
+        const pad = (n: number) => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      })()
+    : "";
 
   return (
     <div className="space-y-5">
@@ -464,6 +517,45 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
             >
               הארך ב-30 ימים
             </button>
+          </div>
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-qf-line-soft grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-sm font-medium">
+                {isPaying ? "לקוח משלם" : "לקוח בניסיון"}
+              </div>
+              <p className="text-xs text-qf-mute mt-0.5">
+                כשפעיל, הדשבורד פתוח כלקוח משלם ולא ננעל בתום הניסיון.
+              </p>
+            </div>
+            <Toggle
+              checked={isPaying}
+              onChange={setPaying}
+              disabled={saving}
+              aria-label="לקוח משלם"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium" htmlFor="trial-end-date">
+              תאריך סיום ניסיון
+            </label>
+            <input
+              id="trial-end-date"
+              type="date"
+              value={trialDateValue}
+              onChange={(e) => setTrialDate(e.target.value)}
+              disabled={saving || isPaying}
+              dir="ltr"
+              className="mt-1 w-full px-3 py-2 rounded-lg border border-qf-line-dash text-sm bg-white disabled:opacity-60"
+            />
+            <p className="text-xs text-qf-mute mt-1">
+              {isPaying
+                ? "לא רלוונטי ללקוח משלם."
+                : "בחירת תאריך תעדכן מיד את מועד נעילת הדשבורד."}
+            </p>
           </div>
         </div>
       </Section>

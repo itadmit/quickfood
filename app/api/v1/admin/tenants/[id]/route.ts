@@ -49,6 +49,13 @@ const PatchSchema = z.object({
   // gets a settings card to tune the welcome text + idle timeout
   // only when the flag is on.
   kiosk_enabled: z.boolean().optional(),
+  // Trial end date (ISO). Drives the dashboard TrialGate together with
+  // is_paying. null clears it (no trial window defined).
+  trial_ends_at: z.string().datetime().nullable().optional(),
+  // Paying customer toggle. true → stamp billing_setup_completed_at so the
+  // dashboard treats them as a paying customer (gate never locks). false →
+  // clear it, dropping them back to a trial gated by trial_ends_at.
+  is_paying: z.boolean().optional(),
 });
 
 export const GET = handler(
@@ -127,7 +134,7 @@ export const PATCH = handler(
 
     const existing = await prisma.tenant.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, billingSetupCompletedAt: true },
     });
     if (!existing) return apiError("not_found", "מסעדה לא נמצאה", 404);
 
@@ -156,10 +163,25 @@ export const PATCH = handler(
             body.whatsapp_instance_id === "" ? null : body.whatsapp_instance_id,
         }),
         ...(body.kiosk_enabled !== undefined && { kioskEnabled: body.kiosk_enabled }),
+        ...(body.trial_ends_at !== undefined && {
+          trialEndsAt: body.trial_ends_at ? new Date(body.trial_ends_at) : null,
+        }),
+        ...(body.is_paying !== undefined && {
+          billingSetupCompletedAt: body.is_paying
+            ? existing.billingSetupCompletedAt ?? new Date()
+            : null,
+        }),
       },
-      select: { id: true },
+      select: { id: true, trialEndsAt: true, billingSetupCompletedAt: true },
     });
-    return apiJson({ tenant: { id: updated.id } });
+    return apiJson({
+      tenant: {
+        id: updated.id,
+        trial_ends_at: updated.trialEndsAt?.toISOString() ?? null,
+        billing_setup_completed_at:
+          updated.billingSetupCompletedAt?.toISOString() ?? null,
+      },
+    });
   },
 );
 
