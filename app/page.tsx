@@ -1264,7 +1264,7 @@ function Footer() {
           <div>
             <div className={styles.footBrand}>
               QuickFood
-              <small>BY QUICKSHOP - TEL AVIV / 2026</small>
+              <small>BY QUICKSHOP</small>
             </div>
             <p className={styles.footTag}>
               פלטפורמת הזמנות שנבנתה לעולם המזון מהיום הראשון. תפריט, מטבח, משלוח וביקורות - תחת השם שלך, על הדומיין שלך.

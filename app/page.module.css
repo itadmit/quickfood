@@ -2043,8 +2043,8 @@
   display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 32px;
   padding-bottom: 32px; border-bottom: 1px solid rgba(241,233,216,0.15);
 }
-.footBrand { font-family: var(--font-pacifico), "Pacifico", cursive; font-weight: 400; font-size: 38px; letter-spacing: 0.01em; line-height: 1; }
-.footBrand small { display: block; font-family: var(--font-noto-hebrew), "Noto Sans Hebrew", "Heebo"; font-size: 12px; font-weight: 600; color: rgba(241,233,216,0.6); margin-top: 6px; letter-spacing: 0.04em; }
+.footBrand { font-family: var(--font-pacifico), "Pacifico", cursive; font-weight: 400; font-size: 38px; letter-spacing: 0.01em; line-height: 1.25; }
+.footBrand small { display: block; font-family: var(--font-noto-hebrew), "Noto Sans Hebrew", "Heebo"; font-size: 12px; font-weight: 600; color: rgba(241,233,216,0.6); margin-top: 12px; letter-spacing: 0.04em; }
 .footTag { margin-top: 14px; font-size: 13px; color: rgba(241,233,216,0.6); max-width: 30ch; line-height: 1.55; }
 .footCol h5 { font-size: 12px; font-weight: 800; color: var(--cheese); letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 14px; }
 .footCol a { display: block; padding: 5px 0; font-size: 14px; color: rgba(241,233,216,0.7); }
