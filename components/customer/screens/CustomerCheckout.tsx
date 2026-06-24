@@ -62,7 +62,6 @@ export function CustomerCheckout({
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
-  const [country, setCountry] = useState("ישראל");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loyaltyConsent, setLoyaltyConsent] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
@@ -669,16 +668,6 @@ export function CustomerCheckout({
                   נשלח אליך מייל קצר לאחר ההזמנה כדי שתוכל לדרג אותה
                 </div>
               )}
-            </div>
-            <div className="col-span-2">
-              <Field label="מדינה" required>
-                <Input
-                  value={country}
-                  onChange={setCountry}
-                  placeholder="ישראל"
-                  autoComplete="country-name"
-                />
-              </Field>
             </div>
           </div>
         </Card>
