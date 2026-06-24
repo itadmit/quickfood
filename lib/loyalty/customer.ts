@@ -33,7 +33,7 @@ export async function getCustomerLoyalty(
   const config = resolveLoyaltyConfig(tenant?.loyaltyConfig);
 
   const agg = await prisma.order.aggregate({
-    where: { tenantId, customerId, status: { notIn: ["cancelled", "refunded"] } },
+    where: { tenantId, customerId, status: { notIn: ["pending", "cancelled", "refunded"] } },
     _sum: { total: true },
   });
 

@@ -93,13 +93,13 @@ function dayBack(d: Date, n: number) {
   return israelStartOfDay(new Date(d.getTime() - n * 86_400_000 + 12 * 3_600_000));
 }
 
-// Orders that count toward the dashboard: any real order placed, EXCEPT
-// cancelled/refunded and card orders abandoned at the payment screen. This
-// deliberately includes in-progress orders (new / confirmed / preparing /
-// ready / out-for-delivery / delivered) so the dashboard reflects live
-// activity during service, not only orders that already went out the door.
+// Orders that count toward the dashboard: any order the merchant has actually
+// accepted (confirmed / preparing / in_oven / ready / out_for_delivery /
+// delivered). Excludes `pending` - a storefront cash order awaiting approval
+// or a card order abandoned at the payment screen hasn't really happened yet,
+// so it must not inflate revenue. Cancelled/refunded are excluded too.
 const COUNTED: Prisma.OrderWhereInput = {
-  status: { notIn: ["cancelled", "refunded"] },
+  status: { notIn: ["pending", "cancelled", "refunded"] },
   NOT: HIDE_UNPAID_NONCASH,
 };
 

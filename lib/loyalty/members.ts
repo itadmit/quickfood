@@ -58,7 +58,9 @@ export async function loadLoyaltyData(
       where: {
         tenantId,
         customerId: { not: null },
-        status: { notIn: ["cancelled", "refunded"] },
+        // Only accepted orders earn points (excludes pending awaiting approval),
+        // matching the dashboard revenue filter and the customer-facing snapshot.
+        status: { notIn: ["pending", "cancelled", "refunded"] },
       },
       _sum: { total: true },
       _count: { _all: true },
