@@ -67,7 +67,6 @@ const COMMON_STAGES = [
   { key: "received", label: "התקבלה" },
   { key: "accepted", label: "אושרה" },
   { key: "preparing", label: "בהכנה" },
-  { key: "ready", label: "מוכנה" },
 ] as const;
 const DELIVERY_TAIL = [
   { key: "delivering", label: "בדרך" },
@@ -76,7 +75,12 @@ const DELIVERY_TAIL = [
 const PICKUP_TAIL = [{ key: "delivered", label: "נאסף" }] as const;
 
 function stagesFor(method: "delivery" | "pickup"): Array<{ key: string; label: string }> {
-  return [...COMMON_STAGES, ...(method === "delivery" ? DELIVERY_TAIL : PICKUP_TAIL)];
+  // For pickup the "ready" step doubles as the "come collect it" cue.
+  const ready = {
+    key: "ready",
+    label: method === "pickup" ? "מוכן לאיסוף" : "מוכנה",
+  };
+  return [...COMMON_STAGES, ready, ...(method === "delivery" ? DELIVERY_TAIL : PICKUP_TAIL)];
 }
 
 function stageOf(status: string, method: "delivery" | "pickup"): number {
