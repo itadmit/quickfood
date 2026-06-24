@@ -227,14 +227,23 @@ export async function advanceStatus(
       });
     }
 
-    if (order.status === "pending" && to === "confirmed") {
-      await sendTenantPush(order.tenantId, {
-        title: `הזמנה חדשה - ${order.number}`,
-        body: `${order.total} ש"ח · ${order.method === "delivery" ? "משלוח" : "איסוף"}`,
-        url: "/dashboard/orders",
-        tag: `order-${orderId}`,
-        requireInteraction: true,
-      }).catch((err) => console.warn("[push] tenant new-order failed", err));
+    // The order is accepted the moment it leaves `pending` toward an active
+    // state - whether the merchant tapped "אשר וקבל" (→ preparing) or a more
+    // granular confirm (→ confirmed). Tell the customer "המסעדה אישרה".
+    if (order.status === "pending" && (to === "confirmed" || to === "preparing")) {
+      // Card orders are first surfaced to the merchant by the payment callback
+      // (pending → confirmed), so push them now. Storefront cash was already
+      // pushed at creation and is being accepted by the merchant here, so don't
+      // double-notify them.
+      if (order.paymentMethod !== "cash") {
+        await sendTenantPush(order.tenantId, {
+          title: `הזמנה חדשה - ${order.number}`,
+          body: `${order.total} ש"ח · ${order.method === "delivery" ? "משלוח" : "איסוף"}`,
+          url: "/dashboard/orders",
+          tag: `order-${orderId}`,
+          requireInteraction: true,
+        }).catch((err) => console.warn("[push] tenant new-order failed", err));
+      }
 
       await sendOrderConfirmedEmail(orderId).catch((err) =>
         console.warn("[email] order confirmed failed", err),

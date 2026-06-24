@@ -4,7 +4,6 @@ import { isItemVisibleNow } from "@/lib/menu-availability";
 import { computeDeliveryFee } from "@/lib/delivery-fee";
 import { matchZoneByCity } from "@/lib/delivery-zone-match";
 import { sendTenantPush } from "@/lib/merchant/push";
-import { sendOrderConfirmedEmail } from "@/lib/orders/notify-customer";
 import { priceGroupOptions } from "@/lib/option-pricing";
 import { ensureLoyaltyMember } from "@/lib/loyalty/membership";
 import type { Prisma } from "@prisma/client";
@@ -433,17 +432,21 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       .slice(0, 3) || "QF";
   const number = `${numberPrefix}-${orderSeq}`;
 
-  // Determine initial state:
-  // - Card: always `pending` - waits for the Grow callback to confirm.
-  // - Storefront cash: `confirmed` - merchant prepares immediately,
-  //   cash is collected at delivery or pickup as part of the existing
-  //   delivery flow (no separate confirmation step needed).
-  // - Kiosk cash: `pending` - the cashier at the counter has to take
-  //   the cash before the kitchen starts cooking. The merchant flips
-  //   it to confirmed via the Kanban once they've collected.
-  const initialStatus =
-    input.paymentMethod === "cash" && !input.kiosk ? "confirmed" : "pending";
+  // Every order starts `pending` and only becomes `confirmed` on a real
+  // acceptance event:
+  // - Storefront cash: the merchant accepts it from the Kanban ("אשר וקבל").
+  //   It now waits for approval like Wolt instead of auto-confirming, so the
+  //   customer's tracker shows a real "המסעדה אישרה" step.
+  // - Card: the Grow payment callback confirms it.
+  // - Kiosk/POS cash: the cashier confirms once they've taken the cash.
+  const initialStatus = "pending";
   const paymentStatus = "pending";
+
+  // Storefront cash is the one path that has no automatic acceptance trigger
+  // (no payment callback, no manned counter), so the merchant must be alerted
+  // the moment it lands or it would sit unseen in the queue.
+  const storefrontCashNeedsApproval =
+    input.paymentMethod === "cash" && !input.kiosk;
 
   // Resolve a real Customer row for every order that has a phone, even
   // when the checkout was placed as a "guest". Returning callers (same
@@ -557,7 +560,9 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       paymentMethod: input.paymentMethod,
       paymentStatus,
       scheduledFor: scheduledFor ?? null,
-      confirmedAt: initialStatus === "confirmed" ? new Date() : null,
+      // Set on acceptance (advanceStatus), never at creation - all orders
+      // start pending now.
+      confirmedAt: null,
       items: { createMany: { data: orderItemData } },
     },
     include: { items: true },
@@ -598,7 +603,11 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     }
   }
 
-  if (initialStatus === "confirmed") {
+  // Alert the merchant about a storefront cash order the instant it arrives so
+  // they can accept it. (Card orders alert on the payment callback; kiosk/POS
+  // are rung up at a manned counter.) The customer "המסעדה אישרה" notification
+  // is sent when the merchant actually accepts - see advanceStatus().
+  if (storefrontCashNeedsApproval) {
     void dispatchWebhook({
       tenantId: tenant.id,
       eventType: "order.created",
@@ -623,10 +632,6 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       tag: `order-${order.id}`,
       requireInteraction: true,
     }).catch((err) => console.warn("[push] tenant new-order failed", err));
-
-    void sendOrderConfirmedEmail(order.id).catch((err) =>
-      console.warn("[email] order confirmed failed", err),
-    );
   }
 
   return { order, paymentMethod: input.paymentMethod, total };

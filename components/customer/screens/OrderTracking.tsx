@@ -65,6 +65,7 @@ interface OrderData {
 
 const COMMON_STAGES = [
   { key: "received", label: "התקבלה" },
+  { key: "accepted", label: "אושרה" },
   { key: "preparing", label: "בהכנה" },
   { key: "ready", label: "מוכנה" },
 ] as const;
@@ -79,15 +80,16 @@ function stagesFor(method: "delivery" | "pickup"): Array<{ key: string; label: s
 }
 
 function stageOf(status: string, method: "delivery" | "pickup"): number {
-  if (["pending", "confirmed"].includes(status)) return 0;
-  if (["preparing", "in_oven"].includes(status)) return 1;
-  if (status === "ready") return 2;
+  if (status === "pending") return 0; // received, waiting for the restaurant
+  if (status === "confirmed") return 1; // accepted by the restaurant
+  if (["preparing", "in_oven"].includes(status)) return 2;
+  if (status === "ready") return 3;
   if (method === "delivery") {
-    if (status === "out_for_delivery") return 3;
-    if (status === "delivered") return 4;
+    if (status === "out_for_delivery") return 4;
+    if (status === "delivered") return 5;
   } else {
     // Pickup skips out_for_delivery entirely.
-    if (status === "delivered") return 3;
+    if (status === "delivered") return 4;
   }
   return 0;
 }
