@@ -47,7 +47,7 @@ export const NAV: NavSection[] = [
       // doubled. History below has no subroutes so the default is fine.
       { href: "/dashboard/orders", label: "הזמנות", Icon: IcoOrders, exact: true },
       { href: "/dashboard/orders/history", label: "היסטוריית הזמנות", Icon: IcoOrders },
-      { href: "/dashboard/kitchen", label: "מסך מטבח", Icon: IcoOrders, badge: "חדש!" },
+      { href: "/dashboard/kitchen", label: "מסך מטבח", Icon: IcoOrders },
       { href: "/pos", label: "קופה", Icon: IcoBag, badge: "חדש!" },
       {
         href: "/dashboard/menu",
@@ -70,7 +70,7 @@ export const NAV: NavSection[] = [
     items: [
       { href: "/dashboard/campaigns", label: "קמפיינים", Icon: IcoMegaphone },
       { href: "/dashboard/loyalty", label: "מועדון לקוחות", Icon: IcoCrown, badge: "חדש!" },
-      { href: "/dashboard/sales/bundles", label: "מבצעי חבילות", Icon: IcoCreditCard, badge: "חדש!" },
+      { href: "/dashboard/sales/bundles", label: "מבצעי חבילות", Icon: IcoCreditCard },
       { href: "/dashboard/coupons", label: "קופונים", Icon: IcoCreditCard },
       { href: "/dashboard/reviews", label: "ביקורות", Icon: IcoStar },
       { href: "/dashboard/messaging", label: "דיוור והתראות", Icon: IcoBell, badge: "חדש!" },
