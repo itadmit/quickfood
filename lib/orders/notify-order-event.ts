@@ -94,7 +94,7 @@ function bodyFor(
       return `${name}: ${courierLine} יצא אליך עם הזמנה ${number}.`;
     }
     case "delivered":
-      return `${name}: הזמנה ${number} נמסרה בהצלחה. תהנו!`;
+      return `${name}: הזמנה ${number} נמסרה בהצלחה. בתאבון!`;
   }
 }
 
