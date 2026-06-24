@@ -70,7 +70,9 @@ export async function sendOrderConfirmedEmail(orderId: string): Promise<void> {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: {
-      items: true,
+      items: {
+        include: { menuItem: { select: { images: true, imageUrl: true } } },
+      },
       tenant: { select: { name: true, slug: true } },
       branch: { select: { phone: true } },
       deliveryAddress: true,
@@ -90,6 +92,7 @@ export async function sendOrderConfirmedEmail(orderId: string): Promise<void> {
     totalPrice: it.totalPrice,
     notes: it.notes,
     options: parseOptions(it.selectedOptions),
+    imageUrl: it.menuItem?.images?.[0] ?? it.menuItem?.imageUrl ?? null,
   }));
 
   const customerName =
