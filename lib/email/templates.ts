@@ -637,17 +637,21 @@ function itemsTable(items: OrderConfirmedItem[]): string {
       const thumb = it.imageUrl
         ? `<img src="${escape(it.imageUrl)}" width="52" height="52" alt="" style="display:block;border:0;width:52px;height:52px;border-radius:10px;object-fit:cover;background:${BRAND.cream};">`
         : `<div style="width:52px;height:52px;border-radius:10px;background:${BRAND.cream};border:1px solid #f0e8d2;"></div>`;
+      // With no size/options/note the name is a single line, so center it
+      // against the thumbnail instead of pinning it to the top of the row.
+      const hasDetails = !!(it.size || (it.options && it.options.length) || it.notes);
+      const valign = hasDetails ? "top" : "middle";
       return `<tr>
-        <td valign="top" dir="rtl" width="64" style="padding:10px 0 10px 12px;border-bottom:1px solid #f0e8d2;width:64px;">
+        <td valign="${valign}" dir="rtl" width="64" style="padding:10px 0 10px 12px;border-bottom:1px solid #f0e8d2;width:64px;">
           ${thumb}
         </td>
-        <td valign="top" dir="rtl" style="padding:10px 0;border-bottom:1px solid #f0e8d2;text-align:right;">
+        <td valign="${valign}" dir="rtl" style="padding:10px 0;border-bottom:1px solid #f0e8d2;text-align:right;">
           <div style="font-size:14px;font-weight:700;color:${BRAND.ink};">${it.quantity}× ${escape(it.name)}</div>
           ${sizeLine}
           ${optionLines}
           ${notesLine}
         </td>
-        <td valign="top" dir="ltr" style="padding:10px 0 10px 12px;border-bottom:1px solid #f0e8d2;font-size:14px;font-weight:700;color:${BRAND.ink};white-space:nowrap;text-align:left;">
+        <td valign="${valign}" dir="ltr" style="padding:10px 0 10px 12px;border-bottom:1px solid #f0e8d2;font-size:14px;font-weight:700;color:${BRAND.ink};white-space:nowrap;text-align:left;">
           ${escape(formatShekels(it.totalPrice))}
         </td>
       </tr>`;
