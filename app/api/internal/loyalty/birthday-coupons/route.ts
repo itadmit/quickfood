@@ -3,6 +3,7 @@ import {
   issueBirthdayCoupons,
   purgeExpiredBirthdayCoupons,
 } from "@/lib/loyalty/birthday";
+import { expireStalePendingPayments } from "@/lib/payments/expire-stale";
 import { verifySignature } from "@/lib/qstash/client";
 
 export const runtime = "nodejs";
@@ -32,7 +33,8 @@ async function run(req: Request, rawBody: string): Promise<Response> {
 
   const result = await issueBirthdayCoupons();
   const purged = await purgeExpiredBirthdayCoupons();
-  return apiJson({ ok: true, ...result, purgedExpired: purged });
+  const expiredPayments = await expireStalePendingPayments();
+  return apiJson({ ok: true, ...result, purgedExpired: purged, expiredPayments });
 }
 
 export const POST = handler(async (req: Request) => {
