@@ -284,8 +284,8 @@ function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-export function buildReceiptHtml(order: ReceiptOrder, settings?: ReceiptSettings): string {
-  const body = buildReceiptLines(order, settings)
+function receiptBodyHtml(order: ReceiptOrder, settings?: ReceiptSettings): string {
+  return buildReceiptLines(order, settings)
     .map((l) => {
       switch (l.kind) {
         case "title":
@@ -305,10 +305,12 @@ export function buildReceiptHtml(order: ReceiptOrder, settings?: ReceiptSettings
       }
     })
     .join("\n");
+}
 
-  // Mirrors the .qf-print-receipt rules in globals.css so the kanban one-tap
-  // print (this standalone iframe) matches the order-drawer print exactly:
-  // 72mm content centred on the 80mm page, bold group headers, table-laid rows.
+// AirPrint / browser print. mm + @page, 72mm content centred on an 80mm page -
+// mirrors the order-drawer .qf-print-receipt look. Used by printReceiptIframe.
+export function buildReceiptHtml(order: ReceiptOrder, settings?: ReceiptSettings): string {
+  const body = receiptBodyHtml(order, settings);
   return `<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8"><style>
 @page{size:80mm auto;margin:0}
 html,body{margin:0}
@@ -327,6 +329,29 @@ h1{font-size:16pt;font-weight:800;text-align:center;margin:0 0 4pt}
 <div class="r">
 ${body}
 </div>
+</body></html>`;
+}
+
+// Star PassPRNT. PassPRNT rasterises the HTML onto a `size`-wide dot canvas
+// (W = 576), so the layout must be in PIXELS at that width - NOT mm/@page, which
+// PassPRNT mis-scales into a small, rotated print. This is the pre-regression
+// pixel layout (was the shared receipt HTML before the mm/72mm AirPrint rework),
+// kept Star-only and extended with the group/opt classes.
+export function buildPassPrntHtml(order: ReceiptOrder, settings?: ReceiptSettings): string {
+  const body = receiptBodyHtml(order, settings);
+  return `<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8"><style>
+body{margin:0;padding:8px 4px;font-family:-apple-system,sans-serif;color:#000;width:568px;direction:rtl;font-size:27px}
+h1{font-size:44px;margin:0 0 4px;text-align:center}
+.row{display:flex;justify-content:space-between;gap:12px;font-size:27px;line-height:1.35}
+.row span:first-child{word-break:break-word}
+.row span:last-child{white-space:nowrap}
+.muted{font-size:24px;line-height:1.35}
+.rule{border-top:3px dashed #000;margin:10px 0}
+.total{font-size:36px;font-weight:bold}
+.grp{font-size:28px;font-weight:bold;margin-top:10px;margin-bottom:2px}
+.opt{font-size:24px;padding-inline-start:18px}
+</style></head><body>
+${body}
 </body></html>`;
 }
 
@@ -517,18 +542,14 @@ function navigateToApp(url: string, onUnhandled?: () => void): void {
 
 // ─── Star (PassPRNT) ──────────────────────────────────────────
 
-// Star PassPRNT's `size` is a paper-WIDTH CODE, not pixels/mm:
-// "2" = 2-inch (58mm), "3" = 3-inch (80mm), "4" = 4-inch (112mm).
-// We were passing the canvas dot-width (W = 576), which PassPRNT can't parse
-// as a width code, so it fell back and printed the receipt rotated/sideways.
-// Standard receipt printers are 80mm → "3". (Set "2" for a 58mm Star.)
-const PASSPRNT_SIZE = "3";
-
 export function openPassPrnt(html: string, onUnhandled?: () => void): void {
   const back = `${window.location.origin}${window.location.pathname}`;
+  // PassPRNT renders the HTML onto a `size`-wide dot canvas (W). The HTML it
+  // receives MUST be laid out in pixels at that width (buildPassPrntHtml) - feed
+  // it the mm/@page AirPrint HTML and PassPRNT mis-scales it (small + rotated).
   const url =
     `starpassprnt://v1/print/nopreview?back=${encodeURIComponent(back)}` +
-    `&size=${PASSPRNT_SIZE}` +
+    `&size=${W}` +
     `&html=${encodeURIComponent(html)}`;
   navigateToApp(url, onUnhandled);
 }
@@ -649,7 +670,7 @@ export function printReceipt(
 ): void {
   switch (printer) {
     case "star":
-      openPassPrnt(buildReceiptHtml(order, settings), onUnhandled);
+      openPassPrnt(buildPassPrntHtml(order, settings), onUnhandled);
       break;
     case "epson":
       printEpson(order, onUnhandled, settings);
