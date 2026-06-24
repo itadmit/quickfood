@@ -414,39 +414,36 @@ function UploadingTile({ progress, name }: { progress: number; name: string }) {
       role="status"
       aria-label={`מעלה ${name}, ${pct} אחוזים`}
     >
-      <div className="flex flex-col items-center gap-2">
-        <div className="relative" style={{ width: SIZE, height: SIZE }}>
-          <svg width={SIZE} height={SIZE} className="-rotate-90">
-            <circle
-              cx={SIZE / 2}
-              cy={SIZE / 2}
-              r={radius}
-              stroke="rgba(0,0,0,0.08)"
-              strokeWidth={STROKE}
-              fill="none"
-            />
-            <circle
-              cx={SIZE / 2}
-              cy={SIZE / 2}
-              r={radius}
-              stroke="var(--qf-primary)"
-              strokeWidth={STROKE}
-              fill="none"
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={dashOffset}
-              style={{ transition: "stroke-dashoffset 120ms linear" }}
-            />
-          </svg>
-          <div
-            className="absolute inset-0 grid place-items-center text-[11px] font-semibold text-qf-ink2 tnum"
-            aria-hidden
-          >
-            {pct}%
-          </div>
-        </div>
-        <div className="text-[10px] text-qf-mute max-w-[80%] truncate" title={name}>
-          {name}
+      {/* Ring scales to the tile (viewBox, not fixed px) so it never spills out
+          of narrow grid cells - capped at SIZE so it doesn't balloon on wide ones. */}
+      <div className="relative w-3/5 max-w-[56px] aspect-square">
+        <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="w-full h-full -rotate-90">
+          <circle
+            cx={SIZE / 2}
+            cy={SIZE / 2}
+            r={radius}
+            stroke="rgba(0,0,0,0.08)"
+            strokeWidth={STROKE}
+            fill="none"
+          />
+          <circle
+            cx={SIZE / 2}
+            cy={SIZE / 2}
+            r={radius}
+            stroke="var(--qf-primary)"
+            strokeWidth={STROKE}
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={dashOffset}
+            style={{ transition: "stroke-dashoffset 120ms linear" }}
+          />
+        </svg>
+        <div
+          className="absolute inset-0 grid place-items-center text-[11px] font-semibold text-qf-ink2 tnum"
+          aria-hidden
+        >
+          {pct}%
         </div>
       </div>
     </div>

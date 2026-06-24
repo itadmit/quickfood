@@ -28,6 +28,13 @@ const JOBS: Job[] = [
     cron: "* * * * *",
     description: "Process pending outbound webhook deliveries (POS / printers / Slack).",
   },
+  {
+    scheduleId: "quickfood-birthday-coupons",
+    path: "/api/internal/loyalty/birthday-coupons",
+    // 06:00 UTC ≈ 09:00 Israel - issue today's birthday coupons + greetings.
+    cron: "0 6 * * *",
+    description: "Issue birthday coupons + send greetings to loyalty members.",
+  },
 ];
 
 async function main() {

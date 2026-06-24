@@ -15,6 +15,7 @@ const JoinSchema = z.object({
   first_name: z.string().max(40).optional(),
   last_name: z.string().max(40).optional(),
   email: z.string().email().optional(),
+  birthday: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   marketing_consent: z.boolean().optional(),
 });
 
@@ -44,7 +45,7 @@ export const POST = handler(async (req: Request) => {
     }
     const existing = await prisma.customer.findUnique({
       where: { phone },
-      select: { id: true, firstName: true, lastName: true, email: true },
+      select: { id: true, firstName: true, lastName: true, email: true, birthday: true },
     });
     if (existing) {
       customerId = existing.id;
@@ -52,6 +53,7 @@ export const POST = handler(async (req: Request) => {
       if (!existing.firstName && body.first_name) updates.firstName = body.first_name;
       if (!existing.lastName && body.last_name) updates.lastName = body.last_name;
       if (!existing.email && body.email) updates.email = body.email.trim();
+      if (!existing.birthday && body.birthday) updates.birthday = body.birthday;
       if (Object.keys(updates).length) {
         await prisma.customer.update({ where: { id: existing.id }, data: updates }).catch(() => {});
       }
@@ -63,6 +65,7 @@ export const POST = handler(async (req: Request) => {
             firstName: body.first_name ?? "",
             lastName: body.last_name ?? "",
             email: body.email?.trim() ?? null,
+            birthday: body.birthday ?? null,
             marketingConsent: body.marketing_consent === true,
           },
           select: { id: true },

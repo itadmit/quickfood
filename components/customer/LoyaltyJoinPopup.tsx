@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { IcoClose, IcoHeart } from "@/components/shared/Icons";
+import { Crown } from "lucide-react";
+import { IcoClose } from "@/components/shared/Icons";
 
 interface JoinForm {
   title: string;
@@ -42,6 +43,7 @@ export function LoyaltyJoinPopup({ tenantSlug }: Props) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [birthday, setBirthday] = useState("");
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -102,6 +104,7 @@ export function LoyaltyJoinPopup({ tenantSlug }: Props) {
           first_name: firstName.trim() || undefined,
           last_name: lastName.trim() || undefined,
           email: email.trim() || undefined,
+          birthday: birthday.trim() || undefined,
           marketing_consent: true,
         }),
       });
@@ -157,10 +160,14 @@ export function LoyaltyJoinPopup({ tenantSlug }: Props) {
 
         {form.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={form.image_url} alt={form.title} className="block w-full h-32 object-cover" />
+          <img
+            src={form.image_url}
+            alt={form.title}
+            className="block w-full aspect-[16/9] object-cover"
+          />
         ) : (
-          <div className="h-20 bg-(--qf-primary) grid place-items-center">
-            <IcoHeart c="var(--qf-on-primary, #000)" s={34} />
+          <div className="aspect-[16/9] bg-(--qf-primary) grid place-items-center">
+            <Crown size={40} style={{ color: "var(--qf-on-primary, #000)" }} />
           </div>
         )}
 
@@ -168,7 +175,7 @@ export function LoyaltyJoinPopup({ tenantSlug }: Props) {
           {done ? (
             <div className="text-center py-6">
               <div className="w-12 h-12 mx-auto rounded-full bg-(--qf-primary) grid place-items-center mb-3">
-                <IcoHeart c="var(--qf-on-primary, #000)" s={22} />
+                <Crown size={24} style={{ color: "var(--qf-on-primary, #000)" }} />
               </div>
               <h3 className="font-black text-lg">הצטרפת למועדון!</h3>
               <p className="text-sm text-qf-ink2 mt-1">תודה שהצטרפת. נתראה בהזמנה הבאה.</p>
@@ -203,7 +210,7 @@ export function LoyaltyJoinPopup({ tenantSlug }: Props) {
                   inputMode="tel"
                   placeholder="טלפון נייד"
                   dir="ltr"
-                  className="w-full rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none text-start"
+                  className="w-full rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none text-right"
                 />
                 {form.collect_email && (
                   <input
@@ -212,7 +219,21 @@ export function LoyaltyJoinPopup({ tenantSlug }: Props) {
                     type="email"
                     placeholder="אימייל"
                     dir="ltr"
-                    className="w-full rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none text-start"
+                    className="w-full rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none text-right"
+                  />
+                )}
+                {form.collect_birthday && (
+                  <input
+                    value={birthday}
+                    onChange={(e) => setBirthday(e.target.value)}
+                    onFocus={(e) => {
+                      e.target.type = "date";
+                    }}
+                    onBlur={(e) => {
+                      if (!birthday) e.target.type = "text";
+                    }}
+                    placeholder="תאריך לידה"
+                    className="w-full rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none text-right"
                   />
                 )}
               </div>

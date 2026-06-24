@@ -25,6 +25,38 @@ export interface LoyaltyConfig {
   showCheckoutCheckbox: boolean;
   joinForm: LoyaltyJoinForm;
   checkoutConsentText: string;
+  // Birthday benefit: when on, a unique percent-off coupon is auto-issued to
+  // each member on their birthday (see lib/loyalty/birthday). The greeting is
+  // the message body sent over WhatsApp/SMS - supports {name} {business}
+  // {coupon} {expiry} tokens.
+  birthdayBenefit: boolean;
+  birthdayDiscountPercent: number;
+  birthdayGreeting: string;
+}
+
+/** Gender-neutral default birthday greeting. Tokens: {name} {business} {coupon} {expiry}. */
+export function defaultBirthdayGreeting(): string {
+  return [
+    "היום יום הולדת! היום יום הולדת! היום יום הולדת ל-{name}!",
+    "אנחנו ב-{business} לא שכחנו את יום ההולדת שלך, ואנחנו מאחלים המון מזל טוב!",
+    "החלטנו להעניק לך הנחה לכבוד חודש יום ההולדת, תקפה עד {expiry}.",
+    "כל מה שנותר זה להזמין ולהזין את קוד הקופון: {coupon}",
+    "",
+    "אוהבים,",
+    "{business}",
+  ].join("\n");
+}
+
+/** Fill the {name}/{business}/{coupon}/{expiry} tokens of a greeting template. */
+export function renderBirthdayGreeting(
+  template: string,
+  vars: { name: string; business: string; coupon: string; expiry: string },
+): string {
+  return template
+    .replaceAll("{name}", vars.name || "חבר/ה")
+    .replaceAll("{business}", vars.business)
+    .replaceAll("{coupon}", vars.coupon)
+    .replaceAll("{expiry}", vars.expiry);
 }
 
 export function defaultCheckoutConsentText(tenantName: string): string {
@@ -53,6 +85,9 @@ export function defaultLoyaltyConfig(tenantName = "העסק"): LoyaltyConfig {
         "אני מאשר/ת את מדיניות הפרטיות, תקנון האתר וקבלת תוכן שיווקי/פרסומי",
     },
     checkoutConsentText: defaultCheckoutConsentText(tenantName),
+    birthdayBenefit: false,
+    birthdayDiscountPercent: 15,
+    birthdayGreeting: defaultBirthdayGreeting(),
   };
 }
 
@@ -107,6 +142,12 @@ export function resolveLoyaltyConfig(raw: unknown, tenantName = "העסק"): Loy
       consentText: asString(form.consentText, d.joinForm.consentText),
     },
     checkoutConsentText: asString(r.checkoutConsentText, d.checkoutConsentText),
+    birthdayBenefit: asBool(r.birthdayBenefit, d.birthdayBenefit),
+    birthdayDiscountPercent: Math.min(
+      100,
+      Math.max(1, Math.round(asNumber(r.birthdayDiscountPercent, d.birthdayDiscountPercent))),
+    ),
+    birthdayGreeting: asString(r.birthdayGreeting, d.birthdayGreeting),
   };
 }
 

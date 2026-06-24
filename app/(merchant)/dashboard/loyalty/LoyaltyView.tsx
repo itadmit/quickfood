@@ -362,6 +362,53 @@ export function LoyaltyView({
                 יום הולדת
               </label>
             </div>
+
+            {config.joinForm.collectBirthday && (
+              <div className="rounded-xl border border-qf-line bg-qf-line-soft/40 p-3 space-y-3">
+                <label className="flex items-center gap-2 text-sm font-bold">
+                  <Toggle
+                    checked={config.birthdayBenefit}
+                    onChange={(v) => patch("birthdayBenefit", v)}
+                    aria-label="הטבת יום הולדת"
+                  />
+                  הטבת יום הולדת
+                </label>
+                {config.birthdayBenefit && (
+                  <>
+                    <Field label="אחוז הנחה ביום הולדת">
+                      <input
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={config.birthdayDiscountPercent}
+                        onChange={(e) =>
+                          patch(
+                            "birthdayDiscountPercent",
+                            Math.min(100, Math.max(1, Math.round(Number(e.target.value) || 0))),
+                          )
+                        }
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field
+                      label="ברכת יום הולדת"
+                      hint="ניתן להשתמש ב: ‎{name}‎ ‎{business}‎ ‎{coupon}‎ ‎{expiry}‎"
+                    >
+                      <textarea
+                        value={config.birthdayGreeting}
+                        onChange={(e) => patch("birthdayGreeting", e.target.value)}
+                        rows={7}
+                        className={inputCls}
+                      />
+                    </Field>
+                    <p className="text-xs text-qf-mute leading-relaxed">
+                      ביום ההולדת נוצר קופון ייחודי לכל לקוח/ה. אם יש חבילת דיוור פעילה,
+                      הברכה תישלח אוטומטית בוואטסאפ עם קוד הקופון.
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
           </div>
           <div>
             <span className="block text-sm font-bold text-qf-ink mb-1.5">תמונת רקע לפופאפ</span>

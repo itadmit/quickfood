@@ -890,6 +890,10 @@ model Customer {
   email      String?
   firstName  String   @default("") @map("first_name")
   lastName   String   @default("") @map("last_name")
+  // Date of birth as "YYYY-MM-DD" (text, not a timestamp - a birthday is a
+  // calendar day, not an instant, so this stays timezone-safe). Collected by
+  // the loyalty join popup; powers the birthday-coupon automation.
+  birthday   String?  @map("birthday")
   anonymized Boolean  @default(false)
   /// Explicit opt-in to marketing/promotional content (email or SMS).
   /// Defaults to false - the customer has to actively tick the consent

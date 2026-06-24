@@ -34,6 +34,9 @@ const LoyaltyConfigSchema = z.object({
     consentText: z.string().min(1).max(400),
   }),
   checkoutConsentText: z.string().min(1).max(400),
+  birthdayBenefit: z.boolean(),
+  birthdayDiscountPercent: z.number().int().min(1).max(100),
+  birthdayGreeting: z.string().min(1).max(800),
 });
 
 export const GET = handler(async () => {
