@@ -59,6 +59,14 @@ export function ReviewsView({ summary, reviews }: { summary: Summary; reviews: R
         chip="קהילה"
         title="ביקורות"
         subtitle={`${summary.count} ביקורות גלויות`}
+        actions={
+          <a
+            href="/dashboard/messaging"
+            className="inline-flex items-center gap-1.5 bg-black text-[#F8CB1E] text-sm font-bold px-3.5 py-2 rounded-xl shadow-[0_2px_0_#000] hover:opacity-90"
+          >
+            הגדרות ביקורות
+          </a>
+        }
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-3 lg:gap-4">
