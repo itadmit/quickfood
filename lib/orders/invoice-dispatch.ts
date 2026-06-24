@@ -46,6 +46,7 @@ export async function dispatchInvoice(
 
   try {
     const { html, text } = renderRtlEmail({
+      brand: order.tenant.name,
       subject: `חשבונית מס/קבלה - הזמנה #${order.number}`,
       preheader: `${order.tenant.name} - קישור להורדת החשבונית`,
       heading: "החשבונית מוכנה",

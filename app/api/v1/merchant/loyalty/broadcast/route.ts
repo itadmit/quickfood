@@ -84,6 +84,7 @@ export const POST = handler(async (req: Request) => {
   if (body.channel === "email") {
     const subject = body.subject?.trim() || `עדכון מ-${businessName}`;
     const { html } = renderRtlEmail({
+      brand: businessName,
       subject,
       heading: subject,
       paragraphs: body.body.split("\n").filter((l) => l.trim().length > 0),

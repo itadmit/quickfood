@@ -61,6 +61,10 @@ export interface RtlEmailOptions {
   button?: EmailButton;
   /** Optional small footer note (escaped). */
   footerNote?: string;
+  /** Brand shown in the header pill + footer line. Defaults to "QuickFood".
+   *  Customer-facing emails pass the business name so the email reads as
+   *  coming from the restaurant, not the platform. */
+  brand?: string;
   /** If true, treat paragraphs as raw HTML (caller is responsible for escaping). */
   raw?: boolean;
   /** Optional raw HTML rendered between the primary button and the footer note -
@@ -73,6 +77,7 @@ export interface RtlEmailOptions {
 }
 
 export function renderRtlEmail(opts: RtlEmailOptions): { html: string; text: string } {
+  const brand = opts.brand ?? "QuickFood";
   const paragraphs = opts.paragraphs
     .map((p) => `<p dir="rtl" style="margin:0 0 14px;line-height:1.65;color:${BRAND.ink2};font-size:15px;direction:rtl;text-align:right;">${opts.raw ? p : escape(p)}</p>`)
     .join("");
@@ -134,7 +139,7 @@ ${preheader}
       <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" dir="rtl" style="max-width:560px;width:100%;background:${BRAND.card};border:2px solid ${BRAND.line};border-radius:20px;overflow:hidden;direction:rtl;text-align:right;">
         <tr>
           <td bgcolor="${BRAND.yellow}" style="background-color:${BRAND.yellow};padding:24px 28px;text-align:right;direction:rtl;border-bottom:2px solid ${BRAND.line};">
-            <div style="font-size:12px;font-weight:900;color:${BRAND.ink};letter-spacing:1.5px;text-transform:uppercase;">QuickFood</div>
+            <div style="font-size:12px;font-weight:900;color:${BRAND.ink};letter-spacing:1.5px;text-transform:uppercase;">${escape(brand)}</div>
             <div style="font-size:22px;font-weight:900;color:${BRAND.ink};margin-top:8px;line-height:1.25;">${escape(opts.heading)}</div>
           </td>
         </tr>
@@ -150,7 +155,7 @@ ${preheader}
         <tr>
           <td bgcolor="${BRAND.card}" style="background-color:${BRAND.card};padding:18px 28px;border-top:2px solid ${BRAND.line};direction:rtl;text-align:right;">
             <div style="font-size:12px;color:${BRAND.mute};line-height:1.5;">
-              מייל זה נשלח אוטומטית מ-QuickFood. אין להשיב למייל זה.
+              מייל זה נשלח אוטומטית מ-${escape(brand)}. אין להשיב למייל זה.
             </div>
           </td>
         </tr>
@@ -168,7 +173,7 @@ ${preheader}
     textParts.push("", `${opts.whatsappButton.label}: ${opts.whatsappButton.href}`);
   }
   if (opts.footerNote) textParts.push("", opts.footerNote);
-  textParts.push("", "-", "QuickFood");
+  textParts.push("", "-", brand);
   const text = textParts.join("\n");
 
   return { html, text };
@@ -435,6 +440,7 @@ export function reviewReminderEmail({
   })();
 
   return renderRtlEmail({
+    brand: businessName,
     subject: `איך הייתה ההזמנה מ-${businessName}?`,
     preheader: "דקה אחת לדרג - עוזר למסעדה ולסועדים הבאים.",
     heading: `${hello}, איך הייתה ההזמנה?`,
@@ -490,6 +496,7 @@ export function reviewReplyEmail({
   </div>`;
 
   return renderRtlEmail({
+    brand: businessName,
     subject: `${businessName} השיב/ה לדירוג שלך`,
     preheader: "המסעדה הגיבה לביקורת שכתבת.",
     heading: `${hello}, יש לך תשובה מהמסעדה`,
@@ -771,7 +778,8 @@ export function orderConfirmedEmail({
     button: { href: trackingUrl, label: "צפייה במעקב ההזמנה" },
     tail,
     whatsappButton: whatsappLink ? { href: whatsappLink, label: "צ'אט בוואטסאפ" } : undefined,
-    footerNote: `נשלח בשם ${businessName}. לכל שאלה אפשר להשיב למייל זה.`,
+    brand: businessName,
+    footerNote: `נשלח בשם ${businessName}.`,
   });
 }
 
@@ -844,6 +852,7 @@ export function orderCancelledEmail({
     ].filter(Boolean),
     raw: true,
     whatsappButton: whatsappLink ? { href: whatsappLink, label: "צ'אט עם המסעדה" } : undefined,
-    footerNote: `נשלח בשם ${businessName}. לכל שאלה אפשר להשיב למייל זה.`,
+    brand: businessName,
+    footerNote: `נשלח בשם ${businessName}.`,
   });
 }
