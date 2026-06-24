@@ -560,7 +560,10 @@ function printEpson(order: ReceiptOrder, onUnhandled?: () => void, settings?: Re
   const xml =
     `<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">` +
     `<image width="${W}" height="${canvas.height}" color="color_1" mode="mono">${raster}</image>` +
-    `<feed line="3"/><cut type="feed"/></epos-print>`;
+    // Feed enough to push the receipt's tail clear of the print head + cutter
+    // before cutting. 3 lines was too short on some units, so the last lines
+    // stayed inside the mechanism ("doesn't print to the end / no cut").
+    `<feed line="6"/><cut type="feed"/></epos-print>`;
   const back = `${window.location.origin}${window.location.pathname}`;
   const url =
     `tmprintassistant://tmprintassistant.epson.com/print` +
@@ -584,7 +587,10 @@ function printRawBt(order: ReceiptOrder, onUnhandled?: () => void, settings?: Re
     chunks.push(0x1d, 0x76, 0x30, 0x00, widthBytes & 0xff, widthBytes >> 8, rows & 0xff, rows >> 8);
     for (let i = row * widthBytes; i < (row + rows) * widthBytes; i++) chunks.push(raster[i]);
   }
-  chunks.push(0x0a, 0x0a, 0x0a, 0x0a); // feed
+  // Feed enough to clear the print head + tear bar / cutter before cutting.
+  // 4 lines was too short on some units - the last lines stayed inside the
+  // mechanism, so the receipt looked unfinished and couldn't be torn cleanly.
+  for (let i = 0; i < 8; i++) chunks.push(0x0a); // feed
   chunks.push(0x1d, 0x56, 0x42, 0x00); // GS V - partial cut (ignored if no cutter)
 
   const b64 = toBase64(new Uint8Array(chunks));
