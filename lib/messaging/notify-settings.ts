@@ -26,6 +26,12 @@ export const ORDER_NOTIFY_EVENTS: OrderNotifyEvent[] = [
 export interface OrderEventConfig {
   enabled: boolean;
   channel: NotifyChannel;
+  /**
+   * Optional merchant override for the message body. When null/blank the
+   * channel-aware built-in default is used. May contain `{business}`,
+   * `{order}`, `{courier}`, `{courier_phone}`, `{waze}` tokens.
+   */
+  text?: string | null;
 }
 
 export type OrderNotifySettings = Record<OrderNotifyEvent, OrderEventConfig>;
@@ -42,6 +48,10 @@ function asBool(v: unknown, fallback: boolean): boolean {
   return typeof v === "boolean" ? v : fallback;
 }
 
+function asText(v: unknown): string | null {
+  return typeof v === "string" && v.trim().length > 0 ? v : null;
+}
+
 /**
  * Default per-event config derived from the legacy `notifyChannel`. The old
  * behaviour: a single channel fired on every event, and `email`/`off` meant
@@ -53,6 +63,7 @@ function defaultFromLegacy(legacy: NotifyChannel): OrderNotifySettings {
   const base: OrderEventConfig = {
     enabled: isPaid,
     channel: isPaid ? legacy : "email",
+    text: null,
   };
   return {
     confirmed: { ...base },
@@ -75,6 +86,7 @@ export function resolveOrderNotifySettings(
     out[ev] = {
       enabled: asBool(e.enabled, d[ev].enabled),
       channel: asChannel(e.channel, d[ev].channel),
+      text: asText(e.text),
     };
   }
   return out;

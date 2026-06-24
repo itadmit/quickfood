@@ -1,14 +1,14 @@
 /**
  * WhatsApp sender - wraps iBot Chat (https://ibot-chat.com/api/v1),
- * shares the per-tenant credit pool with SMS, and writes an audit row to
- * the unified `sms_logs` table with `channel: "whatsapp"`.
+ * draws the per-tenant WhatsApp credit pool (separate from SMS), and writes
+ * an audit row to the unified `sms_logs` table with `channel: "whatsapp"`.
  *
  * Each tenant brings their own iBot account (token + instance_id) so the
  * message goes out from THEIR connected WhatsApp business number. The
  * platform absorbs no provider cost beyond what the merchant already paid
  * for in their messaging-credits package.
  *
- * Hard gate: when `smsCreditsRemaining <= 0` the send is skipped and logged
+ * Hard gate: when `whatsappCreditsRemaining <= 0` the send is skipped and logged
  * with `status: skipped_no_balance`. The caller (e.g. a queued reminder job)
  * should treat that as a successful no-op, not an error.
  */
@@ -58,15 +58,14 @@ export interface SendWhatsAppResult {
 export async function sendWhatsApp(
   input: SendWhatsAppInput,
 ): Promise<SendWhatsAppResult> {
-  // Tenant credentials win when set; otherwise fall back to the platform
-  // singleton (`platform_settings`) which the super-admin maintains from
-  // /admin/settings/whatsapp. This lets us onboard small merchants without
-  // forcing them to open their own iBot account.
+  // The platform iBot singleton (`platform_settings`) is reserved for the
+  // MANAGED track (`useManagedAccount`). BYO sends use the tenant's own iBot
+  // creds only - there is no fall-through to the platform number.
   const [tenant, platform] = await Promise.all([
     prisma.tenant.findUnique({
       where: { id: input.tenantId },
       select: {
-        smsCreditsRemaining: true,
+        whatsappCreditsRemaining: true,
         whatsappToken: true,
         whatsappInstanceId: true,
       },
@@ -83,19 +82,16 @@ export async function sendWhatsApp(
     throw new Error(`tenant ${input.tenantId} not found`);
   }
 
-  // Managed mode: always platform creds, ignore tenant-owned ones. Otherwise
-  // BYO wins, with a fall-through to platform default for tenants that
-  // haven't connected their own iBot account yet.
+  // Managed mode: always platform creds, ignore tenant-owned ones. BYO mode:
+  // tenant creds only (a tenant with no creds is `not_configured`).
   const skipCredit = input.skipCredit || input.useManagedAccount;
   const token = input.useManagedAccount
     ? platform?.whatsappDefaultToken ?? null
-    : tenant.whatsappToken ?? platform?.whatsappDefaultToken ?? null;
+    : tenant.whatsappToken ?? null;
   const instanceId = input.useManagedAccount
     ? platform?.whatsappDefaultInstanceId ?? null
-    : tenant.whatsappInstanceId ?? platform?.whatsappDefaultInstanceId ?? null;
-  const usingPlatformDefault =
-    input.useManagedAccount ||
-    (!tenant.whatsappToken && !tenant.whatsappInstanceId && !!token && !!instanceId);
+    : tenant.whatsappInstanceId ?? null;
+  const usingPlatformDefault = input.useManagedAccount;
 
   const to = normalizePhone(input.to);
   const jid = toJid(to);
@@ -139,7 +135,7 @@ export async function sendWhatsApp(
     };
   }
 
-  if (!skipCredit && tenant.smsCreditsRemaining <= 0) {
+  if (!skipCredit && tenant.whatsappCreditsRemaining <= 0) {
     await prisma.smsLog.update({
       where: { id: log.id },
       data: { status: "skipped_no_balance" },
@@ -166,7 +162,7 @@ export async function sendWhatsApp(
       ops.push(
         prisma.tenant.update({
           where: { id: input.tenantId },
-          data: { smsCreditsRemaining: { decrement: 1 } },
+          data: { whatsappCreditsRemaining: { decrement: 1 } },
         }),
       );
     }
@@ -217,7 +213,7 @@ export async function sendWhatsApp(
       ops.push(
         prisma.tenant.update({
           where: { id: input.tenantId },
-          data: { smsCreditsRemaining: { decrement: 1 } },
+          data: { whatsappCreditsRemaining: { decrement: 1 } },
         }),
       );
     }

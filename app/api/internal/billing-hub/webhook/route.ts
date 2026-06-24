@@ -216,8 +216,8 @@ export const POST = handler(async (req: Request) => {
     }
 
     case "charge.succeeded": {
-      // SMS top-up landed. Metadata carries the package + credit quota that
-      // the /sms/purchase endpoint attached when creating the charge.
+      // SMS / WhatsApp top-up landed. Metadata carries the package + credit
+      // quota that the /sms/purchase endpoint attached when creating the charge.
       const d = event.data as {
         customer_id: string;
         invoice_id?: string;
@@ -229,11 +229,20 @@ export const POST = handler(async (req: Request) => {
           sms_quota?: number | string;
         };
       };
-      if (d.metadata?.kind !== "sms_topup") break;
+      const isWa = d.metadata?.kind === "whatsapp_topup";
+      if (d.metadata?.kind !== "sms_topup" && !isWa) break;
       const tenant = await findTenantByCustomerId(d.customer_id);
       if (!tenant) break;
       const quota = Number(d.metadata?.sms_quota ?? 0);
       if (!Number.isFinite(quota) || quota <= 0) break;
+
+      // SMS keeps the legacy ledger kind; WhatsApp gets its own so the two
+      // channels never share an idempotency row (invoice_id is unique anyway).
+      const ledgerKind = isWa ? "wa_topup_credit" : "topup_credit";
+      // WhatsApp purchase also flips the durable unlock latch.
+      const creditData = isWa
+        ? { whatsappCreditsRemaining: { increment: quota }, whatsappEnabled: true }
+        : { smsCreditsRemaining: { increment: quota } };
 
       // Idempotency: re-check Tenant in case the /sms/purchase endpoint
       // already credited this top-up synchronously. We use the invoice_id
@@ -242,7 +251,7 @@ export const POST = handler(async (req: Request) => {
         const already = await prisma.smsLog.findFirst({
           where: {
             tenantId: tenant.id,
-            kind: "topup_credit",
+            kind: ledgerKind,
             refKind: "invoice",
             refId: d.invoice_id,
           },
@@ -256,8 +265,8 @@ export const POST = handler(async (req: Request) => {
             tenantId: tenant.id,
             to: "",
             sender: "",
-            body: `top-up credit: +${quota} (${d.metadata?.package ?? ""})`,
-            kind: "topup_credit",
+            body: `top-up credit: +${quota} (${isWa ? "WhatsApp " : ""}${d.metadata?.package ?? ""})`,
+            kind: ledgerKind,
             refKind: "invoice",
             refId: d.invoice_id,
             status: "sent",
@@ -268,7 +277,7 @@ export const POST = handler(async (req: Request) => {
 
       await prisma.tenant.update({
         where: { id: tenant.id },
-        data: { smsCreditsRemaining: { increment: quota } },
+        data: creditData,
       });
       break;
     }

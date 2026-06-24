@@ -403,16 +403,24 @@ model Tenant {
   notifySettings      Json          @default("{}") @map("notify_settings")
   smsSender           String?       @map("sms_sender") @db.VarChar(11)
 
-  // SMS + WhatsApp credit balance. Top-ups (Starter/Growth/Scale) STACK -
-  // there is no messaging subscription. Each purchase is a one-off charge
-  // to the saved token that adds the package quota to this counter. Both
-  // SMS and WhatsApp sends decrement from the same pool because per-message
-  // price is the same.
+  // SMS credit balance. Top-ups (Starter/Growth/Scale) STACK - there is no
+  // messaging subscription. Each purchase is a one-off charge that adds the
+  // package quota to this counter. SMS and BYO-WhatsApp keep SEPARATE pools
+  // (whatsappCreditsRemaining below) - the two tracks are billed apart.
   smsCreditsRemaining Int @default(0) @map("sms_credits_remaining")
+
+  // BYO-WhatsApp credit balance. Decremented only by lib/whatsapp/send.ts on
+  // a tenant-owned iBot send. Managed (whatsapp_managed) sends never touch it.
+  whatsappCreditsRemaining Int @default(0) @map("whatsapp_credits_remaining")
+
+  // Durable "purchased a WhatsApp package" latch. Stays true after credits
+  // hit 0 so the connection card never re-locks. Flipped true on the first
+  // whatsapp_topup charge (sync route + webhook). Gates the BYO connection UI.
+  whatsappEnabled Boolean @default(false) @map("whatsapp_enabled")
 
   // iBot Chat (WhatsApp) credentials. Each tenant connects their own iBot
   // instance - QuickFood does not host a shared WhatsApp number. When both
-  // fields are set we treat WhatsApp as available; the `reviewsChannel`
+  // fields are set we treat WhatsApp as connected; the `reviewsChannel`
   // value `whatsapp` triggers sends.
   whatsappToken      String? @map("whatsapp_token")
   whatsappInstanceId String? @map("whatsapp_instance_id")

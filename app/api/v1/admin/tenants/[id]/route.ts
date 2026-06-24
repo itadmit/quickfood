@@ -99,6 +99,7 @@ export const GET = handler(
         custom_domain: tenant.customDomain,
         accepts_cash: tenant.acceptsCash,
         sms_credits_remaining: tenant.smsCreditsRemaining,
+        whatsapp_credits_remaining: tenant.whatsappCreditsRemaining,
         sms_sender: tenant.smsSender,
         whatsapp_token: tenant.whatsappToken,
         whatsapp_instance_id: tenant.whatsappInstanceId,

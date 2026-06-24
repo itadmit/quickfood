@@ -2,6 +2,7 @@ import { z } from "zod";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
+import { resolveMessagingAvailability } from "@/lib/messaging/availability";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,33 +12,28 @@ const Schema = z.object({
 });
 
 async function availability(tenantId: string) {
-  const [tenant, platform] = await Promise.all([
-    prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: {
-        notifyChannel: true,
-        smsCreditsRemaining: true,
-        whatsappToken: true,
-        whatsappInstanceId: true,
-        reviewsWhatsappSubscriptionId: true,
-      },
-    }),
-    prisma.platformSettings.findFirst({
-      select: { whatsappDefaultToken: true, whatsappDefaultInstanceId: true },
-    }),
-  ]);
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    select: {
+      notifyChannel: true,
+      smsCreditsRemaining: true,
+      whatsappCreditsRemaining: true,
+      whatsappEnabled: true,
+      whatsappToken: true,
+      whatsappInstanceId: true,
+      reviewsWhatsappSubscriptionId: true,
+    },
+  });
   if (!tenant) return null;
-  const credits = tenant.smsCreditsRemaining > 0;
-  const whatsappConnected =
-    !!(tenant.whatsappToken && tenant.whatsappInstanceId) ||
-    !!(platform?.whatsappDefaultToken && platform?.whatsappDefaultInstanceId);
+  const a = resolveMessagingAvailability(tenant);
   return {
     tenant,
-    sms_available: credits,
-    whatsapp_connected: whatsappConnected,
-    whatsapp_available: whatsappConnected && credits,
-    managed_active: !!tenant.reviewsWhatsappSubscriptionId,
-    sms_credits: tenant.smsCreditsRemaining,
+    sms_available: a.smsAvailable,
+    whatsapp_connected: a.whatsappConnected,
+    whatsapp_available: a.whatsappAvailable,
+    managed_active: a.managedActive,
+    sms_credits: a.smsCredits,
+    whatsapp_credits: a.whatsappCredits,
   };
 }
 
@@ -79,10 +75,10 @@ export const PATCH = handler(async (req: Request) => {
   }
   if (body.channel === "whatsapp") {
     if (!a.whatsapp_connected) {
-      return apiError("whatsapp_not_connected", "WhatsApp לא מחובר. הגדר חיבור בהגדרות WhatsApp.", 409, "channel");
+      return apiError("whatsapp_not_connected", "WhatsApp לא מחובר. חברו את ה-iBot בעמוד 'דיוור והתראות'.", 409, "channel");
     }
-    if (!a.sms_available) {
-      return apiError("no_credits", "אין קרדיט הודעות. רכוש קרדיט כדי להפעיל את הערוץ הזה.", 409, "channel");
+    if (!a.whatsapp_available) {
+      return apiError("no_credits", "אין יתרת וואטסאפ. רכשו חבילת וואטסאפ כדי להפעיל את הערוץ הזה.", 409, "channel");
     }
   }
 

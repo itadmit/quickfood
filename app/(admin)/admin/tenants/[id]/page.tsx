@@ -57,6 +57,7 @@ export default async function TenantDetailPage({
         acceptsCash: tenant.acceptsCash,
         kioskEnabled: tenant.kioskEnabled,
         smsCreditsRemaining: tenant.smsCreditsRemaining,
+        whatsappCreditsRemaining: tenant.whatsappCreditsRemaining,
         whatsappToken: tenant.whatsappToken,
         whatsappInstanceId: tenant.whatsappInstanceId,
         plan: tenant.plan?.name ?? null,

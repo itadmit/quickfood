@@ -43,6 +43,7 @@ const CHANNEL_LABEL: Record<NotifyChannel, string> = {
 
 interface Availability {
   smsAvailable: boolean;
+  whatsappEnabled: boolean;
   whatsappConnected: boolean;
   whatsappAvailable: boolean;
   managedActive: boolean;
@@ -83,8 +84,10 @@ function channelAvailable(ch: NotifyChannel, a: Availability): boolean {
 
 export function MessagingView({
   balance: initialBalance,
+  whatsappBalance: initialWaBalance,
   smsSender: initialSender,
   billingReady,
+  whatsapp,
   orderEvents,
   review,
   availability,
@@ -94,8 +97,10 @@ export function MessagingView({
   logs,
 }: {
   balance: number;
+  whatsappBalance: number;
   smsSender: string;
   billingReady: boolean;
+  whatsapp: { token: string; instanceId: string };
   orderEvents: OrderNotifySettings;
   review: { enabled: boolean; public: boolean; channel: NotifyChannel; delayMinutes: number };
   availability: Availability;
@@ -106,6 +111,7 @@ export function MessagingView({
 }) {
   const [tab, setTab] = useState<Tab>("balance");
   const [balance, setBalance] = useState(initialBalance);
+  const [waBalance, setWaBalance] = useState(initialWaBalance);
   const hasCredits = balance > 0;
 
   return (
@@ -142,8 +148,12 @@ export function MessagingView({
         <BalanceTab
           balance={balance}
           setBalance={setBalance}
+          waBalance={waBalance}
+          setWaBalance={setWaBalance}
           smsSender={initialSender}
           billingReady={billingReady}
+          whatsapp={whatsapp}
+          availability={availability}
           managed={managed}
           logs={logs}
         />
@@ -177,15 +187,23 @@ export function MessagingView({
 function BalanceTab({
   balance,
   setBalance,
+  waBalance,
+  setWaBalance,
   smsSender,
   billingReady,
+  whatsapp,
+  availability,
   managed,
   logs,
 }: {
   balance: number;
   setBalance: (n: number) => void;
+  waBalance: number;
+  setWaBalance: (n: number) => void;
   smsSender: string;
   billingReady: boolean;
+  whatsapp: { token: string; instanceId: string };
+  availability: Availability;
   managed: Managed;
   logs: LogRow[];
 }) {
@@ -202,24 +220,27 @@ function BalanceTab({
   const [managedBusy, setManagedBusy] = useState(false);
   const [managedError, setManagedError] = useState<string | null>(null);
 
-  async function buy(pkg: string) {
-    setBusy(pkg);
+  async function buy(pkg: string, channel: "sms" | "whatsapp" = "sms") {
+    setBusy(`${channel}:${pkg}`);
     setError(null);
     setSuccess(null);
     try {
       const res = await fetch("/api/v1/merchant/sms/purchase", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ package: pkg }),
+        body: JSON.stringify({ package: pkg, channel }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
         setError(data?.error?.message ?? data?.error ?? "הרכישה נכשלה");
         return;
       }
-      if (typeof data.credits_remaining === "number") setBalance(data.credits_remaining);
+      if (typeof data.credits_remaining === "number") {
+        if (channel === "whatsapp") setWaBalance(data.credits_remaining);
+        else setBalance(data.credits_remaining);
+      }
       const charged = typeof data.total_amount === "number" ? ` · חויב ₪${data.total_amount.toFixed(2)}` : "";
-      setSuccess(`נוספו ${data.added} הודעות ליתרה${charged}`);
+      setSuccess(`נוספו ${data.added} הודעות ליתרת ${channel === "whatsapp" ? "וואטסאפ" : "SMS"}${charged}`);
       router.refresh();
     } finally {
       setBusy(null);
@@ -311,11 +332,16 @@ function BalanceTab({
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-4">
         <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5">
-          <div className="text-xs text-qf-mute">יתרה נוכחית</div>
+          <div className="text-xs text-qf-mute">יתרת SMS</div>
           <div className="text-2xl lg:text-3xl font-bold tnum mt-1">{balance.toLocaleString("he-IL")}</div>
-          <div className="text-xs text-qf-mute mt-0.5">הודעות זמינות (SMS + וואטסאפ)</div>
+          <div className="text-xs text-qf-mute mt-0.5">הודעות SMS זמינות</div>
+        </div>
+        <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5">
+          <div className="text-xs text-qf-mute">יתרת וואטסאפ</div>
+          <div className="text-2xl lg:text-3xl font-bold tnum mt-1">{waBalance.toLocaleString("he-IL")}</div>
+          <div className="text-xs text-qf-mute mt-0.5">הודעות וואטסאפ זמינות</div>
         </div>
         <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5">
           <div className="text-xs text-qf-mute">שם השולח ב-SMS</div>
@@ -326,11 +352,22 @@ function BalanceTab({
         </div>
       </div>
 
+      {(success || error) && (
+        <div>
+          {success && (
+            <div className="text-sm bg-qf-green-soft border border-(--qf-primary)/30 text-qf-green-deep rounded-xl px-3 py-2">
+              {success}
+            </div>
+          )}
+          {error && <div className="text-sm text-qf-tomato">{error}</div>}
+        </div>
+      )}
+
       <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
         <div>
-          <h2 className="text-base lg:text-lg font-semibold">רכישת חבילת הודעות</h2>
+          <h2 className="text-base lg:text-lg font-semibold">רכישת חבילת SMS</h2>
           <p className="text-xs lg:text-sm text-qf-mute">
-            חיוב חד-פעמי מהאשראי השמור והוספת הודעות ליתרה. אין מנוי חודשי - קונים עוד מתי שצריך, היתרה מצטברת ומשרתת גם התראות וגם דיוור מועדון.
+            חיוב חד-פעמי מהאשראי השמור והוספת הודעות ליתרת ה-SMS. אין מנוי חודשי - קונים עוד מתי שצריך, היתרה מצטברת.
           </p>
         </div>
         {!billingReady && (
@@ -342,43 +379,18 @@ function BalanceTab({
             לפני רכישת חבילה.
           </div>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {PACKAGES.map((p) => {
-            const total = p.base * (1 + VAT_RATE);
-            return (
-              <div key={p.key} className="rounded-xl border border-qf-line-dash p-4 flex flex-col">
-                <div className="flex items-baseline justify-between">
-                  <div className="font-semibold">{p.label}</div>
-                  <div className="text-end">
-                    <div className="tnum text-lg font-bold leading-none">
-                      ₪{p.base}
-                      <span className="text-xs font-normal text-qf-mute"> + מע״מ</span>
-                    </div>
-                    <div className="text-[10px] text-qf-mute tnum mt-0.5">₪{total.toFixed(2)} בפועל</div>
-                  </div>
-                </div>
-                <div className="text-xs text-qf-mute mt-1">
-                  {p.quota.toLocaleString("he-IL")} הודעות · ₪{((p.base / p.quota) * 1000).toFixed(1)} לאלף
-                </div>
-                <button
-                  type="button"
-                  onClick={() => buy(p.key)}
-                  disabled={busy !== null || !billingReady}
-                  className="mt-3 py-2 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
-                >
-                  {busy === p.key ? "מבצע רכישה..." : "רכוש"}
-                </button>
-              </div>
-            );
-          })}
-        </div>
-        {success && (
-          <div className="text-sm bg-qf-green-soft border border-(--qf-primary)/30 text-qf-green-deep rounded-xl px-3 py-2">
-            {success}
-          </div>
-        )}
-        {error && <div className="text-sm text-qf-tomato">{error}</div>}
+        <PackageGrid channel="sms" billingReady={billingReady} busy={busy} onBuy={buy} />
       </section>
+
+      <WhatsappSection
+        enabled={availability.whatsappEnabled}
+        connected={availability.whatsappConnected}
+        waBalance={waBalance}
+        initial={whatsapp}
+        billingReady={billingReady}
+        busy={busy}
+        onBuy={(pkg) => buy(pkg, "whatsapp")}
+      />
 
       <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-2">
@@ -601,6 +613,261 @@ function ManagedSubscribeModal({
   );
 }
 
+function PackageGrid({
+  channel,
+  billingReady,
+  busy,
+  onBuy,
+}: {
+  channel: "sms" | "whatsapp";
+  billingReady: boolean;
+  busy: string | null;
+  onBuy: (pkg: string, channel: "sms" | "whatsapp") => void;
+}) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      {PACKAGES.map((p) => {
+        const total = p.base * (1 + VAT_RATE);
+        const key = `${channel}:${p.key}`;
+        return (
+          <div key={p.key} className="rounded-xl border border-qf-line-dash p-4 flex flex-col">
+            <div className="flex items-baseline justify-between">
+              <div className="font-semibold">{p.label}</div>
+              <div className="text-end">
+                <div className="tnum text-lg font-bold leading-none">
+                  ₪{p.base}
+                  <span className="text-xs font-normal text-qf-mute"> + מע״מ</span>
+                </div>
+                <div className="text-[10px] text-qf-mute tnum mt-0.5">₪{total.toFixed(2)} בפועל</div>
+              </div>
+            </div>
+            <div className="text-xs text-qf-mute mt-1">
+              {p.quota.toLocaleString("he-IL")} הודעות · ₪{((p.base / p.quota) * 1000).toFixed(1)} לאלף
+            </div>
+            <button
+              type="button"
+              onClick={() => onBuy(p.key, channel)}
+              disabled={busy !== null || !billingReady}
+              className="mt-3 py-2 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
+            >
+              {busy === key ? "מבצע רכישה..." : "רכוש"}
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * BYO-WhatsApp: connection (own iBot creds) + its own balance + top-up packages.
+ * The connection is locked behind buying a WhatsApp package (whatsappEnabled).
+ */
+function WhatsappSection({
+  enabled,
+  connected,
+  waBalance,
+  initial,
+  billingReady,
+  busy,
+  onBuy,
+}: {
+  enabled: boolean;
+  connected: boolean;
+  waBalance: number;
+  initial: { token: string; instanceId: string };
+  billingReady: boolean;
+  busy: string | null;
+  onBuy: (pkg: string) => void;
+}) {
+  const router = useRouter();
+  const [token, setToken] = useState(initial.token);
+  const [instanceId, setInstanceId] = useState(initial.instanceId);
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  const [testPhone, setTestPhone] = useState("");
+  const [testBusy, setTestBusy] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  async function save() {
+    setSaving(true);
+    setSaveMsg(null);
+    try {
+      const res = await fetch("/api/v1/merchant/whatsapp/settings", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ token: token.trim() || null, instance_id: instanceId.trim() || null }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setSaveMsg({ ok: false, msg: data?.error?.message ?? "שמירה נכשלה" });
+        return;
+      }
+      setSaveMsg({ ok: true, msg: "החיבור נשמר" });
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function sendTest() {
+    setTestBusy(true);
+    setTestResult(null);
+    try {
+      const res = await fetch("/api/v1/merchant/whatsapp/test", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ to: testPhone.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setTestResult({ ok: false, message: data?.error?.message ?? "שליחה נכשלה" });
+        return;
+      }
+      const status: string = data.result?.status ?? "unknown";
+      setTestResult(
+        status === "sent"
+          ? { ok: true, message: "הודעת הבדיקה נשלחה. בדקו את הוואטסאפ." }
+          : {
+              ok: false,
+              message:
+                status === "invalid_recipient"
+                  ? "מספר טלפון לא תקין (פורמט: 05XXXXXXXX)"
+                  : status === "not_configured"
+                    ? "החיבור לא הוגדר. שמרו Token ו-Instance ID תקפים."
+                    : data.result?.providerMsg || `סטטוס: ${status}`,
+            },
+      );
+    } finally {
+      setTestBusy(false);
+    }
+  }
+
+  if (!enabled) {
+    return (
+      <section className="bg-white rounded-2xl border-2 border-dashed border-qf-line-dash p-4 lg:p-5 space-y-3">
+        <div>
+          <h2 className="text-base lg:text-lg font-semibold">וואטסאפ (המספר שלך)</h2>
+          <p className="text-xs lg:text-sm text-qf-mute">
+            שליחת התראות וביקורות מ-WhatsApp העסקי שלכם, דרך iBot Chat. רכשו חבילת וואטסאפ כדי לפתוח את החיבור.
+          </p>
+        </div>
+        {!billingReady && (
+          <div className="bg-qf-yolk-soft border border-qf-yolk/40 rounded-xl px-3 py-2 text-sm text-qf-ink2">
+            יש להשלים{" "}
+            <Link href="/dashboard/billing" className="underline underline-offset-2">
+              הגדרת חיוב
+            </Link>{" "}
+            לפני רכישת חבילה.
+          </div>
+        )}
+        <PackageGrid channel="whatsapp" billingReady={billingReady} busy={busy} onBuy={(pkg) => onBuy(pkg)} />
+      </section>
+    );
+  }
+
+  return (
+    <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h2 className="text-base lg:text-lg font-semibold">וואטסאפ (המספר שלך)</h2>
+          <p className="text-xs lg:text-sm text-qf-mute">
+            חיבור iBot Chat למספר העסקי שלכם. כל שליחה יורדת מיתרת הוואטסאפ ({waBalance.toLocaleString("he-IL")} זמינות).
+          </p>
+        </div>
+        <span
+          className={cn(
+            "shrink-0 px-2.5 py-1 rounded-full text-xs font-bold",
+            connected ? "bg-qf-green-soft text-qf-green-deep" : "bg-qf-line-soft text-qf-mute",
+          )}
+        >
+          {connected ? "מחובר" : "לא מחובר"}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3">
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium block">Token (API key)</label>
+          <input
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            dir="ltr"
+            placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium block">Instance ID</label>
+          <input
+            value={instanceId}
+            onChange={(e) => setInstanceId(e.target.value)}
+            dir="ltr"
+            placeholder="abc123-instance"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm"
+          />
+          <div className="text-xs text-qf-mute">מזהה ה-instance של חיבור הוואטסאפ שלכם ב-iBot.</div>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={save}
+            disabled={saving}
+            className="py-2 px-4 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
+          >
+            {saving ? "שומר..." : "שמירת חיבור"}
+          </button>
+          {saveMsg && (
+            <span className={cn("text-sm", saveMsg.ok ? "text-qf-green-deep" : "text-qf-tomato")}>{saveMsg.msg}</span>
+          )}
+        </div>
+      </div>
+
+      <div className="border-t border-qf-line-soft pt-3 space-y-2">
+        <div className="text-sm font-medium">בדיקת חיבור</div>
+        <p className="text-xs text-qf-mute">שליחת הודעת בדיקה. הפלטפורמה סופגת את העלות - לא יורד מהיתרה.</p>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="tel"
+            inputMode="tel"
+            dir="ltr"
+            value={testPhone}
+            onChange={(e) => setTestPhone(e.target.value)}
+            placeholder="050-1234567"
+            className="flex-1 px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum text-sm"
+          />
+          <button
+            type="button"
+            onClick={sendTest}
+            disabled={testBusy || !connected || testPhone.trim().length < 9}
+            className="px-4 py-2.5 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
+          >
+            {testBusy ? "שולח..." : "שליחת בדיקה"}
+          </button>
+        </div>
+        {!connected && <p className="text-xs text-qf-mute">יש לשמור Token ו-Instance ID לפני שליחת בדיקה.</p>}
+        {testResult && (
+          <div
+            className={cn(
+              "text-sm rounded-xl px-3 py-2 border",
+              testResult.ok
+                ? "bg-qf-green-soft border-(--qf-primary)/30 text-qf-green-deep"
+                : "bg-qf-tomato-soft border-qf-tomato/40 text-qf-tomato",
+            )}
+          >
+            {testResult.message}
+          </div>
+        )}
+      </div>
+
+      <div className="border-t border-qf-line-soft pt-3 space-y-3">
+        <div className="text-sm font-medium">רכישת חבילת וואטסאפ</div>
+        <PackageGrid channel="whatsapp" billingReady={billingReady} busy={busy} onBuy={(pkg) => onBuy(pkg)} />
+      </div>
+    </section>
+  );
+}
+
 /* ─────────────────────── Tab 2: customer notifications ─────────────────────── */
 
 function ChannelPicker({
@@ -642,6 +909,76 @@ function ChannelPicker({
   );
 }
 
+const TEXT_TOKENS: Array<{ token: string; label: string }> = [
+  { token: "{business}", label: "שם העסק" },
+  { token: "{order}", label: "מספר הזמנה" },
+  { token: "{courier}", label: "שם השליח" },
+  { token: "{courier_phone}", label: "טלפון השליח" },
+  { token: "{waze}", label: "לינק Waze" },
+];
+
+function EventTextEditor({
+  event,
+  value,
+  onChange,
+}: {
+  event: OrderNotifyEvent;
+  value: string;
+  onChange: (t: string) => void;
+}) {
+  const [open, setOpen] = useState(value.trim().length > 0);
+  return (
+    <div className="pt-1">
+      {!open ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="text-xs text-(--qf-deep) underline underline-offset-2 hover:text-(--qf-primary)"
+        >
+          {value.trim() ? "עריכת הטקסט (מותאם אישית)" : "עריכת טקסט ההודעה"}
+        </button>
+      ) : (
+        <div className="space-y-2">
+          <textarea
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            rows={3}
+            dir="rtl"
+            placeholder="השאירו ריק לטקסט ברירת המחדל החכם (וואטסאפ עשיר / SMS קצר)."
+            className="w-full px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm leading-relaxed"
+            aria-label={`טקסט הודעה ל${EVENT_LABEL[event]}`}
+          />
+          <div className="flex flex-wrap items-center gap-1.5">
+            {TEXT_TOKENS.map((t) => (
+              <button
+                key={t.token}
+                type="button"
+                onClick={() => onChange(`${value}${value && !value.endsWith(" ") ? " " : ""}${t.token}`)}
+                className="px-2 py-0.5 rounded-md bg-qf-line-soft text-qf-ink2 text-[11px] font-medium hover:bg-qf-line-dash"
+                title={`הוספת ${t.label}`}
+              >
+                {t.label}
+              </button>
+            ))}
+            {value.trim() && (
+              <button
+                type="button"
+                onClick={() => onChange("")}
+                className="px-2 py-0.5 rounded-md text-qf-tomato text-[11px] font-medium hover:underline"
+              >
+                איפוס לברירת מחדל
+              </button>
+            )}
+          </div>
+          <p className="text-[11px] text-qf-mute">
+            ריק = טקסט ברירת מחדל. הלינק ל-Waze רלוונטי בעיקר ב&quot;הזמנה מוכנה&quot; לאיסוף עצמי.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function NotificationsTab({
   orderEvents,
   review,
@@ -666,6 +1003,7 @@ function NotificationsTab({
       out[ev] = {
         enabled: e.enabled,
         channel: PAID.includes(e.channel) ? e.channel : "sms",
+        text: e.text ?? null,
       };
     }
     return out;
@@ -735,12 +1073,19 @@ function NotificationsTab({
                   />
                 </label>
                 {events[ev].enabled && (
-                  <ChannelPicker
-                    value={events[ev].channel}
-                    options={PAID}
-                    availability={availability}
-                    onChange={(c) => setEvent(ev, { channel: c })}
-                  />
+                  <>
+                    <ChannelPicker
+                      value={events[ev].channel}
+                      options={PAID}
+                      availability={availability}
+                      onChange={(c) => setEvent(ev, { channel: c })}
+                    />
+                    <EventTextEditor
+                      event={ev}
+                      value={events[ev].text ?? ""}
+                      onChange={(t) => setEvent(ev, { text: t })}
+                    />
+                  </>
                 )}
               </div>
             ))}

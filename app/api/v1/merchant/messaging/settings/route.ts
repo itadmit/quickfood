@@ -17,6 +17,7 @@ import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { getSubscription, BillingHubError } from "@/lib/billing-hub/client";
 import { REVIEWS_WHATSAPP_BASE_PRICE } from "@/lib/billing-hub/plans";
+import { resolveMessagingAvailability } from "@/lib/messaging/availability";
 import {
   resolveOrderNotifySettings,
   ORDER_NOTIFY_EVENTS,
@@ -33,7 +34,14 @@ const EventEnum = z.enum(["confirmed", "ready", "on_the_way", "delivered"]);
 
 const Schema = z.object({
   order_events: z
-    .record(EventEnum, z.object({ enabled: z.boolean(), channel: ChannelEnum }))
+    .record(
+      EventEnum,
+      z.object({
+        enabled: z.boolean(),
+        channel: ChannelEnum,
+        text: z.string().max(1000).nullish(),
+      }),
+    )
     .optional(),
   review: z
     .object({
@@ -52,48 +60,48 @@ const Schema = z.object({
 });
 
 async function loadContext(tenantId: string) {
-  const [tenant, platform] = await Promise.all([
-    prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: {
-        notifyChannel: true,
-        notifySettings: true,
-        reviewsEnabled: true,
-        reviewsPublic: true,
-        reviewsChannel: true,
-        reviewsDelayMinutes: true,
-        smsSender: true,
-        smsCreditsRemaining: true,
-        whatsappToken: true,
-        whatsappInstanceId: true,
-        reviewsWhatsappSubscriptionId: true,
-        billingCustomerId: true,
-        billingPaymentMethodId: true,
-      },
-    }),
-    prisma.platformSettings.findFirst({
-      select: { whatsappDefaultToken: true, whatsappDefaultInstanceId: true },
-    }),
-  ]);
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    select: {
+      notifyChannel: true,
+      notifySettings: true,
+      reviewsEnabled: true,
+      reviewsPublic: true,
+      reviewsChannel: true,
+      reviewsDelayMinutes: true,
+      smsSender: true,
+      smsCreditsRemaining: true,
+      whatsappCreditsRemaining: true,
+      whatsappEnabled: true,
+      whatsappToken: true,
+      whatsappInstanceId: true,
+      reviewsWhatsappSubscriptionId: true,
+      billingCustomerId: true,
+      billingPaymentMethodId: true,
+    },
+  });
   if (!tenant) return null;
-  const credits = tenant.smsCreditsRemaining > 0;
-  const whatsappConnected =
-    !!(tenant.whatsappToken && tenant.whatsappInstanceId) ||
-    !!(platform?.whatsappDefaultToken && platform?.whatsappDefaultInstanceId);
-  const managedActive = !!tenant.reviewsWhatsappSubscriptionId;
+  const a = resolveMessagingAvailability(tenant);
   return {
     tenant,
-    sms_available: credits,
-    whatsapp_connected: whatsappConnected,
-    whatsapp_available: whatsappConnected && credits,
-    managed_active: managedActive,
+    sms_available: a.smsAvailable,
+    whatsapp_enabled: a.whatsappEnabled,
+    whatsapp_connected: a.whatsappConnected,
+    whatsapp_available: a.whatsappAvailable,
+    whatsapp_credits: a.whatsappCredits,
+    managed_active: a.managedActive,
   };
 }
 
 /** Reject a paid channel the tenant can't actually use (defense-in-depth). */
 function channelError(
   channel: NotifyChannel,
-  ctx: { sms_available: boolean; whatsapp_connected: boolean; managed_active: boolean },
+  ctx: {
+    sms_available: boolean;
+    whatsapp_connected: boolean;
+    whatsapp_available: boolean;
+    managed_active: boolean;
+  },
 ) {
   if (channel === "whatsapp_managed" && !ctx.managed_active) {
     return apiError(
@@ -104,14 +112,14 @@ function channelError(
     );
   }
   if (channel === "sms" && !ctx.sms_available) {
-    return apiError("no_credits", "אין יתרת הודעות. רכשו חבילה כדי להפעיל את הערוץ הזה.", 409, "channel");
+    return apiError("no_credits", "אין יתרת SMS. רכשו חבילה כדי להפעיל את הערוץ הזה.", 409, "channel");
   }
   if (channel === "whatsapp") {
     if (!ctx.whatsapp_connected) {
-      return apiError("whatsapp_not_connected", "WhatsApp לא מחובר. הגדירו חיבור בהגדרות WhatsApp.", 409, "channel");
+      return apiError("whatsapp_not_connected", "WhatsApp לא מחובר. חברו את ה-iBot בעמוד 'דיוור והתראות'.", 409, "channel");
     }
-    if (!ctx.sms_available) {
-      return apiError("no_credits", "אין יתרת הודעות. רכשו חבילה כדי להפעיל את הערוץ הזה.", 409, "channel");
+    if (!ctx.whatsapp_available) {
+      return apiError("no_credits", "אין יתרת וואטסאפ. רכשו חבילת וואטסאפ כדי להפעיל את הערוץ הזה.", 409, "channel");
     }
   }
   return null;
@@ -150,8 +158,13 @@ export const GET = handler(async () => {
 
   return apiJson({
     balance: tenant.smsCreditsRemaining,
+    whatsapp_balance: tenant.whatsappCreditsRemaining,
     sms_sender: tenant.smsSender,
     billing_ready: !!(tenant.billingCustomerId && tenant.billingPaymentMethodId),
+    whatsapp: {
+      token: tenant.whatsappToken ?? "",
+      instance_id: tenant.whatsappInstanceId ?? "",
+    },
     order_events: orderEvents,
     review: {
       enabled: tenant.reviewsEnabled,
@@ -161,8 +174,10 @@ export const GET = handler(async () => {
     },
     availability: {
       sms_available: ctx.sms_available,
+      whatsapp_enabled: ctx.whatsapp_enabled,
       whatsapp_connected: ctx.whatsapp_connected,
       whatsapp_available: ctx.whatsapp_available,
+      whatsapp_credits: ctx.whatsapp_credits,
       managed_active: ctx.managed_active,
     },
     whatsapp_managed: await managedDetail(tenant.reviewsWhatsappSubscriptionId),
@@ -201,7 +216,10 @@ export const PATCH = handler(async (req: Request) => {
     const next: OrderNotifySettings = { ...current };
     for (const ev of ORDER_NOTIFY_EVENTS) {
       const e = body.order_events[ev];
-      if (e) next[ev] = { enabled: e.enabled, channel: e.channel };
+      if (e) {
+        const text = e.text?.trim();
+        next[ev] = { enabled: e.enabled, channel: e.channel, text: text ? text : null };
+      }
     }
     data.notifySettings = next;
   }

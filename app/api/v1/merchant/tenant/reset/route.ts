@@ -92,7 +92,10 @@ export const POST = handler(async (req: Request) => {
 
       // ── 4. Reset the Tenant row to "fresh store" defaults.
       //      Identity (id/slug/name/logoLetter), billing, dashboardVersion,
-      //      smsCreditsRemaining are deliberately untouched. ──
+      //      and the paid messaging balances (smsCreditsRemaining,
+      //      whatsappCreditsRemaining, whatsappEnabled) are deliberately
+      //      untouched - the merchant keeps what they paid for. The iBot creds
+      //      are cleared below (the connection, not the package). ──
       await tx.tenant.update({
         where: { id: tenantId },
         data: {

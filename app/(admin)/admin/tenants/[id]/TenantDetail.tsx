@@ -42,6 +42,7 @@ interface InitialData {
   acceptsCash: boolean;
   kioskEnabled: boolean;
   smsCreditsRemaining: number;
+  whatsappCreditsRemaining: number;
   whatsappToken: string | null;
   whatsappInstanceId: string | null;
   plan: string | null;
@@ -469,7 +470,8 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
         <Stat label="הזמנות" value={t.counts.orders} />
         <Stat label="סניפים" value={t.counts.branches} />
         <Stat label="קמפיינים" value={t.counts.campaigns} />
-        <Stat label="יתרת הודעות" value={t.smsCreditsRemaining} />
+        <Stat label="יתרת SMS" value={t.smsCreditsRemaining} />
+        <Stat label="יתרת וואטסאפ" value={t.whatsappCreditsRemaining} />
       </div>
 
       {/* Trial period */}

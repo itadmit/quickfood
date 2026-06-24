@@ -6,7 +6,12 @@ import { loadLoyaltyData } from "@/lib/loyalty/members";
 import { renderRtlEmail } from "@/lib/email/templates";
 import { sendPoplyEmail, sendPoplySms, poplyFrom, poplyConfigured } from "@/lib/poply/client";
 import { sendWhatsApp } from "@/lib/whatsapp/send";
-import { reserveSmsCredit, refundSmsCredit, getSmsCredits } from "@/lib/messaging/credits";
+import {
+  reserveSmsCredit,
+  refundSmsCredit,
+  getSmsCredits,
+  getWhatsappCredits,
+} from "@/lib/messaging/credits";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,12 +42,24 @@ export const POST = handler(async (req: Request) => {
   const body = BroadcastSchema.parse(await req.json());
 
   // Marketing mailing unlocks once the merchant has bought a messaging
-  // package (credits > 0). This is the single "buy first, then mail" gate.
-  const balance = await getSmsCredits(session.tenantId);
-  if (balance <= 0) {
+  // package. SMS and WhatsApp each gate on their OWN pool; email unlocks on
+  // either ("buy any package, then mail").
+  const [smsCredits, waCredits] = await Promise.all([
+    getSmsCredits(session.tenantId),
+    getWhatsappCredits(session.tenantId),
+  ]);
+  const channelCredits =
+    body.channel === "whatsapp"
+      ? waCredits
+      : body.channel === "sms"
+        ? smsCredits
+        : Math.max(smsCredits, waCredits);
+  if (channelCredits <= 0) {
     return apiError(
       "no_credits",
-      "הדיוור נפתח לאחר רכישת חבילת הודעות. רכשו חבילה כדי לשלוח.",
+      body.channel === "whatsapp"
+        ? "הדיוור בוואטסאפ נפתח לאחר רכישת חבילת וואטסאפ. רכשו חבילה כדי לשלוח."
+        : "הדיוור נפתח לאחר רכישת חבילת הודעות. רכשו חבילה כדי לשלוח.",
       402,
     );
   }
@@ -69,13 +86,13 @@ export const POST = handler(async (req: Request) => {
     return apiJson({ sent: 0, total: 0, skipped: 0, remaining: await getSmsCredits(session.tenantId) });
   }
 
-  // SMS + WhatsApp draw the single messaging balance. Block early on empty so
-  // the merchant gets a clear message instead of an all-skipped result.
-  if (body.channel === "sms" || body.channel === "whatsapp") {
-    const credits = await getSmsCredits(session.tenantId);
-    if (credits <= 0) {
-      return apiError("no_credits", "אין יתרת הודעות לשליחה. ניתן לרכוש חבילת הודעות.", 402);
-    }
+  // Block early on an empty channel pool so the merchant gets a clear message
+  // instead of an all-skipped result.
+  if (body.channel === "sms" && (await getSmsCredits(session.tenantId)) <= 0) {
+    return apiError("no_credits", "אין יתרת SMS לשליחה. ניתן לרכוש חבילת SMS.", 402);
+  }
+  if (body.channel === "whatsapp" && (await getWhatsappCredits(session.tenantId)) <= 0) {
+    return apiError("no_credits", "אין יתרת וואטסאפ לשליחה. ניתן לרכוש חבילת וואטסאפ.", 402);
   }
 
   const businessName = tenant?.name ?? "המסעדה";
@@ -129,6 +146,9 @@ export const POST = handler(async (req: Request) => {
     sent,
     total: audience.length,
     skipped: audience.length - sent,
-    remaining: await getSmsCredits(session.tenantId),
+    remaining:
+      body.channel === "whatsapp"
+        ? await getWhatsappCredits(session.tenantId)
+        : await getSmsCredits(session.tenantId),
   });
 });

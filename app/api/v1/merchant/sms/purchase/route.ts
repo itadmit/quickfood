@@ -1,6 +1,7 @@
 /**
- * One-off SMS top-up. Charges the merchant's saved card via QuickBilling's
- * `POST /api/v1/charges` and adds the package quota to `smsCreditsRemaining`.
+ * One-off messaging top-up (SMS or WhatsApp). Charges the merchant's saved
+ * card via QuickBilling's `POST /api/v1/charges` and adds the package quota
+ * to the channel's own counter (`smsCreditsRemaining` / `whatsappCreditsRemaining`).
  *
  * The merchant can stack purchases - buy Starter (300) today, buy Growth
  * (1000) tomorrow, end up with 1300 credits. No subscriptions, no monthly
@@ -24,21 +25,38 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // Base prices, pre-VAT. The hub adds 18% on top - Starter ends up ~₪46.02
-// on the merchant's card, Growth ~₪93.22, Scale ~₪352.82.
-const PACKAGES = {
+// on the merchant's card, Growth ~₪93.22, Scale ~₪352.82. WhatsApp mirrors
+// the SMS tiers for now; kept separate so pricing can diverge later.
+const SMS_PACKAGES = {
+  starter: { quota: 300, baseIls: 39, label: "Starter - 300 הודעות" },
+  growth: { quota: 1000, baseIls: 79, label: "Growth - 1,000 הודעות" },
+  scale: { quota: 5000, baseIls: 299, label: "Scale - 5,000 הודעות" },
+} as const;
+
+const WHATSAPP_PACKAGES = {
   starter: { quota: 300, baseIls: 39, label: "Starter - 300 הודעות" },
   growth: { quota: 1000, baseIls: 79, label: "Growth - 1,000 הודעות" },
   scale: { quota: 5000, baseIls: 299, label: "Scale - 5,000 הודעות" },
 } as const;
 
 const Schema = z.object({
+  channel: z.enum(["sms", "whatsapp"]).default("sms"),
   package: z.enum(["starter", "growth", "scale"]),
 });
 
 export const POST = handler(async (req: Request) => {
   const session = await requireMerchant(["owner", "manager"]);
   if (!session.tenantId) return apiError("forbidden", "no tenant", 403);
-  const { package: pkgKey } = Schema.parse(await req.json());
+  const { channel, package: pkgKey } = Schema.parse(await req.json());
+
+  const isWa = channel === "whatsapp";
+  const pkg = (isWa ? WHATSAPP_PACKAGES : SMS_PACKAGES)[pkgKey];
+  // SMS keeps the legacy ledger kind so existing rows / in-flight webhooks
+  // still dedupe; WhatsApp gets a distinct kind for clean observability.
+  const ledgerKind = isWa ? "wa_topup_credit" : "topup_credit";
+  const chargeKind = isWa ? "whatsapp_topup" : "sms_topup";
+  const channelLabel = isWa ? "WhatsApp" : "SMS";
+  const creditField = isWa ? "whatsappCreditsRemaining" : "smsCreditsRemaining";
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
@@ -53,24 +71,27 @@ export const POST = handler(async (req: Request) => {
   if (!tenant.billingCustomerId || !tenant.billingPaymentMethodId) {
     return apiError(
       "billing_setup_required",
-      "יש להשלים הגדרת חיוב לפני רכישת חבילת SMS",
+      `יש להשלים הגדרת חיוב לפני רכישת חבילת ${channelLabel}`,
       409,
     );
   }
 
-  const pkg = PACKAGES[pkgKey];
-  const idempotencyKey = `sms-topup:${tenant.id}:${randomUUID()}`;
+  const idempotencyKey = `${chargeKind}:${tenant.id}:${randomUUID()}`;
+  // The WhatsApp purchase also unlocks the BYO connection UI (durable latch).
+  const creditData = isWa
+    ? { whatsappCreditsRemaining: { increment: pkg.quota }, whatsappEnabled: true }
+    : { smsCreditsRemaining: { increment: pkg.quota } };
 
   try {
     const charge = await createCharge({
       customer_id: tenant.billingCustomerId,
       amount: pkg.baseIls,
-      description: `SMS ${pkg.label}`,
+      description: `${channelLabel} ${pkg.label}`,
       idempotency_key: idempotencyKey,
       payment_method_id: tenant.billingPaymentMethodId,
       metadata: {
         tenant_id: tenant.id,
-        kind: "sms_topup",
+        kind: chargeKind,
         package: pkgKey,
         sms_quota: pkg.quota,
       },
@@ -91,7 +112,7 @@ export const POST = handler(async (req: Request) => {
       const already = await prisma.smsLog.findFirst({
         where: {
           tenantId: tenant.id,
-          kind: "topup_credit",
+          kind: ledgerKind,
           refKind: "invoice",
           refId: charge.invoice_id,
         },
@@ -104,8 +125,8 @@ export const POST = handler(async (req: Request) => {
               tenantId: tenant.id,
               to: "",
               sender: "",
-              body: `top-up credit: +${pkg.quota} (${pkgKey})`,
-              kind: "topup_credit",
+              body: `top-up credit: +${pkg.quota} (${channelLabel} ${pkgKey})`,
+              kind: ledgerKind,
               refKind: "invoice",
               refId: charge.invoice_id,
               status: "sent",
@@ -114,7 +135,7 @@ export const POST = handler(async (req: Request) => {
           }),
           prisma.tenant.update({
             where: { id: tenant.id },
-            data: { smsCreditsRemaining: { increment: pkg.quota } },
+            data: creditData,
           }),
         ]);
       }
@@ -123,18 +144,21 @@ export const POST = handler(async (req: Request) => {
       // not be able to match, but at least the merchant gets what they paid for.
       await prisma.tenant.update({
         where: { id: tenant.id },
-        data: { smsCreditsRemaining: { increment: pkg.quota } },
+        data: creditData,
       });
     }
 
     const fresh = await prisma.tenant.findUnique({
       where: { id: tenant.id },
-      select: { smsCreditsRemaining: true },
+      select: { smsCreditsRemaining: true, whatsappCreditsRemaining: true },
     });
 
     return apiJson({
       ok: true,
-      credits_remaining: fresh?.smsCreditsRemaining ?? 0,
+      channel,
+      credits_remaining: isWa
+        ? fresh?.whatsappCreditsRemaining ?? 0
+        : fresh?.smsCreditsRemaining ?? 0,
       added: pkg.quota,
       invoice_id: charge.invoice_id ?? null,
       invoice_url: charge.invoice_url ?? null,
