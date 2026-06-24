@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Crown } from "lucide-react";
 import { IcoChev, IcoReceipt, IcoUser } from "@/components/shared/Icons";
 import { formatPrice, formatDate, formatPhone, fullName } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -15,6 +16,22 @@ interface Customer {
   email: string | null;
   createdAt: string;
 }
+
+interface Loyalty {
+  points: number;
+  tier: string;
+  tierName: string;
+  nextTierName: string | null;
+  pointsToNext: number;
+  progressPct: number;
+}
+
+// Mirrors the merchant dashboard tier palette (LoyaltyView TIER_STYLE).
+const TIER_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  silver: { bg: "#E8EAED", text: "#5B6470", border: "#C2C8D0" },
+  gold: { bg: "#FBE7A1", text: "#7A5B00", border: "#E6B800" },
+  platinum: { bg: "#EAD7BE", text: "#6B4A23", border: "#C79256" },
+};
 
 interface Order {
   id: string;
@@ -40,10 +57,12 @@ export function ProfileLoggedIn({
   tenantSlug,
   customer,
   orders,
+  loyalty,
 }: {
   tenantSlug: string;
   customer: Customer;
   orders: Order[];
+  loyalty?: Loyalty | null;
 }) {
   const router = useRouter();
   const [firstName, setFirstName] = useState(customer.firstName || "");
@@ -73,8 +92,43 @@ export function ProfileLoggedIn({
     }
   }
 
+  const tc = loyalty ? TIER_COLORS[loyalty.tier] ?? TIER_COLORS.silver : null;
+
   return (
     <div className="lg:max-w-2xl lg:mx-auto lg:pt-6 lg:pb-12">
+      {loyalty && tc && (
+        <div className="flex items-center justify-between gap-3 px-4 py-2 bg-white border-b-2 border-black lg:rounded-t-2xl lg:border-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Crown size={16} color={tc.text} />
+            <span className="text-sm font-black truncate">שלום {firstName || "אורח"}</span>
+            <span
+              className="shrink-0 text-[11px] font-black px-2 py-0.5 rounded-full border"
+              style={{ backgroundColor: tc.bg, color: tc.text, borderColor: tc.border }}
+            >
+              לקוח {loyalty.tierName}
+            </span>
+          </div>
+          <div className="shrink-0 flex items-center gap-2">
+            <div className="text-end leading-tight">
+              <div className="text-[10px] text-qf-mute">נקודות שצברת</div>
+              <div className="text-sm font-black">{loyalty.points}</div>
+            </div>
+            <div className="w-16">
+              <div className="h-1.5 rounded-full bg-black/10 overflow-hidden">
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: `${loyalty.progressPct}%`, backgroundColor: tc.border }}
+                />
+              </div>
+              <div className="text-[9px] text-qf-mute mt-0.5 text-center whitespace-nowrap">
+                {loyalty.nextTierName
+                  ? `עוד ${loyalty.pointsToNext} ל${loyalty.nextTierName}`
+                  : "הדרגה הגבוהה"}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <header className="bg-linear-to-b from-(--qf-primary) to-(--qf-deep) text-white px-5 pt-5 pb-7 rounded-b-3xl lg:rounded-3xl lg:px-8">
         <div className="flex items-center gap-3 mb-4">
           <Link

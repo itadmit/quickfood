@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
+import { getCustomerLoyalty } from "@/lib/loyalty/customer";
 import { ProfileLoggedIn } from "./ProfileLoggedIn";
 import { ProfileLogin } from "./ProfileLogin";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
@@ -61,10 +62,13 @@ export default async function ProfilePage({
     );
   }
 
+  const loyalty = await getCustomerLoyalty(tenant.id, customer.id);
+
   return (
     <div className="min-h-screen pb-24">
       <ProfileLoggedIn
         tenantSlug={tenantSlug}
+        loyalty={loyalty}
         customer={{
           id: customer.id,
           firstName: customer.firstName,
