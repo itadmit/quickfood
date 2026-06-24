@@ -4,7 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { IcoPhone, IcoClock, IcoCheck, IcoStar, IcoWhatsApp } from "@/components/shared/Icons";
+import { IcoPhone, IcoClock, IcoCheck, IcoClose, IcoStar, IcoWhatsApp } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { CartLineOptions } from "@/components/customer/CartLineOptions";
 import { formatPrice, formatTime } from "@/lib/format";
@@ -137,6 +137,7 @@ export function OrderTracking({
   const stages = stagesFor(order.method);
   const stage = stageOf(order.status, order.method);
   const isDelivered = order.status === "delivered";
+  const isCancelled = order.status === "cancelled" || order.status === "refunded";
   // "Just placed" - the customer just landed on this page. Render the
   // celebratory green-check confirmation instead of the ETA so they
   // know the order went through.
@@ -262,26 +263,45 @@ export function OrderTracking({
         tenantCoverImage={tenantCoverImage}
         orderNumber={order.number}
         headline={
-          isJustPlaced
-            ? "תודה על ההזמנה!"
-            : isDelivered
-              ? "נמסר בהצלחה"
-              : "25-35"
+          isCancelled
+            ? "ההזמנה בוטלה"
+            : isJustPlaced
+              ? "תודה על ההזמנה!"
+              : isDelivered
+                ? "נמסר בהצלחה"
+                : "25-35"
         }
         subhead={
-          isJustPlaced
-            ? `ההזמנה אצל ${tenantName} - תקבל עדכון ברגע שהיא תיכנס להכנה`
-            : isDelivered
-              ? null
-              : "דקות עד להגעה משוערת"
+          isCancelled
+            ? `ההזמנה בוטלה. לא בוצע חיוב נוסף. לכל שאלה אפשר לפנות ל${tenantName}.`
+            : isJustPlaced
+              ? `ההזמנה אצל ${tenantName} - תקבל עדכון ברגע שהיא תיכנס להכנה`
+              : isDelivered
+                ? null
+                : "דקות עד להגעה משוערת"
         }
-        showCheck={isJustPlaced || isDelivered}
-        bigNumber={!isJustPlaced && !isDelivered}
+        showCheck={!isCancelled && (isJustPlaced || isDelivered)}
+        bigNumber={!isCancelled && !isJustPlaced && !isDelivered}
       />
 
       {/* Status card */}
       <section className="px-5 -mt-3 lg:px-0 lg:mt-6">
         <div className="bg-white rounded-2xl border border-qf-line p-4 space-y-4 shadow-sm">
+          {isCancelled ? (
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-qf-tomato-soft grid place-items-center shrink-0">
+                <IcoClose c="#c2421f" s={20} />
+              </div>
+              <div>
+                <div className="font-bold text-qf-tomato">ההזמנה בוטלה</div>
+                <p className="text-xs text-qf-mute mt-1 leading-relaxed">
+                  ההזמנה כבר לא בהכנה ולא תגיע. אם זו טעות או שיש שאלה, אפשר לפנות
+                  ל{tenantName}. רוצים להזמין שוב? לחצו על "הזמנה חדשה" למטה.
+                </p>
+              </div>
+            </div>
+          ) : (
+          <>
           <div>
             <div className="font-semibold">{stages[stage]?.label}</div>
             <div className="text-xs text-qf-mute">
@@ -368,6 +388,8 @@ export function OrderTracking({
               </span>
               <span>הסטטוס מתעדכן כאן בזמן אמת - אין צורך לרענן את העמוד</span>
             </div>
+          )}
+          </>
           )}
         </div>
       </section>
