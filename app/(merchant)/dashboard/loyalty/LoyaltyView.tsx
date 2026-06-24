@@ -250,6 +250,21 @@ export function LoyaltyView({
               aria-label="הצג פופאפ הרשמה"
             />
           </label>
+          {config.showJoinPopup && (
+            <label className="flex items-center justify-between gap-3 py-2 border-b border-qf-line ps-4">
+              <span className="text-sm text-qf-ink2">
+                הצג פעם אחת בלבד לכל מבקר
+                <span className="block text-xs text-qf-mute font-normal">
+                  כבוי = הפופאפ יוצג בכל כניסה לאתר
+                </span>
+              </span>
+              <Toggle
+                checked={config.popupShowOnce}
+                onChange={(v) => patch("popupShowOnce", v)}
+                aria-label="הצג פעם אחת בלבד"
+              />
+            </label>
+          )}
           <label className="flex items-center justify-between gap-3 py-2 border-b border-qf-line">
             <span className="text-sm font-bold">הצג צ׳קבוקס הרשמה אוטומטית בצ׳קאאוט</span>
             <Toggle

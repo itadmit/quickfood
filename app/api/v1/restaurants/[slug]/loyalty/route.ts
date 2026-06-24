@@ -26,6 +26,7 @@ export const GET = handler(
     return apiJson({
       program_name: row?.name ?? "",
       show_join_popup: config.showJoinPopup,
+      popup_show_once: config.popupShowOnce,
       show_checkout_checkbox: config.showCheckoutCheckbox,
       checkout_consent_text: config.checkoutConsentText,
       join_form: {

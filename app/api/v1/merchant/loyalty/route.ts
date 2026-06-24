@@ -22,6 +22,7 @@ const LoyaltyConfigSchema = z.object({
     platinum: TierSchema,
   }),
   showJoinPopup: z.boolean(),
+  popupShowOnce: z.boolean(),
   showCheckoutCheckbox: z.boolean(),
   joinForm: z.object({
     title: z.string().min(1).max(120),

@@ -17,6 +17,7 @@ interface JoinForm {
 
 interface LoyaltyPublic {
   show_join_popup: boolean;
+  popup_show_once: boolean;
   join_form: JoinForm;
 }
 
@@ -24,12 +25,10 @@ interface Props {
   tenantSlug: string;
 }
 
-function todayKey() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+// Persistent "already saw the popup" flag - only consulted when the club is
+// set to show the popup once per visitor.
 function seenKey(slug: string) {
-  return `qf:loyalty:${slug}:${todayKey()}`;
+  return `qf:loyalty-seen:${slug}`;
 }
 function joinedKey(slug: string) {
   return `qf:loyalty-joined:${slug}`;
@@ -37,6 +36,7 @@ function joinedKey(slug: string) {
 
 export function LoyaltyJoinPopup({ tenantSlug }: Props) {
   const [form, setForm] = useState<JoinForm | null>(null);
+  const [showOnce, setShowOnce] = useState(true);
   const [visible, setVisible] = useState(false);
 
   const [phone, setPhone] = useState("");
@@ -54,13 +54,17 @@ export function LoyaltyJoinPopup({ tenantSlug }: Props) {
     (async () => {
       try {
         if (window.localStorage.getItem(joinedKey(tenantSlug))) return;
-        if (window.localStorage.getItem(seenKey(tenantSlug))) return;
         const res = await fetch(`/api/v1/restaurants/${tenantSlug}/loyalty`, {
           cache: "no-store",
         });
         if (!res.ok) return;
         const data = (await res.json()) as LoyaltyPublic;
         if (cancelled || !data.show_join_popup) return;
+        // Only suppress on "seen" when the club shows the popup once per visitor.
+        if (data.popup_show_once && window.localStorage.getItem(seenKey(tenantSlug))) {
+          return;
+        }
+        setShowOnce(data.popup_show_once);
         setForm(data.join_form);
         window.setTimeout(() => !cancelled && setVisible(true), 50);
       } catch {
@@ -73,10 +77,14 @@ export function LoyaltyJoinPopup({ tenantSlug }: Props) {
   }, [tenantSlug]);
 
   function dismiss() {
-    try {
-      window.localStorage.setItem(seenKey(tenantSlug), "1");
-    } catch {
-      /* ignore */
+    // Remember the dismissal only in "show once" mode; in "always" mode the
+    // popup should reappear on the next visit.
+    if (showOnce) {
+      try {
+        window.localStorage.setItem(seenKey(tenantSlug), "1");
+      } catch {
+        /* ignore */
+      }
     }
     setVisible(false);
     window.setTimeout(() => setForm(null), 200);
@@ -117,7 +125,6 @@ export function LoyaltyJoinPopup({ tenantSlug }: Props) {
       }
       try {
         window.localStorage.setItem(joinedKey(tenantSlug), "1");
-        window.localStorage.setItem(seenKey(tenantSlug), "1");
       } catch {
         /* ignore */
       }

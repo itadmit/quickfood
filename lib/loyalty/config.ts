@@ -22,6 +22,9 @@ export interface LoyaltyConfig {
   pointsPerShekel: number;
   tiers: Record<LoyaltyTier, LoyaltyTierConfig>;
   showJoinPopup: boolean;
+  // true → the entry popup shows only once per visitor (until they dismiss or
+  // join). false → it shows on every visit.
+  popupShowOnce: boolean;
   showCheckoutCheckbox: boolean;
   joinForm: LoyaltyJoinForm;
   checkoutConsentText: string;
@@ -72,6 +75,7 @@ export function defaultLoyaltyConfig(tenantName = "העסק"): LoyaltyConfig {
       platinum: { name: "פלטינה", minPoints: 2000 },
     },
     showJoinPopup: false,
+    popupShowOnce: true,
     showCheckoutCheckbox: false,
     joinForm: {
       title: "מצטרפים למועדון הלקוחות",
@@ -130,6 +134,7 @@ export function resolveLoyaltyConfig(raw: unknown, tenantName = "העסק"): Loy
       platinum: resolveTier(tiers.platinum, d.tiers.platinum),
     },
     showJoinPopup: asBool(r.showJoinPopup, d.showJoinPopup),
+    popupShowOnce: asBool(r.popupShowOnce, d.popupShowOnce),
     showCheckoutCheckbox: asBool(r.showCheckoutCheckbox, d.showCheckoutCheckbox),
     joinForm: {
       title: asString(form.title, d.joinForm.title),
