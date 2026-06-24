@@ -76,6 +76,7 @@ export async function advanceStatus(
   if (order.status === "pending" && to !== "cancelled" && to !== "confirmed") {
     updates.confirmedAt = now;
   }
+  if (to === "preparing") updates.preparingAt = now;
   if (to === "ready") updates.readyAt = now;
   if (to === "out_for_delivery") {
     updates.courierAssignedAt = updates.courierAssignedAt ?? now;

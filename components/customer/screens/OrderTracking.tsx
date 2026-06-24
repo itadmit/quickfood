@@ -49,6 +49,7 @@ interface OrderData {
   paymentStatus: string;
   createdAt: string;
   confirmedAt: string | null;
+  preparingAt: string | null;
   readyAt: string | null;
   deliveredAt: string | null;
   branch: { phone: string; address: string } | null;
@@ -223,6 +224,7 @@ export function OrderTracking({
               readyAt: o.ready_at,
               deliveredAt: o.delivered_at,
               confirmedAt: o.confirmed_at,
+              preparingAt: o.preparing_at,
               courier: o.courier
                 ? {
                     name: o.courier.name,
@@ -382,6 +384,9 @@ export function OrderTracking({
           <div className="pt-3 border-t border-qf-line-soft space-y-1.5 text-xs text-qf-mute">
             {order.confirmedAt && (
               <Timestamp icon label="אושרה" t={order.confirmedAt} />
+            )}
+            {order.preparingAt && (
+              <Timestamp icon label="בהכנה" t={order.preparingAt} />
             )}
             {order.readyAt && <Timestamp icon label="מוכנה" t={order.readyAt} />}
             {order.deliveredAt && (

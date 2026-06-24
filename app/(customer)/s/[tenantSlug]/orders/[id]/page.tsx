@@ -134,6 +134,7 @@ export default async function OrderTrackingPage({
         paymentStatus: order.paymentStatus,
         createdAt: order.createdAt.toISOString(),
         confirmedAt: order.confirmedAt?.toISOString() ?? null,
+        preparingAt: order.preparingAt?.toISOString() ?? null,
         readyAt: order.readyAt?.toISOString() ?? null,
         deliveredAt: order.deliveredAt?.toISOString() ?? null,
         branch: order.branch,
