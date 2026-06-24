@@ -517,11 +517,18 @@ function navigateToApp(url: string, onUnhandled?: () => void): void {
 
 // ─── Star (PassPRNT) ──────────────────────────────────────────
 
+// Star PassPRNT's `size` is a paper-WIDTH CODE, not pixels/mm:
+// "2" = 2-inch (58mm), "3" = 3-inch (80mm), "4" = 4-inch (112mm).
+// We were passing the canvas dot-width (W = 576), which PassPRNT can't parse
+// as a width code, so it fell back and printed the receipt rotated/sideways.
+// Standard receipt printers are 80mm → "3". (Set "2" for a 58mm Star.)
+const PASSPRNT_SIZE = "3";
+
 export function openPassPrnt(html: string, onUnhandled?: () => void): void {
   const back = `${window.location.origin}${window.location.pathname}`;
   const url =
     `starpassprnt://v1/print/nopreview?back=${encodeURIComponent(back)}` +
-    `&size=${W}` +
+    `&size=${PASSPRNT_SIZE}` +
     `&html=${encodeURIComponent(html)}`;
   navigateToApp(url, onUnhandled);
 }
