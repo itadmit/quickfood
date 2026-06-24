@@ -7,8 +7,8 @@ import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import { SettingsSaveBar } from "@/components/merchant/SettingsSaveBar";
 import { Toggle } from "@/components/shared/Toggle";
 import { ImageUploader } from "@/components/shared/ImageUploader";
+import { Crown } from "lucide-react";
 import {
-  IcoHeart,
   IcoSearch,
   IcoStar,
   IcoUser,
@@ -185,7 +185,7 @@ export function LoyaltyView({
       {/* ─── Program settings ─── */}
       <Card>
         <div className="flex items-center gap-2 mb-4">
-          <IcoHeart c="#000" s={20} />
+          <Crown size={20} color="#000" />
           <h2 className="text-lg font-black">הגדרות המועדון</h2>
         </div>
 
@@ -486,7 +486,7 @@ export function LoyaltyView({
                     <td className="px-2 py-2.5">
                       {r.isMember ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F8CB1E] border-2 border-black text-xs font-black">
-                          <IcoHeart c="#000" s={11} /> חבר מועדון
+                          <Crown size={11} color="#000" /> חבר מועדון
                         </span>
                       ) : (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-qf-green-soft text-qf-green-deep text-xs font-bold">
@@ -529,7 +529,7 @@ export function LoyaltyView({
       {/* ─── Mailing moved to the unified דיוור hub ─── */}
       <Card>
         <div className="flex items-center gap-2 mb-1">
-          <IcoHeart c="#000" s={20} />
+          <Crown size={20} color="#000" />
           <h2 className="text-lg font-black">דיוור לחברי המועדון</h2>
         </div>
         <p className="text-sm text-qf-mute mb-3">
