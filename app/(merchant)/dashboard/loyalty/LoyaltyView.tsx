@@ -250,16 +250,16 @@ export function LoyaltyView({
                 className={inputCls}
                 aria-label={`שם מסלול ${t}`}
               />
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 rounded-xl border-2 border-black/15 focus-within:border-black bg-white px-3 py-2.5 transition">
                 <input
                   type="number"
                   min={0}
                   value={config.tiers[t].minPoints}
                   onChange={(e) => patchTier(t, "minPoints", Math.max(0, Number(e.target.value)))}
-                  className={inputCls}
+                  className="flex-1 min-w-0 bg-transparent outline-none text-sm"
                   aria-label={`נקודות מינימום ${t}`}
                 />
-                <span className="text-xs text-qf-mute whitespace-nowrap">נק׳ ומעלה</span>
+                <span className="text-xs text-qf-mute whitespace-nowrap shrink-0">נק׳ ומעלה</span>
               </div>
             </div>
           ))}
