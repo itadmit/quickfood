@@ -95,13 +95,16 @@ export function LoyaltyView({
   initialConfig,
   rows,
   stats,
+  smsCredits,
 }: {
   initialConfig: LoyaltyConfig;
   rows: LoyaltyMemberRow[];
   stats: LoyaltyStats;
+  smsCredits: number;
 }) {
   const router = useRouter();
   const [config, setConfig] = useState<LoyaltyConfig>(initialConfig);
+  const [credits, setCredits] = useState(smsCredits);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
 
@@ -189,8 +192,9 @@ export function LoyaltyView({
         }),
       });
       const data = (await res.json().catch(() => null)) as
-        | { sent?: number; total?: number; error?: { message?: string } }
+        | { sent?: number; total?: number; remaining?: number; error?: { message?: string } }
         | null;
+      if (typeof data?.remaining === "number") setCredits(data.remaining);
       if (!res.ok) {
         setBcToast({ kind: "err", msg: data?.error?.message ?? "השליחה נכשלה" });
         return;
@@ -521,10 +525,14 @@ export function LoyaltyView({
             בקרוב
           </span>
         </div>
-        <p className="text-sm text-qf-mute mb-4">
+        <p className="text-sm text-qf-mute mb-3">
           שליחת מבצעים, הטבות והודעות לחברי המועדון לפי מסלול. מחובר דרך Poply (אימייל ו-SMS) ו-iBot
           (וואטסאפ) — ייפתח לשליחה עם חבילות הדיוור.
         </p>
+        <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-xl bg-qf-bg-dash border-2 border-black/10 text-sm">
+          <span className="text-qf-mute">יתרת הודעות (SMS/וואטסאפ):</span>
+          <span className="font-black text-qf-ink">{credits.toLocaleString("he-IL")}</span>
+        </div>
 
         <div className="space-y-4">
           <div>

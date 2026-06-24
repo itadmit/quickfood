@@ -6,6 +6,7 @@ import { loadLoyaltyData } from "@/lib/loyalty/members";
 import { renderRtlEmail } from "@/lib/email/templates";
 import { sendPoplyEmail, sendPoplySms, poplyFrom, poplyConfigured } from "@/lib/poply/client";
 import { sendWhatsApp } from "@/lib/whatsapp/send";
+import { reserveSmsCredit, refundSmsCredit, getSmsCredits } from "@/lib/messaging/credits";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -64,7 +65,16 @@ export const POST = handler(async (req: Request) => {
     .slice(0, MAX_RECIPIENTS);
 
   if (audience.length === 0) {
-    return apiJson({ sent: 0, total: 0, skipped: 0 });
+    return apiJson({ sent: 0, total: 0, skipped: 0, remaining: await getSmsCredits(session.tenantId) });
+  }
+
+  // SMS + WhatsApp draw the single messaging balance. Block early on empty so
+  // the merchant gets a clear message instead of an all-skipped result.
+  if (body.channel === "sms" || body.channel === "whatsapp") {
+    const credits = await getSmsCredits(session.tenantId);
+    if (credits <= 0) {
+      return apiError("no_credits", "אין יתרת הודעות לשליחה. ניתן לרכוש חבילת הודעות.", 402);
+    }
   }
 
   const businessName = tenant?.name ?? "המסעדה";
@@ -88,11 +98,18 @@ export const POST = handler(async (req: Request) => {
     });
   } else if (body.channel === "sms") {
     // SMS through Poply with a per-message sender = the merchant's business
-    // name (tenant.smsSender). Null sender → Poply uses the workspace default.
+    // name (tenant.smsSender). QuickFood owns the meter: reserve one credit
+    // from the single balance before each send, refund if Poply rejects it.
     const sender = tenant?.smsSender ?? undefined;
     sent = await chunkedSend(audience, 20, async (r) => {
+      const reserved = await reserveSmsCredit(session.tenantId!);
+      if (!reserved) return false;
       const res = await sendPoplySms({ to: r.phone, message: body.body, sender });
-      return res.ok;
+      if (!res.ok) {
+        await refundSmsCredit(session.tenantId!);
+        return false;
+      }
+      return true;
     });
   } else {
     sent = await chunkedSend(audience, 10, async (r) => {
@@ -106,5 +123,10 @@ export const POST = handler(async (req: Request) => {
     });
   }
 
-  return apiJson({ sent, total: audience.length, skipped: audience.length - sent });
+  return apiJson({
+    sent,
+    total: audience.length,
+    skipped: audience.length - sent,
+    remaining: await getSmsCredits(session.tenantId),
+  });
 });
