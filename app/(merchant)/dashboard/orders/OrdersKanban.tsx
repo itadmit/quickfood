@@ -873,7 +873,9 @@ function Card({
       <div className="text-sm font-medium">{order.customerName}</div>
       <div className="text-xs text-qf-mute flex items-center gap-1.5">
         <IcoClock c="#7c8a82" s={12} />
-        {elapsedMin != null && <>לפני {formatElapsedMinutes(elapsedMin)} · </>}
+        {elapsedMin != null && (
+          <>{elapsedMin === 0 ? "עכשיו" : `לפני ${formatElapsedMinutes(elapsedMin)}`} · </>
+        )}
         {order.method === "delivery" ? "משלוח" : "איסוף"}
       </div>
 
