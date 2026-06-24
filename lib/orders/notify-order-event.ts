@@ -15,28 +15,28 @@
 import { prisma } from "@/lib/db/client";
 import { sendSms } from "@/lib/sms/send";
 import { sendWhatsApp } from "@/lib/whatsapp/send";
+import {
+  resolveOrderNotifySettings,
+  type NotifyChannel,
+  type OrderNotifyEvent,
+} from "@/lib/messaging/notify-settings";
 
-export type OrderNotifyEvent =
-  | "confirmed"
-  | "ready"
-  | "on_the_way"
-  | "delivered";
+export type { OrderNotifyEvent };
 
 interface TenantChannel {
   id: string;
   name: string;
-  notifyChannel: "off" | "email" | "sms" | "whatsapp" | "whatsapp_managed";
   reviewsWhatsappSubscriptionId: string | null;
 }
 
 async function sendViaChannel(
   tenant: TenantChannel,
+  ch: NotifyChannel,
   to: string,
   body: string,
   kind: string,
   refId: string,
 ): Promise<void> {
-  const ch = tenant.notifyChannel;
   if (ch === "off" || ch === "email") return;
 
   if (ch === "whatsapp_managed") {
@@ -115,12 +115,20 @@ export async function notifyOrderCustomer(
           id: true,
           name: true,
           notifyChannel: true,
+          notifySettings: true,
           reviewsWhatsappSubscriptionId: true,
         },
       },
     },
   });
   if (!order?.customerPhoneSnap) return;
+
+  const settings = resolveOrderNotifySettings(
+    order.tenant.notifySettings,
+    order.tenant.notifyChannel,
+  );
+  const cfg = settings[event];
+  if (!cfg.enabled) return;
 
   const body = bodyFor(event, {
     name: order.tenant.name,
@@ -131,6 +139,7 @@ export async function notifyOrderCustomer(
 
   await sendViaChannel(
     order.tenant,
+    cfg.channel,
     order.customerPhoneSnap,
     body,
     `order_${event}`,

@@ -395,6 +395,12 @@ model Tenant {
   // reviewsChannel: sms + own/default WhatsApp draw the credit pool;
   // whatsapp_managed uses the platform iBot account. `email`/`off` = no paid send.
   notifyChannel       ReviewChannel @default(email) @map("notify_channel")
+  // Per-event transactional notification settings. JSON keyed by event
+  // (confirmed / ready / on_the_way / delivered), each { enabled, channel }.
+  // Empty default = resolveOrderNotifySettings derives every event from the
+  // legacy `notifyChannel` column so existing tenants keep their behaviour.
+  // The review reminder keeps its own columns (reviewsChannel / reviewsDelayMinutes).
+  notifySettings      Json          @default("{}") @map("notify_settings")
   smsSender           String?       @map("sms_sender") @db.VarChar(11)
 
   // SMS + WhatsApp credit balance. Top-ups (Starter/Growth/Scale) STACK -

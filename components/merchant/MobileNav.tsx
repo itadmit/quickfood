@@ -33,7 +33,7 @@ const NAV: NavItem[] = [
   { href: "/dashboard/menu", label: "תפריט", Icon: IcoMenu },
   { href: "/dashboard/campaigns", label: "קמפיינים", Icon: IcoMegaphone },
   { href: "/dashboard/reviews", label: "ביקורות", Icon: IcoStar },
-  { href: "/dashboard/sms", label: "SMS", Icon: IcoBell },
+  { href: "/dashboard/messaging", label: "דיוור והתראות", Icon: IcoBell },
   { href: "/dashboard/billing", label: "חיוב ומנוי", Icon: IcoCreditCard },
   { href: "/dashboard/couriers", label: "שליחים", Icon: IcoBike },
   {

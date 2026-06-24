@@ -20,12 +20,6 @@ const BroadcastSchema = z.object({
   body: z.string().min(1).max(2000),
 });
 
-// Mailing is wired end-to-end but stays gated until the paid mailing packages
-// ship. Flip LOYALTY_MAILING_ENABLED=true to go live - no code change.
-function mailingEnabled(): boolean {
-  return process.env.LOYALTY_MAILING_ENABLED === "true";
-}
-
 async function chunkedSend<T>(items: T[], size: number, fn: (item: T) => Promise<boolean>) {
   let sent = 0;
   for (let i = 0; i < items.length; i += size) {
@@ -42,8 +36,15 @@ export const POST = handler(async (req: Request) => {
 
   const body = BroadcastSchema.parse(await req.json());
 
-  if (!mailingEnabled()) {
-    return apiError("coming_soon", "הדיוור ייפתח בקרוב עם חבילות הדיוור", 403);
+  // Marketing mailing unlocks once the merchant has bought a messaging
+  // package (credits > 0). This is the single "buy first, then mail" gate.
+  const balance = await getSmsCredits(session.tenantId);
+  if (balance <= 0) {
+    return apiError(
+      "no_credits",
+      "הדיוור נפתח לאחר רכישת חבילת הודעות. רכשו חבילה כדי לשלוח.",
+      402,
+    );
   }
   // Email + SMS both run through Poply; WhatsApp via iBot.
   if ((body.channel === "email" || body.channel === "sms") && !poplyConfigured()) {

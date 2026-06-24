@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import { SettingsSaveBar } from "@/components/merchant/SettingsSaveBar";
@@ -13,9 +14,6 @@ import {
   IcoUser,
   IcoPlus,
   IcoTrash,
-  IcoWhatsApp,
-  IcoMegaphone,
-  IcoPhoneSms,
 } from "@/components/shared/Icons";
 import { LOYALTY_TIERS, type LoyaltyConfig, type LoyaltyTier } from "@/lib/loyalty/config";
 import type { LoyaltyMemberRow, LoyaltyStats } from "@/lib/loyalty/members";
@@ -95,16 +93,13 @@ export function LoyaltyView({
   initialConfig,
   rows,
   stats,
-  smsCredits,
 }: {
   initialConfig: LoyaltyConfig;
   rows: LoyaltyMemberRow[];
   stats: LoyaltyStats;
-  smsCredits: number;
 }) {
   const router = useRouter();
   const [config, setConfig] = useState<LoyaltyConfig>(initialConfig);
-  const [credits, setCredits] = useState(smsCredits);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
 
@@ -112,14 +107,6 @@ export function LoyaltyView({
   const [tierFilter, setTierFilter] = useState<"all" | LoyaltyTier>("all");
   const [membersOnly, setMembersOnly] = useState(false);
   const [busyCustomer, setBusyCustomer] = useState<string | null>(null);
-
-  // Mailing compose state.
-  const [bcChannel, setBcChannel] = useState<"email" | "sms" | "whatsapp">("email");
-  const [bcTier, setBcTier] = useState<"all" | LoyaltyTier>("all");
-  const [bcSubject, setBcSubject] = useState("");
-  const [bcBody, setBcBody] = useState("");
-  const [bcBusy, setBcBusy] = useState(false);
-  const [bcToast, setBcToast] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
 
   function patch<K extends keyof LoyaltyConfig>(key: K, value: LoyaltyConfig[K]) {
     setConfig((c) => ({ ...c, [key]: value }));
@@ -165,45 +152,6 @@ export function LoyaltyView({
       router.refresh();
     } finally {
       setBusyCustomer(null);
-    }
-  }
-
-  const bcAudience = useMemo(() => {
-    return rows.filter(
-      (r) =>
-        r.isMember &&
-        (bcTier === "all" || r.tier === bcTier) &&
-        (bcChannel === "email" ? !!r.email : !!r.phone),
-    ).length;
-  }, [rows, bcTier, bcChannel]);
-
-  async function sendBroadcast() {
-    setBcBusy(true);
-    setBcToast(null);
-    try {
-      const res = await fetch("/api/v1/merchant/loyalty/broadcast", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          channel: bcChannel,
-          tier: bcTier,
-          subject: bcChannel === "email" ? bcSubject : undefined,
-          body: bcBody,
-        }),
-      });
-      const data = (await res.json().catch(() => null)) as
-        | { sent?: number; total?: number; remaining?: number; error?: { message?: string } }
-        | null;
-      if (typeof data?.remaining === "number") setCredits(data.remaining);
-      if (!res.ok) {
-        setBcToast({ kind: "err", msg: data?.error?.message ?? "השליחה נכשלה" });
-        return;
-      }
-      setBcToast({ kind: "ok", msg: `נשלח ל-${data?.sent ?? 0} מתוך ${data?.total ?? 0} נמענים` });
-    } catch {
-      setBcToast({ kind: "err", msg: "השליחה נכשלה, נסו שוב" });
-    } finally {
-      setBcBusy(false);
     }
   }
 
@@ -578,118 +526,21 @@ export function LoyaltyView({
         )}
       </Card>
 
-      {/* ─── Mailing ─── */}
+      {/* ─── Mailing moved to the unified דיוור hub ─── */}
       <Card>
         <div className="flex items-center gap-2 mb-1">
-          <IcoMegaphone c="#000" s={20} />
-          <h2 className="text-lg font-black">דיוור למועדון</h2>
-          <span className="ms-1 px-2 py-0.5 rounded-full bg-black text-[#F8CB1E] text-[10px] font-black tracking-wide">
-            בקרוב
-          </span>
+          <IcoHeart c="#000" s={20} />
+          <h2 className="text-lg font-black">דיוור לחברי המועדון</h2>
         </div>
         <p className="text-sm text-qf-mute mb-3">
-          שליחת מבצעים, הטבות והודעות לחברי המועדון לפי מסלול. מחובר דרך Poply (אימייל ו-SMS) ו-iBot
-          (וואטסאפ) — ייפתח לשליחה עם חבילות הדיוור.
+          שליחת מבצעים והטבות לחברי המועדון עברה למסך הדיוור המאוחד, יחד עם יתרת ההודעות, רכישת חבילות והתראות הלקוח.
         </p>
-        <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-xl bg-qf-bg-dash border-2 border-black/10 text-sm">
-          <span className="text-qf-mute">יתרת הודעות (SMS/וואטסאפ):</span>
-          <span className="font-black text-qf-ink">{credits.toLocaleString("he-IL")}</span>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <span className="block text-sm font-bold mb-1.5">ערוץ</span>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { id: "email" as const, label: "אימייל", icon: <IcoMegaphone c="currentColor" s={14} /> },
-                { id: "sms" as const, label: "SMS", icon: <IcoPhoneSms c="currentColor" s={14} /> },
-                { id: "whatsapp" as const, label: "וואטסאפ", icon: <IcoWhatsApp c="currentColor" s={14} /> },
-              ].map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setBcChannel(c.id)}
-                  className={
-                    "inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 text-sm font-bold transition " +
-                    (bcChannel === c.id
-                      ? "bg-[#F8CB1E] border-black shadow-[0_2px_0_#000]"
-                      : "bg-white border-black/15 hover:border-black")
-                  }
-                >
-                  {c.icon}
-                  {c.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="קהל יעד">
-              <select
-                value={bcTier}
-                onChange={(e) => setBcTier(e.target.value as "all" | LoyaltyTier)}
-                className={inputCls + " font-semibold"}
-              >
-                <option value="all">כל חברי המועדון</option>
-                {LOYALTY_TIERS.map((t) => (
-                  <option key={t} value={t}>
-                    {config.tiers[t].name} בלבד
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <div className="flex items-end">
-              <div className="text-sm text-qf-mute">
-                נמענים מתאימים: <span className="font-black text-qf-ink">{bcAudience}</span>
-              </div>
-            </div>
-          </div>
-
-          {bcChannel === "email" && (
-            <Field label="נושא">
-              <input
-                value={bcSubject}
-                onChange={(e) => setBcSubject(e.target.value)}
-                className={inputCls}
-                placeholder="לדוגמה: מבצע מיוחד לחברי המועדון"
-              />
-            </Field>
-          )}
-
-          <Field label="תוכן ההודעה">
-            <textarea
-              value={bcBody}
-              onChange={(e) => setBcBody(e.target.value)}
-              rows={4}
-              className={inputCls}
-              placeholder="כתבו כאן את ההודעה לחברי המועדון..."
-            />
-          </Field>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={sendBroadcast}
-              disabled={bcBusy || bcBody.trim().length === 0 || bcAudience === 0}
-              className="px-5 py-2.5 rounded-xl bg-[#F8CB1E] hover:bg-[#FFD843] text-black border-2 border-black shadow-[0_2px_0_#000] active:translate-y-px active:shadow-[0_1px_0_#000] text-sm font-black transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {bcBusy ? "שולח..." : "שליחת דיוור"}
-            </button>
-            {bcToast && (
-              <span
-                className={
-                  "text-sm font-bold " +
-                  (bcToast.kind === "ok" ? "text-qf-green-deep" : "text-qf-tomato")
-                }
-              >
-                {bcToast.msg}
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-qf-mute">
-            הכל מחובר ומוכן. השליחה בפועל תיפתח יחד עם חבילות הדיוור.
-          </p>
-        </div>
+        <Link
+          href="/dashboard/messaging"
+          className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#F8CB1E] hover:bg-[#FFD843] text-black border-2 border-black shadow-[0_2px_0_#000] active:translate-y-px active:shadow-[0_1px_0_#000] text-sm font-black transition-all"
+        >
+          למסך הדיוור
+        </Link>
       </Card>
     </div>
   );

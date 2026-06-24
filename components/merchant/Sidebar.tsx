@@ -26,7 +26,7 @@ const NAV: NavItem[] = [
   { href: "/dashboard/campaigns", label: "קמפיינים", Icon: IcoMegaphone },
   { href: "/dashboard/coupons", label: "קופונים", Icon: IcoCreditCard },
   { href: "/dashboard/reviews", label: "ביקורות", Icon: IcoStar },
-  { href: "/dashboard/sms", label: "SMS", Icon: IcoBell },
+  { href: "/dashboard/messaging", label: "דיוור והתראות", Icon: IcoBell },
   { href: "/dashboard/billing", label: "חיוב ומנוי", Icon: IcoCreditCard },
   { href: "/dashboard/couriers", label: "שליחים", Icon: IcoBike },
   { href: "/dashboard/settings/branding", label: "הגדרות", Icon: IcoGear, match: "/dashboard/settings" },

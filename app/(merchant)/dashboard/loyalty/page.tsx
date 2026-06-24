@@ -14,19 +14,12 @@ export default async function LoyaltyPage() {
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
-    select: { name: true, smsCreditsRemaining: true },
+    select: { name: true },
   });
   const { config, rows, stats } = await loadLoyaltyData(
     session.tenantId,
     tenant?.name ?? "העסק",
   );
 
-  return (
-    <LoyaltyView
-      initialConfig={config}
-      rows={rows}
-      stats={stats}
-      smsCredits={tenant?.smsCreditsRemaining ?? 0}
-    />
-  );
+  return <LoyaltyView initialConfig={config} rows={rows} stats={stats} />;
 }

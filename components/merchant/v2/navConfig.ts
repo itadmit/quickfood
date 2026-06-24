@@ -73,7 +73,7 @@ export const NAV: NavSection[] = [
       { href: "/dashboard/sales/bundles", label: "מבצעי חבילות", Icon: IcoCreditCard, badge: "חדש!" },
       { href: "/dashboard/coupons", label: "קופונים", Icon: IcoCreditCard },
       { href: "/dashboard/reviews", label: "ביקורות", Icon: IcoStar },
-      { href: "/dashboard/sms", label: "SMS", Icon: IcoBell },
+      { href: "/dashboard/messaging", label: "דיוור והתראות", Icon: IcoBell, badge: "חדש!" },
       { href: "/dashboard/ai-advisor", label: "יועץ AI", Icon: IcoSparkle, badge: "חדש!" },
     ],
   },
