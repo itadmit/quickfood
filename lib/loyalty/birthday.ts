@@ -107,3 +107,19 @@ export async function issueBirthdayCoupons(): Promise<BirthdayRunResult> {
 
   return { date: `${year}-${mmdd}`, matched: members.length, couponsCreated, greetingsSent };
 }
+
+/**
+ * Delete birthday coupons that have expired (past validUntil) WITHOUT being
+ * used. Redeemed ones (usageCount > 0) are kept so they stay in the merchant's
+ * purchase/coupon history. Run on the same daily tick as issuing.
+ */
+export async function purgeExpiredBirthdayCoupons(): Promise<number> {
+  const res = await prisma.coupon.deleteMany({
+    where: {
+      code: { startsWith: "BDAY-" },
+      usageCount: 0,
+      validUntil: { lt: new Date() },
+    },
+  });
+  return res.count;
+}

@@ -33,7 +33,7 @@ const JOBS: Job[] = [
     path: "/api/internal/loyalty/birthday-coupons",
     // 06:00 UTC ≈ 09:00 Israel - issue today's birthday coupons + greetings.
     cron: "0 6 * * *",
-    description: "Issue birthday coupons + send greetings to loyalty members.",
+    description: "Issue birthday coupons + greetings; purge expired unused ones.",
   },
 ];
 
