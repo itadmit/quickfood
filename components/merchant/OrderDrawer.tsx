@@ -86,20 +86,6 @@ const STATUS_LABEL: Record<string, string> = {
   refunded: "הוחזרה",
 };
 
-const PAYMENT_METHOD_LABEL: Record<string, string> = {
-  cash: "מזומן",
-  card: "כרטיס אשראי",
-  apple_pay: "Apple Pay",
-  google_pay: "Google Pay",
-  bit: "ביט",
-};
-
-const PAYMENT_STATUS_LABEL: Record<string, string> = {
-  pending: "ממתין לתשלום",
-  paid: "שולם",
-  failed: "נכשל",
-  refunded: "הוחזר",
-};
 
 export function OrderDrawer({
   orderId,
@@ -515,12 +501,25 @@ export function OrderDrawer({
                   <SumRow label="הנחה" value={`-${formatPrice(order.discount)}`} />
                 )}
                 <SumRow bold label="סה״כ" value={formatPrice(order.total)} />
-                <div className="flex items-center justify-between text-xs text-qf-mute pt-1">
-                  <span>
-                    תשלום: {PAYMENT_METHOD_LABEL[order.payment_method] ?? order.payment_method}
-                  </span>
-                  <span className={cn(order.payment_status === "paid" ? "text-qf-green-deep" : "text-qf-mute")}>
-                    {PAYMENT_STATUS_LABEL[order.payment_status] ?? order.payment_status}
+                <div className="flex items-center justify-between pt-1.5">
+                  <span className="text-xs text-qf-mute">אופן תשלום</span>
+                  <span
+                    className={cn(
+                      "text-xs font-black px-2 py-0.5 rounded-md border whitespace-nowrap",
+                      order.payment_status === "paid"
+                        ? "bg-qf-green-soft text-qf-green-deep border-qf-green-deep/30"
+                        : order.payment_method === "cash"
+                          ? "bg-qf-yolk-soft text-qf-ink2 border-qf-yolk/60"
+                          : "bg-qf-line-soft text-qf-ink2 border-qf-line",
+                    )}
+                  >
+                    {order.payment_status === "paid"
+                      ? order.payment_method === "cash"
+                        ? "שולם · מזומן"
+                        : "שולם · אשראי"
+                      : order.payment_method === "cash"
+                        ? "מזומן"
+                        : "אשראי"}
                   </span>
                 </div>
               </section>
@@ -572,7 +571,19 @@ export function OrderDrawer({
               disabled={order.status === "refunded" || order.status === "cancelled"}
               className="flex-1 px-3 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              קדם סטטוס
+              {order.status === "ready" && order.method === "pickup"
+                ? "נמסר ללקוח"
+                : order.status === "confirmed"
+                  ? "התחל הכנה"
+                  : order.status === "pending"
+                    ? "אשר הזמנה"
+                    : order.status === "preparing" || order.status === "in_oven"
+                      ? "סמן כמוכן"
+                      : order.status === "ready"
+                        ? "מסור לשליח"
+                        : order.status === "out_for_delivery"
+                          ? "סמן כנמסר"
+                          : "קדם סטטוס"}
             </button>
           </footer>
         )}

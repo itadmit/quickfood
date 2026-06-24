@@ -142,6 +142,7 @@ export function OrderTracking({
   const stage = stageOf(order.status, order.method);
   const isDelivered = order.status === "delivered";
   const isCancelled = order.status === "cancelled" || order.status === "refunded";
+  const isPickup = order.method === "pickup";
   // "Just placed" - the customer just landed on this page. Render the
   // celebratory green-check confirmation instead of the ETA so they
   // know the order went through.
@@ -272,7 +273,9 @@ export function OrderTracking({
             : isJustPlaced
               ? "תודה על ההזמנה!"
               : isDelivered
-                ? "נמסר בהצלחה"
+                ? isPickup
+                  ? "נאסף בהצלחה"
+                  : "נמסר בהצלחה"
                 : "25-35"
         }
         subhead={
@@ -282,7 +285,9 @@ export function OrderTracking({
               ? `ההזמנה אצל ${tenantName} - תקבל עדכון ברגע שהיא תיכנס להכנה`
               : isDelivered
                 ? null
-                : "דקות עד להגעה משוערת"
+                : isPickup
+                  ? "דקות עד שההזמנה מוכנה"
+                  : "דקות עד להגעה משוערת"
         }
         showCheck={!isCancelled && (isJustPlaced || isDelivered)}
         bigNumber={!isCancelled && !isJustPlaced && !isDelivered}

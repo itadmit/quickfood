@@ -726,8 +726,8 @@ function Column({
                   ? "נמסר ללקוח"
                   : o.status === "confirmed"
                     ? "התחל הכנה"
-                    : o.status === "pending" && o.paymentMethod === "cash"
-                      ? "מזומן התקבל"
+                    : o.status === "pending"
+                      ? "אשר הזמנה"
                       : actionLabel
               }
               now={now}
@@ -745,6 +745,35 @@ function Column({
         )}
       </div>
     </section>
+  );
+}
+
+// Payment-at-a-glance pill next to the order total. Cash is highlighted amber
+// (collect on hand-off); paid orders read green so the merchant instantly sees
+// the money is already in.
+function PaymentTag({ method, status }: { method: string; status: PaymentStatus }) {
+  const paid = status === "paid";
+  const isCash = method === "cash";
+  const label = paid
+    ? isCash
+      ? "שולם · מזומן"
+      : "שולם · אשראי"
+    : isCash
+      ? "מזומן"
+      : "אשראי";
+  return (
+    <span
+      className={cn(
+        "text-[10px] font-black px-1.5 py-0.5 rounded-md border whitespace-nowrap shrink-0",
+        paid
+          ? "bg-qf-green-soft text-qf-green-deep border-qf-green-deep/30"
+          : isCash
+            ? "bg-qf-yolk-soft text-qf-ink2 border-qf-yolk/60"
+            : "bg-qf-line-soft text-qf-ink2 border-qf-line",
+      )}
+    >
+      {label}
+    </span>
   );
 }
 
@@ -883,7 +912,10 @@ function Card({
       )}
 
       <footer className="flex items-center justify-between pt-1 gap-2">
-        <div className="text-sm font-semibold tnum">{formatPrice(order.total)}</div>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm font-semibold tnum shrink-0">{formatPrice(order.total)}</span>
+          <PaymentTag method={order.paymentMethod} status={order.paymentStatus} />
+        </div>
         <div className="flex items-center gap-1.5">
           <button
             type="button"
