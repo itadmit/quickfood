@@ -4,8 +4,7 @@ import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { loadLoyaltyData } from "@/lib/loyalty/members";
 import { renderRtlEmail } from "@/lib/email/templates";
-import { sendPoplyEmail, poplyFrom, poplyConfigured } from "@/lib/poply/client";
-import { sendSms } from "@/lib/sms/send";
+import { sendPoplyEmail, sendPoplySms, poplyFrom, poplyConfigured } from "@/lib/poply/client";
 import { sendWhatsApp } from "@/lib/whatsapp/send";
 
 export const runtime = "nodejs";
@@ -45,13 +44,14 @@ export const POST = handler(async (req: Request) => {
   if (!mailingEnabled()) {
     return apiError("coming_soon", "הדיוור ייפתח בקרוב עם חבילות הדיוור", 403);
   }
-  if (body.channel === "email" && !poplyConfigured()) {
+  // Email + SMS both run through Poply; WhatsApp via iBot.
+  if ((body.channel === "email" || body.channel === "sms") && !poplyConfigured()) {
     return apiError("not_configured", "ספק הדיוור אינו מחובר עדיין", 503);
   }
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
-    select: { name: true },
+    select: { name: true, smsSender: true },
   });
   const { rows } = await loadLoyaltyData(session.tenantId, tenant?.name ?? "העסק");
 
@@ -87,17 +87,12 @@ export const POST = handler(async (req: Request) => {
       return res.ok;
     });
   } else if (body.channel === "sms") {
-    // SMS goes through QuickFood's own sms4free integration so the sender name
-    // is the merchant's (tenant.smsSender) and it draws the existing credit
-    // pool - Poply can't carry a per-merchant SMS sender.
+    // SMS through Poply with a per-message sender = the merchant's business
+    // name (tenant.smsSender). Null sender → Poply uses the workspace default.
+    const sender = tenant?.smsSender ?? undefined;
     sent = await chunkedSend(audience, 20, async (r) => {
-      const res = await sendSms({
-        tenantId: session.tenantId!,
-        to: r.phone,
-        body: body.body,
-        kind: "loyalty_broadcast",
-      });
-      return res.status === "sent";
+      const res = await sendPoplySms({ to: r.phone, message: body.body, sender });
+      return res.ok;
     });
   } else {
     sent = await chunkedSend(audience, 10, async (r) => {

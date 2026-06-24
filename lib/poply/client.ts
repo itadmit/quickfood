@@ -5,10 +5,10 @@
  * not separate keys. Base URL + key come from env so staging/prod differ
  * without code changes.
  *
- * Poply API: POST /api/v1/send-email { to, subject, html, from }. Auth:
- * Authorization: Bearer <key>. (SMS is sent through QuickFood's own sms4free
- * integration instead - Poply fixes the SMS sender at the workspace level, so
- * it can't carry the merchant's business name; lib/sms/send.ts can.)
+ * Poply API: POST /api/v1/send-email { to, subject, html, from } and POST
+ * /api/v1/send-sms { to, message, sender }. Auth: Authorization: Bearer <key>.
+ * Both email and SMS for the loyalty club run through Poply; the per-message
+ * `sender`/`from` carry the merchant's business name.
  *
  * POPLY_FROM_EMAIL is QuickFood's verified sender address inside Poply. When
  * set, broadcasts send as `<BusinessName> <POPLY_FROM_EMAIL>` so the display
@@ -66,4 +66,13 @@ export function sendPoplyEmail(input: {
   from?: string;
 }): Promise<PoplySendResult> {
   return post("/api/v1/send-email", input);
+}
+
+export function sendPoplySms(input: {
+  to: string;
+  message: string;
+  /** Per-message sender id (merchant business name). Omit → workspace default. */
+  sender?: string;
+}): Promise<PoplySendResult> {
+  return post("/api/v1/send-sms", input);
 }
