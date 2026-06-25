@@ -90,6 +90,9 @@ export function serializeOrder(o: OrderWithIncludes) {
       size: it.sizeSnapshot,
       options: serializeSelectedOptions(it.selectedOptions),
       notes: it.notes,
+      // Kitchen prep state - without this the kitchen display's SSE refresh
+      // rebuilds every item with prepared_at=null and wipes the cook's tick.
+      prepared_at: it.preparedAt?.toISOString() ?? null,
     })),
   };
 }
