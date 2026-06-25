@@ -54,19 +54,19 @@ export function defaultTemplate(event: OrderNotifyEvent, channel: NotifyChannel)
   switch (event) {
     case "confirmed":
       return rich
-        ? "{business}\nהזמנה {order} התקבלה ואושרה ✅\nנעדכן אותך כשהיא מוכנה."
+        ? "*{business}:*\nהזמנה {order} התקבלה ואושרה ✅\nנעדכן אותך כשהיא מוכנה."
         : "{business}: הזמנה {order} התקבלה ואושרה. נעדכן אותך כשהיא מוכנה.";
     case "ready":
       return rich
-        ? "{business}\nהזמנה {order} מוכנה לאיסוף 🛍️\nאפשר לבוא לקחת!\nניווט במפה: {waze}"
+        ? "*{business}:*\nהזמנה {order} מוכנה לאיסוף 🛍️\nאפשר לבוא לקחת!\nניווט במפה: {waze}"
         : "{business}: הזמנה {order} מוכנה לאיסוף! אפשר לבוא לקחת.";
     case "on_the_way":
       return rich
-        ? "{business}\nהשליח {courier} ({courier_phone}) יצא אליך עם הזמנה {order} 🛵"
+        ? "*{business}:*\nהשליח {courier} ({courier_phone}) יצא אליך עם הזמנה {order} 🛵"
         : "{business}: השליח {courier} ({courier_phone}) יצא אליך עם הזמנה {order}.";
     case "delivered":
       return rich
-        ? "{business}\nהזמנה {order} נמסרה בהצלחה 🎉\nבתאבון!"
+        ? "*{business}:*\nהזמנה {order} נמסרה בהצלחה 🎉\nבתאבון!"
         : "{business}: הזמנה {order} נמסרה בהצלחה. בתאבון!";
   }
 }
@@ -85,30 +85,30 @@ export function defaultBody(
   switch (event) {
     case "confirmed":
       return rich
-        ? `${name}\nהזמנה ${number} התקבלה ואושרה ✅\nנעדכן אותך כשהיא מוכנה.`
+        ? `*${name}:*\nהזמנה ${number} התקבלה ואושרה ✅\nנעדכן אותך כשהיא מוכנה.`
         : `${name}: הזמנה ${number} התקבלה ואושרה. נעדכן אותך כשהיא מוכנה.`;
     case "ready":
       if (ctx.method === "pickup") {
         if (rich) {
           const wazeLine = ctx.waze ? `\nניווט במפה: ${ctx.waze}` : "";
-          return `${name}\nהזמנה ${number} מוכנה לאיסוף 🛍️\nאפשר לבוא לקחת!${wazeLine}`;
+          return `*${name}:*\nהזמנה ${number} מוכנה לאיסוף 🛍️\nאפשר לבוא לקחת!${wazeLine}`;
         }
         return `${name}: הזמנה ${number} מוכנה לאיסוף! אפשר לבוא לקחת.`;
       }
       return rich
-        ? `${name}\nהזמנה ${number} מוכנה 🛍️\nתצא אליך בקרוב.`
+        ? `*${name}:*\nהזמנה ${number} מוכנה 🛍️\nתצא אליך בקרוב.`
         : `${name}: הזמנה ${number} מוכנה ותצא אליך בקרוב.`;
     case "on_the_way": {
       const courierLine = ctx.courier
         ? `השליח ${ctx.courier.name}${ctx.courier.phone ? ` (${ctx.courier.phone})` : ""}`
         : "השליח שלך";
       return rich
-        ? `${name}\n${courierLine} יצא אליך עם הזמנה ${number} 🛵`
+        ? `*${name}:*\n${courierLine} יצא אליך עם הזמנה ${number} 🛵`
         : `${name}: ${courierLine} יצא אליך עם הזמנה ${number}.`;
     }
     case "delivered":
       return rich
-        ? `${name}\nהזמנה ${number} נמסרה בהצלחה 🎉\nבתאבון!`
+        ? `*${name}:*\nהזמנה ${number} נמסרה בהצלחה 🎉\nבתאבון!`
         : `${name}: הזמנה ${number} נמסרה בהצלחה. בתאבון!`;
   }
 }
