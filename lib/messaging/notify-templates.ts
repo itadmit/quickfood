@@ -12,11 +12,17 @@ export interface BodyCtx {
   method: "delivery" | "pickup";
   courier: { name: string; phone: string | null } | null;
   waze: string | null;
+  customer: string;
+  items: string;
+  total: string;
 }
 
 export const TEXT_TOKENS: Array<{ token: string; label: string }> = [
   { token: "{business}", label: "שם העסק" },
+  { token: "{customer}", label: "שם המזמין" },
   { token: "{order}", label: "מספר הזמנה" },
+  { token: "{items}", label: "פריטי ההזמנה" },
+  { token: "{total}", label: "סכום" },
   { token: "{courier}", label: "שם השליח" },
   { token: "{courier_phone}", label: "טלפון השליח" },
   { token: "{waze}", label: "לינק Waze" },
@@ -26,7 +32,10 @@ export const TEXT_TOKENS: Array<{ token: string; label: string }> = [
 export function templateVars(ctx: BodyCtx): Record<string, string> {
   return {
     business: ctx.name,
+    customer: ctx.customer,
     order: String(ctx.number),
+    items: ctx.items,
+    total: ctx.total,
     courier: ctx.courier?.name ?? "",
     courier_phone: ctx.courier?.phone ?? "",
     waze: ctx.waze ?? "",
@@ -54,19 +63,19 @@ export function defaultTemplate(event: OrderNotifyEvent, channel: NotifyChannel)
   switch (event) {
     case "confirmed":
       return rich
-        ? "*{business}:*\nהזמנה {order} התקבלה ואושרה ✅\nנעדכן אותך כשהיא מוכנה."
+        ? '*{business}:*\nהיי {customer} 👋\nהזמנה {order} התקבלה ואושרה ✅\n{items}\nסה"כ: {total}\nנעדכן אותך כשתהיה מוכנה.'
         : "{business}: הזמנה {order} התקבלה ואושרה. נעדכן אותך כשהיא מוכנה.";
     case "ready":
       return rich
-        ? "*{business}:*\nהזמנה {order} מוכנה לאיסוף 🛍️\nאפשר לבוא לקחת!\nניווט במפה: {waze}"
+        ? "*{business}:*\nהיי {customer} 👋\nהזמנה {order} מוכנה לאיסוף 🛍️\n{items}\nאפשר לבוא לקחת!\nניווט במפה: {waze}"
         : "{business}: הזמנה {order} מוכנה לאיסוף! אפשר לבוא לקחת.";
     case "on_the_way":
       return rich
-        ? "*{business}:*\nהשליח {courier} ({courier_phone}) יצא אליך עם הזמנה {order} 🛵"
+        ? "*{business}:*\nהיי {customer} 👋\nהשליח {courier} ({courier_phone}) יצא אליך עם הזמנה {order} 🛵"
         : "{business}: השליח {courier} ({courier_phone}) יצא אליך עם הזמנה {order}.";
     case "delivered":
       return rich
-        ? "*{business}:*\nהזמנה {order} נמסרה בהצלחה 🎉\nבתאבון!"
+        ? "*{business}:*\nהיי {customer} 👋\nהזמנה {order} נמסרה בהצלחה 🎉\nבתאבון!"
         : "{business}: הזמנה {order} נמסרה בהצלחה. בתאבון!";
   }
 }
@@ -82,33 +91,37 @@ export function defaultBody(
 ): string {
   const { name, number } = ctx;
   const rich = channel === "whatsapp" || channel === "whatsapp_managed";
+  // WhatsApp-only extras: a personal greeting and an item list. Omitted when
+  // the data is missing so we never emit a dangling "היי 👋" or blank line.
+  const greet = rich && ctx.customer ? `היי ${ctx.customer} 👋\n` : "";
+  const itemsBlock = rich && ctx.items ? `${ctx.items}\n` : "";
   switch (event) {
     case "confirmed":
       return rich
-        ? `*${name}:*\nהזמנה ${number} התקבלה ואושרה ✅\nנעדכן אותך כשהיא מוכנה.`
+        ? `*${name}:*\n${greet}הזמנה ${number} התקבלה ואושרה ✅\n${itemsBlock}סה"כ: ${ctx.total}\nנעדכן אותך כשתהיה מוכנה.`
         : `${name}: הזמנה ${number} התקבלה ואושרה. נעדכן אותך כשהיא מוכנה.`;
     case "ready":
       if (ctx.method === "pickup") {
         if (rich) {
           const wazeLine = ctx.waze ? `\nניווט במפה: ${ctx.waze}` : "";
-          return `*${name}:*\nהזמנה ${number} מוכנה לאיסוף 🛍️\nאפשר לבוא לקחת!${wazeLine}`;
+          return `*${name}:*\n${greet}הזמנה ${number} מוכנה לאיסוף 🛍️\n${itemsBlock}אפשר לבוא לקחת!${wazeLine}`;
         }
         return `${name}: הזמנה ${number} מוכנה לאיסוף! אפשר לבוא לקחת.`;
       }
       return rich
-        ? `*${name}:*\nהזמנה ${number} מוכנה 🛍️\nתצא אליך בקרוב.`
+        ? `*${name}:*\n${greet}הזמנה ${number} מוכנה 🛍️\n${itemsBlock}תצא אליך בקרוב.`
         : `${name}: הזמנה ${number} מוכנה ותצא אליך בקרוב.`;
     case "on_the_way": {
       const courierLine = ctx.courier
         ? `השליח ${ctx.courier.name}${ctx.courier.phone ? ` (${ctx.courier.phone})` : ""}`
         : "השליח שלך";
       return rich
-        ? `*${name}:*\n${courierLine} יצא אליך עם הזמנה ${number} 🛵`
+        ? `*${name}:*\n${greet}${courierLine} יצא אליך עם הזמנה ${number} 🛵`
         : `${name}: ${courierLine} יצא אליך עם הזמנה ${number}.`;
     }
     case "delivered":
       return rich
-        ? `*${name}:*\nהזמנה ${number} נמסרה בהצלחה 🎉\nבתאבון!`
+        ? `*${name}:*\n${greet}הזמנה ${number} נמסרה בהצלחה 🎉\nבתאבון!`
         : `${name}: הזמנה ${number} נמסרה בהצלחה. בתאבון!`;
   }
 }

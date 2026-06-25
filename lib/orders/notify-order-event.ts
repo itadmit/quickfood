@@ -114,9 +114,12 @@ export async function notifyOrderCustomer(
       id: true,
       number: true,
       method: true,
+      total: true,
       customerPhoneSnap: true,
+      customerFirstNameSnap: true,
       courier: { select: { name: true, phone: true } },
       branch: { select: { address: true, lat: true, lng: true } },
+      items: { select: { nameSnapshot: true, quantity: true } },
       tenant: {
         select: {
           id: true,
@@ -145,6 +148,9 @@ export async function notifyOrderCustomer(
       method: order.method,
       courier: order.courier,
       waze: wazeLink(order.branch),
+      customer: order.customerFirstNameSnap?.trim() || "",
+      items: order.items.map((it) => `${it.quantity}× ${it.nameSnapshot}`).join("\n"),
+      total: `₪${order.total}`,
     },
     cfg.channel,
     cfg.text,
