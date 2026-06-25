@@ -913,12 +913,12 @@ function Card({
         </div>
       )}
 
-      <footer className="flex items-center justify-between pt-1 gap-2">
+      <footer className="flex flex-wrap items-center gap-x-2 gap-y-2 pt-1">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-sm font-semibold tnum shrink-0">{formatPrice(order.total)}</span>
           <PaymentTag method={order.paymentMethod} status={order.paymentStatus} />
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 ms-auto">
           <button
             type="button"
             onClick={(e) => {
