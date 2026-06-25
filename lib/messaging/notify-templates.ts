@@ -36,8 +36,39 @@ export function templateVars(ctx: BodyCtx): Record<string, string> {
 export function renderTemplate(text: string, vars: Record<string, string>): string {
   return text
     .replace(/\{(\w+)\}/g, (m, key: string) => (key in vars ? vars[key] : m))
+    .replace(/\(\s*\)/g, "") // drop "()" left by an empty token (e.g. no courier phone)
+    .replace(/[ \t]{2,}/g, " ")
     .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+/**
+ * Token-based default template per event + channel - the editable seed shown
+ * in the dashboard. Uses {tokens} (not sample values) so a merchant who edits
+ * and saves it still sends correct, personalised messages. The actual send-time
+ * default (when no override is stored) is the method-aware `defaultBody`.
+ */
+export function defaultTemplate(event: OrderNotifyEvent, channel: NotifyChannel): string {
+  const rich = channel === "whatsapp" || channel === "whatsapp_managed";
+  switch (event) {
+    case "confirmed":
+      return rich
+        ? "{business}\nהזמנה {order} התקבלה ואושרה ✅\nנעדכן אותך כשהיא מוכנה."
+        : "{business}: הזמנה {order} התקבלה ואושרה. נעדכן אותך כשהיא מוכנה.";
+    case "ready":
+      return rich
+        ? "{business}\nהזמנה {order} מוכנה לאיסוף 🛍️\nאפשר לבוא לקחת!\nניווט במפה: {waze}"
+        : "{business}: הזמנה {order} מוכנה לאיסוף! אפשר לבוא לקחת.";
+    case "on_the_way":
+      return rich
+        ? "{business}\nהשליח {courier} ({courier_phone}) יצא אליך עם הזמנה {order} 🛵"
+        : "{business}: השליח {courier} ({courier_phone}) יצא אליך עם הזמנה {order}.";
+    case "delivered":
+      return rich
+        ? "{business}\nהזמנה {order} נמסרה בהצלחה 🎉\nבתאבון!"
+        : "{business}: הזמנה {order} נמסרה בהצלחה. בתאבון!";
+  }
 }
 
 /**

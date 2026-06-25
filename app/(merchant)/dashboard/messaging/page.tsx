@@ -86,7 +86,6 @@ export default async function MessagingPage() {
     <MessagingView
       balance={tenant.smsCreditsRemaining}
       whatsappBalance={tenant.whatsappCreditsRemaining}
-      businessName={tenant.name ?? "העסק"}
       smsSender={tenant.smsSender ?? ""}
       billingReady={!!(tenant.billingCustomerId && tenant.billingPaymentMethodId)}
       whatsapp={{
