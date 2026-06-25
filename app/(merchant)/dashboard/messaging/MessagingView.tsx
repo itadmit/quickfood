@@ -15,6 +15,7 @@ import {
   type OrderNotifyEvent,
   type NotifyChannel,
 } from "@/lib/messaging/notify-settings";
+import { defaultBody, TEXT_TOKENS } from "@/lib/messaging/notify-templates";
 
 type Tier = "silver" | "gold" | "platinum";
 type Tab = "balance" | "notifications" | "club";
@@ -85,6 +86,7 @@ function channelAvailable(ch: NotifyChannel, a: Availability): boolean {
 export function MessagingView({
   balance: initialBalance,
   whatsappBalance: initialWaBalance,
+  businessName,
   smsSender: initialSender,
   billingReady,
   whatsapp,
@@ -98,6 +100,7 @@ export function MessagingView({
 }: {
   balance: number;
   whatsappBalance: number;
+  businessName: string;
   smsSender: string;
   billingReady: boolean;
   whatsapp: { token: string; instanceId: string };
@@ -163,6 +166,7 @@ export function MessagingView({
           orderEvents={orderEvents}
           review={review}
           smsSender={initialSender}
+          businessName={businessName}
           availability={availability}
         />
       )}
@@ -909,24 +913,50 @@ function ChannelPicker({
   );
 }
 
-const TEXT_TOKENS: Array<{ token: string; label: string }> = [
-  { token: "{business}", label: "שם העסק" },
-  { token: "{order}", label: "מספר הזמנה" },
-  { token: "{courier}", label: "שם השליח" },
-  { token: "{courier_phone}", label: "טלפון השליח" },
-  { token: "{waze}", label: "לינק Waze" },
-];
+const CHANNEL_SAMPLE_LABEL: Partial<Record<NotifyChannel, string>> = {
+  sms: "SMS",
+  whatsapp: "וואטסאפ",
+  whatsapp_managed: "וואטסאפ",
+};
+
+/** A faithful preview of the built-in default for this event + channel. */
+function previewDefault(
+  event: OrderNotifyEvent,
+  channel: NotifyChannel,
+  businessName: string,
+): string {
+  const pickup = event === "ready";
+  return defaultBody(
+    event,
+    {
+      name: businessName,
+      number: "12",
+      method: pickup ? "pickup" : "delivery",
+      courier: { name: "דני", phone: "050-1234567" },
+      waze: "https://waze.com/ul?q=...",
+    },
+    channel,
+  );
+}
 
 function EventTextEditor({
   event,
+  channel,
+  businessName,
   value,
   onChange,
 }: {
   event: OrderNotifyEvent;
+  channel: NotifyChannel;
+  businessName: string;
   value: string;
   onChange: (t: string) => void;
 }) {
   const [open, setOpen] = useState(value.trim().length > 0);
+  const isPaid = channel === "sms" || channel === "whatsapp" || channel === "whatsapp_managed";
+  const preview = isPaid ? previewDefault(event, channel, businessName) : "";
+  const channelLabel = CHANNEL_SAMPLE_LABEL[channel] ?? "";
+
   return (
     <div className="pt-1">
       {!open ? (
@@ -935,16 +965,33 @@ function EventTextEditor({
           onClick={() => setOpen(true)}
           className="text-xs text-(--qf-deep) underline underline-offset-2 hover:text-(--qf-primary)"
         >
-          {value.trim() ? "עריכת הטקסט (מותאם אישית)" : "עריכת טקסט ההודעה"}
+          {value.trim() ? "עריכת הטקסט (מותאם אישית)" : "צפייה / עריכה של טקסט ההודעה"}
         </button>
       ) : (
         <div className="space-y-2">
+          {isPaid && (
+            <div className="rounded-xl bg-qf-bg/60 border border-qf-line-dash p-2.5">
+              <div className="text-[11px] font-bold text-qf-mute mb-1">
+                ברירת המחדל ({channelLabel}):
+              </div>
+              <div className="text-xs text-qf-ink2 whitespace-pre-wrap leading-relaxed">{preview}</div>
+              {!value.trim() && (
+                <button
+                  type="button"
+                  onClick={() => onChange(preview)}
+                  className="mt-2 text-[11px] text-(--qf-deep) underline underline-offset-2 hover:text-(--qf-primary)"
+                >
+                  ערוך מתוך ברירת המחדל
+                </button>
+              )}
+            </div>
+          )}
           <textarea
             value={value}
             onChange={(e) => onChange(e.target.value)}
             rows={3}
             dir="rtl"
-            placeholder="השאירו ריק לטקסט ברירת המחדל החכם (וואטסאפ עשיר / SMS קצר)."
+            placeholder="השאירו ריק כדי להשתמש בטקסט ברירת המחדל למעלה."
             className="w-full px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm leading-relaxed"
             aria-label={`טקסט הודעה ל${EVENT_LABEL[event]}`}
           />
@@ -971,7 +1018,7 @@ function EventTextEditor({
             )}
           </div>
           <p className="text-[11px] text-qf-mute">
-            ריק = טקסט ברירת מחדל. הלינק ל-Waze רלוונטי בעיקר ב&quot;הזמנה מוכנה&quot; לאיסוף עצמי.
+            ריק = טקסט ברירת המחדל למעלה (משתנה לפי הערוץ - וואטסאפ עשיר, SMS קצר). הלינק ל-Waze רלוונטי בעיקר ב&quot;הזמנה מוכנה&quot; לאיסוף עצמי.
           </p>
         </div>
       )}
@@ -983,11 +1030,13 @@ function NotificationsTab({
   orderEvents,
   review,
   smsSender,
+  businessName,
   availability,
 }: {
   orderEvents: OrderNotifySettings;
   review: { enabled: boolean; public: boolean; channel: NotifyChannel; delayMinutes: number };
   smsSender: string;
+  businessName: string;
   availability: Availability;
 }) {
   const router = useRouter();
@@ -1082,6 +1131,8 @@ function NotificationsTab({
                     />
                     <EventTextEditor
                       event={ev}
+                      channel={events[ev].channel}
+                      businessName={businessName}
                       value={events[ev].text ?? ""}
                       onChange={(t) => setEvent(ev, { text: t })}
                     />
