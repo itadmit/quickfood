@@ -647,28 +647,6 @@ export function CustomerCheckout({
                 />
               </Field>
             </div>
-            <div className="col-span-2">
-              <Field label="דוא״ל" required={emailRequired} error={emailError}>
-                <Input
-                  value={email}
-                  onChange={(v) => {
-                    setEmail(v);
-                    if (!emailTouched) setEmailTouched(true);
-                  }}
-                  onBlur={() => setEmailTouched(true)}
-                  placeholder="you@example.com"
-                  dir="ltr"
-                  inputMode="email"
-                  autoComplete="email"
-                  invalid={!!emailError}
-                />
-              </Field>
-              {requireEmail && (
-                <div className="text-xs text-qf-mute mt-1">
-                  נשלח אליך מייל קצר לאחר ההזמנה כדי שתוכל לדרג אותה
-                </div>
-              )}
-            </div>
           </div>
         </Card>
 
@@ -795,6 +773,30 @@ export function CustomerCheckout({
               {paymentMethod && paymentMethod !== "cash" && (
                 <div className="mt-2 text-xs text-qf-mute">
                   ניתן לשלם בכרטיס אשראי, Bit, Apple Pay ו-Google Pay.
+                </div>
+              )}
+              {emailRequired && (
+                <div className="mt-3">
+                  <Field label="דוא״ל" required error={emailError}>
+                    <Input
+                      value={email}
+                      onChange={(v) => {
+                        setEmail(v);
+                        if (!emailTouched) setEmailTouched(true);
+                      }}
+                      onBlur={() => setEmailTouched(true)}
+                      placeholder="you@example.com"
+                      dir="ltr"
+                      inputMode="email"
+                      autoComplete="email"
+                      invalid={!!emailError}
+                    />
+                  </Field>
+                  <div className="text-xs text-qf-mute mt-1">
+                    {onlinePayment
+                      ? "לשם תישלח חשבונית מס/קבלה"
+                      : "נשלח אליך מייל קצר לאחר ההזמנה כדי שתוכל לדרג אותה"}
+                  </div>
                 </div>
               )}
             </>
