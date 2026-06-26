@@ -78,7 +78,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
     (await prisma.woltImport.count({
       where: { tenantId: tenant.id, status: "committed" },
     })) > 0;
-  const showOnboarding = hasNoMenuItems && !hasCompletedWoltImport;
+  // Same rule for a photo/PDF menu import: once committed the store isn't
+  // "new", so don't nudge it back into onboarding (parity with Wolt - the
+  // overlay was reappearing on entry after a file import).
+  const hasCompletedMenuFileImport =
+    (await prisma.menuFileImport.count({
+      where: { tenantId: tenant.id, status: "committed" },
+    })) > 0;
+  const showOnboarding =
+    hasNoMenuItems && !hasCompletedWoltImport && !hasCompletedMenuFileImport;
 
   const base = (process.env.NEXT_PUBLIC_APP_URL ?? "https://quickfood.co.il").replace(/\/$/, "");
   const storefrontUrl = tenant.customDomain

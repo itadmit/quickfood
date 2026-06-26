@@ -91,7 +91,7 @@ export function MenuFileImportModal({
     return () => clearInterval(id);
   }, [phase]);
 
-  async function onFile(file: File) {
+  async function onFile(file: File, attempt = 0) {
     setError(null);
     setMsgIdx(0);
     setPhase("extracting");
@@ -102,8 +102,16 @@ export function MenuFileImportModal({
         method: "POST",
         body: form,
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
       if (!res.ok) {
+        // The first call right after signup can hit a cold function / DB
+        // connection and 500. Retry once before surfacing it - that's what the
+        // merchant otherwise does by re-uploading. Only retry transient 5xx;
+        // a 4xx (bad file, cooldown, empty menu) is shown immediately.
+        if (res.status >= 500 && attempt < 1) {
+          await new Promise((r) => setTimeout(r, 1500));
+          return onFile(file, attempt + 1);
+        }
         setError(data?.error?.message ?? "חילוץ התפריט נכשל");
         setPhase("upload");
         return;
@@ -112,6 +120,10 @@ export function MenuFileImportModal({
       setMenu(data.menu);
       setPhase("review");
     } catch {
+      if (attempt < 1) {
+        await new Promise((r) => setTimeout(r, 1500));
+        return onFile(file, attempt + 1);
+      }
       setError("שגיאת רשת, נסה שוב");
       setPhase("upload");
     }
