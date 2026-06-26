@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { IcoPhoneSms } from "@/components/shared/Icons";
 
 export function ProfileLogin() {
   const router = useRouter();
+  const params = useParams();
+  const tenantSlug = typeof params?.tenantSlug === "string" ? params.tenantSlug : undefined;
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
@@ -19,7 +21,7 @@ export function ProfileLogin() {
       const res = await fetch("/api/v1/auth/otp/request", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ phone, tenant_slug: tenantSlug }),
       });
       if (!res.ok) {
         const d = await res.json();
@@ -60,7 +62,7 @@ export function ProfileLogin() {
         </div>
         <h2 className="text-xl font-bold">התחברות עם טלפון</h2>
         <p className="text-sm text-qf-mute mt-1">
-          {step === "phone" ? "נשלח לך קוד אימות ב-SMS" : "הזן את הקוד שקיבלת"}
+          {step === "phone" ? "נשלח לך קוד אימות בוואטסאפ" : "הזן את הקוד שקיבלת"}
         </p>
       </div>
 
@@ -129,7 +131,7 @@ export function ProfileLogin() {
             {busy ? "מאמת..." : "התחבר"}
           </button>
           <div className="text-xs text-qf-mute text-center">
-            ב-MVP הקוד נכתב ל-server console - בדוק את הלוג
+            הקוד נשלח אליך בוואטסאפ. לא הגיע? נסה שוב בעוד רגע.
           </div>
         </div>
       )}

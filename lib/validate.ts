@@ -19,6 +19,8 @@ export const UuidSchema = z.string().uuid();
 
 export const OtpRequestSchema = z.object({
   phone: PhoneSchema,
+  // Storefront slug - used to brand the OTP WhatsApp with the business name.
+  tenant_slug: z.string().optional(),
 });
 
 export const OtpVerifySchema = z.object({
