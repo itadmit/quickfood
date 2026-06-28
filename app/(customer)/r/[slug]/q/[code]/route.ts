@@ -23,7 +23,7 @@ export async function GET(
 ) {
   const { slug, code } = await params;
 
-  const fallback = NextResponse.redirect(new URL(`/s/${slug}/menu`, req.url), 302);
+  const fallback = NextResponse.redirect(new URL(`/s/${slug}`, req.url), 302);
 
   const [tenant, campaign] = await Promise.all([
     prisma.tenant.findUnique({ where: { slug }, select: { id: true } }),

@@ -124,11 +124,11 @@ export function resolveQrDestination(
     const sep = campaign.destinationUrl.includes("?") ? "&" : "?";
     return { url: `${campaign.destinationUrl}${sep}src=${src}` };
   }
-  const path =
-    campaign.destinationType === "signup"
-      ? "/login"
-      : campaign.destinationType === "loyalty"
-        ? "/menu?join=1"
-        : "/menu";
-  return { url: `/s/${slug}${path}?src=${src}` };
+  // The storefront home (the menu) is the INDEX at /s/{slug} - there is NO
+  // /s/{slug}/menu page (it would 404), and customers have no /login route;
+  // signup/loyalty are handled by the storefront's own UI. So every built-in
+  // destination lands on the index with the src marker (+ join hint for
+  // loyalty), which the storefront acts on.
+  const join = campaign.destinationType === "loyalty" ? "&join=1" : "";
+  return { url: `/s/${slug}?src=${src}${join}` };
 }

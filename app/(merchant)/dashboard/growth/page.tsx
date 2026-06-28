@@ -55,7 +55,8 @@ export default async function GrowthPage() {
       sources={sources}
       qr={qr}
       score={score}
-      insights={insights}
+      insights={insights.insights}
+      insightsSource={insights.source}
       briefing={briefing}
       tasks={tasks.map((t) => ({
         id: t.id,

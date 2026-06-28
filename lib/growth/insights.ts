@@ -25,10 +25,17 @@ export interface GrowthInsight {
  * rule-based list when no AI is configured or the call fails/ times out. The
  * facts are always computed here so the model can never invent numbers.
  */
+export interface GrowthInsightsResult {
+  insights: GrowthInsight[];
+  // "ai" when the tenant's LLM produced them, "rules" for the deterministic
+  // fallback. Drives the source badge in the UI.
+  source: "ai" | "rules";
+}
+
 export async function getGrowthInsights(
   tenantId: string,
   range: DateRange,
-): Promise<GrowthInsight[]> {
+): Promise<GrowthInsightsResult> {
   const [overview, sources, qr] = await Promise.all([
     getDirectCustomerOverview(tenantId, range),
     getSourceBreakdown(tenantId, range),
@@ -149,5 +156,5 @@ export async function getGrowthInsights(
   };
 
   const ai = await generateAiInsights(tenantId, facts);
-  return ai ?? ruleBased;
+  return ai ? { insights: ai, source: "ai" } : { insights: ruleBased, source: "rules" };
 }

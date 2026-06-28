@@ -71,6 +71,7 @@ export function GrowthView({
   qr,
   score,
   insights,
+  insightsSource,
   briefing,
   tasks,
 }: {
@@ -82,6 +83,7 @@ export function GrowthView({
   qr: QrPerformanceRow[];
   score: GrowthScoreResult;
   insights: GrowthInsight[];
+  insightsSource: "ai" | "rules";
   briefing: DailyBriefing;
   tasks: TaskRow[];
 }) {
@@ -150,37 +152,39 @@ export function GrowthView({
       </div>
 
       {/* ─── Daily AI Briefing - the 30-second morning read ─── */}
-      <Card className="p-5 bg-gradient-to-l from-[#FFF8E1] to-white">
-        <div className="flex items-start gap-3">
-          <div className="shrink-0 w-10 h-10 rounded-2xl bg-black grid place-items-center text-[#F8CB1E]">
-            <IcoSparkle s={20} />
+      <Card className="p-5 lg:p-6 bg-gradient-to-l from-[#FFF8E1] to-white">
+        <div className="flex items-center gap-3">
+          <div className="shrink-0 w-9 h-9 rounded-xl bg-black grid place-items-center text-[#F8CB1E]">
+            <IcoSparkle s={17} />
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="font-black text-lg text-qf-ink">{briefing.greeting}. הנה מה שמצאתי היום:</div>
-            <ul className="mt-2 space-y-2">
-              {briefing.findings.map((f, i) => (
-                <li key={i} className="flex flex-wrap items-center gap-2 text-sm text-qf-ink">
-                  <span className="w-1.5 h-1.5 rounded-full bg-black/40 shrink-0" />
-                  <span>{f.text}</span>
-                  {f.actionLabel && (
-                    <button
-                      onClick={() => runAction(f.actionType, f.actionPayload)}
-                      className="text-xs font-bold text-black underline underline-offset-2"
-                    >
-                      {f.actionLabel}
-                    </button>
-                  )}
-                </li>
-              ))}
-            </ul>
-            {briefing.estimatedOpportunity > 0 && (
-              <div className="mt-3 inline-flex items-center gap-2 bg-black/5 rounded-xl px-3 py-1.5 text-sm">
-                <span className="text-qf-ink2">הזדמנות משוערת היום:</span>
-                <span className="font-black text-qf-ink">{formatPrice(briefing.estimatedOpportunity)}</span>
-              </div>
-            )}
+          <div className="font-black text-lg leading-tight text-qf-ink">
+            {briefing.greeting}. הנה מה שמצאתי היום:
           </div>
         </div>
+        <ul className="mt-4 space-y-3">
+          {briefing.findings.map((f, i) => (
+            <li key={i} className="flex items-start gap-2.5 text-sm text-qf-ink leading-relaxed">
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-black/40 shrink-0" />
+              <span className="flex-1">
+                {f.text}
+                {f.actionLabel && (
+                  <button
+                    onClick={() => runAction(f.actionType, f.actionPayload)}
+                    className="mr-2 text-xs font-bold text-black underline underline-offset-2 whitespace-nowrap"
+                  >
+                    {f.actionLabel}
+                  </button>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+        {briefing.estimatedOpportunity > 0 && (
+          <div className="mt-4 inline-flex items-center gap-2 bg-black/5 rounded-xl px-3 py-2 text-sm">
+            <span className="text-qf-ink2">הזדמנות משוערת היום:</span>
+            <span className="font-black text-qf-ink">{formatPrice(briefing.estimatedOpportunity)}</span>
+          </div>
+        )}
       </Card>
 
       {/* ─── Growth Score + Checklist ─── */}
@@ -310,9 +314,18 @@ export function GrowthView({
       {/* ─── AI Insights ─── */}
       {insights.length > 0 && (
         <Card className="p-5">
-          <SectionTitle icon={<IcoSparkle s={18} />} hint="המלצות מנהל הצמיחה">
-            תובנות חכמות
-          </SectionTitle>
+          <div className="flex items-center justify-between mb-3">
+            <SectionTitle icon={<IcoSparkle s={18} />}>תובנות חכמות</SectionTitle>
+            <span
+              className={`text-[10px] font-bold rounded-md px-2 py-0.5 ${
+                insightsSource === "ai"
+                  ? "bg-black text-[#F8CB1E]"
+                  : "bg-qf-bg text-qf-ink2 border border-qf-line"
+              }`}
+            >
+              {insightsSource === "ai" ? "נוצר על ידי AI" : "מבוסס נתונים"}
+            </span>
+          </div>
           <div className="grid md:grid-cols-2 gap-3">
             {insights.map((ins) => (
               <div key={ins.id} className="rounded-2xl border border-qf-line p-4">
@@ -326,7 +339,7 @@ export function GrowthView({
                 {ins.actionLabel && (
                   <button
                     onClick={() => runAction(ins.actionType, ins.actionPayload)}
-                    className="mt-3 block text-xs font-bold text-black inline-flex items-center gap-1"
+                    className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-black"
                   >
                     {ins.actionLabel} <IcoArrowLeft s={12} />
                   </button>
@@ -415,6 +428,7 @@ export function GrowthView({
       {qrModalOpen && (
         <CreateQrModal
           businessName={businessName}
+          slug={slug}
           onClose={() => setQrModalOpen(false)}
           onCreated={() => {
             setQrModalOpen(false);

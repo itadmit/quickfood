@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import QRCode from "qrcode";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/components/shared/Modal";
 import { resolveLandingCopy, type LandingCopy } from "@/lib/growth/landing";
+import { IcoCopy } from "@/components/shared/Icons";
 
 // Mirror of lib/growth/qr type/destination labels (kept inline so this
 // client component doesn't import the server-only qr module).
@@ -49,10 +51,12 @@ export function CreateQrModal({
   onClose,
   onCreated,
   businessName,
+  slug,
 }: {
   onClose: () => void;
   onCreated: () => void;
   businessName: string;
+  slug: string;
 }) {
   const [name, setName] = useState("");
   const [type, setType] = useState("bag");
@@ -63,6 +67,8 @@ export function CreateQrModal({
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [created, setCreated] = useState<{ url: string; qr: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Switching template resets the editable copy to that template's defaults.
   function pickTemplate(tpl: string) {
@@ -88,12 +94,84 @@ export function CreateQrModal({
         landingCopy: destinationType === "landing" ? copy : undefined,
       }),
     }).catch(() => null);
-    setBusy(false);
     if (!res || !res.ok) {
+      setBusy(false);
       setError("יצירת הקמפיין נכשלה. נסו שוב.");
       return;
     }
-    onCreated();
+    const data = await res.json().catch(() => null);
+    const code = data?.campaign?.code as string | undefined;
+    if (!code) {
+      setBusy(false);
+      onCreated();
+      return;
+    }
+    const url = `${window.location.origin}/r/${slug}/q/${code}`;
+    const qr = await QRCode.toDataURL(url, { width: 320, margin: 2 }).catch(() => "");
+    setBusy(false);
+    setCreated({ url, qr });
+  }
+
+  function copyUrl() {
+    if (!created) return;
+    navigator.clipboard?.writeText(created.url).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      },
+      () => {},
+    );
+  }
+
+  // ─── Success view: show the QR + tracked link so it's obvious what was made
+  if (created) {
+    return (
+      <Modal open onClose={onCreated} size="md" ariaLabel="הקמפיין מוכן">
+        <ModalHeader title="הקמפיין מוכן!" subtitle="הדפיסו את הקוד או שתפו את הקישור" onClose={onCreated} />
+        <ModalBody>
+          <div className="flex flex-col items-center text-center">
+            {created.qr && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={created.qr} alt="QR" className="w-48 h-48 rounded-2xl border border-qf-line" />
+            )}
+            <div className="mt-4 w-full">
+              <div className="text-xs font-semibold text-qf-ink2 mb-1">קישור המעקב</div>
+              <div className="flex items-center gap-2">
+                <input
+                  readOnly
+                  value={created.url}
+                  className="flex-1 min-w-0 bg-qf-bg border border-qf-line rounded-xl px-3 py-2 text-xs outline-none text-qf-ink2 ltr:text-left"
+                  dir="ltr"
+                />
+                <button
+                  onClick={copyUrl}
+                  className="shrink-0 inline-flex items-center gap-1 bg-black text-white text-xs font-bold rounded-xl px-3 py-2"
+                >
+                  <IcoCopy s={14} /> {copied ? "הועתק" : "העתק"}
+                </button>
+              </div>
+            </div>
+            <p className="mt-4 text-sm text-qf-ink2">
+              הקמפיין נוסף לרשימת הקמפיינים למטה. כל סריקה תיספר אוטומטית.
+            </p>
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          {created.qr && (
+            <a
+              href={created.qr}
+              download={`qr-${slug}.png`}
+              className="rounded-2xl border border-qf-line px-4 py-2.5 text-sm font-semibold text-qf-ink"
+            >
+              הורדת PNG
+            </a>
+          )}
+          <button onClick={onCreated} className="rounded-2xl bg-black text-white px-5 py-2.5 text-sm font-bold">
+            סיום
+          </button>
+        </ModalFooter>
+      </Modal>
+    );
   }
 
   return (
