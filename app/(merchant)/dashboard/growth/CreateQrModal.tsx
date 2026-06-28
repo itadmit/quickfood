@@ -23,7 +23,7 @@ const DESTINATIONS: { key: string; label: string }[] = [
   { key: "menu", label: "ישר לתפריט ההזמנות" },
   { key: "signup", label: "הרשמה / כניסה" },
   { key: "loyalty", label: "הצטרפות למועדון" },
-  { key: "landing", label: "דף נחיתה ממוקד (לפני התפריט)" },
+  { key: "landing", label: "פופאפ שקופץ מעל התפריט" },
 ];
 
 const LANDING_TEMPLATES: { key: string; label: string }[] = [
@@ -244,7 +244,7 @@ export function CreateQrModal({
 
         {destinationType === "landing" && (
           <>
-            <label className="block text-sm font-semibold text-qf-ink mb-1 mt-4">תבנית דף הנחיתה</label>
+            <label className="block text-sm font-semibold text-qf-ink mb-1 mt-4">תבנית הפופאפ</label>
             <div className="grid grid-cols-2 gap-2">
               {LANDING_TEMPLATES.map((t) => (
                 <button
