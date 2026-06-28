@@ -2475,3 +2475,297 @@
 @media (prefers-reduced-motion: reduce) {
   .flowArrowFillY, .flowArrowFillX { animation: none; clip-path: none; }
 }
+
+/* ─── HERO: secondary line + positioning badges ──────────── */
+.heroSecondary {
+  font-family: var(--font-noto-hebrew), "Noto Sans Hebrew", "Heebo", sans-serif;
+  font-weight: 700;
+  font-size: clamp(14px, 1.25vw, 16px);
+  color: var(--ink);
+  margin: 16px 0 0;
+  line-height: 1.6;
+  max-width: 42em;
+  opacity: 0.78;
+}
+.heroBadges {
+  margin-top: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.heroBadge {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(10, 10, 10, 0.18);
+  border-radius: 999px;
+  padding: 7px 15px;
+}
+
+/* ─── GROWTH SYSTEM: tag + icon header row inside a mini-cell ── */
+.growthCellHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.growthCellHead .miniCellTag {
+  margin-bottom: 0;
+}
+.growthCellIcon {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  background: var(--cheese);
+  color: var(--ink);
+}
+
+/* ─── DAILY GROWTH MANAGER ────────────────────────────────
+   A morning-briefing card. Mirrors the growCard chrome but with
+   a yellow accent rail and numbered opportunity rows. */
+.dailyCard {
+  margin-top: 48px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  padding: 36px 40px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 24px 60px -34px rgba(10, 10, 10, 0.4);
+}
+.dailyCard::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--tomato) 0%, var(--tomato-deep) 60%, transparent 100%);
+}
+.dailyGreeting {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+.dailyGreetingHi {
+  font-family: var(--font-rubik), "Rubik", sans-serif;
+  font-weight: 900;
+  font-size: clamp(20px, 2.6vw, 26px);
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.dailyGreetingSub {
+  font-size: 14px;
+  color: var(--mute);
+  font-weight: 600;
+}
+.dailyList {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0 0;
+  display: grid;
+  gap: 14px;
+}
+.dailyItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  background: var(--cream-2);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  animation: qf-daily-scan 5.4s ease-in-out infinite;
+  will-change: background, border-color, box-shadow;
+}
+.dailyItem:nth-child(1) { animation-delay: 0s; }
+.dailyItem:nth-child(2) { animation-delay: 1.8s; }
+.dailyItem:nth-child(3) { animation-delay: 3.6s; }
+.dailyItemNum {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--tomato);
+  font-family: var(--font-rubik), "Rubik", sans-serif;
+  font-weight: 900;
+  font-size: 15px;
+}
+.dailyItemText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.dailyItemText strong {
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.dailyItemText span {
+  font-size: 13.5px;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.dailyItemAction {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  padding: 7px 14px;
+  white-space: nowrap;
+  animation: qf-daily-chip 5.4s ease-in-out infinite;
+  will-change: transform, background, color;
+}
+.dailyItem:nth-child(1) .dailyItemAction { animation-delay: 0s; }
+.dailyItem:nth-child(2) .dailyItemAction { animation-delay: 1.8s; }
+.dailyItem:nth-child(3) .dailyItemAction { animation-delay: 3.6s; }
+.dailyItemNum {
+  animation: qf-daily-num 5.4s ease-in-out infinite;
+}
+.dailyItem:nth-child(1) .dailyItemNum { animation-delay: 0s; }
+.dailyItem:nth-child(2) .dailyItemNum { animation-delay: 1.8s; }
+.dailyItem:nth-child(3) .dailyItemNum { animation-delay: 3.6s; }
+.dailyCta {
+  margin-top: 26px;
+  display: flex;
+  justify-content: flex-start;
+}
+/* Looping "scan" - each opportunity row lights up in turn so the
+   briefing feels alive and pulls the eye, like the system is working
+   through the list for you. One row active at a time (1.8s stagger). */
+@keyframes qf-daily-scan {
+  0%, 100% {
+    background: var(--cream-2);
+    border-color: var(--line);
+    box-shadow: 0 0 0 0 rgba(248, 203, 30, 0);
+  }
+  6%, 28% {
+    background: #FFF6D6;
+    border-color: var(--ink);
+    box-shadow: 0 8px 22px -14px rgba(10, 10, 10, 0.45);
+  }
+  34% {
+    background: var(--cream-2);
+    border-color: var(--line);
+    box-shadow: 0 0 0 0 rgba(248, 203, 30, 0);
+  }
+}
+@keyframes qf-daily-chip {
+  0%, 100% {
+    background: var(--paper);
+    color: var(--ink);
+    border-color: var(--ink);
+    transform: scale(1);
+  }
+  8%, 26% {
+    background: var(--ink);
+    color: var(--tomato);
+    border-color: var(--ink);
+    transform: scale(1.06);
+  }
+  34% {
+    background: var(--paper);
+    color: var(--ink);
+    transform: scale(1);
+  }
+}
+@keyframes qf-daily-num {
+  0%, 100% { transform: scale(1); }
+  8%, 26% { transform: scale(1.12); }
+  34% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dailyItem,
+  .dailyItemAction,
+  .dailyItemNum {
+    animation: none;
+  }
+}
+@media (max-width: 760px) {
+  .dailyCard { padding: 26px 20px; }
+  .dailyItem { flex-wrap: wrap; gap: 12px; }
+  .dailyItemAction { margin-inline-start: 46px; }
+}
+
+/* ─── COMPARE: regular site vs QuickFood ──────────────────── */
+.compareGrid {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.compareCol {
+  border-radius: 24px;
+  padding: 30px 32px;
+  border: 1px solid var(--line);
+}
+.compareColPlain {
+  background: var(--cream-2);
+}
+.compareColUs {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+.compareColHead {
+  font-family: var(--font-rubik), "Rubik", sans-serif;
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.compareColUs .compareColHead {
+  color: var(--tomato);
+  border-bottom-color: rgba(255, 255, 255, 0.16);
+}
+.compareList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 14px;
+}
+.compareList li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+.compareColPlain .compareList li { color: var(--ink-2); }
+.compareColUs .compareList li { color: #fff; }
+.compareIconNo {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #C2453C;
+}
+.compareIconYes {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--tomato);
+}
+@media (max-width: 760px) {
+  .compareGrid { grid-template-columns: 1fr; gap: 16px; }
+  .compareCol { padding: 24px 22px; }
+}

@@ -24,6 +24,12 @@ import {
   Leaf,
   Users,
   Crown,
+  Check,
+  X,
+  QrCode,
+  Compass,
+  Send,
+  PiggyBank,
   type LucideIcon,
 } from "lucide-react";
 
@@ -76,10 +82,15 @@ export const metadata: Metadata = {
   title:
     "QuickFood · קוויקפוד - אתר הזמנות למסעדה | חנות אונליין לפיצרייה, המבורגרייה, סושייה",
   description:
-    "QuickFood (קוויקפוד) - פלטפורמת הזמנות למסעדות: אתר משלך עם דומיין משלך, תפריט מלא עם תוספות, גדלים וחצי-חצי, סליקת אשראי/Bit/Apple Pay, ניהול שליחים עם מעקב חי, יועץ AI בעברית, חיבור לקופה דרך API. הקבועים שלך מזמינים ישירות בלי לשלם 30% לוולט. ₪299 לחודש מחיר קבוע + 0.5% להזמנה. 7 ימים ניסיון בלי כרטיס.",
+    "QuickFood (קוויקפוד) - מערכת צמיחה למסעדות עם אתר הזמנות רשמי וממותג: דומיין משלך, מועדון לקוחות, קמפייני QR, יועץ AI בעברית, קאנבן הזמנות חי, מסך מטבח וסליקת אשראי/Bit/Apple Pay. אפליקציות המשלוחים מביאות לקוחות חדשים - QuickFood מחזירה את הקבועים להזמין ישירות ממך, עם חיסכון משוער בעמלות. ₪299 לחודש מחיר קבוע + 0.5% להזמנה. 7 ימים ניסיון בלי כרטיס.",
   keywords: [
     "אתר הזמנות למסעדה",
     "מערכת הזמנות למסעדה",
+    "מערכת הזמנות למסעדות",
+    "אתר הזמנות לפיצרייה",
+    "הזמנות ישירות למסעדה",
+    "מועדון לקוחות למסעדה",
+    "מערכת משלוחים למסעדה",
     "חנות אונליין למסעדה",
     "מערכת הזמנות לפיצרייה",
     "מערכת הזמנות להמבורגרייה",
@@ -129,14 +140,18 @@ export default function LandingPage() {
       <Nav />
       <Hero />
       <TrustStrip />
+      <AcquisitionVsDirect />
+      <GrowthSystem />
+      <DailyGrowthManager />
       <SuitedFor />
-      <WoltTeaser />
       <BornForFood />
-      <LoyaltyClub />
       <Features />
       <PrinterShowcase />
+      <LoyaltyClub />
       <KioskSection />
       <GrowPartner />
+      <CompareSites />
+      <WoltTeaser />
       <CustomerShowcase />
       <Pricing />
       <Faq />
@@ -209,6 +224,254 @@ function TrustStrip() {
   );
 }
 
+/* ─── ACQUISITION vs DIRECT ───────────────────────────────
+   The positioning anchor. Frames delivery apps as an acquisition
+   channel and QuickFood as the repeat-direct channel - never
+   "replace Wolt". Three mini-cells walk the customer journey:
+   first order via app -> second via your own site -> profit stays. */
+function AcquisitionVsDirect() {
+  return (
+    <section id="acquisition" className={styles.section}>
+      <div className={styles.container}>
+        <div className={styles.sectionEyebrow}>גיוס מול לקוח חוזר</div>
+        <h2 className={styles.sectionTitle}>
+          לא מחליפים את אפליקציות המשלוחים. <em>מחזירים את הלקוח אליך.</em>
+        </h2>
+        <p className={styles.sectionLede}>
+          אפליקציות משלוחים יכולות להביא לקוחות חדשים. הבעיה מתחילה כשהלקוח חוזר
+          שוב ושוב - ואתה ממשיך לשלם עמלה גבוהה על כל הזמנה. QuickFood נותנת
+          למסעדה שלך אתר רשמי להזמנות ישירות, עם מועדון לקוחות, קופונים, QR, דיוור,
+          AI והזמנה חוזרת בלחיצה.
+        </p>
+
+        <div className={styles.miniGrid}>
+          <MiniCell
+            tag="פעם ראשונה"
+            title="פעם ראשונה דרך אפליקציה"
+            body="לקוח חדש גילה אותך דרך פלטפורמת משלוחים? מצוין. זה ערוץ גיוס."
+          />
+          <MiniCell
+            tag="פעם שנייה"
+            title="פעם שנייה דרך האתר שלך"
+            body="עם QR, קופון, מועדון לקוחות והזמנה חוזרת - הלקוח חוזר ישירות אליך."
+          />
+          <MiniCell
+            tag="הרווח"
+            title="הרווח נשאר אצלך"
+            body="פחות עמלות על לקוחות חוזרים, יותר שליטה על הקשר עם הלקוח, יותר דאטה לעסק."
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── GROWTH SYSTEM ───────────────────────────────────────
+   "Not just an ordering site - a growth system." Six feature
+   cells covering customer-source tracking, QR campaigns, loyalty,
+   campaigns, AI insight and estimated commission savings. All
+   source/savings language stays hedged ("משוער", "מבוסס QR"). */
+function GrowthSystem() {
+  const cards: Array<{ icon: LucideIcon; tag: string; title: string; body: string }> = [
+    {
+      icon: Compass,
+      tag: "מקורות",
+      title: "מקורות לקוחות",
+      body: "לדעת אם לקוח הגיע מגוגל, אינסטגרם, QR, המלצה או פלטפורמת משלוחים - מבוסס על קישורי קמפיין, סריקות QR ודיווח עצמי של הלקוח.",
+    },
+    {
+      icon: QrCode,
+      tag: "QR",
+      title: "קמפייני QR",
+      body: "QR לשקית, קבלה, שולחן, פלייר או סטורי - עם מדידה של סריקות, הרשמות והזמנות.",
+    },
+    {
+      icon: Crown,
+      tag: "מועדון",
+      title: "מועדון לקוחות",
+      body: "נקודות, דרגות, VIP, ימי הולדת והטבות שמחזירות לקוחות להזמין שוב.",
+    },
+    {
+      icon: Send,
+      tag: "קמפיינים",
+      title: "קמפיינים",
+      body: "שליחת הודעות במייל, SMS ווואטסאפ דרך Poply.",
+    },
+    {
+      icon: Sparkles,
+      tag: "AI",
+      title: "תובנות AI",
+      body: "המערכת מציעה מה לעשות השבוע כדי להגדיל הזמנות ישירות.",
+    },
+    {
+      icon: PiggyBank,
+      tag: "חיסכון משוער",
+      title: "חיסכון משוער בעמלות",
+      body: "לראות כמה כסף נשאר אצלך כשהלקוחות מזמינים ישירות במקום דרך פלטפורמות - אומדן בלבד, לא הבטחה.",
+    },
+  ];
+  return (
+    <section id="growth" className={styles.section}>
+      <div className={styles.container}>
+        <div className={styles.sectionEyebrow}>מערכת צמיחה</div>
+        <h2 className={styles.sectionTitle}>
+          מערכת צמיחה למסעדות. <em>לא רק אתר הזמנות.</em>
+        </h2>
+        <p className={styles.sectionLede}>
+          QuickFood עוזרת לך להבין מאיפה הלקוחות הגיעו, מי חזר להזמין, כמה הזמנות
+          ישירות נכנסו וכמה כסף נשאר אצלך בזכות הזמנות ישירות.
+        </p>
+
+        <div className={styles.miniGrid}>
+          {cards.map(({ icon: Icon, tag, title, body }) => (
+            <div key={title} className={styles.miniCell}>
+              <div className={styles.growthCellHead}>
+                <span className={styles.miniCellTag}>{tag}</span>
+                <span className={styles.growthCellIcon} aria-hidden>
+                  <Icon strokeWidth={2} size={20} />
+                </span>
+              </div>
+              <h4 className={styles.miniCellTitle}>{title}</h4>
+              <p className={styles.miniCellBody}>{body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── DAILY GROWTH MANAGER ────────────────────────────────
+   A "what to do next" morning briefing, not analytics. The
+   briefing card + action buttons are a decorative mockup
+   (aria-hidden); the only live control is the trial CTA below. */
+function DailyGrowthManager() {
+  const items: Array<{ n: string; text: string; sub: string; action: string }> = [
+    {
+      n: "1",
+      text: "14 לקוחות לא הזמינו כבר 30 יום.",
+      sub: "אפשר לשלוח להם קופון חזרה.",
+      action: "צור קופון",
+    },
+    {
+      n: "2",
+      text: "27 לקוחות קרובים לדרגת Gold.",
+      sub: "כדאי לעודד אותם להזמין שוב השבוע.",
+      action: "צור קמפיין",
+    },
+    {
+      n: "3",
+      text: "סריקות ה-QR מהשקיות ירדו ב-38%.",
+      sub: "כדאי להזכיר לצוות להכניס פלייר לכל משלוח.",
+      action: "הדפס QR",
+    },
+  ];
+  return (
+    <section id="daily" className={styles.section}>
+      <div className={styles.container}>
+        <div className={styles.sectionEyebrow}>מנהל צמיחה יומי</div>
+        <h2 className={styles.sectionTitle}>
+          כל בוקר: <em>מה כדאי לעשות כדי להחזיר לקוחות.</em>
+        </h2>
+        <p className={styles.sectionLede}>
+          לא דוחות ולא גרפים. כל בוקר QuickFood מראה לך מה לעשות היום כדי להחזיר
+          לקוחות ולהגדיל הזמנות ישירות - ומכינה לך את הקמפיין, הקופון או ה-QR
+          בלחיצה.
+        </p>
+
+        <div className={styles.dailyCard}>
+          <div className={styles.dailyGreeting}>
+            <span className={styles.dailyGreetingHi}>בוקר טוב.</span>
+            <span className={styles.dailyGreetingSub}>מצאנו 3 הזדמנויות היום:</span>
+          </div>
+          <ul className={styles.dailyList}>
+            {items.map((it) => (
+              <li key={it.n} className={styles.dailyItem}>
+                <span className={styles.dailyItemNum} aria-hidden>{it.n}</span>
+                <div className={styles.dailyItemText}>
+                  <strong>{it.text}</strong>
+                  <span>{it.sub}</span>
+                </div>
+                <span className={styles.dailyItemAction} aria-hidden>{it.action}</span>
+              </li>
+            ))}
+          </ul>
+          <div className={styles.dailyCta}>
+            <Link href="/signup" className={`${styles.btn} ${styles.btnInk} ${styles.btnLg}`}>
+              התחילו 7 ימים חינם <IcoArrowLeft c="currentColor" s={14} />
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── COMPARE: not WordPress / Shopify / Wix ───────────────
+   Side-by-side: a generic website vs QuickFood, built for food.
+   Two card columns reuse the qfood card chrome; Check/X icons
+   instead of dingbats per the no-emoji rule. */
+function CompareSites() {
+  const regular = [
+    "צריך התאמות למסעדה",
+    "אין קאנבן הזמנות חי",
+    "אין מטבח בזמן אמת",
+    "אין הזמנה חוזרת מובנית",
+    "אין מועדון לקוחות למסעדות",
+    "אין AI שמוסיף לעגלה",
+    "אין ניהול משלוחים / איסוף / זמני הכנה כמו מסעדה",
+  ];
+  const quickfood = [
+    "תפריט שנבנה לאוכל",
+    "תוספות, גדלים, חצי-חצי, הערות למטבח",
+    "הזמנות חיות בקאנבן",
+    "דף תודה שמתעדכן בזמן אמת לפי סטטוס ההזמנה",
+    "מסך מטבח והדפסה",
+    "מועדון לקוחות, קופונים וקמפיינים",
+    "AI להזמנות + משלוחים, איסוף עצמי, סניפים וזמני הכנה",
+  ];
+  return (
+    <section id="compare" className={styles.section}>
+      <div className={styles.container}>
+        <div className={styles.sectionEyebrow}>למה לא אתר רגיל</div>
+        <h2 className={styles.sectionTitle}>
+          לא WordPress. לא Shopify. <em>מערכת שנבנתה למסעדות.</em>
+        </h2>
+        <p className={styles.sectionLede}>
+          אפשר לבנות אתר ב-WordPress, Shopify או Wix - אבל אז צריך להתאים הכל ידנית
+          למסעדה. QuickFood כבר נבנתה לאוכל, לתפריט ולמטבח מהיום הראשון.
+        </p>
+
+        <div className={styles.compareGrid}>
+          <div className={`${styles.compareCol} ${styles.compareColPlain}`}>
+            <div className={styles.compareColHead}>אתר רגיל</div>
+            <ul className={styles.compareList}>
+              {regular.map((t) => (
+                <li key={t}>
+                  <X className={styles.compareIconNo} size={18} strokeWidth={2.4} aria-hidden />
+                  <span>{t}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className={`${styles.compareCol} ${styles.compareColUs}`}>
+            <div className={styles.compareColHead}>QuickFood</div>
+            <ul className={styles.compareList}>
+              {quickfood.map((t) => (
+                <li key={t}>
+                  <Check className={styles.compareIconYes} size={18} strokeWidth={2.6} aria-hidden />
+                  <span>{t}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ─── FAQ SCHEMA (SEO) ────────────────────────────────────
    schema.org JSON-LD for the FAQ. Lets Google render the questions
    as rich snippets directly in search results - well-documented CTR
@@ -256,6 +519,14 @@ function FaqSchema() {
     [
       "אני יכול לקבל את הקוד או אפליקציה משלי ב-App Store?",
       "רוצה אפליקציה משלך? השירות שלנו מבוסס על API, אז הכל אפשרי - וגם לא כזה יקר. תשאיר לנו פרטים ונשלח לך הצעה מסודרת.",
+    ],
+    [
+      "QuickFood מחליפה את אפליקציות המשלוחים?",
+      "לא, ולא צריך. אפליקציות המשלוחים מצוינות להבאת לקוחות חדשים - תמשיך לעבוד איתן. QuickFood היא הערוץ הישיר שלך: כשהלקוח חוזר להזמין, הוא מזמין מהאתר הרשמי שלך - עם מועדון לקוחות, קופונים, QR והזמנה חוזרת בלחיצה - ולא דרך פלטפורמה.",
+    ],
+    [
+      "כמה אני חוסך בעמלות?",
+      "תלוי בכמה מהלקוחות החוזרים שלך עוברים להזמין ישירות. המערכת מציגה חיסכון משוער בלבד - אומדן, לא הבטחה - לפי הזמנות שנכנסו ישירות דרך האתר שלך. מקור הלקוח מבוסס על סריקות QR, קישורי קמפיין או דיווח עצמי של הלקוח; אנחנו לא יודעים מי הזמין אצלך בעבר דרך פלטפורמה חיצונית.",
     ],
   ];
   const data = {
@@ -318,20 +589,18 @@ function Hero() {
         />
       </div>
       <div className={styles.container}>
-        <div className={styles.eyebrow}>
-          <span className={styles.eyebrowDot}>חדש</span>
-          יועץ AI בעברית בתוך החנות שלך
-          <Sparkles size={14} strokeWidth={2.2} aria-hidden />
-        </div>
         <h1 className={styles.headline}>
           <span className={styles.stack}>הלקוחות שלך.</span>
           <span className={styles.stack}>ההזמנות שלך.</span>
           <span className={styles.stack}>
-            <Typewriter words={["הכסף שלך.", "הזמן שלך.", "הצמיחה שלך.", "העתיד שלך."]} />
+            <Typewriter words={["הרווח שלך.", "הדאטה שלך.", "הצמיחה שלך.", "הקשר שלך."]} />
           </span>
         </h1>
         <p className={styles.headlineSmall}>
-          QuickFood מאפשרת ללקוחות להזמין ישירות מהאתר שלך, בדומיין שלך ובמיתוג שלך. מערכת אחת שמרכזת את כל תהליך ההזמנה - מהתפריט, דרך התשלום ועד להדפסה במטבח. אתר הזמנות מקצועי למסעדות, פיצריות ובתי קפה, עם סליקה, משלוחים, איסוף עצמי, מסך מטבח וניהול חכם - פשוט להפעלה ומוכן לעבודה תוך דקות.
+          QuickFood בונה למסעדה שלך אתר הזמנות רשמי וממותג - ומערכת צמיחה שמחזירה לקוחות להזמין ישירות ממך. בלי פורטל. בלי תלות. בלי לשלם עמלה גבוהה שוב ושוב על אותו לקוח.
+        </p>
+        <p className={styles.heroSecondary}>
+          תמשיך לעבוד עם אפליקציות המשלוחים כדי להביא לקוחות חדשים. את הלקוחות שחוזרים - תחזיר אליך.
         </p>
 
         <div className={styles.heroCta}>
@@ -339,11 +608,20 @@ function Hero() {
             התחילו 7 ימים חינם
           </Link>
           <a
-            href="#pricing"
+            href="#growth"
             className={`${styles.btn} ${styles.btnGhost} ${styles.btnGhostOutline} ${styles.btnLg}`}
           >
-            צפו במחיר <IcoArrowLeft c="currentColor" s={14} />
+            בנו אתר הזמנות למסעדה <IcoArrowLeft c="currentColor" s={14} />
           </a>
+        </div>
+
+        <div className={styles.heroBadges}>
+          <span className={styles.heroBadge}>אתר רשמי למסעדה</span>
+          <span className={styles.heroBadge}>הזמנות ישירות</span>
+          <span className={styles.heroBadge}>מועדון לקוחות</span>
+          <span className={styles.heroBadge}>AI שמגדיל סל</span>
+          <span className={styles.heroBadge}>קאנבן הזמנות חי</span>
+          <span className={styles.heroBadge}>תשלומים והדפסה למטבח</span>
         </div>
 
         <div className={styles.heroStats}>
@@ -413,18 +691,18 @@ function BornForFood() {
   return (
     <section className={styles.section} id="manage">
       <div className={styles.container}>
-        <div className={styles.sectionEyebrow}>נולד למזון</div>
+        <div className={styles.sectionEyebrow}>האתר הרשמי שלך</div>
         <h2 className={styles.sectionTitle}>
-          לא חנות אונליין שמנסה למכור מנות. <em>תפריט שמדבר את השפה של המטבח.</em>
+          אתר הזמנות רשמי וממותג למסעדה. <em>הדומיין שלך, המותג שלך, הלקוחות שלך.</em>
         </h2>
         <p className={styles.sectionLede}>
-          ומתחילים למכור תוך 5 דקות - הרשמה, ייבוא התפריט מוולט בקליק, והחנות
-          באוויר. משם, כל המסעדה מנוהלת ממסך אחד.
+          לא דף בפורטל של מישהו אחר - אתר הזמנות משלך עם הדומיין שלך, העיצוב שלך
+          ודאטת הלקוחות שלך. מתחילים תוך 5 דקות, ומשם כל המסעדה מנוהלת ממסך אחד.
         </p>
         <div className={styles.bffSteps}>
           <span className={styles.bffStep}>הרשמה ב-2 דקות</span>
-          <span className={styles.bffStep}>ייבוא תפריט מוולט בקליק</span>
-          <span className={styles.bffStep}>החנות עולה לאוויר</span>
+          <span className={styles.bffStep}>ייבוא תפריט מהיר ממקורות קיימים</span>
+          <span className={styles.bffStep}>האתר עולה לאוויר על הדומיין שלך</span>
         </div>
 
         <div className={styles.bffRows}>
@@ -531,8 +809,12 @@ function LoyaltyClub() {
       <div className={styles.container}>
         <div className={styles.sectionEyebrow}>מועדון לקוחות</div>
         <h2 className={styles.sectionTitle}>
-          הלקוחות שחוזרים הם הרווח האמיתי. <em>תן להם סיבה לחזור.</em>
+          מועדון הלקוחות הוא לא רק נקודות. <em>הוא הסיבה שלקוח חוזר אליך ישירות.</em>
         </h2>
+        <p className={styles.sectionLede}>
+          כל הזמנה ישירה מחזקת את הקשר עם הלקוח. QuickFood שומרת היסטוריית הזמנות,
+          נקודות, דרגות, ימי הולדת והעדפות - כדי שהלקוח יחזור אליך, לא לפלטפורמה.
+        </p>
 
         <div className={styles.qfoodStack}>
           <WoltCard
@@ -578,18 +860,9 @@ function Features() {
             tone="peach"
             layout="decor-start"
             tag="יועץ AI"
-            heading="לא יודע מה להזמין? היועץ כבר ידאג לזה."
-            body="'ארוחה לזוג עד ₪120', 'משהו טבעוני', 'כמו בפעם שעברה' - והוא כבר מוסיף לעגלה. אתה רק מפעיל."
+            heading="יועץ AI שמוכר בשבילך - פחות התלבטות, סל ממוצע גבוה יותר."
+            body="הלקוח כותב 'ארוחה לזוג עד ₪120', 'משהו טבעוני', 'כמו בפעם שעברה' - והיועץ שואל, ממליץ, עושה Upsell ומוסיף לעגלה. פחות התלבטות. יותר הזמנות. סל ממוצע גבוה יותר."
             icon="sparkles"
-          />
-
-          <WoltCard
-            tone="mist"
-            layout="decor-end"
-            tag="החנות"
-            heading="עיצוב משלך. דומיין משלך. הלקוחות - שלך."
-            body="לוגו שלך, צבעים שלך, דומיין משלך. שעות, מינימום הזמנה ואזורי משלוח נפרדים לכל סניף. הלקוח לא רואה אותנו ולא אף אחד אחר - רק אותך."
-            icon="store"
           />
 
           <WoltCard
@@ -657,8 +930,7 @@ function Features() {
         </div>
 
         <div className={styles.miniGrid}>
-          <MiniCell tag="מועדפים" title="לב על מנה - הפייבוריט נשמר" body="הלקוחות הרשומים מסמנים מנות בלב ורואים אותן ראשונות בכניסה הבאה. בלי לחפש מחדש את הפיצה שהם תמיד מזמינים." />
-          <MiniCell tag="שדרוג עגלה" title="מומלץ עבורך בצ׳קאאוט" body="קרוסלת פריטים שמשלימים את ההזמנה - מבוססים על מה שבעגלה ועל לקוחות דומים. בלי לדחוף, בלי להציע פריט שכבר נבחר." />
+          <MiniCell tag="שדרוג עגלה" title="מומלץ עבורך בסל הקניות" body="קרוסלת פריטים שמשלימים את ההזמנה בתוך סל הקניות - מבוססים על מה שבעגלה ועל לקוחות דומים. בלי לדחוף, בלי להציע פריט שכבר נבחר." />
           <MiniCell tag="משלוח" title="בוחר עיר או סניף - בקליק" body="צ׳יפ עם שם העיר במרכז דף הבית. לחיצה אחת - והתפריט והמחירים מתעדכנים לפי האזור." />
           <MiniCell tag="סניפים" title="מולטי-סניף" body="שעות, דמי משלוח, עמלת שירות ומינימום הזמנה נפרדים לכל סניף." />
           <MiniCell tag="קופונים" title="קופונים חכמים" body="לפי קטגוריה, סכום מינימום, מגבלת שימוש פר-לקוח, חלון תאריכים." />
@@ -666,7 +938,7 @@ function Features() {
           <MiniCell tag="תזמון" title="הזמנות מראש" body="הלקוח בוחר שעת מסירה או איסוף - 'תאסוף לי בשמונה' במקום 'בהקדם האפשרי'." />
           <MiniCell tag="אנליטיקה" title="נתונים אמיתיים" body="שעות שיא, פריטים מובילים, AOV, אחוז חזרה של לקוחות." />
           <MiniCell tag="חיבורים" title="Webhooks + REST" body="זפייר, Make, קופות רושמות וכל מערכת חיצונית שמדברת HTTP - מתחברות בלי כאב ראש." />
-          <MiniCell tag="ייבוא" title="תפריט מ-Wolt - הכל בקליק" body="מדביקים כתובת חנות בוולט ומקבלים הכל: קטגוריות, פריטים, תמונות, לוגו, שעות וכל קבוצות התוספות על הכללים שלהן. מחברים ומתחילים לעבוד." />
+          <MiniCell tag="ייבוא" title="ייבוא תפריט מהיר ממקורות קיימים" body="מקבלים את הכל בקליק: קטגוריות, פריטים, תמונות, לוגו, שעות וכל קבוצות התוספות על הכללים שלהן. בישראל אפשר לייבא תפריט מ-Wolt בקליק; בשווקים אחרים מתאימים את הייבוא למקורות מקומיים." />
           <MiniCell tag="סכו״ם" title="סכו״ם חד-פעמי בקופה" body="הלקוח בוחר כמה סכו״ם הוא רוצה בקופה - אתה קובע מחיר ליחידה ומגדיר מעל איזה סכום זה חינם. אופציונלי, נשלט מהדשבורד." />
           <MiniCell tag="הודעות" title="הודעות חנות + אלרגנים" body="׳חסר היום: גבינת בופלו׳, התראת אלרגן על פריט - מנוהל מההגדרות ומופיע בחנות מיד." />
           <MiniCell tag="קמפיינים" title="פופאפ מבצע לחנות" body="מעלים תמונה + לינק, נפתח ללקוח ברגע שנכנס לחנות. דחיפה לליל שישי, מבצע חמישי-שישי, השקת פריט חדש - בלי לערוך תפריט." />
@@ -1206,6 +1478,18 @@ function Faq() {
               <summary>אני יכול לקבל את הקוד או אפליקציה משלי ב-App Store?</summary>
               <p>
                 רוצה אפליקציה משלך? השירות שלנו מבוסס על API, אז הכל אפשרי - וגם לא כזה יקר. תשאיר לנו פרטים ונשלח לך הצעה מסודרת.
+              </p>
+            </details>
+            <details className={styles.faqItem}>
+              <summary>QuickFood מחליפה את אפליקציות המשלוחים?</summary>
+              <p>
+                לא, ולא צריך. אפליקציות המשלוחים מצוינות להבאת לקוחות חדשים - תמשיך לעבוד איתן. QuickFood היא הערוץ הישיר שלך: כשהלקוח חוזר להזמין, הוא מזמין מהאתר הרשמי שלך - עם מועדון לקוחות, קופונים, QR והזמנה חוזרת בלחיצה - ולא דרך פלטפורמה.
+              </p>
+            </details>
+            <details className={styles.faqItem}>
+              <summary>כמה אני חוסך בעמלות?</summary>
+              <p>
+                תלוי בכמה מהלקוחות החוזרים שלך עוברים להזמין ישירות. המערכת מציגה חיסכון משוער בלבד - אומדן, לא הבטחה - לפי הזמנות שנכנסו ישירות דרך האתר שלך. מקור הלקוח מבוסס על סריקות QR, קישורי קמפיין או דיווח עצמי של הלקוח; אנחנו לא יודעים מי הזמין אצלך בעבר דרך פלטפורמה חיצונית.
               </p>
             </details>
           </div>
