@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/components/shared/Modal";
+import { resolveLandingCopy, type LandingCopy } from "@/lib/growth/landing";
 
 // Mirror of lib/growth/qr type/destination labels (kept inline so this
 // client component doesn't import the server-only qr module).
@@ -47,16 +48,27 @@ const LANDING_TEMPLATES: { key: string; label: string }[] = [
 export function CreateQrModal({
   onClose,
   onCreated,
+  businessName,
 }: {
   onClose: () => void;
   onCreated: () => void;
+  businessName: string;
 }) {
   const [name, setName] = useState("");
   const [type, setType] = useState("bag");
   const [destinationType, setDestinationType] = useState("menu");
   const [landingTemplate, setLandingTemplate] = useState("bag_insert");
+  const [copy, setCopy] = useState<LandingCopy>(() =>
+    resolveLandingCopy("bag_insert", null, businessName),
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Switching template resets the editable copy to that template's defaults.
+  function pickTemplate(tpl: string) {
+    setLandingTemplate(tpl);
+    setCopy(resolveLandingCopy(tpl, null, businessName));
+  }
 
   async function submit() {
     if (!name.trim()) {
@@ -73,6 +85,7 @@ export function CreateQrModal({
         type,
         destinationType,
         landingTemplate: destinationType === "landing" ? landingTemplate : undefined,
+        landingCopy: destinationType === "landing" ? copy : undefined,
       }),
     }).catch(() => null);
     setBusy(false);
@@ -139,7 +152,7 @@ export function CreateQrModal({
                 <button
                   key={t.key}
                   type="button"
-                  onClick={() => setLandingTemplate(t.key)}
+                  onClick={() => pickTemplate(t.key)}
                   className={`text-sm rounded-2xl border px-3 py-2.5 text-right transition ${
                     landingTemplate === t.key
                       ? "border-(--qf-primary) bg-(--qf-primary)/10 font-semibold"
@@ -149,6 +162,40 @@ export function CreateQrModal({
                   {t.label}
                 </button>
               ))}
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-qf-line bg-qf-bg p-3 space-y-3">
+              <div className="text-xs font-semibold text-qf-ink2">
+                הטקסט שיוצג ללקוח (אפשר לערוך)
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-qf-ink2 mb-1">כותרת</label>
+                <input
+                  value={copy.headline}
+                  onChange={(e) => setCopy((c) => ({ ...c, headline: e.target.value }))}
+                  maxLength={80}
+                  className="w-full bg-white border border-qf-line rounded-xl px-3 py-2 text-sm outline-none focus:border-(--qf-primary)"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-qf-ink2 mb-1">טקסט</label>
+                <textarea
+                  value={copy.body}
+                  onChange={(e) => setCopy((c) => ({ ...c, body: e.target.value }))}
+                  rows={3}
+                  maxLength={300}
+                  className="w-full bg-white border border-qf-line rounded-xl px-3 py-2 text-sm outline-none focus:border-(--qf-primary) resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-qf-ink2 mb-1">כפתור</label>
+                <input
+                  value={copy.cta}
+                  onChange={(e) => setCopy((c) => ({ ...c, cta: e.target.value }))}
+                  maxLength={40}
+                  className="w-full bg-white border border-qf-line rounded-xl px-3 py-2 text-sm outline-none focus:border-(--qf-primary)"
+                />
+              </div>
             </div>
           </>
         )}

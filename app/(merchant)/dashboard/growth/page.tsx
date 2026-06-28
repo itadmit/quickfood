@@ -49,6 +49,7 @@ export default async function GrowthPage() {
   return (
     <GrowthView
       slug={tenant?.slug ?? ""}
+      businessName={tenant?.name ?? "העסק"}
       overview={overview}
       funnel={funnel}
       sources={sources}

@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import { IcoArrowRight } from "@/components/shared/Icons";
 import { formatPrice } from "@/lib/format";
 import type { CustomerSegments, RepeatCustomerRow } from "@/lib/growth/customers";
+import { SendCampaignModal } from "../SendCampaignModal";
 
 const RISK_STYLE: Record<RepeatCustomerRow["risk"], { label: string; cls: string }> = {
   active: { label: "פעיל", cls: "bg-qf-green-soft text-qf-green-deep" },
@@ -25,6 +27,7 @@ export function RepeatCustomersView({
   rows: RepeatCustomerRow[];
 }) {
   const winBack = rows.filter((r) => r.risk === "at_risk" || r.risk === "lost");
+  const [campaignOpen, setCampaignOpen] = useState(false);
 
   return (
     <div className="space-y-5 pb-16">
@@ -60,13 +63,17 @@ export function RepeatCustomersView({
           <p className="text-sm text-black/70 mt-1">
             לקוחות שהזמינו אצלך כמה פעמים ולא חזרו זמן מה. תזכורת עם הטבה קטנה מחזירה אותם בעלות נמוכה.
           </p>
-          <Link
-            href="/dashboard/messaging"
+          <button
+            onClick={() => setCampaignOpen(true)}
             className="mt-3 inline-flex items-center gap-2 bg-black text-white font-bold rounded-2xl px-4 py-2.5 text-sm"
           >
             שלחו קמפיין החזרה
-          </Link>
+          </button>
         </div>
+      )}
+
+      {campaignOpen && (
+        <SendCampaignModal segment="inactive_30d" onClose={() => setCampaignOpen(false)} />
       )}
 
       <section className="rounded-3xl border-2 border-black bg-white shadow-[0_3px_0_#000] p-5">

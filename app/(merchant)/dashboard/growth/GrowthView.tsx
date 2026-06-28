@@ -19,6 +19,7 @@ import type { GrowthScoreResult } from "@/lib/growth/score";
 import type { GrowthInsight } from "@/lib/growth/insights";
 import type { DailyBriefing } from "@/lib/growth/briefing";
 import { CreateQrModal } from "./CreateQrModal";
+import { SendCampaignModal } from "./SendCampaignModal";
 
 interface TaskRow {
   id: string;
@@ -36,8 +37,6 @@ function actionHref(actionType: string | null | undefined): string | null {
       return "/dashboard/coupons";
     case "edit_loyalty":
       return "/dashboard/loyalty";
-    case "send_campaign":
-      return "/dashboard/messaging";
     case "external_link":
       return null;
     default:
@@ -65,6 +64,7 @@ function SectionTitle({ icon, children, hint }: { icon?: React.ReactNode; childr
 
 export function GrowthView({
   slug,
+  businessName,
   overview,
   funnel,
   sources,
@@ -75,6 +75,7 @@ export function GrowthView({
   tasks,
 }: {
   slug: string;
+  businessName: string;
   overview: GrowthOverview;
   funnel: FunnelStage[];
   sources: SourceBreakdownRow[];
@@ -87,6 +88,7 @@ export function GrowthView({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [campaignSegment, setCampaignSegment] = useState<string | null>(null);
 
   function post(url: string, body: unknown) {
     startTransition(async () => {
@@ -99,14 +101,20 @@ export function GrowthView({
     });
   }
 
-  const taskAction = (t: TaskRow) => {
-    if (t.actionType === "create_qr") {
+  // One-click action router shared by tasks, briefing findings and insights.
+  function runAction(actionType: string | null | undefined, payload?: Record<string, unknown> | null) {
+    if (actionType === "create_qr") {
       setQrModalOpen(true);
       return;
     }
-    const href = actionHref(t.actionType);
+    if (actionType === "send_campaign") {
+      const seg = typeof payload?.segment === "string" ? payload.segment : "inactive_30d";
+      setCampaignSegment(seg);
+      return;
+    }
+    const href = actionHref(actionType);
     if (href) router.push(href);
-  };
+  }
 
   return (
     <div className="space-y-5 pb-16">
@@ -156,11 +164,7 @@ export function GrowthView({
                   <span>{f.text}</span>
                   {f.actionLabel && (
                     <button
-                      onClick={() => {
-                        const href = actionHref(f.actionType);
-                        if (f.actionType === "create_qr") setQrModalOpen(true);
-                        else if (href) router.push(href);
-                      }}
+                      onClick={() => runAction(f.actionType, f.actionPayload)}
                       className="text-xs font-bold text-black underline underline-offset-2"
                     >
                       {f.actionLabel}
@@ -262,7 +266,7 @@ export function GrowthView({
                 </div>
                 <div className="flex flex-col gap-1.5 shrink-0">
                   <button
-                    onClick={() => taskAction(t)}
+                    onClick={() => runAction(t.actionType, t.actionPayload)}
                     className="bg-black text-white text-xs font-bold rounded-xl px-3 py-1.5 hover:bg-black/80 transition"
                   >
                     בצע
@@ -321,13 +325,7 @@ export function GrowthView({
                 )}
                 {ins.actionLabel && (
                   <button
-                    onClick={() => {
-                      if (ins.actionType === "create_qr") setQrModalOpen(true);
-                      else {
-                        const href = actionHref(ins.actionType);
-                        if (href) router.push(href);
-                      }
-                    }}
+                    onClick={() => runAction(ins.actionType, ins.actionPayload)}
                     className="mt-3 block text-xs font-bold text-black inline-flex items-center gap-1"
                   >
                     {ins.actionLabel} <IcoArrowLeft s={12} />
@@ -416,12 +414,17 @@ export function GrowthView({
 
       {qrModalOpen && (
         <CreateQrModal
+          businessName={businessName}
           onClose={() => setQrModalOpen(false)}
           onCreated={() => {
             setQrModalOpen(false);
             router.refresh();
           }}
         />
+      )}
+
+      {campaignSegment && (
+        <SendCampaignModal segment={campaignSegment} onClose={() => setCampaignSegment(null)} />
       )}
     </div>
   );

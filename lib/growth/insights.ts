@@ -5,6 +5,7 @@ import {
   getQrCampaignPerformance,
   type DateRange,
 } from "./analytics";
+import { generateAiInsights } from "./ai";
 
 export interface GrowthInsight {
   id: string;
@@ -19,9 +20,10 @@ export interface GrowthInsight {
 }
 
 /**
- * The AI Growth Manager's insights. Rule-based for the MVP but shaped exactly
- * like an LLM would phrase them: observation -> recommended action -> expected
- * impact. This is the seam where a model plugs in later (same return type).
+ * The AI Growth Manager's insights. Tries the tenant's LLM first (phrasing +
+ * prioritisation over the SAME deterministic facts), and falls back to the
+ * rule-based list when no AI is configured or the call fails/ times out. The
+ * facts are always computed here so the model can never invent numbers.
  */
 export async function getGrowthInsights(
   tenantId: string,
@@ -119,5 +121,33 @@ export async function getGrowthInsights(
   }
 
   const order = { high: 0, medium: 1, low: 2 };
-  return out.sort((a, b) => order[a.priority] - order[b.priority]);
+  const ruleBased = out.sort((a, b) => order[a.priority] - order[b.priority]);
+
+  // Hand the model the SAME computed facts (no raw data) and let it phrase +
+  // prioritise. Falls back to the rule-based list on null.
+  const facts = {
+    directCustomersAcquired: overview.directCustomersAcquired,
+    firstDirectOrders: overview.firstDirectOrders,
+    repeatDirectOrders: overview.repeatDirectOrders,
+    directRevenue: overview.directRevenue,
+    estimatedCommissionSaved: overview.estimatedCommissionSaved,
+    commissionRatePct: overview.commissionRate,
+    qrScans: overview.qrScans,
+    scanToOrderRatePct: Math.round(overview.scanToOrderRate * 100),
+    repeatRatePct: Math.round(overview.repeatRate * 100),
+    unattributedSharePct: Math.round(overview.unattributedShare * 100),
+    bestSource: overview.bestSource,
+    qrCampaignCount: qr.length,
+    sources: sources.map((s) => ({
+      label: s.label,
+      category: s.category,
+      customers: s.customers,
+      revenue: s.revenue,
+      avgOrderValue: s.avgOrderValue,
+      selfReported: s.selfReported,
+    })),
+  };
+
+  const ai = await generateAiInsights(tenantId, facts);
+  return ai ?? ruleBased;
 }
