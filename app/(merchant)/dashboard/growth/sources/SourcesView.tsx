@@ -99,7 +99,7 @@ export function SourcesView({
   return (
     <div className="space-y-5 pb-16">
       <PageHeader
-        chip="GROWTH"
+        chip="BOOST"
         title="מקורות לקוחות"
         subtitle="מה לשאול לקוחות חדשים ב„איך הגעת אלינו”"
         actions={
@@ -108,7 +108,7 @@ export function SourcesView({
             className="inline-flex items-center gap-2 bg-black text-white font-bold rounded-2xl px-4 py-2.5 text-sm hover:bg-black/80 transition"
           >
             <IcoArrowRight s={18} />
-            חזרה ל-Growth
+            חזרה ל-Boost
           </Link>
         }
       />

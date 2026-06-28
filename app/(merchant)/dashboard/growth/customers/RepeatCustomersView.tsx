@@ -83,7 +83,7 @@ export function RepeatCustomersView({
   return (
     <div className="space-y-5 pb-16">
       <PageHeader
-        chip="GROWTH"
+        chip="BOOST"
         title="לקוחות"
         subtitle="לחצו על סגמנט כדי לסנן, על לקוח כדי לראות פרופיל"
         actions={
@@ -92,7 +92,7 @@ export function RepeatCustomersView({
             className="inline-flex items-center gap-2 bg-black text-white font-bold rounded-2xl px-4 py-2.5 text-sm hover:bg-black/80 transition"
           >
             <IcoArrowRight s={18} />
-            חזרה ל-Growth
+            חזרה ל-Boost
           </Link>
         }
       />
