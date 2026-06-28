@@ -6,7 +6,7 @@ import { IcoArrowLeft, IcoWhatsApp } from "@/components/shared/Icons";
 import Typewriter from "./_components/Typewriter";
 import { LiteYouTube } from "./_components/LiteYouTube";
 import VerticalRotator from "./_components/VerticalRotator";
-import KioskPromoPopup from "./_components/KioskPromoPopup";
+import GrowthPromoPopup from "./_components/GrowthPromoPopup";
 import BottomCtaPopup from "./_components/BottomCtaPopup";
 import { WhatsAppFAB } from "./_components/WhatsAppFAB";
 import {
@@ -158,7 +158,7 @@ export default function LandingPage() {
       <FinalCta />
       <Footer />
       <ScrollAnimations />
-      <KioskPromoPopup />
+      <GrowthPromoPopup />
       <BottomCtaPopup />
       <WhatsAppFAB />
     </div>
