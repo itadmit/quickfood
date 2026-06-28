@@ -151,6 +151,7 @@ export default function LandingPage() {
       <KioskSection />
       <GrowPartner />
       <CompareSites />
+      <MidCta />
       <WoltTeaser />
       <CustomerShowcase />
       <Pricing />
@@ -1492,6 +1493,46 @@ function Faq() {
                 תלוי בכמה מהלקוחות החוזרים שלך עוברים להזמין ישירות. המערכת מציגה חיסכון משוער בלבד - אומדן, לא הבטחה - לפי הזמנות שנכנסו ישירות דרך האתר שלך. מקור הלקוח מבוסס על סריקות QR, קישורי קמפיין או דיווח עצמי של הלקוח; אנחנו לא יודעים מי הזמין אצלך בעבר דרך פלטפורמה חיצונית.
               </p>
             </details>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── MID-PAGE CTA BAND ───────────────────────────────────
+   The page got long after the positioning rebuild; this yellow
+   band breaks the cream rhythm mid-scroll and gives a trial
+   entry point before the visitor reaches pricing. */
+function MidCta() {
+  return (
+    <section className={styles.midCta}>
+      <div className={styles.container}>
+        <div className={styles.midCtaInner}>
+          <div className={styles.midCtaText}>
+            <h2 className={styles.midCtaTitle}>
+              מוכן להחזיר לקוחות להזמין ישירות ממך?
+            </h2>
+            <p className={styles.midCtaSub}>
+              פותחים אתר הזמנות רשמי ומפעילים את מערכת הצמיחה ב-5 דקות. בלי
+              התחייבות, בלי שיחת מכירה.
+            </p>
+            <div className={styles.midCtaChips}>
+              <span className={styles.midCtaChip}>7 ימים חינם</span>
+              <span className={styles.midCtaChip}>בלי כרטיס אשראי</span>
+              <span className={styles.midCtaChip}>בלי התחייבות</span>
+            </div>
+          </div>
+          <div className={styles.midCtaActions}>
+            <Link href="/signup" className={`${styles.btn} ${styles.btnInk} ${styles.btnLg}`}>
+              התחילו 7 ימים חינם <IcoArrowLeft c="currentColor" s={14} />
+            </Link>
+            <a
+              href="#talk"
+              className={`${styles.btn} ${styles.btnGhost} ${styles.btnGhostOutline} ${styles.btnLg}`}
+            >
+              נדבר קודם
+            </a>
           </div>
         </div>
       </div>

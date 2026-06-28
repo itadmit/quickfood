@@ -1955,6 +1955,64 @@
 /* Quiet editorial close. No dark card, no glow blobs, no illustration.
    Just a centered headline + body + button on the page background, the
    way Stripe's "Get started" usually reads. */
+/* ─── MID-PAGE CTA BAND ───────────────────────────────────── */
+.midCta {
+  background: var(--tomato);
+  padding: 64px 0;
+  border-block: 2px solid var(--ink);
+}
+.midCtaInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 36px;
+  flex-wrap: wrap;
+}
+.midCtaText { min-width: 0; flex: 1 1 360px; }
+.midCtaTitle {
+  font-family: var(--font-rubik), "Rubik", sans-serif;
+  font-weight: 900;
+  font-size: clamp(26px, 3.4vw, 40px);
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+  color: var(--ink);
+  margin: 0;
+}
+.midCtaSub {
+  font-size: 16px;
+  color: rgba(10, 10, 10, 0.72);
+  font-weight: 600;
+  margin: 12px 0 0;
+  line-height: 1.55;
+  max-width: 46ch;
+}
+.midCtaChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+.midCtaChip {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(10, 10, 10, 0.2);
+  border-radius: 999px;
+  padding: 6px 14px;
+}
+.midCtaActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
+}
+@media (max-width: 760px) {
+  .midCta { padding: 44px 0; }
+  .midCtaActions { flex-direction: row; flex-wrap: wrap; align-self: stretch; }
+  .midCtaActions > * { flex: 1 1 auto; justify-content: center; }
+}
+
 .finalCta {
   padding: 160px 0 180px;
   background: var(--cream);
