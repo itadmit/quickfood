@@ -86,7 +86,7 @@ export async function getDailyBriefing(tenantId: string): Promise<DailyBriefing>
 
   if (findings.length === 0) {
     findings.push({
-      text: "אין משימות דחופות הבוקר. כדאי לבדוק את ה-Boost Score ולסמן עוד צעד אחד.",
+      text: "אין משימות דחופות הבוקר. כדאי לבדוק את ציון הצמיחה ולסמן עוד צעד אחד.",
       actionType: "create_qr",
       actionLabel: "צרו קמפיין QR",
     });

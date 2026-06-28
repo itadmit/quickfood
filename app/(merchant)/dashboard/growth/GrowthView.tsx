@@ -159,7 +159,7 @@ export function GrowthView({
             <IcoSparkle s={18} c="#F8CB1E" />
           </div>
           <div className="min-w-0">
-            <div className="text-[11px] font-bold text-qf-ink2 tracking-wide">BOOST MANAGER</div>
+            <div className="text-[11px] font-bold text-qf-ink2 tracking-wide">הסיכום של הבוקר</div>
             <div className="font-black text-lg leading-tight text-qf-ink">
               {briefing.greeting}. הנה מה שמצאתי היום:
             </div>
@@ -194,7 +194,7 @@ export function GrowthView({
       {/* ─── Growth Score + Checklist ─── */}
       <div className="grid lg:grid-cols-[280px_1fr] gap-5">
         <Card className="p-5 flex flex-col items-center justify-center text-center">
-          <div className="text-xs font-bold text-qf-ink2 mb-1">BOOST SCORE</div>
+          <div className="text-xs font-bold text-qf-ink2 mb-1">ציון הצמיחה</div>
           <ScoreRing score={score.score} />
           <div className="mt-2 text-sm text-qf-ink2">
             {score.completed} מתוך {score.total} צעדים הושלמו
@@ -202,7 +202,7 @@ export function GrowthView({
         </Card>
         <Card className="p-5">
           <SectionTitle icon={<IcoCheck s={18} c="#11231a" />} hint="כל צעד שמושלם מעלה את הציון">
-            צ׳קליסט Boost
+            צ׳קליסט הצמיחה
           </SectionTitle>
           <div className="space-y-2">
             {score.checklist.map((item) => (
@@ -319,7 +319,7 @@ export function GrowthView({
       {insights.length > 0 && (
         <Card className="p-5">
           <div className="flex items-center justify-between mb-3">
-            <SectionTitle icon={<IcoSparkle s={18} />}>Boost Insights</SectionTitle>
+            <SectionTitle icon={<IcoSparkle s={18} />}>תובנות AI</SectionTitle>
             <span
               className={`text-[10px] font-bold rounded-md px-2 py-0.5 ${
                 insightsSource === "ai"
