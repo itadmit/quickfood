@@ -11,7 +11,6 @@ import {
   IcoCheck,
   IcoClose,
   IcoArrowLeft,
-  IcoCopy,
 } from "@/components/shared/Icons";
 import { formatPrice } from "@/lib/format";
 import type { GrowthOverview, FunnelStage, SourceBreakdownRow, QrPerformanceRow } from "@/lib/growth/analytics";
@@ -20,6 +19,7 @@ import type { GrowthInsight } from "@/lib/growth/insights";
 import type { DailyBriefing } from "@/lib/growth/briefing";
 import { CreateQrModal } from "./CreateQrModal";
 import { SendCampaignModal } from "./SendCampaignModal";
+import { QrManageModal, type ManagedCampaign } from "./QrManageModal";
 
 interface TaskRow {
   id: string;
@@ -91,6 +91,7 @@ export function GrowthView({
   const [pending, startTransition] = useTransition();
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [campaignSegment, setCampaignSegment] = useState<string | null>(null);
+  const [manageCampaign, setManageCampaign] = useState<ManagedCampaign | null>(null);
 
   function post(url: string, body: unknown) {
     startTransition(async () => {
@@ -419,7 +420,14 @@ export function GrowthView({
         ) : (
           <div className="space-y-2">
             {qr.map((c) => (
-              <QrRow key={c.campaignId} c={c} slug={slug} />
+              <QrRow
+                key={c.campaignId}
+                c={c}
+                slug={slug}
+                onManage={() =>
+                  setManageCampaign({ id: c.campaignId, name: c.name, code: c.code, status: c.status })
+                }
+              />
             ))}
           </div>
         )}
@@ -439,6 +447,18 @@ export function GrowthView({
 
       {campaignSegment && (
         <SendCampaignModal segment={campaignSegment} onClose={() => setCampaignSegment(null)} />
+      )}
+
+      {manageCampaign && (
+        <QrManageModal
+          campaign={manageCampaign}
+          slug={slug}
+          onClose={() => setManageCampaign(null)}
+          onChanged={() => {
+            setManageCampaign(null);
+            router.refresh();
+          }}
+        />
       )}
     </div>
   );
@@ -485,34 +505,33 @@ function BigMetric({
   );
 }
 
-function QrRow({ c, slug }: { c: QrPerformanceRow; slug: string }) {
-  const [copied, setCopied] = useState(false);
-  const url = `${typeof window !== "undefined" ? window.location.origin : ""}/r/${slug}/q/${c.code}`;
+function QrRow({ c, slug, onManage }: { c: QrPerformanceRow; slug: string; onManage: () => void }) {
+  const paused = c.status !== "active";
   return (
     <div className="rounded-2xl border border-qf-line p-3">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="min-w-0">
-          <div className="font-semibold text-sm text-qf-ink truncate">{c.name}</div>
-          <button
-            onClick={() => {
-              navigator.clipboard?.writeText(url).then(
-                () => {
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 1500);
-                },
-                () => {},
-              );
-            }}
-            className="text-[11px] text-qf-ink2 inline-flex items-center gap-1 mt-0.5"
-          >
-            <IcoCopy s={12} /> {copied ? "הועתק!" : `/r/${slug}/q/${c.code}`}
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="font-semibold text-sm text-qf-ink truncate">{c.name}</div>
+            {paused && (
+              <span className="text-[10px] bg-qf-mute/30 text-qf-ink2 rounded px-1.5 py-0.5">מושהה</span>
+            )}
+          </div>
+          <div className="text-[11px] text-qf-ink2 mt-0.5 ltr:text-left" dir="ltr">/r/{slug}/q/{c.code}</div>
         </div>
-        <div className="flex gap-4 text-center shrink-0">
-          <Stat n={c.scans} l="סריקות" />
-          <Stat n={c.signups} l="הרשמות" />
-          <Stat n={c.firstOrders} l="הזמנות" />
-          <Stat n={c.repeatOrders} l="חוזרות" />
+        <div className="flex items-center gap-4">
+          <div className="flex gap-4 text-center shrink-0">
+            <Stat n={c.scans} l="סריקות" />
+            <Stat n={c.signups} l="הרשמות" />
+            <Stat n={c.firstOrders} l="הזמנות" />
+            <Stat n={c.repeatOrders} l="חוזרות" />
+          </div>
+          <button
+            onClick={onManage}
+            className="shrink-0 rounded-xl border border-qf-line px-3 py-1.5 text-xs font-bold text-qf-ink hover:bg-qf-bg transition"
+          >
+            נהל
+          </button>
         </div>
       </div>
     </div>

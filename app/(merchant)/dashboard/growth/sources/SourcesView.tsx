@@ -27,13 +27,20 @@ const CATEGORY_LABELS: Record<string, string> = {
 export function SourcesView({
   initialSources,
   commissionRate,
+  perSourceRates,
 }: {
   initialSources: SourceRow[];
   commissionRate: number;
+  perSourceRates: Record<string, number>;
 }) {
   const router = useRouter();
   const [rows, setRows] = useState<SourceRow[]>(initialSources);
   const [rate, setRate] = useState(commissionRate);
+  const [overrides, setOverrides] = useState<Record<string, string>>(() => {
+    const o: Record<string, string> = {};
+    for (const [k, v] of Object.entries(perSourceRates)) o[k] = String(v);
+    return o;
+  });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -49,6 +56,17 @@ export function SourcesView({
     [next[idx], next[j]] = [next[j], next[idx]];
     setRows(next.map((s, i) => ({ ...s, sortOrder: i })));
     setSaved(false);
+  }
+
+  // Only keep valid 0-100 numeric overrides; drop blanks so they fall back to
+  // the global rate.
+  function cleanOverrides(): Record<string, number> {
+    const out: Record<string, number> = {};
+    for (const [k, v] of Object.entries(overrides)) {
+      const n = Number(v);
+      if (v.trim() !== "" && Number.isFinite(n) && n >= 0 && n <= 100) out[k] = n;
+    }
+    return out;
   }
 
   async function save() {
@@ -70,7 +88,7 @@ export function SourcesView({
       fetch("/api/v1/merchant/growth/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ commissionRate: rate }),
+        body: JSON.stringify({ commissionRate: rate, perSourceRates: cleanOverrides() }),
       }),
     ]).catch(() => {});
     setSaving(false);
@@ -163,7 +181,39 @@ export function SourcesView({
             className="w-24 bg-qf-bg border border-qf-line rounded-xl px-3 py-2 text-base outline-none focus:border-(--qf-primary) focus:bg-white tnum"
           />
           <span className="text-lg font-bold text-qf-ink">%</span>
+          <span className="text-sm text-qf-ink2">ברירת מחדל לכל המקורות</span>
         </div>
+
+        {rows.some((s) => s.sourceCategory === "marketplace") && (
+          <div className="mt-5 border-t border-qf-line pt-4">
+            <div className="text-sm font-semibold text-qf-ink mb-1">עמלה לפי אפליקציה (לא חובה)</div>
+            <p className="text-xs text-qf-ink2 mb-3">
+              אם אפליקציה מסוימת גובה אחוז שונה, הגדירו אותו כאן. ריק = ברירת המחדל למעלה.
+            </p>
+            <div className="space-y-2">
+              {rows
+                .filter((s) => s.sourceCategory === "marketplace")
+                .map((s) => (
+                  <div key={s.sourceKey} className="flex items-center gap-3">
+                    <span className="text-sm text-qf-ink w-32 truncate">{s.sourceLabel}</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      placeholder={String(rate)}
+                      value={overrides[s.sourceKey] ?? ""}
+                      onChange={(e) => {
+                        setOverrides((o) => ({ ...o, [s.sourceKey]: e.target.value }));
+                        setSaved(false);
+                      }}
+                      className="w-20 bg-qf-bg border border-qf-line rounded-xl px-3 py-1.5 text-sm outline-none focus:border-(--qf-primary) focus:bg-white tnum"
+                    />
+                    <span className="text-sm font-bold text-qf-ink2">%</span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
       </section>
 
       <div className="flex items-center gap-3">

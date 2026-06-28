@@ -30,6 +30,7 @@ export default async function GrowthSourcesPage() {
         sortOrder: s.sortOrder,
       }))}
       commissionRate={settings.commissionRate}
+      perSourceRates={settings.perSourceRates}
     />
   );
 }
