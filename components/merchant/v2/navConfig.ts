@@ -12,6 +12,7 @@ import {
   IcoChart,
   IcoBag,
   IcoCrown,
+  IcoTrend,
 } from "@/components/shared/Icons";
 
 // Shared nav config for the V2 dashboard skin - same list rendered by
@@ -68,6 +69,7 @@ export const NAV: NavSection[] = [
   {
     title: "שיווק",
     items: [
+      { href: "/dashboard/growth", label: "Growth", Icon: IcoTrend, badge: "חדש!", match: "/dashboard/growth" },
       { href: "/dashboard/campaigns", label: "קמפיינים", Icon: IcoMegaphone },
       { href: "/dashboard/loyalty", label: "מועדון לקוחות", Icon: IcoCrown, badge: "חדש!" },
       { href: "/dashboard/sales/bundles", label: "מבצעי חבילות", Icon: IcoCreditCard },

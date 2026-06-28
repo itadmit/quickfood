@@ -457,6 +457,16 @@ model Tenant {
   fbp                     String?   @map("fb_fbp")
   fbc                     String?   @map("fb_fbc")
 
+  // Growth engine (Direct Customer Engine). ISO country code drives which
+  // SourceSetting defaults are seeded ("IL" → Wolt/Ten Bis/..., "JP" →
+  // Uber Eats/Demae-can/LINE/...). Defaults to Israel.
+  country                 String    @default("IL") @map("country") @db.VarChar(2)
+  // Per-tenant growth knobs as JSON: { commissionRate: 25,
+  // perSourceRates: { wolt: 30, ... } }. Empty default = resolveGrowthSettings
+  // fills the platform default marketplace commission rate (25%). Drives the
+  // "estimated commission saved" calc - always labelled estimated, never exact.
+  growthSettings          Json      @default("{}") @map("growth_settings")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -490,6 +500,11 @@ model Tenant {
   growLeads        GrowLead[]
   posShifts        PosShift[]
   loyaltyMembers   LoyaltyMember[]
+  customerAttributions CustomerAttribution[]
+  qrCampaigns      QrCampaign[]
+  qrScans          QrScan[]
+  growthTasks      GrowthTask[]
+  sourceSettings   SourceSetting[]
 
   @@index([slug])
   @@map("tenants")
@@ -924,6 +939,7 @@ model Customer {
   apiKeys   ApiKey[]
   favorites Favorite[]
   loyaltyMemberships LoyaltyMember[]
+  attributions CustomerAttribution[]
 
   @@map("customers")
 }
@@ -2044,4 +2060,166 @@ model MarketingLead {
 
   @@index([createdAt(sort: Desc)])
   @@map("marketing_leads")
+}
+
+// ============================================================================
+// Growth engine (Direct Customer Engine) - converts customers who discover
+// the venue on delivery marketplaces, Google, social, walk-in or referral
+// into DIRECT customers ordering from the venue's own QuickFood storefront.
+// Core promise: never fake attribution. If we don't know where a customer
+// came from we show "unknown"; if we only know because they told us, it's
+// self-reported; commission saved is always estimated, never exact.
+// ============================================================================
+
+/// Broad bucket a source falls into, used for grouping + the commission-saved
+/// calc (only `marketplace`-category sources accrue estimated savings).
+enum AttributionCategory {
+  marketplace // Wolt, Uber Eats, Ten Bis, Demae-can...
+  social      // Instagram, TikTok, Facebook, LINE...
+  search      // Google, Google Business Profile...
+  referral    // friend recommendation
+  walk_in     // passed by / dined in
+  qr          // arrived through a tracked QR campaign
+  other
+}
+
+/// Which moment first captured the customer's source. `qr` means they came
+/// through a tracked /r/{slug}/q/{code} link (NOT self-reported - trusted).
+/// The rest (signup/checkout/loyalty/manual) are self-reported answers.
+enum FirstTouchType {
+  signup
+  checkout
+  qr
+  loyalty
+  manual
+}
+
+/// One row per "how did you hear about us" answer or tracked QR arrival.
+/// customerId/orderId are filled when known; both nullable so an anonymous
+/// QR scan that never converts can still record intent.
+model CustomerAttribution {
+  id             String              @id @default(uuid()) @db.Uuid
+  tenantId       String              @map("tenant_id") @db.Uuid
+  tenant         Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customerId     String?             @map("customer_id") @db.Uuid
+  customer       Customer?           @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  orderId        String?             @map("order_id") @db.Uuid
+  // The machine key of the chosen source (matches SourceSetting.sourceKey),
+  // e.g. "wolt", "google", "instagram", "walk_in".
+  source         String              @db.VarChar(40)
+  // Human label as shown at the moment of capture (frozen - SourceSetting
+  // labels can be edited later without rewriting history).
+  sourceLabel    String              @map("source_label")
+  sourceCategory AttributionCategory @map("source_category")
+  firstTouchType FirstTouchType      @map("first_touch_type")
+  // True when the source came from a customer answer; false when it came from
+  // a trusted tracked QR arrival. Drives the "self-reported" UI label.
+  selfReported   Boolean             @default(true) @map("self_reported")
+  campaignId     String?             @map("campaign_id") @db.Uuid
+  campaign       QrCampaign?         @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  metadata       Json?
+  createdAt      DateTime            @default(now()) @map("created_at")
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, customerId])
+  @@index([tenantId, source])
+  @@map("customer_attributions")
+}
+
+/// A printable/shareable QR campaign. Each routes through the tracked
+/// /r/{slug}/q/{code} redirect, which logs a QrScan then forwards to the
+/// destination (menu / signup / loyalty / coupon / a focused landing page).
+model QrCampaign {
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name            String   @db.VarChar(120)
+  // bag / sticker / table_tent / flyer / receipt / ig_bio / gbp / poster
+  type            String   @db.VarChar(40)
+  // Short, URL-safe, globally unique code in the /q/{code} slot.
+  code            String   @unique @db.VarChar(32)
+  // Where the redirect sends the scanner: menu / signup / loyalty / coupon /
+  // landing (landing renders a focused page first, then a CTA into the menu).
+  destinationType String   @default("menu") @map("destination_type") @db.VarChar(20)
+  // Override destination URL. NULL = derive from destinationType + slug.
+  destinationUrl  String?  @map("destination_url")
+  // Landing template slug when destinationType=landing (bag_insert /
+  // receipt_vip / marketplace_convert / walk_in). NULL = direct redirect.
+  landingTemplate String?  @map("landing_template") @db.VarChar(40)
+  // Per-campaign editable headline/body/cta copy for the landing page.
+  landingCopy     Json?    @map("landing_copy")
+  // Optional reward attached to the campaign - links an existing Coupon row.
+  couponId        String?  @map("coupon_id") @db.Uuid
+  status          String   @default("active") @db.VarChar(12)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  scans           QrScan[]
+  attributions    CustomerAttribution[]
+
+  @@index([tenantId, status])
+  @@map("qr_campaigns")
+}
+
+/// One row per QR scan (redirect hit). visitorId comes from the qf_vid
+/// first-party cookie so unique scanners can be counted; ipHash is a salted
+/// SHA-256 (never the raw IP) used only for coarse de-duplication.
+model QrScan {
+  id         String     @id @default(uuid()) @db.Uuid
+  tenantId   String     @map("tenant_id") @db.Uuid
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaignId String     @map("campaign_id") @db.Uuid
+  campaign   QrCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  visitorId  String?    @map("visitor_id")
+  customerId String?    @map("customer_id") @db.Uuid
+  ipHash     String?    @map("ip_hash") @db.VarChar(64)
+  userAgent  String?    @map("user_agent") @db.VarChar(300)
+  referrer   String?
+  createdAt  DateTime   @default(now()) @map("created_at")
+
+  @@index([tenantId, campaignId, createdAt])
+  @@map("qr_scans")
+}
+
+/// An actionable next-step for the merchant ("print QR cards", "send a
+/// 30-day comeback campaign"). The Growth screen is action-first: tasks are
+/// the top of the page. `key` makes generation idempotent so we don't pile
+/// up duplicates of the same suggestion on every dashboard load.
+model GrowthTask {
+  id             String    @id @default(uuid()) @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  key            String    @db.VarChar(60)
+  title          String    @db.VarChar(160)
+  description    String?   @db.VarChar(400)
+  expectedImpact String?   @map("expected_impact") @db.VarChar(200)
+  // create_coupon / create_qr / send_campaign / edit_loyalty / external_link...
+  actionType     String?   @map("action_type") @db.VarChar(40)
+  actionPayload  Json?     @map("action_payload")
+  status         String    @default("pending") @db.VarChar(12) // pending/completed/dismissed
+  createdAt      DateTime  @default(now()) @map("created_at")
+  completedAt    DateTime? @map("completed_at")
+
+  @@unique([tenantId, key])
+  @@index([tenantId, status])
+  @@map("growth_tasks")
+}
+
+/// The "how did you hear about us" option set, configurable per tenant and
+/// seeded per country. Edited from Growth → Customer Sources. The same key
+/// is stored on CustomerAttribution.source.
+model SourceSetting {
+  id             String              @id @default(uuid()) @db.Uuid
+  tenantId       String              @map("tenant_id") @db.Uuid
+  tenant         Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  country        String              @default("IL") @db.VarChar(2)
+  sourceKey      String              @map("source_key") @db.VarChar(40)
+  sourceLabel    String              @map("source_label")
+  sourceCategory AttributionCategory @map("source_category")
+  isActive       Boolean             @default(true) @map("is_active")
+  sortOrder      Int                 @default(0) @map("sort_order")
+
+  @@unique([tenantId, sourceKey])
+  @@index([tenantId, isActive, sortOrder])
+  @@map("source_settings")
 }

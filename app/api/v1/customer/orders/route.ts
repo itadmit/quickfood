@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { after } from "next/server";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
@@ -6,6 +7,7 @@ import { createOrder, CartValidationError } from "@/lib/orders-create";
 import { toE164 } from "@/lib/format";
 import { signReviewToken } from "@/lib/reviews/token";
 import { initiateOrderPayment, type InitiatePaymentData } from "@/lib/payments/initiate-payment";
+import { recordAttribution } from "@/lib/growth/attribution";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,6 +39,11 @@ const CreateOrderSchema = z.object({
   loyalty_consent: z.boolean().optional(),
   coupon_code: z.string().min(1).max(40).optional(),
   applied_bundle_ids: z.array(z.string().uuid()).max(10).optional(),
+  // Growth attribution: the "how did you hear about us" answer (self-reported)
+  // and/or the tracked QR campaign code the customer arrived through. Both
+  // optional - attribution never gates an order.
+  attribution_source: z.string().max(40).optional(),
+  attribution_campaign_code: z.string().max(32).optional(),
   // Set by the kiosk app. Bypasses the "auth or guest phone" gate after
   // we verify the tenant actually has kioskEnabled=true on the server.
   // Kiosk orders are anonymous pickups paid via QR (or at the counter).
@@ -130,6 +137,37 @@ export const POST = handler(async (req: Request) => {
     });
 
     const needsPayment = result.paymentMethod !== "cash";
+
+    // Growth attribution (best-effort, post-response). Links the self-reported
+    // source / tracked QR campaign to the customer created at checkout. Sticky:
+    // recordAttribution no-ops if the customer already has a first touch.
+    if (body.attribution_source || body.attribution_campaign_code) {
+      const order = result.order;
+      after(async () => {
+        try {
+          let campaignId: string | null = null;
+          if (body.attribution_campaign_code) {
+            const c = await prisma.qrCampaign.findUnique({
+              where: { code: body.attribution_campaign_code },
+              select: { id: true, tenantId: true },
+            });
+            if (c && c.tenantId === order.tenantId) campaignId = c.id;
+          }
+          await recordAttribution({
+            tenantId: order.tenantId,
+            source: body.attribution_source ?? "flyer",
+            sourceLabel: body.attribution_source ? undefined : "QR",
+            firstTouchType: body.attribution_campaign_code ? "qr" : "checkout",
+            customerId: order.customerId ?? null,
+            orderId: order.id,
+            campaignId,
+            selfReported: !body.attribution_campaign_code,
+          });
+        } catch {
+          /* attribution is best-effort */
+        }
+      });
+    }
 
     // Fold the payment initiation into this same request for card orders so
     // the client skips a second round-trip (second network hop + possible

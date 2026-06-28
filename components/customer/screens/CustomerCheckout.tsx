@@ -19,6 +19,7 @@ import { readDeliveryChoice, writeDeliveryChoice } from "@/lib/delivery-city-sto
 import { CitySelect } from "@/components/customer/CitySelect";
 import { GrowPaymentSdk, renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
 import { BusyAlertModal } from "@/components/customer/BranchStatusModal";
+import { AttributionPrompt } from "@/components/customer/AttributionPrompt";
 
 type CustomerPaymentMethod = "cash" | "card" | "bit" | "apple_pay" | "google_pay";
 
@@ -414,6 +415,15 @@ export function CustomerCheckout({
           customer_email: email.trim() || undefined,
           terms_accepted: termsAccepted,
           loyalty_consent: loyaltyCheckout.show ? loyaltyConsent : undefined,
+          attribution_source:
+            (typeof window !== "undefined" &&
+              window.sessionStorage.getItem("qf:src-choice")) ||
+            undefined,
+          attribution_campaign_code:
+            (typeof window !== "undefined" &&
+              (window.sessionStorage.getItem("qf:src") ?? "").startsWith("qr_")
+              ? window.sessionStorage.getItem("qf:src")!.slice(3)
+              : undefined) || undefined,
           lines: lines.map((l) => {
             const placements: Record<string, "left" | "right" | "full"> = {};
             for (const o of l.options) {
@@ -993,6 +1003,9 @@ export function CustomerCheckout({
             className="w-full mt-3 bg-qf-bg border border-qf-line rounded-2xl px-4 py-3 text-base outline-none focus:border-(--qf-primary) focus:bg-white resize-none transition"
           />
         </Card>
+
+        {/* How did you hear about us - non-blocking, skippable. */}
+        <AttributionPrompt tenantSlug={tenantSlug} />
 
         {/* Order summary - rendered LAST on mobile (just before the error +
             footer CTA) so the customer scrolls past every input first.
