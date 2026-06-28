@@ -198,7 +198,7 @@ export function GrowthView({
           </div>
         </Card>
         <Card className="p-5">
-          <SectionTitle icon={<IcoCheck s={18} />} hint="כל צעד שמושלם מעלה את הציון">
+          <SectionTitle icon={<IcoCheck s={18} c="#11231a" />} hint="כל צעד שמושלם מעלה את הציון">
             צ׳קליסט הצמיחה
           </SectionTitle>
           <div className="space-y-2">
@@ -280,9 +280,9 @@ export function GrowthView({
                     <button
                       title="סיימתי"
                       onClick={() => post(`/api/v1/merchant/growth/tasks/${t.id}`, { status: "completed" })}
-                      className="w-7 h-7 grid place-items-center rounded-lg border border-qf-line text-qf-green-deep"
+                      className="w-7 h-7 grid place-items-center rounded-lg border border-qf-green/40 bg-qf-green-soft"
                     >
-                      <IcoCheck s={14} />
+                      <IcoCheck s={14} c="#15803d" />
                     </button>
                     <button
                       title="התעלם"
@@ -360,14 +360,18 @@ export function GrowthView({
       {/* ─── Growth Timeline / funnel ─── */}
       <Card className="p-5">
         <SectionTitle hint="התקדמות החודש">המסע של הלקוח</SectionTitle>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-stretch gap-2">
           {funnel.map((stage, i) => (
-            <div key={stage.key} className="flex items-center gap-2">
-              <div className="rounded-2xl border border-qf-line px-4 py-3 text-center min-w-[110px]">
+            <div key={stage.key} className="flex items-stretch gap-2 flex-1 min-w-0">
+              <div className="flex-1 min-w-0 rounded-2xl border border-qf-line px-2 py-3 text-center flex flex-col justify-center">
                 <div className="text-2xl font-black text-qf-ink tnum">{stage.count}</div>
-                <div className="text-[11px] text-qf-ink2 mt-0.5">{stage.label}</div>
+                <div className="text-[11px] text-qf-ink2 mt-0.5 leading-tight">{stage.label}</div>
               </div>
-              {i < funnel.length - 1 && <IcoArrowLeft s={16} c="#9ca3af" />}
+              {i < funnel.length - 1 && (
+                <div className="shrink-0 self-center">
+                  <IcoArrowLeft s={16} c="#9ca3af" />
+                </div>
+              )}
             </div>
           ))}
         </div>
