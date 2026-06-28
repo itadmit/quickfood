@@ -130,7 +130,7 @@ export function GrowthView({
             onClick={() => setQrModalOpen(true)}
             className="inline-flex items-center gap-2 bg-black text-white font-bold rounded-2xl px-4 py-2.5 text-sm hover:bg-black/80 transition"
           >
-            <IcoQrCode s={18} />
+            <IcoQrCode s={18} c="#fff" />
             צרו קמפיין QR
           </button>
         }
@@ -155,8 +155,8 @@ export function GrowthView({
       {/* ─── Daily AI Briefing - the 30-second morning read ─── */}
       <Card className="p-5 lg:p-6 bg-gradient-to-l from-[#FFF8E1] to-white">
         <div className="flex items-center gap-3">
-          <div className="shrink-0 w-9 h-9 rounded-xl bg-black grid place-items-center text-[#F8CB1E]">
-            <IcoSparkle s={17} />
+          <div className="shrink-0 w-9 h-9 rounded-xl bg-black grid place-items-center">
+            <IcoSparkle s={18} c="#F8CB1E" />
           </div>
           <div className="font-black text-lg leading-tight text-qf-ink">
             {briefing.greeting}. הנה מה שמצאתי היום:
@@ -329,21 +329,27 @@ export function GrowthView({
           </div>
           <div className="grid md:grid-cols-2 gap-3">
             {insights.map((ins) => (
-              <div key={ins.id} className="rounded-2xl border border-qf-line p-4">
-                <div className="font-bold text-sm text-qf-ink">{ins.title}</div>
-                <div className="text-xs text-qf-ink2 mt-1.5 leading-relaxed">{ins.body}</div>
-                {ins.expectedImpact && (
-                  <div className="mt-2 inline-block text-[11px] font-semibold text-qf-green-deep bg-qf-green-soft rounded-md px-2 py-0.5">
-                    {ins.expectedImpact}
+              <div key={ins.id} className="rounded-2xl border border-qf-line p-4 flex flex-col">
+                <div className="font-bold text-sm text-qf-ink leading-snug">{ins.title}</div>
+                <div className="text-xs text-qf-ink2 mt-2 leading-relaxed">{ins.body}</div>
+                {(ins.expectedImpact || ins.actionLabel) && (
+                  <div className="mt-3.5 pt-3 border-t border-qf-line-soft flex items-center justify-between gap-3 flex-wrap">
+                    {ins.expectedImpact ? (
+                      <span className="text-[11px] font-semibold text-qf-green-deep bg-qf-green-soft rounded-md px-2 py-1">
+                        {ins.expectedImpact}
+                      </span>
+                    ) : (
+                      <span />
+                    )}
+                    {ins.actionLabel && (
+                      <button
+                        onClick={() => runAction(ins.actionType, ins.actionPayload)}
+                        className="inline-flex items-center gap-1 text-xs font-bold text-black whitespace-nowrap"
+                      >
+                        {ins.actionLabel} <IcoArrowLeft s={12} />
+                      </button>
+                    )}
                   </div>
-                )}
-                {ins.actionLabel && (
-                  <button
-                    onClick={() => runAction(ins.actionType, ins.actionPayload)}
-                    className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-black"
-                  >
-                    {ins.actionLabel} <IcoArrowLeft s={12} />
-                  </button>
                 )}
               </div>
             ))}
