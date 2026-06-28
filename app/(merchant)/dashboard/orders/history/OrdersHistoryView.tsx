@@ -190,7 +190,7 @@ export function OrdersHistoryView() {
       );
       setRowStatus((prev) => ({
         ...prev,
-        [orderId]: { tone: "ok", message: "הוחזר לקאנבן" },
+        [orderId]: { tone: "ok", message: "הוחזר ללוח ההזמנות החי" },
       }));
       window.setTimeout(() => {
         setRowStatus((prev) => {

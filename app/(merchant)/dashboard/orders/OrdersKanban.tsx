@@ -448,7 +448,7 @@ export function OrdersKanban({
 
   async function hideFromKanban(orderId: string) {
     const ok = window.confirm(
-      "להסיר את ההזמנה מהקאנבן? היא תישמר בהיסטוריה ואפשר לשחזר משם.",
+      "להסיר את ההזמנה מלוח ההזמנות החי? היא תישמר בהיסטוריה ואפשר לשחזר משם.",
     );
     if (!ok) return;
     // Optimistic: yank the card from local state before the server
@@ -465,7 +465,7 @@ export function OrdersKanban({
         await refresh();
         return;
       }
-      pushToast("ok", "ההזמנה הוסרה מהקאנבן");
+      pushToast("ok", "ההזמנה הוסרה מלוח ההזמנות החי");
     } catch {
       pushToast("err", "אין חיבור לשרת - מנסה לסנכרן");
       await refresh();
@@ -861,8 +861,8 @@ function Card({
               e.stopPropagation();
               onHide(order.id);
             }}
-            title="הסר מהקאנבן"
-            aria-label="הסר מהקאנבן"
+            title="הסר מלוח ההזמנות החי"
+            aria-label="הסר מלוח ההזמנות החי"
             className="w-6 h-6 grid place-items-center rounded-md text-qf-mute hover:text-qf-tomato hover:bg-qf-tomato-soft transition"
           >
             <IcoClose s={12} c="currentColor" />
