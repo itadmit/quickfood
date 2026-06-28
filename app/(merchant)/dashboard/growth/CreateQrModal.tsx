@@ -20,6 +20,28 @@ const DESTINATIONS: { key: string; label: string }[] = [
   { key: "menu", label: "ישר לתפריט ההזמנות" },
   { key: "signup", label: "הרשמה / כניסה" },
   { key: "loyalty", label: "הצטרפות למועדון" },
+  { key: "landing", label: "דף נחיתה ממוקד (לפני התפריט)" },
+];
+
+const LANDING_TEMPLATES: { key: string; label: string }[] = [
+  { key: "bag_insert", label: "מדבקה לשקית משלוח" },
+  { key: "receipt_vip", label: "QR על הקבלה - מועדון" },
+  { key: "marketplace_convert", label: "המרת לקוח מאפליקציה" },
+  { key: "walk_in", label: "לקוח מזדמן בחנות" },
+  { key: "first_direct_order", label: "הזמנה ישירה ראשונה" },
+  { key: "birthday", label: "יום הולדת" },
+  { key: "referral", label: "חבר מביא חבר" },
+  { key: "cashback", label: "צ׳אקבק / החזר כספי" },
+  { key: "vip", label: "לקוח VIP" },
+  { key: "delivery_box", label: "מדבקה לארגז משלוח" },
+  { key: "takeaway", label: "טייק אווי" },
+  { key: "google_business", label: "פרופיל עסק בגוגל" },
+  { key: "instagram_story", label: "סטורי באינסטגרם" },
+  { key: "tiktok", label: "טיקטוק" },
+  { key: "whatsapp", label: "וואטסאפ" },
+  { key: "email", label: "אימייל" },
+  { key: "dine_in", label: "ישיבה במקום" },
+  { key: "review_request", label: "בקשת ביקורת" },
 ];
 
 export function CreateQrModal({
@@ -32,6 +54,7 @@ export function CreateQrModal({
   const [name, setName] = useState("");
   const [type, setType] = useState("bag");
   const [destinationType, setDestinationType] = useState("menu");
+  const [landingTemplate, setLandingTemplate] = useState("bag_insert");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,7 +68,12 @@ export function CreateQrModal({
     const res = await fetch("/api/v1/merchant/growth/qr-campaigns", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), type, destinationType }),
+      body: JSON.stringify({
+        name: name.trim(),
+        type,
+        destinationType,
+        landingTemplate: destinationType === "landing" ? landingTemplate : undefined,
+      }),
     }).catch(() => null);
     setBusy(false);
     if (!res || !res.ok) {
@@ -102,6 +130,28 @@ export function CreateQrModal({
             </button>
           ))}
         </div>
+
+        {destinationType === "landing" && (
+          <>
+            <label className="block text-sm font-semibold text-qf-ink mb-1 mt-4">תבנית דף הנחיתה</label>
+            <div className="grid grid-cols-2 gap-2">
+              {LANDING_TEMPLATES.map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setLandingTemplate(t.key)}
+                  className={`text-sm rounded-2xl border px-3 py-2.5 text-right transition ${
+                    landingTemplate === t.key
+                      ? "border-(--qf-primary) bg-(--qf-primary)/10 font-semibold"
+                      : "border-qf-line bg-white"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
         {error && <div className="mt-3 text-sm text-qf-tomato">{error}</div>}
       </ModalBody>

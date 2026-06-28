@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import {
@@ -123,6 +124,22 @@ export function GrowthView({
           </button>
         }
       />
+
+      {/* ─── Sub-nav to the Growth sections ─── */}
+      <div className="flex flex-wrap gap-2">
+        <Link
+          href="/dashboard/growth/customers"
+          className="text-sm font-semibold rounded-2xl border-2 border-black bg-white px-4 py-2 hover:bg-qf-bg transition"
+        >
+          לקוחות חוזרים
+        </Link>
+        <Link
+          href="/dashboard/growth/sources"
+          className="text-sm font-semibold rounded-2xl border-2 border-black bg-white px-4 py-2 hover:bg-qf-bg transition"
+        >
+          מקורות לקוחות
+        </Link>
+      </div>
 
       {/* ─── Daily AI Briefing - the 30-second morning read ─── */}
       <Card className="p-5 bg-gradient-to-l from-[#FFF8E1] to-white">

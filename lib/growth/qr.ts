@@ -104,9 +104,11 @@ export async function recordScan(input: RecordScanInput) {
 }
 
 /**
- * Resolve where a QR campaign should forward the scanner. Returns either a
- * landing page (rendered before the menu) or a final redirect URL with the
- * ?src=qr_{code} marker that the storefront persists into checkout.
+ * Resolve where a QR campaign forwards the scanner. ALWAYS enters the
+ * storefront (never a separate page) with the ?src=qr_{code} marker that the
+ * storefront persists into checkout. For `landing` campaigns the storefront
+ * shows the campaign content as a one-time modal over the menu - no extra page
+ * load, no navigation. The modal content is fetched by code client-side.
  */
 export function resolveQrDestination(
   campaign: {
@@ -116,14 +118,11 @@ export function resolveQrDestination(
     landingTemplate: string | null;
   },
   slug: string,
-): { kind: "landing" | "redirect"; url: string } {
+): { url: string } {
   const src = `qr_${campaign.code}`;
-  if (campaign.destinationType === "landing" && campaign.landingTemplate) {
-    return { kind: "landing", url: `/r/${slug}/q/${campaign.code}/welcome` };
-  }
   if (campaign.destinationUrl) {
     const sep = campaign.destinationUrl.includes("?") ? "&" : "?";
-    return { kind: "redirect", url: `${campaign.destinationUrl}${sep}src=${src}` };
+    return { url: `${campaign.destinationUrl}${sep}src=${src}` };
   }
   const path =
     campaign.destinationType === "signup"
@@ -131,5 +130,5 @@ export function resolveQrDestination(
       : campaign.destinationType === "loyalty"
         ? "/menu?join=1"
         : "/menu";
-  return { kind: "redirect", url: `/s/${slug}${path}?src=${src}` };
+  return { url: `/s/${slug}${path}?src=${src}` };
 }
