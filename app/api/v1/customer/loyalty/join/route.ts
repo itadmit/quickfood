@@ -1,10 +1,12 @@
 import { z } from "zod";
+import { after } from "next/server";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { toE164 } from "@/lib/format";
 import { ensureLoyaltyMember } from "@/lib/loyalty/membership";
+import { recordAttribution } from "@/lib/growth/attribution";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +19,9 @@ const JoinSchema = z.object({
   email: z.string().email().optional(),
   birthday: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   marketing_consent: z.boolean().optional(),
+  // Growth attribution captured at the loyalty-join (signup) moment.
+  attribution_source: z.string().max(40).optional(),
+  attribution_campaign_code: z.string().max(32).optional(),
 });
 
 /**
@@ -89,6 +94,34 @@ export const POST = handler(async (req: Request) => {
     joinSource: "popup",
     marketingConsent: body.marketing_consent === true,
   });
+
+  // Attribution at the signup (loyalty-join) moment - sticky first-touch.
+  if (body.attribution_source || body.attribution_campaign_code) {
+    const cid = customerId;
+    after(async () => {
+      try {
+        let campaignId: string | null = null;
+        if (body.attribution_campaign_code) {
+          const c = await prisma.qrCampaign.findUnique({
+            where: { code: body.attribution_campaign_code },
+            select: { id: true, tenantId: true },
+          });
+          if (c && c.tenantId === tenant.id) campaignId = c.id;
+        }
+        await recordAttribution({
+          tenantId: tenant.id,
+          source: body.attribution_source ?? "flyer",
+          sourceLabel: body.attribution_source ? undefined : "QR",
+          firstTouchType: "loyalty",
+          customerId: cid,
+          campaignId,
+          selfReported: !body.attribution_campaign_code,
+        });
+      } catch {
+        /* best-effort */
+      }
+    });
+  }
 
   return apiJson({ ok: true }, 201);
 });

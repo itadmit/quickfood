@@ -425,7 +425,15 @@ export function GrowthView({
                 c={c}
                 slug={slug}
                 onManage={() =>
-                  setManageCampaign({ id: c.campaignId, name: c.name, code: c.code, status: c.status })
+                  setManageCampaign({
+                    id: c.campaignId,
+                    name: c.name,
+                    code: c.code,
+                    status: c.status,
+                    cost: c.cost,
+                    revenue: c.revenue,
+                    roi: c.roi,
+                  })
                 }
               />
             ))}
@@ -511,10 +519,15 @@ function QrRow({ c, slug, onManage }: { c: QrPerformanceRow; slug: string; onMan
     <div className="rounded-2xl border border-qf-line p-3">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <div className="font-semibold text-sm text-qf-ink truncate">{c.name}</div>
             {paused && (
               <span className="text-[10px] bg-qf-mute/30 text-qf-ink2 rounded px-1.5 py-0.5">מושהה</span>
+            )}
+            {c.roi !== null && (
+              <span className="text-[10px] font-bold bg-qf-green-soft text-qf-green-deep rounded px-1.5 py-0.5">
+                ROI ×{c.roi}
+              </span>
             )}
           </div>
           <div className="text-[11px] text-qf-ink2 mt-0.5 ltr:text-left" dir="ltr">/r/{slug}/q/{c.code}</div>

@@ -4,12 +4,16 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/components/shared/Modal";
 import { IcoCopy } from "@/components/shared/Icons";
+import { formatPrice } from "@/lib/format";
 
 export interface ManagedCampaign {
   id: string;
   name: string;
   code: string;
   status: string;
+  cost: number;
+  revenue: number;
+  roi: number | null;
 }
 
 // View/manage an EXISTING QR campaign: re-show the QR + tracked link, pause or
@@ -30,6 +34,8 @@ export function QrManageModal({
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [cost, setCost] = useState(campaign.cost ? String(campaign.cost) : "");
+  const [costSaved, setCostSaved] = useState(false);
   const paused = campaign.status !== "active";
 
   useEffect(() => {
@@ -51,6 +57,19 @@ export function QrManageModal({
     }).catch(() => {});
     setBusy(false);
     onChanged();
+  }
+
+  async function saveCost() {
+    setBusy(true);
+    setCostSaved(false);
+    const n = cost.trim() ? Math.round(Number(cost)) : 0;
+    await fetch(`/api/v1/merchant/growth/qr-campaigns/${campaign.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cost: Number.isFinite(n) && n >= 0 ? n : 0 }),
+    }).catch(() => {});
+    setBusy(false);
+    setCostSaved(true);
   }
 
   async function remove() {
@@ -89,6 +108,40 @@ export function QrManageModal({
               >
                 <IcoCopy s={14} /> {copied ? "הועתק" : "העתק"}
               </button>
+            </div>
+          </div>
+
+          <div className="mt-4 w-full rounded-2xl border border-qf-line p-3 text-right">
+            <div className="text-xs font-semibold text-qf-ink2 mb-1">עלות הקמפיין (לחישוב ROI)</div>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={0}
+                value={cost}
+                onChange={(e) => {
+                  setCost(e.target.value);
+                  setCostSaved(false);
+                }}
+                placeholder="0"
+                className="w-28 bg-qf-bg border border-qf-line rounded-xl px-3 py-2 text-sm outline-none focus:border-(--qf-primary) tnum"
+              />
+              <span className="text-sm font-bold text-qf-ink2">₪</span>
+              <button
+                onClick={saveCost}
+                disabled={busy}
+                className="rounded-xl bg-black text-white text-xs font-bold px-3 py-2 disabled:opacity-60"
+              >
+                שמירה
+              </button>
+              {costSaved && <span className="text-xs text-qf-green-deep font-semibold">נשמר</span>}
+            </div>
+            <div className="mt-2 text-sm text-qf-ink2">
+              הכנסה ישירה מהקמפיין: <strong className="text-qf-ink">{formatPrice(campaign.revenue)}</strong>
+              {campaign.roi !== null && (
+                <span className="mr-2">
+                  · ROI: <strong className="text-qf-green-deep">×{campaign.roi}</strong>
+                </span>
+              )}
             </div>
           </div>
 

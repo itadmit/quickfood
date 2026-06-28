@@ -322,6 +322,10 @@ export interface QrPerformanceRow {
   scanToSignupRate: number;
   signupToOrderRate: number;
   estimatedCommissionSaved: number;
+  cost: number;
+  // Direct revenue attributed to the campaign / cost, as a multiple. null when
+  // cost is 0 (unset) - the UI hides ROI then.
+  roi: number | null;
 }
 
 /** Per-QR-campaign cohort performance (the real cohort - via campaignId). */
@@ -396,6 +400,8 @@ export async function getQrCampaignPerformance(
       // Per-campaign commission attribution is computed at the store level
       // (getDirectCustomerOverview); kept 0 here to avoid double-counting.
       estimatedCommissionSaved: 0,
+      cost: c.cost,
+      roi: c.cost > 0 ? Math.round((revenue / c.cost) * 10) / 10 : null,
     };
   });
 }

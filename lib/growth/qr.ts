@@ -55,6 +55,7 @@ export interface CreateQrCampaignInput {
   landingTemplate?: string | null;
   landingCopy?: Record<string, unknown> | null;
   couponId?: string | null;
+  cost?: number;
 }
 
 export async function createQrCampaign(input: CreateQrCampaignInput) {
@@ -70,6 +71,7 @@ export async function createQrCampaign(input: CreateQrCampaignInput) {
       landingTemplate: input.landingTemplate ?? null,
       landingCopy: input.landingCopy ? (input.landingCopy as Prisma.InputJsonValue) : undefined,
       couponId: input.couponId ?? null,
+      cost: input.cost ?? 0,
     },
   });
 }

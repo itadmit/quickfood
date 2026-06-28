@@ -59,8 +59,12 @@ export function CreateQrModal({
   slug: string;
 }) {
   const [name, setName] = useState("");
+  const [cost, setCost] = useState("");
   const [type, setType] = useState("bag");
-  const [destinationType, setDestinationType] = useState("menu");
+  // Default to a focused landing modal - for physical placements (flyer, bag,
+  // sticker...) the welcome modal is the whole point. Merchants can switch to
+  // "ישר לתפריט" if they want a direct jump.
+  const [destinationType, setDestinationType] = useState("landing");
   const [landingTemplate, setLandingTemplate] = useState("bag_insert");
   const [copy, setCopy] = useState<LandingCopy>(() =>
     resolveLandingCopy("bag_insert", null, businessName),
@@ -92,6 +96,7 @@ export function CreateQrModal({
         destinationType,
         landingTemplate: destinationType === "landing" ? landingTemplate : undefined,
         landingCopy: destinationType === "landing" ? copy : undefined,
+        cost: cost.trim() && Number.isFinite(Number(cost)) ? Math.round(Number(cost)) : undefined,
       }),
     }).catch(() => null);
     if (!res || !res.ok) {
@@ -185,6 +190,21 @@ export function CreateQrModal({
           placeholder="למשל: QR לשקיות משלוח"
           className="w-full bg-qf-bg border border-qf-line rounded-2xl px-4 py-3 text-base outline-none focus:border-(--qf-primary) focus:bg-white transition"
         />
+
+        <label className="block text-sm font-semibold text-qf-ink mb-1 mt-4">
+          עלות הקמפיין <span className="font-normal text-qf-ink2">(לא חובה - לחישוב ROI)</span>
+        </label>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            min={0}
+            value={cost}
+            onChange={(e) => setCost(e.target.value)}
+            placeholder="למשל: 320 (הדפסת מדבקות)"
+            className="flex-1 bg-qf-bg border border-qf-line rounded-2xl px-4 py-3 text-base outline-none focus:border-(--qf-primary) focus:bg-white transition tnum"
+          />
+          <span className="text-lg font-bold text-qf-ink2">₪</span>
+        </div>
 
         <label className="block text-sm font-semibold text-qf-ink mb-1 mt-4">סוג</label>
         <div className="grid grid-cols-2 gap-2">

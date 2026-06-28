@@ -146,6 +146,21 @@ export const POST = handler(async (req: Request) => {
     });
   }
 
+  // Log the campaign for the Growth history (Poply/iBot don't persist this).
+  await prisma.growthCampaign
+    .create({
+      data: {
+        tenantId,
+        segment: input.segment,
+        channel: input.channel,
+        subject: input.subject ?? null,
+        body: input.body,
+        recipients: recipients.length,
+        sent,
+      },
+    })
+    .catch(() => {});
+
   return apiJson({
     sent,
     total: recipients.length,

@@ -15,6 +15,7 @@ const CreateSchema = z.object({
   landingTemplate: z.string().max(40).optional().nullable(),
   landingCopy: z.record(z.unknown()).optional().nullable(),
   couponId: z.string().uuid().optional().nullable(),
+  cost: z.number().int().min(0).max(1000000).optional(),
 });
 
 export const GET = handler(async () => {

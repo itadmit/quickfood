@@ -114,6 +114,14 @@ export function LoyaltyJoinPopup({ tenantSlug }: Props) {
           email: email.trim() || undefined,
           birthday: birthday.trim() || undefined,
           marketing_consent: true,
+          attribution_source:
+            (typeof window !== "undefined" && window.sessionStorage.getItem("qf:src-choice")) ||
+            undefined,
+          attribution_campaign_code:
+            typeof window !== "undefined" &&
+            (window.sessionStorage.getItem("qf:src") ?? "").startsWith("qr_")
+              ? window.sessionStorage.getItem("qf:src")!.slice(3)
+              : undefined,
         }),
       });
       if (!res.ok) {

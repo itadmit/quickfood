@@ -505,6 +505,7 @@ model Tenant {
   qrScans          QrScan[]
   growthTasks      GrowthTask[]
   sourceSettings   SourceSetting[]
+  growthCampaigns  GrowthCampaign[]
 
   @@index([slug])
   @@map("tenants")
@@ -2150,6 +2151,10 @@ model QrCampaign {
   landingCopy     Json?    @map("landing_copy")
   // Optional reward attached to the campaign - links an existing Coupon row.
   couponId        String?  @map("coupon_id") @db.Uuid
+  // What the merchant spent producing this campaign (printing QR cards,
+  // stickers...) in integer shekels. Drives the ROI figure: direct revenue
+  // attributed to the campaign / cost. 0 = unset (ROI hidden).
+  cost            Int      @default(0)
   status          String   @default("active") @db.VarChar(12)
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
@@ -2222,4 +2227,24 @@ model SourceSetting {
   @@unique([tenantId, sourceKey])
   @@index([tenantId, isActive, sortOrder])
   @@map("source_settings")
+}
+
+/// A record of a one-click Growth campaign that was sent (email / SMS /
+/// WhatsApp) to a segment. Poply/iBot don't persist these for us, so we log
+/// our own row for the Growth campaign history. `recipients` is how many the
+/// segment resolved to at send time; `sent` is how many actually went out.
+model GrowthCampaign {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  segment    String   @db.VarChar(40)
+  channel    String   @db.VarChar(12)
+  subject    String?  @db.VarChar(200)
+  body       String   @db.VarChar(2000)
+  recipients Int      @default(0)
+  sent       Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@map("growth_campaigns")
 }

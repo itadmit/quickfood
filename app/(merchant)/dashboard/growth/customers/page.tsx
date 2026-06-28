@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
-import { getRepeatCustomers } from "@/lib/growth/customers";
+import { getRepeatCustomers, getRecentCampaigns } from "@/lib/growth/customers";
 import { RepeatCustomersView } from "./RepeatCustomersView";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +10,9 @@ export default async function RepeatCustomersPage() {
   if (!session || session.type !== "merchant" || !session.tenantId) {
     redirect("/dashboard/login");
   }
-  const { segments, rows } = await getRepeatCustomers(session.tenantId);
-  return <RepeatCustomersView segments={segments} rows={rows} />;
+  const [{ segments, rows }, campaigns] = await Promise.all([
+    getRepeatCustomers(session.tenantId),
+    getRecentCampaigns(session.tenantId),
+  ]);
+  return <RepeatCustomersView segments={segments} rows={rows} campaigns={campaigns} />;
 }

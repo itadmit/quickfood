@@ -15,6 +15,7 @@ const Patch = z.object({
   landingTemplate: z.string().max(40).nullable().optional(),
   landingCopy: z.record(z.unknown()).nullable().optional(),
   couponId: z.string().uuid().nullable().optional(),
+  cost: z.number().int().min(0).max(1000000).optional(),
   status: z.enum(["active", "paused"]).optional(),
 });
 
@@ -46,6 +47,7 @@ export const PATCH = handler(
             }
           : {}),
         ...(body.couponId !== undefined ? { couponId: body.couponId } : {}),
+        ...(body.cost !== undefined ? { cost: body.cost } : {}),
         ...(body.status !== undefined ? { status: body.status } : {}),
       },
     });
