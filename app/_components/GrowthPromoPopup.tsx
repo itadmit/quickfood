@@ -38,7 +38,7 @@ export default function GrowthPromoPopup() {
             <div className={styles.growthPopEmblemIcon}>
               <TrendingUp strokeWidth={2.4} size={40} />
             </div>
-            <div className={styles.growthPopEmblemName}>QuickFood Growth</div>
+            <div className={styles.growthPopEmblemName}>QuickFood Boost</div>
             <div className={styles.growthPopEmblemTag}>מערכת הצמיחה למסעדות</div>
           </div>
         </div>
@@ -51,7 +51,7 @@ export default function GrowthPromoPopup() {
             גם על לקוח שמכיר אותך?
           </h2>
           <p className={styles.kioskPopText}>
-            QuickFood Growth עוזרת להחזיר לקוחות להזמין ישירות מהאתר שלך - במקום
+            QuickFood Boost עוזרת להחזיר לקוחות להזמין ישירות מהאתר שלך - במקום
             לשלם שוב ושוב עמלה על כל הזמנה חוזרת.
           </p>
 
@@ -67,7 +67,7 @@ export default function GrowthPromoPopup() {
           <div className={styles.kioskPopActions}>
             <a href="#growth" className={styles.kioskPopCta} onClick={close}>
               <Rocket size={17} strokeWidth={2.2} aria-hidden />
-              הפעל את Growth
+              הפעל את Boost
             </a>
             <button type="button" className={styles.kioskPopDismiss} onClick={close}>
               אולי אחר כך
