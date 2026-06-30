@@ -7,10 +7,22 @@ import { PROPOSAL_CSS } from "./styles";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "QuickFood · הצעת מחיר",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(
+  { params }: { params: Promise<{ token: string }> },
+): Promise<Metadata> {
+  const { token } = await params;
+  const p = await prisma.proposal.findUnique({
+    where: { token },
+    select: { clientName: true },
+  });
+  const title = p ? `הצעת מחיר | ${p.clientName}` : "QuickFood · הצעת מחיר";
+  return {
+    title,
+    robots: { index: false, follow: false },
+    openGraph: { title, siteName: "QuickFood" },
+    twitter: { title },
+  };
+}
 
 function Ico({ d }: { d: React.ReactNode }) {
   return <svg viewBox="0 0 24 24">{d}</svg>;

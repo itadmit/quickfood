@@ -202,8 +202,8 @@ export function QuotesManager({ initial }: { initial: Quote[] }) {
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <a href={linkFor(q.token)} target="_blank" rel="noopener"
-                    className="text-xs font-bold text-qf-ink border border-qf-line-dash rounded-lg px-3 py-1.5 hover:bg-qf-line-soft" dir="ltr">
-                    /qute/{q.token}
+                    className="text-xs font-bold text-qf-ink border border-qf-line-dash rounded-lg px-3 py-1.5 hover:bg-qf-line-soft">
+                    צפה
                   </a>
                   <button onClick={() => copy(q.token)}
                     className="text-xs font-bold rounded-lg px-3 py-1.5 bg-qf-line-soft hover:bg-qf-line-dash">
