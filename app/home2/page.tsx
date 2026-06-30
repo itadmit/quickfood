@@ -63,8 +63,33 @@ function Hero() {
   return (
     <section className="relative overflow-hidden" style={{ backgroundColor: YELLOW }}>
       <Dots />
-      <div className="relative max-w-6xl mx-auto px-5 py-16 lg:py-24 grid lg:grid-cols-2 gap-10 items-center">
-        <div className="text-center lg:text-right">
+      {/* Full-bleed b-roll on the visual-left of the hero (same treatment as the
+          main landing): a horizontal gradient melts the right edge of the video
+          into the yellow surface so there's no hard cut next to the headline.
+          On mobile it goes full-width with a vertical fade so the copy stays
+          readable on top. */}
+      <div
+        className="absolute inset-0 lg:inset-y-0 lg:left-0 lg:right-auto lg:w-[42%] z-0 overflow-hidden pointer-events-none"
+        aria-hidden
+      >
+        <video src={VIDEO} autoPlay muted loop playsInline className="w-full h-full object-cover" />
+        <div
+          className="absolute inset-0 hidden lg:block"
+          style={{
+            background:
+              "linear-gradient(to right, transparent 0%, rgba(248,203,30,0.4) 35%, rgba(248,203,30,0.85) 65%, #F8CB1E 90%)",
+          }}
+        />
+        <div
+          className="absolute inset-0 lg:hidden"
+          style={{
+            background:
+              "linear-gradient(to top, #F8CB1E 0%, rgba(248,203,30,0.97) 25%, rgba(248,203,30,0.82) 50%, rgba(248,203,30,0.6) 80%, rgba(248,203,30,0.45) 100%)",
+          }}
+        />
+      </div>
+      <div className="relative z-10 max-w-6xl mx-auto px-5 py-16 lg:py-24">
+        <div className="text-center lg:text-right lg:max-w-2xl lg:me-auto">
           <div className="inline-block bg-black text-[#F8CB1E] text-xs font-black tracking-widest rounded-md px-3 py-1 mb-6">
             QUICKFOOD
           </div>
@@ -94,13 +119,6 @@ function Hero() {
             </a>
           </div>
           <div className="mt-4 text-sm text-black/60">בלי כרטיס אשראי · ₪299 לחודש מחיר קבוע</div>
-        </div>
-
-        {/* Phone-framed food video for life + authority */}
-        <div className="flex justify-center lg:justify-start">
-          <div className="relative w-[240px] sm:w-[270px] aspect-[9/16] rounded-[2.2rem] border-[7px] border-black bg-black overflow-hidden shadow-2xl">
-            <video src={VIDEO} autoPlay muted loop playsInline className="w-full h-full object-cover" />
-          </div>
         </div>
       </div>
     </section>
