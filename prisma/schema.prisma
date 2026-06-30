@@ -1506,6 +1506,39 @@ model OtpCode {
   @@map("otp_codes")
 }
 
+enum ProposalStatus {
+  sent
+  signed
+}
+
+/// Sales proposals ("הצעת מחיר") authored in /admin/quotes and shown
+/// publicly at /qute/{token}. Each row is one client-facing proposal.
+/// The client signs at the bottom of the public page → status flips to
+/// `signed`, signature image + timestamp are stored, and the owner is emailed.
+model Proposal {
+  id               String         @id @default(cuid())
+  /// 5-char public link slug → /qute/{token}
+  token            String         @unique
+  clientName       String         @map("client_name")
+  /// Monthly system price, integer shekels (per money convention).
+  monthlyPrice     Int            @map("monthly_price")
+  /// Struck-through original commission text, e.g. "0.5%" (optional).
+  commissionStruck String?        @map("commission_struck")
+  /// Actual commission text shown next to it, e.g. "0" (optional).
+  commissionActual String?        @map("commission_actual")
+  notes            String?        @db.Text
+  status           ProposalStatus @default(sent)
+  /// Name typed by the signer when approving.
+  signerName       String?        @map("signer_name")
+  /// Base64 PNG data URL of the drawn signature.
+  signatureData    String?        @map("signature_data") @db.Text
+  signedAt         DateTime?      @map("signed_at")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  @@map("proposals")
+}
+
 /// Platform-wide singleton settings, edited by platform admins from
 /// `/admin/settings`. The `id` is hard-coded to "singleton" so there is
 /// exactly one row - we upsert it from the API. New global defaults

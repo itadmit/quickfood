@@ -62,6 +62,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               + לקוח חדש
             </Link>
             <Link
+              href="/admin/quotes"
+              className="px-3 py-1.5 rounded-lg hover:bg-qf-line-soft whitespace-nowrap"
+            >
+              הצעות מחיר
+            </Link>
+            <Link
               href="/admin/settings"
               className="px-3 py-1.5 rounded-lg hover:bg-qf-line-soft whitespace-nowrap"
             >
