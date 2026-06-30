@@ -6,6 +6,13 @@ import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { OrderStatusBadgeV2 } from "@/components/merchant/OrderStatusBadgeV2";
+import { OrderDrawer } from "@/components/merchant/OrderDrawer";
+import { AssignCourierModal } from "@/components/merchant/AssignCourierModal";
+import {
+  DEFAULT_RECEIPT_SETTINGS,
+  type ReceiptPrinterType,
+  type ReceiptSettings,
+} from "@/lib/receipt-print";
 
 type Status =
   | "pending"
@@ -146,7 +153,13 @@ function formatDateTime(iso: string): string {
   });
 }
 
-export function OrdersHistoryView() {
+export function OrdersHistoryView({
+  receiptPrinter = "airprint",
+  receiptSettings = DEFAULT_RECEIPT_SETTINGS,
+}: {
+  receiptPrinter?: ReceiptPrinterType;
+  receiptSettings?: ReceiptSettings;
+}) {
   const [status, setStatus] = useState<string>("");
   const [method, setMethod] = useState<string>("");
   const [payment, setPayment] = useState<string>("settled");
@@ -168,6 +181,63 @@ export function OrdersHistoryView() {
   const [rowStatus, setRowStatus] = useState<
     Record<string, { tone: "ok" | "err"; message: string }>
   >({});
+  // Order detail drawer + the courier-assignment modal it triggers when a
+  // delivery order is handed off. reloadKey lets an action (advance) force
+  // the list to re-fetch so the row reflects the new status.
+  const [drawerOrderId, setDrawerOrderId] = useState<string | null>(null);
+  const [assignFor, setAssignFor] = useState<{ orderId: string; orderNumber: string } | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  function refresh() {
+    setReloadKey((k) => k + 1);
+  }
+
+  function nextStatusFor(o: OrderRow): Status | "delivered" {
+    if (o.status === "pending" || o.status === "confirmed") return "preparing";
+    if (o.status === "preparing" || o.status === "in_oven") return "ready";
+    if (o.status === "ready") return "out_for_delivery";
+    if (o.status === "out_for_delivery") return "delivered";
+    return o.status;
+  }
+
+  async function advance(orderId: string, to: Status | "delivered", courierId?: string) {
+    try {
+      const res = await fetch(`/api/v1/merchant/orders/${orderId}/status`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ status: to, ...(courierId ? { courier_id: courierId } : {}) }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setRowStatus((prev) => ({
+          ...prev,
+          [orderId]: { tone: "err", message: body?.error?.message ?? "עדכון הסטטוס נכשל" },
+        }));
+        return;
+      }
+      refresh();
+    } catch {
+      setRowStatus((prev) => ({
+        ...prev,
+        [orderId]: { tone: "err", message: "שגיאת רשת" },
+      }));
+    }
+  }
+
+  function handleAdvance(orderId: string) {
+    const o = orders.find((x) => x.id === orderId);
+    if (!o) return;
+    const to = nextStatusFor(o);
+    if (to === "out_for_delivery") {
+      if (o.method === "pickup") {
+        void advance(orderId, "delivered");
+        return;
+      }
+      setAssignFor({ orderId, orderNumber: o.number });
+      return;
+    }
+    void advance(orderId, to);
+  }
 
   async function restoreToKanban(orderId: string) {
     if (sendingId) return;
@@ -306,7 +376,7 @@ export function OrdersHistoryView() {
       })
       .finally(() => setLoading(false));
     return () => ctrl.abort();
-  }, [status, method, payment, from, to, debouncedSearch, page, perPage]);
+  }, [status, method, payment, from, to, debouncedSearch, page, perPage, reloadKey]);
 
   const summary = useMemo(() => {
     const totalRev = orders.reduce(
@@ -430,7 +500,9 @@ export function OrdersHistoryView() {
                   return (
                     <tr
                       key={o.id}
-                      className="border-t border-qf-line-soft hover:bg-qf-line-soft/30"
+                      onClick={() => setDrawerOrderId(o.id)}
+                      className="border-t border-qf-line-soft hover:bg-qf-line-soft/30 cursor-pointer"
+                      title="לחץ לצפייה בפרטי ההזמנה"
                     >
                       <td className="px-3 py-2 font-mono font-semibold">
                         <div className="flex items-center gap-2">
@@ -438,7 +510,10 @@ export function OrdersHistoryView() {
                           {o.kanban_hidden_at && (
                             <button
                               type="button"
-                              onClick={() => restoreToKanban(o.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                restoreToKanban(o.id);
+                              }}
                               title="הזמנה זו הוסתרה מלוח ההזמנות החיות - לחץ כדי להחזיר אותה ללוח (זה לא החזר כספי)"
                               className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-qf-yolk-soft text-qf-ink2 text-[10px] font-medium hover:bg-qf-yolk-soft/80"
                             >
@@ -476,7 +551,7 @@ export function OrdersHistoryView() {
                       <td className="px-3 py-2 tnum font-medium text-end">
                         {formatPrice(o.total)}
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                         <ReviewCell
                           order={o}
                           rowStatus={rowStatus[o.id]}
@@ -518,6 +593,29 @@ export function OrdersHistoryView() {
           </div>
         )}
       </div>
+
+      {drawerOrderId && (
+        <OrderDrawer
+          orderId={drawerOrderId}
+          receiptPrinter={receiptPrinter}
+          receiptSettings={receiptSettings}
+          onClose={() => setDrawerOrderId(null)}
+          onAdvance={(id) => {
+            handleAdvance(id);
+            setDrawerOrderId(null);
+          }}
+        />
+      )}
+
+      {assignFor && (
+        <AssignCourierModal
+          orderNumber={assignFor.orderNumber}
+          onAssign={async (courierId) => {
+            await advance(assignFor.orderId, "out_for_delivery", courierId);
+          }}
+          onClose={() => setAssignFor(null)}
+        />
+      )}
     </div>
   );
 }
