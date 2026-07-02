@@ -500,22 +500,20 @@ function ZoneFields({
             className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
           />
         </Field>
-        <Field label="מינימום הזמנה (₪)">
+        <Field label="מינימום הזמנה (₪) · 0 = ללא">
           <input
             type="number"
             min={0}
-            placeholder="0 = ללא מינימום"
-            value={draft.minOrder || ""}
+            value={draft.minOrder}
             onChange={(e) => onChange({ ...draft, minOrder: parseInt(e.target.value, 10) || 0 })}
             className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
           />
         </Field>
-        <Field label="משלוח חינם בקנייה מעל (₪)">
+        <Field label="משלוח חינם בקנייה מעל (₪) · 0 = ללא">
           <input
             type="number"
             min={0}
-            placeholder="0 = ללא"
-            value={draft.freeDeliveryAbove || ""}
+            value={draft.freeDeliveryAbove}
             onChange={(e) => onChange({ ...draft, freeDeliveryAbove: parseInt(e.target.value, 10) || 0 })}
             className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
           />
