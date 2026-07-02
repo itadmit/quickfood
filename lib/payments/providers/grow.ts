@@ -350,20 +350,21 @@ export class GrowProvider extends BasePaymentProvider {
         body.maxPaymentNum = Math.min(maxInstallments, 12);
       }
 
-      // Bank transfer (Grow transactionType 15) is off by default - it's a
-      // poor fit for food orders. `transactionType[]` is a "display these
-      // methods" whitelist, so omitting 15 hides it. IMPORTANT: Grow ignores
-      // the whole whitelist if it lists a method the merchant's page isn't
-      // set up for (e.g. Apple/Google Pay), and bank transfer reappears - so
-      // we whitelist only the standard IL consumer bundle every Grow food
-      // account has: credit card (1), Bit (6), PayBox (5). When the merchant
-      // opts in we send nothing and Grow shows the account default (incl. 15).
+      // Bank transfer is a poor fit for food orders, so it's off by default.
+      // Grow's SDK-wallet method filter is `transactionTypes[]` (PLURAL) where
+      // the INDEX is a fixed method slot and the value is that method's code:
+      //   [0]=credit(1) [1]=bit(6) [2]=Apple Pay(13) [3]=Google Pay(14)
+      //   [4]=bank transfer(15) [5]=PayBox(5)
+      // Presence of a slot = "show this method". To hide bank transfer we send
+      // the standard IL bundle (credit + bit + PayBox) and OMIT slot [4].
+      // (Earlier this used the singular `transactionType[i]` with positional
+      // codes - Grow silently ignored it, so bank transfer kept showing.)
       const bankTransferEnabled =
         this.config!.settings?.bankTransferEnabled === true;
       if (!bankTransferEnabled) {
-        [1, 6, 5].forEach((t, i) => {
-          body[`transactionType[${i}]`] = t;
-        });
+        body["transactionTypes[0]"] = 1; // credit card
+        body["transactionTypes[1]"] = 6; // bit
+        body["transactionTypes[5]"] = 5; // PayBox
       }
 
       if (!this.config!.testMode) {
