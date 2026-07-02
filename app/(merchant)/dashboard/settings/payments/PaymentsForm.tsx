@@ -249,14 +249,14 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
               label="מצב פעולה"
               hint={
                 v.grow.test_mode
-                  ? "Sandbox = בדיקות בלבד. משתמש בקרדנציאלים המשותפים של QuickFood - אין צורך למלא כלום נוסף."
-                  : "Production = חיוב כרטיסים אמיתיים. חובה למלא רק User ID של העסק (apiKey + pageCode מסופקים על ידי הפלטפורמה)."
+                  ? "סביבת טסטים = בדיקות בלבד. משתמש בקרדנציאלים המשותפים של QuickFood - אין צורך למלא כלום נוסף."
+                  : "מסוף חי = חיוב כרטיסים אמיתיים. חובה למלא רק User ID של העסק (apiKey + pageCode מסופקים על ידי הפלטפורמה)."
               }
             >
               <Toggle
-                checked={v.grow.test_mode}
-                onChange={(b) => setGrow("test_mode", b)}
-                label={v.grow.test_mode ? "Sandbox" : "Production"}
+                checked={!v.grow.test_mode}
+                onChange={(b) => setGrow("test_mode", !b)}
+                label={v.grow.test_mode ? "סביבת טסטים" : "מסוף חי"}
               />
             </Field>
             <Field
@@ -292,7 +292,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
           {v.grow.test_mode ? (
             <div className="rounded-xl bg-qf-green-soft/40 border border-qf-green-deep/20 px-4 py-3 text-sm space-y-1">
               <div className="font-bold text-qf-green-deep">
-                Sandbox פעיל - אין צורך במילוי
+סביבת טסטים פעילה - אין צורך במילוי
               </div>
               <p className="text-qf-ink2 leading-relaxed">
                 QuickFood משתמשת בקרדנציאלים המשותפים של Grow לסנדבוקס.
@@ -303,7 +303,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
           ) : (
             <>
               <div className="rounded-xl bg-qf-yolk-soft/60 border border-qf-yolk/30 px-4 py-3 text-sm">
-                <div className="font-bold mb-1">Production - מלא רק User ID</div>
+                <div className="font-bold mb-1">מסוף חי - מלא רק User ID</div>
                 <p className="text-qf-ink2 leading-relaxed">
                   המזהה מגיע במייל אישור החיוב לייב של Grow (&quot;מצ&quot;ב הפרטים ל-API לייב&quot;).
                   ה-apiKey וה-pageCode הם של הפלטפורמה - מוגדרים אצלנו במערכת, לא במסעדה.
