@@ -46,51 +46,78 @@ export const POST = handler(async (req: Request) => {
       id: true,
       slug: true,
       name: true,
+      vatNumber: true,
       billingCustomerId: true,
       merchantUsers: {
         where: { role: "owner" },
-        select: { email: true },
+        select: { email: true, phone: true },
         take: 1,
       },
     },
   });
   if (!tenant) return apiError("not_found", "tenant not found", 404);
 
-  const ownerEmail = tenant.merchantUsers[0]?.email;
+  const owner = tenant.merchantUsers[0];
+  const ownerEmail = owner?.email;
   if (!ownerEmail) {
     return apiError("invalid_state", "אין משתמש בעלים על העסק", 409);
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "";
 
-  try {
-    // Reuse the existing billing customer if we have one; otherwise create.
-    let billingCustomerId = tenant.billingCustomerId;
-    if (!billingCustomerId) {
-      const customer = await createCustomer({
-        email: ownerEmail,
-        name: tenant.name,
-        external_id: tenant.id,
-        metadata: { tenant_id: tenant.id },
-      });
-      billingCustomerId = customer.id;
+  // Upsert the billing customer (idempotent by email on the hub) and repoint
+  // the tenant to whatever id the hub returns. Used both for first-time setup
+  // and to self-heal a stale/dangling billingCustomerId (see below).
+  const ensureBillingCustomer = async (): Promise<string> => {
+    const customer = await createCustomer({
+      email: ownerEmail,
+      name: tenant.name,
+      phone: owner?.phone ?? undefined,
+      vat_number: tenant.vatNumber ?? undefined,
+      external_id: tenant.id,
+      external_slug: tenant.slug,
+      metadata: { tenant_id: tenant.id },
+    });
+    if (customer.id !== tenant.billingCustomerId) {
       await prisma.tenant.update({
         where: { id: tenant.id },
-        data: { billingCustomerId },
+        data: { billingCustomerId: customer.id },
       });
     }
+    return customer.id;
+  };
+
+  try {
+    let billingCustomerId = tenant.billingCustomerId ?? (await ensureBillingCustomer());
 
     // subscription_setup: charge the first month's ₪299 (+VAT) so the
     // token is captured along with month 1; card_update: chargeType=3
     // verification with ₪1 hold, no recurring billing yet.
-    const setup = await createPaymentMethodSetup({
-      customer_id: billingCustomerId,
-      accept: true,
-      context_type: contextType,
-      amount: contextType === "card_update" ? 1 : 299,
-      success_url: `${appUrl}/dashboard/billing?setup=complete`,
-      failure_url: `${appUrl}/dashboard/billing?setup=failed`,
-    });
+    const runSetup = (customerId: string) =>
+      createPaymentMethodSetup({
+        customer_id: customerId,
+        accept: true,
+        context_type: contextType,
+        amount: contextType === "card_update" ? 1 : 299,
+        success_url: `${appUrl}/dashboard/billing?setup=complete`,
+        failure_url: `${appUrl}/dashboard/billing?setup=failed`,
+      });
+
+    let setup: Awaited<ReturnType<typeof runSetup>>;
+    try {
+      setup = await runSetup(billingCustomerId);
+    } catch (err) {
+      // Self-heal: a stored billingCustomerId that points to a customer which
+      // no longer exists on the hub (legacy/sandbox onboarding) makes the hub
+      // return 404 CUSTOMER_NOT_FOUND. Re-create the customer, repoint the
+      // tenant, and retry once.
+      if (err instanceof BillingHubError && err.status === 404) {
+        billingCustomerId = await ensureBillingCustomer();
+        setup = await runSetup(billingCustomerId);
+      } else {
+        throw err;
+      }
+    }
 
     return apiJson({
       setup_url: setup.payment_page_url,
