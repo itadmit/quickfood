@@ -2,6 +2,42 @@ import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { TenantPatchSchema } from "@/lib/validate";
+import { createCustomer } from "@/lib/billing-hub/client";
+
+/**
+ * Push the tenant's billing identity (name / ח.פ / phone) to the billing hub
+ * customer so future invoices carry it. Best-effort: the hub upserts by email
+ * and this must never fail the settings save. No-op if the tenant has no
+ * billing customer yet (it'll be created with these values at setup time).
+ */
+async function syncBillingCustomer(tenantId: string) {
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      vatNumber: true,
+      billingCustomerId: true,
+      merchantUsers: {
+        where: { role: "owner" },
+        select: { email: true, phone: true },
+        take: 1,
+      },
+    },
+  });
+  const owner = tenant?.merchantUsers[0];
+  if (!tenant?.billingCustomerId || !owner?.email) return;
+  await createCustomer({
+    email: owner.email,
+    name: tenant.name,
+    phone: owner.phone ?? undefined,
+    vat_number: tenant.vatNumber ?? undefined,
+    external_id: tenant.id,
+    external_slug: tenant.slug,
+    metadata: { tenant_id: tenant.id },
+  });
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -68,6 +104,16 @@ export const PATCH = handler(async (req: Request) => {
       upsellSizeNudge: body.upsell_size_nudge,
     },
   });
+
+  // When the business identity changed, propagate it to the billing customer
+  // so future invoices show the correct ח.פ / name. Fire-and-forget so a hub
+  // hiccup never blocks saving settings.
+  if (body.vat_number !== undefined || body.name !== undefined) {
+    void syncBillingCustomer(tenant.id).catch((e) =>
+      console.error("[tenant.patch] billing customer sync failed:", e),
+    );
+  }
+
   return apiJson({
     tenant: {
       id: tenant.id,
