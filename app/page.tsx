@@ -60,7 +60,7 @@ import { LeadForm } from "@/components/marketing/LeadForm";
 import { AccessibilityWidget } from "@/components/shared/AccessibilityWidget";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db/client";
-import { THEMES } from "@/lib/themes";
+import RecentClientsRow from "./_components/RecentClientsRow";
 import styles from "./page.module.css";
 
 const rubik = Rubik({
@@ -240,7 +240,7 @@ const getRecentClients = unstable_cache(
     prisma.tenant.findMany({
       where: { status: "active", logoUrl: { not: null } },
       orderBy: { createdAt: "desc" },
-      take: 6,
+      take: 9,
       select: { slug: true, name: true, logoUrl: true, logoLetter: true, themeId: true },
     }),
   ["home-recent-clients"],
@@ -265,39 +265,7 @@ async function RecentClients() {
           </p>
         </div>
 
-        <div className={styles.recentClientsRow}>
-          {clients.map((c) => {
-            const displayName = c.name.split("\n")[0].trim() || c.name;
-            return (
-              <a
-                key={c.slug}
-                href={`/s/${c.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.recentClientTile}
-                title={displayName}
-              >
-                {c.logoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={c.logoUrl}
-                    alt={displayName}
-                    loading="lazy"
-                    className={styles.recentClientLogo}
-                  />
-                ) : (
-                  <span
-                    className={styles.recentClientLetter}
-                    style={{ background: (THEMES[c.themeId] ?? THEMES.fresh).primary }}
-                  >
-                    {c.logoLetter}
-                  </span>
-                )}
-                <span className={styles.recentClientName}>{displayName}</span>
-              </a>
-            );
-          })}
-        </div>
+        <RecentClientsRow clients={clients} />
       </div>
     </section>
   );

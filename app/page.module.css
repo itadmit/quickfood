@@ -639,10 +639,11 @@
 .recentClientsTitle {
   font-family: var(--font-rubik), "Rubik", sans-serif;
   font-weight: 900;
-  font-size: clamp(28px, 3.6vw, 44px);
-  line-height: 1.02;
-  letter-spacing: -0.03em;
-  margin: 0 0 14px;
+  font-size: clamp(40px, 5.5vw, 80px);
+  line-height: 0.96;
+  letter-spacing: -0.04em;
+  margin: 0 auto 16px;
+  max-width: 20ch;
   color: var(--ink);
   text-wrap: balance;
 }
@@ -699,11 +700,14 @@
   font-weight: 600;
   color: var(--ink-2);
   line-height: 1.25;
-  max-width: 104px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   width: 100%;
+  text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
 }
 @media (max-width: 700px) {
   .recentClients { padding: 52px 0; }
@@ -801,6 +805,15 @@
 .sectionLede {
   font-size: 18px; color: var(--ink-2); line-height: 1.6;
   max-width: 56ch; font-weight: 400;
+}
+
+/* On phones every section header is center-aligned so the page reads as
+   one consistent, symmetrical column - matches the recent-clients strip. */
+@media (max-width: 700px) {
+  .sectionEyebrow { display: block; text-align: center; }
+  .sectionEyebrow::before { right: 50%; transform: translateX(50%); }
+  .sectionTitle,
+  .sectionLede { margin-left: auto; margin-right: auto; text-align: center; }
 }
 
 /* ─── GROW PARTNER ───────────────────────────────────────────
