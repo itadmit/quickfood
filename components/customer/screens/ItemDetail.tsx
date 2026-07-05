@@ -575,7 +575,7 @@ export function ItemDetail({
           </div>
         )}
         {item.imageNote && (
-          <span className="absolute bottom-3 start-3 z-10 px-2.5 py-1 rounded-lg bg-(--qf-primary) text-white text-[11px] font-semibold shadow-md pointer-events-none">
+          <span className="absolute bottom-3 start-3 z-10 px-2 py-0.5 rounded-md bg-black/45 backdrop-blur-sm text-white/90 text-[10px] font-medium pointer-events-none">
             {item.imageNote}
           </span>
         )}

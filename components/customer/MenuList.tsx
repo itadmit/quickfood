@@ -16,7 +16,6 @@ export interface MenuListItem {
   basePrice: number;
   artType: string | null;
   images?: string[];
-  imageNote?: string | null;
   tags: string[];
   featured?: boolean;
 }
@@ -372,11 +371,6 @@ export function MenuList({
                           <div className="text-xs text-qf-mute line-clamp-2 mt-0.5">
                             {item.description}
                           </div>
-                          {item.imageNote && (
-                            <div className="text-[10px] text-qf-mute mt-0.5">
-                              *{item.imageNote}
-                            </div>
-                          )}
                           {(tags.length > 0 || itemNotices.length > 0) && (
                             <div className="flex gap-1 mt-1.5 flex-wrap">
                               {itemNotices.map((n) => (
