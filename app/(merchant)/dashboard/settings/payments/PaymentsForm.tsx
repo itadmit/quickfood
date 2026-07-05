@@ -16,6 +16,7 @@ interface GrowState {
   api_key: string;
   max_installments: number;
   bank_transfer_enabled: boolean;
+  apple_pay_enabled: boolean;
   apple_pay_domain_association: string;
 }
 
@@ -102,6 +103,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
             api_key: v.grow.api_key || undefined,
             max_installments: v.grow.max_installments,
             bank_transfer_enabled: v.grow.bank_transfer_enabled,
+            apple_pay_enabled: v.grow.apple_pay_enabled,
             apple_pay_domain_association: canEditApplePay
               ? v.grow.apple_pay_domain_association
               : undefined,
@@ -285,6 +287,16 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
                 checked={v.grow.bank_transfer_enabled}
                 onChange={(b) => setGrow("bank_transfer_enabled", b)}
                 label={v.grow.bank_transfer_enabled ? "מוצגת" : "מוסתרת"}
+              />
+            </Field>
+            <Field
+              label="Apple Pay"
+              hint="הצגת Apple Pay בארנק. יש להפעיל רק אחרי ש-Grow אישרו שהעמוד שלכם מוגדר ל-Apple Pay - אחרת הסינון של אמצעי התשלום מתבטל והעברה בנקאית תחזור להופיע."
+            >
+              <Toggle
+                checked={v.grow.apple_pay_enabled}
+                onChange={(b) => setGrow("apple_pay_enabled", b)}
+                label={v.grow.apple_pay_enabled ? "מוצג" : "מוסתר"}
               />
             </Field>
           </div>

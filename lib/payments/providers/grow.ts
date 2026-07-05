@@ -355,10 +355,13 @@ export class GrowProvider extends BasePaymentProvider {
       //   [0]=credit(1) [1]=bit(6) [2]=Apple Pay(13) [3]=Google Pay(14)
       //   [4]=bank transfer(15) [5]=PayBox(5)
       // Presence of a slot = "show this method". To hide bank transfer we send
-      // every other method and OMIT slot [4]. Apple/Google Pay slots are safe
-      // to always send - the SDK only renders them on capable devices, and
-      // the domain-association file is served platform-wide (one Grow blob
-      // for all storefront domains; Grow approves domains on their side).
+      // every other method and OMIT slot [4]. QuickShop-proven caveat: Grow
+      // ignores the ENTIRE whitelist when it lists a method the page isn't
+      // set up for (bank transfer would reappear), so the Apple Pay slot is
+      // sent only for tenants whose Grow page has it enabled - flip the
+      // toggle in dashboard settings/payments after Grow confirms the page.
+      // The domain-association file itself is platform-wide (one Grow blob
+      // for every storefront domain; Grow approves domains on their side).
       // (Earlier this used the singular `transactionType[i]` with positional
       // codes - Grow silently ignored it, so bank transfer kept showing.)
       const bankTransferEnabled =
@@ -366,9 +369,10 @@ export class GrowProvider extends BasePaymentProvider {
       if (!bankTransferEnabled) {
         body["transactionTypes[0]"] = 1; // credit card
         body["transactionTypes[1]"] = 6; // bit
-        body["transactionTypes[2]"] = 13; // Apple Pay
-        body["transactionTypes[3]"] = 14; // Google Pay
         body["transactionTypes[5]"] = 5; // PayBox
+        if (this.config!.settings?.applePayEnabled === true) {
+          body["transactionTypes[2]"] = 13; // Apple Pay
+        }
       }
 
       if (!this.config!.testMode) {

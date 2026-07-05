@@ -16,6 +16,7 @@ interface GrowCredentials {
 interface GrowSettings {
   maxInstallments?: number;
   bankTransferEnabled?: boolean;
+  applePayEnabled?: boolean;
 }
 
 export default async function PaymentsSettingsPage() {
@@ -58,6 +59,7 @@ export default async function PaymentsSettingsPage() {
             api_key: creds.apiKey ?? "",
             max_installments: settings.maxInstallments ?? 1,
             bank_transfer_enabled: settings.bankTransferEnabled ?? false,
+            apple_pay_enabled: settings.applePayEnabled ?? false,
             apple_pay_domain_association:
               config?.applePayDomainAssociation ?? "",
           },
