@@ -58,6 +58,9 @@ import ScrollAnimations from "./_components/ScrollAnimations";
 import WoltTeaser from "./_components/WoltTeaser";
 import { LeadForm } from "@/components/marketing/LeadForm";
 import { AccessibilityWidget } from "@/components/shared/AccessibilityWidget";
+import { unstable_cache } from "next/cache";
+import { prisma } from "@/lib/db/client";
+import { THEMES } from "@/lib/themes";
 import styles from "./page.module.css";
 
 const rubik = Rubik({
@@ -140,6 +143,7 @@ export default function LandingPage() {
       <Nav />
       <Hero />
       <TrustStrip />
+      <RecentClients />
       <AcquisitionVsDirect />
       <GrowthSystem />
       <DailyGrowthManager />
@@ -219,6 +223,80 @@ function TrustStrip() {
             <span className={styles.trustPromise}>בלי כרטיס אשראי</span>
             <span className={styles.trustPromise}>ביטול בכל רגע</span>
           </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── RECENT CLIENTS ──────────────────────────────────────
+   Social-proof strip high on the page. Pulls the latest few real
+   tenants that already have a logo and shows them as Wolt-style
+   rounded logo tiles - each links to their live storefront so a
+   visitor can feel how fast a real store goes up. Cached 10min so
+   the homepage stays a near-static ISR render (one query / window). */
+const getRecentClients = unstable_cache(
+  async () =>
+    prisma.tenant.findMany({
+      where: { status: "active", logoUrl: { not: null } },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      select: { slug: true, name: true, logoUrl: true, logoLetter: true, themeId: true },
+    }),
+  ["home-recent-clients"],
+  { revalidate: 600 },
+);
+
+async function RecentClients() {
+  const clients = await getRecentClients();
+  if (clients.length < 3) return null;
+
+  return (
+    <section className={styles.recentClients}>
+      <div className={styles.container}>
+        <div className={styles.recentClientsHead}>
+          <div className={styles.sectionEyebrow}>הצטרפו לאחרונה</div>
+          <h2 className={styles.recentClientsTitle}>
+            מסעדות שכבר פתחו אתר משלהן. <em>לאחרונה.</em>
+          </h2>
+          <p className={styles.recentClientsLede}>
+            אנחנו כל כך בטוחים במערכת שאנחנו פשוט מציגים את מי שנרשם אחרון. כל
+            לוגו הוא אתר הזמנות חי - לחצו ותראו כמה זה פשוט.
+          </p>
+        </div>
+
+        <div className={styles.recentClientsRow}>
+          {clients.map((c) => {
+            const displayName = c.name.split("\n")[0].trim() || c.name;
+            return (
+              <a
+                key={c.slug}
+                href={`/s/${c.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.recentClientTile}
+                title={displayName}
+              >
+                {c.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={c.logoUrl}
+                    alt={displayName}
+                    loading="lazy"
+                    className={styles.recentClientLogo}
+                  />
+                ) : (
+                  <span
+                    className={styles.recentClientLetter}
+                    style={{ background: (THEMES[c.themeId] ?? THEMES.fresh).primary }}
+                  >
+                    {c.logoLetter}
+                  </span>
+                )}
+                <span className={styles.recentClientName}>{displayName}</span>
+              </a>
+            );
+          })}
         </div>
       </div>
     </section>
