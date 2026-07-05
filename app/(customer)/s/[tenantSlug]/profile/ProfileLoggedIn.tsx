@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Crown } from "lucide-react";
-import { IcoChev, IcoReceipt, IcoUser } from "@/components/shared/Icons";
+import { IcoChev, IcoHeart, IcoReceipt, IcoUser } from "@/components/shared/Icons";
+import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { formatPrice, formatDate, formatPhone, fullName } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
@@ -41,6 +42,16 @@ interface Order {
   createdAt: string;
 }
 
+interface FavoriteItem {
+  id: string;
+  name: string;
+  description: string;
+  basePrice: number;
+  images: string[];
+  artType: string | null;
+  available: boolean;
+}
+
 const STATUS_LABEL: Record<string, string> = {
   pending: "ממתינה",
   confirmed: "אושרה",
@@ -58,11 +69,15 @@ export function ProfileLoggedIn({
   customer,
   orders,
   loyalty,
+  favorites = [],
+  businessType = "general",
 }: {
   tenantSlug: string;
   customer: Customer;
   orders: Order[];
   loyalty?: Loyalty | null;
+  favorites?: FavoriteItem[];
+  businessType?: BusinessType;
 }) {
   const router = useRouter();
   const [firstName, setFirstName] = useState(customer.firstName || "");
@@ -219,6 +234,48 @@ export function ProfileLoggedIn({
           </div>
         )}
       </section>
+
+      {favorites.length > 0 && (
+        <section className="px-5 mt-4 lg:px-0 lg:mt-5">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="font-semibold flex items-center gap-1.5">
+              <IcoHeart s={16} c="#dc2626" fill="#dc2626" />
+              המועדפים שלי
+            </h2>
+            <span className="text-xs text-qf-mute tnum">{favorites.length}</span>
+          </div>
+          <div className="space-y-2">
+            {favorites.map((f) => (
+              <Link
+                key={f.id}
+                href={`/s/${tenantSlug}?item=${f.id}`}
+                className="bg-white rounded-2xl border border-qf-line p-3 flex items-center gap-3"
+              >
+                <MenuItemImage
+                  src={f.images[0]}
+                  alt={f.name}
+                  businessType={businessType}
+                  size={56}
+                  rounded="xl"
+                  className="w-14 h-14 shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm truncate">{f.name}</div>
+                  {f.description && (
+                    <div className="text-xs text-qf-mute truncate mt-0.5">{f.description}</div>
+                  )}
+                </div>
+                <div className="shrink-0 text-end">
+                  <div className="tnum font-semibold text-sm">{formatPrice(f.basePrice)}</div>
+                  {!f.available && (
+                    <div className="text-[10px] text-qf-tomato mt-0.5">לא זמין כרגע</div>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="px-5 mt-4 lg:px-0 lg:mt-5">
         <div className="bg-white rounded-2xl border border-qf-line divide-y divide-qf-line">

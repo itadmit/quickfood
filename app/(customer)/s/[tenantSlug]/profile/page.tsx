@@ -40,7 +40,7 @@ export default async function ProfilePage({
     );
   }
 
-  const [customer, orders] = await Promise.all([
+  const [customer, orders, favorites] = await Promise.all([
     prisma.customer.findUnique({
       where: { id: session.userId },
       select: { id: true, firstName: true, lastName: true, phone: true, email: true, createdAt: true },
@@ -50,6 +50,23 @@ export default async function ProfilePage({
       orderBy: { createdAt: "desc" },
       take: 10,
       select: { id: true, number: true, status: true, total: true, createdAt: true },
+    }),
+    prisma.favorite.findMany({
+      where: { customerId: session.userId, item: { tenantId: tenant.id } },
+      orderBy: { createdAt: "desc" },
+      include: {
+        item: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            basePrice: true,
+            images: true,
+            artType: true,
+            available: true,
+          },
+        },
+      },
     }),
   ]);
 
@@ -69,6 +86,16 @@ export default async function ProfilePage({
       <ProfileLoggedIn
         tenantSlug={tenantSlug}
         loyalty={loyalty}
+        businessType={tenant.businessType}
+        favorites={favorites.map((f) => ({
+          id: f.item.id,
+          name: f.item.name,
+          description: f.item.description,
+          basePrice: f.item.basePrice,
+          images: f.item.images,
+          artType: f.item.artType,
+          available: f.item.available,
+        }))}
         customer={{
           id: customer.id,
           firstName: customer.firstName,
