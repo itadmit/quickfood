@@ -70,27 +70,58 @@ const STATUS_LABEL: Record<string, string> = {
   trial: "ניסיון",
 };
 
+type FilterKey = "paying" | "live" | "ready" | "setup" | "cold" | "wolt" | "unverified";
+
+const FILTERS: Record<FilterKey, (t: Tenant) => boolean> = {
+  paying: (t) => t.isPaying,
+  live: (t) => t.ordersCount > 0,
+  ready: (t) => t.ordersCount === 0 && t.menuItemsCount > 0,
+  setup: (t) => t.ordersCount === 0 && t.menuItemsCount === 0 && !!t.lastLoginAt,
+  cold: (t) => !t.lastLoginAt && t.menuItemsCount === 0 && t.ordersCount === 0,
+  wolt: (t) => !!t.woltCommittedAt,
+  unverified: (t) => !t.ownerVerified,
+};
+
 export function TenantsList({ tenants }: { tenants: Tenant[] }) {
   const [items] = useState(tenants);
   const [messageTo, setMessageTo] = useState<Tenant | null>(null);
+  const [filter, setFilter] = useState<FilterKey | null>(null);
 
   const counts = {
     total: items.length,
-    paying: items.filter((t) => t.isPaying).length,
-    live: items.filter((t) => t.ordersCount > 0).length,
-    ready: items.filter((t) => t.ordersCount === 0 && t.menuItemsCount > 0).length,
-    setup: items.filter((t) => t.ordersCount === 0 && t.menuItemsCount === 0 && t.lastLoginAt).length,
-    cold: items.filter((t) => !t.lastLoginAt && t.menuItemsCount === 0 && t.ordersCount === 0).length,
-    wolt: items.filter((t) => !!t.woltCommittedAt).length,
-    unverified: items.filter((t) => !t.ownerVerified).length,
+    paying: items.filter(FILTERS.paying).length,
+    live: items.filter(FILTERS.live).length,
+    ready: items.filter(FILTERS.ready).length,
+    setup: items.filter(FILTERS.setup).length,
+    cold: items.filter(FILTERS.cold).length,
+    wolt: items.filter(FILTERS.wolt).length,
+    unverified: items.filter(FILTERS.unverified).length,
   };
+
+  const visible = filter ? items.filter(FILTERS[filter]) : items;
+  const toggle = (key: FilterKey) => setFilter((cur) => (cur === key ? null : key));
 
   return (
     <div className="space-y-5">
       <header className="flex items-end justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold">לקוחות הפלטפורמה</h1>
-          <p className="text-sm text-qf-mute">{counts.total} מסעדות רשומות</p>
+          <p className="text-sm text-qf-mute">
+            {filter ? (
+              <>
+                מציג {visible.length} מתוך {counts.total} · {FILTER_LABEL[filter]}{" "}
+                <button
+                  type="button"
+                  onClick={() => setFilter(null)}
+                  className="text-(--qf-primary) hover:underline font-medium"
+                >
+                  נקה סינון
+                </button>
+              </>
+            ) : (
+              `${counts.total} מסעדות רשומות`
+            )}
+          </p>
         </div>
         <Link
           href="/admin/tenants/new"
@@ -101,13 +132,13 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
       </header>
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-        <StatCard label="מנויים משלמים" value={counts.paying} tone="text-qf-green-deep" hint="מנוי פלטפורמה פעיל בתשלום" />
-        <StatCard label="מזמינים בפועל" value={counts.live} tone="text-qf-green-deep" hint="לפחות הזמנה אחת" />
-        <StatCard label="תפריט מוכן" value={counts.ready} tone="text-(--qf-deep)" hint="הוסיפו מוצרים, עדיין בלי הזמנה" />
-        <StatCard label="באמצע הקמה" value={counts.setup} tone="text-qf-ink2" hint="נכנסו, אין תפריט" />
-        <StatCard label="לא נכנסו" value={counts.cold} tone="text-qf-mute" hint="הירשמו ולא חזרו" />
-        <StatCard label="ייבאו מוולט" value={counts.wolt} tone="text-qf-ink" hint="פעולת import הושלמה" />
-        <StatCard label="אימייל לא מאומת" value={counts.unverified} tone="text-qf-tomato" hint="בעלי החנות שלא לחצו על הלינק" />
+        <StatCard filterKey="paying" active={filter === "paying"} onSelect={toggle} label="מנויים משלמים" value={counts.paying} tone="text-qf-green-deep" hint="מנוי פלטפורמה פעיל בתשלום" />
+        <StatCard filterKey="live" active={filter === "live"} onSelect={toggle} label="מזמינים בפועל" value={counts.live} tone="text-qf-green-deep" hint="לפחות הזמנה אחת" />
+        <StatCard filterKey="ready" active={filter === "ready"} onSelect={toggle} label="תפריט מוכן" value={counts.ready} tone="text-(--qf-deep)" hint="הוסיפו מוצרים, עדיין בלי הזמנה" />
+        <StatCard filterKey="setup" active={filter === "setup"} onSelect={toggle} label="באמצע הקמה" value={counts.setup} tone="text-qf-ink2" hint="נכנסו, אין תפריט" />
+        <StatCard filterKey="cold" active={filter === "cold"} onSelect={toggle} label="לא נכנסו" value={counts.cold} tone="text-qf-mute" hint="הירשמו ולא חזרו" />
+        <StatCard filterKey="wolt" active={filter === "wolt"} onSelect={toggle} label="ייבאו מוולט" value={counts.wolt} tone="text-qf-ink" hint="פעולת import הושלמה" />
+        <StatCard filterKey="unverified" active={filter === "unverified"} onSelect={toggle} label="אימייל לא מאומת" value={counts.unverified} tone="text-qf-tomato" hint="בעלי החנות שלא לחצו על הלינק" />
       </div>
 
       <div className="bg-white rounded-2xl border border-qf-line-dash overflow-hidden">
@@ -120,16 +151,16 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
           <div>כניסה אחרונה</div>
           <div></div>
         </div>
-        {items.map((t) => (
+        {visible.map((t) => (
           <TenantRow
             key={t.id}
             t={t}
             onMessage={(tn) => setMessageTo(tn)}
           />
         ))}
-        {items.length === 0 && (
+        {visible.length === 0 && (
           <div className="px-5 py-10 text-center text-sm text-qf-mute">
-            עדיין אין מסעדות. הוסף את הראשונה.
+            {filter ? "אין מסעדות בסינון הזה." : "עדיין אין מסעדות. הוסף את הראשונה."}
           </div>
         )}
       </div>
@@ -391,13 +422,49 @@ function LabeledCell({
   );
 }
 
-function StatCard({ label, value, tone, hint }: { label: string; value: number; tone: string; hint: string }) {
+const FILTER_LABEL: Record<FilterKey, string> = {
+  paying: "מנויים משלמים",
+  live: "מזמינים בפועל",
+  ready: "תפריט מוכן",
+  setup: "באמצע הקמה",
+  cold: "לא נכנסו",
+  wolt: "ייבאו מוולט",
+  unverified: "אימייל לא מאומת",
+};
+
+function StatCard({
+  filterKey,
+  active,
+  onSelect,
+  label,
+  value,
+  tone,
+  hint,
+}: {
+  filterKey: FilterKey;
+  active: boolean;
+  onSelect: (key: FilterKey) => void;
+  label: string;
+  value: number;
+  tone: string;
+  hint: string;
+}) {
   return (
-    <div className="bg-white rounded-xl border border-qf-line-dash px-4 py-3">
+    <button
+      type="button"
+      onClick={() => onSelect(filterKey)}
+      aria-pressed={active}
+      className={cn(
+        "text-right bg-white rounded-xl border px-4 py-3 transition-colors cursor-pointer hover:border-(--qf-primary)",
+        active
+          ? "border-(--qf-primary) ring-1 ring-(--qf-primary) bg-(--qf-soft)/40"
+          : "border-qf-line-dash",
+      )}
+    >
       <div className={cn("text-2xl font-bold tnum", tone)}>{value}</div>
       <div className="text-xs font-medium mt-0.5">{label}</div>
       <div className="text-[10px] text-qf-mute mt-0.5">{hint}</div>
-    </div>
+    </button>
   );
 }
 
