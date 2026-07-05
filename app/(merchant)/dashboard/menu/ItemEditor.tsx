@@ -83,6 +83,7 @@ interface ItemData {
   artType: string | null;
   imageUrl: string | null;
   images: string[];
+  imageNote: string | null;
   available: boolean;
   tags: string[];
   sku: string | null;
@@ -105,6 +106,7 @@ const EMPTY_ITEM: ItemData = {
   artType: null,
   imageUrl: null,
   images: [],
+  imageNote: null,
   available: true,
   tags: [],
   sku: null,
@@ -251,6 +253,7 @@ export function ItemEditor({
         art_type: data.artType ?? undefined,
         image_url: data.imageUrl ?? undefined,
         images: data.images,
+        image_note: data.imageNote?.trim() ? data.imageNote.trim() : null,
         available: data.available,
         tags: data.tags,
         position: 0,
@@ -511,6 +514,32 @@ export function ItemEditor({
               multiple
               max={5}
             />
+            <div className="pt-2 border-t border-qf-line-soft space-y-2">
+              <label className="text-sm inline-flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={data.imageNote !== null}
+                  onChange={(e) =>
+                    update("imageNote", e.target.checked ? "התמונה להמחשה בלבד" : null)
+                  }
+                />
+                הוסף הערה לתמונה
+              </label>
+              {data.imageNote !== null && (
+                <>
+                  <input
+                    value={data.imageNote}
+                    onChange={(e) => update("imageNote", e.target.value)}
+                    maxLength={80}
+                    placeholder="התמונה להמחשה בלבד"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-base lg:text-sm"
+                  />
+                  <p className="text-xs text-qf-mute">
+                    יוצג כמדבקה קטנה על תמונת המוצר בעמוד המוצר, וכטקסט קטן בכרטיס בתפריט.
+                  </p>
+                </>
+              )}
+            </div>
           </section>
 
           {/* Sizes */}

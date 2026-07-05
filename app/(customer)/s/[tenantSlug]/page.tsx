@@ -308,6 +308,7 @@ export default async function HomePage({
         basePrice: i.basePrice,
         artType: i.artType,
         images: i.images,
+        imageNote: i.imageNote,
         tags: i.tags,
         featured: i.featured,
       }))}

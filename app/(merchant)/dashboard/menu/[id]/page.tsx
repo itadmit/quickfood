@@ -97,6 +97,7 @@ export default async function ItemEditPage({
         artType: item.artType,
         imageUrl: item.imageUrl,
         images: item.images,
+        imageNote: item.imageNote,
         available: item.available,
         tags: item.tags,
         sku: item.sku,

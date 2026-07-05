@@ -9,7 +9,7 @@ export type MenuItemForCustomer = NonNullable<
 export function loadMenuItemForCustomer(tenantSlug: string, itemId: string) {
   return unstable_cache(
     () => _fetch(tenantSlug, itemId),
-    ["menu-item", tenantSlug, itemId],
+    ["menu-item", "v2", tenantSlug, itemId],
     { tags: [`menu-item-${itemId}`], revalidate: false },
   )();
 }
@@ -45,6 +45,7 @@ async function _fetch(tenantSlug: string, itemId: string) {
       basePrice: row.basePrice,
       artType: row.artType,
       images: row.images,
+      imageNote: row.imageNote,
       tags: row.tags,
       sizes: row.sizes.map((s) => ({
         id: s.id,

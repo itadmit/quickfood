@@ -629,6 +629,10 @@ model MenuItem {
   description String       @default("")
   imageUrl    String?      @map("image_url")
   images      String[]     @default([])
+  // Optional disclaimer shown on the item image ("התמונה להמחשה בלבד").
+  // NULL = off. Rendered as a corner sticker on the item page and as
+  // small plain text on the menu card.
+  imageNote   String?      @map("image_note")
   artType     String?      @map("art_type")
   basePrice   Int          @map("base_price")
   prepMinutes Int          @default(10) @map("prep_minutes")

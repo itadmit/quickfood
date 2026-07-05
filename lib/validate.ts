@@ -248,6 +248,7 @@ export const MenuItemInputSchema = z.object({
   art_type: z.string().max(40).optional(),
   image_url: z.string().url().optional(),
   images: z.array(z.string().url()).max(10).default([]),
+  image_note: z.string().max(80).nullable().optional(),
   available: z.boolean().default(true),
   tags: z.array(z.string()).default([]),
   position: z.number().int().default(0),

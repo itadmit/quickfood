@@ -65,6 +65,7 @@ interface ItemData {
   basePrice: number;
   artType: string | null;
   images?: string[];
+  imageNote?: string | null;
   tags: string[];
   sizes: Size[];
   optionGroups: OptionGroup[];
@@ -572,6 +573,11 @@ export function ItemDetail({
             />
             <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-black/30 to-transparent pointer-events-none" />
           </div>
+        )}
+        {item.imageNote && (
+          <span className="absolute bottom-3 start-3 z-10 px-2.5 py-1 rounded-lg bg-(--qf-primary) text-white text-[11px] font-semibold shadow-md pointer-events-none">
+            {item.imageNote}
+          </span>
         )}
         {!inModal && (
           <Link
