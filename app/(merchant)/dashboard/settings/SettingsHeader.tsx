@@ -53,7 +53,7 @@ export function SettingsHeader({ subtitle }: { subtitle: string }) {
         </div>
       </div>
 
-      <nav className="bg-white border-t-2 border-black px-2.5 py-2 flex gap-1.5 overflow-x-auto no-scrollbar">
+      <nav className="bg-white border-t-2 border-black px-2.5 pt-2 pb-1.5 flex gap-1.5 overflow-x-auto qf-hscroll">
         {TABS.map((tab) => {
           const isActive = path.startsWith(tab.href);
           return (

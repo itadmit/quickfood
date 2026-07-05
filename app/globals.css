@@ -374,6 +374,38 @@ label[for][class*="shadow-[0_"] {
   -ms-overflow-style: none;
 }
 
+/* ─── Custom thin scrollbar for horizontal tab strips ─────────
+   Hidden on touch (swipe works there); visible thin bar on
+   mouse/trackpad devices so desktop users can actually scroll. */
+.qf-hscroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.qf-hscroll::-webkit-scrollbar {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .qf-hscroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+    -ms-overflow-style: auto;
+  }
+  .qf-hscroll::-webkit-scrollbar {
+    display: block;
+    height: 6px;
+  }
+  .qf-hscroll::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 99px;
+  }
+  .qf-hscroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.5);
+  }
+  .qf-hscroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
 /* ─── Print (Order Drawer) ───────────────────────────────────── */
 /* The print path renders only the .qf-print-receipt block - everything
    else is force-hidden. The receipt itself is mounted in the React
