@@ -385,14 +385,18 @@ label[for][class*="shadow-[0_"] {
   display: none;
 }
 @media (hover: hover) and (pointer: fine) {
+  /* scrollbar-width MUST stay `auto` here: any other value makes Chrome
+     ignore the ::-webkit-scrollbar customization below entirely, and the
+     bar vanishes on desktop. Firefox (no webkit pseudo) gets the thin
+     native bar via the @supports block. */
   .qf-hscroll {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+    scrollbar-width: auto;
     -ms-overflow-style: auto;
   }
   .qf-hscroll::-webkit-scrollbar {
     display: block;
     height: 6px;
+    background: transparent;
   }
   .qf-hscroll::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, 0.3);
@@ -403,6 +407,12 @@ label[for][class*="shadow-[0_"] {
   }
   .qf-hscroll::-webkit-scrollbar-track {
     background: transparent;
+  }
+  @supports not selector(::-webkit-scrollbar) {
+    .qf-hscroll {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+    }
   }
 }
 
