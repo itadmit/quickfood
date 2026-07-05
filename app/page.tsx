@@ -143,9 +143,9 @@ export default function LandingPage() {
       <Nav />
       <Hero />
       <TrustStrip />
-      <RecentClients />
       <AcquisitionVsDirect />
       <GrowthSystem />
+      <RecentClients />
       <DailyGrowthManager />
       <SuitedFor />
       <BornForFood />
@@ -252,7 +252,7 @@ async function RecentClients() {
   if (clients.length < 3) return null;
 
   return (
-    <section className={styles.recentClients}>
+    <section id="examples" className={styles.recentClients}>
       <div className={styles.container}>
         <div className={styles.recentClientsHead}>
           <div className={styles.sectionEyebrow}>הצטרפו לאחרונה</div>
@@ -655,10 +655,10 @@ function Hero() {
             התחילו 7 ימים חינם
           </Link>
           <a
-            href="#growth"
+            href="#examples"
             className={`${styles.btn} ${styles.btnGhost} ${styles.btnGhostOutline} ${styles.btnLg}`}
           >
-            בנו אתר הזמנות למסעדה <IcoArrowLeft c="currentColor" s={14} />
+            צפה בדוגמאות <IcoArrowLeft c="currentColor" s={14} />
           </a>
         </div>
 
