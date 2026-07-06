@@ -110,7 +110,11 @@
   border-color: var(--ink);
   border-width: 2px;
 }
-.btnGhostOutline:hover { background: var(--ink); color: white; }
+/* hover-capable devices only - on touch, tapping "sticks" the :hover
+   state and the outlined button stays painted black. */
+@media (hover: hover) {
+  .btnGhostOutline:hover { background: var(--ink); color: white; }
+}
 /* Primary CTA - black pill, white text. Triolla-style "צור קשר" feel,
    pops on both the yellow hero and the cream body sections. */
 .btnInk {
@@ -156,11 +160,13 @@
   border-radius: 999px;
   box-shadow: 0 4px 0 var(--ink);
 }
-.btnGhostOutline:hover {
-  background: var(--ink);
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 var(--ink);
+@media (hover: hover) {
+  .btnGhostOutline:hover {
+    background: var(--ink);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 var(--ink);
+  }
 }
 .btnGhostOutline:active {
   transform: translateY(0);
