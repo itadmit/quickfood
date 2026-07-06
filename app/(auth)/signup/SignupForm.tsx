@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Sparkles, MapPin, User, Check, X, Star, Camera, FileText } from "lucide-react";
-import { IcoArrowLeft, IcoArrowRight } from "@/components/shared/Icons";
+import { IcoArrowLeft, IcoArrowRight, IcoWhatsApp } from "@/components/shared/Icons";
 import { CameraMenuCapture } from "@/components/shared/menu-capture/CameraMenuCapture";
 import { stashMenuFile } from "@/lib/menu-import/handoff";
 import { SignupOtpModal } from "@/components/auth/SignupOtpModal";
@@ -537,6 +537,10 @@ export function SignupForm() {
 const MENU_FILE_ACCEPT = "application/pdf,image/png,image/jpeg,image/webp";
 const MENU_FILE_MAX = 15 * 1024 * 1024;
 
+const WHATSAPP_IMPORT_PHONE = "972552554432";
+const WHATSAPP_IMPORT_MESSAGE =
+  "שלום, נרשמתי ל-QuickFood ואשמח שתזינו לי את התפריט. שולח/ת כאן את התפריט ותמונות המנות.";
+
 function Step0Url({
   woltUrl,
   setWoltUrl,
@@ -556,6 +560,7 @@ function Step0Url({
   const [expanded, setExpanded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [waOpen, setWaOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   function onFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
@@ -645,6 +650,31 @@ function Step0Url({
             subtitle="כבר יש לכם חנות בוולט?"
             onClick={() => setExpanded(true)}
           />
+          <ImportOption
+            icon={<IcoWhatsApp c="currentColor" s={20} />}
+            title="ייבוא בוואטסאפ"
+            subtitle="שלחו לנו את התפריט - ואנחנו נזין הכל"
+            onClick={() => setWaOpen((v) => !v)}
+          />
+          {waOpen && (
+            <div className="rounded-xl border-2 border-black bg-[#FFFBEC] px-4 py-3.5 shadow-[0_2px_0_#000] space-y-3">
+              <p className="text-sm text-black/80 leading-relaxed">
+                שלחו לנו בוואטסאפ את התפריט - קובץ, צילום או אפילו תמונה
+                נפרדת לכל מנה עם שם, מחיר ותוספות - והצוות של QuickFood יזין
+                לכם את הכל לחנות. בינתיים ממשיכים בהרשמה רגילה, והתפריט יחכה
+                לכם מוכן.
+              </p>
+              <a
+                href={`https://wa.me/${WHATSAPP_IMPORT_PHONE}?text=${encodeURIComponent(WHATSAPP_IMPORT_MESSAGE)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full px-4 py-3 rounded-xl bg-[#25D366] hover:brightness-105 text-white text-sm font-black border-2 border-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition inline-flex items-center justify-center gap-2"
+              >
+                <IcoWhatsApp c="#fff" s={18} />
+                שליחת התפריט בוואטסאפ
+              </a>
+            </div>
+          )}
           {error && (
             <div className="bg-[#FFE2DC] border-2 border-black text-black text-sm font-bold rounded-xl px-3 py-2.5 shadow-[0_2px_0_#000]">
               {error}
