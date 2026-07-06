@@ -1,25 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { IcoWhatsApp } from "@/components/shared/Icons";
 import { Modal, ModalBody } from "@/components/shared/Modal";
-import { WA_IMPORT_FLAG, WA_IMPORT_MESSAGE, WA_IMPORT_PHONE } from "@/lib/wa-import";
+import { WA_IMPORT_MESSAGE, WA_IMPORT_PHONE } from "@/lib/wa-import";
 
-export function WhatsAppImportModal({ hasMenuItems }: { hasMenuItems: boolean }) {
-  const [open, setOpen] = useState(false);
-
-  // The flag survives dismissals on purpose - the modal returns on every
-  // dashboard visit until the menu actually has items, then self-clears.
-  useEffect(() => {
-    try {
-      if (localStorage.getItem(WA_IMPORT_FLAG) !== "1") return;
-      if (hasMenuItems) {
-        localStorage.removeItem(WA_IMPORT_FLAG);
-        return;
-      }
-      setOpen(true);
-    } catch {}
-  }, [hasMenuItems]);
+// Mounted only for tenants with signupImportMethod === "whatsapp" and an
+// empty menu - so it reappears on every dashboard visit (any device) until
+// the items are actually in.
+export function WhatsAppImportModal() {
+  const [open, setOpen] = useState(true);
 
   if (!open) return null;
 

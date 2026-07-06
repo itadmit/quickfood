@@ -24,6 +24,7 @@ interface Tenant {
   menuCategoriesCount: number;
   woltCommittedAt: string | null;
   woltItemsImported: number;
+  signupImportMethod: string | null;
   lastLoginAt: string | null;
   lastOrderAt: string | null;
   ownerVerified: boolean;
@@ -32,6 +33,13 @@ interface Tenant {
   ownerEmail: string | null;
   createdAt: string;
 }
+
+const IMPORT_METHOD_LABELS: Record<string, string> = {
+  whatsapp: "וואטסאפ",
+  wolt: "וולט",
+  menu_file: "קובץ תפריט",
+  manual: "ידני",
+};
 
 type ActivityLevel = "cold" | "setup" | "ready" | "live";
 
@@ -147,7 +155,7 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
           <div>פעילות</div>
           <div>תפריט</div>
           <div>הזמנות</div>
-          <div>וולט</div>
+          <div>ייבוא</div>
           <div>כניסה אחרונה</div>
           <div></div>
         </div>
@@ -307,17 +315,35 @@ function TenantRow({
     </>
   );
 
-  const woltCell = t.woltCommittedAt ? (
-    <div>
-      <span className="text-xs bg-qf-green-soft text-qf-green-deep px-2 py-0.5 rounded-md font-medium">
-        {t.woltItemsImported || "✓"}
-      </span>
-      <div className="text-[10px] text-qf-mute mt-0.5">
-        {timeAgo(t.woltCommittedAt)}
-      </div>
+  const importMethodChip = t.signupImportMethod && (
+    <span
+      className={cn(
+        "inline-block text-[10px] px-1.5 py-0.5 rounded-md font-semibold",
+        t.signupImportMethod === "whatsapp"
+          ? "bg-[#25D366]/15 text-[#128C4A]"
+          : "bg-qf-line-soft text-qf-ink2",
+      )}
+    >
+      {IMPORT_METHOD_LABELS[t.signupImportMethod] ?? t.signupImportMethod}
+    </span>
+  );
+
+  const woltCell = (
+    <div className="space-y-0.5">
+      {importMethodChip}
+      {t.woltCommittedAt ? (
+        <div>
+          <span className="text-xs bg-qf-green-soft text-qf-green-deep px-2 py-0.5 rounded-md font-medium">
+            {t.woltItemsImported || "✓"}
+          </span>
+          <div className="text-[10px] text-qf-mute mt-0.5">
+            {timeAgo(t.woltCommittedAt)}
+          </div>
+        </div>
+      ) : (
+        !importMethodChip && <span className="text-xs text-qf-mute">-</span>
+      )}
     </div>
-  ) : (
-    <span className="text-xs text-qf-mute">-</span>
   );
 
   const lastLoginCell = (
@@ -379,7 +405,7 @@ function TenantRow({
         <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
           <LabeledCell label="תפריט">{menuCell}</LabeledCell>
           <LabeledCell label="הזמנות">{ordersCell}</LabeledCell>
-          <LabeledCell label="וולט">{woltCell}</LabeledCell>
+          <LabeledCell label="ייבוא">{woltCell}</LabeledCell>
           <LabeledCell label="כניסה אחרונה">
             <span className="text-qf-mute">{lastLoginCell}</span>
           </LabeledCell>

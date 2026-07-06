@@ -14,7 +14,6 @@ import { BusinessTypeSelect } from "@/components/shared/BusinessTypeSelect";
 import { WoltTermsTrigger, WoltTermsGateModal } from "@/components/shared/wolt/WoltTermsModal";
 import { StorefrontPreviewPhone } from "@/components/shared/wolt/StorefrontPreviewPhone";
 import { cn } from "@/lib/cn";
-import { WA_IMPORT_FLAG } from "@/lib/wa-import";
 import { track } from "@/lib/fb/pixel";
 import { gaEvent } from "@/lib/ga/gtag";
 
@@ -108,6 +107,10 @@ export function SignupForm() {
     cover: true,
   });
   const [woltOverrides, setWoltOverrides] = useState<Overrides>({});
+
+  // Merchant tapped "ייבוא בוואטסאפ" on Step 0 - persisted on the tenant
+  // so the dashboard keeps nudging them to send the menu until it's in.
+  const [waImport, setWaImport] = useState(false);
 
   // A PDF/photo menu the merchant attached on Step 0. We don't run the AI
   // extraction during signup (no tenant, no auth yet) - the file is stashed in
@@ -208,9 +211,16 @@ export function SignupForm() {
   async function submit(phoneVerifyToken: string) {
     setBusy(true);
     setError(null);
+    const importMethod = menuFileReady
+      ? "menu_file"
+      : woltUrl
+        ? "wolt"
+        : waImport
+          ? "whatsapp"
+          : "manual";
     gaEvent("signup_start", {
       business_type: businessType,
-      method: menuFileReady ? "menu_file" : woltUrl ? "wolt" : "manual",
+      method: importMethod,
     });
     try {
       const venueExtras =
@@ -245,6 +255,7 @@ export function SignupForm() {
           owner_password: ownerPassword,
           phone_verify_token: phoneVerifyToken,
           client_type: "web",
+          import_method: importMethod,
           ...venueExtras,
         }),
       });
@@ -278,7 +289,7 @@ export function SignupForm() {
         { email: ownerEmail.toLowerCase(), phone: branchPhone },
       );
       gaEvent("sign_up", {
-        method: menuFileReady ? "menu_file" : woltUrl ? "wolt" : "manual",
+        method: importMethod,
         business_type: businessType,
         currency: "ILS",
         value: 299,
@@ -371,6 +382,12 @@ export function SignupForm() {
               setWoltStage("mapping");
             }}
             onSkip={() => {
+              setWoltUrl("");
+              setWoltPreview(null);
+              setStep(1);
+            }}
+            onWhatsApp={() => {
+              setWaImport(true);
               setWoltUrl("");
               setWoltPreview(null);
               setStep(1);
@@ -544,12 +561,14 @@ function Step0Url({
   setWoltUrl,
   onPreviewed,
   onSkip,
+  onWhatsApp,
   onMenuFileChosen,
 }: {
   woltUrl: string;
   setWoltUrl: (v: string) => void;
   onPreviewed: (info: WoltPreview) => void;
   onSkip: () => void;
+  onWhatsApp: () => void;
   onMenuFileChosen: (file: File) => void;
 }) {
   const [busy, setBusy] = useState(false);
@@ -649,12 +668,7 @@ function Step0Url({
           />
           <button
             type="button"
-            onClick={() => {
-              try {
-                localStorage.setItem(WA_IMPORT_FLAG, "1");
-              } catch {}
-              onSkip();
-            }}
+            onClick={onWhatsApp}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#25D366] hover:brightness-105 text-white text-start border-2 border-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition"
           >
             <span className="shrink-0 w-10 h-10 rounded-lg bg-white/15 grid place-items-center">
@@ -665,7 +679,11 @@ function Step0Url({
                 ייבוא בוואטסאפ
               </span>
               <span className="block text-xs font-bold text-white/80">
-                שלחו לנו את התפריט אחרי ההרשמה - ואנחנו נזין הכל
+                לוחצים פה ובסיום ההרשמה תופיע אפשרות לשלוח לנו את התפריט
+                ואנחנו נזין הכל
+              </span>
+              <span className="inline-block mt-1.5 bg-white text-[#128C4A] text-[10px] font-black px-2 py-0.5 rounded-full border border-black/10">
+                הזנת התפריט על ידי נציג אנושי - ללא עלות
               </span>
             </span>
             <IcoArrowLeft c="currentColor" s={16} />

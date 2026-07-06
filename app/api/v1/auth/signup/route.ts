@@ -105,6 +105,9 @@ const SignupSchema = z.object({
     .string({ required_error: "יש לאמת את מספר הנייד" })
     .min(10, "יש לאמת את מספר הנייד"),
   client_type: z.enum(["web", "mobile"]).default("web"),
+  import_method: z
+    .enum(["manual", "wolt", "menu_file", "whatsapp"])
+    .default("manual"),
 
   // Optional fields populated by the signup wizard's Wolt pre-step.
   // Each field is opt-in (the mapping UI lets the merchant tick which
@@ -191,6 +194,7 @@ export const POST = handler(async (req: Request) => {
       businessType: body.business_type,
       cuisineType: body.cuisine_type,
       status: "active",
+      signupImportMethod: body.import_method,
       branches: {
         create: [
           {

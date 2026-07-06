@@ -358,6 +358,11 @@ model Tenant {
   // NULL = overlay hasn't been seen yet → show it on next dashboard visit.
   onboardingDismissedAt DateTime? @map("onboarding_dismissed_at")
 
+  // How the merchant chose to bring their menu in at signup:
+  // "manual" | "wolt" | "menu_file" | "whatsapp". Drives the recurring
+  // WhatsApp-import dashboard modal and the super-admin tenants view.
+  signupImportMethod String? @map("signup_import_method") @db.VarChar(20)
+
   // Which dashboard skin to render. "v2" = the bold yellow/black
   // landing-page brand language (default for all tenants). "v1" =
   // the original green/white chrome. Switchable from Settings →

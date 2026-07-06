@@ -49,7 +49,7 @@ export default async function DashboardPage({
     }),
     prisma.tenant.findUnique({
       where: { id: session.tenantId },
-      select: { dashboardVersion: true, logoUrl: true, about: true, cuisineType: true, name: true, acceptsCash: true },
+      select: { dashboardVersion: true, logoUrl: true, about: true, cuisineType: true, name: true, acceptsCash: true, signupImportMethod: true },
     }),
     prisma.merchantUser.findUnique({
       where: { id: session.userId },
@@ -89,9 +89,9 @@ export default async function DashboardPage({
     />
   ) : menufile === "1" ? (
     <MenuFileImportAutostart />
-  ) : (
-    <WhatsAppImportModal hasMenuItems={menuItemCount > 0} />
-  );
+  ) : tenant?.signupImportMethod === "whatsapp" && menuItemCount === 0 ? (
+    <WhatsAppImportModal />
+  ) : null;
 
   if (tenant?.dashboardVersion === "v2") {
     const firstName = (merchant?.name ?? "").split(/\s+/)[0] ?? "";

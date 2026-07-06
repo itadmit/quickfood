@@ -51,6 +51,7 @@ export default async function TenantsListPage() {
     menuCategoriesCount: t._count.menuCategories,
     woltCommittedAt: t.woltImports[0]?.committedAt?.toISOString() ?? null,
     woltItemsImported: t.woltImports[0]?.itemsImported ?? 0,
+    signupImportMethod: t.signupImportMethod,
     lastLoginAt:
       t.merchantUsers
         .map((u) => u.lastLoginAt)
