@@ -680,10 +680,7 @@ function Step0Url({
               </span>
               <span className="block text-xs font-bold text-white/80">
                 לוחצים פה ובסיום ההרשמה תופיע אפשרות לשלוח לנו את התפריט
-                ואנחנו נזין הכל
-              </span>
-              <span className="inline-block mt-1.5 bg-white text-[#128C4A] text-[10px] font-black px-2 py-0.5 rounded-full border border-black/10">
-                הזנת התפריט על ידי נציג אנושי - ללא עלות
+                ואנחנו נזין עבורכם הכל ללא עלות
               </span>
             </span>
             <IcoArrowLeft c="currentColor" s={16} />
