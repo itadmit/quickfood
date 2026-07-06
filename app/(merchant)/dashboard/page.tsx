@@ -90,7 +90,7 @@ export default async function DashboardPage({
   ) : menufile === "1" ? (
     <MenuFileImportAutostart />
   ) : (
-    <WhatsAppImportModal />
+    <WhatsAppImportModal hasMenuItems={menuItemCount > 0} />
   );
 
   if (tenant?.dashboardVersion === "v2") {
