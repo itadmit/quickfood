@@ -9,6 +9,7 @@ import { DashboardView } from "./DashboardView";
 import { DashboardViewV2 } from "@/components/merchant/v2/DashboardViewV2";
 import { WoltImportModal } from "./WoltImportModal";
 import { MenuFileImportAutostart } from "./MenuFileImportAutostart";
+import { WhatsAppImportModal } from "./WhatsAppImportModal";
 import { roleHome } from "@/lib/auth/merchant-access";
 
 export const dynamic = "force-dynamic";
@@ -88,7 +89,9 @@ export default async function DashboardPage({
     />
   ) : menufile === "1" ? (
     <MenuFileImportAutostart />
-  ) : null;
+  ) : (
+    <WhatsAppImportModal />
+  );
 
   if (tenant?.dashboardVersion === "v2") {
     const firstName = (merchant?.name ?? "").split(/\s+/)[0] ?? "";
