@@ -624,7 +624,7 @@
    as quiet social proof, not a full feature section. */
 .recentClients {
   padding: 72px 0;
-  background: var(--cream);
+  background: var(--paper);
   text-align: center;
 }
 .recentClientsHead {
@@ -635,6 +635,20 @@
 .recentClientsHead .sectionEyebrow::before {
   right: 50%;
   transform: translateX(50%);
+}
+/* Desktop: head aligned to the right like every other section title;
+   the logos row stays centered. Mobile keeps the centered layout. */
+@media (min-width: 701px) {
+  .recentClients { text-align: start; }
+  .recentClientsHead { max-width: none; margin: 0 0 40px; }
+  .recentClientsHead .sectionEyebrow { margin: 0; }
+  .recentClientsHead .sectionEyebrow::before {
+    right: 0;
+    transform: none;
+  }
+  .recentClientsTitle { margin: 0 0 16px; max-width: 22ch; }
+  .recentClientsLede { margin: 0; }
+  .recentClientsRow { justify-content: center; }
 }
 .recentClientsTitle {
   font-family: var(--font-rubik), "Rubik", sans-serif;
