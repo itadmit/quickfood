@@ -252,6 +252,24 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
     }
   }
 
+  async function markReady(orderId: string) {
+    // Optimistic flip to "מוכנה"; SSE-driven refresh reconciles. Also moves
+    // the order to "ready" on the orders board and fires the customer's
+    // "ההזמנה מוכנה" notification server-side.
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, status: "ready" } : o)),
+    );
+    try {
+      await fetch(`/api/v1/merchant/orders/${orderId}/status`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ status: "ready" }),
+      });
+    } catch {
+      /* refresh via SSE */
+    }
+  }
+
   function minsSince(iso: string): number | null {
     if (now == null) return null;
     return Math.max(0, Math.floor((now - new Date(iso).getTime()) / 60_000));
@@ -414,6 +432,23 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
                     );
                   })}
                 </ul>
+
+                {allPrepared &&
+                  (o.status === "ready" ? (
+                    <div className="w-full rounded-xl bg-qf-green text-white font-black text-lg py-3 text-center inline-flex items-center justify-center gap-2">
+                      <IcoCheck c="#fff" s={18} />
+                      ההזמנה מוכנה
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => markReady(o.id)}
+                      className="w-full rounded-xl bg-qf-green text-white font-black text-lg py-3 border-2 border-qf-green-deep shadow-[0_3px_0_var(--color-qf-green-deep)] active:translate-y-0.5 active:shadow-[0_1px_0_var(--color-qf-green-deep)] transition inline-flex items-center justify-center gap-2"
+                    >
+                      <IcoCheck c="#fff" s={18} />
+                      ההזמנה מוכנה
+                    </button>
+                  ))}
               </article>
             );
           })}

@@ -26,7 +26,7 @@ import { sendOrderConfirmedEmail, sendOrderCancelledEmail } from "@/lib/orders/n
 // there would silently undo wallet credits + courier assignment.
 const TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   pending: ["confirmed", "preparing", "cancelled"],
-  confirmed: ["pending", "preparing", "cancelled"],
+  confirmed: ["pending", "preparing", "ready", "cancelled"],
   preparing: ["confirmed", "in_oven", "ready", "cancelled"],
   in_oven: ["preparing", "ready", "cancelled"],
   ready: ["preparing", "in_oven", "out_for_delivery", "delivered", "cancelled"],
