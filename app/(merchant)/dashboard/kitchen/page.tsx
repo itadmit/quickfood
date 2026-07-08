@@ -6,7 +6,12 @@ import { KitchenDisplay } from "./KitchenDisplay";
 
 export const dynamic = "force-dynamic";
 
-const KITCHEN_STATUSES = ["pending", "confirmed", "preparing", "in_oven", "ready"] as const;
+// `pending` orders haven't been confirmed by the merchant yet (or are card
+// orders still awaiting Grow's payment callback). The kitchen shouldn't
+// start cooking until they flip to confirmed - matches the client refresh
+// filter in KitchenDisplay, so the initial paint doesn't flash a card that
+// the very next refresh would remove.
+const KITCHEN_STATUSES = ["confirmed", "preparing", "in_oven", "ready"] as const;
 
 export default async function KitchenPage() {
   const session = await getSession();
@@ -59,7 +64,7 @@ export default async function KitchenPage() {
         id: o.id,
         number: o.number,
         // Query was filtered to KITCHEN_STATUSES so this narrowing is sound.
-        status: o.status as "pending" | "confirmed" | "preparing" | "in_oven" | "ready",
+        status: o.status as "confirmed" | "preparing" | "in_oven" | "ready",
         method: o.method,
         customerNotes: o.customerNotes,
         createdAt: o.createdAt.toISOString(),
