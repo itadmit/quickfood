@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { computeDeliveryFee } from "@/lib/delivery-fee";
 import { matchZoneByCity, type ZoneForMatch } from "@/lib/delivery-zone-match";
 import { readDeliveryChoice, DELIVERY_CHOICE_EVENT } from "@/lib/delivery-city-storage";
+import type { BranchHours } from "@/lib/branch-hours";
 
 export type CartLineSource = "menu" | "ai_advisor" | "upsell" | "reorder";
 
@@ -101,6 +102,7 @@ interface BranchInfo {
   busyEtaBoostMinutes: number;
   freeDeliveryMinOrder?: number | null;
   freeDeliveryMinItems?: number | null;
+  hours?: BranchHours | null;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);

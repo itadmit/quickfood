@@ -267,6 +267,7 @@ function errorMessageFor(code: string): string {
     address_required: "נדרשת כתובת למשלוח",
     address_not_found: "הכתובת לא נמצאה",
     min_order_not_met: "לא הגעת לסכום מינימום להזמנה",
+    scheduled_outside_hours: "השעה שנבחרה מחוץ לשעות הפעילות של המסעדה",
   };
   return m[code] ?? code;
 }

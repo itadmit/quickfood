@@ -53,6 +53,54 @@ export interface OpenStatus {
   nextOpen: { dayLabel: string; time: string } | null;
 }
 
+/**
+ * Today's open window in minutes-from-midnight, for bounding the "schedule
+ * for later today" slot picker. closeMin is capped at 1440 (end of today)
+ * for overnight windows, since scheduling is same-day only. Returns null
+ * when the branch is not open at all today.
+ */
+export function getTodayScheduleWindowMin(
+  hours: BranchHours,
+  now = new Date(),
+): { openMin: number; closeMin: number } | null {
+  const today = hours[DAY_KEYS[now.getDay()]];
+  if (!today?.active) return null;
+  const o = toMinutes(today.open);
+  const c = toMinutes(today.close);
+  if (o === null || c === null) return null;
+  const closeMin = c <= o ? 24 * 60 : c;
+  return { openMin: o, closeMin };
+}
+
+/**
+ * True when `when` falls inside an active open window (handles overnight
+ * windows that spill from the previous day). Authoritative check used to
+ * reject scheduled orders placed outside the branch's opening hours.
+ */
+export function isWithinOpenHours(hours: BranchHours, when: Date): boolean {
+  const idx = when.getDay();
+  const whenMin = when.getHours() * 60 + when.getMinutes();
+
+  const today = hours[DAY_KEYS[idx]];
+  if (today?.active) {
+    const o = toMinutes(today.open);
+    const c = toMinutes(today.close);
+    if (o !== null && c !== null) {
+      const closeWindow = c <= o ? c + 24 * 60 : c;
+      if (whenMin >= o && whenMin < closeWindow) return true;
+    }
+  }
+
+  const yesterday = hours[DAY_KEYS[(idx + 6) % 7]];
+  if (yesterday?.active) {
+    const o = toMinutes(yesterday.open);
+    const c = toMinutes(yesterday.close);
+    if (o !== null && c !== null && c <= o && whenMin < c) return true;
+  }
+
+  return false;
+}
+
 export function getOpenStatus(hours: BranchHours, now = new Date()): OpenStatus {
   const todayIdx = now.getDay();
   const todayKey = DAY_KEYS[todayIdx];

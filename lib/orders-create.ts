@@ -6,6 +6,7 @@ import { matchZoneByCity } from "@/lib/delivery-zone-match";
 import { sendTenantPush } from "@/lib/merchant/push";
 import { priceGroupOptions } from "@/lib/option-pricing";
 import { ensureLoyaltyMember } from "@/lib/loyalty/membership";
+import { isWithinOpenHours, type BranchHours } from "@/lib/branch-hours";
 import type { Prisma } from "@prisma/client";
 
 /**
@@ -130,6 +131,15 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   // order into ASAP rather than failing the request, so an old cached
   // client doesn't get a hard 4xx.
   const scheduledFor = tenant.scheduledOrdersEnabled ? input.scheduledFor : null;
+
+  // A scheduled time must fall inside the branch's opening hours - a store
+  // that closes at 23:00 must not accept an order scheduled for 23:15.
+  if (
+    scheduledFor &&
+    !isWithinOpenHours((branch.hours ?? {}) as BranchHours, scheduledFor)
+  ) {
+    throw new CartValidationError("scheduled_outside_hours");
+  }
 
   if (input.lines.length === 0) {
     throw new CartValidationError("cart_empty");

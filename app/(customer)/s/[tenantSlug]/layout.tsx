@@ -8,6 +8,7 @@ import { CartProvider } from "@/components/customer/CartProvider";
 import { CartBundleProvider } from "@/components/customer/CartBundleProvider";
 import type { BusinessType } from "@/components/shared/MenuItemImage";
 import { MenuSearchProvider } from "@/components/customer/MenuSearchProvider";
+import type { BranchHours } from "@/lib/branch-hours";
 import { CustomerTopNav } from "@/components/customer/CustomerTopNav";
 import { ReviewPromptModal } from "@/components/customer/ReviewPromptModal";
 import { MerchantPreviewBar } from "@/components/customer/MerchantPreviewBar";
@@ -131,6 +132,7 @@ export default async function CustomerLayout({
                 busyEtaBoostMinutes: branch.busyEtaBoostMinutes,
                 freeDeliveryMinOrder: branch.freeDeliveryMinOrder,
                 freeDeliveryMinItems: branch.freeDeliveryMinItems,
+                hours: (branch.hours ?? null) as BranchHours | null,
               }
             : null
         }

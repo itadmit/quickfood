@@ -16,6 +16,7 @@ import { recordRecentOrder } from "@/lib/recent-orders-storage";
 import { recordOrderToken } from "@/lib/order-access-storage";
 import { takeCheckoutPrefill } from "@/lib/checkout-prefill";
 import { readDeliveryChoice, writeDeliveryChoice } from "@/lib/delivery-city-storage";
+import { getTodayScheduleWindowMin } from "@/lib/branch-hours";
 import { CitySelect } from "@/components/customer/CitySelect";
 import { GrowPaymentSdk, renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
 import { BusyAlertModal } from "@/components/customer/BranchStatusModal";
@@ -252,20 +253,23 @@ export function CustomerCheckout({
   // session is short enough that drift doesn't matter, and scheduledIso()
   // below already pushes past-times to tomorrow as a safety net.
   const scheduleSlots = useMemo(() => {
+    const window = branch?.hours
+      ? getTodayScheduleWindowMin(branch.hours)
+      : { openMin: 0, closeMin: 23 * 60 };
+    if (!window) return [];
+
+    const now = new Date();
+    let startMin = now.getHours() * 60 + now.getMinutes() + 30;
+    const overshoot = startMin % 15;
+    if (overshoot !== 0) startMin += 15 - overshoot;
+    startMin = Math.max(startMin, window.openMin);
+
     const out: string[] = [];
-    const start = new Date();
-    start.setMinutes(start.getMinutes() + 30);
-    const overshoot = start.getMinutes() % 15;
-    if (overshoot !== 0) start.setMinutes(start.getMinutes() + (15 - overshoot));
-    start.setSeconds(0, 0);
-    const end = new Date();
-    end.setHours(23, 0, 0, 0);
-    for (let t = start.getTime(); t <= end.getTime(); t += 15 * 60_000) {
-      const d = new Date(t);
-      out.push(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
+    for (let m = startMin; m < window.closeMin && m < 24 * 60; m += 15) {
+      out.push(`${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
     }
     return out;
-  }, []);
+  }, [branch?.hours]);
 
   /** Convert "HH:mm" to today's ISO datetime so the server gets a real
       timestamp. Returns null if the input is empty/invalid. */
