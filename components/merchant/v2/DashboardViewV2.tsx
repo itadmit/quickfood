@@ -29,6 +29,7 @@ interface TopItem {
   item_id: string | null;
   name: string;
   art_type: string | null;
+  image: string | null;
   count: number;
   revenue: number;
 }
@@ -320,7 +321,7 @@ export function DashboardViewV2({
                   <li key={it.item_id ?? i} className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 border-2 border-black">
                       <MenuItemImage
-                        src={null}
+                        src={it.image}
                         alt={it.name}
                         businessType="general"
                         size={36}

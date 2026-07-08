@@ -248,7 +248,7 @@ export async function topItems(tenantId: string, range: Range, limit = 5) {
   const ids = rows.map((r) => r.menuItemId!).filter(Boolean);
   const items = await prisma.menuItem.findMany({
     where: { id: { in: ids } },
-    select: { id: true, name: true, artType: true },
+    select: { id: true, name: true, artType: true, images: true, imageUrl: true },
   });
   const itemsById = new Map(items.map((i) => [i.id, i]));
 
@@ -258,6 +258,7 @@ export async function topItems(tenantId: string, range: Range, limit = 5) {
       item_id: r.menuItemId,
       name: item?.name ?? "פריט שנמחק",
       art_type: item?.artType ?? null,
+      image: item?.images?.[0] ?? item?.imageUrl ?? null,
       count: r._sum.quantity ?? 0,
       revenue: r._sum.totalPrice ?? 0,
     };
