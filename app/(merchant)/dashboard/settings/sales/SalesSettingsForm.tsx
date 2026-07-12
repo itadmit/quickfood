@@ -65,7 +65,7 @@ export function SalesSettingsForm({
             <div className="min-w-0">
               <div className="text-sm font-bold">באנר &quot;שדרגו לגודל גדול יותר&quot;</div>
               <div className="text-xs text-qf-mute mt-1 leading-relaxed">
-                מציג באנר בולט בעמוד הפריט (&quot;שדרגו ל-XL ב-+₪10 בלבד · שדרג&quot;) כשהלקוח בחר גודל קטן מהמקסימלי. עובד בחנות ובקיוסק. נכבה אוטומטית אם לפריט יש רק גודל אחד.
+                מציג באנר בולט בעמוד הפריט (&quot;שדרגו ל-XL בתוספת ₪10 בלבד · שדרג&quot;) כשהלקוח בחר גודל קטן מהמקסימלי. עובד בחנות ובקיוסק. נכבה אוטומטית אם לפריט יש רק גודל אחד.
               </div>
             </div>
             <input

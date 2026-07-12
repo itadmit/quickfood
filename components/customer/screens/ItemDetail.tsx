@@ -679,7 +679,7 @@ export function ItemDetail({
                   )}
                   <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
                     <span className="text-sm font-black text-(--qf-deep)">
-                      שדרגו ל-{upgradeTo.name} ב-+{formatPrice(upgradeDelta)} בלבד
+                      שדרגו ל-{upgradeTo.name} בתוספת {formatPrice(upgradeDelta)} בלבד
                     </span>
                     <span className="text-xs bg-(--qf-primary) text-white px-2 py-1 rounded-full font-bold whitespace-nowrap">
                       שדרג
