@@ -142,6 +142,7 @@ export default async function HomePage({
     popular,
     allMenuItems,
     notices,
+    activeDeals,
     customerRecentOrders,
     bannerCampaign,
     pendingReview,
@@ -167,6 +168,21 @@ export default async function HomePage({
     prisma.notice.findMany({
       where: { tenantId: tenant.id, active: true },
       orderBy: [{ position: "asc" }, { updatedAt: "desc" }],
+    }),
+    prisma.deal.findMany({
+      where: { tenantId: tenant.id, active: true },
+      orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+      include: {
+        slots: {
+          orderBy: { position: "asc" },
+          include: {
+            choices: {
+              orderBy: { position: "asc" },
+              include: { item: { select: { images: true, available: true } } },
+            },
+          },
+        },
+      },
     }),
     customerRecentOrdersPromise,
     prisma.campaign.findFirst({
@@ -321,6 +337,21 @@ export default async function HomePage({
         title: n.title,
         body: n.body,
       }))}
+      deals={activeDeals
+        .filter((d) =>
+          d.slots.every((s) => s.choices.some((c) => c.item.available)),
+        )
+        .map((d) => ({
+          id: d.id,
+          name: d.name,
+          description: d.description,
+          imageUrl: d.imageUrl,
+          fixedPrice: d.fixedPrice,
+          itemImages: d.slots
+            .flatMap((s) => s.choices.map((c) => c.item.images[0]))
+            .filter((x): x is string => !!x)
+            .slice(0, 3),
+        }))}
       popular={popularSerialized}
       recentOrders={recentOrdersSerialized}
       deliveryCities={deliveryCities}

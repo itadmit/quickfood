@@ -99,6 +99,7 @@ enum OrderItemSource {
   upsell
   reorder
   wolt
+  deal
 }
 
 enum CourierStatus {
@@ -479,6 +480,7 @@ model Tenant {
   menuCategories   MenuCategory[]
   menuItems        MenuItem[]
   bundleOffers     BundleOffer[]
+  deals            Deal[]
   coupons          Coupon[]
   merchantUsers    MerchantUser[]
   subscription     Subscription?
@@ -618,6 +620,7 @@ model MenuCategory {
 
   items    MenuItem[]
   notices  Notice[]
+  deals    Deal[]
 
   @@unique([tenantId, externalSource, externalId])
   @@index([tenantId, position])
@@ -673,6 +676,7 @@ model MenuItem {
   bundleTriggers BundleOfferTrigger[]
   bundleAddons   BundleOfferAddon[]
   bundleLinkedFor BundleOffer[] @relation("BundleLinkedItem")
+  dealSlotChoices DealSlotChoice[]
 
   @@unique([tenantId, externalSource, externalId])
   @@index([tenantId, categoryId, position])
@@ -751,6 +755,60 @@ model BundleOfferAddon {
   qty      Int         @default(1)
   @@id([bundleId, itemId])
   @@map("bundle_offer_addons")
+}
+
+/// Fixed-price meal deal composed of EXISTING menu items ("דיל זוגי -
+/// 2 מנות פלאפל/סביח + 2 פחיות - 68₪"). Each slot is one choice the
+/// customer makes (expanded ×quantity), and the choices point at live
+/// MenuItem rows - so the chosen item's option groups (תוספות) are
+/// always the current ones, no re-entry. Pricing: fixedPrice covers
+/// the base items; PAID options the customer picks are added on top.
+model Deal {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  description String   @default("")
+  imageUrl    String?  @map("image_url")
+  fixedPrice  Int      @map("fixed_price")
+  active      Boolean  @default(true)
+  position    Int      @default(0)
+  // Optional placement inside a regular menu category, in addition to
+  // the dedicated deals rail at the top of the storefront.
+  categoryId String?       @map("category_id") @db.Uuid
+  category   MenuCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  slots DealSlot[]
+
+  @@index([tenantId, active, position])
+  @@map("deals")
+}
+
+model DealSlot {
+  id       String @id @default(uuid()) @db.Uuid
+  dealId   String @map("deal_id") @db.Uuid
+  deal     Deal   @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  name     String
+  quantity Int    @default(1)
+  position Int    @default(0)
+
+  choices DealSlotChoice[]
+
+  @@index([dealId])
+  @@map("deal_slots")
+}
+
+model DealSlotChoice {
+  slotId   String   @map("slot_id") @db.Uuid
+  slot     DealSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  itemId   String   @map("item_id") @db.Uuid
+  item     MenuItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  position Int      @default(0)
+
+  @@id([slotId, itemId])
+  @@map("deal_slot_choices")
 }
 
 /// Customer "heart" on a menu item - single global favorites list per

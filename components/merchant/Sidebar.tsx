@@ -21,6 +21,7 @@ const NAV: NavItem[] = [
   { href: "/dashboard/menu", label: "מוצרים", Icon: IcoMenu, exact: true },
   { href: "/dashboard/categories", label: "קטגוריות", Icon: IcoMenuList },
   { href: "/dashboard/menu/modifiers", label: "קטלוג תוספות", Icon: IcoMenuList },
+  { href: "/dashboard/menu/deals", label: "דילים", Icon: IcoMenuList },
   { href: "/dashboard/menu/notices", label: "הודעות", Icon: IcoMenuList },
   { href: "/dashboard/analytics", label: "אנליטיקס", Icon: IcoChart },
   { href: "/dashboard/campaigns", label: "קמפיינים", Icon: IcoMegaphone },

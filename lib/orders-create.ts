@@ -93,6 +93,25 @@ export interface CreateOrderInput {
    *  true preserves the legacy storefront flow. */
   linkGuestCustomer?: boolean;
   lines: CartLineInput[];
+  /** Fixed-price deals composed in the storefront. Priced server-side:
+   *  Deal.fixedPrice + paid extras on the chosen units. */
+  deals?: DealLineInput[];
+}
+
+/** One customer choice inside a deal - which item fills a slot unit and
+ *  which of THAT item's options were picked. Paid options are charged on
+ *  top of the deal's fixed price; the base item price is covered by it. */
+export interface DealUnitInput {
+  slot_id: string;
+  item_id: string;
+  option_ids?: string[];
+}
+
+export interface DealLineInput {
+  deal_id: string;
+  quantity: number;
+  units: DealUnitInput[];
+  notes?: string | null;
 }
 
 export interface CreateOrderResult {
@@ -141,14 +160,20 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     throw new CartValidationError("scheduled_outside_hours");
   }
 
-  if (input.lines.length === 0) {
+  const dealLines = input.deals ?? [];
+  if (input.lines.length === 0 && dealLines.length === 0) {
     throw new CartValidationError("cart_empty");
   }
 
   // Load all menu items + their sizes/options in one shot. Groups that link
   // to a ModifierSet pull their options from the set (Wolt-style reusable
-  // modifier library) instead of the inline ItemOption rows.
-  const itemIds = Array.from(new Set(input.lines.map((l) => l.item_id)));
+  // modifier library) instead of the inline ItemOption rows. Items chosen
+  // inside deals are loaded through the same query so their option pricing
+  // uses identical rules.
+  const dealUnitItemIds = dealLines.flatMap((d) => d.units.map((u) => u.item_id));
+  const itemIds = Array.from(
+    new Set([...input.lines.map((l) => l.item_id), ...dealUnitItemIds]),
+  );
   const items = await prisma.menuItem.findMany({
     where: { id: { in: itemIds }, tenantId: tenant.id, available: true },
     include: {
@@ -163,41 +188,16 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   });
   const itemsById = new Map(items.map((i) => [i.id, i]));
 
-  let subtotal = 0;
-  const orderItemData: Prisma.OrderItemCreateManyOrderInput[] = [];
-
-  for (const line of input.lines) {
-    const item = itemsById.get(line.item_id);
-    if (!item) throw new CartValidationError("item_unavailable", line.item_id);
-    // Time-windowed items (breakfast-only, out-of-stock, etc.) are filtered
-    // out of the storefront menu, but a stale cart can still try to submit
-    // one. Server is the source of truth.
-    if (!isItemVisibleNow(item)) {
-      throw new CartValidationError("item_unavailable", line.item_id);
-    }
-    if (line.quantity < 1 || line.quantity > 20) {
-      throw new CartValidationError("invalid_quantity", line.item_id);
-    }
-
-    let sizeDelta = 0;
-    let sizeSnapshot: string | null = null;
-    if (line.size_id) {
-      const size = item.sizes.find((s) => s.id === line.size_id);
-      if (!size) throw new CartValidationError("size_not_found", line.item_id);
-      sizeDelta = size.priceDelta;
-      sizeSnapshot = size.name;
-    } else {
-      const defaultSize = item.sizes.find((s) => s.isDefault);
-      if (defaultSize) {
-        sizeDelta = defaultSize.priceDelta;
-        sizeSnapshot = defaultSize.name;
-      }
-    }
-
+  /** Validate + price the picked options of one item against its live
+   *  option groups. Shared by regular cart lines and deal units. */
+  function priceOptionsForItem(
+    item: (typeof items)[number],
+    optionIdList: string[],
+    placements: Record<string, "left" | "right" | "full">,
+  ) {
     const selectedOptions: Array<{ group_id: string; group_name: string; option_id: string; name: string; price_delta: number; half?: string }> = [];
     let optionsDelta = 0;
-    const optionIds = new Set(line.option_ids ?? []);
-    const placements = line.option_placements ?? {};
+    const optionIds = new Set(optionIdList);
     for (const group of item.optionGroups) {
       // Resolve the effective options + config: ModifierSet overrides inline.
       const fromSet = group.templateSet;
@@ -259,6 +259,45 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         optionsDelta += effectiveDelta;
       }
     }
+    return { selectedOptions, optionsDelta };
+  }
+
+  let subtotal = 0;
+  const orderItemData: Prisma.OrderItemCreateManyOrderInput[] = [];
+
+  for (const line of input.lines) {
+    const item = itemsById.get(line.item_id);
+    if (!item) throw new CartValidationError("item_unavailable", line.item_id);
+    // Time-windowed items (breakfast-only, out-of-stock, etc.) are filtered
+    // out of the storefront menu, but a stale cart can still try to submit
+    // one. Server is the source of truth.
+    if (!isItemVisibleNow(item)) {
+      throw new CartValidationError("item_unavailable", line.item_id);
+    }
+    if (line.quantity < 1 || line.quantity > 20) {
+      throw new CartValidationError("invalid_quantity", line.item_id);
+    }
+
+    let sizeDelta = 0;
+    let sizeSnapshot: string | null = null;
+    if (line.size_id) {
+      const size = item.sizes.find((s) => s.id === line.size_id);
+      if (!size) throw new CartValidationError("size_not_found", line.item_id);
+      sizeDelta = size.priceDelta;
+      sizeSnapshot = size.name;
+    } else {
+      const defaultSize = item.sizes.find((s) => s.isDefault);
+      if (defaultSize) {
+        sizeDelta = defaultSize.priceDelta;
+        sizeSnapshot = defaultSize.name;
+      }
+    }
+
+    const { selectedOptions, optionsDelta } = priceOptionsForItem(
+      item,
+      line.option_ids ?? [],
+      line.option_placements ?? {},
+    );
 
     const unitPriceExact = item.basePrice + sizeDelta + optionsDelta;
     const totalPriceExact = unitPriceExact * line.quantity;
@@ -278,6 +317,87 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       notes: line.notes ?? null,
       source: line.source ?? "menu",
     });
+  }
+
+  // Fixed-price deals. Each deal line: validate every slot got exactly its
+  // quantity of choices from the allowed items, price paid extras with the
+  // same live option rules as regular lines, and emit ONE OrderItem whose
+  // selectedOptions carry the composed units - kitchen + receipts render
+  // them with zero special-casing.
+  if (dealLines.length > 0) {
+    const deals = await prisma.deal.findMany({
+      where: {
+        id: { in: dealLines.map((d) => d.deal_id) },
+        tenantId: tenant.id,
+        active: true,
+      },
+      include: { slots: { orderBy: { position: "asc" }, include: { choices: true } } },
+    });
+    const dealsById = new Map(deals.map((d) => [d.id, d]));
+
+    for (const dl of dealLines) {
+      const deal = dealsById.get(dl.deal_id);
+      if (!deal) throw new CartValidationError("deal_unavailable", dl.deal_id);
+      if (dl.quantity < 1 || dl.quantity > 20) {
+        throw new CartValidationError("invalid_quantity", dl.deal_id);
+      }
+
+      const selectedOptions: Array<{ group_id: string; group_name: string; option_id: string; name: string; price_delta: number }> = [];
+      let extrasDelta = 0;
+
+      for (const slot of deal.slots) {
+        const slotUnits = dl.units.filter((u) => u.slot_id === slot.id);
+        if (slotUnits.length !== slot.quantity) {
+          throw new CartValidationError("deal_slot_incomplete", slot.id);
+        }
+        const allowed = new Set(slot.choices.map((c) => c.itemId));
+        slotUnits.forEach((unit, idx) => {
+          if (!allowed.has(unit.item_id)) {
+            throw new CartValidationError("deal_item_not_allowed", slot.id);
+          }
+          const item = itemsById.get(unit.item_id);
+          if (!item || !isItemVisibleNow(item)) {
+            throw new CartValidationError("item_unavailable", unit.item_id);
+          }
+          const unitLabel = slot.quantity > 1 ? `${slot.name} ${idx + 1}` : slot.name;
+          selectedOptions.push({
+            group_id: slot.id,
+            group_name: unitLabel,
+            option_id: item.id,
+            name: item.name,
+            price_delta: 0,
+          });
+          const priced = priceOptionsForItem(item, unit.option_ids ?? [], {});
+          for (const o of priced.selectedOptions) {
+            selectedOptions.push({
+              group_id: o.group_id,
+              group_name: `${unitLabel} · ${o.group_name}`,
+              option_id: o.option_id,
+              name: o.name,
+              price_delta: o.price_delta,
+            });
+          }
+          extrasDelta += priced.optionsDelta;
+        });
+      }
+
+      const unitPrice = Math.round(deal.fixedPrice + extrasDelta);
+      const totalPrice = unitPrice * dl.quantity;
+      subtotal += totalPrice;
+
+      orderItemData.push({
+        menuItemId: null,
+        nameSnapshot: deal.name,
+        quantity: dl.quantity,
+        unitPrice,
+        totalPrice,
+        sizeId: null,
+        sizeSnapshot: null,
+        selectedOptions: selectedOptions as unknown as Prisma.InputJsonValue,
+        notes: dl.notes ?? null,
+        source: "deal",
+      });
+    }
   }
 
   // Per-zone delivery economics: when the order's city resolves to an active
@@ -303,7 +423,9 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     method: input.method,
     baseFee: effectiveDeliveryFee,
     subtotal,
-    itemCount: input.lines.reduce((n, l) => n + l.quantity, 0),
+    itemCount:
+      input.lines.reduce((n, l) => n + l.quantity, 0) +
+      dealLines.reduce((n, d) => n + d.quantity, 0),
     freeMinOrder: effectiveFreeMinOrder,
     freeMinItems: branch.freeDeliveryMinItems,
   });

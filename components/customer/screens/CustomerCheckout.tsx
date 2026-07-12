@@ -428,21 +428,35 @@ export function CustomerCheckout({
               (window.sessionStorage.getItem("qf:src") ?? "").startsWith("qr_")
               ? window.sessionStorage.getItem("qf:src")!.slice(3)
               : undefined) || undefined,
-          lines: lines.map((l) => {
-            const placements: Record<string, "left" | "right" | "full"> = {};
-            for (const o of l.options) {
-              if (o.half) placements[o.optionId] = o.half;
-            }
-            return {
-              item_id: l.itemId,
+          lines: lines
+            .filter((l) => !l.deal)
+            .map((l) => {
+              const placements: Record<string, "left" | "right" | "full"> = {};
+              for (const o of l.options) {
+                if (o.half) placements[o.optionId] = o.half;
+              }
+              return {
+                item_id: l.itemId,
+                quantity: l.quantity,
+                size_id: l.sizeId,
+                option_ids: l.options.map((o) => o.optionId),
+                option_placements: Object.keys(placements).length > 0 ? placements : undefined,
+                notes: l.notes,
+                source: l.source ?? "menu",
+              };
+            }),
+          deals: lines
+            .filter((l) => !!l.deal)
+            .map((l) => ({
+              deal_id: l.deal!.dealId,
               quantity: l.quantity,
-              size_id: l.sizeId,
-              option_ids: l.options.map((o) => o.optionId),
-              option_placements: Object.keys(placements).length > 0 ? placements : undefined,
               notes: l.notes,
-              source: l.source ?? "menu",
-            };
-          }),
+              units: l.deal!.units.map((u) => ({
+                slot_id: u.slotId,
+                item_id: u.itemId,
+                option_ids: u.optionIds,
+              })),
+            })),
         }),
       });
       const data = await res.json();

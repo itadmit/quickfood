@@ -60,7 +60,27 @@ const CreateOrderSchema = z.object({
         source: z.enum(["menu", "ai_advisor", "upsell", "reorder"]).default("menu"),
       }),
     )
-    .min(1),
+    .default([]),
+  deals: z
+    .array(
+      z.object({
+        deal_id: z.string().uuid(),
+        quantity: z.number().int().min(1).max(20),
+        notes: z.string().max(200).nullable().optional(),
+        units: z
+          .array(
+            z.object({
+              slot_id: z.string().uuid(),
+              item_id: z.string().uuid(),
+              option_ids: z.array(z.string().uuid()).default([]),
+            }),
+          )
+          .min(1)
+          .max(40),
+      }),
+    )
+    .max(10)
+    .default([]),
 });
 
 export const POST = handler(async (req: Request) => {
@@ -133,6 +153,16 @@ export const POST = handler(async (req: Request) => {
         option_placements: l.option_placements,
         notes: l.notes ?? undefined,
         source: l.source,
+      })),
+      deals: body.deals.map((d) => ({
+        deal_id: d.deal_id,
+        quantity: d.quantity,
+        notes: d.notes ?? undefined,
+        units: d.units.map((u) => ({
+          slot_id: u.slot_id,
+          item_id: u.item_id,
+          option_ids: u.option_ids,
+        })),
       })),
     });
 

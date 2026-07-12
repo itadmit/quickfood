@@ -30,6 +30,7 @@ import {
 import { cn } from "@/lib/cn";
 import { ItemDetailModal } from "@/components/customer/ItemDetailModal";
 import { ItemDetail } from "@/components/customer/screens/ItemDetail";
+import { DealComposer } from "@/components/customer/DealComposer";
 import ItemModalSkeleton from "@/components/customer/ItemModalSkeleton";
 import { AIAdvisorTopButton } from "@/components/customer/ai-advisor/AIAdvisorTopButton";
 import { BusyAlertModal, ClosedAlertModal } from "@/components/customer/BranchStatusModal";
@@ -101,6 +102,15 @@ interface Props {
   /** Tenant-configurable label for the "featured" badge on menu cards.
    *  NULL → MenuList's default ("מומלץ של השף"). */
   featuredBadgeLabel?: string | null;
+  /** Fixed-price deals rail rendered above the menu. */
+  deals?: Array<{
+    id: string;
+    name: string;
+    description: string;
+    imageUrl: string | null;
+    fixedPrice: number;
+    itemImages: string[];
+  }>;
 }
 
 export function CustomerHome({
@@ -121,7 +131,9 @@ export function CustomerHome({
   featuredBadgeLabel = null,
   ratingSummary = null,
   deliveryEta = null,
+  deals = [],
 }: Props) {
+  const [composerDealId, setComposerDealId] = useState<string | null>(null);
   const themeDefaultColor: CategoryColorKey =
     THEME_DEFAULT_CATEGORY_COLOR[tenant.themeId ?? ""] ?? "green";
 
@@ -667,6 +679,42 @@ export function CustomerHome({
               ))}
             </div>
           )}
+          {deals.length > 0 && (
+            <div className="mb-6">
+              <h2 className="text-base lg:text-xl font-semibold mb-3">דילים</h2>
+              <div className="flex gap-3 overflow-x-auto qf-hscroll -mx-5 px-5 pb-1.5 lg:grid lg:grid-cols-3 lg:mx-0 lg:px-0 lg:overflow-visible">
+                {deals.map((d) => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => setComposerDealId(d.id)}
+                    className="w-64 lg:w-auto shrink-0 bg-white rounded-2xl border-2 border-(--qf-primary)/30 hover:border-(--qf-primary) overflow-hidden text-start transition shadow-xs"
+                  >
+                    <div className="relative h-28">
+                      <MenuItemImage
+                        src={d.imageUrl ?? d.itemImages[0]}
+                        alt={d.name}
+                        businessType={tenant.businessType}
+                        size={256}
+                        rounded="none"
+                        fill
+                      />
+                      <span className="absolute bottom-2 start-2 bg-(--qf-primary) text-white text-xs font-bold px-2.5 py-1 rounded-lg shadow-sm tnum">
+                        {formatPrice(d.fixedPrice)}
+                      </span>
+                    </div>
+                    <div className="p-3">
+                      <div className="font-semibold leading-tight">{d.name}</div>
+                      {d.description && (
+                        <div className="text-xs text-qf-mute line-clamp-2 mt-0.5">{d.description}</div>
+                      )}
+                      <div className="text-xs text-(--qf-deep) font-medium mt-1.5">הרכיבו את הדיל</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <h2 className="text-base lg:text-xl font-semibold mb-3">התפריט המלא</h2>
           {/* Mobile-only search input - sticks to the top of the viewport
               once the user scrolls past the heading, sitting just above the
@@ -738,6 +786,15 @@ export function CustomerHome({
           }
           onChoose={applyChoice}
           onClose={() => setPickerOpen(false)}
+        />
+      )}
+
+      {composerDealId && (
+        <DealComposer
+          tenantSlug={tenant.slug}
+          businessType={tenant.businessType}
+          dealId={composerDealId}
+          onClose={() => setComposerDealId(null)}
         />
       )}
 

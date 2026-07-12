@@ -26,6 +26,15 @@ export interface CartLine {
    *  breakdown of channel performance. Defaults to "menu" so old carts
    *  in localStorage stay valid. */
   source?: CartLineSource;
+  /** Present when this line is a composed fixed-price deal. itemId then
+   *  holds the deal id, basePrice the fixed price, and options[] carries
+   *  DISPLAY entries (chosen dishes + paid extras) so the cart renders the
+   *  composition natively. Checkout routes these lines into the `deals`
+   *  payload instead of `lines`. Deal lines are not editable in place. */
+  deal?: {
+    dealId: string;
+    units: Array<{ slotId: string; itemId: string; optionIds: string[] }>;
+  };
 }
 
 /** A bundle offer the customer accepted on the cart screen. We keep the

@@ -264,6 +264,26 @@ export const MenuItemInputSchema = z.object({
   option_groups: z.array(ItemOptionGroupInputSchema).default([]),
 });
 
+export const DealInputSchema = z.object({
+  name: z.string().min(1).max(120),
+  description: z.string().max(400).default(""),
+  image_url: z.string().url().nullable().optional(),
+  fixed_price: z.number().int().min(1),
+  active: z.boolean().default(true),
+  position: z.number().int().default(0),
+  category_id: UuidSchema.nullable().optional(),
+  slots: z
+    .array(
+      z.object({
+        name: z.string().min(1).max(60),
+        quantity: z.number().int().min(1).max(10),
+        item_ids: z.array(UuidSchema).min(1).max(30),
+      }),
+    )
+    .min(1)
+    .max(10),
+});
+
 // ─── Merchant settings ─────────────────────────────────────────
 
 export const TENANT_ABOUT_MAX = 90;

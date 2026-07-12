@@ -59,6 +59,7 @@ export const NAV: NavSection[] = [
           { href: "/dashboard/menu", label: "מוצרים", match: "/dashboard/menu" },
           { href: "/dashboard/categories", label: "קטגוריות", match: "/dashboard/categories" },
           { href: "/dashboard/menu/modifiers", label: "קטלוג תוספות", match: "/dashboard/menu/modifiers" },
+          { href: "/dashboard/menu/deals", label: "דילים", match: "/dashboard/menu/deals" },
           { href: "/dashboard/menu/notices", label: "הודעות", match: "/dashboard/menu/notices" },
         ],
       },

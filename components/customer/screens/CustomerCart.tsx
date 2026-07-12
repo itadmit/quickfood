@@ -113,9 +113,11 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
               key={l.lineId}
               role="button"
               tabIndex={0}
-              onClick={() => setEditing(l)}
+              onClick={() => {
+                if (!l.deal) setEditing(l);
+              }}
               onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
+                if ((e.key === "Enter" || e.key === " ") && !l.deal) {
                   e.preventDefault();
                   setEditing(l);
                 }
