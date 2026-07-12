@@ -8,6 +8,7 @@ import { issueTokensForMerchant, setSessionCookies } from "@/lib/auth/session";
 import { createCustomer, BillingHubError } from "@/lib/billing-hub/client";
 import { sendEmail } from "@/lib/email/send";
 import { welcomeEmail, merchantSignupAdminEmail } from "@/lib/email/templates";
+import { sendWelcomeWhatsApp } from "@/lib/auth/send-welcome-whatsapp";
 import { verifyPhoneVerify } from "@/lib/auth/jwt";
 import { toE164 } from "@/lib/format";
 import { publish } from "@/lib/qstash/client";
@@ -301,6 +302,18 @@ export const POST = handler(async (req: Request) => {
       });
     } catch (err) {
       console.warn("[signup] welcome email failed", err);
+    }
+    try {
+      const sent = await sendWelcomeWhatsApp({
+        phone: body.owner_phone,
+        ownerName: owner.name,
+        businessName: tenant.name,
+        dashboardUrl: `${appUrl}/dashboard`,
+        storeUrl: `${appUrl}/s/${tenant.slug}`,
+      });
+      if (!sent) console.warn("[signup] welcome whatsapp not sent");
+    } catch (err) {
+      console.warn("[signup] welcome whatsapp failed", err);
     }
     try {
       const { html, text } = merchantSignupAdminEmail({
