@@ -308,7 +308,12 @@ export function DealComposer({
                   </div>
 
                   {chosen &&
-                    chosen.optionGroups.map((g) => (
+                    chosen.optionGroups.map((g) => {
+                      const picked = g.options.filter((o) => u.optionIds.has(o.id)).length;
+                      const floor = g.required ? Math.max(1, g.minSelect) : g.minSelect;
+                      const missing = g.required && picked < floor;
+                      const atMax = g.type === "multi" && picked >= g.maxSelect;
+                      return (
                       <div key={g.id} className="rounded-xl bg-qf-line-soft/40 border border-qf-line p-3 space-y-1.5">
                         <div className="text-xs font-semibold text-qf-ink2 flex items-center gap-1.5">
                           {g.name}
@@ -318,7 +323,33 @@ export function DealComposer({
                               ({g.includedFree} כלולות במחיר)
                             </span>
                           )}
+                          {g.type === "multi" && (
+                            <span
+                              className={cn(
+                                "ms-auto text-[10px] tnum font-bold px-1.5 py-0.5 rounded-md",
+                                atMax
+                                  ? "bg-(--qf-primary) text-white"
+                                  : "bg-white border border-qf-line text-qf-mute font-normal",
+                              )}
+                            >
+                              {picked}/{g.maxSelect}
+                            </span>
+                          )}
                         </div>
+                        {(missing || atMax) && (
+                          <div
+                            className={cn(
+                              "text-[10px]",
+                              missing ? "text-qf-tomato font-medium" : "text-qf-mute",
+                            )}
+                          >
+                            {missing
+                              ? floor > 1
+                                ? `חובה לבחור לפחות ${floor} אפשרויות`
+                                : "חובה לבחור אפשרות אחת"
+                              : "הגעתם למקסימום - להחלפה בטלו בחירה קודמת"}
+                          </div>
+                        )}
                         <div className="flex flex-wrap gap-1.5">
                           {g.options.map((o) => {
                             const active = u.optionIds.has(o.id);
@@ -346,7 +377,8 @@ export function DealComposer({
                           })}
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                 </section>
               );
             })}
