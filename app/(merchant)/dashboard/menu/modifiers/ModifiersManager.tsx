@@ -158,6 +158,62 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
     startTransition(() => router.refresh());
   }
 
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+
+  async function duplicateSet(s: ModifierSet) {
+    if (duplicatingId) return;
+    setDuplicatingId(s.id);
+    try {
+      const copyName = `${s.name} (עותק)`.slice(0, 60);
+      const res = await fetch(`/api/v1/merchant/menu/modifier-sets`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: copyName,
+          type: s.type,
+          required: s.required,
+          min_select: s.minSelect,
+          max_select: s.maxSelect,
+          included_free: s.includedFree,
+          help_text: s.helpText,
+          allow_half: s.allowHalf,
+          split_price: s.splitPrice,
+          custom_half_price: s.customHalfPrice,
+          bundle_count: s.bundleCount,
+          bundle_price: s.bundlePrice,
+          max_per_side: s.maxPerSide,
+          position: sets.length,
+          options: s.options.map((o) => ({
+            name: o.name,
+            price_delta: o.priceDelta,
+            half_price_delta: s.customHalfPrice ? (o.halfPriceDelta ?? null) : null,
+            is_default: o.isDefault,
+            available: o.available,
+            image_url: o.imageUrl,
+          })),
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        pushToast("err", result.error?.message ?? "השכפול נכשל");
+        return;
+      }
+      const newSet: ModifierSet = {
+        ...s,
+        id: result.set.id,
+        name: copyName,
+        position: sets.length,
+        attachedCount: 0,
+        options: s.options.map((o) => ({ ...o })),
+      };
+      setSets((prev) => [...prev, newSet]);
+      pushToast("ok", "הקטלוג שוכפל");
+      startTransition(() => router.refresh());
+    } finally {
+      setDuplicatingId(null);
+    }
+  }
+
   async function performDelete() {
     if (!confirmDelete) return;
     const res = await fetch(`/api/v1/merchant/menu/modifier-sets/${confirmDelete.id}`, {
@@ -321,6 +377,15 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
                   }
                 >
                   מחק
+                </button>
+                <button
+                  type="button"
+                  onClick={() => duplicateSet(s)}
+                  disabled={duplicatingId !== null}
+                  className="text-xs text-qf-ink2 hover:underline font-medium disabled:opacity-40"
+                  title="יוצר עותק חדש ונפרד - שינויים בעותק לא משפיעים על המקור"
+                >
+                  {duplicatingId === s.id ? "משכפל..." : "שכפול"}
                 </button>
                 <button
                   type="button"
