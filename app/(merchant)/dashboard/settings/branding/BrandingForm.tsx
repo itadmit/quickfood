@@ -42,6 +42,12 @@ interface Branch {
   defaultEtaMax: number;
 }
 
+const ABOUT_MAX = 90;
+
+function singleLineAbout(v: string): string {
+  return v.replace(/\s*\n+\s*/g, " ").slice(0, ABOUT_MAX);
+}
+
 function deriveLogoLetter(name: string): string {
   const trimmed = name.trim();
   if (!trimmed) return "QF";
@@ -66,7 +72,7 @@ export function BrandingForm({
   const [themeId, setThemeId] = useState<ThemeId>(tenant.themeId);
   const [businessType, setBusinessType] = useState<BusinessType>(tenant.businessType);
   const [cuisineType, setCuisineType] = useState(tenant.cuisineType ?? "");
-  const [about, setAbout] = useState(tenant.about ?? "");
+  const [about, setAbout] = useState(singleLineAbout(tenant.about ?? ""));
   const [coverImage, setCoverImage] = useState<string | null>(tenant.coverImage);
   const [logoUrl, setLogoUrl] = useState<string | null>(tenant.logoUrl);
   const [vatNumber, setVatNumber] = useState(tenant.vatNumber ?? "");
@@ -314,14 +320,17 @@ export function BrandingForm({
             <Field label="תיאור העסק">
               <textarea
                 value={about}
-                onChange={(e) => setAbout(e.target.value)}
-                rows={3}
-                maxLength={2000}
-                placeholder="טאגליין קצר או פסקה שמופיעה מתחת לשם החנות בעמוד הלקוח"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none resize-y leading-relaxed"
+                onChange={(e) => setAbout(singleLineAbout(e.target.value))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
+                }}
+                rows={2}
+                maxLength={ABOUT_MAX}
+                placeholder="טאגליין קצר שמופיע מתחת לשם החנות בעמוד הלקוח"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none resize-none leading-relaxed"
               />
               <p className="text-xs text-qf-mute mt-1">
-                עד 2000 תווים. מוצג בעמוד הראשי של החנות לצד הלוגו.
+                שורה אחת, עד {ABOUT_MAX} תווים ({about.length}/{ABOUT_MAX}). מוצג בעמוד הראשי של החנות לצד הלוגו.
               </p>
             </Field>
 

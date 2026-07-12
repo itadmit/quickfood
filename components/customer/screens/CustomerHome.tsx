@@ -374,7 +374,7 @@ export function CustomerHome({
                   onClick={() => setInfoOpen(true)}
                   className="mt-2 max-w-xl text-start cursor-pointer"
                 >
-                  <div className="text-sm text-white/85 drop-shadow leading-relaxed whitespace-pre-line line-clamp-2">
+                  <div className="text-sm text-white/85 drop-shadow leading-relaxed line-clamp-2">
                     {tenant.about}
                   </div>
                 </button>
@@ -462,7 +462,7 @@ export function CustomerHome({
                   onClick={() => setInfoOpen(true)}
                   className="mt-1.5 text-start cursor-pointer"
                 >
-                  <div className="text-xs text-white/85 drop-shadow leading-relaxed whitespace-pre-line line-clamp-2">
+                  <div className="text-xs text-white/85 drop-shadow leading-relaxed line-clamp-2">
                     {tenant.about}
                   </div>
                 </button>

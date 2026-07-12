@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { prisma } from "@/lib/db/client";
 import { isValidSlug } from "@/lib/slug";
+import { normalizeTenantAbout } from "@/lib/validate";
 import { issueTokensForMerchant, setSessionCookies } from "@/lib/auth/session";
 import { createCustomer, BillingHubError } from "@/lib/billing-hub/client";
 import { sendEmail } from "@/lib/email/send";
@@ -115,7 +116,7 @@ const SignupSchema = z.object({
   // an empty value or the signup default (e.g. default hours).
   logo_url: z.string().url().optional().nullable(),
   cover_image_url: z.string().url().optional().nullable(),
-  about: z.string().max(2000).optional().nullable(),
+  about: z.string().max(2000).transform(normalizeTenantAbout).optional().nullable(),
   hours: HoursMapSchema.optional().nullable(),
 });
 

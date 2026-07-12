@@ -266,6 +266,12 @@ export const MenuItemInputSchema = z.object({
 
 // ─── Merchant settings ─────────────────────────────────────────
 
+export const TENANT_ABOUT_MAX = 90;
+
+export function normalizeTenantAbout(v: string): string {
+  return v.replace(/\s+/g, " ").trim().slice(0, TENANT_ABOUT_MAX);
+}
+
 export const TenantPatchSchema = z.object({
   name: z.string().min(1).max(120).optional(),
   logo_letter: z.string().min(1).max(2).optional(),
@@ -288,7 +294,7 @@ export const TenantPatchSchema = z.object({
     ])
     .optional(),
   cuisine_type: z.string().max(60).optional(),
-  about: z.string().max(2000).nullable().optional(),
+  about: z.string().max(2000).transform(normalizeTenantAbout).nullable().optional(),
   vat_number: z.string().max(20).optional(),
   terms_text: z.string().max(20000).nullable().optional(),
   terms_acknowledged: z.boolean().optional(),

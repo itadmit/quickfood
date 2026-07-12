@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
+import { normalizeTenantAbout } from "@/lib/validate";
 import { uploadBytes } from "@/lib/storage/r2";
 import { fetchImage } from "./fetch";
 import { cleanImportedName, cleanImportedText } from "./normalize";
@@ -395,7 +396,7 @@ async function applyVenueInfo({
   const tenantUpdate: Prisma.TenantUpdateInput = {};
 
   if (flags.about && venue.description) {
-    tenantUpdate.about = venue.description.trim();
+    tenantUpdate.about = normalizeTenantAbout(venue.description);
     applied.push("about");
   }
 
