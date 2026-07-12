@@ -690,7 +690,7 @@ export function CustomerHome({
                     onClick={() => setComposerDealId(d.id)}
                     className="w-64 lg:w-auto shrink-0 bg-white rounded-2xl border-2 border-(--qf-primary)/30 hover:border-(--qf-primary) overflow-hidden text-start transition shadow-xs"
                   >
-                    <div className="relative h-28">
+                    <div className="relative h-36">
                       <MenuItemImage
                         src={d.imageUrl ?? d.itemImages[0]}
                         alt={d.name}
