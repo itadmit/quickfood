@@ -1201,7 +1201,7 @@ function GroupEditor({
           <div className="rounded-lg bg-white/60 border border-qf-line-dash p-2.5 space-y-2">
             <div className="font-semibold text-qf-ink">תמחור והנחות</div>
             <label className="flex items-center justify-between gap-2">
-              <span className="text-qf-mute">כלולות חינם · N הראשונות חינם, 0 = הכל בתשלום</span>
+              <span className="text-qf-mute">כמה תוספות ראשונות בחינם?</span>
               <input
                 type="number"
                 min={0}
@@ -1212,6 +1212,11 @@ function GroupEditor({
                 className="w-20 px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white tnum text-base lg:text-sm shrink-0"
               />
             </label>
+            <p className="text-[11px] text-qf-mute -mt-1">
+              {group.includedFree === 0
+                ? "0 = אין תוספות חינם, הלקוח משלם על כל תוספת שבחר"
+                : `הלקוח לא ישלם על ${group.includedFree === 1 ? "התוספת הראשונה" : `${group.includedFree} התוספות הראשונות`} - רק מהתוספת ה-${group.includedFree + 1} והלאה יתווסף מחיר`}
+            </p>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"

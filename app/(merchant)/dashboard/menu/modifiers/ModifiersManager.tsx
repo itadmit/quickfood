@@ -547,7 +547,7 @@ function SetEditor({
         <div className="rounded-xl bg-qf-line-soft/40 border border-qf-line-dash p-3 space-y-2.5 text-sm">
           <div className="font-semibold">תמחור והנחות</div>
           <label className="flex items-center justify-between gap-2">
-            <span className="text-qf-mute text-xs">כלולות חינם · N הראשונות חינם, 0 = הכל בתשלום</span>
+            <span className="text-qf-mute text-xs">כמה תוספות ראשונות בחינם?</span>
             <input
               type="number"
               min={0}
@@ -558,6 +558,11 @@ function SetEditor({
               className="w-20 px-2.5 py-1.5 rounded-xl border border-qf-line-dash bg-white tnum shrink-0"
             />
           </label>
+          <p className="text-[11px] text-qf-mute -mt-1">
+            {set.includedFree === 0
+              ? "0 = אין תוספות חינם, הלקוח משלם על כל תוספת שבחר"
+              : `הלקוח לא ישלם על ${set.includedFree === 1 ? "התוספת הראשונה" : `${set.includedFree} התוספות הראשונות`} - רק מהתוספת ה-${set.includedFree + 1} והלאה יתווסף מחיר`}
+          </p>
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
