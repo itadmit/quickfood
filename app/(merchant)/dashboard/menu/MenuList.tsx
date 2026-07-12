@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/format";
-import { IcoEye, IcoEdit, IcoTrash, IcoClose, IcoCheck, IcoMore, IcoStar } from "@/components/shared/Icons";
+import { IcoEye, IcoEdit, IcoTrash, IcoClose, IcoCheck, IcoMore, IcoStar, IcoCopy } from "@/components/shared/Icons";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { Toggle } from "@/components/shared/Toggle";
@@ -142,6 +142,49 @@ export function MenuList({
     }
     pushToast("ok", "הפריט נמחק");
     router.refresh();
+  }
+
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+
+  async function duplicateItem(item: Item) {
+    if (duplicatingId) return;
+    setDuplicatingId(item.id);
+    try {
+      const getRes = await fetch(`/api/v1/merchant/menu/items/${item.id}`);
+      const getBody = await getRes.json();
+      if (!getRes.ok) {
+        pushToast("err", getBody?.error?.message ?? "השכפול נכשל");
+        return;
+      }
+      const src = getBody.item;
+      const copyName = `${src.name} (עותק)`.slice(0, 120);
+      const res = await fetch("/api/v1/merchant/menu/items", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          ...src,
+          id: undefined,
+          name: copyName,
+          art_type: src.art_type ?? undefined,
+          image_url: src.image_url ?? undefined,
+          sku: src.sku ?? undefined,
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        pushToast("err", body?.error?.message ?? "השכפול נכשל");
+        return;
+      }
+      setLocalItems((prev) => {
+        const at = prev.findIndex((i) => i.id === item.id);
+        const copy: Item = { ...item, id: body.item.id, name: copyName };
+        return [...prev.slice(0, at + 1), copy, ...prev.slice(at + 1)];
+      });
+      pushToast("ok", "הפריט שוכפל");
+      router.refresh();
+    } finally {
+      setDuplicatingId(null);
+    }
   }
 
   function startReorder() {
@@ -443,6 +486,7 @@ export function MenuList({
               <RowActions
                 item={item}
                 onPreview={() => setPreviewId(item.id)}
+                onDuplicate={() => duplicateItem(item)}
                 onDelete={() => setPendingDelete(item)}
               />
             </div>
@@ -613,10 +657,12 @@ function CsvImportModal({ onClose }: { onClose: () => void }) {
 function RowActions({
   item,
   onPreview,
+  onDuplicate,
   onDelete,
 }: {
   item: Item;
   onPreview: () => void;
+  onDuplicate: () => void;
   onDelete: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -697,6 +743,18 @@ function RowActions({
               <IcoEdit s={16} c="#3a4a40" />
               <span>ערוך</span>
             </Link>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onDuplicate();
+              }}
+              className="w-full text-start px-3 py-2 hover:bg-qf-line-soft inline-flex items-center gap-2"
+            >
+              <IcoCopy s={16} c="#3a4a40" />
+              <span>שכפל</span>
+            </button>
             <button
               type="button"
               role="menuitem"
