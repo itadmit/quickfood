@@ -224,9 +224,9 @@ export function DealsManager({
               <button
                 type="button"
                 onClick={() => setEditing({ ...EMPTY })}
-                className="mt-4 inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium"
+                className="mt-4 inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-black text-sm font-medium"
               >
-                <IcoPlus c="white" s={14} /> צור את הדיל הראשון
+                <IcoPlus c="currentColor" s={14} /> צור את הדיל הראשון
               </button>
             </div>
           )}
