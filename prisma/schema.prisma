@@ -659,6 +659,9 @@ model MenuItem {
   // Inventory: if non-null the item auto-disappears when this hits 0.
   // Refilled manually (or via API) when the merchant restocks.
   stockRemaining Int?      @map("stock_remaining")
+  // Per-item override for the size-upgrade nudge banner. Effective only
+  // when the tenant-level toggle (Tenant.upsellSizeNudge) is also on.
+  upsellSizeNudge Boolean  @default(true) @map("upsell_size_nudge")
   // Provenance for bulk imports - see MenuCategory.externalSource for the
   // contract. A re-import keys off (tenantId, externalSource, externalId)
   // to upsert rather than duplicate.

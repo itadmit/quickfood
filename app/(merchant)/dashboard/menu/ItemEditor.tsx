@@ -93,6 +93,7 @@ interface ItemData {
   availableTo: number | null;
   availableDays: number | null;
   stockRemaining: number | null;
+  upsellSizeNudge: boolean;
 }
 
 const TAGS = ALL_TAG_LABELS;
@@ -116,6 +117,7 @@ const EMPTY_ITEM: ItemData = {
   availableTo: null,
   availableDays: null,
   stockRemaining: null,
+  upsellSizeNudge: true,
 };
 
 // Hebrew weekday names indexed by JavaScript getDay() (0 = Sunday). Used by
@@ -262,6 +264,7 @@ export function ItemEditor({
         available_to: data.availableTo,
         available_days: data.availableDays,
         stock_remaining: data.stockRemaining,
+        upsell_size_nudge: data.upsellSizeNudge,
         sizes: data.sizes.map((s) => ({
           code: s.code,
           name: s.name,
@@ -554,6 +557,19 @@ export function ItemEditor({
                 <IcoPlus c="var(--qf-deep)" s={14} /> הוסף גודל
               </button>
             </header>
+            {data.sizes.length > 1 && (
+              <label className="text-sm inline-flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={data.upsellSizeNudge}
+                  onChange={(e) => update("upsellSizeNudge", e.target.checked)}
+                />
+                הצג הודעת עידוד שדרוג לגודל הגדול
+                <span className="text-[11px] text-qf-mute">
+                  (פועל רק כשהבאנר מופעל גם בהגדרות ← מכירות ואפסיילים)
+                </span>
+              </label>
+            )}
             {data.sizes.length === 0 ? (
               <div className="text-xs text-qf-mute">לא מוגדרים גדלים</div>
             ) : (

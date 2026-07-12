@@ -260,6 +260,7 @@ export const MenuItemInputSchema = z.object({
   available_days: z.number().int().min(0).max(127).nullable().optional(),
   // Inventory countdown - null = no inventory tracking (infinite).
   stock_remaining: z.number().int().min(0).nullable().optional(),
+  upsell_size_nudge: z.boolean().default(true),
   sizes: z.array(ItemSizeInputSchema).default([]),
   option_groups: z.array(ItemOptionGroupInputSchema).default([]),
 });

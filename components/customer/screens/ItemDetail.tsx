@@ -66,6 +66,7 @@ interface ItemData {
   artType: string | null;
   images?: string[];
   imageNote?: string | null;
+  upsellSizeNudge?: boolean;
   tags: string[];
   sizes: Size[];
   optionGroups: OptionGroup[];
@@ -103,7 +104,8 @@ export function ItemDetail({
   const router = useRouter();
   const { add, updateLine, tenant, branch } = useCart();
   const isEditing = !!editLine;
-  const upsellSizeNudge = tenant.upsellSizeNudge !== false;
+  const upsellSizeNudge =
+    tenant.upsellSizeNudge !== false && item.upsellSizeNudge !== false;
   const branchClosed = branch?.status === "closed";
 
   const defaultSize = item.sizes.find((s) => s.isDefault) ?? item.sizes[0] ?? null;

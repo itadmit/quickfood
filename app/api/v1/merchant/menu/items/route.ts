@@ -63,6 +63,7 @@ export const GET = handler(async (req: Request) => {
       available_to: item.availableTo,
       available_days: item.availableDays,
       stock_remaining: item.stockRemaining,
+      upsell_size_nudge: item.upsellSizeNudge,
       sizes: item.sizes.map((s) => ({
         id: s.id,
         code: s.code,
@@ -131,6 +132,7 @@ export const POST = handler(async (req: Request) => {
       availableTo: body.available_to ?? null,
       availableDays: body.available_days ?? null,
       stockRemaining: body.stock_remaining ?? null,
+      upsellSizeNudge: body.upsell_size_nudge,
       sizes: {
         create: body.sizes.map((s, i) => ({
           code: s.code,
