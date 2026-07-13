@@ -35,7 +35,7 @@ export async function GET(
   }
 
   const themeColor = THEME_COLOR_BY_ID[tenant.themeId] ?? "#11231a";
-  const icon = tenant.logoUrl ?? "/quickfood-mark.png";
+  const icon = tenant.logoUrl ?? "/icons/icon-512.png";
   const kioskPath = `/s/${tenant.slug}/kiosk`;
 
   const manifest = {
