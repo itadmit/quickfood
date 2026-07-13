@@ -2,9 +2,18 @@ import { prisma } from "@/lib/db/client";
 import { Prisma } from "@prisma/client";
 import { HIDE_UNPAID_NONCASH } from "@/lib/orders-visible";
 
-export type Range = "today" | "yesterday" | "7d" | "30d" | "custom";
+export type Range =
+  | "today"
+  | "yesterday"
+  | "7d"
+  | "30d"
+  | "this_month"
+  | "last_month"
+  | "custom";
 
-export function rangeBounds(range: Range, custom?: { from?: Date; to?: Date }) {
+export type CustomBounds = { from?: Date; to?: Date };
+
+export function rangeBounds(range: Range, custom?: CustomBounds) {
   const now = new Date();
   const today = israelStartOfDay(now);
   switch (range) {
@@ -33,6 +42,21 @@ export function rangeBounds(range: Range, custom?: { from?: Date; to?: Date }) {
         previousTo: f,
       };
     }
+    case "this_month": {
+      const from = israelStartOfMonth(now);
+      const previousFrom = israelStartOfMonth(new Date(from.getTime() - 86_400_000));
+      // Month-to-date compares against the same elapsed window of the
+      // previous month, capped so it never bleeds into the current one.
+      const elapsed = now.getTime() - from.getTime();
+      const previousTo = new Date(Math.min(previousFrom.getTime() + elapsed, from.getTime()));
+      return { from, to: now, previousFrom, previousTo };
+    }
+    case "last_month": {
+      const thisMonthStart = israelStartOfMonth(now);
+      const from = israelStartOfMonth(new Date(thisMonthStart.getTime() - 86_400_000));
+      const previousFrom = israelStartOfMonth(new Date(from.getTime() - 86_400_000));
+      return { from, to: thisMonthStart, previousFrom, previousTo: from };
+    }
     case "custom": {
       const f = custom?.from ?? dayBack(today, 6);
       const t = custom?.to ?? now;
@@ -45,6 +69,29 @@ export function rangeBounds(range: Range, custom?: { from?: Date; to?: Date }) {
       };
     }
   }
+}
+
+/**
+ * Parse `from`/`to` query params (YYYY-MM-DD, inclusive, Israel-local) into
+ * UTC instants for range="custom". Returns null when the pair is missing,
+ * malformed, reversed, or in the future.
+ */
+export function parseCustomBounds(
+  fromStr?: string | null,
+  toStr?: string | null,
+): { from: Date; to: Date } | null {
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  if (!fromStr || !toStr || !DATE_RE.test(fromStr) || !DATE_RE.test(toStr)) return null;
+  const middayUtc = (s: string) => {
+    const [y, m, d] = s.split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1, d, 12));
+  };
+  const from = israelStartOfDay(middayUtc(fromStr));
+  const toExclusive = israelStartOfDay(new Date(middayUtc(toStr).getTime() + 86_400_000));
+  if (from.getTime() >= toExclusive.getTime()) return null;
+  const now = new Date();
+  if (from.getTime() > now.getTime()) return null;
+  return { from, to: new Date(Math.min(toExclusive.getTime(), now.getTime())) };
 }
 
 const ANALYTICS_TZ = "Asia/Jerusalem";
@@ -88,6 +135,22 @@ export function israelStartOfDay(at: Date): Date {
   return new Date(utcMidnight - israelOffsetMs(new Date(utcMidnight)));
 }
 
+/** UTC instant of the Israel-local midnight on the 1st of the month containing `at`. */
+export function israelStartOfMonth(at: Date): Date {
+  const p = new Intl.DateTimeFormat("en-CA", {
+    timeZone: ANALYTICS_TZ,
+    year: "numeric",
+    month: "2-digit",
+  })
+    .formatToParts(at)
+    .reduce((a, x) => {
+      a[x.type] = x.value;
+      return a;
+    }, {} as Record<string, string>);
+  const utcMonthStart = Date.UTC(+p.year, +p.month - 1, 1, 0, 0, 0);
+  return new Date(utcMonthStart - israelOffsetMs(new Date(utcMonthStart)));
+}
+
 /** N Israel-days before `d` (an Israel midnight), DST-safe via midday snap. */
 function dayBack(d: Date, n: number) {
   return israelStartOfDay(new Date(d.getTime() - n * 86_400_000 + 12 * 3_600_000));
@@ -103,8 +166,8 @@ const COUNTED: Prisma.OrderWhereInput = {
   NOT: HIDE_UNPAID_NONCASH,
 };
 
-export async function summary(tenantId: string, range: Range) {
-  const { from, to, previousFrom, previousTo } = rangeBounds(range);
+export async function summary(tenantId: string, range: Range, custom?: CustomBounds) {
+  const { from, to, previousFrom, previousTo } = rangeBounds(range, custom);
 
   const [current, previous] = await Promise.all([
     aggregateBucket(tenantId, from, to),
@@ -153,8 +216,8 @@ function pctDelta(current: number, previous: number): number {
  * among visitors). Sourced from the first-party StorefrontVisit table -
  * merchant self-previews are never recorded there.
  */
-export async function visitorStats(tenantId: string, range: Range) {
-  const { from, to, previousFrom, previousTo } = rangeBounds(range);
+export async function visitorStats(tenantId: string, range: Range, custom?: CustomBounds) {
+  const { from, to, previousFrom, previousTo } = rangeBounds(range, custom);
   const [cur, prev] = await Promise.all([
     visitorBucket(tenantId, from, to),
     visitorBucket(tenantId, previousFrom, previousTo),
@@ -192,8 +255,8 @@ async function visitorBucket(tenantId: string, from: Date, to: Date) {
   };
 }
 
-export async function hourly(tenantId: string, range: Range) {
-  const { from, to, previousFrom, previousTo } = rangeBounds(range);
+export async function hourly(tenantId: string, range: Range, custom?: CustomBounds) {
+  const { from, to, previousFrom, previousTo } = rangeBounds(range, custom);
   const [cur, prev] = await Promise.all([
     bucketByHour(tenantId, from, to),
     bucketByHour(tenantId, previousFrom, previousTo),
@@ -227,8 +290,8 @@ async function bucketByHour(tenantId: string, from: Date, to: Date): Promise<num
   return buckets;
 }
 
-export async function topItems(tenantId: string, range: Range, limit = 5) {
-  const { from, to } = rangeBounds(range);
+export async function topItems(tenantId: string, range: Range, limit = 5, custom?: CustomBounds) {
+  const { from, to } = rangeBounds(range, custom);
 
   const rows = await prisma.orderItem.groupBy({
     by: ["menuItemId"],
@@ -281,8 +344,8 @@ export interface UpsellStat {
   ordersTouched: number;
 }
 
-export async function channelBreakdown(tenantId: string, range: Range) {
-  const { from, to } = rangeBounds(range);
+export async function channelBreakdown(tenantId: string, range: Range, custom?: CustomBounds) {
+  const { from, to } = rangeBounds(range, custom);
   const orders = await prisma.order.findMany({
     where: {
       tenantId,
@@ -338,8 +401,8 @@ export async function channelBreakdown(tenantId: string, range: Range) {
 
 /* ─── Customer segments (new vs returning) ───────────────────────── */
 
-export async function customerSegments(tenantId: string, range: Range) {
-  const { from, to } = rangeBounds(range);
+export async function customerSegments(tenantId: string, range: Range, custom?: CustomBounds) {
+  const { from, to } = rangeBounds(range, custom);
   const orders = await prisma.order.findMany({
     where: {
       tenantId,
@@ -439,8 +502,8 @@ export async function customerSegments(tenantId: string, range: Range) {
 
 /* ─── Operational health (accept rate / prep time / cancel rate) ──── */
 
-export async function operationalHealth(tenantId: string, range: Range) {
-  const { from, to } = rangeBounds(range);
+export async function operationalHealth(tenantId: string, range: Range, custom?: CustomBounds) {
+  const { from, to } = rangeBounds(range, custom);
   const orders = await prisma.order.findMany({
     where: {
       tenantId,
@@ -497,8 +560,8 @@ export interface Insight {
   metric?: string;
 }
 
-export async function insights(tenantId: string, range: Range): Promise<Insight[]> {
-  const { from, to } = rangeBounds(range);
+export async function insights(tenantId: string, range: Range, custom?: CustomBounds): Promise<Insight[]> {
+  const { from, to } = rangeBounds(range, custom);
   const [orders, channelData] = await Promise.all([
     prisma.order.findMany({
       where: {
@@ -514,7 +577,7 @@ export async function insights(tenantId: string, range: Range): Promise<Insight[
         customerPhoneSnap: true,
       },
     }),
-    channelBreakdown(tenantId, range),
+    channelBreakdown(tenantId, range, custom),
   ]);
 
   const out: Insight[] = [];
@@ -569,7 +632,7 @@ export async function insights(tenantId: string, range: Range): Promise<Insight[
   }
 
   // 4. Returning customers share
-  const segs = await customerSegments(tenantId, range);
+  const segs = await customerSegments(tenantId, range, custom);
   if (segs.total.orders >= 5 && segs.returning.orders > 0) {
     const returningShare = Math.round((segs.returning.orders / segs.total.orders) * 100);
     if (returningShare >= 30) {
@@ -590,7 +653,7 @@ export async function insights(tenantId: string, range: Range): Promise<Insight[
   }
 
   // 5. Operational excellence
-  const ops = await operationalHealth(tenantId, range);
+  const ops = await operationalHealth(tenantId, range, custom);
   if (ops.total >= 5 && ops.cancelRate <= 5 && ops.acceptRate >= 90) {
     out.push({
       tone: "strength",

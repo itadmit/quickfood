@@ -1,11 +1,11 @@
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
-import { topItems, type Range } from "@/lib/analytics";
+import { topItems, parseCustomBounds, type Range } from "@/lib/analytics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const RANGES: Range[] = ["today", "yesterday", "7d", "30d", "custom"];
+const RANGES: Range[] = ["today", "yesterday", "7d", "30d", "this_month", "last_month", "custom"];
 
 export const GET = handler(async (req: Request) => {
   const session = await requireMerchant();
@@ -13,6 +13,11 @@ export const GET = handler(async (req: Request) => {
   const url = new URL(req.url);
   const range = (url.searchParams.get("range") ?? "today") as Range;
   if (!RANGES.includes(range)) return apiError("validation_error", "range invalid", 422, "range");
+  let custom;
+  if (range === "custom") {
+    custom = parseCustomBounds(url.searchParams.get("from"), url.searchParams.get("to"));
+    if (!custom) return apiError("validation_error", "from/to invalid (YYYY-MM-DD, from <= to, not future)", 422, "from");
+  }
   const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get("limit") ?? "5", 10)));
-  return apiJson({ items: await topItems(session.tenantId, range, limit) });
+  return apiJson({ items: await topItems(session.tenantId, range, limit, custom ?? undefined) });
 });

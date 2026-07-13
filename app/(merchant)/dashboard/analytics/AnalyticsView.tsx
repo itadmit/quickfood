@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { CalendarDays } from "lucide-react";
 import { IcoTrend, IcoSparkle, IcoChart, IcoCheck, IcoWarning } from "@/components/shared/Icons";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -67,12 +69,42 @@ interface VisitorStats {
   unique_customers: KPI;
 }
 
-const RANGES: Array<{ key: "today" | "yesterday" | "7d" | "30d"; label: string }> = [
+type RangeKey =
+  | "today"
+  | "yesterday"
+  | "7d"
+  | "30d"
+  | "this_month"
+  | "last_month"
+  | "custom";
+
+const RANGES: Array<{ key: Exclude<RangeKey, "custom">; label: string }> = [
   { key: "today", label: "היום" },
   { key: "yesterday", label: "אתמול" },
   { key: "7d", label: "7 ימים" },
   { key: "30d", label: "30 ימים" },
+  { key: "this_month", label: "החודש" },
+  { key: "last_month", label: "חודש שעבר" },
 ];
+
+const RANGE_LABELS: Record<RangeKey, string> = {
+  today: "היום",
+  yesterday: "אתמול",
+  "7d": "7 ימים",
+  "30d": "30 ימים",
+  this_month: "החודש",
+  last_month: "חודש שעבר",
+  custom: "טווח מותאם",
+};
+
+function israelToday(): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" });
+}
+
+function formatShortDate(iso: string): string {
+  const [, m, d] = iso.split("-");
+  return `${Number(d)}.${Number(m)}`;
+}
 
 const CHANNEL_LABELS: Record<ChannelBucket["source"], string> = {
   direct: "ישיר מהתפריט",
@@ -82,6 +114,8 @@ const CHANNEL_LABELS: Record<ChannelBucket["source"], string> = {
 
 export function AnalyticsView({
   range,
+  customFrom,
+  customTo,
   summary,
   hourly,
   topItems,
@@ -91,7 +125,9 @@ export function AnalyticsView({
   insights,
   visitors,
 }: {
-  range: "today" | "yesterday" | "7d" | "30d";
+  range: RangeKey;
+  customFrom: string | null;
+  customTo: string | null;
   summary: Summary;
   hourly: { current: number[]; previous: number[] };
   topItems: TopItem[];
@@ -102,6 +138,24 @@ export function AnalyticsView({
   visitors: VisitorStats;
 }) {
   const router = useRouter();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [draftFrom, setDraftFrom] = useState(customFrom ?? israelToday());
+  const [draftTo, setDraftTo] = useState(customTo ?? israelToday());
+  const draftValid = !!draftFrom && !!draftTo && draftFrom <= draftTo;
+
+  const customActive = range === "custom";
+  const customLabel =
+    customActive && customFrom && customTo
+      ? customFrom === customTo
+        ? formatShortDate(customFrom)
+        : `${formatShortDate(customFrom)} - ${formatShortDate(customTo)}`
+      : "בחירת תאריכים";
+
+  const applyCustom = () => {
+    if (!draftValid) return;
+    setPickerOpen(false);
+    router.push(`/dashboard/analytics?range=custom&from=${draftFrom}&to=${draftTo}`);
+  };
 
   const totalOrders = summary.orders.count ?? 0;
   const maxBar = Math.max(1, ...hourly.current, ...hourly.previous);
@@ -114,33 +168,98 @@ export function AnalyticsView({
 
   return (
     <div className="space-y-5">
-      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+      <header className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black">אנליטיקס</h1>
           <p className="text-sm text-black/60 mt-0.5">
             ניתוח עמוק של הביצועים - כספים, ערוצים, לקוחות ותפעול.
           </p>
         </div>
-        <div
-          className="inline-flex rounded-2xl border-2 border-black overflow-hidden self-start sm:self-auto shadow-[0_3px_0_#000]"
-          style={{ backgroundColor: "#FFF2C9" }}
-        >
-          {RANGES.map((r) => {
-            const active = r.key === range;
-            return (
-              <button
-                key={r.key}
-                type="button"
-                onClick={() => router.push(`/dashboard/analytics?range=${r.key}`)}
-                className={cn(
-                  "px-4 py-2 text-sm font-bold transition",
-                  active ? "bg-black text-[#F8CB1E]" : "hover:bg-black/5",
-                )}
-              >
-                {r.label}
-              </button>
-            );
-          })}
+        <div className="flex items-stretch gap-2 self-start xl:self-auto max-w-full">
+          <div
+            className="inline-flex rounded-2xl border-2 border-black overflow-x-auto shadow-[0_3px_0_#000] no-scrollbar"
+            style={{ backgroundColor: "#FFF2C9" }}
+          >
+            {RANGES.map((r) => {
+              const active = r.key === range;
+              return (
+                <button
+                  key={r.key}
+                  type="button"
+                  onClick={() => router.push(`/dashboard/analytics?range=${r.key}`)}
+                  className={cn(
+                    "px-3.5 py-2 text-sm font-bold transition whitespace-nowrap shrink-0",
+                    active ? "bg-black text-[#F8CB1E]" : "hover:bg-black/5",
+                  )}
+                >
+                  {r.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="relative shrink-0">
+            <button
+              type="button"
+              onClick={() => setPickerOpen((v) => !v)}
+              className={cn(
+                "h-full inline-flex items-center gap-2 px-3.5 py-2 text-sm font-bold rounded-2xl border-2 border-black shadow-[0_3px_0_#000] transition whitespace-nowrap",
+                customActive ? "bg-black text-[#F8CB1E]" : "hover:bg-black/5",
+              )}
+              style={customActive ? undefined : { backgroundColor: "#FFF2C9" }}
+            >
+              <CalendarDays size={16} />
+              <span className="tnum">{customLabel}</span>
+            </button>
+
+            {pickerOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-20"
+                  onClick={() => setPickerOpen(false)}
+                />
+                <div className="absolute top-full mt-2 end-0 z-30 w-72 bg-white rounded-2xl border-2 border-black shadow-[0_4px_0_#000] p-4">
+                  <div className="font-black text-sm mb-3">טווח תאריכים מותאם</div>
+                  <div className="space-y-3">
+                    <label className="block">
+                      <span className="text-xs font-bold text-black/60">מתאריך</span>
+                      <input
+                        type="date"
+                        value={draftFrom}
+                        max={draftTo || israelToday()}
+                        onChange={(e) => setDraftFrom(e.target.value)}
+                        className="mt-1 w-full px-3 py-2 rounded-xl border-2 border-black text-sm font-bold bg-white tnum"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs font-bold text-black/60">עד תאריך</span>
+                      <input
+                        type="date"
+                        value={draftTo}
+                        min={draftFrom || undefined}
+                        max={israelToday()}
+                        onChange={(e) => setDraftTo(e.target.value)}
+                        className="mt-1 w-full px-3 py-2 rounded-xl border-2 border-black text-sm font-bold bg-white tnum"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={applyCustom}
+                      disabled={!draftValid}
+                      className={cn(
+                        "w-full py-2 rounded-xl border-2 border-black font-black text-sm transition",
+                        draftValid
+                          ? "bg-black text-[#F8CB1E] hover:opacity-90"
+                          : "bg-black/10 text-black/40 cursor-not-allowed",
+                      )}
+                    >
+                      הצג נתונים
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -298,7 +417,7 @@ export function AnalyticsView({
       </Panel>
 
       {/* TOP ITEMS */}
-      <Panel title="פריטים מובילים" subtitle={`לפי כמות במכר · ${range === "7d" ? "7 ימים" : "טווח נבחר"}`}>
+      <Panel title="פריטים מובילים" subtitle={`לפי כמות במכר · ${range === "custom" ? customLabel : RANGE_LABELS[range]}`}>
         {topItems.length === 0 ? (
           <Empty>אין הזמנות בטווח הזה.</Empty>
         ) : (
