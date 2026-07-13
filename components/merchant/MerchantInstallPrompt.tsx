@@ -91,11 +91,18 @@ export function MerchantInstallPrompt() {
         <div className="flex-1 min-w-0">
           <p className="font-bold text-sm">התקינו את QuickFood כאפליקציה</p>
           <p className="text-xs text-qf-mute">
-            {deferred
-              ? "אייקון במסך הבית, פתיחה במסך מלא בלי דפדפן"
-              : fallback === "ios"
-                ? "בספארי: לחצו על כפתור השיתוף ובחרו 'הוסף למסך הבית'"
-                : "בכרום: פתחו את תפריט ⋮ ובחרו 'הוספה למסך הבית'"}
+            {deferred ? (
+              "אייקון במסך הבית, פתיחה במסך מלא בלי דפדפן"
+            ) : fallback === "ios" ? (
+              "בספארי: לחצו על כפתור השיתוף ובחרו 'הוסף למסך הבית'"
+            ) : (
+              <>
+                בכרום: תפריט ⋮ ← &apos;הוספה למסך הבית&apos;, או{" "}
+                <a href="/download" className="font-bold underline text-qf-ink">
+                  הורידו את האפליקציה
+                </a>
+              </>
+            )}
           </p>
         </div>
         {deferred && (

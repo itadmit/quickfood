@@ -82,12 +82,23 @@ export function InstallAppButton() {
         {busy ? "פותח..." : "שמור במסך הבית"}
       </button>
       {showManual && !deferred && (
-        <div className="rounded-xl bg-qf-line-soft/50 border border-qf-line-dash p-3 text-sm text-qf-ink2 leading-relaxed">
-          {isIos
-            ? "באייפון: פתחו את הדשבורד בספארי, לחצו על כפתור השיתוף ובחרו 'הוסף למסך הבית'."
-            : isAndroid
-              ? "באנדרואיד: פתחו את הדשבורד בכרום, לחצו על תפריט ⋮ למעלה ובחרו 'הוספה למסך הבית' (או 'התקנת אפליקציה')."
-              : "במחשב: בכרום, לחצו על אייקון ההתקנה בסוף שורת הכתובת ובחרו 'התקנה'."}
+        <div className="rounded-xl bg-qf-line-soft/50 border border-qf-line-dash p-3 text-sm text-qf-ink2 leading-relaxed space-y-2">
+          <p>
+            {isIos
+              ? "באייפון: פתחו את הדשבורד בספארי, לחצו על כפתור השיתוף ובחרו 'הוסף למסך הבית'."
+              : isAndroid
+                ? "באנדרואיד: פתחו את הדשבורד בכרום, לחצו על תפריט ⋮ למעלה ובחרו 'הוספה למסך הבית' (או 'התקנת אפליקציה')."
+                : "במחשב: בכרום, לחצו על אייקון ההתקנה בסוף שורת הכתובת ובחרו 'התקנה'."}
+          </p>
+          {isAndroid && (
+            <p>
+              הדפדפן לא משתף פעולה? התקינו את{" "}
+              <a href="/download" className="font-bold underline">
+                אפליקציית האנדרואיד המלאה
+              </a>{" "}
+              - עובדת על כל מכשיר, כולל התראות על הזמנות.
+            </p>
+          )}
         </div>
       )}
     </div>
