@@ -14,6 +14,7 @@ import {
   createPaymentMethodSetup,
   BillingHubError,
 } from "@/lib/billing-hub/client";
+import { activeIntroPrice, BASE_PLAN_PRICE } from "@/lib/billing-hub/plans";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,6 +49,8 @@ export const POST = handler(async (req: Request) => {
       name: true,
       vatNumber: true,
       billingCustomerId: true,
+      introMonthlyPrice: true,
+      introPriceUntil: true,
       merchantUsers: {
         where: { role: "owner" },
         select: { email: true, phone: true },
@@ -91,14 +94,16 @@ export const POST = handler(async (req: Request) => {
     let billingCustomerId = tenant.billingCustomerId ?? (await ensureBillingCustomer());
 
     // subscription_setup: charge the first month's ₪299 (+VAT) so the
-    // token is captured along with month 1; card_update: chargeType=3
+    // token is captured along with month 1 - or the tenant's negotiated
+    // intro price when one is active; card_update: chargeType=3
     // verification with ₪1 hold, no recurring billing yet.
+    const monthOne = activeIntroPrice(tenant) ?? BASE_PLAN_PRICE;
     const runSetup = (customerId: string) =>
       createPaymentMethodSetup({
         customer_id: customerId,
         accept: true,
         context_type: contextType,
-        amount: contextType === "card_update" ? 1 : 299,
+        amount: contextType === "card_update" ? 1 : monthOne,
         success_url: `${appUrl}/dashboard/billing?setup=complete`,
         failure_url: `${appUrl}/dashboard/billing?setup=failed`,
       });

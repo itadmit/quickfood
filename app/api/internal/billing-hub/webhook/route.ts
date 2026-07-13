@@ -23,7 +23,7 @@ import {
   createSubscription,
   BillingHubError,
 } from "@/lib/billing-hub/client";
-import { REVIEWS_WHATSAPP_PLAN_CODE } from "@/lib/billing-hub/plans";
+import { REVIEWS_WHATSAPP_PLAN_CODE, activeIntroPrice } from "@/lib/billing-hub/plans";
 import { sendCapiEvent } from "@/lib/fb/capi";
 import { after } from "next/server";
 
@@ -56,6 +56,8 @@ async function findTenantByCustomerId(customerId: string) {
       smsCreditsRemaining: true,
       reviewsWhatsappSubscriptionId: true,
       reviewsChannel: true,
+      introMonthlyPrice: true,
+      introPriceUntil: true,
       fbp: true,
       fbc: true,
       merchantUsers: {
@@ -143,12 +145,14 @@ export const POST = handler(async (req: Request) => {
       // from now.
       if (!tenant.billingSubscriptionId && paymentMethodId) {
         try {
+          const introPrice = activeIntroPrice(tenant);
           const sub = await createSubscription({
             customer_id: d.customer_id,
             plan_code: BASE_PLAN_CODE,
             billing_interval: "monthly",
             trial_days: BASE_TRIAL_DAYS_AFTER_SETUP,
             payment_method_id: paymentMethodId,
+            custom_monthly_price: introPrice ?? undefined,
             metadata: { tenant_id: tenant.id, kind: "base" },
           });
           await prisma.tenant.update({

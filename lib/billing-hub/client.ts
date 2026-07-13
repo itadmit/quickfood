@@ -185,6 +185,8 @@ export function createSubscription(input: {
   billing_interval?: "monthly" | "yearly";
   trial_days?: number;
   payment_method_id?: string;
+  /** Per-subscription price override (pre-VAT shekels) - bills instead of the plan price at every renewal until cleared. */
+  custom_monthly_price?: number;
   metadata?: Record<string, string>;
 }) {
   return request<BillingSubscription>("POST", "/api/v1/subscriptions", input);
@@ -242,6 +244,8 @@ export function patchSubscription(
     cancel_at_period_end?: boolean;
     plan_code?: string;
     payment_method_id?: string;
+    /** Pass null to clear a price override and revert to the plan price. */
+    custom_monthly_price?: number | null;
   },
 ) {
   return request<SubscriptionDetail>(

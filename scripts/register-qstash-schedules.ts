@@ -35,6 +35,14 @@ const JOBS: Job[] = [
     cron: "0 6 * * *",
     description: "Issue birthday coupons + greetings; purge expired unused ones.",
   },
+  {
+    scheduleId: "quickfood-expire-intro-prices",
+    path: "/api/internal/jobs/expire-intro-prices",
+    // 03:00 UTC ≈ 06:00 Israel - revert expired negotiated intro prices to
+    // the regular plan price before the day's renewals run.
+    cron: "0 3 * * *",
+    description: "Clear expired Tenant intro prices + hub custom_monthly_price overrides.",
+  },
 ];
 
 async function main() {

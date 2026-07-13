@@ -455,6 +455,13 @@ model Tenant {
   // 7-day local trial countdown set at signup. After this date, without a
   // saved payment method, the dashboard is fully locked.
   trialEndsAt             DateTime? @map("trial_ends_at")
+  // Negotiated intro pricing (pre-VAT shekels). While `introPriceUntil` is in
+  // the future: billing setup charges this amount for month 1 and the base
+  // subscription is created with a matching custom_monthly_price on the hub.
+  // The expire-intro-prices job clears the override once the date passes, so
+  // the next renewal bills the regular plan price.
+  introMonthlyPrice       Int?      @map("intro_monthly_price")
+  introPriceUntil         DateTime? @map("intro_price_until")
 
   // Meta click/browser ids captured from the _fbp/_fbc cookies at signup.
   // Reused when the merchant later pays so the server-side Purchase event
