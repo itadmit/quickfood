@@ -197,7 +197,10 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   ) {
     const selectedOptions: Array<{ group_id: string; group_name: string; option_id: string; name: string; price_delta: number; half?: string }> = [];
     let optionsDelta = 0;
-    const optionIds = new Set(optionIdList);
+    // A repeated id means the customer picked the same option that many
+    // times (Wolt-style quantity) - every occurrence is one unit.
+    const optionCounts = new Map<string, number>();
+    for (const id of optionIdList) optionCounts.set(id, (optionCounts.get(id) ?? 0) + 1);
     for (const group of item.optionGroups) {
       // Resolve the effective options + config: ModifierSet overrides inline.
       const fromSet = group.templateSet;
@@ -213,40 +216,48 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       const effectiveBundleCount = ownBundle ? group.bundleCount : (fromSet?.bundleCount ?? 0);
       const effectiveBundlePrice = ownBundle ? group.bundlePrice : (fromSet?.bundlePrice ?? 0);
       const availableOptions = effectiveOptions.filter((o) => o.available);
-      const picksInGroup = availableOptions.filter((o) => optionIds.has(o.id));
+      const picksInGroup = availableOptions.filter((o) => optionCounts.has(o.id));
+      const unitsInGroup = picksInGroup.reduce(
+        (n, o) => n + (optionCounts.get(o.id) ?? 0),
+        0,
+      );
 
-      if (effectiveType === "single" && picksInGroup.length > 1) {
+      if (effectiveType === "single" && unitsInGroup > 1) {
         throw new CartValidationError("too_many_in_single_group", group.id);
       }
       // חובה group with min=0 in the catalog is still a "must pick one":
       // the Wolt importer occasionally leaves the floor unset. Treat
       // required as min>=1 regardless of what the row says.
       const requiredFloor = effectiveRequired ? Math.max(1, effectiveMin) : effectiveMin;
-      if (effectiveRequired && picksInGroup.length < requiredFloor) {
+      if (effectiveRequired && unitsInGroup < requiredFloor) {
         throw new CartValidationError("required_group_missing", group.id);
       }
-      if (picksInGroup.length > effectiveMax) {
+      if (unitsInGroup > effectiveMax) {
         throw new CartValidationError("too_many_in_group", group.id);
       }
 
-      const charges = priceGroupOptions(
-        picksInGroup.map((o) => ({
-          id: o.id,
+      // One pseudo-pick per unit ("<id>#0", "<id>#1", ...) so cheapest-free
+      // and bundle caps allocate across repeated picks of the same option.
+      const units = picksInGroup.flatMap((o) =>
+        Array.from({ length: optionCounts.get(o.id) ?? 0 }, (_, i) => ({
+          id: `${o.id}#${i}`,
           priceDelta: o.priceDelta,
           halfPriceDelta: o.halfPriceDelta,
           half: placements[o.id] ?? null,
+          option: o,
         })),
-        {
-          includedFree: effectiveFree,
-          bundleCount: effectiveBundleCount,
-          bundlePrice: effectiveBundlePrice,
-          splitPrice: effectiveSplit,
-          customHalfPrice: effectiveCustomHalf,
-        },
       );
+      const charges = priceGroupOptions(units, {
+        includedFree: effectiveFree,
+        bundleCount: effectiveBundleCount,
+        bundlePrice: effectiveBundlePrice,
+        splitPrice: effectiveSplit,
+        customHalfPrice: effectiveCustomHalf,
+      });
 
-      for (const o of picksInGroup) {
-        const effectiveDelta = charges.get(o.id) ?? o.priceDelta;
+      for (const unit of units) {
+        const o = unit.option;
+        const effectiveDelta = charges.get(unit.id) ?? o.priceDelta;
         const half = placements[o.id];
         selectedOptions.push({
           group_id: group.id,

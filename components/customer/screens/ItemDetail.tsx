@@ -135,6 +135,24 @@ export function ItemDetail({
     return initial;
   });
 
+  // Wolt-style per-option quantity inside multi groups (3× טחינה). Only
+  // options present in `picks` count; a picked option with no entry here
+  // is quantity 1.
+  const [optQtys, setOptQtys] = useState<Record<string, Record<string, number>>>(() => {
+    const initial: Record<string, Record<string, number>> = {};
+    if (editLine) {
+      for (const g of item.optionGroups) {
+        if (g.allowHalf) continue;
+        const m: Record<string, number> = {};
+        for (const o of editLine.options) {
+          if (o.groupId === g.id && !o.half) m[o.optionId] = (m[o.optionId] ?? 0) + 1;
+        }
+        initial[g.id] = m;
+      }
+    }
+    return initial;
+  });
+
   // For allowHalf groups: maps optionId → placement ("left"|"right"|"full")
   const [halfPicks, setHalfPicks] = useState<Record<string, Record<string, HalfPlacement>>>(() => {
     const initial: Record<string, Record<string, HalfPlacement>> = {};
@@ -269,17 +287,38 @@ export function ItemDetail({
     return () => observer.disconnect();
   }, []);
 
+  function optionQty(g: OptionGroup, optionId: string): number {
+    if (!picks[g.id]?.has(optionId)) return 0;
+    if (g.type !== "multi" || g.maxSelect <= 1) return 1;
+    return Math.max(1, optQtys[g.id]?.[optionId] ?? 1);
+  }
+
+  // One PricedOption per unit: an option picked 3 times becomes three
+  // entries keyed "<id>#0..2" so the cheapest-free / bundle allocation in
+  // priceGroupOptions treats every unit as its own pick. Callers map the
+  // synthetic key back to the real id by cutting at "#".
   function pickedOptions(g: OptionGroup): PricedOption[] {
     if (g.allowHalf) {
       const gHalf = halfPicks[g.id] ?? {};
       return g.options
         .filter((o) => gHalf[o.id])
-        .map((o) => ({ id: o.id, priceDelta: o.priceDelta, halfPriceDelta: o.halfPriceDelta, half: gHalf[o.id] }));
+        .map((o) => ({ id: `${o.id}#0`, priceDelta: o.priceDelta, halfPriceDelta: o.halfPriceDelta, half: gHalf[o.id] }));
     }
-    const selected = picks[g.id] ?? new Set<string>();
-    return g.options
-      .filter((o) => selected.has(o.id))
-      .map((o) => ({ id: o.id, priceDelta: o.priceDelta, halfPriceDelta: o.halfPriceDelta }));
+    const out: PricedOption[] = [];
+    for (const o of g.options) {
+      const q = optionQty(g, o.id);
+      for (let i = 0; i < q; i++) {
+        out.push({ id: `${o.id}#${i}`, priceDelta: o.priceDelta, halfPriceDelta: o.halfPriceDelta });
+      }
+    }
+    return out;
+  }
+
+  function groupUnits(g: OptionGroup): number {
+    if (g.allowHalf) return Object.keys(halfPicks[g.id] ?? {}).length;
+    let n = 0;
+    for (const id of picks[g.id] ?? []) n += optionQty(g, id);
+    return n;
   }
 
   function groupPricingConfig(g: OptionGroup): GroupPricingConfig {
@@ -309,7 +348,7 @@ export function ItemDetail({
       for (const c of charges.values()) oDelta += c;
     }
     return (item.basePrice + sDelta + oDelta) * quantity;
-  }, [item, sizeId, picks, halfPicks, quantity]);
+  }, [item, sizeId, picks, optQtys, halfPicks, quantity]);
 
   const missingGroup = useMemo(() => {
     for (const g of item.optionGroups) {
@@ -317,16 +356,11 @@ export function ItemDetail({
       // if the catalog's minSelect leaked through as 0 (a known artefact
       // of the Wolt importer that doesn't always seed the floor).
       const floor = g.required ? Math.max(1, g.minSelect) : g.minSelect;
-      if (g.allowHalf) {
-        const count = Object.keys(halfPicks[g.id] ?? {}).length;
-        if (g.required && count < floor) return g;
-      } else {
-        const sel = picks[g.id] ?? new Set();
-        if (g.required && sel.size < floor) return g;
-      }
+      if (g.required && groupUnits(g) < floor) return g;
     }
     return null;
-  }, [item.optionGroups, picks, halfPicks]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.optionGroups, picks, optQtys, halfPicks]);
 
   function toggleOption(group: OptionGroup, optionId: string) {
     setPicks((prev) => {
@@ -341,14 +375,39 @@ export function ItemDetail({
       } else {
         if (current.has(optionId)) {
           current.delete(optionId);
+          setOptQtys((q) => ({ ...q, [group.id]: { ...q[group.id], [optionId]: 0 } }));
         } else {
-          if (current.size >= group.maxSelect) return prev;
+          let units = 0;
+          for (const id of current) units += Math.max(1, optQtys[group.id]?.[id] ?? 1);
+          if (units >= group.maxSelect) return prev;
           current.add(optionId);
+          setOptQtys((q) => ({ ...q, [group.id]: { ...q[group.id], [optionId]: 1 } }));
         }
         next[group.id] = current;
       }
       return next;
     });
+  }
+
+  function bumpOptionQty(group: OptionGroup, optionId: string, delta: 1 | -1) {
+    const current = optionQty(group, optionId);
+    const next = current + delta;
+    if (next <= 0) {
+      setPicks((prev) => {
+        const set = new Set(prev[group.id] ?? []);
+        set.delete(optionId);
+        return { ...prev, [group.id]: set };
+      });
+      setOptQtys((q) => ({ ...q, [group.id]: { ...q[group.id], [optionId]: 0 } }));
+      return;
+    }
+    if (delta > 0 && groupUnits(group) >= group.maxSelect) return;
+    setPicks((prev) => {
+      const set = new Set(prev[group.id] ?? []);
+      set.add(optionId);
+      return { ...prev, [group.id]: set };
+    });
+    setOptQtys((q) => ({ ...q, [group.id]: { ...q[group.id], [optionId]: next } }));
   }
 
   function toggleHalf(group: OptionGroup, optionId: string, placement: HalfPlacement) {
@@ -395,15 +454,17 @@ export function ItemDetail({
       const picked = pickedOptions(g);
       if (picked.length === 0) continue;
       const charges = priceGroupOptions(picked, groupPricingConfig(g));
-      for (const o of g.options) {
-        if (!charges.has(o.id)) continue;
-        const placement = g.allowHalf ? (halfPicks[g.id]?.[o.id] as HalfPlacement | undefined) : undefined;
+      for (const unit of picked) {
+        const optionId = unit.id.slice(0, unit.id.indexOf("#"));
+        const o = g.options.find((x) => x.id === optionId);
+        if (!o) continue;
+        const placement = g.allowHalf ? (halfPicks[g.id]?.[optionId] as HalfPlacement | undefined) : undefined;
         selectedOpts.push({
           groupId: g.id,
-          optionId: o.id,
+          optionId,
           name: o.name,
           groupName: g.name,
-          priceDelta: charges.get(o.id)!,
+          priceDelta: charges.get(unit.id) ?? o.priceDelta,
           ...(placement ? { half: placement } : {}),
         });
       }
@@ -827,10 +888,23 @@ export function ItemDetail({
         }
 
         const free = g.includedFree ?? 0;
-        const selected = picks[g.id]?.size ?? 0;
+        const selected = groupUnits(g);
         const remaining = Math.max(0, g.maxSelect - selected);
         const atMax = selected >= g.maxSelect;
         const freeRemaining = Math.max(0, free - selected);
+        // Wolt-style free picks: while the group still has free slots left,
+        // paid options show no price at all - the price tag appears only
+        // once the free allowance is used up. Bundle groups keep their
+        // explicit prices (the bundle note explains the deal).
+        const hidePriceWhileFree = free > 0 && !(g.bundleCount && g.bundlePrice);
+        const groupCharges = new Map<string, number>();
+        if (hidePriceWhileFree && selected > 0) {
+          const charges = priceGroupOptions(pickedOptions(g), groupPricingConfig(g));
+          for (const [key, charge] of charges) {
+            const realId = key.slice(0, key.indexOf("#"));
+            groupCharges.set(realId, (groupCharges.get(realId) ?? 0) + charge);
+          }
+        }
         // A maxSelect at/above the number of options is effectively "no
         // limit" (the data often carries a 999 sentinel). Don't surface the
         // raw cap as "4/999" / "אפשר לבחור עוד 995".
@@ -904,6 +978,19 @@ export function ItemDetail({
               // the current selection, so blocking the row would leave the
               // customer stuck on their first choice - the "can't switch" bug.
               const blocked = !isSingle && !checked && atMax;
+              let priceLabel: string | null;
+              if (o.priceDelta === 0) {
+                priceLabel = null;
+              } else if (o.priceDelta < 0) {
+                priceLabel = `-${formatPrice(-o.priceDelta)}`;
+              } else if (!hidePriceWhileFree) {
+                priceLabel = `+${formatPrice(o.priceDelta)}`;
+              } else if (checked) {
+                const charged = groupCharges.get(o.id) ?? 0;
+                priceLabel = charged > 0 ? `+${formatPrice(charged)}` : "חינם";
+              } else {
+                priceLabel = freeRemaining > 0 ? null : `+${formatPrice(o.priceDelta)}`;
+              }
               return (
                 <Row
                   key={o.id}
@@ -915,15 +1002,19 @@ export function ItemDetail({
                   }}
                   label={o.name}
                   imageUrl={o.imageUrl}
-                  priceLabel={
-                    o.priceDelta === 0
-                      ? null
-                      : o.priceDelta > 0
-                        ? `+${formatPrice(o.priceDelta)}`
-                        : `-${formatPrice(-o.priceDelta)}`
-                  }
+                  priceLabel={priceLabel}
                   priceTone="delta"
                   radio={isSingle}
+                  stepper={
+                    !isSingle && checked
+                      ? {
+                          qty: optionQty(g, o.id),
+                          canInc: !atMax,
+                          onInc: () => bumpOptionQty(g, o.id, 1),
+                          onDec: () => bumpOptionQty(g, o.id, -1),
+                        }
+                      : undefined
+                  }
                 />
               );
             });
@@ -1232,6 +1323,7 @@ function Row({
   radio,
   imageUrl,
   disabled,
+  stepper,
 }: {
   active: boolean;
   onClick: () => void;
@@ -1241,6 +1333,7 @@ function Row({
   radio?: boolean;
   imageUrl?: string | null;
   disabled?: boolean;
+  stepper?: { qty: number; canInc: boolean; onInc: () => void; onDec: () => void };
 }) {
   return (
     <button
@@ -1281,16 +1374,45 @@ function Row({
           {label}
         </span>
       </div>
-      {priceLabel && (
-        <span
-          className={cn(
-            "text-xs tnum font-medium shrink-0",
-            priceTone === "absolute" ? "text-qf-ink2" : "text-qf-mute",
-          )}
-        >
-          {priceLabel}
-        </span>
-      )}
+      <span className="flex items-center gap-2.5 shrink-0">
+        {priceLabel && (
+          <span
+            className={cn(
+              "text-xs tnum font-medium",
+              priceTone === "absolute" ? "text-qf-ink2" : "text-qf-mute",
+            )}
+          >
+            {priceLabel}
+          </span>
+        )}
+        {stepper && (
+          <span
+            className="flex items-center bg-qf-line-soft rounded-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span
+              role="button"
+              aria-label="הפחת"
+              onClick={stepper.onDec}
+              className="w-8 h-8 grid place-items-center rounded-full active:bg-qf-line-dash transition"
+            >
+              <IcoMinus s={14} />
+            </span>
+            <span className="w-5 text-center text-sm font-bold tnum">{stepper.qty}</span>
+            <span
+              role="button"
+              aria-label="הוסף"
+              onClick={stepper.canInc ? stepper.onInc : undefined}
+              className={cn(
+                "w-8 h-8 grid place-items-center rounded-full transition",
+                stepper.canInc ? "active:bg-qf-line-dash" : "opacity-40",
+              )}
+            >
+              <IcoPlus c="#11231a" s={14} />
+            </span>
+          </span>
+        )}
+      </span>
     </button>
   );
 }
