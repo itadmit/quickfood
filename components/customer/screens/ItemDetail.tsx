@@ -502,7 +502,8 @@ export function ItemDetail({
     <div
       className={cn(
         "pb-36",
-        inModal ? "lg:pb-0" : "lg:pb-12",
+        !inModal && "lg:pb-12",
+        inModal && kioskMode && "lg:pb-0",
         // Card chrome only on the full-page route; inside the modal
         // the wrapper provides its own card surface.
         !inModal &&
@@ -1068,21 +1069,27 @@ export function ItemDetail({
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
             maxLength={200}
-            placeholder="למשל: בלי בצל, חתוך ל-8"
+            placeholder="הערות למנה"
             className="w-full bg-qf-bg border border-qf-line rounded-xl px-3 py-2.5 text-sm outline-none focus:border-(--qf-primary) focus:bg-white resize-none"
           />
         )}
       </Section>
 
       {/* Footer CTA - Wolt-style chunky pill with quantity stepper on one side
-          and bold add-to-cart CTA on the other. Sticks to viewport on mobile,
-          sits naturally at the bottom of the card on desktop. In kioskMode
-          we drop the max-w-md cap (the kiosk tablet was getting a cramped
-          448px-wide bar centered in a 1000px viewport) and bump every
-          tap target up so a fingertip on a 10" iPad lands clean. */}
+          and bold add-to-cart CTA on the other. `fixed` inside the modal
+          pins to the transformed card (its containing block), so the bar
+          floats over the scrolling options on every breakpoint and the
+          live total stays visible. The full-page desktop route and the
+          kiosk (inModal but NOT inside a transformed card - fixed there
+          would pin to the viewport, across the category sidebar) keep the
+          static bottom-of-card placement on lg+. In kioskMode we drop
+          the max-w-md cap (the kiosk tablet was getting a cramped 448px
+          bar centered in a 1000px viewport) and bump every tap target up
+          so a fingertip on a 10" iPad lands clean. */}
       <div
         className={cn(
-          "fixed bottom-0 inset-x-0 z-30 lg:static lg:inset-auto lg:mx-0 lg:z-auto",
+          "fixed bottom-0 inset-x-0 z-30",
+          (!inModal || kioskMode) && "lg:static lg:inset-auto lg:mx-0 lg:z-auto",
           kioskMode
             ? "max-w-none mx-0 lg:max-w-none"
             : "max-w-md mx-auto lg:max-w-none",
