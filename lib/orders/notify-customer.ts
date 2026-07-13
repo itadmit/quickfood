@@ -11,7 +11,7 @@ interface OptionShape {
   price_delta?: number;
 }
 
-function parseOptions(raw: unknown): Array<{ name: string; priceDelta: number }> {
+export function parseOptions(raw: unknown): Array<{ name: string; priceDelta: number }> {
   if (!Array.isArray(raw)) return [];
   return raw
     .map((o) => {
@@ -22,7 +22,7 @@ function parseOptions(raw: unknown): Array<{ name: string; priceDelta: number }>
     .filter((o): o is { name: string; priceDelta: number } => o !== null);
 }
 
-function formatAddress(addr: {
+export function formatAddress(addr: {
   street?: string | null;
   city?: string | null;
   apartment?: string | null;
@@ -39,7 +39,7 @@ function formatAddress(addr: {
   return extras.length ? `${base} (${extras.join(", ")})` : base;
 }
 
-function formatScheduledFor(d: Date | null): string | null {
+export function formatScheduledFor(d: Date | null): string | null {
   if (!d) return null;
   try {
     return new Intl.DateTimeFormat("he-IL", {
@@ -55,7 +55,7 @@ function formatScheduledFor(d: Date | null): string | null {
   }
 }
 
-function appBaseUrl(): string {
+export function appBaseUrl(): string {
   return (process.env.NEXT_PUBLIC_APP_URL ?? "https://quickfood.co.il").replace(/\/$/, "");
 }
 

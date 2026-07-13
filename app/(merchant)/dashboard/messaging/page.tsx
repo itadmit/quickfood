@@ -4,7 +4,10 @@ import { prisma } from "@/lib/db/client";
 import { getSubscription, BillingHubError } from "@/lib/billing-hub/client";
 import { REVIEWS_WHATSAPP_BASE_PRICE } from "@/lib/billing-hub/plans";
 import { loadLoyaltyData } from "@/lib/loyalty/members";
-import { resolveOrderNotifySettings } from "@/lib/messaging/notify-settings";
+import {
+  resolveOrderNotifySettings,
+  resolveMerchantNewOrderSettings,
+} from "@/lib/messaging/notify-settings";
 import { resolveMessagingAvailability } from "@/lib/messaging/availability";
 import { MessagingView } from "./MessagingView";
 
@@ -93,6 +96,7 @@ export default async function MessagingPage() {
         instanceId: tenant.whatsappInstanceId ?? "",
       }}
       orderEvents={resolveOrderNotifySettings(tenant.notifySettings, tenant.notifyChannel)}
+      merchantNewOrder={resolveMerchantNewOrderSettings(tenant.notifySettings)}
       review={{
         enabled: tenant.reviewsEnabled,
         public: tenant.reviewsPublic,

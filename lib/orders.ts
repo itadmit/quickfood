@@ -8,6 +8,7 @@ import { notifyCourierAssigned } from "@/lib/courier/notify";
 import { notifyOrderCustomer } from "@/lib/orders/notify-order-event";
 import { sendTenantPush } from "@/lib/merchant/push";
 import { sendOrderConfirmedEmail, sendOrderCancelledEmail } from "@/lib/orders/notify-customer";
+import { notifyMerchantNewOrder } from "@/lib/orders/notify-merchant";
 
 /**
  * Order status state machine. Defines which transitions are legal.
@@ -244,6 +245,10 @@ export async function advanceStatus(
           tag: `order-${orderId}`,
           requireInteraction: true,
         }).catch((err) => console.warn("[push] tenant new-order failed", err));
+
+        await notifyMerchantNewOrder(orderId).catch((err) =>
+          console.warn("[notify-merchant] new-order failed", err),
+        );
       }
 
       await sendOrderConfirmedEmail(orderId).catch((err) =>

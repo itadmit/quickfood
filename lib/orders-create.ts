@@ -1,5 +1,7 @@
+import { after } from "next/server";
 import { prisma } from "@/lib/db/client";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
+import { notifyMerchantNewOrder } from "@/lib/orders/notify-merchant";
 import { isItemVisibleNow } from "@/lib/menu-availability";
 import { computeDeliveryFee } from "@/lib/delivery-fee";
 import { matchZoneByCity } from "@/lib/delivery-zone-match";
@@ -775,6 +777,12 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       tag: `order-${order.id}`,
       requireInteraction: true,
     }).catch((err) => console.warn("[push] tenant new-order failed", err));
+
+    after(() =>
+      notifyMerchantNewOrder(order.id).catch((err) =>
+        console.warn("[notify-merchant] new-order failed", err),
+      ),
+    );
   }
 
   return { order, paymentMethod: input.paymentMethod, total };

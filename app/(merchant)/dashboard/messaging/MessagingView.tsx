@@ -90,6 +90,7 @@ export function MessagingView({
   billingReady,
   whatsapp,
   orderEvents,
+  merchantNewOrder,
   review,
   availability,
   managed,
@@ -103,6 +104,7 @@ export function MessagingView({
   billingReady: boolean;
   whatsapp: { token: string; instanceId: string };
   orderEvents: OrderNotifySettings;
+  merchantNewOrder: { email: boolean; whatsapp: boolean };
   review: { enabled: boolean; public: boolean; channel: NotifyChannel; delayMinutes: number };
   availability: Availability;
   managed: Managed;
@@ -126,7 +128,7 @@ export function MessagingView({
       <nav className="flex gap-1.5 overflow-x-auto no-scrollbar">
         {([
           { id: "balance", label: "יתרה ורכישה" },
-          { id: "notifications", label: "התראות ללקוח" },
+          { id: "notifications", label: "התראות" },
           { id: "club", label: hasCredits ? "דיוור מועדון" : "דיוור מועדון (נעול)" },
         ] as Array<{ id: Tab; label: string }>).map((t) => (
           <button
@@ -162,6 +164,7 @@ export function MessagingView({
       {tab === "notifications" && (
         <NotificationsTab
           orderEvents={orderEvents}
+          merchantNewOrder={merchantNewOrder}
           review={review}
           smsSender={initialSender}
           availability={availability}
@@ -349,7 +352,7 @@ function BalanceTab({
           <div className="text-base lg:text-lg font-semibold mt-1" dir="ltr">
             {smsSender || "-"}
           </div>
-          <div className="text-xs text-qf-mute mt-0.5">משתנה בלשונית &quot;התראות ללקוח&quot;.</div>
+          <div className="text-xs text-qf-mute mt-0.5">משתנה בלשונית &quot;התראות&quot;.</div>
         </div>
       </div>
 
@@ -997,11 +1000,13 @@ function EventTextEditor({
 
 function NotificationsTab({
   orderEvents,
+  merchantNewOrder,
   review,
   smsSender,
   availability,
 }: {
   orderEvents: OrderNotifySettings;
+  merchantNewOrder: { email: boolean; whatsapp: boolean };
   review: { enabled: boolean; public: boolean; channel: NotifyChannel; delayMinutes: number };
   smsSender: string;
   availability: Availability;
@@ -1027,6 +1032,7 @@ function NotificationsTab({
   }, [orderEvents]);
 
   const [events, setEvents] = useState<OrderNotifySettings>(initEvents);
+  const [ownerAlert, setOwnerAlert] = useState(merchantNewOrder);
   const [rev, setRev] = useState(review);
   const [sender, setSender] = useState(smsSender);
   const [saving, setSaving] = useState(false);
@@ -1045,6 +1051,7 @@ function NotificationsTab({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           order_events: events,
+          merchant_new_order: ownerAlert,
           review: {
             enabled: rev.enabled,
             public: rev.public,
@@ -1070,9 +1077,42 @@ function NotificationsTab({
   return (
     <>
       <div className="space-y-5">
+        <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
+          <div>
+            <h2 className="text-base lg:text-lg font-semibold">התראה לבעל העסק על הזמנה חדשה</h2>
+            <p className="text-xs text-qf-mute">
+              איך לעדכן אתכם ברגע שנכנסת הזמנה חדשה, בנוסף להתראה בדשבורד ובאפליקציה.
+            </p>
+          </div>
+          <label className="flex items-center gap-2.5 text-sm">
+            <input
+              type="checkbox"
+              checked={ownerAlert.email}
+              onChange={(e) => setOwnerAlert((x) => ({ ...x, email: e.target.checked }))}
+              className="w-4 h-4 accent-(--qf-primary)"
+            />
+            <span>
+              מייל
+              <span className="text-xs text-qf-mute"> · נשלח לכתובת המייל של בעל החשבון</span>
+            </span>
+          </label>
+          <label className="flex items-center gap-2.5 text-sm">
+            <input
+              type="checkbox"
+              checked={ownerAlert.whatsapp}
+              onChange={(e) => setOwnerAlert((x) => ({ ...x, whatsapp: e.target.checked }))}
+              className="w-4 h-4 accent-(--qf-primary)"
+            />
+            <span>
+              וואטסאפ
+              <span className="text-xs text-qf-mute"> · נשלח למספר הנייד של בעל החשבון, ללא עלות</span>
+            </span>
+          </label>
+        </section>
+
         <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
           <div>
-            <h2 className="text-base lg:text-lg font-semibold">עדכוני סטטוס הזמנה</h2>
+            <h2 className="text-base lg:text-lg font-semibold">עדכוני סטטוס הזמנה ללקוח</h2>
             <p className="text-xs text-qf-mute">
               מה לשלוח ללקוח בכל שלב, ובאיזה ערוץ. אישור הזמנה וחשבונית נשלחים תמיד גם במייל; ההתראות כאן נשלחות בנוסף.
             </p>

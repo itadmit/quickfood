@@ -794,6 +794,83 @@ export function orderConfirmedEmail({
   });
 }
 
+export function merchantNewOrderEmail({
+  businessName,
+  orderNumber,
+  method,
+  paymentMethod,
+  items,
+  total,
+  dashboardUrl,
+  customerName,
+  customerPhone,
+  addressLine,
+  scheduledForLabel,
+  customerNotes,
+}: {
+  businessName: string;
+  orderNumber: string;
+  method: "delivery" | "pickup";
+  paymentMethod: string;
+  items: OrderConfirmedItem[];
+  total: number;
+  dashboardUrl: string;
+  customerName?: string | null;
+  customerPhone?: string | null;
+  addressLine?: string | null;
+  scheduledForLabel?: string | null;
+  customerNotes?: string | null;
+}) {
+  const paymentLabels: Record<string, string> = {
+    cash: "מזומן",
+    card: "כרטיס אשראי",
+    bit: "ביט",
+    apple_pay: "Apple Pay",
+    google_pay: "Google Pay",
+  };
+  const paymentLabel = paymentLabels[paymentMethod] ?? paymentMethod;
+  const methodLabel = method === "delivery" ? "משלוח" : "איסוף עצמי";
+
+  const metaRow = (label: string, value: string, opts: { ltr?: boolean; accent?: boolean } = {}) =>
+    `<tr>
+      <td dir="rtl" style="font-size:13px;color:${BRAND.mute};padding:3px 0;vertical-align:top;">${escape(label)}</td>
+      <td dir="${opts.ltr ? "ltr" : "rtl"}" style="font-size:13px;color:${opts.accent ? "#9a6500" : BRAND.ink2};font-weight:${opts.ltr ? "800" : "500"};padding:3px 0 3px 12px;text-align:left;">${value}</td>
+    </tr>`;
+
+  const metaTable = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" style="border-collapse:collapse;background:${BRAND.cream};border:1px solid #f0e8d2;border-radius:12px;padding:14px 16px;margin:0 0 18px;">
+    ${metaRow("הזמנה", escape(orderNumber), { ltr: true })}
+    ${metaRow("סוג", escape(methodLabel))}
+    ${metaRow("תשלום", escape(paymentLabel))}
+    ${scheduledForLabel ? metaRow("לאספקה", escape(scheduledForLabel)) : ""}
+    ${customerName ? metaRow("לקוח", escape(customerName)) : ""}
+    ${customerPhone ? metaRow("טלפון", `<a href="tel:${escape(customerPhone)}" style="color:${BRAND.ink2};text-decoration:none;">${escape(customerPhone)}</a>`) : ""}
+    ${addressLine ? metaRow("כתובת", escape(addressLine)) : ""}
+    ${customerNotes ? metaRow("הערה", escape(customerNotes), { accent: true }) : ""}
+  </table>`;
+
+  const summaryTable = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" style="border-collapse:collapse;border-top:2px solid ${BRAND.line};margin-top:14px;padding-top:6px;">
+    ${summaryRow("סה\"כ", formatShekels(total), { bold: true })}
+  </table>`;
+
+  const tail =
+    metaTable +
+    `<h3 style="margin:18px 0 4px;font-size:15px;font-weight:800;color:${BRAND.ink};text-align:right;">פירוט הזמנה</h3>` +
+    itemsTable(items) +
+    summaryTable;
+
+  return renderRtlEmail({
+    subject: `הזמנה חדשה ב-${businessName} · ${orderNumber} · ${formatShekels(total)}`,
+    preheader: `${methodLabel} · ${paymentLabel} · סה"כ ${formatShekels(total)}`,
+    heading: `הזמנה חדשה - ${orderNumber}`,
+    paragraphs: [
+      `התקבלה הזמנה חדשה ב-<strong>${escape(businessName)}</strong>. היכנסו לדשבורד כדי לאשר אותה ולהתחיל בהכנה.`,
+    ],
+    raw: true,
+    button: { href: dashboardUrl, label: "לניהול ההזמנות" },
+    tail,
+  });
+}
+
 export function orderCancelledEmail({
   customerName,
   businessName,

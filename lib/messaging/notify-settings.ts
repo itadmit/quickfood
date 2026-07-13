@@ -73,6 +73,29 @@ function defaultFromLegacy(legacy: NotifyChannel): OrderNotifySettings {
   };
 }
 
+/**
+ * How the BUSINESS OWNER hears about a new order, on top of the always-on
+ * dashboard push. Stored under `merchant_new_order` in the same
+ * Tenant.notifySettings JSON. Email defaults ON so a fresh tenant gets
+ * order emails with zero setup; WhatsApp goes out from the platform's own
+ * iBot number, so it needs no tenant credentials or credits.
+ */
+export interface MerchantNewOrderSettings {
+  email: boolean;
+  whatsapp: boolean;
+}
+
+export function resolveMerchantNewOrderSettings(raw: unknown): MerchantNewOrderSettings {
+  const src =
+    raw && typeof raw === "object"
+      ? ((raw as Record<string, unknown>).merchant_new_order as Record<string, unknown> | undefined)
+      : undefined;
+  return {
+    email: asBool(src?.email, true),
+    whatsapp: asBool(src?.whatsapp, false),
+  };
+}
+
 export function resolveOrderNotifySettings(
   raw: unknown,
   legacyNotifyChannel: NotifyChannel,

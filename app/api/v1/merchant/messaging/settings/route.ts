@@ -20,6 +20,7 @@ import { REVIEWS_WHATSAPP_BASE_PRICE } from "@/lib/billing-hub/plans";
 import { resolveMessagingAvailability } from "@/lib/messaging/availability";
 import {
   resolveOrderNotifySettings,
+  resolveMerchantNewOrderSettings,
   ORDER_NOTIFY_EVENTS,
   type OrderNotifySettings,
   type NotifyChannel,
@@ -56,6 +57,12 @@ const Schema = z.object({
     .max(11)
     .regex(SmsSenderRegex, "אותיות באנגלית או ספרות בלבד, עד 11 תווים")
     .nullable()
+    .optional(),
+  merchant_new_order: z
+    .object({
+      email: z.boolean(),
+      whatsapp: z.boolean(),
+    })
     .optional(),
 });
 
@@ -166,6 +173,7 @@ export const GET = handler(async () => {
       instance_id: tenant.whatsappInstanceId ?? "",
     },
     order_events: orderEvents,
+    merchant_new_order: resolveMerchantNewOrderSettings(tenant.notifySettings),
     review: {
       enabled: tenant.reviewsEnabled,
       public: tenant.reviewsPublic,
@@ -209,19 +217,28 @@ export const PATCH = handler(async (req: Request) => {
   }
 
   // Merge order-event changes over the resolved current state, then store the
-  // full object so future reads don't depend on the legacy column.
+  // full object so future reads don't depend on the legacy column. The JSON
+  // also carries merchant_new_order - always rewrite BOTH parts so saving one
+  // never drops the other.
   const data: Record<string, unknown> = {};
-  if (body.order_events) {
-    const current = resolveOrderNotifySettings(tenant.notifySettings, tenant.notifyChannel);
-    const next: OrderNotifySettings = { ...current };
-    for (const ev of ORDER_NOTIFY_EVENTS) {
-      const e = body.order_events[ev];
-      if (e) {
-        const text = e.text?.trim();
-        next[ev] = { enabled: e.enabled, channel: e.channel, text: text ? text : null };
+  if (body.order_events || body.merchant_new_order) {
+    const next: OrderNotifySettings = {
+      ...resolveOrderNotifySettings(tenant.notifySettings, tenant.notifyChannel),
+    };
+    if (body.order_events) {
+      for (const ev of ORDER_NOTIFY_EVENTS) {
+        const e = body.order_events[ev];
+        if (e) {
+          const text = e.text?.trim();
+          next[ev] = { enabled: e.enabled, channel: e.channel, text: text ? text : null };
+        }
       }
     }
-    data.notifySettings = next;
+    data.notifySettings = {
+      ...next,
+      merchant_new_order:
+        body.merchant_new_order ?? resolveMerchantNewOrderSettings(tenant.notifySettings),
+    };
   }
   if (body.review?.enabled !== undefined) data.reviewsEnabled = body.review.enabled;
   if (body.review?.public !== undefined) data.reviewsPublic = body.review.public;
