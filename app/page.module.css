@@ -886,17 +886,6 @@
   margin-top: 4px;
   letter-spacing: 0.02em;
 }
-.growLearnLink {
-  font-size: 13px;
-  font-weight: 700;
-  color: #6E39EE;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-  text-decoration: none;
-}
-.growLearnLink:hover { text-decoration: underline; text-underline-offset: 3px; }
 .growSplit {
   display: grid;
   grid-template-columns: minmax(0, 280px) minmax(0, 1fr);

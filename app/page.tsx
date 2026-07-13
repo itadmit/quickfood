@@ -1294,14 +1294,6 @@ function GrowPartner() {
                 <div className={styles.growBrandTag}>סליקה · חשבוניות · בנקאות עסקית</div>
               </div>
             </div>
-            <a
-              href="https://grow.business/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.growLearnLink}
-            >
-              למידע על Grow <IcoArrowLeft c="currentColor" s={12} />
-            </a>
           </div>
 
           <div className={styles.growSplit}>
