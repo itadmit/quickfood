@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db/client";
 import { createOrder, CartValidationError, type CreateOrderInput } from "@/lib/orders-create";
+import { priceGroupOptions } from "@/lib/option-pricing";
 import { Prisma } from "@prisma/client";
 
 const EXPIRY_MINUTES = 30;
@@ -51,7 +52,8 @@ async function priceKioskCart(input: CreateOrderInput): Promise<{
       sizes: { select: { id: true, priceDelta: true } },
       optionGroups: {
         include: {
-          options: { select: { id: true, priceDelta: true } },
+          options: true,
+          templateSet: { include: { options: true } },
         },
       },
     },
@@ -75,19 +77,41 @@ async function priceKioskCart(input: CreateOrderInput): Promise<{
       }
       unit += size.priceDelta;
     }
-    for (const optId of line.option_ids ?? []) {
-      let foundDelta: number | null = null;
-      for (const grp of item.optionGroups) {
-        const opt = grp.options.find((o) => o.id === optId);
-        if (opt) {
-          foundDelta = opt.priceDelta;
-          break;
-        }
-      }
-      if (foundDelta === null) {
-        return { total: 0, error: new CartValidationError("option_not_found", optId) };
-      }
-      unit += foundDelta;
+    // Price options with the same engine createOrder uses (modifier-set
+    // resolution, includedFree, bundles, repeated ids as quantities) so the
+    // amount charged via Grow matches the order that materializes later.
+    const optionCounts = new Map<string, number>();
+    for (const id of line.option_ids ?? []) {
+      optionCounts.set(id, (optionCounts.get(id) ?? 0) + 1);
+    }
+    let matchedUnits = 0;
+    for (const grp of item.optionGroups) {
+      const fromSet = grp.templateSet;
+      const effectiveOptions = fromSet ? fromSet.options : grp.options;
+      const picksInGroup = effectiveOptions.filter((o) => optionCounts.has(o.id));
+      if (picksInGroup.length === 0) continue;
+      const units = picksInGroup.flatMap((o) =>
+        Array.from({ length: optionCounts.get(o.id) ?? 0 }, (_, i) => ({
+          id: `${o.id}#${i}`,
+          priceDelta: o.priceDelta,
+          halfPriceDelta: o.halfPriceDelta,
+          half: line.option_placements?.[o.id] ?? null,
+        })),
+      );
+      matchedUnits += units.length;
+      const ownBundle = grp.bundleCount > 0;
+      const charges = priceGroupOptions(units, {
+        includedFree: fromSet?.includedFree ?? grp.includedFree,
+        bundleCount: ownBundle ? grp.bundleCount : (fromSet?.bundleCount ?? 0),
+        bundlePrice: ownBundle ? grp.bundlePrice : (fromSet?.bundlePrice ?? 0),
+        splitPrice: grp.splitPrice || (fromSet?.splitPrice ?? false),
+        customHalfPrice: grp.customHalfPrice || (fromSet?.customHalfPrice ?? false),
+      });
+      for (const charge of charges.values()) unit += charge;
+    }
+    const requestedUnits = (line.option_ids ?? []).length;
+    if (matchedUnits < requestedUnits) {
+      return { total: 0, error: new CartValidationError("option_not_found", line.item_id) };
     }
     subtotal += unit * line.quantity;
   }
