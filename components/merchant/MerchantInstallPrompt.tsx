@@ -59,22 +59,24 @@ export function MerchantInstallPrompt() {
   if (!deferred || dismissed) return null;
 
   return (
-    <div className="mb-3 rounded-xl bg-(--qf-primary)/10 border border-(--qf-primary)/30 p-3 flex items-center gap-3">
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold text-sm">התקינו את QuickFood כאפליקציה</p>
-        <p className="text-xs text-qf-mute">אייקון במסך הבית, פתיחה במסך מלא בלי דפדפן</p>
+    <div className="fixed bottom-4 inset-x-3 z-50 mx-auto w-auto max-w-md lg:bottom-6">
+      <div className="rounded-2xl bg-white border-2 border-black shadow-xl p-3.5 flex items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-sm">התקינו את QuickFood כאפליקציה</p>
+          <p className="text-xs text-qf-mute">אייקון במסך הבית, פתיחה במסך מלא בלי דפדפן</p>
+        </div>
+        <button
+          type="button"
+          onClick={install}
+          disabled={busy}
+          className="px-3.5 py-2 rounded-xl bg-black text-[#F8CB1E] text-xs font-bold disabled:opacity-60 whitespace-nowrap"
+        >
+          {busy ? "פותח..." : "התקנה"}
+        </button>
+        <button type="button" onClick={dismiss} className="text-qf-mute hover:text-qf-ink text-xs whitespace-nowrap">
+          לא עכשיו
+        </button>
       </div>
-      <button
-        type="button"
-        onClick={install}
-        disabled={busy}
-        className="px-3 py-1.5 rounded-lg bg-black text-[#F8CB1E] text-xs font-bold disabled:opacity-60 whitespace-nowrap"
-      >
-        {busy ? "פותח..." : "התקנה"}
-      </button>
-      <button type="button" onClick={dismiss} className="text-qf-mute hover:text-qf-ink text-xs">
-        לא עכשיו
-      </button>
     </div>
   );
 }
