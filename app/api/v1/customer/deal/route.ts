@@ -56,6 +56,7 @@ export async function GET(req: Request) {
       description: deal.description,
       imageUrl: deal.imageUrl,
       fixedPrice: deal.fixedPrice,
+      freeExtras: deal.freeExtras,
       slots: deal.slots.map((s) => ({
         id: s.id,
         name: s.name,

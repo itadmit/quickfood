@@ -413,6 +413,20 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         });
       }
 
+      // Deal-gifted extras: the N cheapest PAID picks across all composed
+      // units cost 0. Applied after per-group pricing so it stacks on top
+      // of whatever includedFree/bundle rules the item groups already ran.
+      if (deal.freeExtras > 0) {
+        const gifted = selectedOptions
+          .filter((o) => o.price_delta > 0)
+          .sort((a, b) => a.price_delta - b.price_delta)
+          .slice(0, deal.freeExtras);
+        for (const o of gifted) {
+          extrasDelta -= o.price_delta;
+          o.price_delta = 0;
+        }
+      }
+
       const unitPrice = Math.round(deal.fixedPrice + extrasDelta);
       const totalPrice = unitPrice * dl.quantity;
       subtotal += totalPrice;

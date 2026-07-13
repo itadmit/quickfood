@@ -776,6 +776,10 @@ model Deal {
   fixedPrice  Int      @map("fixed_price")
   active      Boolean  @default(true)
   position    Int      @default(0)
+  // Paid add-ons gifted with the deal: the N cheapest PAID option picks
+  // across the composed units cost 0, overriding the per-item pricing the
+  // groups normally derive from. 0 = extras charge as usual.
+  freeExtras  Int      @default(0) @map("free_extras")
   // Optional placement inside a regular menu category, in addition to
   // the dedicated deals rail at the top of the storefront.
   categoryId String?       @map("category_id") @db.Uuid

@@ -274,6 +274,7 @@ export const DealInputSchema = z.object({
   fixed_price: z.number().int().min(1),
   active: z.boolean().default(true),
   position: z.number().int().default(0),
+  free_extras: z.number().int().min(0).max(20).default(0),
   category_id: UuidSchema.nullable().optional(),
   slots: z
     .array(

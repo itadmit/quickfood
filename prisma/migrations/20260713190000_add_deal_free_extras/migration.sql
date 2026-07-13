@@ -1,0 +1,1 @@
+ALTER TABLE "deals" ADD COLUMN "free_extras" INTEGER NOT NULL DEFAULT 0;

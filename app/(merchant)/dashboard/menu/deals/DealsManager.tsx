@@ -34,6 +34,7 @@ interface DealRow {
   fixed_price: number;
   active: boolean;
   position: number;
+  free_extras: number;
   category_id: string | null;
   slots: DealSlotRow[];
 }
@@ -50,6 +51,7 @@ const EMPTY: EditingDeal = {
   fixed_price: 68,
   active: true,
   position: 0,
+  free_extras: 0,
   category_id: null,
   slots: [{ name: "מנה", quantity: 1, items: [] }],
 };
@@ -95,6 +97,7 @@ export function DealsManager({
         fixed_price: editing.fixed_price,
         active: editing.active,
         position: editing.position,
+        free_extras: editing.free_extras,
         category_id: editing.category_id,
         slots: editing.slots.map((s) => ({
           name: s.name,
@@ -155,6 +158,7 @@ export function DealsManager({
         fixed_price: deal.fixed_price,
         active: !deal.active,
         position: deal.position,
+        free_extras: deal.free_extras,
         category_id: deal.category_id,
         slots: deal.slots.map((s) => ({
           name: s.name,
@@ -372,6 +376,29 @@ function DealEditor({
             className="px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum text-base lg:text-sm"
           />
         </label>
+      </div>
+
+      <div className="rounded-xl bg-qf-line-soft/40 border border-qf-line-dash p-3 space-y-1.5 text-sm">
+        <label className="flex items-center gap-2">
+          <span className="font-medium">תוספות בתשלום במתנה</span>
+          <input
+            type="number"
+            min={0}
+            max={20}
+            value={deal.free_extras}
+            onChange={(e) =>
+              onChange({ ...deal, free_extras: Math.max(0, Math.min(20, parseInt(e.target.value, 10) || 0)) })
+            }
+            className="w-20 px-2.5 py-1.5 rounded-xl border border-qf-line-dash bg-white tnum text-base lg:text-sm"
+          />
+        </label>
+        <p className="text-xs text-qf-mute">
+          {deal.free_extras === 0
+            ? "0 = תוספות בתשלום נשארות במחיר הרגיל שלהן מהמנה"
+            : deal.free_extras === 1
+              ? "התוספת בתשלום הזולה ביותר שהלקוח יבחר בדיל - חינם"
+              : `${deal.free_extras} התוספות בתשלום הזולות ביותר שהלקוח יבחר בדיל - חינם`}
+        </p>
       </div>
 
       <label className="flex flex-col gap-1 text-sm">

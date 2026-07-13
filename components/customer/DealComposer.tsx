@@ -43,6 +43,7 @@ interface ComposerDeal {
   description: string;
   imageUrl: string | null;
   fixedPrice: number;
+  freeExtras?: number;
   slots: Array<{
     id: string;
     name: string;
@@ -72,12 +73,6 @@ function groupCharges(group: ComposerGroup, picked: Set<string>): Map<string, nu
   paid.forEach((o, i) => out.set(o.id, i < free ? 0 : o.priceDelta));
   for (const o of chosen) if (o.priceDelta <= 0) out.set(o.id, o.priceDelta);
   return out;
-}
-
-function groupExtras(group: ComposerGroup, picked: Set<string>): number {
-  let sum = 0;
-  for (const v of groupCharges(group, picked).values()) sum += v;
-  return sum;
 }
 
 export function DealComposer({
@@ -175,16 +170,37 @@ export function DealComposer({
     );
   }
 
+  // Effective charge per picked option across the whole deal, mirroring the
+  // server: per-group pricing first, then the deal's gifted extras zero the
+  // N cheapest remaining paid picks. Keyed "unitIdx:groupId:optionId".
+  const chargeByPick = useMemo(() => {
+    const perKey = new Map<string, number>();
+    const positive: Array<{ key: string; charge: number }> = [];
+    units.forEach((u, ui) => {
+      if (!u.itemId) return;
+      const item = items[u.itemId];
+      if (!item) return;
+      for (const g of item.optionGroups) {
+        for (const [oid, charge] of groupCharges(g, u.optionIds)) {
+          const key = `${ui}:${g.id}:${oid}`;
+          perKey.set(key, charge);
+          if (charge > 0) positive.push({ key, charge });
+        }
+      }
+    });
+    const gifted = deal?.freeExtras ?? 0;
+    if (gifted > 0) {
+      positive.sort((a, b) => a.charge - b.charge);
+      for (const p of positive.slice(0, gifted)) perKey.set(p.key, 0);
+    }
+    return perKey;
+  }, [deal, units, items]);
+
   const extras = useMemo(() => {
     let sum = 0;
-    for (const u of units) {
-      if (!u.itemId) continue;
-      const item = items[u.itemId];
-      if (!item) continue;
-      for (const g of item.optionGroups) sum += groupExtras(g, u.optionIds);
-    }
+    for (const v of chargeByPick.values()) sum += v;
     return sum;
-  }, [units, items]);
+  }, [chargeByPick]);
 
   const incomplete = useMemo(() => {
     for (const u of units) {
@@ -205,7 +221,7 @@ export function DealComposer({
   function addToCart() {
     if (!deal || incomplete || added) return;
     const displayOptions: Array<{ groupId: string; optionId: string; name: string; groupName?: string; priceDelta: number }> = [];
-    for (const u of units) {
+    units.forEach((u, ui) => {
       const item = items[u.itemId!];
       displayOptions.push({
         groupId: u.slotId,
@@ -215,7 +231,6 @@ export function DealComposer({
         priceDelta: 0,
       });
       for (const g of item.optionGroups) {
-        const charges = groupCharges(g, u.optionIds);
         for (const o of g.options) {
           if (!u.optionIds.has(o.id)) continue;
           displayOptions.push({
@@ -223,11 +238,11 @@ export function DealComposer({
             optionId: o.id,
             name: o.name,
             groupName: `${u.label} · ${g.name}`,
-            priceDelta: charges.get(o.id) ?? 0,
+            priceDelta: chargeByPick.get(`${ui}:${g.id}:${o.id}`) ?? 0,
           });
         }
       }
-    }
+    });
     add({
       itemId: deal.id,
       name: deal.name,
@@ -280,6 +295,14 @@ export function DealComposer({
 
           {deal.description && (
             <p className="px-5 pt-3 text-sm text-qf-ink2 leading-snug">{deal.description}</p>
+          )}
+          {(deal.freeExtras ?? 0) > 0 && (
+            <div className="mx-5 mt-3 inline-flex items-center gap-1.5 rounded-lg bg-(--qf-primary)/15 border border-(--qf-primary)/40 px-2.5 py-1.5 text-xs font-semibold text-qf-ink">
+              {deal.freeExtras === 1
+                ? "תוספת בתשלום אחת במתנה"
+                : `${deal.freeExtras} תוספות בתשלום במתנה`}
+              <span className="font-normal text-qf-mute">· ההנחה יורדת אוטומטית בסיכום</span>
+            </div>
           )}
 
           <div className="px-5 py-4 space-y-5">
