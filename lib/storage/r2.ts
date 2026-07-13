@@ -2,6 +2,7 @@ import {
   S3Client,
   HeadObjectCommand,
   PutObjectCommand,
+  CopyObjectCommand,
   ListObjectsV2Command,
   DeleteObjectsCommand,
   DeleteObjectCommand,
@@ -66,6 +67,41 @@ export function keyFromPublicUrl(url: string): string | null {
 /** Delete a single object by key. Best-effort - resolves even if absent. */
 export async function deleteObject(key: string): Promise<void> {
   await client().send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+}
+
+/** Server-side copy within the bucket - no bytes travel through us. */
+export async function copyObject(srcKey: string, destKey: string): Promise<void> {
+  await client().send(
+    new CopyObjectCommand({
+      Bucket: BUCKET,
+      CopySource: `${BUCKET}/${encodeURIComponent(srcKey).replace(/%2F/g, "/")}`,
+      Key: destKey,
+    }),
+  );
+}
+
+/**
+ * Give a duplicated record its own copy of an image so deleting the image
+ * from one record can never break the other. Foreign URLs (not our bucket)
+ * and copy failures fall back to the original URL - a shared image is
+ * better than a broken one.
+ */
+export async function copyImageUrl(
+  url: string | null | undefined,
+  destPrefix: string,
+): Promise<string | null> {
+  if (!url) return null;
+  const srcKey = keyFromPublicUrl(url);
+  if (!srcKey) return url;
+  const dot = srcKey.lastIndexOf(".");
+  const ext = dot > srcKey.lastIndexOf("/") ? srcKey.slice(dot + 1) : "jpg";
+  const destKey = `${destPrefix}/${crypto.randomUUID()}.${ext}`;
+  try {
+    await copyObject(srcKey, destKey);
+    return publicUrlFor(destKey);
+  } catch {
+    return url;
+  }
 }
 
 export async function createUploadUrl(opts: {
