@@ -1216,7 +1216,7 @@ function GroupEditor({
           {/* Pricing & discounts */}
           <div className="rounded-lg bg-white/60 border border-qf-line-dash p-2.5 space-y-2">
             <div className="font-semibold text-qf-ink">תמחור והנחות</div>
-            <label className="flex items-center justify-between gap-2">
+            <label className="flex items-center gap-2">
               <span className="text-qf-mute">כמה תוספות ראשונות בחינם?</span>
               <input
                 type="number"
@@ -1244,7 +1244,7 @@ function GroupEditor({
                   })
                 }
               />
-              <span>מבצע כמות</span>
+              <span>מבצע כמות - כמה תוספות יחד במחיר קבוע</span>
             </label>
             {group.bundleCount > 0 && (
               <div className="ps-6 space-y-1.5">
@@ -1294,7 +1294,10 @@ function GroupEditor({
                   })
                 }
               />
-              <span>אפשר תוספת על חצי (פיצה ועוד)</span>
+              <span>
+                אפשר תוספות על חצי מנה
+                <span className="text-qf-mute"> - הלקוח בוחר חצי ימין / חצי שמאל / כל המנה (מתאים לפיצות)</span>
+              </span>
             </label>
             {group.allowHalf && (
               <div className="ps-6 space-y-2">
@@ -1326,7 +1329,7 @@ function GroupEditor({
                     );
                   })}
                 </div>
-                <label className="flex items-center justify-between gap-2">
+                <label className="flex items-center gap-2">
                   <span className="text-qf-mute" title="כמה תוספות מותר לבחור על כל חצי בנפרד. 'שלם' נספרת בשני הצדדים. ריק = ללא הגבלה לפי צד.">
                     מקסימום תוספות לצד
                   </span>
@@ -1517,7 +1520,7 @@ function GroupEditor({
         }
         className="text-xs text-(--qf-deep) inline-flex items-center gap-1"
       >
-        <IcoPlus c="var(--qf-deep)" s={12} /> אפשרות
+        <IcoPlus c="var(--qf-deep)" s={12} /> הוספת אפשרות
       </button>
     </div>
   );

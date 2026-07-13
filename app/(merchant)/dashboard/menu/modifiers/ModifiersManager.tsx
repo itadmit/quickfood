@@ -546,7 +546,7 @@ function SetEditor({
       {isMulti && (
         <div className="rounded-xl bg-qf-line-soft/40 border border-qf-line-dash p-3 space-y-2.5 text-sm">
           <div className="font-semibold">תמחור והנחות</div>
-          <label className="flex items-center justify-between gap-2">
+          <label className="flex items-center gap-2">
             <span className="text-qf-mute text-xs">כמה תוספות ראשונות בחינם?</span>
             <input
               type="number"
@@ -574,7 +574,7 @@ function SetEditor({
                 })
               }
             />
-            <span>מבצע כמות</span>
+            <span>מבצע כמות - כמה תוספות יחד במחיר קבוע</span>
           </label>
           {set.bundleCount > 0 && (
             <div className="ps-6 space-y-1.5 text-xs">
@@ -625,7 +625,10 @@ function SetEditor({
                 })
               }
             />
-            <span>אפשר תוספת על חצי (פיצה ועוד)</span>
+            <span>
+              אפשר תוספות על חצי מנה
+              <span className="text-qf-mute"> - הלקוח בוחר חצי ימין / חצי שמאל / כל המנה (מתאים לפיצות)</span>
+            </span>
           </label>
           {set.allowHalf && (
             <div className="ps-6 space-y-2.5">
@@ -657,7 +660,7 @@ function SetEditor({
                   );
                 })}
               </div>
-              <label className="flex items-center justify-between gap-2 text-xs">
+              <label className="flex items-center gap-2 text-xs">
                 <span className="text-qf-mute" title="כמה תוספות מותר לבחור על כל חצי. 'שלם' נספרת בשני הצדדים. ריק = ללא הגבלה לפי צד.">
                   מקסימום תוספות לצד
                 </span>
@@ -714,7 +717,7 @@ function SetEditor({
             }
             className="text-xs text-(--qf-deep) inline-flex items-center gap-1 font-medium"
           >
-            <IcoPlus c="var(--qf-deep)" s={12} /> אפשרות
+            <IcoPlus c="var(--qf-deep)" s={12} /> הוספת אפשרות
           </button>
         </div>
         {set.options.length === 0 ? (
