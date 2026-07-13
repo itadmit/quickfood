@@ -57,8 +57,8 @@ export const GET = handler(async () => {
   const items = [
     ...recentOrders.map((o) => {
       const name =
-        fullName(o.customer?.firstName, o.customer?.lastName) ||
         fullName(o.customerFirstNameSnap, o.customerLastNameSnap) ||
+        fullName(o.customer?.firstName, o.customer?.lastName) ||
         "אורח";
       return {
         id: `order:${o.id}`,

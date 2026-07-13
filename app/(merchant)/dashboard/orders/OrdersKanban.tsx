@@ -278,8 +278,8 @@ export function OrdersKanban({
         paymentStatus: (o.payment_status as PaymentStatus) ?? "pending",
         paymentMethod: (o.payment_method as string) ?? "cash",
         customerName:
-          (o.customer as { name?: string } | null)?.name ||
           (o.customer_name as string | null) ||
+          (o.customer as { name?: string } | null)?.name ||
           "אורח",
         customerPhone:
           (o.customer as { phone?: string } | null)?.phone ||

@@ -57,8 +57,8 @@ export default async function OrdersPage() {
     status: o.status as KanbanStatus,
     method: o.method,
     customerName:
-      fullName(o.customer?.firstName, o.customer?.lastName) ||
       fullName(o.customerFirstNameSnap, o.customerLastNameSnap) ||
+      fullName(o.customer?.firstName, o.customer?.lastName) ||
       "אורח",
     customerPhone: o.customer?.phone || o.customerPhoneSnap || "",
     customerNotes: o.customerNotes,

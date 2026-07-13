@@ -85,8 +85,8 @@ export const GET = handler(async (req: Request) => {
       total: o.total,
       status: o.status,
       customer:
-        fullName(o.customer?.firstName, o.customer?.lastName) ||
         fullName(o.customerFirstNameSnap, o.customerLastNameSnap) ||
+        fullName(o.customer?.firstName, o.customer?.lastName) ||
         "אורח",
       created_at: o.createdAt.toISOString(),
     })),

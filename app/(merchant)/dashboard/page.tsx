@@ -75,8 +75,8 @@ export default async function DashboardPage({
     method: o.method,
     total: o.total,
     customerName:
-      fullName(o.customer?.firstName, o.customer?.lastName) ||
       fullName(o.customerFirstNameSnap, o.customerLastNameSnap) ||
+      fullName(o.customer?.firstName, o.customer?.lastName) ||
       "אורח",
     createdAt: o.createdAt.toISOString(),
   }));

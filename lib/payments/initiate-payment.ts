@@ -108,8 +108,8 @@ export async function initiateOrderPayment(
       : order.total;
 
   const composedName =
-    fullName(customer?.firstName, customer?.lastName) ||
     fullName(order.customerFirstNameSnap, order.customerLastNameSnap) ||
+    fullName(customer?.firstName, customer?.lastName) ||
     "Customer";
 
   // Grow validates `sum == Σ(productData.price × quantity)` server-side, so
