@@ -22,6 +22,10 @@ export interface CartLine {
   sizeDelta: number;
   options: Array<{ groupId: string; optionId: string; name: string; groupName?: string; priceDelta: number; half?: "left" | "right" | "full" }>;
   notes: string | null;
+  /** Item stock at the moment the line was added (null/undefined = not
+   *  stock-tracked). Best-effort UX cap for the +/- steppers - the server
+   *  re-checks live stock at order time either way. */
+  stockRemaining?: number | null;
   /** How this line landed in the cart - powers the merchant analytics
    *  breakdown of channel performance. Defaults to "menu" so old carts
    *  in localStorage stay valid. */
@@ -49,6 +53,17 @@ export interface CartState {
   lines: CartLine[];
   method: "delivery" | "pickup";
   acceptedBundles: AcceptedBundle[];
+}
+
+/** Cap `qty` so all cart lines of the same item together stay within the
+ *  item's tracked stock. Lines without stockRemaining pass through as-is. */
+function clampToStock(lines: CartLine[], line: CartLine, qty: number): number {
+  if (line.stockRemaining == null) return qty;
+  const others = lines.reduce(
+    (acc, l) => acc + (l.itemId === line.itemId && l.lineId !== line.lineId ? l.quantity : 0),
+    0,
+  );
+  return Math.min(qty, Math.max(0, line.stockRemaining - others));
 }
 
 interface CartContextValue extends CartState {
@@ -234,7 +249,11 @@ export function CartProvider({
       ...state,
       add: (line) => {
         const lineId = crypto.randomUUID();
-        setState((s) => ({ ...s, lines: [...s.lines, { ...line, lineId }] }));
+        setState((s) => {
+          const withId = { ...line, lineId };
+          const quantity = Math.max(1, clampToStock(s.lines, withId, withId.quantity));
+          return { ...s, lines: [...s.lines, { ...withId, quantity }] };
+        });
       },
       addMany: (newLines) => {
         if (newLines.length === 0) return;
@@ -245,10 +264,14 @@ export function CartProvider({
         setState((s) => ({ ...s, lines: [...s.lines, ...withIds] }));
       },
       updateLine: (lineId, line) => {
-        setState((s) => ({
-          ...s,
-          lines: s.lines.map((l) => (l.lineId === lineId ? { ...line, lineId } : l)),
-        }));
+        setState((s) => {
+          const withId = { ...line, lineId };
+          const quantity = Math.max(1, clampToStock(s.lines, withId, withId.quantity));
+          return {
+            ...s,
+            lines: s.lines.map((l) => (l.lineId === lineId ? { ...withId, quantity } : l)),
+          };
+        });
       },
       updateQuantity: (lineId, qty) =>
         setState((s) => ({
@@ -256,7 +279,11 @@ export function CartProvider({
           lines:
             qty <= 0
               ? s.lines.filter((l) => l.lineId !== lineId)
-              : s.lines.map((l) => (l.lineId === lineId ? { ...l, quantity: qty } : l)),
+              : s.lines.map((l) =>
+                  l.lineId === lineId
+                    ? { ...l, quantity: Math.max(1, clampToStock(s.lines, l, qty)) }
+                    : l,
+                ),
         })),
       remove: (lineId) =>
         setState((s) => ({ ...s, lines: s.lines.filter((l) => l.lineId !== lineId) })),

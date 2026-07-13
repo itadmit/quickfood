@@ -61,6 +61,7 @@ async function priceKioskCart(input: CreateOrderInput): Promise<{
   const itemMap = new Map(items.map((it) => [it.id, it]));
 
   let subtotal = 0;
+  const stockNeeds = new Map<string, number>();
   for (const line of input.lines) {
     const item = itemMap.get(line.item_id);
     if (!item) {
@@ -68,6 +69,13 @@ async function priceKioskCart(input: CreateOrderInput): Promise<{
     }
     if (!item.available) {
       return { total: 0, error: new CartValidationError("item_unavailable", line.item_id) };
+    }
+    if (item.stockRemaining !== null) {
+      const needed = (stockNeeds.get(item.id) ?? 0) + line.quantity;
+      if (needed > item.stockRemaining) {
+        return { total: 0, error: new CartValidationError("insufficient_stock", line.item_id) };
+      }
+      stockNeeds.set(item.id, needed);
     }
     let unit = item.basePrice;
     if (line.size_id) {

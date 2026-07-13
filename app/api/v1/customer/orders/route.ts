@@ -290,6 +290,7 @@ function errorMessageFor(code: string): string {
     cart_empty: "הסל ריק",
     item_unavailable: "פריט לא זמין",
     invalid_quantity: "כמות לא תקינה",
+    insufficient_stock: "הכמות שביקשת כבר לא במלאי",
     size_not_found: "גודל לא נמצא",
     required_group_missing: "חובה לבחור באחת האפשרויות",
     too_many_in_single_group: "ניתן לבחור רק אפשרות אחת",

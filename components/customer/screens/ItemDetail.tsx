@@ -69,6 +69,7 @@ interface ItemData {
   imageNote?: string | null;
   upsellSizeNudge?: boolean;
   tags: string[];
+  stockRemaining?: number | null;
   sizes: Size[];
   optionGroups: OptionGroup[];
 }
@@ -103,11 +104,21 @@ export function ItemDetail({
   addSource?: CartLineSource;
 }) {
   const router = useRouter();
-  const { add, updateLine, tenant, branch } = useCart();
+  const { add, updateLine, tenant, branch, lines } = useCart();
   const isEditing = !!editLine;
   const upsellSizeNudge =
     tenant.upsellSizeNudge !== false && item.upsellSizeNudge !== false;
   const branchClosed = branch?.status === "closed";
+
+  const inCartQty = lines.reduce(
+    (acc, l) =>
+      acc + (l.itemId === item.id && l.lineId !== editLine?.lineId ? l.quantity : 0),
+    0,
+  );
+  const stockLeft =
+    item.stockRemaining != null ? Math.max(0, item.stockRemaining - inCartQty) : null;
+  const outOfStock = stockLeft === 0;
+  const maxQty = Math.min(20, stockLeft ?? 20);
 
   const defaultSize = item.sizes.find((s) => s.isDefault) ?? item.sizes[0] ?? null;
   const [sizeId, setSizeId] = useState<string | null>(editLine?.sizeId ?? defaultSize?.id ?? null);
@@ -177,6 +188,9 @@ export function ItemDetail({
   const [lightbox, setLightbox] = useState<"closed" | "open" | "closing">("closed");
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    if (maxQty >= 1 && quantity > maxQty) setQuantity(maxQty);
+  }, [maxQty, quantity]);
 
   // Favorite state. Asked once on mount via the existing
   // /api/v1/customer/favorites GET (filtered to this tenant). Guest
@@ -471,6 +485,7 @@ export function ItemDetail({
       sizeDelta: size?.priceDelta ?? 0,
       options: selectedOpts,
       notes: notes || null,
+      stockRemaining: item.stockRemaining ?? null,
     };
     if (isEditing && editLine) {
       updateLine(editLine.lineId, { ...payload, source: editLine.source });
@@ -493,11 +508,13 @@ export function ItemDetail({
 
   const ctaLabel = branchClosed
     ? "המסעדה סגורה"
-    : missingGroup
-      ? `בחר ${missingGroup.name}`
-      : isEditing
-        ? "עדכן הזמנה"
-        : "הוסף לסל";
+    : outOfStock
+      ? "אזל מהמלאי"
+      : missingGroup
+        ? `בחר ${missingGroup.name}`
+        : isEditing
+          ? "עדכן הזמנה"
+          : "הוסף לסל";
 
   return (
     <div
@@ -1132,8 +1149,8 @@ export function ItemDetail({
             </div>
             <button
               type="button"
-              onClick={() => setQuantity((q) => Math.min(20, q + 1))}
-              disabled={quantity >= 20}
+              onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
+              disabled={quantity >= maxQty}
               className={cn(
                 "grid place-items-center disabled:opacity-40 active:bg-qf-line-dash rounded-full transition",
                 kioskMode ? "w-20 h-24" : "w-12 h-14",
@@ -1146,7 +1163,7 @@ export function ItemDetail({
           <button
             type="button"
             onClick={addToCart}
-            disabled={addPhase !== "idle" || branchClosed}
+            disabled={addPhase !== "idle" || branchClosed || outOfStock}
             className={cn(
               "flex-1 font-bold flex items-center justify-between transition-all duration-300 active:scale-[0.98]",
               kioskMode

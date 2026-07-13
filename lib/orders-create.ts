@@ -1,4 +1,5 @@
 import { after } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db/client";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
 import { notifyMerchantNewOrder } from "@/lib/orders/notify-merchant";
@@ -280,6 +281,20 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   let subtotal = 0;
   const orderItemData: Prisma.OrderItemCreateManyOrderInput[] = [];
 
+  // Total units requested per stock-tracked item, across regular lines AND
+  // deal units. Validated here for a friendly error, then claimed with a
+  // conditional decrement right before the order row is created - the
+  // conditional is what makes two simultaneous checkouts unable to oversell.
+  const stockNeeds = new Map<string, number>();
+  function requireStock(item: { id: string; stockRemaining: number | null }, qty: number) {
+    if (item.stockRemaining === null) return;
+    const needed = (stockNeeds.get(item.id) ?? 0) + qty;
+    if (needed > item.stockRemaining) {
+      throw new CartValidationError("insufficient_stock", item.id);
+    }
+    stockNeeds.set(item.id, needed);
+  }
+
   for (const line of input.lines) {
     const item = itemsById.get(line.item_id);
     if (!item) throw new CartValidationError("item_unavailable", line.item_id);
@@ -292,6 +307,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     if (line.quantity < 1 || line.quantity > 20) {
       throw new CartValidationError("invalid_quantity", line.item_id);
     }
+    requireStock(item, line.quantity);
 
     let sizeDelta = 0;
     let sizeSnapshot: string | null = null;
@@ -374,6 +390,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
           if (!item || !isItemVisibleNow(item)) {
             throw new CartValidationError("item_unavailable", unit.item_id);
           }
+          requireStock(item, dl.quantity);
           const unitLabel = slot.quantity > 1 ? `${slot.name} ${idx + 1}` : slot.name;
           selectedOptions.push({
             group_id: slot.id,
@@ -676,6 +693,28 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       ? "reorder"
       : "direct";
   const orderSource = input.sourceOverride ?? inferredSource;
+
+  // Claim stock atomically: the `gte` condition makes a concurrent order that
+  // grabbed the last units fail here instead of overselling. The `null` arm
+  // covers a merchant clearing the limit between validation and claim
+  // (decrementing a NULL column is a no-op in Postgres).
+  if (stockNeeds.size > 0) {
+    await prisma.$transaction(async (tx) => {
+      for (const [itemId, qty] of stockNeeds) {
+        const claimed = await tx.menuItem.updateMany({
+          where: {
+            id: itemId,
+            OR: [{ stockRemaining: null }, { stockRemaining: { gte: qty } }],
+          },
+          data: { stockRemaining: { decrement: qty } },
+        });
+        if (claimed.count === 0) {
+          throw new CartValidationError("insufficient_stock", itemId);
+        }
+      }
+    });
+    for (const itemId of stockNeeds.keys()) revalidateTag(`menu-item-${itemId}`, {});
+  }
 
   const order = await prisma.order.create({
     data: {
