@@ -61,6 +61,15 @@ export async function GET(req: Request) {
         name: s.name,
         quantity: s.quantity,
         itemIds: s.choices.map((c) => c.itemId).filter((iid) => visibleItemIds.has(iid)),
+        // Full choice list INCLUDING currently-unavailable items - the
+        // composer renders those dimmed with a "לא זמין כעת" badge instead
+        // of silently dropping them from the deal.
+        choices: s.choices.map((c) => ({
+          id: c.itemId,
+          name: c.item.name,
+          image: c.item.images[0] ?? c.item.imageUrl ?? null,
+          available: visibleItemIds.has(c.itemId),
+        })),
       })),
     },
     items: itemsById,

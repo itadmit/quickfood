@@ -31,13 +31,25 @@ interface ComposerItem {
   images?: string[];
   optionGroups: ComposerGroup[];
 }
+interface ComposerChoice {
+  id: string;
+  name: string;
+  image: string | null;
+  available: boolean;
+}
 interface ComposerDeal {
   id: string;
   name: string;
   description: string;
   imageUrl: string | null;
   fixedPrice: number;
-  slots: Array<{ id: string; name: string; quantity: number; itemIds: string[] }>;
+  slots: Array<{
+    id: string;
+    name: string;
+    quantity: number;
+    itemIds: string[];
+    choices?: ComposerChoice[];
+  }>;
 }
 
 /** One selection row = one slot unit ("מנה 1", "מנה 2", "שתייה"...). */
@@ -116,11 +128,24 @@ export function DealComposer({
     };
   }, [tenantSlug, dealId]);
 
-  const slotItemIds = useMemo(() => {
-    const m = new Map<string, string[]>();
-    for (const s of deal?.slots ?? []) m.set(s.id, s.itemIds);
+  // Cards to render per slot, unavailable items included (dimmed, blocked).
+  // Older cached payloads without `choices` degrade to available-only.
+  const slotChoices = useMemo(() => {
+    const m = new Map<string, ComposerChoice[]>();
+    for (const s of deal?.slots ?? []) {
+      m.set(
+        s.id,
+        s.choices ??
+          s.itemIds.map((id) => ({
+            id,
+            name: items[id]?.name ?? "",
+            image: items[id]?.images?.[0] ?? null,
+            available: true,
+          })),
+      );
+    }
     return m;
-  }, [deal]);
+  }, [deal, items]);
 
   function pickItem(unitIdx: number, itemId: string) {
     setUnits((prev) =>
@@ -259,9 +284,7 @@ export function DealComposer({
 
           <div className="px-5 py-4 space-y-5">
             {units.map((u, ui) => {
-              const choices = (slotItemIds.get(u.slotId) ?? [])
-                .map((id) => items[id])
-                .filter(Boolean);
+              const choices = slotChoices.get(u.slotId) ?? [];
               const chosen = u.itemId ? items[u.itemId] : null;
               return (
                 <section key={`${u.slotId}-${ui}`} className="space-y-2.5">
@@ -276,6 +299,32 @@ export function DealComposer({
                   <div className="grid grid-cols-2 gap-2">
                     {choices.map((it) => {
                       const active = u.itemId === it.id;
+                      if (!it.available) {
+                        return (
+                          <div
+                            key={it.id}
+                            aria-disabled="true"
+                            className="relative flex items-center gap-2 rounded-xl border-2 border-qf-line bg-white p-2 opacity-45"
+                          >
+                            <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0">
+                              <MenuItemImage
+                                src={it.image ?? undefined}
+                                alt={it.name}
+                                businessType={businessType}
+                                size={40}
+                                rounded="lg"
+                                className="w-full h-full"
+                              />
+                            </div>
+                            <span className="text-sm font-medium leading-tight flex-1 min-w-0">
+                              {it.name}
+                            </span>
+                            <span className="absolute top-1.5 start-1.5 text-[10px] font-bold bg-qf-ink text-white px-1.5 py-0.5 rounded-md">
+                              לא זמין כעת
+                            </span>
+                          </div>
+                        );
+                      }
                       return (
                         <button
                           key={it.id}
@@ -291,7 +340,7 @@ export function DealComposer({
                         >
                           <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0">
                             <MenuItemImage
-                              src={it.images?.[0]}
+                              src={it.image ?? undefined}
                               alt={it.name}
                               businessType={businessType}
                               size={40}
