@@ -167,6 +167,9 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
                 <span className="font-bold text-(--qf-deep)">ב-69₪ לחודש + 1% בלבד! ללא עמלת הקמת מסוף חדש!</span>{" "}
                 ממלאים פרטים קצרים והם חוזרים אליך.
               </div>
+              <div className="text-[11px] text-qf-ink2 mt-1.5 leading-snug">
+                המנוי כולל עד 100 עסקאות בחודש - כל עסקה נוספת בתוספת ₪0.7 · עסקה באמצעות bit ו-PayBox - תוספת של 0.3% · Apple Pay / Google Pay - תוספת של ₪0.5 לעסקה · אפשרות לתשלום בהעברה בנקאית בעלות של ₪3.5 להעברה.
+              </div>
               <div className="text-[10px] text-qf-mute mt-1.5 leading-snug">
                 * התשלום עבור שירותי הסליקה נגבה ישירות על ידי חברת Grow Payments, אינו קשור ל-QuickFood וכפוף לאישור החברה.
               </div>
