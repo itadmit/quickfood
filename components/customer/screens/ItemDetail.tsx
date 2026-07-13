@@ -362,52 +362,41 @@ export function ItemDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.optionGroups, picks, optQtys, halfPicks]);
 
-  function toggleOption(group: OptionGroup, optionId: string) {
+  function setPickState(group: OptionGroup, optionId: string, qty: number) {
     setPicks((prev) => {
-      const next = { ...prev };
-      const current = new Set(next[group.id] ?? []);
-      if (group.type === "single" || group.maxSelect === 1) {
-        // Radio behavior: one tap swaps the choice. Re-tapping the selected
-        // option clears it only when the group is optional; a required group
-        // always keeps a pick.
-        next[group.id] =
-          current.has(optionId) && !group.required ? new Set() : new Set([optionId]);
-      } else {
-        if (current.has(optionId)) {
-          current.delete(optionId);
-          setOptQtys((q) => ({ ...q, [group.id]: { ...q[group.id], [optionId]: 0 } }));
-        } else {
-          let units = 0;
-          for (const id of current) units += Math.max(1, optQtys[group.id]?.[id] ?? 1);
-          if (units >= group.maxSelect) return prev;
-          current.add(optionId);
-          setOptQtys((q) => ({ ...q, [group.id]: { ...q[group.id], [optionId]: 1 } }));
-        }
-        next[group.id] = current;
-      }
-      return next;
+      const set = new Set(prev[group.id] ?? []);
+      if (qty > 0) set.add(optionId);
+      else set.delete(optionId);
+      return { ...prev, [group.id]: set };
     });
+    setOptQtys((prev) => ({ ...prev, [group.id]: { ...prev[group.id], [optionId]: qty } }));
+  }
+
+  function toggleOption(group: OptionGroup, optionId: string) {
+    if (group.type === "single" || group.maxSelect === 1) {
+      // Radio behavior: one tap swaps the choice. Re-tapping the selected
+      // option clears it only when the group is optional; a required group
+      // always keeps a pick.
+      const current = picks[group.id] ?? new Set<string>();
+      setPicks((prev) => ({
+        ...prev,
+        [group.id]:
+          current.has(optionId) && !group.required ? new Set<string>() : new Set([optionId]),
+      }));
+      return;
+    }
+    if (picks[group.id]?.has(optionId)) {
+      setPickState(group, optionId, 0);
+    } else {
+      if (groupUnits(group) >= group.maxSelect) return;
+      setPickState(group, optionId, 1);
+    }
   }
 
   function bumpOptionQty(group: OptionGroup, optionId: string, delta: 1 | -1) {
-    const current = optionQty(group, optionId);
-    const next = current + delta;
-    if (next <= 0) {
-      setPicks((prev) => {
-        const set = new Set(prev[group.id] ?? []);
-        set.delete(optionId);
-        return { ...prev, [group.id]: set };
-      });
-      setOptQtys((q) => ({ ...q, [group.id]: { ...q[group.id], [optionId]: 0 } }));
-      return;
-    }
+    const next = optionQty(group, optionId) + delta;
     if (delta > 0 && groupUnits(group) >= group.maxSelect) return;
-    setPicks((prev) => {
-      const set = new Set(prev[group.id] ?? []);
-      set.add(optionId);
-      return { ...prev, [group.id]: set };
-    });
-    setOptQtys((q) => ({ ...q, [group.id]: { ...q[group.id], [optionId]: next } }));
+    setPickState(group, optionId, Math.max(0, next));
   }
 
   function toggleHalf(group: OptionGroup, optionId: string, placement: HalfPlacement) {
