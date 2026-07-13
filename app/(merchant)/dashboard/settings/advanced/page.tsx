@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/client";
 import { SettingsHeader } from "../SettingsHeader";
 import { WoltImportClient } from "./WoltImportClient";
 import { AppearanceToggle } from "./AppearanceToggle";
+import { InstallAppButton } from "./InstallAppButton";
 import { DeleteAllItems } from "./DeleteAllItems";
 import { ResetStore } from "./ResetStore";
 
@@ -64,6 +65,17 @@ export default async function AdvancedSettingsPage({
         <AppearanceToggle
           initial={(tenant?.dashboardVersion ?? "v2") as "v1" | "v2"}
         />
+      </section>
+
+      <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-6">
+        <header className="mb-4">
+          <h2 className="text-lg font-bold">התקנת האפליקציה</h2>
+          <p className="text-sm text-qf-mute mt-1 leading-relaxed">
+            שמרו את הדשבורד כאפליקציה במסך הבית - אייקון QuickFood, פתיחה
+            במסך מלא בלי דפדפן, והתראות על הזמנות חדשות.
+          </p>
+        </header>
+        <InstallAppButton />
       </section>
 
       <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-6">
