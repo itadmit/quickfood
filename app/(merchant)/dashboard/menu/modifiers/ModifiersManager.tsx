@@ -30,6 +30,7 @@ interface ModifierSet {
   includedFree: number;
   helpText: string | null;
   allowHalf: boolean;
+  allowQty: boolean;
   splitPrice: boolean;
   customHalfPrice: boolean;
   bundleCount: number;
@@ -57,6 +58,7 @@ const EMPTY: NewModifierSet = {
   includedFree: 0,
   helpText: null,
   allowHalf: false,
+  allowQty: false,
   splitPrice: false,
   customHalfPrice: false,
   bundleCount: 0,
@@ -99,6 +101,7 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
       included_free: editing.includedFree,
       help_text: editing.helpText,
       allow_half: editing.allowHalf,
+      allow_qty: editing.allowQty,
       split_price: editing.splitPrice,
       custom_half_price: editing.customHalfPrice,
       bundle_count: editing.bundleCount,
@@ -139,6 +142,7 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
       includedFree: editing.includedFree,
       helpText: editing.helpText,
       allowHalf: editing.allowHalf,
+      allowQty: editing.allowQty,
       splitPrice: editing.splitPrice,
       customHalfPrice: editing.customHalfPrice,
       bundleCount: editing.bundleCount,
@@ -177,6 +181,7 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
           included_free: s.includedFree,
           help_text: s.helpText,
           allow_half: s.allowHalf,
+          allow_qty: s.allowQty,
           split_price: s.splitPrice,
           custom_half_price: s.customHalfPrice,
           bundle_count: s.bundleCount,
@@ -487,6 +492,7 @@ function SetEditor({
                   minSelect: set.required ? 1 : 0,
                   includedFree: 0,
                   allowHalf: false,
+                  allowQty: false,
                   splitPrice: false,
                   customHalfPrice: false,
                   bundleCount: 0,
@@ -541,6 +547,20 @@ function SetEditor({
             />
           </label>
         </div>
+      )}
+
+      {isMulti && (
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={set.allowQty}
+            onChange={(e) => onChange({ ...set, allowQty: e.target.checked })}
+          />
+          <span>
+            אפשר לבחור את אותה תוספת כמה פעמים
+            <span className="text-qf-mute text-xs"> - מציג ללקוח כפתורי +/- ליד תוספת שנבחרה</span>
+          </span>
+        </label>
       )}
 
       {isMulti && (

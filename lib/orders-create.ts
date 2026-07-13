@@ -217,12 +217,14 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       const ownBundle = group.bundleCount > 0;
       const effectiveBundleCount = ownBundle ? group.bundleCount : (fromSet?.bundleCount ?? 0);
       const effectiveBundlePrice = ownBundle ? group.bundlePrice : (fromSet?.bundlePrice ?? 0);
+      const effectiveAllowQty = group.allowQty || (fromSet?.allowQty ?? false);
       const availableOptions = effectiveOptions.filter((o) => o.available);
       const picksInGroup = availableOptions.filter((o) => optionCounts.has(o.id));
-      const unitsInGroup = picksInGroup.reduce(
-        (n, o) => n + (optionCounts.get(o.id) ?? 0),
-        0,
-      );
+      // Quantities are a per-group opt-in; without it a repeated id (stale
+      // cart, crafted payload) collapses back to a single pick.
+      const unitOf = (o: (typeof picksInGroup)[number]) =>
+        effectiveAllowQty ? (optionCounts.get(o.id) ?? 0) : Math.min(1, optionCounts.get(o.id) ?? 0);
+      const unitsInGroup = picksInGroup.reduce((n, o) => n + unitOf(o), 0);
 
       if (effectiveType === "single" && unitsInGroup > 1) {
         throw new CartValidationError("too_many_in_single_group", group.id);
@@ -241,7 +243,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       // One pseudo-pick per unit ("<id>#0", "<id>#1", ...) so cheapest-free
       // and bundle caps allocate across repeated picks of the same option.
       const units = picksInGroup.flatMap((o) =>
-        Array.from({ length: optionCounts.get(o.id) ?? 0 }, (_, i) => ({
+        Array.from({ length: unitOf(o) }, (_, i) => ({
           id: `${o.id}#${i}`,
           priceDelta: o.priceDelta,
           halfPriceDelta: o.halfPriceDelta,

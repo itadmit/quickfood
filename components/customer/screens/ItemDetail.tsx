@@ -51,6 +51,7 @@ interface OptionGroup {
   includedFree?: number;
   helpText?: string | null;
   allowHalf?: boolean;
+  allowQty?: boolean;
   splitPrice?: boolean;
   customHalfPrice?: boolean;
   bundleCount?: number;
@@ -289,7 +290,7 @@ export function ItemDetail({
 
   function optionQty(g: OptionGroup, optionId: string): number {
     if (!picks[g.id]?.has(optionId)) return 0;
-    if (g.type !== "multi" || g.maxSelect <= 1) return 1;
+    if (!g.allowQty || g.type !== "multi" || g.maxSelect <= 1) return 1;
     return Math.max(1, optQtys[g.id]?.[optionId] ?? 1);
   }
 
@@ -996,7 +997,7 @@ export function ItemDetail({
                   priceTone="delta"
                   radio={isSingle}
                   stepper={
-                    !isSingle && checked
+                    !isSingle && checked && g.allowQty
                       ? {
                           qty: optionQty(g, o.id),
                           canInc: !atMax,

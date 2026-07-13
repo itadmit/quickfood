@@ -88,17 +88,18 @@ async function priceKioskCart(input: CreateOrderInput): Promise<{
     for (const grp of item.optionGroups) {
       const fromSet = grp.templateSet;
       const effectiveOptions = fromSet ? fromSet.options : grp.options;
+      const allowQty = grp.allowQty || (fromSet?.allowQty ?? false);
       const picksInGroup = effectiveOptions.filter((o) => optionCounts.has(o.id));
       if (picksInGroup.length === 0) continue;
+      matchedUnits += picksInGroup.reduce((n, o) => n + (optionCounts.get(o.id) ?? 0), 0);
       const units = picksInGroup.flatMap((o) =>
-        Array.from({ length: optionCounts.get(o.id) ?? 0 }, (_, i) => ({
+        Array.from({ length: allowQty ? (optionCounts.get(o.id) ?? 0) : 1 }, (_, i) => ({
           id: `${o.id}#${i}`,
           priceDelta: o.priceDelta,
           halfPriceDelta: o.halfPriceDelta,
           half: line.option_placements?.[o.id] ?? null,
         })),
       );
-      matchedUnits += units.length;
       const ownBundle = grp.bundleCount > 0;
       const charges = priceGroupOptions(units, {
         includedFree: fromSet?.includedFree ?? grp.includedFree,

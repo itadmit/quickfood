@@ -32,6 +32,7 @@ export default async function ModifiersPage() {
         includedFree: s.includedFree,
         helpText: s.helpText,
         allowHalf: s.allowHalf,
+        allowQty: s.allowQty,
         splitPrice: s.splitPrice,
         customHalfPrice: s.customHalfPrice,
         bundleCount: s.bundleCount,

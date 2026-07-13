@@ -45,6 +45,7 @@ interface OptionGroup {
   includedFree: number;
   helpText: string | null;
   allowHalf: boolean;
+  allowQty: boolean;
   splitPrice: boolean;
   customHalfPrice: boolean;
   bundleCount: number;
@@ -64,6 +65,7 @@ export interface ModifierSetSummary {
   includedFree: number;
   helpText: string | null;
   allowHalf: boolean;
+  allowQty: boolean;
   splitPrice: boolean;
   customHalfPrice: boolean;
   bundleCount: number;
@@ -193,6 +195,7 @@ export function ItemEditor({
           includedFree: 0,
           helpText: null,
           allowHalf: false,
+          allowQty: false,
           splitPrice: false,
           customHalfPrice: false,
           bundleCount: 0,
@@ -221,6 +224,7 @@ export function ItemEditor({
           includedFree: set.includedFree,
           helpText: set.helpText,
           allowHalf: set.allowHalf,
+          allowQty: set.allowQty,
           splitPrice: set.splitPrice,
           customHalfPrice: set.customHalfPrice,
           bundleCount: set.bundleCount,
@@ -280,6 +284,7 @@ export function ItemEditor({
           included_free: g.includedFree,
           help_text: g.helpText,
           allow_half: g.allowHalf,
+          allow_qty: g.allowQty,
           split_price: g.splitPrice,
           custom_half_price: g.customHalfPrice,
           bundle_count: g.bundleCount,
@@ -1212,6 +1217,18 @@ function GroupEditor({
               />
             </label>
           </div>
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={group.allowQty}
+              onChange={(e) => onChange({ ...group, allowQty: e.target.checked })}
+            />
+            <span>
+              אפשר לבחור את אותה תוספת כמה פעמים
+              <span className="text-qf-mute"> - מציג ללקוח כפתורי +/- ליד תוספת שנבחרה</span>
+            </span>
+          </label>
 
           {/* Pricing & discounts */}
           <div className="rounded-lg bg-white/60 border border-qf-line-dash p-2.5 space-y-2">

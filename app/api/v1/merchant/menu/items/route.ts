@@ -152,6 +152,7 @@ export const POST = handler(async (req: Request) => {
           includedFree: g.included_free,
           helpText: g.help_text ?? null,
           allowHalf: g.allow_half,
+          allowQty: g.allow_qty,
           splitPrice: g.split_price,
           customHalfPrice: g.custom_half_price,
           bundleCount: g.bundle_count,
