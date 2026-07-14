@@ -64,6 +64,9 @@ export function CustomerCheckout({
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
+  // Flipped on the first failed submit attempt: from then on EVERY invalid
+  // field shows its red error (Shopify-style), not just touched ones.
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loyaltyConsent, setLoyaltyConsent] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
@@ -361,29 +364,50 @@ export function CustomerCheckout({
     void place();
   }
 
+  // Scroll to and focus the first invalid field. Selector-based because a
+  // few targets (terms, payment) render twice (desktop sidebar + mobile
+  // fixed bar) - we pick the visible instance.
+  function focusInvalidField(selector: string) {
+    const candidates = Array.from(document.querySelectorAll<HTMLElement>(selector));
+    const el = candidates.find((c) => c.offsetParent !== null) ?? candidates[0];
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => el.focus({ preventScroll: true }), 300);
+  }
+
   async function place() {
-    if (!paymentMethod) {
-      setError("בחר אמצעי תשלום");
-      return;
-    }
-    if (!phoneLooksValid) {
+    // Shopify-style: the button is always pressable; a failed attempt marks
+    // every invalid field in red and jumps to the first one.
+    const failures: Array<{ sel: string; msg: string }> = [];
+    if (!firstName.trim()) failures.push({ sel: "#co-first-name", msg: "נא למלא שם פרטי" });
+    if (lastNameRequired && !lastName.trim())
+      failures.push({ sel: "#co-last-name", msg: "נא למלא שם משפחה" });
+    if (!phone.trim() || !phoneLooksValid)
+      failures.push({ sel: "#co-phone", msg: "מספר הטלפון אינו תקין. דוגמה: 050-1234567" });
+    if (method === "delivery" && !address.trim())
+      failures.push({ sel: "#co-address", msg: "נא למלא רחוב ומספר" });
+    if (method === "delivery" && !city)
+      failures.push({ sel: "[data-co-city]", msg: "נא לבחור עיר" });
+    if (emailRequired && !emailLooksValid)
+      failures.push({ sel: "#co-email", msg: "כתובת המייל אינה תקינה" });
+    if (!paymentMethod) failures.push({ sel: "[data-co-payment]", msg: "נא לבחור אמצעי תשלום" });
+    if (!termsAccepted)
+      failures.push({ sel: "[data-co-terms]", msg: "יש לאשר את התקנון ותנאי השימוש" });
+    if (belowMin)
+      failures.push({
+        sel: "[data-co-payment]",
+        msg: `חסר ${formatPrice(minOrder - subtotal)} לסכום המינימום להזמנה`,
+      });
+
+    if (failures.length > 0) {
+      setSubmitAttempted(true);
       setPhoneTouched(true);
-      setError("מספר הטלפון אינו תקין. דוגמה: 050-1234567");
-      return;
-    }
-    if (emailRequired && !emailLooksValid) {
       setEmailTouched(true);
-      setError("כתובת המייל אינה תקינה");
+      setError(failures.length === 1 ? failures[0].msg : "יש להשלים את השדות המסומנים באדום");
+      focusInvalidField(failures[0].sel);
       return;
     }
-    if (lastNameRequired && !lastName.trim()) {
-      setError("נא למלא שם משפחה");
-      return;
-    }
-    if (!termsAccepted) {
-      setError("יש לאשר את התקנון ותנאי השימוש");
-      return;
-    }
+
     setBusy(true);
     setError(null);
     try {
@@ -554,15 +578,29 @@ export function CustomerCheckout({
   }
   const phoneLooksValid = validateIsraeliPhone(phone);
   const phoneError =
-    phoneTouched && phone.trim() && !phoneLooksValid
+    (phoneTouched || submitAttempted) && phone.trim() && !phoneLooksValid
       ? "מספר טלפון לא תקין - למשל 050-1234567"
-      : phoneTouched && !phone.trim()
+      : (phoneTouched || submitAttempted) && !phone.trim()
         ? "נדרש מספר טלפון"
         : null;
   const emailError =
-    emailRequired && emailTouched && email.trim() && !emailLooksValid
+    emailRequired && (emailTouched || submitAttempted) && email.trim() && !emailLooksValid
       ? "כתובת מייל לא תקינה"
-      : null;
+      : emailRequired && submitAttempted && !email.trim()
+        ? "נדרש דוא״ל"
+        : null;
+  const firstNameError =
+    submitAttempted && !firstName.trim() ? "נא למלא שם פרטי" : null;
+  const lastNameError =
+    submitAttempted && lastNameRequired && !lastName.trim() ? "נא למלא שם משפחה" : null;
+  const addressError =
+    submitAttempted && method === "delivery" && !address.trim() ? "נא למלא רחוב ומספר" : null;
+  const cityError =
+    submitAttempted && method === "delivery" && !city ? "נא לבחור עיר" : null;
+  const paymentError =
+    submitAttempted && !paymentMethod ? "נא לבחור אמצעי תשלום" : null;
+  const termsError =
+    submitAttempted && !termsAccepted ? "יש לאשר את התקנון ותנאי השימוש" : null;
 
   const paymentInFlight = !!pendingPayment;
   // Zone-aware minimum (branch.minOrder already resolves to the customer's
@@ -570,18 +608,10 @@ export function CustomerCheckout({
   // server's min_order_not_met guard so the customer is told up-front.
   const minOrder = branch?.minOrder ?? 0;
   const belowMin = minOrder > 0 && subtotal < minOrder;
-  const canPlace =
-    !busy &&
-    !paymentInFlight &&
-    !belowMin &&
-    !!paymentMethod &&
-    !!firstName &&
-    !!phone &&
-    phoneLooksValid &&
-    termsAccepted &&
-    (method !== "delivery" || (!!address && !!city)) &&
-    (!lastNameRequired || !!lastName.trim()) &&
-    (!emailRequired || emailLooksValid);
+  // The button stays pressable while the form is incomplete - place()
+  // paints the missing fields red and focuses the first one. Only an
+  // in-flight submit/payment locks it (double-submit guard).
+  const submitLocked = busy || paymentInFlight;
 
   // The terms modal is portaled to <body>, outside the storefront's
   // ThemeProvider, so CSS vars like --qf-primary fall back to the default
@@ -589,12 +619,24 @@ export function CustomerCheckout({
   const themeColors = THEMES[(tenant?.themeId as ThemeId)] ?? THEMES.fresh;
 
   const termsConsent = (
-    <label className="flex items-start gap-2 text-xs text-qf-ink2 leading-relaxed cursor-pointer">
+    <div>
+    <label
+      data-co-terms
+      tabIndex={-1}
+      className={cn(
+        "flex items-start gap-2 text-xs leading-relaxed cursor-pointer outline-none rounded-lg",
+        termsError ? "text-qf-tomato" : "text-qf-ink2",
+      )}
+    >
       <input
         type="checkbox"
         checked={termsAccepted}
         onChange={(e) => setTermsAccepted(e.target.checked)}
-        className="mt-0.5 w-4 h-4 shrink-0 accent-(--qf-primary)"
+        aria-invalid={!!termsError || undefined}
+        className={cn(
+          "mt-0.5 w-4 h-4 shrink-0 accent-(--qf-primary)",
+          termsError && "ring-2 ring-qf-tomato/60 rounded",
+        )}
       />
       <span>
         קראתי ואני מאשר/ת את{" "}
@@ -610,6 +652,12 @@ export function CustomerCheckout({
         </button>
       </span>
     </label>
+    {termsError && (
+      <div className="mt-1 text-xs font-medium text-qf-tomato" role="alert">
+        {termsError}
+      </div>
+    )}
+    </div>
   );
 
   const loyaltyConsentEl = loyaltyCheckout.show ? (
@@ -642,25 +690,32 @@ export function CustomerCheckout({
         <Card>
           <CardTitle>פרטי קשר</CardTitle>
           <div className="grid grid-cols-2 gap-3 mt-3">
-            <Field label="שם פרטי" required>
+            <Field label="שם פרטי" required error={firstNameError} errorId="co-first-name-error">
               <Input
+                id="co-first-name"
                 value={firstName}
                 onChange={setFirstName}
                 placeholder="ישראל"
                 autoComplete="given-name"
+                invalid={!!firstNameError}
+                describedBy="co-first-name-error"
               />
             </Field>
-            <Field label="שם משפחה" required={lastNameRequired}>
+            <Field label="שם משפחה" required={lastNameRequired} error={lastNameError} errorId="co-last-name-error">
               <Input
+                id="co-last-name"
                 value={lastName}
                 onChange={setLastName}
                 placeholder="ישראלי"
                 autoComplete="family-name"
+                invalid={!!lastNameError}
+                describedBy="co-last-name-error"
               />
             </Field>
             <div className="col-span-2">
-              <Field label="טלפון" required error={phoneError}>
+              <Field label="טלפון" required error={phoneError} errorId="co-phone-error">
                 <Input
+                  id="co-phone"
                   value={phone}
                   onChange={(v) => {
                     setPhone(v);
@@ -672,6 +727,7 @@ export function CustomerCheckout({
                   inputMode="tel"
                   autoComplete="tel"
                   invalid={!!phoneError}
+                  describedBy="co-phone-error"
                 />
               </Field>
             </div>
@@ -709,17 +765,20 @@ export function CustomerCheckout({
             <CardTitle>כתובת משלוח</CardTitle>
             <div className="grid grid-cols-2 gap-3 mt-3">
               <div className="col-span-2">
-                <Field label="רחוב ומספר" required>
+                <Field label="רחוב ומספר" required error={addressError} errorId="co-address-error">
                   <Input
+                    id="co-address"
                     value={address}
                     onChange={setAddress}
                     placeholder="הרצל 12"
                     autoComplete="street-address"
+                    invalid={!!addressError}
+                    describedBy="co-address-error"
                   />
                 </Field>
               </div>
-              <div className="col-span-2">
-                <Field label="עיר" required>
+              <div className="col-span-2" data-co-city tabIndex={-1}>
+                <Field label="עיר" required error={cityError} errorId="co-city-error">
                   <CitySelect
                     cities={deliveryCities}
                     value={city}
@@ -763,7 +822,13 @@ export function CustomerCheckout({
               (card / Bit / Apple Pay / Google Pay) are picked inside Grow's
               wallet when it opens, so showing them all here is noise. */}
         <Card>
+          <div data-co-payment tabIndex={-1} className="outline-none">
           <CardTitle>אמצעי תשלום</CardTitle>
+          {paymentError && (
+            <div className="mt-2 text-xs font-medium text-qf-tomato" role="alert">
+              {paymentError}
+            </div>
+          )}
           {methodsLoading ? (
             <div className="grid grid-cols-2 gap-2 mt-3" aria-hidden>
               <div className="h-14 rounded-2xl bg-qf-line-soft animate-pulse" />
@@ -805,8 +870,9 @@ export function CustomerCheckout({
               )}
               {emailRequired && (
                 <div className="mt-3">
-                  <Field label="דוא״ל" required error={emailError}>
+                  <Field label="דוא״ל" required error={emailError} errorId="co-email-error">
                     <Input
+                      id="co-email"
                       value={email}
                       onChange={(v) => {
                         setEmail(v);
@@ -818,6 +884,7 @@ export function CustomerCheckout({
                       inputMode="email"
                       autoComplete="email"
                       invalid={!!emailError}
+                      describedBy="co-email-error"
                     />
                   </Field>
                   <div className="text-xs text-qf-mute mt-1">
@@ -829,6 +896,7 @@ export function CustomerCheckout({
               )}
             </>
           )}
+          </div>
         </Card>
 
         {/* 5. Tip (delivery only - pickup has no courier) */}
@@ -1195,7 +1263,7 @@ export function CustomerCheckout({
             <button
               type="button"
               onClick={onPlaceClick}
-              disabled={!canPlace}
+              disabled={submitLocked}
               className="w-full mt-3 bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-14 text-base font-semibold flex items-center justify-between shadow-sm shadow-(--qf-primary)/25 transition"
             >
               <span className="inline-flex items-center gap-2">
@@ -1233,7 +1301,7 @@ export function CustomerCheckout({
         <button
           type="button"
           onClick={onPlaceClick}
-          disabled={!canPlace}
+          disabled={submitLocked}
           className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-16 text-base font-semibold flex items-center justify-between shadow-lg shadow-(--qf-primary)/25 transition active:scale-[0.99]"
         >
           <span className="inline-flex items-center gap-2">
@@ -1343,11 +1411,14 @@ function Field({
   label,
   required,
   error,
+  errorId,
   children,
 }: {
   label: string;
   required?: boolean;
   error?: string | null;
+  /** Links the error text to the input via aria-describedby. */
+  errorId?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -1358,7 +1429,7 @@ function Field({
       </div>
       {children}
       {error && (
-        <div className="mt-1.5 text-xs font-medium text-qf-tomato" role="alert">
+        <div id={errorId} className="mt-1.5 text-xs font-medium text-qf-tomato" role="alert">
           {error}
         </div>
       )}
@@ -1367,6 +1438,7 @@ function Field({
 }
 
 function Input({
+  id,
   value,
   onChange,
   onBlur,
@@ -1375,7 +1447,9 @@ function Input({
   inputMode,
   autoComplete,
   invalid,
+  describedBy,
 }: {
+  id?: string;
   value: string;
   onChange: (v: string) => void;
   onBlur?: () => void;
@@ -1384,9 +1458,11 @@ function Input({
   inputMode?: "tel" | "text" | "email" | "numeric";
   autoComplete?: string;
   invalid?: boolean;
+  describedBy?: string;
 }) {
   return (
     <input
+      id={id}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       onBlur={onBlur}
@@ -1395,6 +1471,7 @@ function Input({
       inputMode={inputMode}
       autoComplete={autoComplete}
       aria-invalid={invalid || undefined}
+      aria-describedby={invalid && describedBy ? describedBy : undefined}
       className={
         "w-full bg-white border rounded-2xl px-4 h-14 text-base outline-none placeholder:text-qf-mute transition " +
         (invalid
