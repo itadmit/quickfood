@@ -6,7 +6,7 @@ type OS = "windows" | "mac" | "android" | "other";
 
 const CDN = "https://pub-a811b9f81e364e2bb4ee8b84ac8bf681.r2.dev/apps";
 
-type Platform = { req: string; href: string };
+type Platform = { req: string; href: string; label?: string; badge?: string };
 
 type Product = {
   key: string;
@@ -32,7 +32,12 @@ const PRODUCTS: Product[] = [
     platforms: {
       windows: { req: "Windows 7 ומעלה", href: `${CDN}/quickfood-dashboard-Setup-1.0.0.exe` },
       mac: { req: "macOS 11 ומעלה", href: `${CDN}/quickfood-dashboard-1.0.0-universal.dmg` },
-      android: { req: "Android 7 ומעלה", href: `${CDN}/quickfood-1.0.0.apk` },
+      android: {
+        req: "Android 7 ומעלה",
+        href: `${CDN}/quickfood-2.0.0.apk`,
+        label: "האפליקציה החדשה 2.0",
+        badge: "חדש",
+      },
     },
   },
 ];
@@ -115,7 +120,14 @@ export function DownloadCards() {
                       <Glyph />
                     </span>
                     <span className="flex-1 text-right">
-                      <span className="block text-sm font-black">{PLATFORM_NAME[key]}</span>
+                      <span className="flex items-center gap-1.5 text-sm font-black">
+                        {plat.label ?? PLATFORM_NAME[key]}
+                        {plat.badge && (
+                          <span className="rounded-md border-2 border-black bg-[#F8CB1E] px-1.5 py-px text-[10px] font-black">
+                            {plat.badge}
+                          </span>
+                        )}
+                      </span>
                       <span className="block text-[11px] font-bold text-black/55">{plat.req}</span>
                     </span>
                     <span className="text-xs font-black text-black/70">
