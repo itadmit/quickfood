@@ -33,33 +33,47 @@ export const GET = handler(async (req: Request) => {
       .filter(Boolean),
   );
 
-  const categories = await prisma.menuCategory.findMany({
-    where: { tenantId: tenant.id, active: true },
-    orderBy: { position: "asc" },
-  });
+  const [categories, tenantRow, flaggedItemCount] = await Promise.all([
+    prisma.menuCategory.findMany({
+      where: { tenantId: tenant.id, active: true },
+      orderBy: { position: "asc" },
+    }),
+    prisma.tenant.findUnique({
+      where: { id: tenant.id },
+      select: { cartUpsellTitle: true },
+    }),
+    prisma.menuItem.count({ where: { tenantId: tenant.id, upsellInCart: true } }),
+  ]);
 
   // Primary: categories explicitly flagged by the merchant.
   let chosen = categories.filter((c) => c.upsellInCart);
 
   // Fallback: name-match against common drink / dessert / topping
-  // patterns. Only kicks in when the merchant hasn't flagged anything,
-  // so an explicit flag of zero categories means "no upsell, please".
-  if (chosen.length === 0) {
+  // patterns. Only kicks in when the merchant flagged nothing at all
+  // (neither categories nor individual items), so an explicit selection
+  // means "exactly this, please".
+  if (chosen.length === 0 && flaggedItemCount === 0) {
     chosen = categories.filter((c) =>
       FALLBACK_PATTERNS.some((re) => re.test(c.name)),
     );
   }
 
-  if (chosen.length === 0) return apiJson({ items: [], heading: null });
+  if (chosen.length === 0 && flaggedItemCount === 0) {
+    return apiJson({ items: [], heading: null });
+  }
 
+  // Hand-picked items merge with the flagged categories' items.
   const items = await prisma.menuItem.findMany({
     where: {
       tenantId: tenant.id,
-      categoryId: { in: chosen.map((c) => c.id) },
+      OR: [
+        ...(chosen.length > 0 ? [{ categoryId: { in: chosen.map((c) => c.id) } }] : []),
+        { upsellInCart: true },
+      ],
       available: true,
       ...(exclude.size > 0 ? { id: { notIn: [...exclude] } } : {}),
     },
-    orderBy: [{ featured: "desc" }, { position: "asc" }],
+    orderBy: [{ upsellInCart: "desc" }, { featured: "desc" }, { position: "asc" }],
     take: MAX_ITEMS,
     select: {
       id: true,
@@ -79,7 +93,9 @@ export const GET = handler(async (req: Request) => {
   });
 
   return apiJson({
-    heading: chosen.length === 1 ? chosen[0].name : "מומלץ עבורך",
+    heading:
+      tenantRow?.cartUpsellTitle?.trim() ||
+      (chosen.length === 1 ? chosen[0].name : "מומלץ עבורך"),
     items: items.map((i) => {
       const hasRequiredGroup = i.optionGroups.some(
         (g) => (g.templateSet?.required ?? g.required) === true,

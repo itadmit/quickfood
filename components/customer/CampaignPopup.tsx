@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { IcoClose } from "@/components/shared/Icons";
 
 interface Campaign {
@@ -30,14 +31,26 @@ function storageKey(tenantSlug: string, campaignId: string) {
 export function CampaignPopup({ tenantSlug }: Props) {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [visible, setVisible] = useState(false);
+  const pathname = usePathname() ?? "";
 
-  // Fetch the active campaign once on mount, then decide whether to show.
+  // Which storefront page we're on, for placement targeting. Kiosk,
+  // checkout and payment pages never show popups - a promo overlay in
+  // the middle of paying is a conversion killer.
+  const base = `/s/${tenantSlug}`;
+  const blocked =
+    pathname.startsWith(`${base}/kiosk`) ||
+    pathname.startsWith(`${base}/checkout`) ||
+    pathname.startsWith(`${base}/pay`);
+  const page = pathname === base ? "home" : pathname.startsWith(`${base}/cart`) ? "cart" : "other";
+
+  // Fetch the active campaign for this page, then decide whether to show.
   useEffect(() => {
+    if (blocked) return;
     let cancelled = false;
     (async () => {
       try {
         const res = await fetch(
-          `/api/v1/restaurants/${tenantSlug}/campaigns/active?kind=popup`,
+          `/api/v1/restaurants/${tenantSlug}/campaigns/active?kind=popup&page=${page}`,
           { cache: "no-store" },
         );
         if (!res.ok) return;
@@ -55,7 +68,7 @@ export function CampaignPopup({ tenantSlug }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [tenantSlug]);
+  }, [tenantSlug, page, blocked]);
 
   // Auto-close after AUTO_CLOSE_MS once visible.
   useEffect(() => {

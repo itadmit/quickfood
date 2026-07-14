@@ -107,6 +107,7 @@ export default async function ItemEditPage({
         availableDays: item.availableDays,
         stockRemaining: item.stockRemaining,
         upsellSizeNudge: item.upsellSizeNudge,
+        upsellInCart: item.upsellInCart,
         sizes: item.sizes.map((s) => ({
           code: s.code,
           name: s.name,

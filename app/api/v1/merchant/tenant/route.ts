@@ -102,6 +102,7 @@ export const PATCH = handler(async (req: Request) => {
       kioskStringOverrides: body.kiosk_string_overrides,
       featuredBadgeLabel: body.featured_badge_label,
       upsellSizeNudge: body.upsell_size_nudge,
+      cartUpsellTitle: body.cart_upsell_title,
     },
   });
 

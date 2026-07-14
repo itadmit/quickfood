@@ -19,11 +19,13 @@ import { cn } from "@/lib/cn";
 
 type CampaignKind = "popup" | "banner";
 type CampaignStyle = "image" | "text";
+type CampaignPlacement = "home" | "cart" | "all";
 
 interface Campaign {
   id: string;
   kind: CampaignKind;
   style: CampaignStyle;
+  placement: CampaignPlacement;
   title: string;
   subtitle: string | null;
   icon: string | null;
@@ -38,6 +40,7 @@ type DraftCampaign = {
   id?: string;
   kind: CampaignKind;
   style: CampaignStyle;
+  placement: CampaignPlacement;
   title: string;
   subtitle: string;
   icon: string | null;
@@ -50,6 +53,7 @@ type DraftCampaign = {
 const EMPTY_DRAFT: DraftCampaign = {
   kind: "popup",
   style: "image",
+  placement: "home",
   title: "",
   subtitle: "",
   icon: null,
@@ -91,6 +95,7 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
       id: c.id,
       kind: c.kind,
       style: c.style,
+      placement: c.placement ?? "home",
       title: c.title,
       subtitle: c.subtitle ?? "",
       icon: c.icon,
@@ -125,6 +130,7 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
       body: JSON.stringify({
         kind: editing.kind,
         style: effectiveStyle,
+        placement: editing.placement,
         title: editing.title.trim(),
         subtitle: editing.subtitle.trim() || null,
         icon: editing.icon,
@@ -145,6 +151,7 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
       id: string;
       kind: CampaignKind;
       style: CampaignStyle;
+      placement: CampaignPlacement;
       title: string;
       subtitle: string | null;
       icon: string | null;
@@ -158,6 +165,7 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
       id: saved.id,
       kind: saved.kind,
       style: saved.style,
+      placement: saved.placement ?? "home",
       title: saved.title,
       subtitle: saved.subtitle,
       icon: saved.icon,
@@ -394,10 +402,47 @@ export function CampaignsView({ initial }: { initial: Campaign[] }) {
                 </div>
                 <p className="text-[11px] text-qf-mute mt-1.5">
                   {editing.kind === "popup"
-                    ? "פופאפ מופיע פעם ביום ללקוח כשהוא נכנס לעמוד הבית."
+                    ? "פופאפ מופיע פעם ביום ללקוח, במיקום שתבחרו למטה."
                     : "באנר מופיע משובץ בעמוד הבית, בלי הפרעה לגלילה."}
                 </p>
               </div>
+
+              {editing.kind === "popup" && (
+                <div>
+                  <label className="text-sm font-medium block mb-1.5">איפה להציג</label>
+                  <div className="grid grid-cols-3 gap-2 bg-qf-line-soft p-1 rounded-xl">
+                    {(
+                      [
+                        ["home", "דף הבית"],
+                        ["cart", "עגלה"],
+                        ["all", "כל העמודים"],
+                      ] as const
+                    ).map(([value, label]) => {
+                      const active = editing.placement === value;
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() =>
+                            setEditing((prev) => prev && { ...prev, placement: value })
+                          }
+                          className={cn(
+                            "px-3 py-2 rounded-lg text-sm font-semibold transition",
+                            active
+                              ? "bg-white shadow-sm text-qf-ink"
+                              : "text-qf-ink2 hover:text-qf-ink",
+                          )}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[11px] text-qf-mute mt-1.5">
+                    בקופה, בתשלום ובקיוסק הפופאפ לעולם לא מוצג.
+                  </p>
+                </div>
+              )}
 
               {editing.kind === "banner" && (
                 <div>

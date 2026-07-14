@@ -324,6 +324,9 @@ model Tenant {
   // in the item picker when a larger size exists. Off → sizes render
   // as a plain selector with no extra prompt.
   upsellSizeNudge Boolean @default(true) @map("upsell_size_nudge")
+  // Custom heading for the cart upsell carousel. NULL falls back to the
+  // flagged category's name (single) or "מומלץ עבורך".
+  cartUpsellTitle String? @map("cart_upsell_title") @db.VarChar(60)
 
   // Self-service kiosk mode (paid add-on). Toggled per-tenant from
   // the super-admin UI for now; the merchant-side settings page (welcome
@@ -669,6 +672,9 @@ model MenuItem {
   // Per-item override for the size-upgrade nudge banner. Effective only
   // when the tenant-level toggle (Tenant.upsellSizeNudge) is also on.
   upsellSizeNudge Boolean  @default(true) @map("upsell_size_nudge")
+  // Hand-picked for the cart upsell carousel, merged with items from
+  // categories flagged upsellInCart. See /api/v1/customer/cart-upsell.
+  upsellInCart   Boolean   @default(false) @map("upsell_in_cart")
   // Provenance for bulk imports - see MenuCategory.externalSource for the
   // contract. A re-import keys off (tenantId, externalSource, externalId)
   // to upsert rather than duplicate.
@@ -1957,6 +1963,14 @@ enum CampaignKind {
   banner
 }
 
+// Where a popup campaign is allowed to appear in the storefront. Banners
+// ignore this (they only render inline on the home page).
+enum CampaignPlacement {
+  home
+  cart
+  all
+}
+
 enum CampaignStyle {
   image
   text
@@ -1982,6 +1996,7 @@ model Campaign {
   imageUrl String?       @map("image_url")
   isActive Boolean       @default(true) @map("is_active")
   linkUrl  String?       @map("link_url")
+  placement CampaignPlacement @default(home)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

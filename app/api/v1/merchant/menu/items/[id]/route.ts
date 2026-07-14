@@ -45,6 +45,7 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
       available_days: item.availableDays,
       stock_remaining: item.stockRemaining,
       upsell_size_nudge: item.upsellSizeNudge,
+      upsell_in_cart: item.upsellInCart,
       sizes: item.sizes.map((s) => ({
         id: s.id,
         code: s.code,
@@ -124,6 +125,7 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
         availableDays: body.available_days ?? null,
         stockRemaining: body.stock_remaining ?? null,
         upsellSizeNudge: body.upsell_size_nudge,
+        upsellInCart: body.upsell_in_cart,
       },
     }),
     prisma.itemSize.deleteMany({ where: { itemId: id } }),

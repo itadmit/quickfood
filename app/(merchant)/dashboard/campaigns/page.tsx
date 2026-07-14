@@ -22,6 +22,7 @@ export default async function CampaignsPage() {
         id: c.id,
         kind: c.kind,
         style: c.style,
+        placement: c.placement,
         title: c.title,
         subtitle: c.subtitle,
         icon: c.icon,

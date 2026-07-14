@@ -25,6 +25,7 @@ export const POST = handler(async (req: Request) => {
       tenantId: session.tenantId,
       kind: body.kind,
       style: body.style,
+      placement: body.placement,
       title: body.title,
       subtitle: body.subtitle ?? null,
       icon: body.icon ?? null,

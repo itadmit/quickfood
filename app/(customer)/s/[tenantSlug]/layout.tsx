@@ -15,6 +15,7 @@ import { MerchantPreviewBar } from "@/components/customer/MerchantPreviewBar";
 import { AIAdvisorFAB } from "@/components/customer/ai-advisor/AIAdvisorFAB";
 import { AIAdvisorPromoPopup } from "@/components/customer/ai-advisor/AIAdvisorPromoPopup";
 import { FloatingCartCTA } from "@/components/customer/FloatingCartCTA";
+import { CampaignPopup } from "@/components/customer/CampaignPopup";
 import { CustomerChromeGate } from "@/components/customer/CustomerChromeGate";
 import { CustomerFooter } from "@/components/customer/CustomerFooter";
 import { VisitBeacon } from "@/components/customer/VisitBeacon";
@@ -178,6 +179,7 @@ export default async function CustomerLayout({
           </div>
           {modal}
           <CustomerChromeGate>
+            <CampaignPopup tenantSlug={tenant.slug} />
             <FloatingCartCTA />
             {tenant.aiAdvisorEnabled &&
               ((tenant.aiProvider === "claude" && tenant.aiClaudeApiKey) ||

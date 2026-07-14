@@ -263,6 +263,7 @@ export const MenuItemInputSchema = z.object({
   // Inventory countdown - null = no inventory tracking (infinite).
   stock_remaining: z.number().int().min(0).nullable().optional(),
   upsell_size_nudge: z.boolean().default(true),
+  upsell_in_cart: z.boolean().default(false),
   sizes: z.array(ItemSizeInputSchema).default([]),
   option_groups: z.array(ItemOptionGroupInputSchema).default([]),
 });
@@ -364,6 +365,7 @@ export const TenantPatchSchema = z.object({
   // Merchandising knobs (shared by storefront + kiosk).
   featured_badge_label: z.string().max(40).nullable().optional(),
   upsell_size_nudge: z.boolean().optional(),
+  cart_upsell_title: z.string().max(60).nullable().optional(),
 });
 
 export const NoticeInputSchema = z.object({
@@ -435,6 +437,7 @@ export const CampaignCreateSchema = z
   .object({
     kind: z.enum(["popup", "banner"]).optional().default("popup"),
     style: z.enum(["image", "text"]).optional().default("image"),
+    placement: z.enum(["home", "cart", "all"]).optional().default("home"),
     title: z.string().min(1).max(120),
     subtitle: z.string().max(160).nullable().optional(),
     icon: z.string().max(40).nullable().optional(),
@@ -466,6 +469,7 @@ export const CampaignCreateSchema = z
 const CampaignPatchObject = z.object({
   kind: z.enum(["popup", "banner"]).optional(),
   style: z.enum(["image", "text"]).optional(),
+  placement: z.enum(["home", "cart", "all"]).optional(),
   title: z.string().min(1).max(120).optional(),
   subtitle: z.string().max(160).nullable().optional(),
   icon: z.string().max(40).nullable().optional(),

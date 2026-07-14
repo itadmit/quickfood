@@ -96,6 +96,7 @@ interface ItemData {
   availableDays: number | null;
   stockRemaining: number | null;
   upsellSizeNudge: boolean;
+  upsellInCart: boolean;
 }
 
 const TAGS = ALL_TAG_LABELS;
@@ -120,6 +121,7 @@ const EMPTY_ITEM: ItemData = {
   availableDays: null,
   stockRemaining: null,
   upsellSizeNudge: true,
+  upsellInCart: false,
 };
 
 // Hebrew weekday names indexed by JavaScript getDay() (0 = Sunday). Used by
@@ -269,6 +271,7 @@ export function ItemEditor({
         available_days: data.availableDays,
         stock_remaining: data.stockRemaining,
         upsell_size_nudge: data.upsellSizeNudge,
+        upsell_in_cart: data.upsellInCart,
         sizes: data.sizes.map((s) => ({
           code: s.code,
           name: s.name,
@@ -507,6 +510,17 @@ export function ItemEditor({
                 aria-label="זמינות פריט"
               />
             </Field>
+            <label className="text-sm inline-flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={data.upsellInCart}
+                onChange={(e) => update("upsellInCart", e.target.checked)}
+              />
+              להציע בעגלה (אפסייל)
+              <span className="text-[11px] text-qf-mute">
+                (מצטרף לקטגוריות שסומנו לאפסייל; הכותרת בהגדרות ← מכירות ואפסיילים)
+              </span>
+            </label>
           </section>
 
           {/* Images */}

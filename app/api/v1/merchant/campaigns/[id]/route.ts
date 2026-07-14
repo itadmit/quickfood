@@ -21,6 +21,7 @@ export const PATCH = handler(
       data: {
         ...(body.kind !== undefined && { kind: body.kind }),
         ...(body.style !== undefined && { style: body.style }),
+        ...(body.placement !== undefined && { placement: body.placement }),
         ...(body.title !== undefined && { title: body.title }),
         ...(body.subtitle !== undefined && { subtitle: body.subtitle }),
         ...(body.icon !== undefined && { icon: body.icon }),

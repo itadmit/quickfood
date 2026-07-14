@@ -17,6 +17,7 @@ export default async function SalesSettingsPage() {
     select: {
       featuredBadgeLabel: true,
       upsellSizeNudge: true,
+      cartUpsellTitle: true,
     },
   });
   if (!tenant) redirect("/dashboard/login");
@@ -28,6 +29,7 @@ export default async function SalesSettingsPage() {
         initial={{
           featuredBadgeLabel: tenant.featuredBadgeLabel ?? "",
           upsellSizeNudge: tenant.upsellSizeNudge,
+          cartUpsellTitle: tenant.cartUpsellTitle ?? "",
         }}
       />
     </div>

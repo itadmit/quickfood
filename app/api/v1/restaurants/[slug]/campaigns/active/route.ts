@@ -16,11 +16,28 @@ export const GET = handler(async (req: Request, { params }: { params: Promise<{ 
   const tenant = await resolveTenantBySlug(slug);
   if (!tenant) return apiError("not_found", "מסעדה לא נמצאה", 404);
 
-  const kindParam = new URL(req.url).searchParams.get("kind");
+  const searchParams = new URL(req.url).searchParams;
+  const kindParam = searchParams.get("kind");
   const kind = kindParam === "popup" || kindParam === "banner" ? kindParam : undefined;
 
+  // Popup placement: the storefront says which page it's on ("home" /
+  // "cart" / anything else) and gets popups targeted at that page or at
+  // "all". No page param keeps the legacy behaviour (no filter).
+  const pageParam = searchParams.get("page");
+  const placements =
+    pageParam === "home" || pageParam === "cart"
+      ? ([pageParam, "all"] as const)
+      : pageParam
+        ? (["all"] as const)
+        : null;
+
   const campaign = await prisma.campaign.findFirst({
-    where: { tenantId: tenant.id, isActive: true, ...(kind && { kind }) },
+    where: {
+      tenantId: tenant.id,
+      isActive: true,
+      ...(kind && { kind }),
+      ...(kind === "popup" && placements ? { placement: { in: [...placements] } } : {}),
+    },
     orderBy: { updatedAt: "desc" },
     select: {
       id: true,

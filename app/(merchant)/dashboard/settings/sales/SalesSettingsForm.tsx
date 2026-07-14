@@ -7,10 +7,11 @@ import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toas
 export function SalesSettingsForm({
   initial,
 }: {
-  initial: { featuredBadgeLabel: string; upsellSizeNudge: boolean };
+  initial: { featuredBadgeLabel: string; upsellSizeNudge: boolean; cartUpsellTitle: string };
 }) {
   const [featuredLabel, setFeaturedLabel] = useState(initial.featuredBadgeLabel);
   const [sizeNudge, setSizeNudge] = useState(initial.upsellSizeNudge);
+  const [upsellTitle, setUpsellTitle] = useState(initial.cartUpsellTitle);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   function pushToast(kind: ToastKind, message: string) {
@@ -26,6 +27,7 @@ export function SalesSettingsForm({
         body: JSON.stringify({
           featured_badge_label: featuredLabel.trim() || null,
           upsell_size_nudge: sizeNudge,
+          cart_upsell_title: upsellTitle.trim() || null,
         }),
       });
       if (!res.ok) {
@@ -57,6 +59,23 @@ export function SalesSettingsForm({
           />
           <p className="text-xs text-qf-mute">
             הטקסט שמופיע על פינת כרטיסי המנות שסימנת כ&quot;מומלץ&quot; בעורך הפריט (תפריט). השאירי ריק לברירת מחדל &quot;מומלץ של השף&quot;. דוגמאות פופולריות: &quot;הכי נמכר&quot;, &quot;חדש!&quot;, &quot;הבחירה של הבית&quot;.
+          </p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-2">
+          <label className="block text-sm font-bold">אפסייל בעגלה</label>
+          <input
+            value={upsellTitle}
+            onChange={(e) => setUpsellTitle(e.target.value)}
+            placeholder="מומלץ עבורך"
+            maxLength={60}
+            className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+          />
+          <p className="text-xs text-qf-mute">
+            הכותרת של קרוסלת ההמלצות בעמוד העגלה. השאירו ריק לברירת המחדל.
+            אילו מוצרים מופיעים שם? מסמנים קטגוריות שלמות (&quot;הצג באפסייל&quot; בעריכת קטגוריה)
+            או מוצרים בודדים (&quot;להציע בעגלה&quot; בעורך המוצר) - אפשר גם וגם. בלי שום סימון,
+            המערכת מזהה לבד קטגוריות שתייה וקינוחים.
           </p>
         </div>
 
