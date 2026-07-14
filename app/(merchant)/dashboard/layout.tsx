@@ -18,7 +18,6 @@ import { OnboardingWelcome } from "@/components/merchant/OnboardingWelcome";
 import { SupportFAB } from "@/components/merchant/SupportFAB";
 import { DashboardFooter } from "@/components/merchant/DashboardFooter";
 import { MerchantPushSubscribe } from "@/components/merchant/MerchantPushSubscribe";
-import { MerchantInstallPrompt } from "@/components/merchant/MerchantInstallPrompt";
 import { RoleRouteGuard } from "@/components/merchant/RoleRouteGuard";
 import { TermsAckGate } from "@/components/merchant/TermsAckGate";
 import { TermsAckBanner } from "@/components/merchant/TermsAckBanner";
@@ -185,7 +184,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
               <div className="mx-auto w-full max-w-7xl space-y-3">
                 <RoleRouteGuard role={user.role} />
                 <MerchantPushSubscribe />
-                <MerchantInstallPrompt />
                 {children}
               </div>
             </main>
@@ -234,7 +232,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
               <div className="mx-auto w-full max-w-7xl space-y-3">
                 <RoleRouteGuard role={user.role} />
                 <MerchantPushSubscribe />
-                <MerchantInstallPrompt />
                 {children}
               </div>
             </main>
