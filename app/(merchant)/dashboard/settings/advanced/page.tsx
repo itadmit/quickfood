@@ -7,6 +7,7 @@ import { AppearanceToggle } from "./AppearanceToggle";
 import { InstallAppButton } from "./InstallAppButton";
 import { DeleteAllItems } from "./DeleteAllItems";
 import { ResetStore } from "./ResetStore";
+import { WipeOrders } from "./WipeOrders";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,7 @@ export default async function AdvancedSettingsPage({
   const ackParam = params.ack === "1";
   const autoStartParam = params.autostart === "1";
 
-  const [lastImport, tenant, itemCount] = await Promise.all([
+  const [lastImport, tenant, itemCount, orderCount] = await Promise.all([
     prisma.woltImport.findFirst({
       where: { tenantId: session.tenantId },
       orderBy: { createdAt: "desc" },
@@ -45,6 +46,7 @@ export default async function AdvancedSettingsPage({
       select: { dashboardVersion: true, name: true },
     }),
     prisma.menuItem.count({ where: { tenantId: session.tenantId } }),
+    prisma.order.count({ where: { tenantId: session.tenantId } }),
   ]);
 
   const isOwner = session.role === "owner";
@@ -113,6 +115,20 @@ export default async function AdvancedSettingsPage({
             </p>
           </header>
           <DeleteAllItems itemCount={itemCount} />
+        </section>
+      )}
+
+      {isOwner && tenant?.name && (
+        <section className="bg-white rounded-2xl border border-qf-tomato/30 p-4 lg:p-6">
+          <header className="mb-4">
+            <h2 className="text-lg font-bold text-qf-tomato">מחיקת כל ההזמנות</h2>
+            <p className="text-sm text-qf-mute mt-1 leading-relaxed">
+              עשיתם הזמנות ניסיון כדי לראות מה הלקוח רואה? כאן מנקים את
+              ההיסטוריה לפני העלייה לאוויר - כל ההזמנות נמחקות והמספור
+              מתחיל שוב מההתחלה.
+            </p>
+          </header>
+          <WipeOrders tenantName={tenant.name} orderCount={orderCount} />
         </section>
       )}
 
