@@ -34,8 +34,8 @@ const PRODUCTS: Product[] = [
       mac: { req: "macOS 11 ומעלה", href: `${CDN}/quickfood-dashboard-1.0.0-universal.dmg` },
       android: {
         req: "Android 7 ומעלה",
-        href: `${CDN}/quickfood-2.0.0.apk`,
-        label: "האפליקציה החדשה 2.0",
+        href: `${CDN}/quickfood-2.1.0.apk`,
+        label: "האפליקציה החדשה 2.1",
         badge: "חדש",
       },
     },
