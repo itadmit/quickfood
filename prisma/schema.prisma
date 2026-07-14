@@ -2382,3 +2382,22 @@ model GrowthCampaign {
   @@index([tenantId, createdAt(sort: Desc)])
   @@map("growth_campaigns")
 }
+
+/// Native FCM device token for the QuickFood merchant Android app. Parallel to
+/// MerchantUserPushSubscription (web-push) — one row per app install. Used by
+/// lib/merchant/fcm.ts to alert the merchant on a new order even when the app
+/// is backgrounded.
+model NativeDeviceToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  tenantId   String?   @map("tenant_id") @db.Uuid
+  fcmToken   String    @unique @map("fcm_token")
+  platform   String    @db.VarChar(12)
+  appVersion String?   @map("app_version") @db.VarChar(40)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  lastSeenAt DateTime? @map("last_seen_at")
+
+  @@index([userId])
+  @@index([tenantId])
+  @@map("native_device_tokens")
+}
