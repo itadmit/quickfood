@@ -2,6 +2,7 @@ import { z } from "zod";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
+import { voidCommissions, BillingHubError } from "@/lib/billing-hub/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,9 +20,10 @@ export const dynamic = "force-dynamic";
  * checkouts are cleared explicitly since they reference orders without a
  * cascading FK. Menu, customers, team, billing setup - untouched.
  *
- * NOTE: commissions already recorded on the billing hub for delivered
- * test orders are hub-side and are NOT reversed here - the UI says to
- * run test orders before connecting billing.
+ * Commissions the hub already recorded for these orders are voided via
+ * POST /commissions/void (pending ones only - anything already on an
+ * issued invoice is skipped by the hub and needs a human). Best-effort:
+ * a hub hiccup doesn't fail the wipe.
  *
  * Confirm token = the tenant's exact name (same UX as store reset).
  * Owner role required.
@@ -42,7 +44,7 @@ export const POST = handler(async (req: Request) => {
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
-    select: { name: true },
+    select: { name: true, billingCustomerId: true },
   });
   if (!tenant) return apiError("not_found", "החנות לא נמצאה", 404);
 
@@ -51,6 +53,12 @@ export const POST = handler(async (req: Request) => {
   }
 
   const tenantId = session.tenantId;
+
+  // Order ids are the hub's source_external_id - captured before the wipe
+  // so the commission void can run after the rows are gone.
+  const orderIds = (
+    await prisma.order.findMany({ where: { tenantId }, select: { id: true } })
+  ).map((o) => o.id);
 
   const summary = await prisma.$transaction(
     async (tx) => {
@@ -70,5 +78,28 @@ export const POST = handler(async (req: Request) => {
     { timeout: 60_000 },
   );
 
-  return apiJson({ ok: true, deleted: summary });
+  let commissionsVoided = 0;
+  if (tenant.billingCustomerId && orderIds.length > 0) {
+    for (let i = 0; i < orderIds.length; i += 1000) {
+      try {
+        const res = await voidCommissions({
+          customer_id: tenant.billingCustomerId,
+          source_external_ids: orderIds.slice(i, i + 1000),
+        });
+        commissionsVoided += res.voided;
+      } catch (err) {
+        if (err instanceof BillingHubError) {
+          console.warn("[wipe-orders] commission void failed", err.status, err.message);
+        } else {
+          console.warn("[wipe-orders] commission void threw", err);
+        }
+      }
+    }
+  }
+
+  return apiJson({
+    ok: true,
+    deleted: summary,
+    commissions_voided: commissionsVoided,
+  });
 });

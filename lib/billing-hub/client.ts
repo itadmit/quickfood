@@ -277,6 +277,22 @@ export function recordCommission(input: {
 }
 
 /**
+ * Void PENDING commissions by their source order ids - the hub half of the
+ * "wipe test orders" flow. Charges already invoiced/paid are skipped by
+ * the hub and reported back; they need a human on the hub side.
+ */
+export function voidCommissions(input: {
+  customer_id: string;
+  source_external_ids: string[];
+}) {
+  return request<{ voided: number; skipped_non_pending: number }>(
+    "POST",
+    "/api/v1/commissions/void",
+    input,
+  );
+}
+
+/**
  * One-off charge against the customer's saved payment method. Used for SMS
  * top-up purchases (Starter/Growth/Scale).
  *
