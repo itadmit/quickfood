@@ -7,6 +7,7 @@ import { isItemVisibleNow } from "@/lib/menu-availability";
 import { computeDeliveryFee } from "@/lib/delivery-fee";
 import { matchZoneByCity } from "@/lib/delivery-zone-match";
 import { sendTenantPush } from "@/lib/merchant/push";
+import { sendTenantFcm } from "@/lib/merchant/fcm";
 import { priceGroupOptions } from "@/lib/option-pricing";
 import { ensureLoyaltyMember } from "@/lib/loyalty/membership";
 import { isWithinOpenHours, type BranchHours } from "@/lib/branch-hours";
@@ -832,6 +833,13 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       tag: `order-${order.id}`,
       requireInteraction: true,
     }).catch((err) => console.warn("[push] tenant new-order failed", err));
+
+    // Native FCM push to the merchant Android app (parallel to web-push above).
+    void sendTenantFcm(tenant.id, {
+      orderId: order.id,
+      title: `הזמנה חדשה - ${order.number}`,
+      body: `${total} ש"ח · ${input.method === "delivery" ? "משלוח" : "איסוף"}`,
+    }).catch((err) => console.warn("[fcm] tenant new-order failed", err));
 
     after(() =>
       notifyMerchantNewOrder(order.id).catch((err) =>
