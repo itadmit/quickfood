@@ -263,7 +263,7 @@ export function OrderDrawer({
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-40 flex">
+    <div className="fixed inset-0 z-50 flex">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <aside className="relative ms-auto h-full w-full max-w-[480px] bg-white shadow-2xl flex flex-col overflow-hidden">
         <header className="flex items-start justify-between gap-3 px-5 py-4 border-b border-qf-line-soft">
