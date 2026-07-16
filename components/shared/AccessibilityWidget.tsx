@@ -6,7 +6,7 @@ const A11Y_CONFIG = {
   enabled: true,
   key: A11Y_KEY,
   language: "he",
-  position: "bottom-left",
+  position: "top-left",
   accentColor: "#facb1e",
   buttonShape: "circle",
   buttonSize: 43,
