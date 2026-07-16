@@ -948,3 +948,13 @@ label[for][class*="shadow-[0_"] {
     animation: none;
   }
 }
+
+/* The accessibility widget (#a11y-root, shadow DOM) pins its launcher at
+   z-index 2147483647 internally. Giving the host a LOW stacking context
+   traps that value inside it, so modals/drawers (z-50) paint above the
+   floating button instead of being covered by it. */
+#a11y-root {
+  position: relative;
+  z-index: 40;
+  isolation: isolate;
+}
