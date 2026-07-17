@@ -605,6 +605,9 @@ model MenuCategory {
   name     String
   icon     String?
   color    String?
+  // Optional uploaded image (R2, webp). When set, storefront category
+  // tiles show it instead of the icon+color circle.
+  imageUrl String? @map("image_url")
   position Int     @default(0)
   active   Boolean @default(true)
 

@@ -7,6 +7,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Modal } from "@/components/shared/Modal";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { DragList, DragHandle } from "@/components/shared/DragList";
+import { ImageUploader } from "@/components/shared/ImageUploader";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import {
   CATEGORY_ICONS,
@@ -25,6 +26,7 @@ export interface CategoryRow {
   name: string;
   icon: string | null;
   color: string | null;
+  imageUrl: string | null;
   position: number;
   upsellInCart: boolean;
   upsellBeforeCheckout: boolean;
@@ -36,6 +38,7 @@ type Draft = {
   name: string;
   icon: CategoryIconKey;
   color: CategoryColorKey;
+  imageUrl: string | null;
   position: number;
   upsellInCart: boolean;
   upsellBeforeCheckout: boolean;
@@ -45,6 +48,7 @@ const EMPTY_DRAFT: Draft = {
   name: "",
   icon: DEFAULT_ICON,
   color: DEFAULT_COLOR,
+  imageUrl: null,
   position: 0,
   upsellInCart: false,
   upsellBeforeCheckout: false,
@@ -112,6 +116,7 @@ export function CategoriesView({
       name: c.name,
       icon: style.iconKey,
       color: style.colorKey,
+      imageUrl: c.imageUrl,
       position: c.position,
       upsellInCart: c.upsellInCart,
       upsellBeforeCheckout: c.upsellBeforeCheckout,
@@ -137,6 +142,7 @@ export function CategoriesView({
         name: editing.name.trim(),
         icon: editing.icon,
         color: editing.color,
+        image_url: editing.imageUrl,
         upsell_in_cart: editing.upsellInCart,
         upsell_before_checkout: editing.upsellBeforeCheckout,
         ...(isCreate && { position: editing.position }),
@@ -226,12 +232,21 @@ export function CategoriesView({
                   >
                     <DragHandle />
                   </span>
-                  <div
-                    className="w-11 h-11 rounded-full grid place-items-center shrink-0"
-                    style={{ backgroundColor: style.bg }}
-                  >
-                    <Icon size={20} color={style.fg} strokeWidth={1.8} />
-                  </div>
+                  {c.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={c.imageUrl}
+                      alt=""
+                      className="w-11 h-11 rounded-full object-cover shrink-0 border border-qf-line"
+                    />
+                  ) : (
+                    <div
+                      className="w-11 h-11 rounded-full grid place-items-center shrink-0"
+                      style={{ backgroundColor: style.bg }}
+                    >
+                      <Icon size={20} color={style.fg} strokeWidth={1.8} />
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{c.name}</div>
                     <div className="text-xs text-qf-mute mt-0.5 flex items-center gap-2 flex-wrap">
@@ -348,12 +363,21 @@ function DraftModal({
 
       <div className="flex-1 overflow-y-auto p-5 space-y-5">
           <div className="flex flex-col items-center gap-2 py-2">
-            <div
-              className="w-16 h-16 rounded-full grid place-items-center"
-              style={{ backgroundColor: previewStyle.bg }}
-            >
-              <PreviewIcon size={28} color={previewStyle.fg} strokeWidth={1.8} />
-            </div>
+            {draft.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={draft.imageUrl}
+                alt=""
+                className="w-16 h-16 rounded-full object-cover border border-qf-line"
+              />
+            ) : (
+              <div
+                className="w-16 h-16 rounded-full grid place-items-center"
+                style={{ backgroundColor: previewStyle.bg }}
+              >
+                <PreviewIcon size={28} color={previewStyle.fg} strokeWidth={1.8} />
+              </div>
+            )}
             <div className="text-sm font-medium">{draft.name || "שם קטגוריה"}</div>
           </div>
 
@@ -422,6 +446,22 @@ function DraftModal({
                 );
               })}
             </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium block mb-1">תמונה במקום אייקון</label>
+            <p className="text-xs text-qf-mute mb-2 leading-relaxed">
+              כשמעלים תמונה, היא מוצגת בעיגול הקטגוריה בחנות במקום האייקון והצבע.
+              מחיקת התמונה מחזירה את האייקון שנבחר.
+            </p>
+            <ImageUploader
+              type="menu_item_image"
+              value={draft.imageUrl ? [draft.imageUrl] : []}
+              onChange={(urls) => onChange({ ...draft, imageUrl: urls[0] ?? null })}
+              multiple={false}
+              max={1}
+              hint="תמונה אחת · jpg/png/webp · עד 10MB · נשמרת אוטומטית כ-webp"
+            />
           </div>
 
           <label className="flex items-start justify-between gap-3 py-2 cursor-pointer">

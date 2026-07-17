@@ -108,7 +108,7 @@ function NoticeChip({ notice }: { notice: NoticeRow }) {
 interface Props {
   tenantSlug: string;
   businessType?: BusinessType;
-  categories: Array<{ id: string; name: string; icon: string | null; color: string | null }>;
+  categories: Array<{ id: string; name: string; icon: string | null; color: string | null; imageUrl?: string | null }>;
   items: MenuListItem[];
   query?: string;
   activeTags?: Set<string>;
@@ -291,13 +291,23 @@ export function MenuList({
                     : "bg-white text-qf-ink2 border-qf-line",
                 )}
               >
-                <span
-                  className="w-5 h-5 rounded-full grid place-items-center shrink-0"
-                  style={{ backgroundColor: active ? "rgba(255,255,255,0.18)" : style.bg }}
-                  aria-hidden
-                >
-                  <Icon size={11} color={active ? "#fff" : style.fg} strokeWidth={2} />
-                </span>
+                {c.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={c.imageUrl}
+                    alt=""
+                    className="w-5 h-5 rounded-full object-cover shrink-0"
+                    aria-hidden
+                  />
+                ) : (
+                  <span
+                    className="w-5 h-5 rounded-full grid place-items-center shrink-0"
+                    style={{ backgroundColor: active ? "rgba(255,255,255,0.18)" : style.bg }}
+                    aria-hidden
+                  >
+                    <Icon size={11} color={active ? "#fff" : style.fg} strokeWidth={2} />
+                  </span>
+                )}
                 <span>{c.name}</span>
               </button>
             );

@@ -314,8 +314,8 @@ export default async function HomePage({
       }
       ratingSummary={ratingSummary}
       deliveryEta={deliveryEta}
-      categories={categories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color }))}
-      allCategories={allCategories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color }))}
+      categories={categories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color, imageUrl: c.imageUrl }))}
+      allCategories={allCategories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color, imageUrl: c.imageUrl }))}
       menuItems={menuItems.map((i) => ({
         id: i.id,
         categoryId: i.categoryId,

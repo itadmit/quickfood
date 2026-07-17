@@ -10,8 +10,11 @@ const CategoryInput = z.object({
   name: z.string().min(1).max(60),
   icon: z.string().max(20).optional(),
   color: z.string().max(20).optional(),
+  image_url: z.string().url().nullable().optional(),
   position: z.number().int().min(0).default(0),
   active: z.boolean().default(true),
+  upsell_in_cart: z.boolean().default(false),
+  upsell_before_checkout: z.boolean().default(false),
 });
 
 export const GET = handler(async () => {
@@ -27,6 +30,7 @@ export const GET = handler(async () => {
       name: c.name,
       icon: c.icon,
       color: c.color,
+      image_url: c.imageUrl,
       position: c.position,
       active: c.active,
       upsell_in_cart: c.upsellInCart,
@@ -45,8 +49,11 @@ export const POST = handler(async (req: Request) => {
       name: body.name,
       icon: body.icon,
       color: body.color,
+      imageUrl: body.image_url ?? null,
       position: body.position,
       active: body.active,
+      upsellInCart: body.upsell_in_cart,
+      upsellBeforeCheckout: body.upsell_before_checkout,
     },
   });
   return apiJson({ category: { id: cat.id, name: cat.name } }, 201);

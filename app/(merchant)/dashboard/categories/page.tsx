@@ -39,6 +39,7 @@ export default async function CategoriesPage() {
         name: c.name,
         icon: c.icon,
         color: c.color,
+        imageUrl: c.imageUrl,
         position: c.position,
         upsellInCart: c.upsellInCart,
         upsellBeforeCheckout: c.upsellBeforeCheckout,

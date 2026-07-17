@@ -16,6 +16,8 @@ interface Props {
   multiple?: boolean;
   max?: number;
   className?: string;
+  /** Override for the helper line under the tiles. */
+  hint?: string;
 }
 
 interface UploadInitResponse {
@@ -38,6 +40,7 @@ export function ImageUploader({
   multiple = true,
   max = 5,
   className,
+  hint,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState<PendingUpload[]>([]);
@@ -332,7 +335,7 @@ export function ImageUploader({
       </div>
 
       <div className="text-[11px] text-qf-mute">
-        עד {max} תמונות · jpg/png/webp · עד 10MB · התמונה הראשונה היא הראשית בתצוגת המוצר
+        {hint ?? `עד ${max} תמונות · jpg/png/webp · עד 10MB · התמונה הראשונה היא הראשית בתצוגת המוצר`}
       </div>
 
       {error && (

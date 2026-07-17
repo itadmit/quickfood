@@ -61,10 +61,10 @@ interface Props {
   } | null;
   ratingSummary?: { average: number; count: number } | null;
   deliveryEta?: { min: number; max: number } | null;
-  categories: Array<{ id: string; name: string; icon: string | null; color: string | null }>;
+  categories: Array<{ id: string; name: string; icon: string | null; color: string | null; imageUrl?: string | null }>;
   /** All active categories for the inline menu list below (the `categories`
    *  prop above is capped at 8 for the icon rail). */
-  allCategories: Array<{ id: string; name: string; icon: string | null; color: string | null }>;
+  allCategories: Array<{ id: string; name: string; icon: string | null; color: string | null; imageUrl?: string | null }>;
   menuItems: MenuListItem[];
   notices?: NoticeRow[];
   popular: Array<{
@@ -606,12 +606,22 @@ export function CustomerHome({
                 href={`#cat-${c.id}`}
                 className="shrink-0 w-24 bg-white rounded-2xl border border-qf-line px-2 py-3 text-center hover:border-(--qf-primary)/40 hover:shadow-sm transition lg:w-auto"
               >
-                <div
-                  className="w-10 h-10 rounded-full grid place-items-center mx-auto mb-1"
-                  style={{ backgroundColor: style.bg }}
-                >
-                  <Icon size={20} color={style.fg} strokeWidth={1.8} />
-                </div>
+                {c.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={c.imageUrl}
+                    alt=""
+                    className="w-10 h-10 rounded-full object-cover mx-auto mb-1"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div
+                    className="w-10 h-10 rounded-full grid place-items-center mx-auto mb-1"
+                    style={{ backgroundColor: style.bg }}
+                  >
+                    <Icon size={20} color={style.fg} strokeWidth={1.8} />
+                  </div>
+                )}
                 <div className="text-xs font-medium line-clamp-2 leading-tight">{c.name}</div>
               </Link>
             );
