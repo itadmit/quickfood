@@ -14,6 +14,7 @@ import { ItemDetailModal } from "@/components/customer/ItemDetailModal";
 import { ItemDetail } from "@/components/customer/screens/ItemDetail";
 import ItemModalSkeleton from "@/components/customer/ItemModalSkeleton";
 import { CartUpsell } from "@/components/customer/CartUpsell";
+import { usePreCheckoutUpsell } from "@/components/customer/PreCheckoutUpsell";
 import { CartBundleOffers } from "@/components/customer/CartBundleOffers";
 
 export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
@@ -24,6 +25,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
   // edit mode (pre-filled with the line's selections; CTA flips to
   // "עדכן הזמנה"). We fetch the menu item by its current itemId so the
   // available options reflect the live menu, not a stale snapshot.
+  const preCheckout = usePreCheckoutUpsell(tenantSlug);
   const [editing, setEditing] = useState<CartLine | null>(null);
   const [editItem, setEditItem] = useState<null | { item: Record<string, unknown>; tenant: { slug: string; businessType: string } }>(null);
   const [editLoading, setEditLoading] = useState(false);
@@ -219,14 +221,16 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
               <button
                 type="button"
                 disabled={!meetsMin}
-                onClick={() => {
-                  // Belt-and-suspenders: scroll to top BEFORE the route change
-                  // so the user sees the new screen open from the top even on
-                  // mobile Safari where streaming/layout shifts can race the
-                  // global ScrollToTop.
-                  window.scrollTo(0, 0);
-                  router.push(`/s/${tenantSlug}/checkout`);
-                }}
+                onClick={() =>
+                  preCheckout.intercept(() => {
+                    // Belt-and-suspenders: scroll to top BEFORE the route change
+                    // so the user sees the new screen open from the top even on
+                    // mobile Safari where streaming/layout shifts can race the
+                    // global ScrollToTop.
+                    window.scrollTo(0, 0);
+                    router.push(`/s/${tenantSlug}/checkout`);
+                  })
+                }
                 className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-14 text-base font-semibold flex items-center justify-between shadow-sm shadow-(--qf-primary)/25 transition"
               >
                 <span className="inline-flex items-center gap-2">
@@ -250,7 +254,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
         <button
           type="button"
           disabled={!meetsMin}
-          onClick={() => router.push(`/s/${tenantSlug}/checkout`)}
+          onClick={() => preCheckout.intercept(() => router.push(`/s/${tenantSlug}/checkout`))}
           className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-16 text-base font-semibold flex items-center justify-between shadow-lg shadow-(--qf-primary)/25 transition active:scale-[0.99]"
         >
           <span className="inline-flex items-center gap-2">
@@ -260,6 +264,8 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
           <span className="tnum text-lg">{formatPrice(total)}</span>
         </button>
       </div>
+
+      {preCheckout.element}
 
       <BottomTabBar tenantSlug={tenantSlug} />
 

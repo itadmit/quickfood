@@ -21,6 +21,10 @@ export const GET = handler(async (req: Request) => {
   const url = new URL(req.url);
   const slug = url.searchParams.get("tenant");
   const excludeParam = url.searchParams.get("exclude") ?? "";
+  // flag=checkout serves the one-shot "anything else?" interstitial fired
+  // when the customer taps המשך לתשלום - categories opted in via
+  // upsellBeforeCheckout, no name-heuristic fallback, capped tighter.
+  const checkoutFlag = url.searchParams.get("flag") === "checkout";
   if (!slug) return apiError("validation_error", "missing tenant", 422);
 
   const tenant = await resolveTenantBySlug(slug);
@@ -45,20 +49,20 @@ export const GET = handler(async (req: Request) => {
     prisma.menuItem.count({ where: { tenantId: tenant.id, upsellInCart: true } }),
   ]);
 
-  // Primary: categories explicitly flagged by the merchant.
-  let chosen = categories.filter((c) => c.upsellInCart);
+  // Primary: categories explicitly flagged by the merchant. The checkout
+  // interstitial is strictly opt-in (upsellBeforeCheckout); the in-cart
+  // carousel keeps its name-heuristic fallback.
+  let chosen = categories.filter((c) =>
+    checkoutFlag ? c.upsellBeforeCheckout : c.upsellInCart,
+  );
 
-  // Fallback: name-match against common drink / dessert / topping
-  // patterns. Only kicks in when the merchant flagged nothing at all
-  // (neither categories nor individual items), so an explicit selection
-  // means "exactly this, please".
-  if (chosen.length === 0 && flaggedItemCount === 0) {
+  if (!checkoutFlag && chosen.length === 0 && flaggedItemCount === 0) {
     chosen = categories.filter((c) =>
       FALLBACK_PATTERNS.some((re) => re.test(c.name)),
     );
   }
 
-  if (chosen.length === 0 && flaggedItemCount === 0) {
+  if (chosen.length === 0 && (checkoutFlag || flaggedItemCount === 0)) {
     return apiJson({ items: [], heading: null });
   }
 
@@ -68,13 +72,15 @@ export const GET = handler(async (req: Request) => {
       tenantId: tenant.id,
       OR: [
         ...(chosen.length > 0 ? [{ categoryId: { in: chosen.map((c) => c.id) } }] : []),
-        { upsellInCart: true },
+        ...(checkoutFlag ? [] : [{ upsellInCart: true }]),
       ],
       available: true,
       ...(exclude.size > 0 ? { id: { notIn: [...exclude] } } : {}),
     },
-    orderBy: [{ upsellInCart: "desc" }, { featured: "desc" }, { position: "asc" }],
-    take: MAX_ITEMS,
+    orderBy: checkoutFlag
+      ? [{ basePrice: "asc" }, { position: "asc" }]
+      : [{ upsellInCart: "desc" }, { featured: "desc" }, { position: "asc" }],
+    take: checkoutFlag ? 4 : MAX_ITEMS,
     select: {
       id: true,
       name: true,
