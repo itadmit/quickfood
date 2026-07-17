@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { IcoWhatsApp } from "@/components/shared/Icons";
 
-const SUPPORT_PHONE = "972552554432";
+const SUPPORT_PHONE = "972559618968";
 
 function buildWhatsAppHref(merchantName: string, hasNoMenuItems: boolean): string {
   const name = merchantName.trim() || "סוחר";

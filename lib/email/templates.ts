@@ -183,7 +183,7 @@ export function welcomeEmail({
   ownerName,
   businessName,
   dashboardUrl,
-  supportPhone = "972552554432",
+  supportPhone = "972559618968",
 }: {
   ownerName: string;
   businessName: string;
@@ -226,7 +226,7 @@ export function signupFollowupEmail({
   hasMenuItems,
   hasPayments,
   growSignupUrl,
-  supportPhone = "972552554432",
+  supportPhone = "972559618968",
 }: {
   ownerName: string;
   businessName: string;
