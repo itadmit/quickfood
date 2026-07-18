@@ -71,7 +71,7 @@ export function ProfileLogin() {
           <input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            placeholder="050-1234567"
+            placeholder="0501234567"
             dir="ltr"
             inputMode="tel"
             autoFocus

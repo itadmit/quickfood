@@ -383,7 +383,7 @@ export function CustomerCheckout({
     if (lastNameRequired && !lastName.trim())
       failures.push({ sel: "#co-last-name", msg: "נא למלא שם משפחה" });
     if (!phone.trim() || !phoneLooksValid)
-      failures.push({ sel: "#co-phone", msg: "מספר הטלפון אינו תקין. דוגמה: 050-1234567" });
+      failures.push({ sel: "#co-phone", msg: "מספר הטלפון אינו תקין. דוגמה: 0501234567" });
     if (method === "delivery" && !address.trim())
       failures.push({ sel: "#co-address", msg: "נא למלא רחוב ומספר" });
     if (method === "delivery" && !city)
@@ -579,7 +579,7 @@ export function CustomerCheckout({
   const phoneLooksValid = validateIsraeliPhone(phone);
   const phoneError =
     (phoneTouched || submitAttempted) && phone.trim() && !phoneLooksValid
-      ? "מספר טלפון לא תקין - למשל 050-1234567"
+      ? "מספר טלפון לא תקין - למשל 0501234567"
       : (phoneTouched || submitAttempted) && !phone.trim()
         ? "נדרש מספר טלפון"
         : null;
@@ -722,7 +722,7 @@ export function CustomerCheckout({
                     if (!phoneTouched) setPhoneTouched(true);
                   }}
                   onBlur={() => setPhoneTouched(true)}
-                  placeholder="050-1234567"
+                  placeholder="0501234567"
                   dir="ltr"
                   inputMode="tel"
                   autoComplete="tel"
