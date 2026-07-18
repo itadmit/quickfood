@@ -1085,7 +1085,7 @@ export function CustomerCheckout({
             value={customerNotes}
             onChange={(e) => setCustomerNotes(e.target.value)}
             rows={2}
-            placeholder="למשל: בלי בצל, חתוך ל-8"
+            placeholder="הערות למסעדה"
             className="w-full mt-3 bg-qf-bg border border-qf-line rounded-2xl px-4 py-3 text-base outline-none focus:border-(--qf-primary) focus:bg-white resize-none transition"
           />
         </Card>
