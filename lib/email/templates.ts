@@ -782,7 +782,7 @@ export function orderConfirmedEmail({
     preheader: `הזמנה ${orderNumber} התקבלה ב-${businessName}. סה"כ ${formatShekels(total)}.`,
     heading: `תודה ${customerName}!`,
     paragraphs: [
-      `קיבלנו את ההזמנה שלך ב-<strong>${escape(businessName)}</strong> והיא בדרך לרשת.`,
+      `קיבלנו את ההזמנה שלך ב-<strong>${escape(businessName)}</strong>.`,
       `שמרנו לך פירוט מלא כאן וגם בקישור המעקב. אם תרצה לשנות משהו - צור קשר עם המסעדה.`,
     ],
     raw: true,
