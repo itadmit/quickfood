@@ -4,7 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { IcoPhone, IcoClock, IcoCheck, IcoClose, IcoStar, IcoWhatsApp } from "@/components/shared/Icons";
+import { IcoPhone, IcoClock, IcoCheck, IcoClose, IcoStar, IcoWhatsApp, IcoChev } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { CartLineOptions } from "@/components/customer/CartLineOptions";
 import { formatPrice, formatTime } from "@/lib/format";
@@ -1102,7 +1102,10 @@ function BrandedHeader({
           cover and the content below, so the cover frames a clear identity
           chip instead of bleeding straight into a generic receipt. */}
       <div className="relative -mt-8 px-5 lg:px-0">
-        <div className="bg-white rounded-2xl border border-qf-line shadow-sm px-4 py-3 flex items-center gap-3">
+        <Link
+          href={`/s/${tenantSlug}`}
+          className="bg-white rounded-2xl border border-qf-line shadow-sm px-4 py-3 flex items-center gap-3 transition hover:border-(--qf-primary)/40 active:scale-[0.99]"
+        >
           <div
             className="w-14 h-14 rounded-full border-2 border-white overflow-hidden grid place-items-center shrink-0 shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
             style={{ backgroundColor: "var(--qf-primary)" }}
@@ -1120,14 +1123,10 @@ function BrandedHeader({
           </div>
           <div className="min-w-0 flex-1">
             <div className="font-semibold truncate">{tenantName}</div>
-            <Link
-              href={`/s/${tenantSlug}`}
-              className="text-xs text-qf-mute hover:text-(--qf-deep) underline-offset-2 hover:underline"
-            >
-              לחנות
-            </Link>
+            <div className="text-xs text-(--qf-deep) font-medium">חזרה לתפריט</div>
           </div>
-        </div>
+          <IcoChev s={18} c="#7c8a82" className="shrink-0 rotate-180" />
+        </Link>
       </div>
     </header>
   );
