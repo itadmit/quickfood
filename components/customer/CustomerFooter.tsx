@@ -19,6 +19,16 @@ export function CustomerFooter({
       <div>
         © {year} {tenantName}
       </div>
+      <div>
+        <a
+          href="https://quickfood.co.il/?utm_source=storefront&utm_medium=footer_credit"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-qf-mute hover:text-qf-ink2 transition"
+        >
+          מופעל על ידי <span className="font-semibold">QuickFood</span>
+        </a>
+      </div>
     </footer>
   );
 }
