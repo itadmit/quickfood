@@ -1061,7 +1061,7 @@ export function CustomerCheckout({
                 placeholder="הקלד קוד"
                 maxLength={40}
                 dir="ltr"
-                className="flex-1 bg-qf-bg border border-qf-line rounded-2xl px-4 py-3 text-base outline-none focus:border-(--qf-primary) focus:bg-white transition tnum"
+                className="flex-1 bg-qf-bg border border-qf-line rounded-2xl px-4 py-3 text-base text-right outline-none focus:border-(--qf-primary) focus:bg-white transition tnum"
               />
               <button
                 type="button"
