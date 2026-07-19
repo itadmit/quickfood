@@ -16,11 +16,11 @@
  * settings before the change and therefore carry an explicit notifySettings
  * JSON that would otherwise pin the old (all-off) behaviour.
  */
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../lib/db/client";
 import {
   resolveOrderNotifySettings,
   resolveMerchantNewOrderSettings,
-  ORDER_NOTIFY_EVENTS,
 } from "../lib/messaging/notify-settings";
 
 const APPLY = process.argv.includes("--apply");
@@ -56,7 +56,7 @@ async function main() {
           notifySettings: {
             ...next,
             merchant_new_order: resolveMerchantNewOrderSettings(t.notifySettings),
-          },
+          } as unknown as Prisma.InputJsonValue,
         },
       });
     }
