@@ -254,9 +254,12 @@ export function CustomerHome({
   const menuSearchRef = useRef<HTMLInputElement | null>(null);
 
   function focusMenuSearch() {
+    // iOS only opens the keyboard for a focus() made synchronously inside
+    // the tap gesture - the old scroll-then-focus-after-400ms left the field
+    // focused but keyboardless on iPhone, which read as "search is broken".
+    menuSearchRef.current?.focus({ preventScroll: true });
     const el = document.getElementById("menu-section");
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-    window.setTimeout(() => menuSearchRef.current?.focus(), 400);
   }
 
   function toggleTag(t: string) {

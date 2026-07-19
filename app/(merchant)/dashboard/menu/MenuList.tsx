@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/format";
-import { IcoEye, IcoEdit, IcoTrash, IcoClose, IcoCheck, IcoMore, IcoStar, IcoCopy } from "@/components/shared/Icons";
+import { IcoEye, IcoEdit, IcoTrash, IcoClose, IcoCheck, IcoMore, IcoStar, IcoCopy, IcoSearch } from "@/components/shared/Icons";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { Toggle } from "@/components/shared/Toggle";
@@ -68,6 +68,7 @@ export function MenuList({
 }) {
   const router = useRouter();
   const [activeCat, setActiveCat] = useState<string | "all">("all");
+  const [search, setSearch] = useState("");
   const [localItems, setLocalItems] = useState(items);
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Item | null>(null);
@@ -89,10 +90,17 @@ export function MenuList({
     setToast({ id: Date.now(), kind, message });
   }
 
-  const filtered = useMemo(
-    () => (activeCat === "all" ? localItems : localItems.filter((i) => i.categoryId === activeCat)),
-    [activeCat, localItems],
-  );
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return localItems.filter(
+      (i) =>
+        (activeCat === "all" || i.categoryId === activeCat) &&
+        (!q ||
+          i.name.toLowerCase().includes(q) ||
+          i.description.toLowerCase().includes(q) ||
+          (i.sku ?? "").toLowerCase().includes(q)),
+    );
+  }, [activeCat, localItems, search]);
 
   async function toggleAvailability(itemId: string, next: boolean) {
     // optimistic
@@ -192,7 +200,10 @@ export function MenuList({
       pushToast("err", "בחר קטגוריה ספציפית כדי לסדר את הפריטים שלה");
       return;
     }
-    setOrderDraft(filtered);
+    // Draft from the full category, never the search subset - reordering a
+    // filtered slice would silently rewrite positions for hidden items.
+    setSearch("");
+    setOrderDraft(localItems.filter((i) => i.categoryId === activeCat));
     setReorderMode(true);
   }
 
@@ -286,7 +297,30 @@ export function MenuList({
         }
       />
 
-      <div className={cn("flex items-center gap-2", reorderMode && "opacity-40 pointer-events-none")}>
+      <div className={cn("space-y-2.5", reorderMode && "opacity-40 pointer-events-none")}>
+        <div className="relative max-w-sm">
+          <span className="absolute inset-y-0 right-3 grid place-items-center pointer-events-none">
+            <IcoSearch c="#7c8a82" s={16} />
+          </span>
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="חיפוש מוצר לפי שם, תיאור או מק״ט"
+            aria-label="חיפוש מוצר"
+            className="w-full rounded-xl border border-qf-line-dash focus:border-(--qf-primary) bg-white pr-9 pl-9 py-2 text-sm outline-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="absolute inset-y-0 left-2 grid place-items-center text-qf-mute hover:text-qf-ink"
+              aria-label="נקה חיפוש"
+            >
+              <IcoClose s={14} />
+            </button>
+          )}
+        </div>
         <div className="flex gap-2 overflow-x-auto qf-hscroll pb-1.5 flex-1 min-w-0">
           <CategoryChip active={activeCat === "all"} onClick={() => setActiveCat("all")}>
             הכל ({localItems.length})
@@ -494,7 +528,7 @@ export function MenuList({
         ))}
         {filtered.length === 0 && (
           <div className="p-10 text-center text-sm text-qf-mute">
-            אין פריטים בקטגוריה הזו
+            {search.trim() ? `לא נמצאו מוצרים עבור "${search.trim()}"` : "אין פריטים בקטגוריה הזו"}
           </div>
         )}
       </div>
