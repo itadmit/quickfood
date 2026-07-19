@@ -1,0 +1,1 @@
+ALTER TABLE "tenants" ADD COLUMN "tip_enabled" BOOLEAN NOT NULL DEFAULT true;

@@ -330,6 +330,7 @@ export const TenantPatchSchema = z.object({
   cutlery_label: z.string().min(1).max(60).optional(),
   cutlery_price: z.number().int().min(0).max(10000).optional(),
   cutlery_free_above: z.number().int().min(0).max(1000000).nullable().optional(),
+  tip_enabled: z.boolean().optional(),
   // Only setter-shape we accept: `true` = stamp now, anything else ignored.
   // Cleared via the DB if a tenant ever needs to be re-shown.
   onboarding_dismissed: z.literal(true).optional(),

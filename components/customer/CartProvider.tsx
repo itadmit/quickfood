@@ -106,6 +106,7 @@ interface TenantInfo {
   themeId: string;
   businessType?: string;
   scheduledOrdersEnabled?: boolean;
+  tipEnabled?: boolean;
   cutleryEnabled?: boolean;
   cutleryLabel?: string;
   cutleryPrice?: number;

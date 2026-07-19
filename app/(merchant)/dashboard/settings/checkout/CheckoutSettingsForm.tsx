@@ -14,6 +14,7 @@ interface Initial {
   cutleryLabel: string;
   cutleryPrice: number;
   cutleryFreeAbove: number | null;
+  tipEnabled: boolean;
 }
 
 export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
@@ -23,6 +24,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
     initial.scheduledOrdersEnabled,
   );
   const [pickupEnabled, setPickupEnabled] = useState(initial.pickupEnabled);
+  const [tipEnabled, setTipEnabled] = useState(initial.tipEnabled);
   const [cutleryEnabled, setCutleryEnabled] = useState(initial.cutleryEnabled);
   const [cutleryLabel, setCutleryLabel] = useState(initial.cutleryLabel);
   const [cutleryPrice, setCutleryPrice] = useState(initial.cutleryPrice / 100);
@@ -43,6 +45,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
           checkout_show_tracking: showTracking,
           scheduled_orders_enabled: scheduledOrdersEnabled,
           pickup_enabled: pickupEnabled,
+          tip_enabled: tipEnabled,
           cutlery_enabled: cutleryEnabled,
           cutlery_label: cutleryLabel.trim() || "סכו״ם חד״פ",
           cutlery_price: Math.max(0, Math.round(Number(cutleryPrice) * 100) || 0),
@@ -98,6 +101,17 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
         }
         value={pickupEnabled}
         onChange={setPickupEnabled}
+      />
+
+      <Toggle
+        label="הצע טיפ לשליח בקופה"
+        description={
+          tipEnabled
+            ? "בהזמנת משלוח הלקוח רואה שורת טיפ לשליח (ללא / ₪5 / ₪10 / ₪15)."
+            : "שורת הטיפ לשליח מוסתרת מהקופה."
+        }
+        value={tipEnabled}
+        onChange={setTipEnabled}
       />
 
       <div className="pt-3 border-t border-qf-line-soft space-y-4">

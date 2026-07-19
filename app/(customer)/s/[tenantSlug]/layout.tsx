@@ -116,6 +116,7 @@ export default async function CustomerLayout({
           themeId: tenant.themeId,
           businessType: tenant.businessType,
           scheduledOrdersEnabled: tenant.scheduledOrdersEnabled,
+          tipEnabled: tenant.tipEnabled,
           cutleryEnabled: tenant.cutleryEnabled,
           cutleryLabel: tenant.cutleryLabel,
           cutleryPrice: tenant.cutleryPrice,

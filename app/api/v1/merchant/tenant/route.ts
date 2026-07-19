@@ -91,6 +91,7 @@ export const PATCH = handler(async (req: Request) => {
       cutleryLabel: body.cutlery_label,
       cutleryPrice: body.cutlery_price,
       cutleryFreeAbove: body.cutlery_free_above,
+      tipEnabled: body.tip_enabled,
       onboardingDismissedAt: body.onboarding_dismissed ? new Date() : undefined,
       dashboardVersion: body.dashboard_version,
       receiptPrinter: body.receipt_printer,

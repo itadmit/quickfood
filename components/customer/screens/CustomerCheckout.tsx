@@ -899,8 +899,8 @@ export function CustomerCheckout({
           </div>
         </Card>
 
-        {/* 5. Tip (delivery only - pickup has no courier) */}
-        {method === "delivery" && (
+        {/* 5. Tip (delivery only - pickup has no courier; merchant can hide it) */}
+        {method === "delivery" && tenant.tipEnabled !== false && (
           <Card>
             <div className="flex items-baseline justify-between">
               <CardTitle>טיפ לשליח</CardTitle>

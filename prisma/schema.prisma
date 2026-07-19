@@ -305,6 +305,10 @@ model Tenant {
   cutleryPrice      Int     @default(0) @map("cutlery_price")
   cutleryFreeAbove  Int?    @map("cutlery_free_above")
 
+  // When false, the "טיפ לשליח" line is hidden from the delivery checkout.
+  // For businesses that don't want to prompt for courier tips.
+  tipEnabled        Boolean @default(true) @map("tip_enabled")
+
   // Monotonic per-tenant order counter. Used by orders-create to assign
   // sequential numbers (M-1, M-2, M-3...) instead of the legacy random
   // 4-digit suffix, which made the Kanban look like the numbers had no
