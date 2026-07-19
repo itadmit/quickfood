@@ -69,7 +69,9 @@ export function MenuList({
   const router = useRouter();
   const [activeCat, setActiveCat] = useState<string | "all">("all");
   const [search, setSearch] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
   const [localItems, setLocalItems] = useState(items);
+  const searchOpen = searchFocused || search.trim().length > 0;
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Item | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -297,8 +299,15 @@ export function MenuList({
         }
       />
 
-      <div className={cn("space-y-2.5", reorderMode && "opacity-40 pointer-events-none")}>
-        <div className="relative max-w-sm">
+      <div className={cn("flex items-center gap-2", reorderMode && "opacity-40 pointer-events-none")}>
+        {/* Compact inline search that widens on focus / while it has text,
+            so the category chips keep almost the full row when idle. */}
+        <div
+          className={cn(
+            "relative shrink-0 transition-[width] duration-200",
+            searchOpen ? "w-64 sm:w-80" : "w-36 sm:w-44",
+          )}
+        >
           <span className="absolute inset-y-0 right-3 grid place-items-center pointer-events-none">
             <IcoSearch c="#7c8a82" s={16} />
           </span>
@@ -306,9 +315,11 @@ export function MenuList({
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="חיפוש מוצר לפי שם, תיאור או מק״ט"
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+            placeholder={searchOpen ? "חיפוש לפי שם, תיאור או מק״ט" : "חיפוש"}
             aria-label="חיפוש מוצר"
-            className="w-full rounded-xl border border-qf-line-dash focus:border-(--qf-primary) bg-white pr-9 pl-9 py-2 text-sm outline-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
+            className="w-full rounded-full border border-qf-line-dash focus:border-(--qf-primary) bg-white pr-9 pl-8 py-2 text-sm outline-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
           />
           {search && (
             <button
