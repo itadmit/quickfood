@@ -11,6 +11,7 @@ import { sendTenantFcm } from "@/lib/merchant/fcm";
 import { priceGroupOptions } from "@/lib/option-pricing";
 import { ensureLoyaltyMember } from "@/lib/loyalty/membership";
 import { isWithinOpenHours, type BranchHours } from "@/lib/branch-hours";
+import { printOrderTicket } from "@/lib/printing/print-order";
 import { resolveLoyaltyConfig } from "@/lib/loyalty/config";
 import { loadLoyaltyBalance, redeemQuote } from "@/lib/loyalty/points";
 import type { Prisma } from "@prisma/client";
@@ -813,6 +814,13 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       payload: { status: initialStatus, total } as unknown as Prisma.InputJsonValue,
     },
   });
+
+  // Cloud kitchen printer: cash orders print on creation (card orders print
+  // from the payment callback). POS is excluded - it's rung up at a manned
+  // counter with its own print flow.
+  if (input.paymentMethod === "cash" && orderSource !== "pos") {
+    after(() => printOrderTicket(order.id, "cash_created"));
+  }
 
   // Points redemption record - the durable side of the discount already
   // baked into `discount`. Unique on orderId, so a double submit can't

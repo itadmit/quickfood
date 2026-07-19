@@ -389,6 +389,12 @@ model Tenant {
   // fills missing keys as true so older tenants keep the full receipt.
   receiptSettings Json @default("{}") @map("receipt_settings")
 
+  // Cloud kitchen-ticket printer (HSPOS MQTT). JSON: { enabled, device_topic,
+  // print_cash_on_create, print_card_on_paid, copies }. Empty default =
+  // resolvePrinterSettings returns disabled. Broker connection comes from
+  // env (PRINTER_MQTT_URL/USERNAME/PASSWORD) - device_topic is per tenant.
+  printerSettings Json @default("{}") @map("printer_settings")
+
   // Customer loyalty club config. JSON of points rate, tier thresholds,
   // the storefront join-form copy, and the two storefront toggles
   // (show entry popup / show checkout opt-in checkbox). Empty default =

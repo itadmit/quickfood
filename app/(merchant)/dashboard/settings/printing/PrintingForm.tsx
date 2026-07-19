@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { IcoCheck, IcoClose, IcoPrinter } from "@/components/shared/Icons";
 import { SettingsSaveBar } from "@/components/merchant/SettingsSaveBar";
 import type { ReceiptPrinterType, ReceiptSettings } from "@/lib/receipt-print";
+import type { CloudPrinterSettings } from "@/lib/printing/settings";
 
 const RECEIPT_FIELDS: Array<{ key: keyof ReceiptSettings; label: string }> = [
   { key: "showCustomerName", label: "הצג שם לקוח" },
@@ -81,13 +82,16 @@ const APP_LINKS: Partial<Record<ReceiptPrinterType, AppLinks>> = {
 export function PrintingForm({
   initial,
   initialSettings,
+  initialCloudPrinter,
 }: {
   initial: ReceiptPrinterType;
   initialSettings: ReceiptSettings;
+  initialCloudPrinter: CloudPrinterSettings;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<ReceiptPrinterType>(initial);
   const [settings, setSettings] = useState<ReceiptSettings>(initialSettings);
+  const [cloud, setCloud] = useState<CloudPrinterSettings>(initialCloudPrinter);
   const [saving, setSaving] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [toast, setToast] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
@@ -99,10 +103,17 @@ export function PrintingForm({
       const receipt_settings = Object.fromEntries(
         RECEIPT_FIELDS.map((f) => [SETTINGS_API_KEY[f.key], settings[f.key]]),
       );
+      const printer_settings = {
+        enabled: cloud.enabled,
+        device_topic: cloud.deviceTopic.trim(),
+        print_cash_on_create: cloud.printCashOnCreate,
+        print_card_on_paid: cloud.printCardOnPaid,
+        copies: cloud.copies,
+      };
       const res = await fetch("/api/v1/merchant/tenant", {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ receipt_printer: selected, receipt_settings }),
+        body: JSON.stringify({ receipt_printer: selected, receipt_settings, printer_settings }),
       });
       const data = (await res.json()) as { error?: { message?: string } };
       if (res.ok) {
@@ -221,6 +232,8 @@ export function PrintingForm({
             })}
           </div>
         </div>
+
+        <CloudPrinterCard cloud={cloud} setCloud={setCloud} />
       </div>
 
       {showGuide && <GuideModal type={selected} onClose={() => setShowGuide(false)} />}
@@ -318,6 +331,147 @@ function GuideModal({ type, onClose }: { type: ReceiptPrinterType; onClose: () =
           </button>
         </footer>
       </div>
+    </div>
+  );
+}
+
+function CloudPrinterCard({
+  cloud,
+  setCloud,
+}: {
+  cloud: CloudPrinterSettings;
+  setCloud: React.Dispatch<React.SetStateAction<CloudPrinterSettings>>;
+}) {
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  async function sendTest() {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const res = await fetch("/api/v1/merchant/printer/test", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ device_topic: cloud.deviceTopic.trim() || undefined }),
+      });
+      const data = (await res.json()) as { error?: { message?: string } };
+      setTestResult(
+        res.ok
+          ? { ok: true, msg: "נשלח - בדקו שיצאה פתקית מהמדפסת" }
+          : { ok: false, msg: data.error?.message ?? "השליחה נכשלה" },
+      );
+    } catch {
+      setTestResult({ ok: false, msg: "שגיאת רשת" });
+    } finally {
+      setTesting(false);
+      setTimeout(() => setTestResult(null), 6000);
+    }
+  }
+
+  const TRIGGERS: Array<{ key: "printCashOnCreate" | "printCardOnPaid"; label: string }> = [
+    { key: "printCardOnPaid", label: "הדפסה אוטומטית כשהזמנה שולמה באשראי" },
+    { key: "printCashOnCreate", label: "הדפסה אוטומטית כשנכנסת הזמנת מזומן" },
+  ];
+
+  return (
+    <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="font-semibold text-base lg:text-lg">מדפסת ענן - הדפסה אוטומטית</h2>
+          <p className="text-sm text-qf-mute mt-0.5">
+            מדפסת בונים שמחוברת לאינטרנט (HSPOS ודומות) מדפיסה כל הזמנה לבד - בלי מחשב,
+            בלי דשבורד ובלי אפליקציה.
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={cloud.enabled}
+          onClick={() => setCloud((p) => ({ ...p, enabled: !p.enabled }))}
+          className={
+            "w-11 h-6 rounded-full relative transition shrink-0 mt-1 " +
+            (cloud.enabled ? "bg-(--qf-primary)" : "bg-qf-line-dash")
+          }
+          aria-label="הפעלת מדפסת ענן"
+        >
+          <span
+            className={
+              "absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all " +
+              (cloud.enabled ? "right-0.5" : "right-[calc(100%-1.375rem)]")
+            }
+          />
+        </button>
+      </div>
+
+      {cloud.enabled && (
+        <>
+          <div>
+            <label className="block text-sm font-medium mb-1" htmlFor="cloud-printer-topic">
+              מזהה מדפסת
+            </label>
+            <input
+              id="cloud-printer-topic"
+              value={cloud.deviceTopic}
+              onChange={(e) => setCloud((p) => ({ ...p, deviceTopic: e.target.value }))}
+              placeholder="Prn..."
+              dir="ltr"
+              spellCheck={false}
+              className="w-full rounded-xl border border-qf-line-dash focus:border-(--qf-primary) px-3 py-2.5 text-sm outline-none font-mono"
+            />
+            <p className="text-xs text-qf-mute mt-1">
+              מודפס על דף הבדיקה העצמית של המדפסת בשורת SubTopic (מתחיל ב-Prn).
+            </p>
+          </div>
+
+          <div className="divide-y divide-qf-line-soft">
+            {TRIGGERS.map((f) => {
+              const on = cloud[f.key];
+              return (
+                <button
+                  key={f.key}
+                  type="button"
+                  role="switch"
+                  aria-checked={on}
+                  onClick={() => setCloud((p) => ({ ...p, [f.key]: !p[f.key] }))}
+                  className="w-full flex items-center justify-between gap-3 py-3 text-start"
+                >
+                  <span className="text-sm font-medium">{f.label}</span>
+                  <span
+                    className={
+                      "w-5 h-5 rounded-md border-2 shrink-0 grid place-items-center transition " +
+                      (on ? "border-(--qf-primary) bg-(--qf-primary)" : "border-qf-line-dash")
+                    }
+                    aria-hidden
+                  >
+                    {on && <IcoCheck c="#fff" s={12} />}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={sendTest}
+              disabled={testing || !cloud.deviceTopic.trim()}
+              className="px-4 py-2.5 rounded-xl border-2 border-black bg-white font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5 disabled:opacity-50 disabled:shadow-none"
+            >
+              {testing ? "שולח..." : "הדפסת בדיקה"}
+            </button>
+            {testResult && (
+              <span
+                className={
+                  "text-xs font-semibold " +
+                  (testResult.ok ? "text-qf-green-deep" : "text-qf-tomato")
+                }
+              >
+                {testResult.msg}
+              </span>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

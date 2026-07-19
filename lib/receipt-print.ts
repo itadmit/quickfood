@@ -175,7 +175,7 @@ export function formatSelectedOptions(options: unknown, opts?: FormatOptionsOpts
 
 // ─── Shared line model ────────────────────────────────────────
 
-type ReceiptLine =
+export type ReceiptLine =
   | { kind: "title"; text: string }
   | { kind: "row"; right: string; left?: string; size: "normal" | "muted" | "total" }
   | { kind: "text"; text: string; size: "normal" | "muted" }
@@ -183,7 +183,7 @@ type ReceiptLine =
   | { kind: "opt"; text: string }
   | { kind: "rule" };
 
-function buildReceiptLines(
+export function buildReceiptLines(
   order: ReceiptOrder,
   settings: ReceiptSettings = DEFAULT_RECEIPT_SETTINGS,
 ): ReceiptLine[] {

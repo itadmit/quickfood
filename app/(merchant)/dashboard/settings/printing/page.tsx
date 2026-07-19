@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/client";
 import { SettingsHeader } from "../SettingsHeader";
 import { PrintingForm } from "./PrintingForm";
 import { resolveReceiptSettings, type ReceiptPrinterType } from "@/lib/receipt-print";
+import { resolvePrinterSettings } from "@/lib/printing/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export default async function PrintingSettingsPage() {
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
-    select: { receiptPrinter: true, receiptSettings: true },
+    select: { receiptPrinter: true, receiptSettings: true, printerSettings: true },
   });
   if (!tenant) redirect("/dashboard/login");
 
@@ -25,6 +26,7 @@ export default async function PrintingSettingsPage() {
       <PrintingForm
         initial={tenant.receiptPrinter as ReceiptPrinterType}
         initialSettings={resolveReceiptSettings(tenant.receiptSettings)}
+        initialCloudPrinter={resolvePrinterSettings(tenant.printerSettings)}
       />
     </div>
   );

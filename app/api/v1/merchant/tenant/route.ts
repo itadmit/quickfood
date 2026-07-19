@@ -96,6 +96,7 @@ export const PATCH = handler(async (req: Request) => {
       dashboardVersion: body.dashboard_version,
       receiptPrinter: body.receipt_printer,
       receiptSettings: body.receipt_settings,
+      printerSettings: body.printer_settings,
       kioskWelcomeText: body.kiosk_welcome_text,
       kioskIdleSeconds: body.kiosk_idle_seconds,
       kioskCollectPhone: body.kiosk_collect_phone,

@@ -14,9 +14,11 @@
  * is a no-op (so Grow's retries are safe).
  */
 
+import { after } from "next/server";
 import { apiError, apiJson, handler } from "@/lib/api-response";
 import { prisma } from "@/lib/db/client";
 import { advanceStatus, canTransition } from "@/lib/orders";
+import { printOrderTicket } from "@/lib/printing/print-order";
 import {
   checkoutRefToId,
   materializeKioskCheckout,
@@ -134,6 +136,9 @@ export const POST = handler(async (req: Request) => {
     }
 
     if (parsed.success) {
+      // A Grow retry re-enters here with the checkout already completed -
+      // remember that so the kitchen ticket only prints on first processing.
+      const firstProcessing = checkout.status !== "completed";
       const result = await materializeKioskCheckout(checkoutId);
       if (!result.ok) {
         console.error("[payments/callback] materialize failed", result.code);
@@ -166,6 +171,9 @@ export const POST = handler(async (req: Request) => {
         void recordOrderCommission(result.orderId).catch((err) => {
           console.error("[payments/callback] kiosk commission failed", err);
         });
+      }
+      if (firstProcessing) {
+        after(() => printOrderTicket(result.orderId, "card_paid"));
       }
     } else {
       await prisma.kioskPendingCheckout.update({
@@ -302,6 +310,7 @@ export const POST = handler(async (req: Request) => {
           console.error("[payments/callback] commission record failed", err);
         });
       }
+      after(() => printOrderTicket(pending!.orderId, "card_paid"));
     }
   } else {
     if (pending.status === PendingPaymentStatus.pending) {

@@ -347,6 +347,18 @@ export const TenantPatchSchema = z.object({
     })
     .partial()
     .optional(),
+  // Cloud kitchen-ticket printer (HSPOS MQTT). device_topic is the printer's
+  // SubTopic from its self-test page (looks like "Prn2E0D0B...").
+  printer_settings: z
+    .object({
+      enabled: z.boolean(),
+      device_topic: z.string().trim().max(80),
+      print_cash_on_create: z.boolean(),
+      print_card_on_paid: z.boolean(),
+      copies: z.number().int().min(1).max(3),
+    })
+    .partial()
+    .optional(),
   // Kiosk feature settings - only the welcome text + idle reset are
   // merchant-editable. `kiosk_enabled` itself is a superadmin gate.
   kiosk_welcome_text: z.string().max(160).nullable().optional(),
