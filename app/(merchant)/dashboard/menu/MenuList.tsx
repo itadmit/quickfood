@@ -287,7 +287,7 @@ export function MenuList({
       />
 
       <div className={cn("flex items-center gap-2", reorderMode && "opacity-40 pointer-events-none")}>
-        <div className="flex gap-2 overflow-x-auto no-scrollbar flex-1 min-w-0">
+        <div className="flex gap-2 overflow-x-auto qf-hscroll pb-1.5 flex-1 min-w-0">
           <CategoryChip active={activeCat === "all"} onClick={() => setActiveCat("all")}>
             הכל ({localItems.length})
           </CategoryChip>
