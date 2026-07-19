@@ -11,6 +11,8 @@ import { sendTenantFcm } from "@/lib/merchant/fcm";
 import { priceGroupOptions } from "@/lib/option-pricing";
 import { ensureLoyaltyMember } from "@/lib/loyalty/membership";
 import { isWithinOpenHours, type BranchHours } from "@/lib/branch-hours";
+import { resolveLoyaltyConfig } from "@/lib/loyalty/config";
+import { loadLoyaltyBalance, redeemQuote } from "@/lib/loyalty/points";
 import type { Prisma } from "@prisma/client";
 
 /**
@@ -54,6 +56,10 @@ export interface CreateOrderInput {
   /// the resolved Customer into this tenant's club (loyalty_members) and
   /// implies marketing consent. Only acts when true.
   loyaltyConsent?: boolean;
+  /// Logged-in club member asked to pay part of the order with points.
+  /// Server-validated: membership, balance, and the club's redemption
+  /// terms decide the actual discount; silently ignored for guests.
+  usePoints?: boolean;
   method: "delivery" | "pickup";
   addressId?: string | null;
   /** Customer's chosen delivery city - matched against the branch's active
@@ -576,6 +582,36 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     if (discount > subtotal) discount = subtotal;
   }
 
+  // Loyalty points redemption - logged-in club members only. The quote is
+  // taken on what's LEFT after coupons/bundles (no stacking past the
+  // subtotal), and both the cap and the balance are re-validated here so
+  // the client preview can never overdraw.
+  let loyaltyRedeem: { points: number; valueShekels: number } | null = null;
+  if (input.usePoints && input.customerId) {
+    const loyaltyConfig = resolveLoyaltyConfig(tenant.loyaltyConfig, tenant.name);
+    if (loyaltyConfig.redemption.enabled) {
+      const membership = await prisma.loyaltyMember.findUnique({
+        where: {
+          tenantId_customerId: { tenantId: tenant.id, customerId: input.customerId },
+        },
+        select: { id: true },
+      });
+      if (membership) {
+        const { balance } = await loadLoyaltyBalance(
+          tenant.id,
+          input.customerId,
+          loyaltyConfig,
+        );
+        const quote = redeemQuote(balance, Math.max(0, subtotal - discount), loyaltyConfig);
+        if (quote.valueShekels > 0) {
+          loyaltyRedeem = quote;
+          discount += quote.valueShekels;
+          if (discount > subtotal) discount = subtotal;
+        }
+      }
+    }
+  }
+
   const total = subtotal + deliveryFee + serviceFee + cutleryFee + tip - discount;
 
   // Validate address if delivery
@@ -777,6 +813,26 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       payload: { status: initialStatus, total } as unknown as Prisma.InputJsonValue,
     },
   });
+
+  // Points redemption record - the durable side of the discount already
+  // baked into `discount`. Unique on orderId, so a double submit can't
+  // charge the balance twice. Failure here would grant an uncharged
+  // discount - log loudly, never fail the order.
+  if (loyaltyRedeem && input.customerId) {
+    try {
+      await prisma.loyaltyRedemption.create({
+        data: {
+          tenantId: tenant.id,
+          customerId: input.customerId,
+          orderId: order.id,
+          points: loyaltyRedeem.points,
+          valueShekels: loyaltyRedeem.valueShekels,
+        },
+      });
+    } catch (err) {
+      console.error("[loyalty] redemption record FAILED - uncharged discount", order.id, err);
+    }
+  }
 
   // Loyalty club opt-in ticked at checkout - enrol the resolved customer.
   // Best-effort; never blocks the order. Implies marketing consent.

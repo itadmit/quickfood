@@ -7,14 +7,16 @@
 import { prisma } from "@/lib/db/client";
 import {
   resolveLoyaltyConfig,
-  pointsForSpend,
-  tierForPoints,
   LOYALTY_TIERS,
   type LoyaltyTier,
 } from "@/lib/loyalty/config";
+import { loadLoyaltyBalance } from "@/lib/loyalty/points";
 
 export interface CustomerLoyalty {
   points: number;
+  balance: number;
+  balanceValueShekels: number;
+  redemptionEnabled: boolean;
   tier: LoyaltyTier;
   tierName: string;
   nextTierName: string | null;
@@ -32,14 +34,14 @@ export async function getCustomerLoyalty(
   });
   const config = resolveLoyaltyConfig(tenant?.loyaltyConfig);
 
-  const agg = await prisma.order.aggregate({
-    where: { tenantId, customerId, status: { notIn: ["pending", "cancelled", "refunded"] } },
-    _sum: { total: true },
-  });
-
-  const spent = agg._sum.total ?? 0;
-  const points = pointsForSpend(spent, config);
-  const tier = tierForPoints(points, config);
+  const { earned: points, balance, tier } = await loadLoyaltyBalance(
+    tenantId,
+    customerId,
+    config,
+  );
+  const balanceValueShekels = Math.floor(
+    (balance * config.redemption.pointValueAgorot) / 100,
+  );
 
   const idx = LOYALTY_TIERS.indexOf(tier);
   const nextTier =
@@ -56,6 +58,9 @@ export async function getCustomerLoyalty(
 
   return {
     points,
+    balance,
+    balanceValueShekels,
+    redemptionEnabled: config.redemption.enabled,
     tier,
     tierName: config.tiers[tier].name,
     nextTierName: nextTier ? config.tiers[nextTier].name : null,

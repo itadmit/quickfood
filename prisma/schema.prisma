@@ -521,6 +521,7 @@ model Tenant {
   growLeads        GrowLead[]
   posShifts        PosShift[]
   loyaltyMembers   LoyaltyMember[]
+  loyaltyRedemptions LoyaltyRedemption[]
   customerAttributions CustomerAttribution[]
   qrCampaigns      QrCampaign[]
   qrScans          QrScan[]
@@ -1039,6 +1040,7 @@ model Customer {
   apiKeys   ApiKey[]
   favorites Favorite[]
   loyaltyMemberships LoyaltyMember[]
+  loyaltyRedemptions LoyaltyRedemption[]
   attributions CustomerAttribution[]
 
   @@map("customers")
@@ -1168,6 +1170,7 @@ model Order {
   events          OrderEvent[]
   review          Review?
   pendingPayments PendingPayment[]
+  loyaltyRedemption LoyaltyRedemption?
   paymentTxns     PaymentTransaction[]
 
   @@unique([tenantId, number])
@@ -1963,6 +1966,31 @@ model LoyaltyMember {
   @@unique([tenantId, customerId])
   @@index([tenantId, joinedAt(sort: Desc)])
   @@map("loyalty_members")
+}
+
+// One row per points redemption at checkout. EARNED points stay derived
+// from order history (progressive per-tier fold - see lib/loyalty/points);
+// redemptions are real money and must be durable, so they live here.
+// balance = earned − Σ(non-revoked redemptions). Cancelling/refunding the
+// order sets revokedAt, which returns the points.
+model LoyaltyRedemption {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customerId String   @map("customer_id") @db.Uuid
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orderId    String   @unique @map("order_id") @db.Uuid
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  points       Int
+  // Whole shekels (money convention), the discount the points bought.
+  valueShekels Int @map("value_shekels")
+
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([tenantId, customerId])
+  @@map("loyalty_redemptions")
 }
 
 enum CampaignKind {

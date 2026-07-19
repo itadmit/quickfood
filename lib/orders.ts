@@ -259,6 +259,18 @@ export async function advanceStatus(
       );
     }
 
+    // A cancelled or refunded order returns any points it redeemed - the
+    // balance is earned − non-revoked redemptions, so flipping revokedAt
+    // restores the points instantly everywhere.
+    if (to === "cancelled" || to === "refunded") {
+      await prisma.loyaltyRedemption
+        .updateMany({
+          where: { orderId, revokedAt: null },
+          data: { revokedAt: now },
+        })
+        .catch((err) => console.warn("[loyalty] redemption revoke failed", err));
+    }
+
     if (to === "cancelled") {
       await dispatchWebhook({
         tenantId: order.tenantId,

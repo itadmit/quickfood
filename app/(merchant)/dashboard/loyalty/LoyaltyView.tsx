@@ -117,6 +117,18 @@ export function LoyaltyView({
   ) {
     setConfig((c) => ({ ...c, joinForm: { ...c.joinForm, [key]: value } }));
   }
+  function patchEarn(tier: LoyaltyTier, value: number) {
+    setConfig((c) => ({
+      ...c,
+      earnPerShekel: { ...c.earnPerShekel, [tier]: Math.max(0, value) },
+    }));
+  }
+  function patchRedemption<K extends keyof LoyaltyConfig["redemption"]>(
+    key: K,
+    value: LoyaltyConfig["redemption"][K],
+  ) {
+    setConfig((c) => ({ ...c, redemption: { ...c.redemption, [key]: value } }));
+  }
   function patchTier(tier: LoyaltyTier, field: "name" | "minPoints", value: string | number) {
     setConfig((c) => ({
       ...c,
@@ -223,25 +235,16 @@ export function LoyaltyView({
           </label>
         </div>
 
-        <div className="mt-5 grid sm:grid-cols-2 gap-4">
-          <Field label="נקודות לכל ₪1" hint="כמה נקודות הלקוח צובר על כל שקל שהוא מוציא">
-            <input
-              type="number"
-              min={0}
-              step={0.1}
-              value={config.pointsPerShekel}
-              onChange={(e) => patch("pointsPerShekel", Math.max(0, Number(e.target.value)))}
-              className={inputCls}
-            />
-          </Field>
-        </div>
-
-        <h3 className="text-sm font-black mt-6 mb-2">מסלולים</h3>
+        <h3 className="text-sm font-black mt-6 mb-2">מסלולים וצבירה</h3>
+        <p className="text-xs text-qf-mute mb-2 leading-relaxed">
+          לכל מסלול קובעים כמה נקודות שווה כל ₪1 שהלקוח מוציא. ככל שהמסלול
+          גבוה יותר - הצבירה מהירה יותר.
+        </p>
         <div className="space-y-2">
           {LOYALTY_TIERS.map((t) => (
             <div
               key={t}
-              className="grid grid-cols-[auto_1fr_1fr] items-center gap-3 rounded-xl border-2 border-black/10 px-3 py-2.5"
+              className="grid grid-cols-[auto_1fr_1fr_1fr] items-center gap-3 rounded-xl border-2 border-black/10 px-3 py-2.5"
             >
               <TierBadge tier={t} config={config} />
               <input
@@ -261,8 +264,78 @@ export function LoyaltyView({
                 />
                 <span className="text-xs text-qf-mute whitespace-nowrap shrink-0">נק׳ ומעלה</span>
               </div>
+              <div className="flex items-center gap-2 rounded-xl border-2 border-black/15 focus-within:border-black bg-white px-3 py-2.5 transition">
+                <input
+                  type="number"
+                  min={0}
+                  step={0.1}
+                  value={config.earnPerShekel[t]}
+                  onChange={(e) => patchEarn(t, Number(e.target.value))}
+                  className="flex-1 min-w-0 bg-transparent outline-none text-sm"
+                  aria-label={`נקודות לכל שקל במסלול ${t}`}
+                />
+                <span className="text-xs text-qf-mute whitespace-nowrap shrink-0">נק׳ לכל ₪1</span>
+              </div>
             </div>
           ))}
+        </div>
+
+        {/* Points redemption */}
+        <h3 className="text-sm font-black mt-6 mb-2">מימוש נקודות</h3>
+        <div className="rounded-xl border-2 border-black/10 p-4 space-y-4">
+          <label className="flex items-center justify-between gap-3 cursor-pointer">
+            <span>
+              <span className="block text-sm font-bold">אפשר תשלום בנקודות</span>
+              <span className="block text-xs text-qf-mute mt-0.5">
+                לקוח מחובר שחבר במועדון יוכל להמיר נקודות להנחה בצ׳קאאוט
+              </span>
+            </span>
+            <Toggle
+              checked={config.redemption.enabled}
+              onChange={(v) => patchRedemption("enabled", v)}
+              aria-label="אפשר תשלום בנקודות"
+            />
+          </label>
+          <div className={config.redemption.enabled ? "grid sm:grid-cols-3 gap-4" : "grid sm:grid-cols-3 gap-4 opacity-50 pointer-events-none"}>
+            <Field
+              label="שווי נקודה (אגורות)"
+              hint={`100 נקודות = ₪${config.redemption.pointValueAgorot}`}
+            >
+              <input
+                type="number"
+                min={1}
+                value={config.redemption.pointValueAgorot}
+                onChange={(e) => patchRedemption("pointValueAgorot", Math.max(1, Math.round(Number(e.target.value))))}
+                className={inputCls}
+              />
+            </Field>
+            <Field label="עד % מההזמנה" hint="כמה מההזמנה מותר לכסות בנקודות">
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={config.redemption.maxPercentOfOrder}
+                onChange={(e) => patchRedemption("maxPercentOfOrder", Math.min(100, Math.max(1, Math.round(Number(e.target.value)))))}
+                className={inputCls}
+              />
+            </Field>
+            <Field label="מינימום נקודות למימוש" hint="מתחת ליתרה הזו האפשרות לא מוצגת">
+              <input
+                type="number"
+                min={0}
+                value={config.redemption.minPoints}
+                onChange={(e) => patchRedemption("minPoints", Math.max(0, Math.round(Number(e.target.value))))}
+                className={inputCls}
+              />
+            </Field>
+          </div>
+          <p className="text-xs text-qf-mute leading-relaxed">
+            החזר בפועל לפי ההגדרות:{" "}
+            {(["silver", "gold", "platinum"] as const)
+              .map((t) => `${config.tiers[t].name} ${(config.earnPerShekel[t] * config.redemption.pointValueAgorot).toFixed(1)}%`)
+              .join(" · ")}{" "}
+            (נקודות לכל ₪1 × שווי נקודה)
+          </p>
         </div>
 
         {/* Join form builder */}

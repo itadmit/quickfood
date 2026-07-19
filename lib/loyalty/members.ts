@@ -1,11 +1,10 @@
 import { prisma } from "@/lib/db/client";
 import {
   resolveLoyaltyConfig,
-  pointsForSpend,
-  tierForPoints,
   type LoyaltyConfig,
   type LoyaltyTier,
 } from "@/lib/loyalty/config";
+import { foldEarnedPoints, EARNING_STATUS_FILTER } from "@/lib/loyalty/points";
 
 export interface LoyaltyMemberRow {
   customerId: string;
@@ -15,6 +14,7 @@ export interface LoyaltyMemberRow {
   email: string | null;
   spent: number;
   points: number;
+  balance: number;
   tier: LoyaltyTier;
   orderCount: number;
   lastOrderAt: string | null;
@@ -52,38 +52,49 @@ export async function loadLoyaltyData(
   });
   const config = resolveLoyaltyConfig(tenant?.loyaltyConfig, tenantName);
 
-  const [grouped, members] = await Promise.all([
-    prisma.order.groupBy({
-      by: ["customerId"],
+  const [orderRows, members, redemptions] = await Promise.all([
+    // Per-order rows (not an aggregate) because earned points fold
+    // chronologically at the tier held per order - see lib/loyalty/points.
+    prisma.order.findMany({
       where: {
         tenantId,
         customerId: { not: null },
         // Only accepted orders earn points (excludes pending awaiting approval),
         // matching the dashboard revenue filter and the customer-facing snapshot.
-        status: { notIn: ["pending", "cancelled", "refunded"] },
+        status: EARNING_STATUS_FILTER,
       },
-      _sum: { total: true },
-      _count: { _all: true },
-      _max: { createdAt: true },
+      orderBy: { createdAt: "asc" },
+      select: { customerId: true, total: true, createdAt: true },
     }),
     prisma.loyaltyMember.findMany({
       where: { tenantId },
       orderBy: { joinedAt: "desc" },
     }),
+    prisma.loyaltyRedemption.groupBy({
+      by: ["customerId"],
+      where: { tenantId, revokedAt: null },
+      _sum: { points: true },
+    }),
   ]);
 
   const spendByCustomer = new Map<
     string,
-    { spent: number; orders: number; lastOrderAt: Date | null }
+    { spent: number; orders: number; lastOrderAt: Date | null; totals: Array<{ total: number }> }
   >();
-  for (const g of grouped) {
-    if (!g.customerId) continue;
-    spendByCustomer.set(g.customerId, {
-      spent: g._sum.total ?? 0,
-      orders: g._count._all,
-      lastOrderAt: g._max.createdAt ?? null,
-    });
+  for (const o of orderRows) {
+    if (!o.customerId) continue;
+    const entry =
+      spendByCustomer.get(o.customerId) ??
+      { spent: 0, orders: 0, lastOrderAt: null as Date | null, totals: [] };
+    entry.spent += o.total;
+    entry.orders += 1;
+    entry.lastOrderAt = o.createdAt;
+    entry.totals.push({ total: o.total });
+    spendByCustomer.set(o.customerId, entry);
   }
+  const redeemedByCustomer = new Map(
+    redemptions.map((r) => [r.customerId, r._sum.points ?? 0]),
+  );
 
   const memberByCustomer = new Map(members.map((m) => [m.customerId, m]));
 
@@ -111,8 +122,8 @@ export async function loadLoyaltyData(
     const spend = spendByCustomer.get(c.id);
     const member = memberByCustomer.get(c.id);
     const spent = spend?.spent ?? 0;
-    const points = pointsForSpend(spent, config);
-    const tier = tierForPoints(points, config);
+    const { earned: points, tier } = foldEarnedPoints(spend?.totals ?? [], config);
+    const balance = Math.max(0, points - (redeemedByCustomer.get(c.id) ?? 0));
     byTier[tier] += 1;
     return {
       customerId: c.id,
@@ -122,6 +133,7 @@ export async function loadLoyaltyData(
       email: c.email,
       spent,
       points,
+      balance,
       tier,
       orderCount: spend?.orders ?? 0,
       lastOrderAt: spend?.lastOrderAt ? spend.lastOrderAt.toISOString() : null,

@@ -18,6 +18,7 @@ import { takeCheckoutPrefill } from "@/lib/checkout-prefill";
 import { readDeliveryChoice, writeDeliveryChoice } from "@/lib/delivery-city-storage";
 import { getTodayScheduleWindowMin } from "@/lib/branch-hours";
 import { CitySelect } from "@/components/customer/CitySelect";
+import { Toggle } from "@/components/shared/Toggle";
 import { GrowPaymentSdk, renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
 import { BusyAlertModal } from "@/components/customer/BranchStatusModal";
 import { AttributionPrompt } from "@/components/customer/AttributionPrompt";
@@ -108,6 +109,49 @@ export function CustomerCheckout({
   >(null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [couponBusy, setCouponBusy] = useState(false);
+
+  // Loyalty points redemption. Balance + terms come from the server for the
+  // logged-in member; the preview here mirrors lib/loyalty/points.redeemQuote
+  // and the server re-validates on submit, so the shown discount is exactly
+  // what the order will charge.
+  const [loyalty, setLoyalty] = useState<{
+    balance: number;
+    pointValueAgorot: number;
+    maxPercentOfOrder: number;
+    minPoints: number;
+  } | null>(null);
+  const [usePoints, setUsePoints] = useState(false);
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetch(`/api/v1/customer/loyalty/points?tenant=${encodeURIComponent(tenantSlug)}`, {
+      signal: ctrl.signal,
+      credentials: "include",
+    })
+      .then((r) => r.json())
+      .then(
+        (d: {
+          member?: boolean;
+          balance?: number;
+          redemption?: {
+            enabled: boolean;
+            point_value_agorot: number;
+            max_percent_of_order: number;
+            min_points: number;
+          };
+        }) => {
+          if (d.member && d.redemption?.enabled && (d.balance ?? 0) >= d.redemption.min_points) {
+            setLoyalty({
+              balance: d.balance ?? 0,
+              pointValueAgorot: d.redemption.point_value_agorot,
+              maxPercentOfOrder: d.redemption.max_percent_of_order,
+              minPoints: d.redemption.min_points,
+            });
+          }
+        },
+      )
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [tenantSlug]);
   // True once the POST /orders call has succeeded - even though we clear()
   // the cart immediately afterward, this stays true until the browser
   // finishes navigating to /orders/[id], so we can show a "processing"
@@ -197,9 +241,24 @@ export function CustomerCheckout({
     tenant.cutleryEnabled && cutleryCount > 0 && !cutleryFreeUnlocked
       ? cutleryUnitPrice * cutleryCount
       : 0;
+  // Mirror of the server quote: points cover the remainder after coupon +
+  // bundle savings, capped by the club's percent-of-order and the balance.
+  const pointsBase = Math.max(0, subtotal - couponDiscount - bundleDiscount);
+  const pointsQuote = (() => {
+    if (!loyalty || !usePoints) return { points: 0, valueShekels: 0 };
+    const balanceValue = Math.floor((loyalty.balance * loyalty.pointValueAgorot) / 100);
+    const cap = Math.floor((pointsBase * loyalty.maxPercentOfOrder) / 100);
+    const valueShekels = Math.max(0, Math.min(balanceValue, cap));
+    if (valueShekels === 0) return { points: 0, valueShekels: 0 };
+    return {
+      points: Math.ceil((valueShekels * 100) / loyalty.pointValueAgorot),
+      valueShekels,
+    };
+  })();
+  const pointsDiscount = pointsQuote.valueShekels;
   const total = Math.max(
     0,
-    subtotal + deliveryFee + serviceFee + cutleryFee + tip - couponDiscount - bundleDiscount,
+    subtotal + deliveryFee + serviceFee + cutleryFee + tip - couponDiscount - bundleDiscount - pointsDiscount,
   );
 
   /**
@@ -443,6 +502,7 @@ export function CustomerCheckout({
           customer_email: email.trim() || undefined,
           terms_accepted: termsAccepted,
           loyalty_consent: loyaltyCheckout.show ? loyaltyConsent : undefined,
+          use_points: usePoints && pointsDiscount > 0 ? true : undefined,
           attribution_source:
             (typeof window !== "undefined" &&
               window.sessionStorage.getItem("qf:src-choice")) ||
@@ -1078,6 +1138,33 @@ export function CustomerCheckout({
           )}
         </Card>
 
+        {/* Loyalty points - shown only to a logged-in member of a club with
+            redemption on and enough balance. */}
+        {loyalty && (
+          <Card>
+            <label className="flex items-center justify-between gap-3 cursor-pointer">
+              <div className="min-w-0">
+                <CardTitle>נקודות מועדון</CardTitle>
+                <div className="text-xs text-qf-mute mt-1">
+                  יש לך {loyalty.balance.toLocaleString("he-IL")} נקודות בשווי{" "}
+                  {formatPrice(Math.floor((loyalty.balance * loyalty.pointValueAgorot) / 100))}
+                </div>
+                {usePoints && pointsDiscount > 0 && (
+                  <div className="text-xs font-semibold text-qf-green-deep mt-1 tnum">
+                    ינוצלו {pointsQuote.points.toLocaleString("he-IL")} נקודות = −
+                    {formatPrice(pointsDiscount)} בהזמנה זו
+                  </div>
+                )}
+              </div>
+              <Toggle
+                checked={usePoints}
+                onChange={setUsePoints}
+                aria-label="מימוש נקודות מועדון"
+              />
+            </label>
+          </Card>
+        )}
+
         {/* 6. Notes */}
         <Card>
           <CardTitle>הערה למסעדה</CardTitle>
@@ -1169,6 +1256,13 @@ export function CustomerCheckout({
                 tone="discount"
               />
             )}
+            {pointsDiscount > 0 && (
+              <SumRow
+                label={`נקודות מועדון (${pointsQuote.points.toLocaleString("he-IL")})`}
+                value={`−${formatPrice(pointsDiscount)}`}
+                tone="discount"
+              />
+            )}
             <div className="pt-2 border-t border-qf-line-soft flex items-center justify-between">
               <div className="font-semibold">סה״כ לתשלום</div>
               <div className="font-bold tnum text-lg">{formatPrice(total)}</div>
@@ -1245,6 +1339,13 @@ export function CustomerCheckout({
               <SumRow
                 label={`קופון ${couponApplied.code}`}
                 value={`−${formatPrice(couponApplied.discount)}`}
+                tone="discount"
+              />
+            )}
+            {pointsDiscount > 0 && (
+              <SumRow
+                label={`נקודות מועדון (${pointsQuote.points.toLocaleString("he-IL")})`}
+                value={`−${formatPrice(pointsDiscount)}`}
                 tone="discount"
               />
             )}

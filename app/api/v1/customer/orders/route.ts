@@ -37,6 +37,7 @@ const CreateOrderSchema = z.object({
   // Customer ticked the loyalty-club opt-in checkbox at checkout. Enrols
   // them into the tenant's club and implies marketing consent.
   loyalty_consent: z.boolean().optional(),
+  use_points: z.boolean().optional(),
   coupon_code: z.string().min(1).max(40).optional(),
   applied_bundle_ids: z.array(z.string().uuid()).max(10).optional(),
   // Growth attribution: the "how did you hear about us" answer (self-reported)
@@ -133,6 +134,7 @@ export const POST = handler(async (req: Request) => {
       termsAccepted: body.terms_accepted,
       marketingConsent: body.marketing_consent,
       loyaltyConsent: body.loyalty_consent,
+      usePoints: body.use_points,
       method: body.method,
       addressId: body.address_id ?? null,
       deliveryCity: body.delivery_city ?? null,

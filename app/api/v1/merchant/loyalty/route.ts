@@ -16,6 +16,17 @@ const TierSchema = z.object({
 
 const LoyaltyConfigSchema = z.object({
   pointsPerShekel: z.number().min(0).max(100),
+  earnPerShekel: z.object({
+    silver: z.number().min(0).max(100),
+    gold: z.number().min(0).max(100),
+    platinum: z.number().min(0).max(100),
+  }),
+  redemption: z.object({
+    enabled: z.boolean(),
+    pointValueAgorot: z.number().int().min(1).max(10_000),
+    maxPercentOfOrder: z.number().int().min(1).max(100),
+    minPoints: z.number().int().min(0).max(1_000_000),
+  }),
   tiers: z.object({
     silver: TierSchema,
     gold: TierSchema,

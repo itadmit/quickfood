@@ -20,6 +20,9 @@ interface Customer {
 
 interface Loyalty {
   points: number;
+  balance: number;
+  balanceValueShekels: number;
+  redemptionEnabled: boolean;
   tier: string;
   tierName: string;
   nextTierName: string | null;
@@ -125,8 +128,15 @@ export function ProfileLoggedIn({
           </div>
           <div className="shrink-0 flex items-center gap-2">
             <div className="text-end leading-tight">
-              <div className="text-[10px] text-qf-mute">נקודות שצברת</div>
-              <div className="text-sm font-black">{loyalty.points}</div>
+              <div className="text-[10px] text-qf-mute">
+                {loyalty.redemptionEnabled ? "יתרת נקודות" : "נקודות שצברת"}
+              </div>
+              <div className="text-sm font-black">
+                {loyalty.redemptionEnabled ? loyalty.balance : loyalty.points}
+                {loyalty.redemptionEnabled && loyalty.balanceValueShekels > 0 && (
+                  <span className="text-[10px] font-bold text-qf-mute"> · ₪{loyalty.balanceValueShekels}</span>
+                )}
+              </div>
             </div>
             <div className="w-16">
               <div className="h-1.5 rounded-full bg-black/10 overflow-hidden">

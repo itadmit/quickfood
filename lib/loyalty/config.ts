@@ -18,8 +18,25 @@ export interface LoyaltyJoinForm {
   consentText: string;
 }
 
+export interface LoyaltyRedemptionConfig {
+  // Master switch: "אפשר תשלום בנקודות" in the club settings.
+  enabled: boolean;
+  // Worth of one point at checkout, in agorot (5 = ₪0.05). Config-only
+  // number - order money stays whole shekels.
+  pointValueAgorot: number;
+  // Points may cover at most this share of the order's items subtotal.
+  maxPercentOfOrder: number;
+  // Below this balance the redemption toggle doesn't show.
+  minPoints: number;
+}
+
 export interface LoyaltyConfig {
+  // Legacy single earn rate - kept as the fallback each tier defaults to,
+  // so configs saved before per-tier rates keep their exact behaviour.
   pointsPerShekel: number;
+  // Per-tier earn rate: points per ₪1 while the member holds that tier.
+  earnPerShekel: Record<LoyaltyTier, number>;
+  redemption: LoyaltyRedemptionConfig;
   tiers: Record<LoyaltyTier, LoyaltyTierConfig>;
   showJoinPopup: boolean;
   // true → the entry popup shows only once per visitor (until they dismiss or
@@ -69,6 +86,8 @@ export function defaultCheckoutConsentText(tenantName: string): string {
 export function defaultLoyaltyConfig(tenantName = "העסק"): LoyaltyConfig {
   return {
     pointsPerShekel: 1,
+    earnPerShekel: { silver: 1, gold: 1, platinum: 1 },
+    redemption: { enabled: false, pointValueAgorot: 5, maxPercentOfOrder: 50, minPoints: 20 },
     tiers: {
       silver: { name: "סילבר", minPoints: 0 },
       gold: { name: "גולד", minPoints: 500 },
@@ -126,8 +145,28 @@ export function resolveLoyaltyConfig(raw: unknown, tenantName = "העסק"): Loy
   const r = raw as Record<string, unknown>;
   const tiers = (r.tiers ?? {}) as Record<string, unknown>;
   const form = (r.joinForm ?? {}) as Record<string, unknown>;
+  const earn = (r.earnPerShekel ?? {}) as Record<string, unknown>;
+  const redemption = (r.redemption ?? {}) as Record<string, unknown>;
+  const legacyRate = Math.max(0, asNumber(r.pointsPerShekel, d.pointsPerShekel));
   return {
-    pointsPerShekel: Math.max(0, asNumber(r.pointsPerShekel, d.pointsPerShekel)),
+    pointsPerShekel: legacyRate,
+    earnPerShekel: {
+      silver: Math.max(0, asNumber(earn.silver, legacyRate)),
+      gold: Math.max(0, asNumber(earn.gold, legacyRate)),
+      platinum: Math.max(0, asNumber(earn.platinum, legacyRate)),
+    },
+    redemption: {
+      enabled: asBool(redemption.enabled, d.redemption.enabled),
+      pointValueAgorot: Math.max(
+        1,
+        Math.round(asNumber(redemption.pointValueAgorot, d.redemption.pointValueAgorot)),
+      ),
+      maxPercentOfOrder: Math.min(
+        100,
+        Math.max(1, Math.round(asNumber(redemption.maxPercentOfOrder, d.redemption.maxPercentOfOrder))),
+      ),
+      minPoints: Math.max(0, Math.round(asNumber(redemption.minPoints, d.redemption.minPoints))),
+    },
     tiers: {
       silver: resolveTier(tiers.silver, d.tiers.silver),
       gold: resolveTier(tiers.gold, d.tiers.gold),
@@ -159,6 +198,11 @@ export function resolveLoyaltyConfig(raw: unknown, tenantName = "העסק"): Loy
 /** Points earned for a given spend, in whole shekels. */
 export function pointsForSpend(spendShekels: number, config: LoyaltyConfig): number {
   return Math.max(0, Math.round(spendShekels * config.pointsPerShekel));
+}
+
+/** Per-tier earn rate (points per ₪1). */
+export function earnRateForTier(config: LoyaltyConfig, tier: LoyaltyTier): number {
+  return config.earnPerShekel[tier] ?? config.pointsPerShekel;
 }
 
 /** Highest tier whose threshold the points clear. */
