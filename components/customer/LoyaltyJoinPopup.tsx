@@ -34,6 +34,34 @@ function joinedKey(slug: string) {
   return `qf:loyalty-joined:${slug}`;
 }
 
+// The birthday is typed as DD/MM/YYYY (auto-slashed) and converted to the
+// API's YYYY-MM-DD on submit. A free-typed field instead of a native date
+// input: iOS Safari breaks on type-swapping, and the native display order
+// follows the browser locale rather than the DD/MM/YYYY Israelis expect.
+function formatBirthdayInput(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)]
+    .filter(Boolean)
+    .join("/");
+}
+
+function birthdayToIso(display: string): string | null {
+  const m = display.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  const [, dd, mm, yyyy] = m;
+  const date = new Date(Date.UTC(+yyyy, +mm - 1, +dd));
+  if (
+    +yyyy < 1900 ||
+    date.getUTCFullYear() !== +yyyy ||
+    date.getUTCMonth() !== +mm - 1 ||
+    date.getUTCDate() !== +dd ||
+    date.getTime() > Date.now()
+  ) {
+    return null;
+  }
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export function LoyaltyJoinPopup({ tenantSlug }: Props) {
   const [form, setForm] = useState<JoinForm | null>(null);
   const [showOnce, setShowOnce] = useState(true);
@@ -100,6 +128,11 @@ export function LoyaltyJoinPopup({ tenantSlug }: Props) {
       setError("יש לאשר את התקנון ומדיניות הפרטיות");
       return;
     }
+    const birthdayIso = birthday.trim() ? birthdayToIso(birthday.trim()) : undefined;
+    if (birthday.trim() && !birthdayIso) {
+      setError("תאריך הלידה לא תקין - יש להזין יום/חודש/שנה");
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch("/api/v1/customer/loyalty/join", {
@@ -112,7 +145,7 @@ export function LoyaltyJoinPopup({ tenantSlug }: Props) {
           first_name: firstName.trim() || undefined,
           last_name: lastName.trim() || undefined,
           email: email.trim() || undefined,
-          birthday: birthday.trim() || undefined,
+          birthday: birthdayIso || undefined,
           marketing_consent: true,
           attribution_source:
             (typeof window !== "undefined" && window.sessionStorage.getItem("qf:src-choice")) ||
@@ -238,21 +271,14 @@ export function LoyaltyJoinPopup({ tenantSlug }: Props) {
                   />
                 )}
                 {form.collect_birthday && (
-                  <div>
-                    <label className="block text-xs font-semibold text-qf-ink2 mb-1">
-                      תאריך לידה
-                    </label>
-                    {/* Always a real date input - swapping type on focus keeps
-                        iOS Safari from ever opening the date picker. */}
-                    <input
-                      type="date"
-                      value={birthday}
-                      onChange={(e) => setBirthday(e.target.value)}
-                      max={new Date().toISOString().slice(0, 10)}
-                      dir="ltr"
-                      className="w-full min-h-[42px] rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none bg-white appearance-none"
-                    />
-                  </div>
+                  <input
+                    value={birthday}
+                    onChange={(e) => setBirthday(formatBirthdayInput(e.target.value))}
+                    inputMode="numeric"
+                    placeholder="תאריך לידה (DD/MM/YYYY)"
+                    dir="ltr"
+                    className="w-full rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none text-right placeholder:text-right"
+                  />
                 )}
               </div>
 
