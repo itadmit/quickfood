@@ -871,6 +871,72 @@ export function merchantNewOrderEmail({
   });
 }
 
+/**
+ * Short status-update email for the ready / on-the-way / delivered events.
+ * (order confirmation and cancellation have their own richer templates.)
+ * Copy mirrors the storefront tracking headline the customer sees.
+ */
+export function orderStatusEmail({
+  event,
+  customerName,
+  businessName,
+  orderNumber,
+  method,
+  trackingUrl,
+  whatsappLink,
+}: {
+  event: "ready" | "on_the_way" | "delivered";
+  customerName: string;
+  businessName: string;
+  orderNumber: string;
+  method: "delivery" | "pickup";
+  trackingUrl: string;
+  whatsappLink?: string | null;
+}): { html: string; text: string; subject: string } {
+  const isPickup = method === "pickup";
+  const b = `<strong>${escape(businessName)}</strong>`;
+
+  const copy: Record<
+    "ready" | "on_the_way" | "delivered",
+    { subject: string; heading: string; body: string; footer: string }
+  > = {
+    ready: {
+      subject: `ההזמנה שלך מ-${businessName} מוכנה · ${orderNumber}`,
+      heading: isPickup ? "ההזמנה מוכנה לאיסוף" : "ההזמנה מוכנה",
+      body: isPickup
+        ? `${escape(customerName)}, ההזמנה שלך מ-${b} מוכנה וממתינה לך לאיסוף בסניף.`
+        : `${escape(customerName)}, ההזמנה שלך מ-${b} מוכנה וממתינה לשליח.`,
+      footer: "מחכים לך!",
+    },
+    on_the_way: {
+      subject: `ההזמנה שלך מ-${businessName} בדרך אליך · ${orderNumber}`,
+      heading: "ההזמנה בדרך אליך",
+      body: `${escape(customerName)}, השליח יצא עם ההזמנה שלך מ-${b}. עוד רגע אצלך.`,
+      footer: "בתאבון!",
+    },
+    delivered: {
+      subject: `ההזמנה שלך מ-${businessName} ${isPickup ? "נאספה" : "נמסרה"} · ${orderNumber}`,
+      heading: isPickup ? "ההזמנה נאספה" : "ההזמנה נמסרה",
+      body: `${escape(customerName)}, ההזמנה שלך מ-${b} ${isPickup ? "נאספה" : "נמסרה"}. תודה שהזמנת!`,
+      footer: "בתאבון!",
+    },
+  };
+
+  const c = copy[event];
+  const rendered = renderRtlEmail({
+    brand: businessName,
+    subject: c.subject,
+    preheader: c.heading,
+    heading: c.heading,
+    raw: true,
+    paragraphs: [c.body],
+    button: { href: trackingUrl, label: "מעקב אחר ההזמנה" },
+    whatsappButton: whatsappLink ? { href: whatsappLink, label: "צ'אט בוואטסאפ" } : undefined,
+    footerNote: c.footer,
+  });
+  return { ...rendered, subject: c.subject };
+}
+
 export function orderCancelledEmail({
   customerName,
   businessName,

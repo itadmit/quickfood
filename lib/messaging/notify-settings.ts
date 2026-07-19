@@ -53,23 +53,36 @@ function asText(v: unknown): string | null {
 }
 
 /**
- * Default per-event config derived from the legacy `notifyChannel`. The old
- * behaviour: a single channel fired on every event, and `email`/`off` meant
- * "no extra send" (the order email is handled separately). So a paid channel
- * → all events on with that channel; `email`/`off` → all events off.
+ * Default per-event config for a tenant that never opened the messaging screen.
+ *
+ * If the tenant had explicitly picked a PAID legacy `notifyChannel`, preserve
+ * the old behaviour (that channel fires on every event). Otherwise apply the
+ * free-email default (product decision 2026-07-19): notify the customer by
+ * email on order-confirmed, ready, and on-the-way. `delivered` stays off by
+ * default (the review reminder already lands after delivery). Email is free
+ * via Resend, so this ships to every active store with no per-message cost.
  */
 function defaultFromLegacy(legacy: NotifyChannel): OrderNotifySettings {
   const isPaid = legacy === "sms" || legacy === "whatsapp" || legacy === "whatsapp_managed";
-  const base: OrderEventConfig = {
-    enabled: isPaid,
-    channel: isPaid ? legacy : "email",
+  if (isPaid) {
+    const base: OrderEventConfig = { enabled: true, channel: legacy, text: null };
+    return {
+      confirmed: { ...base },
+      ready: { ...base },
+      on_the_way: { ...base },
+      delivered: { ...base },
+    };
+  }
+  const email = (enabled: boolean): OrderEventConfig => ({
+    enabled,
+    channel: "email",
     text: null,
-  };
+  });
   return {
-    confirmed: { ...base },
-    ready: { ...base },
-    on_the_way: { ...base },
-    delivered: { ...base },
+    confirmed: email(true),
+    ready: email(true),
+    on_the_way: email(true),
+    delivered: email(false),
   };
 }
 

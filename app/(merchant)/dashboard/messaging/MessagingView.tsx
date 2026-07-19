@@ -1012,18 +1012,19 @@ function NotificationsTab({
   availability: Availability;
 }) {
   const router = useRouter();
-  const PAID: NotifyChannel[] = ["sms", "whatsapp", "whatsapp_managed"];
+  // Email is the free default channel; paid rails are opt-in per event.
+  const ORDER_EVENT_CHANNELS: NotifyChannel[] = ["email", "sms", "whatsapp", "whatsapp_managed"];
   const REVIEW_CHANNELS: NotifyChannel[] = ["off", "email", "sms", "whatsapp", "whatsapp_managed"];
 
-  // Coerce any legacy email/off channel on an order event to a paid default so
-  // the picker (which only shows paid rails) always has a valid selection.
+  // Coerce an `off` channel (not offered for order events - use the toggle
+  // instead) to the free email default so the picker always has a valid pick.
   const initEvents = useMemo(() => {
     const out = {} as OrderNotifySettings;
     for (const ev of ORDER_NOTIFY_EVENTS) {
       const e = orderEvents[ev];
       out[ev] = {
         enabled: e.enabled,
-        channel: PAID.includes(e.channel) ? e.channel : "sms",
+        channel: ORDER_EVENT_CHANNELS.includes(e.channel) ? e.channel : "email",
         text: e.text ?? null,
       };
     }
@@ -1114,9 +1115,23 @@ function NotificationsTab({
           <div>
             <h2 className="text-base lg:text-lg font-semibold">עדכוני סטטוס הזמנה ללקוח</h2>
             <p className="text-xs text-qf-mute">
-              מה לשלוח ללקוח בכל שלב, ובאיזה ערוץ. אישור הזמנה וחשבונית נשלחים תמיד גם במייל; ההתראות כאן נשלחות בנוסף.
+              מה לשלוח ללקוח בכל שלב, ובאיזה ערוץ. מייל הוא ברירת המחדל וללא עלות; SMS ו-וואטסאפ נגבים מהיתרה.
             </p>
           </div>
+          <label className="flex items-center justify-between gap-3 pb-1">
+            <span className="text-sm font-medium">סמן הכל</span>
+            <Toggle
+              checked={ORDER_NOTIFY_EVENTS.every((ev) => events[ev].enabled)}
+              onChange={(b) =>
+                setEvents((x) => {
+                  const next = { ...x } as OrderNotifySettings;
+                  for (const ev of ORDER_NOTIFY_EVENTS) next[ev] = { ...next[ev], enabled: b };
+                  return next;
+                })
+              }
+              aria-label="סמן הכל"
+            />
+          </label>
           <div className="space-y-3">
             {ORDER_NOTIFY_EVENTS.map((ev) => (
               <div key={ev} className="rounded-xl border border-qf-line-dash p-3 space-y-2.5">
@@ -1132,16 +1147,22 @@ function NotificationsTab({
                   <>
                     <ChannelPicker
                       value={events[ev].channel}
-                      options={PAID}
+                      options={ORDER_EVENT_CHANNELS}
                       availability={availability}
                       onChange={(c) => setEvent(ev, { channel: c })}
                     />
-                    <EventTextEditor
-                      event={ev}
-                      channel={events[ev].channel}
-                      value={events[ev].text ?? ""}
-                      onChange={(t) => setEvent(ev, { text: t })}
-                    />
+                    {events[ev].channel === "email" ? (
+                      <p className="text-xs text-qf-mute">
+                        נשלח מייל עדכון קצר עם קישור למעקב. ללא עלות.
+                      </p>
+                    ) : (
+                      <EventTextEditor
+                        event={ev}
+                        channel={events[ev].channel}
+                        value={events[ev].text ?? ""}
+                        onChange={(t) => setEvent(ev, { text: t })}
+                      />
+                    )}
                   </>
                 )}
               </div>

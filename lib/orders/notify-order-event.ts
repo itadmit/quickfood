@@ -15,6 +15,9 @@
 import { prisma } from "@/lib/db/client";
 import { sendSms } from "@/lib/sms/send";
 import { sendWhatsApp } from "@/lib/whatsapp/send";
+import { sendEmail } from "@/lib/email/send";
+import { orderStatusEmail } from "@/lib/email/templates";
+import { appBaseUrl } from "@/lib/orders/notify-customer";
 import {
   resolveOrderNotifySettings,
   type NotifyChannel,
@@ -117,12 +120,15 @@ export async function notifyOrderCustomer(
       total: true,
       customerPhoneSnap: true,
       customerFirstNameSnap: true,
+      customerEmailSnap: true,
+      customer: { select: { email: true } },
       courier: { select: { name: true, phone: true } },
       branch: { select: { address: true, lat: true, lng: true } },
       items: { select: { nameSnapshot: true, quantity: true } },
       tenant: {
         select: {
           id: true,
+          slug: true,
           name: true,
           notifyChannel: true,
           notifySettings: true,
@@ -131,7 +137,7 @@ export async function notifyOrderCustomer(
       },
     },
   });
-  if (!order?.customerPhoneSnap) return;
+  if (!order) return;
 
   const settings = resolveOrderNotifySettings(
     order.tenant.notifySettings,
@@ -139,6 +145,38 @@ export async function notifyOrderCustomer(
   );
   const cfg = settings[event];
   if (!cfg.enabled) return;
+
+  // Email is the free channel. `confirmed` already gets the always-on
+  // confirmation email (sendOrderConfirmedEmail), so skip it here to avoid a
+  // duplicate; only ready / on_the_way / delivered are sent from here.
+  if (cfg.channel === "email") {
+    if (event === "confirmed") return;
+    const to =
+      order.customerEmailSnap?.trim() || order.customer?.email?.trim() || null;
+    if (!to) return;
+    const { html, text, subject } = orderStatusEmail({
+      event: event as "ready" | "on_the_way" | "delivered",
+      customerName: order.customerFirstNameSnap?.trim() || "לקוח",
+      businessName: order.tenant.name,
+      orderNumber: order.number,
+      method: order.method,
+      trackingUrl: `${appBaseUrl()}/s/${order.tenant.slug}/orders/${order.id}`,
+    });
+    await sendEmail({
+      tenantId: order.tenant.id,
+      to,
+      subject,
+      body: text,
+      html,
+      fromName: order.tenant.name,
+      kind: `order_${event}`,
+      refKind: "order",
+      refId: orderId,
+    });
+    return;
+  }
+
+  if (!order.customerPhoneSnap) return;
 
   const body = bodyFor(
     event,
