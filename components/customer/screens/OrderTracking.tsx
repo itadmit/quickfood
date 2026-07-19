@@ -99,6 +99,34 @@ function stageOf(status: string, method: "delivery" | "pickup"): number {
   return 0;
 }
 
+/**
+ * Header sentence per order status - replaces the old fixed "25-35 minutes"
+ * ETA with a plain-language status line (product decision 2026-07-19).
+ */
+function statusHeadline(status: string, method: "delivery" | "pickup"): string {
+  switch (status) {
+    case "pending":
+      return "קיבלנו את ההזמנה";
+    case "confirmed":
+      return "מישהו במסעדה ראה ואישר את ההזמנה";
+    case "preparing":
+    case "in_oven":
+      return "אנחנו מכינים את ההזמנה ברגע זה";
+    case "ready":
+      return method === "pickup"
+        ? "ההזמנה מוכנה וממתינה לאיסוף"
+        : "ההזמנה מוכנה וממתינה לשליח";
+    case "out_for_delivery":
+      return "ההזמנה בדרך אליך";
+    case "delivered":
+      return method === "pickup"
+        ? "ההזמנה נאספה, בתאבון!"
+        : "ההזמנה נמסרה לך, בתאבון!";
+    default:
+      return "קיבלנו את ההזמנה";
+  }
+}
+
 interface ExistingReview {
   rating: number;
   text: string | null;
@@ -143,10 +171,8 @@ export function OrderTracking({
   const stage = stageOf(order.status, order.method);
   const isDelivered = order.status === "delivered";
   const isCancelled = order.status === "cancelled" || order.status === "refunded";
-  const isPickup = order.method === "pickup";
   // "Just placed" - the customer just landed on this page. Render the
-  // celebratory green-check confirmation instead of the ETA so they
-  // know the order went through.
+  // celebratory green-check confirmation so they know the order went through.
   const isJustPlaced = order.status === "pending";
 
   // Same-device review unlock: if the server said "no review form for you"
@@ -270,29 +296,15 @@ export function OrderTracking({
         tenantCoverImage={tenantCoverImage}
         orderNumber={order.number}
         headline={
-          isCancelled
-            ? "ההזמנה בוטלה"
-            : isJustPlaced
-              ? "תודה על ההזמנה!"
-              : isDelivered
-                ? isPickup
-                  ? "נאסף בהצלחה"
-                  : "נמסר בהצלחה"
-                : "25-35"
+          isCancelled ? "ההזמנה בוטלה" : statusHeadline(order.status, order.method)
         }
         subhead={
           isCancelled
             ? `ההזמנה בוטלה. לא בוצע חיוב נוסף. לכל שאלה אפשר לפנות ל${tenantName}.`
-            : isJustPlaced
-              ? `ההזמנה אצל ${tenantName} - תקבל עדכון ברגע שהיא תיכנס להכנה`
-              : isDelivered
-                ? null
-                : isPickup
-                  ? "דקות עד שההזמנה מוכנה"
-                  : "דקות עד להגעה משוערת"
+            : null
         }
         showCheck={!isCancelled && (isJustPlaced || isDelivered)}
-        bigNumber={!isCancelled && !isJustPlaced && !isDelivered}
+        bigNumber={false}
       />
 
       {/* Status card */}
