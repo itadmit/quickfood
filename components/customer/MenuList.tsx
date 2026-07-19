@@ -271,7 +271,7 @@ export function MenuList({
       )}
 
       <div className="sticky top-15 z-20 bg-qf-bg/95 backdrop-blur border-b border-qf-line lg:top-16 lg:mt-0">
-        <div className="flex gap-1.5 overflow-x-auto no-scrollbar px-4 py-2.5">
+        <div className="flex gap-1.5 overflow-x-auto qf-hscroll px-4 py-2.5">
           {visibleCategories.map((c) => {
             const active = activeCat === c.id;
             const style = resolveCategoryStyle(c.icon, c.color, themeDefaultColor);

@@ -399,11 +399,11 @@ label[for][class*="shadow-[0_"] {
     background: transparent;
   }
   .qf-hscroll::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--qf-primary, rgba(0, 0, 0, 0.3));
     border-radius: 99px;
   }
   .qf-hscroll::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--qf-deep, rgba(0, 0, 0, 0.5));
   }
   .qf-hscroll::-webkit-scrollbar-track {
     background: transparent;
@@ -411,7 +411,7 @@ label[for][class*="shadow-[0_"] {
   @supports not selector(::-webkit-scrollbar) {
     .qf-hscroll {
       scrollbar-width: thin;
-      scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+      scrollbar-color: var(--qf-primary, rgba(0, 0, 0, 0.3)) transparent;
     }
   }
 }
