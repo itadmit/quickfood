@@ -238,18 +238,21 @@ export function LoyaltyJoinPopup({ tenantSlug }: Props) {
                   />
                 )}
                 {form.collect_birthday && (
-                  <input
-                    value={birthday}
-                    onChange={(e) => setBirthday(e.target.value)}
-                    onFocus={(e) => {
-                      e.target.type = "date";
-                    }}
-                    onBlur={(e) => {
-                      if (!birthday) e.target.type = "text";
-                    }}
-                    placeholder="תאריך לידה"
-                    className="w-full rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none text-right"
-                  />
+                  <div>
+                    <label className="block text-xs font-semibold text-qf-ink2 mb-1">
+                      תאריך לידה
+                    </label>
+                    {/* Always a real date input - swapping type on focus keeps
+                        iOS Safari from ever opening the date picker. */}
+                    <input
+                      type="date"
+                      value={birthday}
+                      onChange={(e) => setBirthday(e.target.value)}
+                      max={new Date().toISOString().slice(0, 10)}
+                      dir="ltr"
+                      className="w-full min-h-[42px] rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none bg-white appearance-none"
+                    />
+                  </div>
                 )}
               </div>
 
