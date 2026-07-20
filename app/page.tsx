@@ -672,7 +672,7 @@ function Hero() {
         <div className={styles.heroStats}>
           <div className={styles.heroStat}>
             <div className={styles.heroStatN}>₪299</div>
-            <div className={styles.heroStatL}>לחודש. מחיר קבוע וברור.</div>
+            <div className={styles.heroStatL}>לחודש + מע״מ. מחיר קבוע וברור.</div>
           </div>
           <div className={styles.heroStat}>
             <div className={styles.heroStatN}>0.5%</div>
