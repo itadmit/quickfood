@@ -23,12 +23,19 @@ interface ComposerGroup {
   includedFree?: number;
   options: ComposerOption[];
 }
+interface ComposerSize {
+  id: string;
+  name: string;
+  priceDelta: number;
+  isDefault: boolean;
+}
 interface ComposerItem {
   id: string;
   name: string;
   basePrice: number;
   artType: string | null;
   images?: string[];
+  sizes?: ComposerSize[];
   optionGroups: ComposerGroup[];
 }
 interface ComposerChoice {
@@ -58,7 +65,14 @@ interface UnitSel {
   slotId: string;
   label: string;
   itemId: string | null;
+  sizeId: string | null;
   optionIds: Set<string>;
+}
+
+/** The item's default size id (or its first size), null when it has no sizes. */
+function defaultSizeId(item: ComposerItem | undefined): string | null {
+  if (!item?.sizes?.length) return null;
+  return (item.sizes.find((s) => s.isDefault) ?? item.sizes[0]).id;
 }
 
 /** Effective charge per picked option, mirroring the server's allocation in
@@ -106,10 +120,12 @@ export function DealComposer({
         const expanded: UnitSel[] = [];
         for (const slot of d.deal.slots as ComposerDeal["slots"]) {
           for (let i = 0; i < slot.quantity; i++) {
+            const preItemId = slot.itemIds.length === 1 ? slot.itemIds[0] : null;
             expanded.push({
               slotId: slot.id,
               label: slot.quantity > 1 ? `${slot.name} ${i + 1}` : slot.name,
-              itemId: slot.itemIds.length === 1 ? slot.itemIds[0] : null,
+              itemId: preItemId,
+              sizeId: preItemId ? defaultSizeId(d.items[preItemId]) : null,
               optionIds: new Set(),
             });
           }
@@ -145,9 +161,15 @@ export function DealComposer({
   function pickItem(unitIdx: number, itemId: string) {
     setUnits((prev) =>
       prev.map((u, i) =>
-        i === unitIdx ? { ...u, itemId, optionIds: new Set<string>() } : u,
+        i === unitIdx
+          ? { ...u, itemId, sizeId: defaultSizeId(items[itemId]), optionIds: new Set<string>() }
+          : u,
       ),
     );
+  }
+
+  function pickSize(unitIdx: number, sizeId: string) {
+    setUnits((prev) => prev.map((u, i) => (i === unitIdx ? { ...u, sizeId } : u)));
   }
 
   function toggleOption(unitIdx: number, group: ComposerGroup, optionId: string) {
@@ -202,6 +224,17 @@ export function DealComposer({
     return sum;
   }, [chargeByPick]);
 
+  // Size upgrades are charged on top of the fixed price (never gifted).
+  const sizeExtras = useMemo(() => {
+    let sum = 0;
+    for (const u of units) {
+      if (!u.itemId || !u.sizeId) continue;
+      const size = items[u.itemId]?.sizes?.find((s) => s.id === u.sizeId);
+      if (size) sum += size.priceDelta;
+    }
+    return sum;
+  }, [units, items]);
+
   const incomplete = useMemo(() => {
     for (const u of units) {
       if (!u.itemId) return true;
@@ -216,7 +249,7 @@ export function DealComposer({
     return units.length === 0;
   }, [units, items]);
 
-  const total = (deal?.fixedPrice ?? 0) + extras;
+  const total = (deal?.fixedPrice ?? 0) + extras + sizeExtras;
 
   function addToCart() {
     if (!deal || incomplete || added) return;
@@ -230,6 +263,16 @@ export function DealComposer({
         groupName: u.label,
         priceDelta: 0,
       });
+      const size = u.sizeId ? item.sizes?.find((s) => s.id === u.sizeId) : undefined;
+      if (size && (item.sizes?.length ?? 0) > 1) {
+        displayOptions.push({
+          groupId: `${u.slotId}:size`,
+          optionId: size.id,
+          name: size.name,
+          groupName: `${u.label} · גודל`,
+          priceDelta: size.priceDelta,
+        });
+      }
       for (const g of item.optionGroups) {
         for (const o of g.options) {
           if (!u.optionIds.has(o.id)) continue;
@@ -261,6 +304,7 @@ export function DealComposer({
         units: units.map((u) => ({
           slotId: u.slotId,
           itemId: u.itemId!,
+          sizeId: u.sizeId,
           optionIds: Array.from(u.optionIds),
         })),
       },
@@ -379,6 +423,38 @@ export function DealComposer({
                     })}
                   </div>
 
+                  {chosen && (chosen.sizes?.length ?? 0) > 1 && (
+                    <div className="rounded-xl bg-qf-line-soft/40 border border-qf-line p-3 space-y-1.5">
+                      <div className="text-xs font-semibold text-qf-ink2">גודל</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {chosen.sizes!.map((s) => {
+                          const active = u.sizeId === s.id;
+                          return (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onClick={() => pickSize(ui, s.id)}
+                              className={cn(
+                                "px-2.5 py-1 rounded-lg text-xs border transition",
+                                active
+                                  ? "bg-(--qf-primary) text-white border-(--qf-primary)"
+                                  : "bg-white text-qf-ink2 border-qf-line hover:border-qf-mute",
+                              )}
+                              aria-pressed={active}
+                            >
+                              {s.name}
+                              {s.priceDelta > 0 && (
+                                <span className={cn("ms-1 tnum", active ? "text-white/80" : "text-qf-mute")}>
+                                  +₪{s.priceDelta}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   {chosen &&
                     chosen.optionGroups.map((g) => {
                       const picked = g.options.filter((o) => u.optionIds.has(o.id)).length;
@@ -459,9 +535,9 @@ export function DealComposer({
           <div className="fixed bottom-0 inset-x-0 sm:absolute bg-white border-t border-qf-line p-4 flex items-center gap-3">
             <div className="flex-1">
               <div className="font-bold text-lg tnum">{formatPrice(total)}</div>
-              {extras > 0 && (
+              {extras + sizeExtras > 0 && (
                 <div className="text-[11px] text-qf-mute tnum">
-                  {formatPrice(deal.fixedPrice)} + {formatPrice(extras)} תוספות
+                  {formatPrice(deal.fixedPrice)} + {formatPrice(extras + sizeExtras)} תוספות
                 </div>
               )}
             </div>

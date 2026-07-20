@@ -73,6 +73,7 @@ const CreateOrderSchema = z.object({
             z.object({
               slot_id: z.string().uuid(),
               item_id: z.string().uuid(),
+              size_id: z.string().uuid().nullable().optional(),
               option_ids: z.array(z.string().uuid()).default([]),
             }),
           )
@@ -163,6 +164,7 @@ export const POST = handler(async (req: Request) => {
         units: d.units.map((u) => ({
           slot_id: u.slot_id,
           item_id: u.item_id,
+          size_id: u.size_id ?? null,
           option_ids: u.option_ids,
         })),
       })),

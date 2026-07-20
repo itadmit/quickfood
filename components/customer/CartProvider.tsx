@@ -37,7 +37,7 @@ export interface CartLine {
    *  payload instead of `lines`. Deal lines are not editable in place. */
   deal?: {
     dealId: string;
-    units: Array<{ slotId: string; itemId: string; optionIds: string[] }>;
+    units: Array<{ slotId: string; itemId: string; sizeId: string | null; optionIds: string[] }>;
   };
 }
 

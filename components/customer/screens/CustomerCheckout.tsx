@@ -552,6 +552,7 @@ export function CustomerCheckout({
               units: l.deal!.units.map((u) => ({
                 slot_id: u.slotId,
                 item_id: u.itemId,
+                size_id: u.sizeId ?? null,
                 option_ids: u.optionIds,
               })),
             })),

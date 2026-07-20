@@ -115,6 +115,10 @@ export interface CreateOrderInput {
 export interface DealUnitInput {
   slot_id: string;
   item_id: string;
+  /** Chosen size for this unit's item. null/undefined = the item's default
+   *  size. The deal's fixed price covers the default size; a larger size
+   *  adds its priceDelta on top. */
+  size_id?: string | null;
   option_ids?: string[];
 }
 
@@ -381,8 +385,9 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         throw new CartValidationError("invalid_quantity", dl.deal_id);
       }
 
-      const selectedOptions: Array<{ group_id: string; group_name: string; option_id: string; name: string; price_delta: number }> = [];
+      const selectedOptions: Array<{ group_id: string; group_name: string; option_id: string; name: string; price_delta: number; kind?: "size" }> = [];
       let extrasDelta = 0;
+      let sizeDelta = 0;
 
       for (const slot of deal.slots) {
         const slotUnits = dl.units.filter((u) => u.slot_id === slot.id);
@@ -407,6 +412,27 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
             name: item.name,
             price_delta: 0,
           });
+          // Size: the fixed price covers the default size; a larger size adds
+          // its priceDelta. Sizes are NOT eligible for the free-extras gift.
+          if (item.sizes.length > 0) {
+            const chosen = unit.size_id
+              ? item.sizes.find((s) => s.id === unit.size_id)
+              : (item.sizes.find((s) => s.isDefault) ?? item.sizes[0]);
+            if (unit.size_id && !chosen) {
+              throw new CartValidationError("size_invalid", unit.item_id);
+            }
+            if (chosen) {
+              sizeDelta += chosen.priceDelta;
+              selectedOptions.push({
+                group_id: `${slot.id}:size`,
+                group_name: `${unitLabel} · גודל`,
+                option_id: chosen.id,
+                name: chosen.name,
+                price_delta: chosen.priceDelta,
+                kind: "size",
+              });
+            }
+          }
           const priced = priceOptionsForItem(item, unit.option_ids ?? [], {});
           for (const o of priced.selectedOptions) {
             selectedOptions.push({
@@ -424,9 +450,10 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       // Deal-gifted extras: the N cheapest PAID picks across all composed
       // units cost 0. Applied after per-group pricing so it stacks on top
       // of whatever includedFree/bundle rules the item groups already ran.
+      // Size upgrades are excluded - they're a base choice, not a bonus topping.
       if (deal.freeExtras > 0) {
         const gifted = selectedOptions
-          .filter((o) => o.price_delta > 0)
+          .filter((o) => o.price_delta > 0 && o.kind !== "size")
           .sort((a, b) => a.price_delta - b.price_delta)
           .slice(0, deal.freeExtras);
         for (const o of gifted) {
@@ -435,7 +462,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         }
       }
 
-      const unitPrice = Math.round(deal.fixedPrice + extrasDelta);
+      const unitPrice = Math.round(deal.fixedPrice + extrasDelta + sizeDelta);
       const totalPrice = unitPrice * dl.quantity;
       subtotal += totalPrice;
 
