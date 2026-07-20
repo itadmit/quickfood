@@ -52,11 +52,11 @@ export const POST = handler(async (req: Request) => {
   });
   if (already) return apiJson({ ok: true, skipped: "already_sent" });
 
-  const [menuItemCount, growConfig] = await Promise.all([
+  const [menuItemCount, activeCardConfig] = await Promise.all([
     prisma.menuItem.count({ where: { tenantId: tenant.id } }),
-    prisma.paymentProviderConfig.findUnique({
-      where: { tenantId_provider: { tenantId: tenant.id, provider: PaymentProvider.grow } },
-      select: { isActive: true },
+    prisma.paymentProviderConfig.findFirst({
+      where: { tenantId: tenant.id, isActive: true, provider: { not: PaymentProvider.cash } },
+      select: { id: true },
     }),
   ]);
 
@@ -66,7 +66,7 @@ export const POST = handler(async (req: Request) => {
     businessName: tenant.name,
     dashboardUrl: `${appUrl}/dashboard`,
     hasMenuItems: menuItemCount > 0,
-    hasPayments: growConfig?.isActive ?? false,
+    hasPayments: !!activeCardConfig,
     growSignupUrl: `${appUrl}${GROW_SIGNUP_URL}`,
   });
 

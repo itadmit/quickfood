@@ -112,7 +112,11 @@ interface SetupState {
   initialMinOrder: number;
   initialDeliveryFee: number;
   initialAcceptsCash: boolean;
+  /** Grow specifically is active (drives the wizard's Grow quick-toggle). */
   initialGrowActive: boolean;
+  /** Any card provider (Grow OR CardCom) is active (drives the "payment
+   *  configured" nudge + whether the wizard skips the Grow payment step). */
+  initialCardProviderActive: boolean;
   initialGrowUserId: string;
   initialBranchHours: Record<string, DayHours>;
 }
@@ -203,7 +207,7 @@ export function DashboardViewV2({
       {/* ─── GROW CLEARING NUDGE ────────────────────────────────── */}
       {/* Menu already started but no active clearing - one-time popup
           pushing the Grow quick-signup form. */}
-      {!hasNoMenuItems && setupState && !setupState.initialGrowActive && (
+      {!hasNoMenuItems && setupState && !setupState.initialCardProviderActive && (
         <GrowNudgeModal tenantId={setupState.tenantId} />
       )}
 
@@ -698,16 +702,23 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
   async function savePaymentsAndHours() {
     setBusy(true); setErr(null);
     try {
-      const tasks: Promise<Response>[] = [
-        fetch("/api/v1/merchant/payments", {
-          method: "PATCH",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            accepts_cash: acceptsCash,
-            grow: { is_active: growActive, test_mode: false, user_id: growUserId || undefined, max_installments: 1 },
+      const tasks: Promise<Response>[] = [];
+      // This is the Grow quick-toggle. Skip the payments PATCH entirely when a
+      // card provider is already configured (e.g. CardCom set up in Settings) -
+      // otherwise it would clobber that config or trip the "enable at least one
+      // method" / "User ID required" validation.
+      if (!state.initialCardProviderActive) {
+        tasks.push(
+          fetch("/api/v1/merchant/payments", {
+            method: "PATCH",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              accepts_cash: acceptsCash,
+              grow: { is_active: growActive, test_mode: false, user_id: growUserId || undefined, max_installments: 1 },
+            }),
           }),
-        }),
-      ];
+        );
+      }
       if (state.branchId) {
         tasks.push(fetch(`/api/v1/merchant/branches/${state.branchId}`, {
           method: "PATCH",

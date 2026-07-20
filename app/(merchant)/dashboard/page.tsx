@@ -69,8 +69,12 @@ export default async function DashboardPage({
   ]);
 
   // "Payment configured" = any active card provider (Grow OR CardCom). The
-  // Grow User ID prefill stays Grow-specific (empty for a CardCom-only tenant).
+  // Grow-specific active flag + User ID prefill drive the wizard's Grow
+  // quick-toggle (empty/false for a CardCom-only tenant).
   const cardProviderActive = paymentConfigs.some((c) => c.isActive);
+  const growActive = paymentConfigs.some(
+    (c) => c.provider === PaymentProvider.grow && c.isActive,
+  );
   const growUserId = (
     (paymentConfigs.find((c) => c.provider === PaymentProvider.grow)?.credentials ??
       {}) as { userId?: string }
@@ -128,7 +132,8 @@ export default async function DashboardPage({
             initialMinOrder: primaryBranch?.minOrder ?? 0,
             initialDeliveryFee: primaryBranch?.deliveryFee ?? 0,
             initialAcceptsCash: tenant?.acceptsCash ?? true,
-            initialGrowActive: cardProviderActive,
+            initialGrowActive: growActive,
+            initialCardProviderActive: cardProviderActive,
             initialGrowUserId: growUserId,
             initialBranchHours: (primaryBranch?.hours ?? {}) as Record<string, { open: string; close: string; active: boolean }>,
           }}
