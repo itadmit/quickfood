@@ -34,7 +34,7 @@ export default async function DashboardPage({
   const range: Quick = allowed.includes(raw as Quick) ? (raw as Quick) : "today";
   const apiRange: Range = range;
 
-  const [sum, hr, items, recentOrders, tenant, merchant, menuItemCount, categoryCount, primaryBranch, paymentConfig] = await Promise.all([
+  const [sum, hr, items, recentOrders, tenant, merchant, menuItemCount, categoryCount, primaryBranch, paymentConfigs] = await Promise.all([
     summary(session.tenantId, apiRange),
     hourly(session.tenantId, apiRange),
     topItems(session.tenantId, apiRange, 5),
@@ -62,11 +62,19 @@ export default async function DashboardPage({
       select: { id: true, name: true, address: true, phone: true, minOrder: true, deliveryFee: true, hours: true },
       orderBy: { createdAt: "asc" },
     }),
-    prisma.paymentProviderConfig.findUnique({
-      where: { tenantId_provider: { tenantId: session.tenantId, provider: PaymentProvider.grow } },
-      select: { isActive: true, credentials: true },
+    prisma.paymentProviderConfig.findMany({
+      where: { tenantId: session.tenantId, provider: { not: PaymentProvider.cash } },
+      select: { provider: true, isActive: true, credentials: true },
     }),
   ]);
+
+  // "Payment configured" = any active card provider (Grow OR CardCom). The
+  // Grow User ID prefill stays Grow-specific (empty for a CardCom-only tenant).
+  const cardProviderActive = paymentConfigs.some((c) => c.isActive);
+  const growUserId = (
+    (paymentConfigs.find((c) => c.provider === PaymentProvider.grow)?.credentials ??
+      {}) as { userId?: string }
+  ).userId ?? "";
 
   const recent = recentOrders.map((o) => ({
     id: o.id,
@@ -120,8 +128,8 @@ export default async function DashboardPage({
             initialMinOrder: primaryBranch?.minOrder ?? 0,
             initialDeliveryFee: primaryBranch?.deliveryFee ?? 0,
             initialAcceptsCash: tenant?.acceptsCash ?? true,
-            initialGrowActive: paymentConfig?.isActive ?? false,
-            initialGrowUserId: ((paymentConfig?.credentials ?? {}) as { userId?: string }).userId ?? "",
+            initialGrowActive: cardProviderActive,
+            initialGrowUserId: growUserId,
             initialBranchHours: (primaryBranch?.hours ?? {}) as Record<string, { open: string; close: string; active: boolean }>,
           }}
         />
