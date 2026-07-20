@@ -38,19 +38,21 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ slug: st
   }
 
   // Payment methods this tenant accepts. Cash is just a tenant-level boolean;
-  // anything else (card/bit/apple_pay/google_pay) is gated by an active Grow
-  // PaymentProviderConfig. The customer picks from this list at checkout.
-  const growConfig = await prisma.paymentProviderConfig.findUnique({
+  // anything else (card/bit/apple_pay/google_pay) is gated by an active card
+  // provider - Grow OR CardCom. The customer picks from this list at checkout.
+  const cardConfig = await prisma.paymentProviderConfig.findFirst({
     where: {
-      tenantId_provider: { tenantId: tenant.id, provider: PaymentProvider.grow },
+      tenantId: tenant.id,
+      isActive: true,
+      provider: { not: PaymentProvider.cash },
     },
-    select: { isActive: true },
+    select: { id: true },
   });
-  const growActive = growConfig?.isActive === true;
+  const cardActive = !!cardConfig;
 
   const paymentMethods: string[] = [];
   if (tenant.acceptsCash) paymentMethods.push("cash");
-  if (growActive) {
+  if (cardActive) {
     paymentMethods.push("card", "bit", "apple_pay", "google_pay");
   }
   // If the merchant picked a default at /settings/payments, lift it to
