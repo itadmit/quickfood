@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
 import { IcoCheck } from "@/components/shared/Icons";
 import { resolveCheckoutRedirect } from "../resolve";
+import { CheckoutRedirect } from "../CheckoutRedirect";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +10,7 @@ export default async function CheckoutThankYouPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const target = await resolveCheckoutRedirect(await searchParams, "success");
-  if (target.path) redirect(target.path);
+  if (target.path) return <CheckoutRedirect path={target.path} />;
 
   return (
     <main dir="rtl" className="min-h-screen bg-[#FFFBEC] grid place-items-center p-6">

@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
 import { resolveCheckoutRedirect } from "../resolve";
+import { CheckoutRedirect } from "../CheckoutRedirect";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +9,7 @@ export default async function CheckoutCancelPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const target = await resolveCheckoutRedirect(await searchParams, "cancel");
-  if (target.path) redirect(target.path);
+  if (target.path) return <CheckoutRedirect path={target.path} />;
 
   return (
     <main dir="rtl" className="min-h-screen bg-[#FFFBEC] grid place-items-center p-6">

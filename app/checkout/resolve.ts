@@ -25,7 +25,12 @@ export async function resolveCheckoutRedirect(
   searchParams: Search,
   kind: "success" | "cancel" | "failed",
 ): Promise<CheckoutRedirectTarget> {
-  const ref = first(searchParams.ref) || first(searchParams.cField1);
+  // ref/cField1 = Grow's echo of our orderReference; ReturnValue = CardCom's.
+  const ref =
+    first(searchParams.ref) ||
+    first(searchParams.cField1) ||
+    first(searchParams.ReturnValue) ||
+    first(searchParams.returnValue);
   const tenantId = first(searchParams.cField2);
 
   if (ref.startsWith(KIOSK_CHECKOUT_REF_PREFIX)) {
