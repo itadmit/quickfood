@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatPrice } from "@/lib/format";
 import { GrowPaymentSdk, renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
+import { HostedPaymentFrame } from "@/components/customer/HostedPaymentFrame";
 import {
   buildKioskT,
   type KioskOverrides,
@@ -23,9 +24,15 @@ interface PayPageProps {
     invoiceUrl: string | null;
     customerEmailMasked: string | null;
   };
-  growEnabled: boolean;
-  growTestMode: boolean;
+  /** Tenant has an active card provider (grow OR cardcom). */
+  cardEnabled: boolean;
+  provider: "grow" | "cardcom" | null;
+  testMode: boolean;
+  displayMode: "iframe" | "redirect" | null;
+  /** Grow SDK wallet auth code (grow only). */
   initialAuthCode: string | null;
+  /** CardCom hosted-page URL (cardcom only). */
+  initialPaymentUrl: string | null;
   stringOverrides: KioskOverrides;
   justPaid: boolean;
 }
@@ -34,9 +41,12 @@ export function PayPage({
   tenantSlug,
   tenantName,
   order,
-  growEnabled,
-  growTestMode,
+  cardEnabled,
+  provider,
+  testMode,
+  displayMode,
   initialAuthCode,
+  initialPaymentUrl,
   stringOverrides,
   justPaid,
 }: PayPageProps) {
@@ -53,11 +63,12 @@ export function PayPage({
     order.customerEmailMasked,
   );
   const [authCode, setAuthCode] = useState<string | null>(initialAuthCode);
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(initialPaymentUrl);
   const [sdkReady, setSdkReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const initiatedRef = useRef(!!initialAuthCode);
+  const initiatedRef = useRef(!!initialAuthCode || !!initialPaymentUrl);
 
   async function startPayment() {
     if (initiatedRef.current) return;
@@ -70,7 +81,7 @@ export function PayPage({
         { method: "POST", credentials: "include" },
       );
       const data = await res.json();
-      if (!res.ok || !data?.sdk_auth_code) {
+      if (!res.ok || (!data?.sdk_auth_code && !data?.payment_url)) {
         setError(
           typeof data?.error?.message === "string"
             ? data.error.message
@@ -79,7 +90,8 @@ export function PayPage({
         initiatedRef.current = false;
         return;
       }
-      setAuthCode(data.sdk_auth_code);
+      if (data.sdk_auth_code) setAuthCode(data.sdk_auth_code);
+      else if (data.payment_url) setPaymentUrl(data.payment_url);
     } catch {
       setError(t("payPage.network"));
       initiatedRef.current = false;
@@ -89,17 +101,17 @@ export function PayPage({
   }
 
   useEffect(() => {
-    if (!alreadyPaid && growEnabled && !authCode) {
+    if (!alreadyPaid && cardEnabled && !authCode && !paymentUrl) {
       void startPayment();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (authCode && sdkReady) {
+    if (provider === "grow" && authCode && sdkReady) {
       renderGrowWallet(authCode);
     }
-  }, [authCode, sdkReady]);
+  }, [provider, authCode, sdkReady]);
 
   useEffect(() => {
     // Stop polling once we have everything we'd display: the payment is
@@ -261,7 +273,7 @@ export function PayPage({
         </div>
       </div>
 
-      {!growEnabled ? (
+      {!cardEnabled ? (
         <div className="bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato rounded-xl p-4 text-sm text-center">
           {t("payPage.notAvailable")}
         </div>
@@ -286,6 +298,7 @@ export function PayPage({
                 onClick={() => {
                   initiatedRef.current = false;
                   setAuthCode(null);
+                  setPaymentUrl(null);
                   void startPayment();
                 }}
                 className="block mx-auto mt-2 underline text-sm"
@@ -295,20 +308,29 @@ export function PayPage({
             </div>
           )}
 
-          <GrowPaymentSdk
-            testMode={growTestMode}
-            thankYouUrl={`/s/${tenantSlug}/pay/${order.id}?paid=1`}
-            onReady={() => setSdkReady(true)}
-            onError={(message) => {
-              setError(
-                typeof message === "string"
-                  ? message
-                  : t("payPage.paymentFailed"),
-              );
-              initiatedRef.current = false;
-              setAuthCode(null);
-            }}
-          />
+          {provider === "cardcom" ? (
+            paymentUrl && (
+              <HostedPaymentFrame
+                paymentUrl={paymentUrl}
+                displayMode={displayMode ?? "redirect"}
+              />
+            )
+          ) : (
+            <GrowPaymentSdk
+              testMode={testMode}
+              thankYouUrl={`/s/${tenantSlug}/pay/${order.id}?paid=1`}
+              onReady={() => setSdkReady(true)}
+              onError={(message) => {
+                setError(
+                  typeof message === "string"
+                    ? message
+                    : t("payPage.paymentFailed"),
+                );
+                initiatedRef.current = false;
+                setAuthCode(null);
+              }}
+            />
+          )}
         </>
       )}
     </div>

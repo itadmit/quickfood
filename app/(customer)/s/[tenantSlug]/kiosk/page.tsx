@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { PaymentProvider } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { loadMenuItemForCustomer, type MenuItemForCustomer } from "@/lib/menu-item-load";
 import { normalizeKioskOverrides } from "@/lib/i18n/kiosk-messages";
+import { getActiveCardProviderSummary } from "@/lib/payments/factory";
 import { KioskApp } from "./KioskApp";
 
 export const dynamic = "force-dynamic";
@@ -46,13 +46,11 @@ export default async function KioskPage({
   if (!tenant) notFound();
   if (!tenant.kioskEnabled) notFound();
 
-  const growConfig = await prisma.paymentProviderConfig.findUnique({
-    where: {
-      tenantId_provider: { tenantId: tenant.id, provider: PaymentProvider.grow },
-    },
-    select: { isActive: true },
-  });
-  const growEnabled = !!growConfig?.isActive;
+  // "Card offered?" gate - true when ANY card provider (grow or cardcom) is
+  // active. The kiosk itself is provider-agnostic: it hands the customer a
+  // pay-checkout link that resolves the concrete provider at pay time.
+  const cardProvider = await getActiveCardProviderSummary(tenant.id);
+  const growEnabled = !!cardProvider;
 
   const [categories, items] = await Promise.all([
     prisma.menuCategory.findMany({

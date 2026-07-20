@@ -192,6 +192,7 @@ enum WebhookDeliveryStatus {
 enum PaymentProvider {
   cash
   grow
+  cardcom
 }
 
 enum AIProvider {

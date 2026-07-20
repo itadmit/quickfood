@@ -86,9 +86,12 @@ export const POST = handler(async (req: Request) => {
   if (!providerParam) return apiError("missing_provider", "missing ?provider", 400);
   if (!tenantSlug) return apiError("missing_tenant", "missing ?tenant", 400);
 
-  // We only support Grow right now
   const providerType = providerParam as PaymentProvider;
-  if (providerType !== PaymentProvider.grow) {
+  const SUPPORTED_PROVIDERS: PaymentProvider[] = [
+    PaymentProvider.grow,
+    PaymentProvider.cardcom,
+  ];
+  if (!SUPPORTED_PROVIDERS.includes(providerType)) {
     return apiError("unknown_provider", `provider not supported: ${providerParam}`, 400);
   }
 
@@ -110,7 +113,9 @@ export const POST = handler(async (req: Request) => {
     return apiError("invalid_webhook", validation.error || "invalid webhook", 401);
   }
 
-  const parsed = provider.parseCallback(body);
+  // Awaited: CardCom's parseCallback is async (re-fetches the authoritative
+  // result via GetLpResult). Grow's is sync - await passes its value through.
+  const parsed = await provider.parseCallback(body);
 
   // Kiosk-card pre-checkout branch. If the reference Grow echoed back is
   // a checkout ref (KCO- prefix) the Order doesn't exist yet - we
@@ -149,6 +154,10 @@ export const POST = handler(async (req: Request) => {
         data: {
           paymentStatus: PaymentStatus.paid,
           paymentIntentId: parsed.providerTransactionId,
+          // CardCom issues the tax document inline and returns it on the same
+          // result; Grow ships it later via the invoice-callback (leaves unset).
+          ...(parsed.invoiceNumber ? { invoiceNumber: parsed.invoiceNumber } : {}),
+          ...(parsed.invoiceUrl ? { invoiceUrl: parsed.invoiceUrl } : {}),
         },
       });
       const order = await prisma.order.findUnique({
@@ -280,6 +289,8 @@ export const POST = handler(async (req: Request) => {
           data: {
             paymentStatus: PaymentStatus.paid,
             paymentIntentId: parsed.providerTransactionId,
+            ...(parsed.invoiceNumber ? { invoiceNumber: parsed.invoiceNumber } : {}),
+            ...(parsed.invoiceUrl ? { invoiceUrl: parsed.invoiceUrl } : {}),
           },
         });
       });

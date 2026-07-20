@@ -20,6 +20,18 @@ interface GrowState {
   apple_pay_domain_association: string;
 }
 
+interface CardComState {
+  is_active: boolean;
+  test_mode: boolean;
+  terminal_number: string;
+  api_name: string;
+  api_password: string;
+  max_installments: number;
+  display_mode: "iframe" | "redirect";
+  create_invoice: boolean;
+  document_type: string;
+}
+
 type CustomerPaymentMethod = "cash" | "card" | "bit" | "apple_pay" | "google_pay";
 
 const PAYMENT_METHOD_LABELS: Record<CustomerPaymentMethod, string> = {
@@ -34,6 +46,7 @@ interface Initial {
   accepts_cash: boolean;
   default_payment_method: CustomerPaymentMethod | null;
   grow: GrowState;
+  cardcom: CardComState;
 }
 
 interface Props {
@@ -52,13 +65,29 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
     setV((x) => ({ ...x, accepts_cash: b }));
   }
   function setGrow<K extends keyof GrowState>(k: K, val: GrowState[K]) {
-    setV((x) => ({ ...x, grow: { ...x.grow, [k]: val } }));
+    setV((x) => {
+      // Only one card provider at a time - turning Grow on disables CardCom.
+      const cardcom =
+        k === "is_active" && val === true
+          ? { ...x.cardcom, is_active: false }
+          : x.cardcom;
+      return { ...x, grow: { ...x.grow, [k]: val }, cardcom };
+    });
+  }
+  function setCardcom<K extends keyof CardComState>(k: K, val: CardComState[K]) {
+    setV((x) => {
+      const grow =
+        k === "is_active" && val === true
+          ? { ...x.grow, is_active: false }
+          : x.grow;
+      return { ...x, cardcom: { ...x.cardcom, [k]: val }, grow };
+    });
   }
   function setDefaultMethod(m: CustomerPaymentMethod | null) {
     setV((x) => ({ ...x, default_payment_method: m }));
   }
 
-  const hasAnyActive = v.accepts_cash || v.grow.is_active;
+  const hasAnyActive = v.accepts_cash || v.grow.is_active || v.cardcom.is_active;
 
   // Methods that are currently enabled - this drives the default-method
   // dropdown so the merchant can't pick a method that won't appear at
@@ -66,7 +95,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
   // (which is also the order on the customer's pill grid).
   const enabledMethods: CustomerPaymentMethod[] = [];
   if (v.accepts_cash) enabledMethods.push("cash");
-  if (v.grow.is_active) {
+  if (v.grow.is_active || v.cardcom.is_active) {
     enabledMethods.push("card", "bit", "apple_pay", "google_pay");
   }
   // If the previously-saved default is no longer enabled, drop it on the
@@ -107,6 +136,17 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
             apple_pay_domain_association: canEditApplePay
               ? v.grow.apple_pay_domain_association
               : undefined,
+          },
+          cardcom: {
+            is_active: v.cardcom.is_active,
+            test_mode: v.cardcom.test_mode,
+            terminal_number: v.cardcom.terminal_number || undefined,
+            api_name: v.cardcom.api_name || undefined,
+            api_password: v.cardcom.api_password || undefined,
+            max_installments: v.cardcom.max_installments,
+            display_mode: v.cardcom.display_mode,
+            create_invoice: v.cardcom.create_invoice,
+            document_type: v.cardcom.document_type || undefined,
           },
         }),
       });
@@ -151,6 +191,19 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
           checked={v.grow.is_active}
           onChange={(b) => setGrow("is_active", b)}
         />
+        <MethodRow
+          icon={<IcoCreditCard s={20} />}
+          title="אשראי דרך חברת CardCom"
+          sub="סליקת אשראי דרך מסוף CardCom · תשלומים · חשבוניות · Bit / Google Pay לפי הגדרת המסוף"
+          checked={v.cardcom.is_active}
+          onChange={(b) => setCardcom("is_active", b)}
+        />
+
+        {(v.grow.is_active && v.cardcom.is_active) && (
+          <div className="rounded-xl bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm px-3.5 py-2.5">
+            אפשר להפעיל רק ספק סליקה אחד בו-זמנית (Grow או CardCom).
+          </div>
+        )}
 
         {!hasAnyActive && (
           <div className="rounded-xl bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm px-3.5 py-2.5">
@@ -374,6 +427,147 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
                   </Field>
                 </div>
               </details>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* CardCom config - only when CardCom is enabled */}
+      {v.cardcom.is_active && (
+        <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
+          <div>
+            <h2 className="font-semibold text-base lg:text-lg">הגדרות חשבון CardCom</h2>
+            <p className="text-sm text-qf-mute mt-0.5">
+              מקבלים את הפרטים מחשבון הסליקה שלכם ב-CardCom (מספר מסוף + פרטי API).
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field
+              label="מצב פעולה"
+              hint={
+                v.cardcom.test_mode
+                  ? "סביבת טסטים = מסוף הבדיקות (1000) המשותף. אין צורך למלא פרטים."
+                  : "מסוף חי = חיוב כרטיסים אמיתיים. חובה למלא מספר מסוף, שם וסיסמת API."
+              }
+            >
+              <Toggle
+                checked={!v.cardcom.test_mode}
+                onChange={(b) => setCardcom("test_mode", !b)}
+                label={v.cardcom.test_mode ? "סביבת טסטים" : "מסוף חי"}
+              />
+            </Field>
+            <Field
+              label="מספר תשלומים מקסימלי"
+              hint="1 = ללא תשלומים. עד 12 חודשי תשלומים. כל חנות מחליטה."
+            >
+              <select
+                value={v.cardcom.max_installments}
+                onChange={(e) => setCardcom("max_installments", parseInt(e.target.value, 10))}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none bg-white tnum"
+              >
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+                  <option key={n} value={n}>
+                    {n === 1 ? "תשלום אחד (ללא תשלומים)" : `עד ${n} תשלומים`}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field
+              label="אופן הצגת עמוד התשלום"
+              hint="הפניה = מעבר לעמוד CardCom וחזרה. חלון מוטמע = iframe בתוך העמוד."
+            >
+              <select
+                value={v.cardcom.display_mode}
+                onChange={(e) =>
+                  setCardcom("display_mode", e.target.value as "iframe" | "redirect")
+                }
+                className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none bg-white"
+              >
+                <option value="redirect">הפניה לעמוד CardCom</option>
+                <option value="iframe">חלון מוטמע (iframe)</option>
+              </select>
+            </Field>
+            <Field
+              label="הפקת חשבונית דרך CardCom"
+              hint="CardCom תפיק את המסמך ותשלח ללקוח למייל (אם הוזן)."
+            >
+              <Toggle
+                checked={v.cardcom.create_invoice}
+                onChange={(b) => setCardcom("create_invoice", b)}
+                label={v.cardcom.create_invoice ? "מופקת דרך CardCom" : "כבוי"}
+              />
+            </Field>
+            {v.cardcom.create_invoice && (
+              <Field
+                label="סוג מסמך"
+                hint="סוג המסמך שיופק בכל תשלום. חייב להתאים לערך DocumentTypeToCreate ב-CardCom."
+              >
+                <select
+                  value={v.cardcom.document_type}
+                  onChange={(e) => setCardcom("document_type", e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none bg-white"
+                >
+                  <option value="Order">הזמנה (Order)</option>
+                  <option value="Invoice">חשבונית (Invoice)</option>
+                  <option value="InvoiceReceipt">חשבונית מס קבלה (InvoiceReceipt)</option>
+                </select>
+              </Field>
+            )}
+          </div>
+
+          {v.cardcom.test_mode ? (
+            <div className="rounded-xl bg-qf-green-soft/40 border border-qf-green-deep/20 px-4 py-3 text-sm space-y-1">
+              <div className="font-bold text-qf-green-deep">
+                סביבת טסטים פעילה - אין צורך במילוי
+              </div>
+              <p className="text-qf-ink2 leading-relaxed">
+                משתמש במסוף הבדיקות של CardCom. כרטיס בדיקה:{" "}
+                <span dir="ltr" className="tnum">4580 0000 0000 0000</span> · תוקף 12/30 · CVV 123.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="rounded-xl bg-qf-yolk-soft/60 border border-qf-yolk/30 px-4 py-3 text-sm">
+                <div className="font-bold mb-1">מסוף חי - מלא את פרטי ה-API</div>
+                <p className="text-qf-ink2 leading-relaxed">
+                  שלושת השדות מגיעים מחשבון CardCom שלך (הגדרות מסוף / פרטי מפתח).
+                  סיסמת ה-API דרושה גם לביצוע זיכויים.
+                </p>
+              </div>
+              <Field label="מספר מסוף (Terminal)" hint="דוגמה: 1000">
+                <input
+                  value={v.cardcom.terminal_number}
+                  onChange={(e) => setCardcom("terminal_number", e.target.value.trim())}
+                  dir="ltr"
+                  autoComplete="off"
+                  spellCheck={false}
+                  placeholder="1000"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
+                />
+              </Field>
+              <Field label="API Name" hint="שם משתמש ה-API של המסוף.">
+                <input
+                  value={v.cardcom.api_name}
+                  onChange={(e) => setCardcom("api_name", e.target.value.trim())}
+                  dir="ltr"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
+                />
+              </Field>
+              <Field label="API Password" hint="סיסמת ה-API. נשמרת מוצפנת ומשמשת גם לזיכויים.">
+                <input
+                  type="password"
+                  value={v.cardcom.api_password}
+                  onChange={(e) => setCardcom("api_password", e.target.value.trim())}
+                  dir="ltr"
+                  autoComplete="off"
+                  spellCheck={false}
+                  placeholder="••••••••"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
+                />
+              </Field>
             </>
           )}
         </div>

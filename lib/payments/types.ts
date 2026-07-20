@@ -19,12 +19,25 @@ export interface ProviderCredentials {
   userId?: string;
   pageCode?: string; // optional override of platform default
   apiKey?: string; // per-tenant for PROD; falls back to env GROW_API_KEY
+  // CardCom per-merchant (all three mandatory for live charging). Stored as
+  // strings in JSONB; terminalNumber is Number()-coerced at call time.
+  terminalNumber?: string;
+  apiName?: string;
+  apiPassword?: string;
   // Generic
   [key: string]: string | undefined;
 }
 
+/** How a redirect/hosted-page provider (CardCom) surfaces its payment page. */
+export type PaymentDisplayMode = "iframe" | "redirect";
+
 export interface ProviderSettings {
   maxInstallments?: number;
+  // CardCom: how to present the hosted LowProfile page, and whether to have
+  // CardCom issue the tax document/invoice for the charge.
+  displayMode?: PaymentDisplayMode;
+  createInvoice?: boolean;
+  documentType?: string; // CardCom DocumentTypeToCreate (e.g. "Order")
   [key: string]: unknown;
 }
 
@@ -69,9 +82,11 @@ export interface InitiatePaymentResponse {
   success: boolean;
   /// SDK Wallet mode (Grow): client calls window.growPayment.renderPaymentOptions(authCode).
   sdkAuthCode?: string;
-  /// Hosted-page redirect mode (fallback).
+  /// Hosted-page redirect mode (CardCom LowProfile / Grow redirect fallback).
   paymentUrl?: string;
-  providerRequestId?: string; // Grow processId
+  /// For hosted-page providers: how the client should present `paymentUrl`.
+  displayMode?: PaymentDisplayMode;
+  providerRequestId?: string; // Grow processId / CardCom LowProfileId
   errorCode?: string;
   errorMessage?: string;
   providerResponse?: Record<string, unknown>;
@@ -89,6 +104,11 @@ export interface ParsedCallback {
   cardBrand?: string;
   cardLastFour?: string;
   providerToken?: string; // transactionToken (needed for refunds)
+  // Some providers (CardCom) issue the tax document synchronously and return
+  // it on the same result we finalize the order with. Grow ships it later via
+  // a separate invoice-callback, so it leaves these unset.
+  invoiceNumber?: string;
+  invoiceUrl?: string;
   errorCode?: string;
   errorMessage?: string;
   rawData: Record<string, unknown>;
@@ -122,7 +142,11 @@ export interface IPaymentProvider {
   configure(config: ProviderConfig): void;
   initiatePayment(req: InitiatePaymentRequest): Promise<InitiatePaymentResponse>;
   validateWebhook(body: unknown, headers: Record<string, string>): WebhookValidationResult;
-  parseCallback(body: unknown): ParsedCallback;
+  // May be async: CardCom re-fetches the authoritative result via GetLpResult
+  // (its callback carries no signature/IP guard, so the posted body is not
+  // trusted). Grow parses synchronously and returns a plain object; callers
+  // must `await` this regardless.
+  parseCallback(body: unknown): ParsedCallback | Promise<ParsedCallback>;
   acknowledgeCallback(parsed: ParsedCallback): Promise<{ success: boolean; error?: string }>;
   refund(req: RefundRequest): Promise<RefundResponse>;
 }

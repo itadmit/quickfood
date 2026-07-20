@@ -20,6 +20,7 @@ import { getTodayScheduleWindowMin } from "@/lib/branch-hours";
 import { CitySelect } from "@/components/customer/CitySelect";
 import { Toggle } from "@/components/shared/Toggle";
 import { GrowPaymentSdk, renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
+import { HostedPaymentFrame } from "@/components/customer/HostedPaymentFrame";
 import { BusyAlertModal } from "@/components/customer/BranchStatusModal";
 import { AttributionPrompt } from "@/components/customer/AttributionPrompt";
 
@@ -36,8 +37,10 @@ const PAYMENT_METHOD_LABELS: Record<CustomerPaymentMethod, string> = {
 export function CustomerCheckout({
   tenantSlug,
   requireEmail = false,
-  growEnabled = false,
-  growTestMode = true,
+  cardEnabled = false,
+  provider = null,
+  testMode = true,
+  displayMode = null,
   deliveryCities = [],
   pickupEnabled = true,
   termsText = "",
@@ -45,8 +48,11 @@ export function CustomerCheckout({
 }: {
   tenantSlug: string;
   requireEmail?: boolean;
-  growEnabled?: boolean;
-  growTestMode?: boolean;
+  /** Tenant has an active card provider (grow OR cardcom). */
+  cardEnabled?: boolean;
+  provider?: "grow" | "cardcom" | null;
+  testMode?: boolean;
+  displayMode?: "iframe" | "redirect" | null;
   deliveryCities?: string[];
   pickupEnabled?: boolean;
   termsText?: string;
@@ -166,6 +172,11 @@ export function CustomerCheckout({
   const [pendingPayment, setPendingPayment] = useState<
     | { orderId: string; authCode: string; thankYouUrl: string; testMode: boolean }
     | null
+  >(null);
+  // CardCom hosted-page equivalent. Redirect mode navigates away immediately;
+  // iframe mode shows an overlay with the embedded LowProfile page.
+  const [hostedPayment, setHostedPayment] = useState<
+    { paymentUrl: string; displayMode: "iframe" | "redirect" } | null
   >(null);
   const [sdkReady, setSdkReady] = useState(false);
   const [walletOpen, setWalletOpen] = useState(false);
@@ -574,6 +585,13 @@ export function CustomerCheckout({
           });
           return;
         }
+        if (inline?.payment_url) {
+          setHostedPayment({
+            paymentUrl: inline.payment_url,
+            displayMode: inline.display_mode === "iframe" ? "iframe" : "redirect",
+          });
+          return;
+        }
         // Fallback: initiate in a second call (inline path failed/skipped).
         try {
           const initRes = await fetch(
@@ -581,13 +599,20 @@ export function CustomerCheckout({
             { method: "POST", credentials: "include" },
           );
           const initData = await initRes.json();
-          if (!initRes.ok || !initData?.sdk_auth_code) {
+          if (!initRes.ok || (!initData?.sdk_auth_code && !initData?.payment_url)) {
             setError(
               asErrorString(
                 initData?.error?.message,
                 "לא הצלחנו לפתוח את שדה התשלום",
               ),
             );
+            return;
+          }
+          if (initData.payment_url && !initData.sdk_auth_code) {
+            setHostedPayment({
+              paymentUrl: initData.payment_url,
+              displayMode: initData.display_mode === "iframe" ? "iframe" : "redirect",
+            });
             return;
           }
           // Keep the form intact + cart full so the user can retry if the
@@ -1430,9 +1455,40 @@ export function CustomerCheckout({
           enabled, so the SDK has ~1s to do its async setup while the
           customer fills out the form. The wallet itself only renders when
           we trigger `renderGrowWallet(authCode)` after /pay/initiate. */}
-      {growEnabled && (
+      {provider === "cardcom" && hostedPayment?.displayMode === "iframe" && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[70] grid place-items-center bg-black/60 p-4"
+        >
+          <div className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-xl">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-qf-line">
+              <span className="font-bold text-sm">תשלום מאובטח</span>
+              <button
+                type="button"
+                onClick={() => setHostedPayment(null)}
+                className="text-sm text-qf-mute hover:text-qf-ink"
+              >
+                סגירה
+              </button>
+            </div>
+            <HostedPaymentFrame
+              paymentUrl={hostedPayment.paymentUrl}
+              displayMode="iframe"
+              heightPx={560}
+            />
+          </div>
+        </div>
+      )}
+      {provider === "cardcom" && hostedPayment?.displayMode === "redirect" && (
+        <HostedPaymentFrame
+          paymentUrl={hostedPayment.paymentUrl}
+          displayMode="redirect"
+        />
+      )}
+      {provider === "grow" && cardEnabled && (
         <GrowPaymentSdk
-          testMode={pendingPayment?.testMode ?? growTestMode}
+          testMode={pendingPayment?.testMode ?? testMode}
           thankYouUrl={pendingPayment?.thankYouUrl ?? `/s/${tenantSlug}`}
           onReady={() => setSdkReady(true)}
           onSuccess={() => {

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db/client";
-import { getConfiguredProvider } from "@/lib/payments/factory";
-import type { InitiatePaymentRequest } from "@/lib/payments/types";
+import { getActiveCardProvider } from "@/lib/payments/factory";
+import type { InitiatePaymentRequest, PaymentDisplayMode } from "@/lib/payments/types";
 import { idToCheckoutRef } from "@/lib/orders/kiosk-checkout";
 import { PaymentProvider } from "@prisma/client";
 import type { CreateOrderInput } from "@/lib/orders-create";
@@ -9,6 +9,7 @@ export interface InitiateKioskCheckoutData {
   provider: PaymentProvider;
   sdk_auth_code: string | null;
   payment_url: string | null;
+  display_mode: PaymentDisplayMode | null;
   provider_request_id: string | null;
   test_mode: boolean;
 }
@@ -44,19 +45,12 @@ export async function initiateKioskCheckoutPayment(
     return { ok: false, code: "expired", message: "ה-checkout פג תוקף", status: 410 };
   }
 
-  const providerType = PaymentProvider.grow;
-  const [provider, providerConfig] = await Promise.all([
-    getConfiguredProvider(checkout.tenantId, providerType),
-    prisma.paymentProviderConfig.findUnique({
-      where: {
-        tenantId_provider: { tenantId: checkout.tenantId, provider: providerType },
-      },
-      select: { testMode: true },
-    }),
-  ]);
-  if (!provider) {
+  const active = await getActiveCardProvider(checkout.tenantId);
+  if (!active) {
     return { ok: false, code: "provider_unavailable", message: "ספק התשלום לא מוגדר", status: 503 };
   }
+  const providerType = active.type;
+  const provider = active.provider;
 
   const input = checkout.cartData as unknown as CreateOrderInput;
   const composedName =
@@ -97,6 +91,8 @@ export async function initiateKioskCheckoutPayment(
   await prisma.kioskPendingCheckout.update({
     where: { id: checkout.id },
     data: {
+      // Column is named grow_process_id for historical reasons; it holds
+      // whichever provider's request id (Grow processId / CardCom LowProfileId).
       growProcessId: result.providerRequestId,
       authCode: result.sdkAuthCode,
       providerResponse: (result.providerResponse ?? {}) as object,
@@ -109,8 +105,9 @@ export async function initiateKioskCheckoutPayment(
       provider: providerType,
       sdk_auth_code: result.sdkAuthCode ?? null,
       payment_url: result.paymentUrl ?? null,
+      display_mode: result.displayMode ?? null,
       provider_request_id: result.providerRequestId ?? null,
-      test_mode: providerConfig?.testMode ?? true,
+      test_mode: active.testMode,
     },
   };
 }

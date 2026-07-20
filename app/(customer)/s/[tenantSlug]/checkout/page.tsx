@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
 import ReactDOM from "react-dom";
-import { PaymentProvider } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { resolveTerms } from "@/lib/legal/terms";
 import { resolveLoyaltyConfig } from "@/lib/loyalty/config";
+import { getActiveCardProviderSummary } from "@/lib/payments/factory";
 import { CustomerCheckout } from "@/components/customer/screens/CustomerCheckout";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +26,6 @@ export default async function CheckoutPage({
     reviewsEnabled: boolean;
     pickupEnabled: boolean;
   } | null = null;
-  let growConfig: { testMode: boolean; isActive: boolean } | null = null;
   try {
     settings = await prisma.tenant.findUnique({
       where: { id: tenant.id },
@@ -45,32 +44,22 @@ export default async function CheckoutPage({
     (settings as { loyaltyConfig?: unknown } | null)?.loyaltyConfig,
     tenant.name,
   );
+  let cardProvider: Awaited<ReturnType<typeof getActiveCardProviderSummary>> = null;
   try {
-    growConfig = await prisma.paymentProviderConfig.findUnique({
-      where: {
-        tenantId_provider: {
-          tenantId: tenant.id,
-          provider: PaymentProvider.grow,
-        },
-      },
-      select: { testMode: true, isActive: true },
-    });
+    cardProvider = await getActiveCardProviderSummary(tenant.id);
   } catch (err) {
-    console.error("[checkout/page] grow config lookup failed", err);
+    console.error("[checkout/page] card provider lookup failed", err);
   }
 
   const requireEmail =
     !!settings?.reviewsEnabled && settings.reviewsChannel === "email";
 
-  const growEnabled = !!growConfig?.isActive;
-  const growTestMode = growConfig?.testMode ?? true;
+  const cardEnabled = !!cardProvider;
 
   // SSR-preconnect to Grow's CDN + preload the SDK script so the browser
   // starts downloading gs.min.js in parallel with HTML transfer/hydration.
-  // Without this the SDK only starts downloading after GrowPaymentSdk
-  // mounts client-side - costing ~500-800ms on first paint. Mirrors the
-  // perf work on /pay-checkout/[checkoutId] and /pay/[orderId].
-  if (growEnabled) {
+  // Only for Grow - CardCom loads its own hosted page, no SDK to preload.
+  if (cardProvider?.provider === "grow") {
     ReactDOM.preconnect("https://cdn.meshulam.co.il");
     ReactDOM.preconnect("https://secure.meshulam.co.il");
     ReactDOM.preconnect("https://sandbox.meshulam.co.il");
@@ -115,8 +104,10 @@ export default async function CheckoutPage({
     <CustomerCheckout
       tenantSlug={tenantSlug}
       requireEmail={requireEmail}
-      growEnabled={growEnabled}
-      growTestMode={growTestMode}
+      cardEnabled={cardEnabled}
+      provider={cardProvider?.provider ?? null}
+      testMode={cardProvider?.testMode ?? true}
+      displayMode={cardProvider?.displayMode ?? null}
       deliveryCities={deliveryCities}
       pickupEnabled={settings?.pickupEnabled ?? true}
       termsText={termsText}

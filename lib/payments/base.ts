@@ -35,7 +35,7 @@ export abstract class BasePaymentProvider implements IPaymentProvider {
 
   abstract initiatePayment(req: InitiatePaymentRequest): Promise<InitiatePaymentResponse>;
   abstract validateWebhook(body: unknown, headers: Record<string, string>): WebhookValidationResult;
-  abstract parseCallback(body: unknown): ParsedCallback;
+  abstract parseCallback(body: unknown): ParsedCallback | Promise<ParsedCallback>;
   abstract acknowledgeCallback(parsed: ParsedCallback): Promise<{ success: boolean; error?: string }>;
   abstract refund(req: RefundRequest): Promise<RefundResponse>;
 

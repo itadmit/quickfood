@@ -15,8 +15,8 @@
  */
 
 import { prisma } from "@/lib/db/client";
-import { getConfiguredProvider } from "@/lib/payments/factory";
-import type { InitiatePaymentRequest } from "@/lib/payments/types";
+import { getActiveCardProvider } from "@/lib/payments/factory";
+import type { InitiatePaymentRequest, PaymentDisplayMode } from "@/lib/payments/types";
 import { fullName } from "@/lib/format";
 import {
   PaymentMethod,
@@ -30,6 +30,7 @@ export interface InitiatePaymentData {
   provider: PaymentProvider;
   sdk_auth_code: string | null;
   payment_url: string | null;
+  display_mode: PaymentDisplayMode | null;
   provider_request_id: string | null;
   test_mode: boolean;
   success_url: string;
@@ -67,20 +68,10 @@ export async function initiateOrderPayment(
     return { ok: false, code: "cash_payment", message: "הזמנת מזומן לא דורשת אתחול תשלום", status: 400 };
   }
 
-  const providerType = PaymentProvider.grow;
-
-  // Independent reads run in parallel - provider config, provider instance,
-  // and the customer row don't depend on each other (cuts ~2 sequential
-  // Neon round-trips off the critical path; same query count, so no extra
-  // DB cost).
-  const [provider, providerConfig, customer] = await Promise.all([
-    getConfiguredProvider(order.tenantId, providerType),
-    prisma.paymentProviderConfig.findUnique({
-      where: {
-        tenantId_provider: { tenantId: order.tenantId, provider: providerType },
-      },
-      select: { testMode: true },
-    }),
+  // Resolve whichever card provider the tenant has active (grow or cardcom).
+  // Runs in parallel with the customer read - they're independent.
+  const [active, customer] = await Promise.all([
+    getActiveCardProvider(order.tenantId),
     order.customerId
       ? prisma.customer.findUnique({
           where: { id: order.customerId },
@@ -89,9 +80,11 @@ export async function initiateOrderPayment(
       : Promise.resolve(null),
   ]);
 
-  if (!provider) {
+  if (!active) {
     return { ok: false, code: "provider_unavailable", message: "ספק התשלום לא מוגדר במסעדה", status: 503 };
   }
+  const providerType = active.type;
+  const provider = active.provider;
 
   const baseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
   const orderRef = order.number;
@@ -200,8 +193,9 @@ export async function initiateOrderPayment(
       provider: providerType,
       sdk_auth_code: result.sdkAuthCode ?? null,
       payment_url: result.paymentUrl ?? null,
+      display_mode: result.displayMode ?? null,
       provider_request_id: result.providerRequestId ?? null,
-      test_mode: providerConfig?.testMode ?? true,
+      test_mode: active.testMode,
       success_url: initiateReq.successUrl,
       cancel_url: initiateReq.cancelUrl,
     },

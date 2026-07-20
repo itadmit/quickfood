@@ -5,6 +5,7 @@ import { usePos } from "@/components/pos/PosContext";
 import { usePosCart } from "@/components/pos/PosCartProvider";
 import { PosCashKeypadModal } from "@/components/pos/PosNumericKeypad";
 import { renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
+import { HostedPaymentFrame } from "@/components/customer/HostedPaymentFrame";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { IcoCheck } from "@/components/shared/Icons";
@@ -80,6 +81,8 @@ export function PosPaymentSheet({
   const [error, setError] = useState<string | null>(null);
   const [method, setMethod] = useState<Method | null>(null);
   const [cardOpen, setCardOpen] = useState(false);
+  // CardCom hosted page (embedded here rather than redirecting the POS away).
+  const [hostedUrl, setHostedUrl] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ title: string; sub?: string } | null>(null);
   // Card payments need a real walk-in name (Grow PROD rejects placeholder
   // fullName). Cashier can fill it once per ticket; we remember it so a
@@ -232,6 +235,12 @@ export function PosPaymentSheet({
         setError(translateError(data?.error) || "פתיחת תשלום אשראי נכשלה");
         return;
       }
+      // CardCom (or any redirect/hosted provider): embed the hosted page in an
+      // iframe on the POS instead of the inline Grow wallet.
+      if (data.payment_url) {
+        setHostedUrl(data.payment_url);
+        return;
+      }
       setCardOpen(true);
       // Render Grow wallet - same component the customer storefront uses.
       renderGrowWallet(data.sdk_auth_code);
@@ -340,6 +349,50 @@ export function PosPaymentSheet({
           void runCardCharge();
         }}
       />
+    );
+  }
+
+  // CardCom hosted page embedded in the POS. The cashier watches the
+  // customer complete payment in the iframe, then confirms - the order is
+  // flipped to paid by the S2S webhook independently.
+  if (hostedUrl) {
+    return (
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="fixed inset-0 z-[60] grid place-items-center bg-black/60 p-4"
+      >
+        <div className="w-full max-w-md bg-white rounded-3xl border-2 border-black shadow-[0_6px_0_#000] overflow-hidden">
+          <div className="px-4 py-3 border-b-2 border-black flex items-center justify-between">
+            <span className="font-black text-sm">תשלום אשראי (CardCom)</span>
+            <span className="text-sm font-bold tnum">{formatPrice(amount)}</span>
+          </div>
+          <HostedPaymentFrame paymentUrl={hostedUrl} displayMode="iframe" heightPx={520} />
+          <div className="grid grid-cols-2 gap-2 p-3">
+            <button
+              type="button"
+              onClick={() => {
+                setHostedUrl(null);
+                setMethod(null);
+                setError("התשלום בוטל. נסה שוב או בחר מזומן.");
+              }}
+              className="h-12 rounded-xl border-2 border-black font-black text-sm"
+            >
+              ביטול
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setHostedUrl(null);
+                onPaid();
+              }}
+              className="h-12 rounded-xl bg-black text-[#F8CB1E] border-2 border-black font-black text-sm"
+            >
+              התשלום בוצע
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
 

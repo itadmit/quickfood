@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import ReactDOM from "react-dom";
-import { PaymentMethod, PaymentProvider, PaymentStatus } from "@prisma/client";
+import { PaymentMethod, PaymentStatus } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { normalizeKioskOverrides } from "@/lib/i18n/kiosk-messages";
 import { initiateOrderPayment } from "@/lib/payments/initiate-payment";
+import { getActiveCardProviderSummary } from "@/lib/payments/factory";
 import { PayPage } from "./PayPage";
 
 export const dynamic = "force-dynamic";
@@ -50,7 +51,7 @@ export default async function PayRoute({
   const tenant = await resolveTenantBySlug(tenantSlug);
   if (!tenant) notFound();
 
-  const [order, growConfig] = await Promise.all([
+  const [order, cardProvider] = await Promise.all([
     prisma.order.findFirst({
       where: { id: orderId, tenantId: tenant.id },
       select: {
@@ -64,16 +65,11 @@ export default async function PayRoute({
         customerEmailSnap: true,
       },
     }),
-    prisma.paymentProviderConfig.findUnique({
-      where: {
-        tenantId_provider: { tenantId: tenant.id, provider: PaymentProvider.grow },
-      },
-      select: { testMode: true, isActive: true },
-    }),
+    getActiveCardProviderSummary(tenant.id),
   ]);
   if (!order) notFound();
 
-  const growEnabled = !!growConfig?.isActive;
+  const cardEnabled = !!cardProvider;
   const isOpenForPayment =
     !justPaid &&
     order.paymentStatus !== PaymentStatus.paid &&
@@ -81,11 +77,13 @@ export default async function PayRoute({
     order.paymentMethod !== PaymentMethod.cash;
 
   let initialAuthCode: string | null = null;
-  if (growEnabled && isOpenForPayment) {
+  let initialPaymentUrl: string | null = null;
+  if (cardEnabled && isOpenForPayment) {
     try {
       const initResult = await initiateOrderPayment(order.id);
       if (initResult.ok) {
         initialAuthCode = initResult.data.sdk_auth_code;
+        initialPaymentUrl = initResult.data.payment_url;
       } else {
         // eslint-disable-next-line no-console
         console.warn("[pay] ssr initiate failed", {
@@ -113,9 +111,12 @@ export default async function PayRoute({
         invoiceUrl: order.invoiceUrl,
         customerEmailMasked: maskEmail(order.customerEmailSnap),
       }}
-      growEnabled={growEnabled}
-      growTestMode={growConfig?.testMode ?? true}
+      cardEnabled={cardEnabled}
+      provider={cardProvider?.provider ?? null}
+      testMode={cardProvider?.testMode ?? true}
+      displayMode={cardProvider?.displayMode ?? null}
       initialAuthCode={initialAuthCode}
+      initialPaymentUrl={initialPaymentUrl}
       stringOverrides={normalizeKioskOverrides(tenant.kioskStringOverrides)}
       justPaid={justPaid}
     />

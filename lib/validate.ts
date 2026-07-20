@@ -603,11 +603,38 @@ export const MerchantPaymentsPatchSchema = z
           .nullable(),
       })
       .optional(),
+    /** CardCom (v11) - per-tenant terminal + API user. An alternative card
+     *  provider to Grow; only one card provider may be active at a time. */
+    cardcom: z
+      .object({
+        is_active: z.boolean(),
+        test_mode: z.boolean().optional(),
+        terminal_number: z.string().max(32).optional(),
+        api_name: z.string().max(128).optional(),
+        api_password: z.string().max(128).optional(),
+        max_installments: z.number().int().min(1).max(12).optional(),
+        display_mode: z.enum(["iframe", "redirect"]).optional(),
+        create_invoice: z.boolean().optional(),
+        document_type: z.string().max(32).optional(),
+      })
+      .optional(),
   })
   .refine(
-    (v) => v.accepts_cash || (v.grow?.is_active ?? false),
+    (v) =>
+      v.accepts_cash ||
+      (v.grow?.is_active ?? false) ||
+      (v.cardcom?.is_active ?? false),
     {
-      message: "חייב להפעיל לפחות אמצעי תשלום אחד (מזומן או Grow)",
+      message: "חייב להפעיל לפחות אמצעי תשלום אחד (מזומן / Grow / CardCom)",
       path: ["accepts_cash"],
+    },
+  )
+  .refine(
+    // Exactly one card provider at a time - the initiate resolver picks the
+    // single active non-cash provider, so two active would be ambiguous.
+    (v) => !((v.grow?.is_active ?? false) && (v.cardcom?.is_active ?? false)),
+    {
+      message: "אפשר להפעיל רק ספק סליקה אחד (Grow או CardCom) בו-זמנית",
+      path: ["cardcom"],
     },
   );
