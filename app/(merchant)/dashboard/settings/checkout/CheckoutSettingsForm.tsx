@@ -9,6 +9,7 @@ import { cn } from "@/lib/cn";
 interface Initial {
   showTracking: boolean;
   requireEmail: boolean;
+  showAttribution: boolean;
   scheduledOrdersEnabled: boolean;
   pickupEnabled: boolean;
   cutleryEnabled: boolean;
@@ -22,6 +23,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
   const router = useRouter();
   const [showTracking, setShowTracking] = useState(initial.showTracking);
   const [requireEmail, setRequireEmail] = useState(initial.requireEmail);
+  const [showAttribution, setShowAttribution] = useState(initial.showAttribution);
   const [scheduledOrdersEnabled, setScheduledOrdersEnabled] = useState(
     initial.scheduledOrdersEnabled,
   );
@@ -46,6 +48,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
         body: JSON.stringify({
           checkout_show_tracking: showTracking,
           checkout_require_email: requireEmail,
+          checkout_show_attribution: showAttribution,
           scheduled_orders_enabled: scheduledOrdersEnabled,
           pickup_enabled: pickupEnabled,
           tip_enabled: tipEnabled,
@@ -93,6 +96,17 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
         }
         value={requireEmail}
         onChange={setRequireEmail}
+      />
+
+      <Toggle
+        label="הצג שאלת 'איך הגעת אלינו?' בקופה"
+        description={
+          showAttribution
+            ? "הלקוח נשאל איך הגיע אליכם (וולט, גוגל, המלצה וכו') - הנתונים מזינים את דוח המקורות ב'צמיחה'. ניתן לדלג."
+            : "השאלה מוסתרת מהקופה. לא ייאספו נתוני מקור הגעה מהזמנות."
+        }
+        value={showAttribution}
+        onChange={setShowAttribution}
       />
 
       <Toggle

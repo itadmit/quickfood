@@ -41,6 +41,7 @@ export function CustomerCheckout({
   provider = null,
   testMode = true,
   displayMode = null,
+  showAttribution = true,
   deliveryCities = [],
   pickupEnabled = true,
   termsText = "",
@@ -53,6 +54,8 @@ export function CustomerCheckout({
   provider?: "grow" | "cardcom" | null;
   testMode?: boolean;
   displayMode?: "iframe" | "redirect" | null;
+  /** Show the "how did you hear about us?" attribution prompt. */
+  showAttribution?: boolean;
   deliveryCities?: string[];
   pickupEnabled?: boolean;
   termsText?: string;
@@ -1202,8 +1205,9 @@ export function CustomerCheckout({
           />
         </Card>
 
-        {/* How did you hear about us - non-blocking, skippable. */}
-        <AttributionPrompt tenantSlug={tenantSlug} />
+        {/* How did you hear about us - non-blocking, skippable. Merchant can
+            hide it in Settings -> Checkout. */}
+        {showAttribution && <AttributionPrompt tenantSlug={tenantSlug} />}
 
         {/* Order summary - rendered LAST on mobile (just before the error +
             footer CTA) so the customer scrolls past every input first.

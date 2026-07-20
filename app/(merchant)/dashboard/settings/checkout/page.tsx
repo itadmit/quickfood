@@ -17,6 +17,7 @@ export default async function CheckoutSettingsPage() {
     select: {
       checkoutShowTracking: true,
       checkoutRequireEmail: true,
+      checkoutShowAttribution: true,
       scheduledOrdersEnabled: true,
       pickupEnabled: true,
       cutleryEnabled: true,
@@ -35,6 +36,7 @@ export default async function CheckoutSettingsPage() {
         initial={{
           showTracking: tenant.checkoutShowTracking,
           requireEmail: tenant.checkoutRequireEmail,
+          showAttribution: tenant.checkoutShowAttribution,
           scheduledOrdersEnabled: tenant.scheduledOrdersEnabled,
           pickupEnabled: tenant.pickupEnabled,
           cutleryEnabled: tenant.cutleryEnabled,

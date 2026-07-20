@@ -301,6 +301,10 @@ model Tenant {
   // email regardless - that's a separate, reviews-driven need.)
   checkoutRequireEmail Boolean @default(false) @map("checkout_require_email")
 
+  // Show the "how did you hear about us?" attribution prompt at checkout.
+  // On by default (feeds the growth/sources analytics); merchants can hide it.
+  checkoutShowAttribution Boolean @default(true) @map("checkout_show_attribution")
+
   // When false, the customer can only order "as soon as possible" - the
   // schedule-for-later section is hidden from checkout. Useful for fast-food
   // spots that don't want pre-orders piling up in the queue.

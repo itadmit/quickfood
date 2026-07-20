@@ -26,6 +26,7 @@ export default async function CheckoutPage({
     reviewsEnabled: boolean;
     pickupEnabled: boolean;
     checkoutRequireEmail: boolean;
+    checkoutShowAttribution: boolean;
   } | null = null;
   try {
     settings = await prisma.tenant.findUnique({
@@ -36,6 +37,7 @@ export default async function CheckoutPage({
         pickupEnabled: true,
         loyaltyConfig: true,
         checkoutRequireEmail: true,
+        checkoutShowAttribution: true,
       },
     });
   } catch (err) {
@@ -114,6 +116,7 @@ export default async function CheckoutPage({
       provider={cardProvider?.provider ?? null}
       testMode={cardProvider?.testMode ?? true}
       displayMode={cardProvider?.displayMode ?? null}
+      showAttribution={settings?.checkoutShowAttribution ?? true}
       deliveryCities={deliveryCities}
       pickupEnabled={settings?.pickupEnabled ?? true}
       termsText={termsText}

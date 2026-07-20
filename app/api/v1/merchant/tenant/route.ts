@@ -86,6 +86,7 @@ export const PATCH = handler(async (req: Request) => {
       termsAcknowledgedAt: body.terms_acknowledged ? new Date() : undefined,
       checkoutShowTracking: body.checkout_show_tracking,
       checkoutRequireEmail: body.checkout_require_email,
+      checkoutShowAttribution: body.checkout_show_attribution,
       scheduledOrdersEnabled: body.scheduled_orders_enabled,
       pickupEnabled: body.pickup_enabled,
       cutleryEnabled: body.cutlery_enabled,
