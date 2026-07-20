@@ -129,23 +129,23 @@ export class CardComProvider extends BasePaymentProvider {
 
   // ─── Credential accessors (test-mode falls back to the shared terminal) ──
 
+  // In test mode we ALWAYS use the shared test terminal, ignoring whatever the
+  // merchant has stored - flipping "Sandbox" on is meant to JUST WORK (mirrors
+  // GrowProvider). This also shields us from browser password-manager autofill
+  // dumping the merchant's dashboard login into the API credential fields.
   private get terminalNumber(): number {
-    const raw = this.config!.testMode
-      ? this.config!.credentials.terminalNumber || CARDCOM_TEST_TERMINAL
-      : this.config!.credentials.terminalNumber!;
-    return Number(raw);
+    if (this.config!.testMode) return Number(CARDCOM_TEST_TERMINAL);
+    return Number(this.config!.credentials.terminalNumber);
   }
 
   private get apiName(): string {
-    return this.config!.testMode
-      ? this.config!.credentials.apiName || CARDCOM_TEST_API_NAME
-      : this.config!.credentials.apiName!;
+    if (this.config!.testMode) return CARDCOM_TEST_API_NAME;
+    return this.config!.credentials.apiName!;
   }
 
   private get apiPassword(): string {
-    return this.config!.testMode
-      ? this.config!.credentials.apiPassword || CARDCOM_TEST_API_PASSWORD
-      : this.config!.credentials.apiPassword!;
+    if (this.config!.testMode) return CARDCOM_TEST_API_PASSWORD;
+    return this.config!.credentials.apiPassword!;
   }
 
   private get displayMode(): PaymentDisplayMode {

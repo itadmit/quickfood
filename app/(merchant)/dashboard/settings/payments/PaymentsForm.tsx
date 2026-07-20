@@ -546,25 +546,31 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
                   className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
                 />
               </Field>
-              <Field label="API Name" hint="שם משתמש ה-API של המסוף.">
+              <Field label="API Name" hint="שם משתמש ה-API של המסוף (לא אימייל ההתחברות ל-QuickFood).">
                 <input
+                  name="cardcom-api-name"
                   value={v.cardcom.api_name}
                   onChange={(e) => setCardcom("api_name", e.target.value.trim())}
                   dir="ltr"
                   autoComplete="off"
+                  data-1p-ignore
+                  data-lpignore="true"
                   spellCheck={false}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
                 />
               </Field>
-              <Field label="API Password" hint="סיסמת ה-API. נשמרת מוצפנת ומשמשת גם לזיכויים.">
+              <Field label="API Password" hint="סיסמת ה-API של המסוף (לא סיסמת ההתחברות ל-QuickFood). נשמרת מוצפנת ומשמשת גם לזיכויים.">
                 <input
-                  type="password"
+                  type="text"
+                  name="cardcom-api-password"
                   value={v.cardcom.api_password}
                   onChange={(e) => setCardcom("api_password", e.target.value.trim())}
                   dir="ltr"
                   autoComplete="off"
+                  data-1p-ignore
+                  data-lpignore="true"
                   spellCheck={false}
-                  placeholder="••••••••"
+                  placeholder="סיסמת API מ-CardCom"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
                 />
               </Field>
