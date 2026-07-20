@@ -35,6 +35,7 @@ export interface DealWithSlots {
     quantity: number;
     choices: Array<{
       itemId: string;
+      fixedSizeId: string | null;
       item: { id: string; name: string; basePrice: number; available: boolean; images: string[] };
     }>;
   }>;
@@ -61,6 +62,7 @@ export function serializeDeal(deal: DealWithSlots) {
         base_price: c.item.basePrice,
         available: c.item.available,
         image: c.item.images[0] ?? null,
+        fixedSizeId: c.fixedSizeId,
       })),
     })),
   };
@@ -71,9 +73,21 @@ export async function assertDealInputBelongsToTenant(
   tenantId: string,
 ) {
   const ids = Array.from(new Set(body.slots.flatMap((s) => s.item_ids)));
-  const count = await prisma.menuItem.count({ where: { id: { in: ids }, tenantId } });
-  if (count !== ids.length) {
+  const items = await prisma.menuItem.findMany({
+    where: { id: { in: ids }, tenantId },
+    select: { id: true, sizes: { select: { id: true } } },
+  });
+  if (items.length !== ids.length) {
     throw apiError("validation_error", "פריט לא שייך לחנות", 422, "slots");
+  }
+  // Each pinned size must be a real size of the item it's pinned to.
+  const sizesByItem = new Map(items.map((i) => [i.id, new Set(i.sizes.map((s) => s.id))]));
+  for (const s of body.slots) {
+    for (const [itemId, sizeId] of Object.entries(s.fixed_sizes ?? {})) {
+      if (!sizesByItem.get(itemId)?.has(sizeId)) {
+        throw apiError("validation_error", "גודל קבוע לא תקין לפריט", 422, "slots");
+      }
+    }
   }
   if (body.category_id) {
     const cat = await prisma.menuCategory.findUnique({

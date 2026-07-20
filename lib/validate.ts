@@ -283,6 +283,9 @@ export const DealInputSchema = z.object({
         name: z.string().min(1).max(60),
         quantity: z.number().int().min(1).max(10),
         item_ids: z.array(UuidSchema).min(1).max(30),
+        // Optional per-item fixed size: { itemId: sizeId }. Absent/omitted
+        // item = customer chooses the size.
+        fixed_sizes: z.record(UuidSchema, UuidSchema).optional(),
       }),
     )
     .min(1)

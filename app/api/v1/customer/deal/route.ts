@@ -70,6 +70,7 @@ export async function GET(req: Request) {
           name: c.item.name,
           image: c.item.images[0] ?? c.item.imageUrl ?? null,
           available: visibleItemIds.has(c.itemId),
+          fixedSizeId: c.fixedSizeId,
         })),
       })),
     },

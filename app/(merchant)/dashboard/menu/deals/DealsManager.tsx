@@ -10,6 +10,12 @@ import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
+interface ItemSize {
+  id: string;
+  name: string;
+  priceDelta: number;
+  isDefault: boolean;
+}
 interface PickerItem {
   id: string;
   name: string;
@@ -17,13 +23,22 @@ interface PickerItem {
   categoryId: string;
   available: boolean;
   image: string | null;
+  sizes: ItemSize[];
 }
 
 interface DealSlotRow {
   id?: string;
   name: string;
   quantity: number;
-  items: Array<{ id: string; name: string; base_price: number; available: boolean; image: string | null }>;
+  items: Array<{
+    id: string;
+    name: string;
+    base_price: number;
+    available: boolean;
+    image: string | null;
+    /** Pinned size for this item in the deal; null/undefined = customer chooses. */
+    fixedSizeId?: string | null;
+  }>;
 }
 
 interface DealRow {
@@ -103,6 +118,9 @@ export function DealsManager({
           name: s.name,
           quantity: s.quantity,
           item_ids: s.items.map((i) => i.id),
+          fixed_sizes: Object.fromEntries(
+            s.items.filter((i) => i.fixedSizeId).map((i) => [i.id, i.fixedSizeId]),
+          ),
         })),
       };
       const res = await fetch(
@@ -492,25 +510,50 @@ function DealEditor({
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-1.5">
-              {slot.items.map((it) => (
-                <span
-                  key={it.id}
-                  className="inline-flex items-center gap-1.5 bg-white border border-qf-line rounded-lg px-2 py-1 text-xs"
-                >
-                  {it.name}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateSlot(si, { items: slot.items.filter((x) => x.id !== it.id) })
-                    }
-                    aria-label={`הסר ${it.name}`}
-                    className="text-qf-mute hover:text-qf-tomato"
+            <div className="space-y-1.5">
+              {slot.items.map((it) => {
+                const sizes = menuItems.find((m) => m.id === it.id)?.sizes ?? [];
+                return (
+                  <div
+                    key={it.id}
+                    className="flex items-center gap-2 bg-white border border-qf-line rounded-lg px-2 py-1.5 text-xs"
                   >
-                    <IcoClose s={10} />
-                  </button>
-                </span>
-              ))}
+                    <span className="flex-1 min-w-0 truncate">{it.name}</span>
+                    {sizes.length > 1 && (
+                      <select
+                        value={it.fixedSizeId ?? ""}
+                        onChange={(e) =>
+                          updateSlot(si, {
+                            items: slot.items.map((x) =>
+                              x.id === it.id ? { ...x, fixedSizeId: e.target.value || null } : x,
+                            ),
+                          })
+                        }
+                        className="text-xs border border-qf-line rounded-md px-1.5 py-1 bg-white max-w-[11rem]"
+                        title="גודל בתוך הדיל"
+                      >
+                        <option value="">גודל לבחירת הלקוח</option>
+                        {sizes.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name}
+                            {s.priceDelta ? ` (+₪${s.priceDelta})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateSlot(si, { items: slot.items.filter((x) => x.id !== it.id) })
+                      }
+                      aria-label={`הסר ${it.name}`}
+                      className="text-qf-mute hover:text-qf-tomato shrink-0"
+                    >
+                      <IcoClose s={12} />
+                    </button>
+                  </div>
+                );
+              })}
               <button
                 type="button"
                 onClick={() => setPickerSlot(pickerSlot === si ? null : si)}

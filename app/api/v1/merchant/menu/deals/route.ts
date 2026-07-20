@@ -44,7 +44,11 @@ export const POST = handler(async (req: Request) => {
           quantity: s.quantity,
           position: si,
           choices: {
-            create: s.item_ids.map((itemId, ii) => ({ itemId, position: ii })),
+            create: s.item_ids.map((itemId, ii) => ({
+              itemId,
+              position: ii,
+              fixedSizeId: s.fixed_sizes?.[itemId] ?? null,
+            })),
           },
         })),
       },

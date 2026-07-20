@@ -412,23 +412,39 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
             name: item.name,
             price_delta: 0,
           });
-          // Size: the fixed price covers the default size; a larger size adds
-          // its priceDelta. Sizes are NOT eligible for the free-extras gift.
+          // Size. Two modes, enforced server-side:
+          //  - Merchant-pinned (choice.fixedSizeId): use that size, charge 0 -
+          //    the deal's fixed price already accounts for it. Client size_id
+          //    is ignored. Falls back to default if the pinned size was deleted.
+          //  - Customer choice: fixed price covers the default size; a larger
+          //    size adds its priceDelta.
+          // Sizes are NOT eligible for the free-extras gift either way.
           if (item.sizes.length > 0) {
-            const chosen = unit.size_id
-              ? item.sizes.find((s) => s.id === unit.size_id)
-              : (item.sizes.find((s) => s.isDefault) ?? item.sizes[0]);
-            if (unit.size_id && !chosen) {
-              throw new CartValidationError("size_invalid", unit.item_id);
+            const choice = slot.choices.find((c) => c.itemId === unit.item_id);
+            const lockedSizeId = choice?.fixedSizeId ?? null;
+            const fallback = item.sizes.find((s) => s.isDefault) ?? item.sizes[0];
+            let chosen: (typeof item.sizes)[number] | undefined;
+            let chargeDelta: number;
+            if (lockedSizeId) {
+              chosen = item.sizes.find((s) => s.id === lockedSizeId) ?? fallback;
+              chargeDelta = 0;
+            } else {
+              chosen = unit.size_id
+                ? item.sizes.find((s) => s.id === unit.size_id)
+                : fallback;
+              if (unit.size_id && !chosen) {
+                throw new CartValidationError("size_invalid", unit.item_id);
+              }
+              chargeDelta = chosen?.priceDelta ?? 0;
             }
             if (chosen) {
-              sizeDelta += chosen.priceDelta;
+              sizeDelta += chargeDelta;
               selectedOptions.push({
                 group_id: `${slot.id}:size`,
                 group_name: `${unitLabel} · גודל`,
                 option_id: chosen.id,
                 name: chosen.name,
-                price_delta: chosen.priceDelta,
+                price_delta: chargeDelta,
                 kind: "size",
               });
             }

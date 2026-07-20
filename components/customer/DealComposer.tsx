@@ -43,6 +43,10 @@ interface ComposerChoice {
   name: string;
   image: string | null;
   available: boolean;
+  /** When set, this item is pinned to a specific size in the deal - the
+   *  customer doesn't choose, and the size delta is NOT charged (the fixed
+   *  price already accounts for it). */
+  fixedSizeId?: string | null;
 }
 interface ComposerDeal {
   id: string;
@@ -121,11 +125,14 @@ export function DealComposer({
         for (const slot of d.deal.slots as ComposerDeal["slots"]) {
           for (let i = 0; i < slot.quantity; i++) {
             const preItemId = slot.itemIds.length === 1 ? slot.itemIds[0] : null;
+            const preLocked = preItemId
+              ? (slot.choices ?? []).find((c) => c.id === preItemId)?.fixedSizeId ?? null
+              : null;
             expanded.push({
               slotId: slot.id,
               label: slot.quantity > 1 ? `${slot.name} ${i + 1}` : slot.name,
               itemId: preItemId,
-              sizeId: preItemId ? defaultSizeId(d.items[preItemId]) : null,
+              sizeId: preItemId ? (preLocked ?? defaultSizeId(d.items[preItemId])) : null,
               optionIds: new Set(),
             });
           }
@@ -158,13 +165,23 @@ export function DealComposer({
     return m;
   }, [deal, items]);
 
+  /** Pinned size for a (slot, item) pair, null when the customer chooses. */
+  function lockedSizeId(slotId: string, itemId: string): string | null {
+    return slotChoices.get(slotId)?.find((c) => c.id === itemId)?.fixedSizeId ?? null;
+  }
+
   function pickItem(unitIdx: number, itemId: string) {
     setUnits((prev) =>
-      prev.map((u, i) =>
-        i === unitIdx
-          ? { ...u, itemId, sizeId: defaultSizeId(items[itemId]), optionIds: new Set<string>() }
-          : u,
-      ),
+      prev.map((u, i) => {
+        if (i !== unitIdx) return u;
+        const locked = lockedSizeId(u.slotId, itemId);
+        return {
+          ...u,
+          itemId,
+          sizeId: locked ?? defaultSizeId(items[itemId]),
+          optionIds: new Set<string>(),
+        };
+      }),
     );
   }
 
@@ -224,16 +241,19 @@ export function DealComposer({
     return sum;
   }, [chargeByPick]);
 
-  // Size upgrades are charged on top of the fixed price (never gifted).
+  // Customer-chosen size upgrades are charged on top of the fixed price (never
+  // gifted). A merchant-pinned size is NOT charged - the fixed price covers it.
   const sizeExtras = useMemo(() => {
     let sum = 0;
     for (const u of units) {
       if (!u.itemId || !u.sizeId) continue;
+      if (lockedSizeId(u.slotId, u.itemId)) continue;
       const size = items[u.itemId]?.sizes?.find((s) => s.id === u.sizeId);
       if (size) sum += size.priceDelta;
     }
     return sum;
-  }, [units, items]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [units, items, slotChoices]);
 
   const incomplete = useMemo(() => {
     for (const u of units) {
@@ -263,6 +283,7 @@ export function DealComposer({
         groupName: u.label,
         priceDelta: 0,
       });
+      const locked = !!lockedSizeId(u.slotId, item.id);
       const size = u.sizeId ? item.sizes?.find((s) => s.id === u.sizeId) : undefined;
       if (size && (item.sizes?.length ?? 0) > 1) {
         displayOptions.push({
@@ -270,7 +291,7 @@ export function DealComposer({
           optionId: size.id,
           name: size.name,
           groupName: `${u.label} · גודל`,
-          priceDelta: size.priceDelta,
+          priceDelta: locked ? 0 : size.priceDelta,
         });
       }
       for (const g of item.optionGroups) {
@@ -423,7 +444,18 @@ export function DealComposer({
                     })}
                   </div>
 
-                  {chosen && (chosen.sizes?.length ?? 0) > 1 && (
+                  {chosen && lockedSizeId(u.slotId, chosen.id) && (() => {
+                    const locked = chosen.sizes?.find(
+                      (s) => s.id === lockedSizeId(u.slotId, chosen.id),
+                    );
+                    return locked ? (
+                      <div className="rounded-xl bg-qf-line-soft/40 border border-qf-line px-3 py-2 text-xs text-qf-ink2">
+                        גודל: <span className="font-semibold">{locked.name}</span>
+                      </div>
+                    ) : null;
+                  })()}
+
+                  {chosen && !lockedSizeId(u.slotId, chosen.id) && (chosen.sizes?.length ?? 0) > 1 && (
                     <div className="rounded-xl bg-qf-line-soft/40 border border-qf-line p-3 space-y-1.5">
                       <div className="text-xs font-semibold text-qf-ink2">גודל</div>
                       <div className="flex flex-wrap gap-1.5">

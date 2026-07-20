@@ -21,7 +21,18 @@ export default async function DealsPage() {
     prisma.menuItem.findMany({
       where: { tenantId: session.tenantId },
       orderBy: [{ categoryId: "asc" }, { position: "asc" }],
-      select: { id: true, name: true, basePrice: true, categoryId: true, available: true, images: true },
+      select: {
+        id: true,
+        name: true,
+        basePrice: true,
+        categoryId: true,
+        available: true,
+        images: true,
+        sizes: {
+          orderBy: { position: "asc" },
+          select: { id: true, name: true, priceDelta: true, isDefault: true },
+        },
+      },
     }),
     prisma.menuCategory.findMany({
       where: { tenantId: session.tenantId, active: true },
@@ -40,6 +51,7 @@ export default async function DealsPage() {
         categoryId: i.categoryId,
         available: i.available,
         image: i.images[0] ?? null,
+        sizes: i.sizes,
       }))}
       categories={categories}
     />
