@@ -3,10 +3,10 @@
  *
  * Verifies the HMAC signature (X-Quickcommerce-Signature: sha256=<hex>) and
  * reacts to the events QuickFood cares about:
- *   - payment_method.created  → mirror IDs + create base subscription with
- *                                trial_days:30 (first month was already paid
- *                                upfront via the setup amount, so the hub
- *                                shouldn't invoice again for 30 days).
+ *   - payment_method.created  → mirror IDs + create base subscription as
+ *                                'active' (trial_days:0; first month was already
+ *                                paid upfront via the setup amount, so the hub's
+ *                                next invoice fires one month from setup).
  *   - subscription.created    → mirror sub id (idempotent).
  *   - invoice.paid (base)     → bump billingSetupCompletedAt.
  *   - charge.succeeded        → SMS top-up paid → add credits per metadata.
@@ -32,9 +32,11 @@ export const dynamic = "force-dynamic";
 
 const BASE_PLAN_CODE = "quickfood_base";
 // First month already paid via the payment-methods/setup `amount` (₪352.82).
-// Defer the hub's automatic billing so the merchant isn't charged again
-// before the cycle is over.
-const BASE_TRIAL_DAYS_AFTER_SETUP = 30;
+// trial_days:0 → the hub creates the subscription 'active' (a paying customer
+// is NOT a trial) with the next invoice one calendar month after setup. Do NOT
+// use a positive value here: the hub sets period_end = trialEnd + 1 month, which
+// would double-defer billing by ~2 months AND leave the sub showing as 'trial'.
+const BASE_TRIAL_DAYS_AFTER_SETUP = 0;
 // Net (ex-VAT) base-plan price reported as the Purchase conversion value, kept
 // in step with the CompleteRegistration value so Meta sees a consistent funnel.
 const BASE_PLAN_VALUE_ILS = 299;
@@ -140,9 +142,8 @@ export const POST = handler(async (req: Request) => {
       }
 
       // Create the base subscription if we haven't already. The hub already
-      // charged ₪352.82 via the setup amount, so the subscription rides on
-      // a 30-day initial trial - the next invoice fires one billing cycle
-      // from now.
+      // charged ₪352.82 via the setup amount, so the subscription is created
+      // 'active' (trial_days:0) with the next invoice one billing cycle from now.
       if (!tenant.billingSubscriptionId && paymentMethodId) {
         try {
           const introPrice = activeIntroPrice(tenant);
