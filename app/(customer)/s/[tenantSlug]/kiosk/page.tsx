@@ -52,6 +52,13 @@ export default async function KioskPage({
   const cardProvider = await getActiveCardProviderSummary(tenant.id);
   const growEnabled = !!cardProvider;
 
+  // Email opt-in on the kiosk is off by default - the payment provider issues
+  // and sends the tax invoice. Show it only when the merchant requires email
+  // or runs reviews by email.
+  const collectEmail =
+    tenant.checkoutRequireEmail ||
+    (tenant.reviewsEnabled && tenant.reviewsChannel === "email");
+
   const [categories, items] = await Promise.all([
     prisma.menuCategory.findMany({
       where: { tenantId: tenant.id, active: true },
@@ -103,6 +110,7 @@ export default async function KioskPage({
       businessType={tenant.businessType}
       featuredBadgeLabel={tenant.featuredBadgeLabel}
       growEnabled={growEnabled}
+      collectEmail={collectEmail}
       kioskCollectPhone={tenant.kioskCollectPhone}
       kioskRequirePhone={tenant.kioskRequirePhone}
       stringOverrides={normalizeKioskOverrides(tenant.kioskStringOverrides)}

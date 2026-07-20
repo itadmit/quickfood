@@ -120,6 +120,7 @@ export function KioskApp({
   businessType: businessTypeProp,
   featuredBadgeLabel,
   growEnabled,
+  collectEmail,
   kioskCollectPhone,
   kioskRequirePhone,
   stringOverrides,
@@ -138,6 +139,9 @@ export function KioskApp({
   businessType: string;
   featuredBadgeLabel: string | null;
   growEnabled: boolean;
+  /** Show the "receive tax invoice by email" opt-in on the kiosk. Off by
+   *  default - the payment provider issues + sends the invoice. */
+  collectEmail: boolean;
   kioskCollectPhone: boolean;
   kioskRequirePhone: boolean;
   stringOverrides: KioskOverrides;
@@ -1444,6 +1448,7 @@ export function KioskApp({
                 the card resets the email and the marketing tick, so a
                 customer who toggles off doesn't accidentally leave
                 stale opt-ins behind. */}
+            {collectEmail && (
             <div
               className={cn(
                 "rounded-2xl border-2 bg-white transition overflow-hidden",
@@ -1511,6 +1516,7 @@ export function KioskApp({
                 </div>
               )}
             </div>
+            )}
           </div>
 
           <button

@@ -16,6 +16,7 @@ export default async function CheckoutSettingsPage() {
     where: { id: session.tenantId },
     select: {
       checkoutShowTracking: true,
+      checkoutRequireEmail: true,
       scheduledOrdersEnabled: true,
       pickupEnabled: true,
       cutleryEnabled: true,
@@ -33,6 +34,7 @@ export default async function CheckoutSettingsPage() {
       <CheckoutSettingsForm
         initial={{
           showTracking: tenant.checkoutShowTracking,
+          requireEmail: tenant.checkoutRequireEmail,
           scheduledOrdersEnabled: tenant.scheduledOrdersEnabled,
           pickupEnabled: tenant.pickupEnabled,
           cutleryEnabled: tenant.cutleryEnabled,

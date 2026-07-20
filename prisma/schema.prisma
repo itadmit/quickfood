@@ -294,6 +294,13 @@ model Tenant {
   // e-commerce "thank you" receipt.
   checkoutShowTracking Boolean @default(true) @map("checkout_show_tracking")
 
+  // When false (default), email is NOT required at checkout/kiosk - the payment
+  // provider (Grow/CardCom) issues + sends the tax invoice, and the customer
+  // enters their email on the provider's own page. Merchants who still want to
+  // collect email at checkout flip this on. (Review-by-email tenants require
+  // email regardless - that's a separate, reviews-driven need.)
+  checkoutRequireEmail Boolean @default(false) @map("checkout_require_email")
+
   // When false, the customer can only order "as soon as possible" - the
   // schedule-for-later section is hidden from checkout. Useful for fast-food
   // spots that don't want pre-orders piling up in the queue.

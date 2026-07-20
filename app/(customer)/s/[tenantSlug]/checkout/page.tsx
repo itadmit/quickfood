@@ -25,6 +25,7 @@ export default async function CheckoutPage({
     reviewsChannel: string;
     reviewsEnabled: boolean;
     pickupEnabled: boolean;
+    checkoutRequireEmail: boolean;
   } | null = null;
   try {
     settings = await prisma.tenant.findUnique({
@@ -34,6 +35,7 @@ export default async function CheckoutPage({
         reviewsEnabled: true,
         pickupEnabled: true,
         loyaltyConfig: true,
+        checkoutRequireEmail: true,
       },
     });
   } catch (err) {
@@ -51,8 +53,12 @@ export default async function CheckoutPage({
     console.error("[checkout/page] card provider lookup failed", err);
   }
 
+  // Email is required only when reviews go out by email, or the merchant
+  // explicitly opted in (Settings -> Checkout). Card payments no longer force
+  // it - the payment provider issues + emails the tax invoice itself.
   const requireEmail =
-    !!settings?.reviewsEnabled && settings.reviewsChannel === "email";
+    (!!settings?.reviewsEnabled && settings.reviewsChannel === "email") ||
+    (settings?.checkoutRequireEmail ?? false);
 
   const cardEnabled = !!cardProvider;
 

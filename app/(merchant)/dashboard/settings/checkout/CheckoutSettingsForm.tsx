@@ -8,6 +8,7 @@ import { cn } from "@/lib/cn";
 
 interface Initial {
   showTracking: boolean;
+  requireEmail: boolean;
   scheduledOrdersEnabled: boolean;
   pickupEnabled: boolean;
   cutleryEnabled: boolean;
@@ -20,6 +21,7 @@ interface Initial {
 export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
   const router = useRouter();
   const [showTracking, setShowTracking] = useState(initial.showTracking);
+  const [requireEmail, setRequireEmail] = useState(initial.requireEmail);
   const [scheduledOrdersEnabled, setScheduledOrdersEnabled] = useState(
     initial.scheduledOrdersEnabled,
   );
@@ -43,6 +45,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           checkout_show_tracking: showTracking,
+          checkout_require_email: requireEmail,
           scheduled_orders_enabled: scheduledOrdersEnabled,
           pickup_enabled: pickupEnabled,
           tip_enabled: tipEnabled,
@@ -79,6 +82,17 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
         }
         value={showTracking}
         onChange={setShowTracking}
+      />
+
+      <Toggle
+        label="דרוש כתובת מייל בקופה"
+        description={
+          requireEmail
+            ? "הלקוח חייב למלא כתובת מייל כדי להשלים הזמנה."
+            : "כתובת המייל לא נדרשת. חברת הסליקה (Grow / CardCom) מפיקה ושולחת את חשבונית המס, והלקוח מזין את המייל בעמוד התשלום שלה. (במסעדות עם ביקורות במייל - המייל עדיין נדרש.)"
+        }
+        value={requireEmail}
+        onChange={setRequireEmail}
       />
 
       <Toggle

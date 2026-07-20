@@ -649,10 +649,12 @@ export function CustomerCheckout({
 
   const emailLooksValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
-  // Online (Grow) payments are the actual "payment page" the card processor
-  // audits - those require full contact details. Cash stays lenient.
+  // Email is only required when the tenant needs it (reviews-by-email or the
+  // "require email" checkout setting) - NOT just because the order is paid by
+  // card. The payment provider (Grow/CardCom) issues and sends the tax invoice
+  // and collects the email on its own page, so forcing it here is just friction.
   const onlinePayment = !!paymentMethod && paymentMethod !== "cash";
-  const emailRequired = requireEmail || onlinePayment;
+  const emailRequired = requireEmail;
   const lastNameRequired = onlinePayment;
 
   function validateIsraeliPhone(raw: string): boolean {
@@ -973,9 +975,7 @@ export function CustomerCheckout({
                     />
                   </Field>
                   <div className="text-xs text-qf-mute mt-1">
-                    {onlinePayment
-                      ? "לשם תישלח חשבונית מס/קבלה"
-                      : "נשלח אליך מייל קצר לאחר ההזמנה כדי שתוכל לדרג אותה"}
+                    נשלח אליך מייל קצר עם עדכונים על ההזמנה
                   </div>
                 </div>
               )}
