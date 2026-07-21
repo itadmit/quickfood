@@ -108,6 +108,8 @@ export const POST = handler(async (req: Request) => {
             // Token is on file - mark setup complete + close out the local
             // trial so the dashboard banner / lock disappear.
             billingSetupCompletedAt: new Date(),
+            // A fresh card recovers a store that was suspended for non-payment.
+            billingSuspendedAt: null,
           },
         });
       }
@@ -190,7 +192,8 @@ export const POST = handler(async (req: Request) => {
       if (d.plan_code === BASE_PLAN_CODE) {
         await prisma.tenant.update({
           where: { id: tenant.id },
-          data: { billingSubscriptionId: subId },
+          // A (re)created/updated base subscription means billing is live again.
+          data: { billingSubscriptionId: subId, billingSuspendedAt: null },
         });
       } else if (d.plan_code === REVIEWS_WHATSAPP_PLAN_CODE) {
         await prisma.tenant.update({
@@ -214,7 +217,8 @@ export const POST = handler(async (req: Request) => {
       if (d.plan_code === BASE_PLAN_CODE) {
         await prisma.tenant.update({
           where: { id: tenant.id },
-          data: { billingSetupCompletedAt: new Date() },
+          // A paid base invoice recovers a store suspended for non-payment.
+          data: { billingSetupCompletedAt: new Date(), billingSuspendedAt: null },
         });
       }
       break;
@@ -298,9 +302,16 @@ export const POST = handler(async (req: Request) => {
       const subId = d.id ?? d.subscription_id;
       if (!subId) break;
       if (subId === tenant.billingSubscriptionId) {
+        // Base subscription cancelled - the hub only cancels after dunning
+        // (≈3 failed charges over several days), so this is the definitive
+        // non-payment signal. Suspend the storefront until a card recovers it.
         await prisma.tenant.update({
           where: { id: tenant.id },
-          data: { billingSubscriptionId: null, billingSetupCompletedAt: null },
+          data: {
+            billingSubscriptionId: null,
+            billingSetupCompletedAt: null,
+            billingSuspendedAt: new Date(),
+          },
         });
       } else if (subId === tenant.reviewsWhatsappSubscriptionId) {
         // Add-on ended - clear the mirror id. If the merchant had picked

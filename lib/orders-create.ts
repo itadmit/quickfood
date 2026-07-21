@@ -155,6 +155,8 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   });
   if (!tenant) throw new CartValidationError("tenant_not_found");
   if (tenant.status !== "active") throw new CartValidationError("tenant_inactive");
+  // Store closed for non-payment (hub cancelled the base subscription).
+  if (tenant.billingSuspendedAt) throw new CartValidationError("tenant_inactive");
 
   const branch = tenant.branches[0];
   if (!branch) throw new CartValidationError("no_branch");

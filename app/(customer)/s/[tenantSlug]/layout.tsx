@@ -18,6 +18,7 @@ import { FloatingCartCTA } from "@/components/customer/FloatingCartCTA";
 import { CampaignPopup } from "@/components/customer/CampaignPopup";
 import { CustomerChromeGate } from "@/components/customer/CustomerChromeGate";
 import { CustomerFooter } from "@/components/customer/CustomerFooter";
+import { StoreSuspended } from "@/components/customer/StoreSuspended";
 import { VisitBeacon } from "@/components/customer/VisitBeacon";
 import { QrLandingModal } from "@/components/customer/QrLandingModal";
 
@@ -104,6 +105,21 @@ export default async function CustomerLayout({
   // here shouldn't see a "manage" CTA that lands them somewhere unrelated.
   const isOwnMerchant =
     session?.type === "merchant" && session.tenantId === tenant.id;
+
+  // Storefront closed for billing (hub cancelled the base subscription for
+  // non-payment) or an admin suspension. Replace the whole storefront with a
+  // neutral "temporarily closed" page - the owner gets a link to fix payment.
+  if (tenant.billingSuspendedAt || tenant.status === "suspended") {
+    return (
+      <ThemeProvider themeId={tenant.themeId} className="min-h-screen bg-qf-bg">
+        <StoreSuspended
+          tenantName={tenant.name}
+          tenantLogoUrl={tenant.logoUrl}
+          isOwner={isOwnMerchant}
+        />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider themeId={tenant.themeId} className="min-h-screen bg-qf-bg">

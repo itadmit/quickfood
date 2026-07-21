@@ -477,6 +477,11 @@ model Tenant {
   // then SMS purchases are blocked and after `trialEndsAt` the whole
   // dashboard is locked behind a "complete payment" screen.
   billingSetupCompletedAt DateTime? @map("billing_setup_completed_at")
+  // Set when the hub cancels the base subscription after failed charges
+  // (dunning exhausted). While non-null the customer storefront is closed
+  // ("מנוי לא פעיל"); cleared automatically when a valid card / paid invoice
+  // lands. Independent of the admin-managed `status` field.
+  billingSuspendedAt      DateTime? @map("billing_suspended_at")
   // 7-day local trial countdown set at signup. After this date, without a
   // saved payment method, the dashboard is fully locked.
   trialEndsAt             DateTime? @map("trial_ends_at")
