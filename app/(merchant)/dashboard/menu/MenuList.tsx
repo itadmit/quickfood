@@ -289,6 +289,12 @@ export function MenuList({
             >
               ייבוא מתפריט (PDF/תמונה)
             </button>
+            <a
+              href="/api/v1/merchant/menu/export"
+              className="inline-flex px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/5"
+            >
+              ייצוא לאקסל
+            </a>
             <Link
               href="/dashboard/menu/new"
               className="flex-1 sm:flex-initial text-center px-3.5 py-2 rounded-xl bg-black text-[#F8CB1E] border-2 border-black font-bold text-sm shadow-[0_2px_0_#000] hover:bg-black/90"
