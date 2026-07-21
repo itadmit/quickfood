@@ -78,6 +78,7 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
           is_default: o.isDefault,
           available: o.available,
           image_url: o.imageUrl,
+          max_quantity: o.maxQuantity,
         })),
       })),
     },

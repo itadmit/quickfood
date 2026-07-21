@@ -299,6 +299,7 @@ function errorMessageFor(code: string): string {
     required_group_missing: "חובה לבחור באחת האפשרויות",
     too_many_in_single_group: "ניתן לבחור רק אפשרות אחת",
     too_many_in_group: "חרגת מהמספר המקסימלי של בחירות",
+    too_many_of_option: "חרגת מהכמות המקסימלית לאחת האפשרויות",
     address_required: "נדרשת כתובת למשלוח",
     address_not_found: "הכתובת לא נמצאה",
     min_order_not_met: "לא הגעת לסכום מינימום להזמנה",

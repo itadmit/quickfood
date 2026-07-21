@@ -958,6 +958,10 @@ model ItemOption {
   available  Boolean         @default(true)
   imageUrl   String?         @map("image_url")
   position   Int             @default(0)
+  // Per-option quantity ceiling for allowQty groups (e.g. "max 2 pitas in
+  // the platter"). 0 = no per-option cap; the group's maxSelect still bounds
+  // the total. Ignored when the group is not allowQty (one unit each anyway).
+  maxQuantity Int            @default(0) @map("max_quantity")
 
   @@index([groupId, position])
   @@map("item_options")
@@ -1025,6 +1029,9 @@ model ModifierSetOption {
   available  Boolean     @default(true)
   imageUrl   String?     @map("image_url")
   position   Int         @default(0)
+  // Per-option quantity ceiling inherited by attached groups. See
+  // ItemOption.maxQuantity.
+  maxQuantity Int        @default(0) @map("max_quantity")
   // Provenance for bulk imports - scoped per parent set so the same source
   // option id can re-appear if the merchant has two imported sets.
   externalId String?     @map("external_id") @db.VarChar(64)

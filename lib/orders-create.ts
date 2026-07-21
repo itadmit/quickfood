@@ -252,6 +252,12 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       if (unitsInGroup > effectiveMax) {
         throw new CartValidationError("too_many_in_group", group.id);
       }
+      for (const o of picksInGroup) {
+        const cap = (o as { maxQuantity?: number }).maxQuantity ?? 0;
+        if (cap > 0 && unitOf(o) > cap) {
+          throw new CartValidationError("too_many_of_option", group.id);
+        }
+      }
 
       // One pseudo-pick per unit ("<id>#0", "<id>#1", ...) so cheapest-free
       // and bundle caps allocate across repeated picks of the same option.

@@ -137,6 +137,7 @@ export default async function ItemEditPage({
             isDefault: o.isDefault,
             available: o.available,
             imageUrl: o.imageUrl,
+            maxQuantity: o.maxQuantity,
           })),
         })),
       }}

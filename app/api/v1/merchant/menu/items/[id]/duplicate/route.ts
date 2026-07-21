@@ -119,6 +119,7 @@ export const POST = handler(async (_req, { params }: { params: Promise<{ id: str
               isDefault: o.isDefault,
               available: o.available,
               imageUrl: newOptionImages.get(o.id) ?? null,
+              maxQuantity: o.maxQuantity,
               position: oi,
             })),
           },

@@ -47,6 +47,7 @@ export default async function ModifiersPage() {
           isDefault: o.isDefault,
           available: o.available,
           imageUrl: o.imageUrl,
+          maxQuantity: o.maxQuantity,
         })),
       }))}
     />

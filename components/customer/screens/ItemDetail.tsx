@@ -38,6 +38,7 @@ interface Option {
   halfPriceDelta?: number | null;
   isDefault: boolean;
   imageUrl?: string | null;
+  maxQuantity?: number;
 }
 type HalfPlacement = "left" | "right" | "full";
 
@@ -411,6 +412,8 @@ export function ItemDetail({
   function bumpOptionQty(group: OptionGroup, optionId: string, delta: 1 | -1) {
     const next = optionQty(group, optionId) + delta;
     if (delta > 0 && groupUnits(group) >= group.maxSelect) return;
+    const cap = group.options.find((o) => o.id === optionId)?.maxQuantity ?? 0;
+    if (delta > 0 && cap > 0 && optionQty(group, optionId) >= cap) return;
     setPickState(group, optionId, Math.max(0, next));
   }
 
@@ -1017,7 +1020,9 @@ export function ItemDetail({
                     !isSingle && checked && g.allowQty
                       ? {
                           qty: optionQty(g, o.id),
-                          canInc: !atMax,
+                          canInc:
+                            !atMax &&
+                            (!o.maxQuantity || optionQty(g, o.id) < o.maxQuantity),
                           onInc: () => bumpOptionQty(g, o.id, 1),
                           onDec: () => bumpOptionQty(g, o.id, -1),
                         }

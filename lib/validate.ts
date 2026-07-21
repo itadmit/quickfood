@@ -142,6 +142,7 @@ export const ItemOptionInputSchema = z.object({
   is_default: z.boolean().default(false),
   available: z.boolean().default(true),
   image_url: z.string().url().nullable().optional(),
+  max_quantity: z.number().int().min(0).default(0),
 });
 
 type ModifierShape = {

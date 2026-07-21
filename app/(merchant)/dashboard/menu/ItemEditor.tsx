@@ -34,6 +34,7 @@ interface Option {
   isDefault: boolean;
   available: boolean;
   imageUrl: string | null;
+  maxQuantity: number;
 }
 
 interface OptionGroup {
@@ -301,6 +302,7 @@ export function ItemEditor({
             is_default: o.isDefault,
             available: o.available,
             image_url: o.imageUrl,
+            max_quantity: g.allowQty ? (o.maxQuantity ?? 0) : 0,
           })),
         })),
       };
@@ -1476,6 +1478,26 @@ function GroupEditor({
                 placeholder="חצי"
               />
             )}
+            {group.allowQty && (
+              <input
+                type="number"
+                min={0}
+                value={o.maxQuantity || ""}
+                onChange={(e) => {
+                  const raw = e.target.value.trim();
+                  const parsed = raw === "" ? 0 : Math.max(0, parseInt(raw, 10) || 0);
+                  onChange({
+                    ...group,
+                    options: group.options.map((x, idx) =>
+                      idx === oi ? { ...x, maxQuantity: parsed } : x,
+                    ),
+                  });
+                }}
+                className="w-16 px-2 py-1.5 rounded-lg border border-qf-line-dash text-sm bg-white tnum shrink-0"
+                title="מקסימום כמות לאפשרות הזו (0 = ללא הגבלה)"
+                placeholder="מקס׳"
+              />
+            )}
             <label
               className="text-xs inline-flex items-center justify-center w-6 h-8 shrink-0"
               title="ברירת מחדל"
@@ -1545,6 +1567,7 @@ function GroupEditor({
                 isDefault: false,
                 available: true,
                 imageUrl: null,
+                maxQuantity: 0,
               },
             ],
           })

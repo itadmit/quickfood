@@ -7,6 +7,7 @@ interface InlineOption {
   isDefault: boolean;
   available: boolean;
   imageUrl: string | null;
+  maxQuantity: number;
 }
 
 interface IncomingOption {
@@ -16,6 +17,7 @@ interface IncomingOption {
   is_default: boolean;
   available: boolean;
   image_url?: string | null;
+  max_quantity?: number;
 }
 
 interface IncomingGroup {
@@ -38,6 +40,7 @@ export async function resolveGroupOptions(
         isDefault: o.is_default,
         available: o.available,
         imageUrl: o.image_url ?? null,
+        maxQuantity: o.max_quantity ?? 0,
       }));
   }
   const rows = await prisma.modifierSetOption.findMany({
@@ -51,6 +54,7 @@ export async function resolveGroupOptions(
       isDefault: true,
       available: true,
       imageUrl: true,
+      maxQuantity: true,
     },
   });
   const bySet = new Map<string, InlineOption[]>();
@@ -63,6 +67,7 @@ export async function resolveGroupOptions(
       isDefault: r.isDefault,
       available: r.available,
       imageUrl: r.imageUrl,
+      maxQuantity: r.maxQuantity,
     });
   }
   return (g) => {
@@ -76,6 +81,7 @@ export async function resolveGroupOptions(
       isDefault: o.is_default,
       available: o.available,
       imageUrl: o.image_url ?? null,
+      maxQuantity: o.max_quantity ?? 0,
     }));
   };
 }

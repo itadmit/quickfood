@@ -46,6 +46,7 @@ export const GET = handler(async () => {
         is_default: o.isDefault,
         available: o.available,
         image_url: o.imageUrl,
+        max_quantity: o.maxQuantity,
       })),
     })),
   });
@@ -83,6 +84,7 @@ export const POST = handler(async (req: Request) => {
           isDefault: o.is_default,
           available: o.available,
           imageUrl: o.image_url ?? null,
+          maxQuantity: o.max_quantity,
           position: oi,
         })),
       },

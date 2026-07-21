@@ -18,6 +18,7 @@ interface SetOption {
   isDefault: boolean;
   available: boolean;
   imageUrl: string | null;
+  maxQuantity: number;
 }
 
 interface ModifierSet {
@@ -115,6 +116,7 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
         is_default: o.isDefault,
         available: o.available,
         image_url: o.imageUrl,
+        max_quantity: editing.allowQty ? (o.maxQuantity ?? 0) : 0,
       })),
     };
     const url = editing.id
@@ -195,6 +197,7 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
             is_default: o.isDefault,
             available: o.available,
             image_url: o.imageUrl,
+            max_quantity: s.allowQty ? (o.maxQuantity ?? 0) : 0,
           })),
         }),
       });
@@ -731,6 +734,7 @@ function SetEditor({
                     isDefault: false,
                     available: true,
                     imageUrl: null,
+                    maxQuantity: 0,
                   },
                 ],
               })
@@ -750,6 +754,7 @@ function SetEditor({
             <span className="flex-1 min-w-0">אפשרות</span>
             <span className="w-16 text-center shrink-0">{set.customHalfPrice ? "מלא" : "מחיר"}</span>
             {set.customHalfPrice && <span className="w-16 text-center shrink-0">חצי</span>}
+            {set.allowQty && <span className="w-16 text-center shrink-0">מקס׳</span>}
             <span className="w-6 shrink-0" aria-hidden />
             <span className="w-12 shrink-0" aria-hidden />
             <span className="w-8 shrink-0" aria-hidden />
@@ -828,6 +833,26 @@ function SetEditor({
                     className="w-16 px-2 py-1.5 rounded-xl border border-qf-line-dash text-sm bg-white tnum shrink-0"
                     title="מחיר על חצי (₪)"
                     placeholder="חצי"
+                  />
+                )}
+                {set.allowQty && (
+                  <input
+                    type="number"
+                    min={0}
+                    value={o.maxQuantity || ""}
+                    onChange={(e) => {
+                      const raw = e.target.value.trim();
+                      const parsed = raw === "" ? 0 : Math.max(0, parseInt(raw, 10) || 0);
+                      onChange({
+                        ...set,
+                        options: set.options.map((x, i) =>
+                          i === oi ? { ...x, maxQuantity: parsed } : x,
+                        ),
+                      });
+                    }}
+                    className="w-16 px-2 py-1.5 rounded-xl border border-qf-line-dash text-sm bg-white tnum shrink-0"
+                    title="מקסימום כמות לאפשרות הזו (0 = ללא הגבלה)"
+                    placeholder="מקס׳"
                   />
                 )}
                 <label

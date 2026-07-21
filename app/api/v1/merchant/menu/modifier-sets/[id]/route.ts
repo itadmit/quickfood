@@ -48,6 +48,7 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
         is_default: o.isDefault,
         available: o.available,
         image_url: o.imageUrl,
+        max_quantity: o.maxQuantity,
       })),
     },
   });
@@ -97,6 +98,7 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
           isDefault: o.is_default,
           available: o.available,
           imageUrl: o.image_url ?? null,
+          maxQuantity: o.max_quantity,
           position: oi,
         })),
       });
@@ -141,6 +143,7 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
             isDefault: o.is_default,
             available: o.available,
             imageUrl: o.image_url ?? null,
+            maxQuantity: o.max_quantity,
             position: oi,
           })),
         ),
