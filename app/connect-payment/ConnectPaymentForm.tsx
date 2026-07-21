@@ -86,7 +86,10 @@ export function ConnectPaymentForm({ prefill }: Props) {
         </p>
 
         <div className="rounded-xl border-2 border-black bg-[#FFF7DE] px-4 py-3">
-          <div className="text-sm font-black text-black">69₪ לחודש + 1% עמלת אשראי</div>
+          <div className="text-sm font-black text-black">69₪ לחודש + 1% עמלת אשראי + מע״מ</div>
+          <div className="text-[11px] text-black/60 mt-0.5">
+            ייתכנו עמלות סליקה נוספות בהתאם לאמצעי התשלום וסוג עסקה (כגון תשלומים, ארנקים דיגיטליים וכרטיסים בינלאומיים).
+          </div>
           <div className="text-[11px] text-black/60 mt-0.5">
             *בכפוף לתנאים המלאים בחברת גרואו
           </div>
