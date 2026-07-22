@@ -30,8 +30,8 @@ const PRODUCTS: Product[] = [
     name: "אפליקציית לוח בקרה",
     desc: "ניהול הזמנות, תפריט והגדרות במסך מלא — על עמדת הקופה או על טאבלט.",
     platforms: {
-      windows: { req: "Windows 7 ומעלה", href: `${CDN}/quickfood-dashboard-Setup-1.0.0.exe` },
-      mac: { req: "macOS 11 ומעלה", href: `${CDN}/quickfood-dashboard-1.0.0-universal.dmg` },
+      windows: { req: "Windows 7 ומעלה", href: `${CDN}/quickfood-dashboard-Setup-1.1.0.exe` },
+      mac: { req: "macOS 11 ומעלה", href: `${CDN}/quickfood-dashboard-1.1.0-universal.dmg` },
       android: {
         req: "Android 7 ומעלה",
         href: `${CDN}/quickfood-2.1.0.apk`,
