@@ -37,6 +37,10 @@ export type ReceiptSettings = {
   showOptionPrices: boolean;
   showItemNotes: boolean;
   showOrderNotes: boolean;
+  /** Auto-print each new order from the open dashboard/board. Opt-in (default
+   *  off). Prints silently inside the QuickFood desktop app (native bridge) or
+   *  via the browser's silent print (Chrome --kiosk-printing). */
+  autoPrintOnNew: boolean;
 };
 
 export const DEFAULT_RECEIPT_SETTINGS: ReceiptSettings = {
@@ -46,10 +50,12 @@ export const DEFAULT_RECEIPT_SETTINGS: ReceiptSettings = {
   showOptionPrices: true,
   showItemNotes: true,
   showOrderNotes: true,
+  autoPrintOnNew: false,
 };
 
-// Stored as snake_case JSON; a missing key means "on" so tenants created before
-// the feature (and the `{}` column default) keep the full receipt.
+// Stored as snake_case JSON; a missing key means "on" for the show_* fields so
+// tenants created before the feature keep the full receipt. autoPrintOnNew is
+// opt-in, so it defaults OFF (=== true).
 export function resolveReceiptSettings(raw: unknown): ReceiptSettings {
   const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const on = (k: string) => o[k] !== false;
@@ -60,6 +66,7 @@ export function resolveReceiptSettings(raw: unknown): ReceiptSettings {
     showOptionPrices: on("show_option_prices"),
     showItemNotes: on("show_item_notes"),
     showOrderNotes: on("show_order_notes"),
+    autoPrintOnNew: o["auto_print_on_new"] === true,
   };
 }
 

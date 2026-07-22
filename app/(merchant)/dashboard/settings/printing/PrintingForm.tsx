@@ -23,6 +23,7 @@ const SETTINGS_API_KEY: Record<keyof ReceiptSettings, string> = {
   showOptionPrices: "show_option_prices",
   showItemNotes: "show_item_notes",
   showOrderNotes: "show_order_notes",
+  autoPrintOnNew: "auto_print_on_new",
 };
 
 interface PrinterOption {
@@ -100,9 +101,12 @@ export function PrintingForm({
     setSaving(true);
     setToast(null);
     try {
-      const receipt_settings = Object.fromEntries(
-        RECEIPT_FIELDS.map((f) => [SETTINGS_API_KEY[f.key], settings[f.key]]),
-      );
+      const receipt_settings = {
+        ...Object.fromEntries(
+          RECEIPT_FIELDS.map((f) => [SETTINGS_API_KEY[f.key], settings[f.key]]),
+        ),
+        auto_print_on_new: settings.autoPrintOnNew,
+      };
       const printer_settings = {
         enabled: cloud.enabled,
         device_topic: cloud.deviceTopic.trim(),
@@ -231,6 +235,52 @@ export function PrintingForm({
               );
             })}
           </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
+          <div>
+            <h2 className="font-semibold text-base lg:text-lg">הדפסה אוטומטית של הזמנות חדשות</h2>
+            <p className="text-sm text-qf-mute mt-0.5">
+              כשמופעל, כל הזמנה חדשה מודפסת אוטומטית כל עוד לוח ההזמנות פתוח - גם
+              כשהחלון ממוזער.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            role="switch"
+            aria-checked={settings.autoPrintOnNew}
+            onClick={() => setSettings((p) => ({ ...p, autoPrintOnNew: !p.autoPrintOnNew }))}
+            className="w-full flex items-center justify-between gap-3 py-2 text-start"
+          >
+            <span className="text-sm font-medium">הדפס כל הזמנה חדשה אוטומטית</span>
+            <span
+              className={
+                "w-5 h-5 rounded-md border-2 shrink-0 grid place-items-center transition " +
+                (settings.autoPrintOnNew
+                  ? "border-(--qf-primary) bg-(--qf-primary)"
+                  : "border-qf-line-dash")
+              }
+              aria-hidden
+            >
+              {settings.autoPrintOnNew && <IcoCheck c="#fff" s={12} />}
+            </span>
+          </button>
+
+          {settings.autoPrintOnNew && (
+            <div className="rounded-xl bg-qf-yolk-soft/50 border border-qf-yolk/30 px-3.5 py-3 text-xs text-qf-ink2 leading-relaxed space-y-1">
+              <div className="font-bold text-qf-ink">כדי שההדפסה תהיה שקטה (בלי חלון הדפסה):</div>
+              <p>
+                • <span className="font-medium">באפליקציית QuickFood למחשב</span> - עובד אוטומטית,
+                גם כשהאפליקציה ממוזערת. ודאו שהמדפסת מוגדרת כברירת מחדל ב-Windows.
+              </p>
+              <p>
+                • <span className="font-medium">בדפדפן Chrome/Edge</span> - יש לפתוח את לוח
+                ההזמנות עם הדגל <span dir="ltr" className="font-mono">--kiosk-printing</span> ולהשאיר
+                אותו פתוח. בלי זה יופיע חלון הדפסה על כל הזמנה.
+              </p>
+            </div>
+          )}
         </div>
 
         <CloudPrinterCard cloud={cloud} setCloud={setCloud} />

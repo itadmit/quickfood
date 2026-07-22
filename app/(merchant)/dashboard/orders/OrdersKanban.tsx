@@ -11,6 +11,7 @@ import {
   formatSelectedOptions,
   printReceipt,
   printReceiptIframe,
+  buildReceiptHtml,
   RECEIPT_PRINTER_LABEL,
   DEFAULT_RECEIPT_SETTINGS,
   type ReceiptOrder,
@@ -22,6 +23,14 @@ import { ManualOrderModal } from "@/components/merchant/ManualOrderModal";
 import { AssignCourierModal } from "@/components/merchant/AssignCourierModal";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import { NewOrderChime } from "@/components/merchant/NewOrderChime";
+
+declare global {
+  interface Window {
+    /** Injected by the QuickFood desktop app (Electron preload) to print a
+     *  receipt HTML silently on the OS default printer. Absent in a browser. */
+    qfNativePrint?: (html: string) => void | Promise<void>;
+  }
+}
 
 type Status =
   | "pending"
@@ -259,6 +268,39 @@ export function OrdersKanban({
   // from the server-rendered initial list so existing orders stay silent.
   const seenIdsRef = useRef<Set<string>>(new Set(initial.map((o) => o.id)));
 
+  // Auto-print reads settings/printer via refs so the useCallback([]) refresh
+  // loop never prints with a stale config after the merchant changes settings.
+  const receiptSettingsRef = useRef(receiptSettings);
+  const receiptPrinterRef = useRef(receiptPrinter);
+  useEffect(() => {
+    receiptSettingsRef.current = receiptSettings;
+    receiptPrinterRef.current = receiptPrinter;
+  }, [receiptSettings, receiptPrinter]);
+
+  // Silently print a freshly-arrived order. Prefers the QuickFood desktop app's
+  // native bridge (prints on the OS default printer even when minimized);
+  // otherwise the browser silent-print path (airprint family + --kiosk-printing).
+  const autoPrintOrder = useCallback(async (orderId: string) => {
+    try {
+      const res = await fetch(`/api/v1/customer/orders/${orderId}`, { cache: "no-store" });
+      if (!res.ok) return;
+      const data = await res.json();
+      const detail = (data.order as ReceiptOrder | null) ?? null;
+      if (!detail) return;
+      const settings = receiptSettingsRef.current;
+      const native = typeof window !== "undefined" ? window.qfNativePrint : undefined;
+      if (typeof native === "function") {
+        await native(buildReceiptHtml(detail, settings));
+      } else if (receiptPrinterRef.current === "airprint") {
+        printReceiptIframe(detail, settings);
+      }
+      // Mobile-app printer families (star / epson / escpos) can't silently
+      // auto-print from the board - the manual print button covers those.
+    } catch {
+      /* best-effort - never block the board on a print failure */
+    }
+  }, []);
+
   const refresh = useCallback(async () => {
     try {
       // cache:"no-store" so a service worker or browser intermediate
@@ -305,14 +347,19 @@ export function OrdersKanban({
       // how it reached us. SSE order.created and a reconnect refresh() both
       // funnel through here, so this is the single source of truth - the SSE
       // listener no longer dispatches the event itself (would double-ring).
-      const freshUnseen = fresh.some((o) => !seenIdsRef.current.has(o.id));
+      const newIds = fresh.filter((o) => !seenIdsRef.current.has(o.id)).map((o) => o.id);
       for (const o of fresh) seenIdsRef.current.add(o.id);
-      if (freshUnseen) {
+      if (newIds.length > 0) {
         try {
           window.dispatchEvent(new Event("qf:new-order"));
         } catch {
           /* ignore */
         }
+      }
+      // Auto-print each genuinely-new order (seenIdsRef is seeded with the
+      // server-rendered list, so pre-existing orders never print).
+      if (receiptSettingsRef.current.autoPrintOnNew && newIds.length > 0) {
+        for (const id of newIds) void autoPrintOrder(id);
       }
 
       const pending = pendingAdvancesRef.current;
