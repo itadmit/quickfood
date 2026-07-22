@@ -4,6 +4,7 @@ import { handler, apiJson, apiError } from "@/lib/api-response";
 import { prisma } from "@/lib/db/client";
 import { isValidSlug } from "@/lib/slug";
 import { normalizeTenantAbout } from "@/lib/validate";
+import { hasLinkOrSpam } from "@/lib/safe-text";
 import { issueTokensForMerchant, setSessionCookies } from "@/lib/auth/session";
 import { createCustomer, BillingHubError } from "@/lib/billing-hub/client";
 import { sendEmail } from "@/lib/email/send";
@@ -53,7 +54,8 @@ const SignupSchema = z.object({
   business_name: z
     .string({ required_error: "שם העסק חסר" })
     .min(2, "שם העסק חייב להכיל לפחות 2 תווים")
-    .max(120, "שם העסק ארוך מדי"),
+    .max(120, "שם העסק ארוך מדי")
+    .refine((s) => !hasLinkOrSpam(s), "שם העסק לא יכול להכיל קישורים"),
   slug: z
     .string({ required_error: "כתובת באתר חסרה" })
     .min(2, "כתובת באתר חייבת להכיל לפחות 2 תווים")
@@ -89,7 +91,8 @@ const SignupSchema = z.object({
   owner_name: z
     .string({ required_error: "שם הבעלים חסר" })
     .min(1, "שם הבעלים חסר")
-    .max(80, "שם ארוך מדי"),
+    .max(80, "שם ארוך מדי")
+    .refine((s) => !hasLinkOrSpam(s), "שם הבעלים לא יכול להכיל קישורים"),
   owner_phone: z
     .string({ required_error: "מספר נייד חסר" })
     .min(7, "מספר טלפון חייב להכיל לפחות 7 ספרות")
