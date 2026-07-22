@@ -391,9 +391,6 @@ function BalanceTab({
         connected={availability.whatsappConnected}
         waBalance={waBalance}
         initial={whatsapp}
-        billingReady={billingReady}
-        busy={busy}
-        onBuy={(pkg) => buy(pkg, "whatsapp")}
       />
 
       <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
@@ -401,7 +398,8 @@ function BalanceTab({
           <div>
             <h2 className="text-base lg:text-lg font-semibold">ווטסאפ של QuickFood</h2>
             <p className="text-xs lg:text-sm text-qf-mute">
-              מנוי חודשי לשליחת התראות וביקורות בוואטסאפ של QuickFood, ללא הגבלת שליחות וללא ניכוי מהיתרה.
+              מנוי חודשי לשליחת התראות הזמנה וביקורות בוואטסאפ של QuickFood, ללא הגבלת שליחות וללא ניכוי מהיתרה.{" "}
+              <b className="text-qf-ink">שימו לב: החבילה מיועדת לחיווי וביקורות בלבד - היא אינה מאפשרת שליחת דיוור בוואטסאפ.</b>
             </p>
           </div>
           {managed.active ? (
@@ -577,7 +575,10 @@ function ManagedSubscribeModal({
         <div className="space-y-1">
           <div className="font-semibold">הפעלת ווטסאפ של QuickFood</div>
           <div className="text-sm text-qf-ink2">
-            שליחת התראות וביקורות בוואטסאפ של QuickFood, ללא הגבלת שליחות בחודש. השליחות לא מנכות מהיתרה.
+            שליחת התראות הזמנה וביקורות בוואטסאפ של QuickFood, ללא הגבלת שליחות בחודש. השליחות לא מנכות מהיתרה.
+          </div>
+          <div className="text-xs font-bold text-qf-tomato bg-qf-tomato-soft border border-qf-tomato/30 rounded-xl px-3 py-2">
+            החבילה מיועדת לחיווי וביקורות בלבד - היא אינה מאפשרת שליחת דיוור בוואטסאפ.
           </div>
         </div>
         <div className="rounded-xl border border-qf-line-dash bg-qf-bg/50 p-3 text-sm space-y-0.5">
@@ -664,25 +665,21 @@ function PackageGrid({
 }
 
 /**
- * BYO-WhatsApp: connection (own iBot creds) + its own balance + top-up packages.
- * The connection is locked behind buying a WhatsApp package (whatsappEnabled).
+ * BYO-WhatsApp (legacy iBot connection). WhatsApp credit packages are no
+ * longer sold - the section only renders for tenants that already unlocked
+ * it, so they can keep using their remaining balance; new mailing goes
+ * over SMS (or the official WhatsApp API, coming later).
  */
 function WhatsappSection({
   enabled,
   connected,
   waBalance,
   initial,
-  billingReady,
-  busy,
-  onBuy,
 }: {
   enabled: boolean;
   connected: boolean;
   waBalance: number;
   initial: { token: string; instanceId: string };
-  billingReady: boolean;
-  busy: string | null;
-  onBuy: (pkg: string) => void;
 }) {
   const router = useRouter();
   const [token, setToken] = useState(initial.token);
@@ -748,27 +745,10 @@ function WhatsappSection({
     }
   }
 
+  // WhatsApp packages are no longer sold - tenants that never unlocked the
+  // BYO connection simply don't see it.
   if (!enabled) {
-    return (
-      <section className="bg-white rounded-2xl border-2 border-dashed border-qf-line-dash p-4 lg:p-5 space-y-3">
-        <div>
-          <h2 className="text-base lg:text-lg font-semibold">וואטסאפ (המספר שלך)</h2>
-          <p className="text-xs lg:text-sm text-qf-mute">
-            שליחת התראות וביקורות מ-WhatsApp העסקי שלכם, דרך iBot Chat. רכשו חבילת וואטסאפ כדי לפתוח את החיבור.
-          </p>
-        </div>
-        {!billingReady && (
-          <div className="bg-qf-yolk-soft border border-qf-yolk/40 rounded-xl px-3 py-2 text-sm text-qf-ink2">
-            יש להשלים{" "}
-            <Link href="/dashboard/billing" className="underline underline-offset-2">
-              הגדרת חיוב
-            </Link>{" "}
-            לפני רכישת חבילה.
-          </div>
-        )}
-        <PackageGrid channel="whatsapp" billingReady={billingReady} busy={busy} onBuy={(pkg) => onBuy(pkg)} />
-      </section>
-    );
+    return null;
   }
 
   return (
@@ -864,9 +844,11 @@ function WhatsappSection({
         )}
       </div>
 
-      <div className="border-t border-qf-line-soft pt-3 space-y-3">
-        <div className="text-sm font-medium">רכישת חבילת וואטסאפ</div>
-        <PackageGrid channel="whatsapp" billingReady={billingReady} busy={busy} onBuy={(pkg) => onBuy(pkg)} />
+      <div className="border-t border-qf-line-soft pt-3">
+        <p className="text-xs text-qf-mute leading-relaxed">
+          חבילות וואטסאפ אינן נמכרות יותר. היתרה הקיימת ({waBalance.toLocaleString("he-IL")}) ניתנת לניצול עד סיומה;
+          לדיוור מומלץ להשתמש ב-SMS.
+        </p>
       </div>
     </section>
   );

@@ -49,7 +49,18 @@ export const POST = handler(async (req: Request) => {
   if (!session.tenantId) return apiError("forbidden", "no tenant", 403);
   const { channel, package: pkgKey } = Schema.parse(await req.json());
 
-  const isWa = channel === "whatsapp";
+  // WhatsApp credit packages were discontinued (2026-07-22) - the unofficial
+  // iBot channel risks number bans on bulk sends. Existing balances keep
+  // working; new mailing goes over SMS or the official WhatsApp API.
+  if (channel === "whatsapp") {
+    return apiError(
+      "discontinued",
+      "חבילות וואטסאפ אינן נמכרות יותר. לדיוור השתמשו ב-SMS.",
+      410,
+    );
+  }
+
+  const isWa = (channel as string) === "whatsapp";
   const pkg = (isWa ? WHATSAPP_PACKAGES : SMS_PACKAGES)[pkgKey];
   // SMS keeps the legacy ledger kind so existing rows / in-flight webhooks
   // still dedupe; WhatsApp gets a distinct kind for clean observability.
