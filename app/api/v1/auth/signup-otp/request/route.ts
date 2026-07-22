@@ -15,6 +15,7 @@ import { prisma } from "@/lib/db/client";
 import { toE164 } from "@/lib/format";
 import { issueOtp } from "@/lib/auth/otp";
 import { sendRawSms } from "@/lib/sms/send-raw";
+import { checkRate } from "@/lib/api/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,6 +23,15 @@ export const dynamic = "force-dynamic";
 const Body = z.object({ phone: z.string().min(3).max(20) });
 
 const THROTTLE_SECONDS = 60;
+
+function clientIp(req: Request): string {
+  return (
+    req.headers.get("cf-connecting-ip") ??
+    req.headers.get("true-client-ip") ??
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    "unknown"
+  );
+}
 
 export const POST = handler(async (req: Request) => {
   const parsed = Body.safeParse(await req.json().catch(() => ({})));
@@ -33,6 +43,12 @@ export const POST = handler(async (req: Request) => {
   if (!e164) {
     return apiError("invalid_phone", "מספר נייד לא תקין", 422, "phone");
   }
+
+  // Abuse guard: this sends SMS on the platform's account. The per-phone
+  // throttle below stops double-taps, but without a per-IP cap a spammer can
+  // spray OTP SMS to many different victim numbers (SMS pumping). Cap per-IP.
+  checkRate(`signup-otp:ip:${clientIp(req)}`, 8);
+  checkRate(`signup-otp:phone:${e164}`, 4);
 
   const recent = await prisma.otpCode.findFirst({
     where: {
