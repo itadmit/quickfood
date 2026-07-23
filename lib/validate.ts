@@ -354,6 +354,7 @@ export const TenantPatchSchema = z.object({
       show_option_prices: z.boolean(),
       show_item_notes: z.boolean(),
       show_order_notes: z.boolean(),
+      auto_print_on_new: z.boolean(),
     })
     .partial()
     .optional(),
