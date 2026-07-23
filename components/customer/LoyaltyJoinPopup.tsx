@@ -23,6 +23,11 @@ interface LoyaltyPublic {
 
 interface Props {
   tenantSlug: string;
+  // Controlled mode: when `open` is provided the parent drives visibility
+  // (e.g. the login screen's "join the club" CTA) and the automatic
+  // config/localStorage-gated popup is disabled. onClose fires on dismiss/done.
+  open?: boolean;
+  onClose?: () => void;
 }
 
 // Persistent "already saw the popup" flag - only consulted when the club is
@@ -62,7 +67,8 @@ function birthdayToIso(display: string): string | null {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-export function LoyaltyJoinPopup({ tenantSlug }: Props) {
+export function LoyaltyJoinPopup({ tenantSlug, open, onClose }: Props) {
+  const controlled = open !== undefined;
   const [form, setForm] = useState<JoinForm | null>(null);
   const [showOnce, setShowOnce] = useState(true);
   const [visible, setVisible] = useState(false);
@@ -78,6 +84,7 @@ export function LoyaltyJoinPopup({ tenantSlug }: Props) {
   const [done, setDone] = useState(false);
 
   useEffect(() => {
+    if (controlled) return;
     let cancelled = false;
     (async () => {
       try {
@@ -102,9 +109,44 @@ export function LoyaltyJoinPopup({ tenantSlug }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [tenantSlug]);
+  }, [tenantSlug, controlled]);
+
+  // Controlled mode: the parent opens the popup on demand, so we fetch the join
+  // form regardless of the show_join_popup / show-once gating and follow `open`.
+  useEffect(() => {
+    if (!controlled) return;
+    if (!open) {
+      setVisible(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!form) {
+          const res = await fetch(`/api/v1/restaurants/${tenantSlug}/loyalty`, {
+            cache: "no-store",
+          });
+          if (res.ok) {
+            const data = (await res.json()) as LoyaltyPublic;
+            if (!cancelled) setForm(data.join_form);
+          }
+        }
+      } catch {
+        // Silent - popup is non-critical.
+      }
+      if (!cancelled) window.setTimeout(() => setVisible(true), 50);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [controlled, open, tenantSlug, form]);
 
   function dismiss() {
+    if (controlled) {
+      setVisible(false);
+      onClose?.();
+      return;
+    }
     // Remember the dismissal only in "show once" mode; in "always" mode the
     // popup should reappear on the next visit.
     if (showOnce) {
@@ -172,6 +214,7 @@ export function LoyaltyJoinPopup({ tenantSlug }: Props) {
       setDone(true);
       window.setTimeout(() => {
         setVisible(false);
+        if (controlled) onClose?.();
         window.setTimeout(() => setForm(null), 200);
       }, 1800);
     } finally {

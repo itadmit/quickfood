@@ -19,7 +19,7 @@ export const POST = handler(async (req: Request) => {
   // A code is only ever issued to an existing member (see request route), so
   // never create a customer here - just refresh last-seen.
   const customer = await prisma.customer.findUnique({ where: { phone } });
-  if (!customer) return apiError("not_member", "המספר אינו רשום למועדון", 404, "phone");
+  if (!customer) return apiError("not_member", "אין מנוי עם מספר זה", 404, "phone");
   await prisma.customer.update({
     where: { id: customer.id },
     data: { lastSeenAt: new Date() },

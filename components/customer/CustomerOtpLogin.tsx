@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { LoyaltyJoinPopup } from "@/components/customer/LoyaltyJoinPopup";
 
 export interface OtpCustomer {
   id: string;
@@ -29,10 +30,13 @@ export function CustomerOtpLogin({
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notMember, setNotMember] = useState(false);
+  const [joinOpen, setJoinOpen] = useState(false);
 
   async function requestOtp() {
     setBusy(true);
     setError(null);
+    setNotMember(false);
     try {
       const res = await fetch("/api/v1/auth/otp/request", {
         method: "POST",
@@ -42,6 +46,7 @@ export function CustomerOtpLogin({
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
         setError(d.error?.message ?? "שגיאה");
+        setNotMember(d.error?.code === "not_member");
         return;
       }
       setStep("code");
@@ -76,7 +81,13 @@ export function CustomerOtpLogin({
       <div className="space-y-3">
         <input
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(e) => {
+            setPhone(e.target.value);
+            if (notMember) {
+              setNotMember(false);
+              setError(null);
+            }
+          }}
           placeholder="0501234567"
           dir="ltr"
           inputMode="tel"
@@ -96,6 +107,26 @@ export function CustomerOtpLogin({
         >
           {busy ? "שולח..." : "המשך"}
         </button>
+        {notMember && tenantSlug && (
+          <button
+            type="button"
+            onClick={() => setJoinOpen(true)}
+            className="w-full py-3 rounded-2xl border border-(--qf-primary) text-(--qf-primary) font-medium hover:bg-(--qf-soft)"
+          >
+            הצטרפות למועדון
+          </button>
+        )}
+        {tenantSlug && (
+          <LoyaltyJoinPopup
+            tenantSlug={tenantSlug}
+            open={joinOpen}
+            onClose={() => {
+              setJoinOpen(false);
+              setNotMember(false);
+              setError(null);
+            }}
+          />
+        )}
       </div>
     );
   }

@@ -56,7 +56,7 @@ export const POST = handler(async (req: Request) => {
     select: { id: true },
   });
   if (!member) {
-    return apiError("not_member", "המספר אינו רשום למועדון הלקוחות של החנות", 404, "phone");
+    return apiError("not_member", "אין מנוי עם מספר זה", 404, "phone");
   }
 
   const { code, expiresAt } = await issueOtp(phone);
