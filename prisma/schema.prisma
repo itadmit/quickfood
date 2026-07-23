@@ -352,6 +352,10 @@ model Tenant {
   // Custom heading for the cart upsell carousel. NULL falls back to the
   // flagged category's name (single) or "מומלץ עבורך".
   cartUpsellTitle String? @map("cart_upsell_title") @db.VarChar(60)
+  // Custom title + subtitle for the pre-checkout "add something before you
+  // finish?" popup. NULL → the built-in Hebrew defaults.
+  preCheckoutUpsellTitle String? @map("pre_checkout_upsell_title") @db.VarChar(80)
+  preCheckoutUpsellSubtitle String? @map("pre_checkout_upsell_subtitle") @db.VarChar(160)
 
   // Self-service kiosk mode (paid add-on). Toggled per-tenant from
   // the super-admin UI for now; the merchant-side settings page (welcome

@@ -139,6 +139,8 @@ export default async function CustomerLayout({
           cutleryFreeAbove: tenant.cutleryFreeAbove,
           reviewsPublic: tenant.reviewsEnabled && tenant.reviewsPublic,
           upsellSizeNudge: tenant.upsellSizeNudge,
+          preCheckoutUpsellTitle: tenant.preCheckoutUpsellTitle,
+          preCheckoutUpsellSubtitle: tenant.preCheckoutUpsellSubtitle,
         }}
         branch={
           branch

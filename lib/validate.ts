@@ -390,6 +390,8 @@ export const TenantPatchSchema = z.object({
   featured_badge_label: z.string().max(40).nullable().optional(),
   upsell_size_nudge: z.boolean().optional(),
   cart_upsell_title: z.string().max(60).nullable().optional(),
+  pre_checkout_upsell_title: z.string().max(80).nullable().optional(),
+  pre_checkout_upsell_subtitle: z.string().max(160).nullable().optional(),
 });
 
 export const NoticeInputSchema = z.object({

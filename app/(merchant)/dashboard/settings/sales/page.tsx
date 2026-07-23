@@ -18,6 +18,8 @@ export default async function SalesSettingsPage() {
       featuredBadgeLabel: true,
       upsellSizeNudge: true,
       cartUpsellTitle: true,
+      preCheckoutUpsellTitle: true,
+      preCheckoutUpsellSubtitle: true,
     },
   });
   if (!tenant) redirect("/dashboard/login");
@@ -30,6 +32,8 @@ export default async function SalesSettingsPage() {
           featuredBadgeLabel: tenant.featuredBadgeLabel ?? "",
           upsellSizeNudge: tenant.upsellSizeNudge,
           cartUpsellTitle: tenant.cartUpsellTitle ?? "",
+          preCheckoutUpsellTitle: tenant.preCheckoutUpsellTitle ?? "",
+          preCheckoutUpsellSubtitle: tenant.preCheckoutUpsellSubtitle ?? "",
         }}
       />
     </div>

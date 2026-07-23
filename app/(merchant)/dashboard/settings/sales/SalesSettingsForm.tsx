@@ -7,11 +7,19 @@ import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toas
 export function SalesSettingsForm({
   initial,
 }: {
-  initial: { featuredBadgeLabel: string; upsellSizeNudge: boolean; cartUpsellTitle: string };
+  initial: {
+    featuredBadgeLabel: string;
+    upsellSizeNudge: boolean;
+    cartUpsellTitle: string;
+    preCheckoutUpsellTitle: string;
+    preCheckoutUpsellSubtitle: string;
+  };
 }) {
   const [featuredLabel, setFeaturedLabel] = useState(initial.featuredBadgeLabel);
   const [sizeNudge, setSizeNudge] = useState(initial.upsellSizeNudge);
   const [upsellTitle, setUpsellTitle] = useState(initial.cartUpsellTitle);
+  const [preTitle, setPreTitle] = useState(initial.preCheckoutUpsellTitle);
+  const [preSubtitle, setPreSubtitle] = useState(initial.preCheckoutUpsellSubtitle);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   function pushToast(kind: ToastKind, message: string) {
@@ -28,6 +36,8 @@ export function SalesSettingsForm({
           featured_badge_label: featuredLabel.trim() || null,
           upsell_size_nudge: sizeNudge,
           cart_upsell_title: upsellTitle.trim() || null,
+          pre_checkout_upsell_title: preTitle.trim() || null,
+          pre_checkout_upsell_subtitle: preSubtitle.trim() || null,
         }),
       });
       if (!res.ok) {
@@ -77,6 +87,37 @@ export function SalesSettingsForm({
             או מוצרים בודדים (&quot;להציע בעגלה&quot; בעורך המוצר) - אפשר גם וגם. בלי שום סימון,
             המערכת מזהה לבד קטגוריות שתייה וקינוחים.
           </p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-3">
+          <div>
+            <label className="block text-sm font-bold">חלון &quot;להוסיף משהו לפני שמסיימים?&quot;</label>
+            <p className="text-xs text-qf-mute mt-1 leading-relaxed">
+              הטקסטים של החלון הקופץ שמופיע לפני התשלום. השאירו ריק לברירת המחדל.
+              איזה מוצרים מוצעים שם ומתי החלון מופיע? מסמנים קטגוריות ב&quot;הצע לפני
+              סיום&quot; בעריכת קטגוריה - בלי סימון, החלון לא יופיע.
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-qf-ink2">כותרת</label>
+            <input
+              value={preTitle}
+              onChange={(e) => setPreTitle(e.target.value)}
+              placeholder="להוסיף משהו לפני שמסיימים?"
+              maxLength={80}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-qf-ink2">כותרת משנה</label>
+            <input
+              value={preSubtitle}
+              onChange={(e) => setPreSubtitle(e.target.value)}
+              placeholder="ההמלצה האחרונה שלנו לסגירת הארוחה"
+              maxLength={160}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none"
+            />
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl border border-qf-line-dash p-5">

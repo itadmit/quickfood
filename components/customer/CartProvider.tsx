@@ -117,6 +117,10 @@ interface TenantInfo {
   // Show the "upgrade to XL for ₪Y" banner inside ItemDetail when
   // a larger size exists. Toggled from Settings → Sales (default on).
   upsellSizeNudge?: boolean;
+  // Custom copy for the pre-checkout "add something before you finish?"
+  // popup. Empty/undefined → the built-in Hebrew defaults.
+  preCheckoutUpsellTitle?: string | null;
+  preCheckoutUpsellSubtitle?: string | null;
 }
 
 interface BranchInfo {

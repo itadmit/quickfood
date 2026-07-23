@@ -108,6 +108,8 @@ export const PATCH = handler(async (req: Request) => {
       featuredBadgeLabel: body.featured_badge_label,
       upsellSizeNudge: body.upsell_size_nudge,
       cartUpsellTitle: body.cart_upsell_title,
+      preCheckoutUpsellTitle: body.pre_checkout_upsell_title,
+      preCheckoutUpsellSubtitle: body.pre_checkout_upsell_subtitle,
     },
   });
 

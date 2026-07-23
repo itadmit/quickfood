@@ -121,6 +121,10 @@ export function usePreCheckoutUpsell(tenantSlug: string) {
   }
 
   const businessType = (tenant.businessType as BusinessType) ?? "general";
+  const upsellTitle =
+    tenant.preCheckoutUpsellTitle?.trim() || "להוסיף משהו לפני שמסיימים?";
+  const upsellSubtitle =
+    tenant.preCheckoutUpsellSubtitle?.trim() || "ההמלצה האחרונה שלנו לסגירת הארוחה";
 
   const element = (
     <>
@@ -130,8 +134,8 @@ export function usePreCheckoutUpsell(tenantSlug: string) {
         <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/55 backdrop-blur-sm sm:items-center sm:p-6">
           <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[85vh] animate-qf-sheet-in">
             <header className="px-5 py-4 border-b border-qf-line-soft text-center">
-              <h2 className="text-lg font-bold text-qf-ink">להוסיף משהו לפני שמסיימים?</h2>
-              <p className="text-xs text-qf-mute mt-0.5">ההמלצה האחרונה שלנו לסגירת הארוחה</p>
+              <h2 className="text-lg font-bold text-qf-ink">{upsellTitle}</h2>
+              <p className="text-xs text-qf-mute mt-0.5">{upsellSubtitle}</p>
             </header>
             <div className="flex-1 overflow-y-auto p-4">
               <div className="grid grid-cols-2 gap-3">
