@@ -68,6 +68,17 @@ export interface CreateOrderInput {
    *  branch-level values when absent or no zone matches. */
   deliveryCity?: string | null;
   deliveryNotes?: string | null;
+  /** Structured delivery address from checkout. When present for a resolved
+   *  customer, it's upserted as their default saved address (and linked to
+   *  this order) so it prefills next time. */
+  deliveryAddress?: {
+    street: string;
+    city?: string;
+    apartment?: string;
+    floor?: string;
+    entrance?: string;
+    notes?: string;
+  } | null;
   customerNotes?: string | null;
   paymentMethod: "cash" | "card" | "apple_pay" | "google_pay" | "bit";
   tip?: number;
@@ -783,6 +794,49 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     }
   }
 
+  // Remember the delivery address. For a resolved customer placing a
+  // delivery order with a structured address, update their existing default
+  // row in place (so we don't accumulate a row per order) or create the
+  // first one. The order then links to it, and it prefills next checkout +
+  // shows in the personal area.
+  let resolvedAddressId: string | null = input.addressId ?? null;
+  if (
+    input.method === "delivery" &&
+    effectiveCustomerId &&
+    !resolvedAddressId &&
+    input.deliveryAddress?.street?.trim()
+  ) {
+    const da = input.deliveryAddress;
+    const data = {
+      street: da.street.trim(),
+      city: da.city?.trim() || "",
+      apartment: da.apartment?.trim() || null,
+      floor: da.floor?.trim() || null,
+      entrance: da.entrance?.trim() || null,
+      notes: da.notes?.trim() || null,
+      isDefault: true,
+    };
+    try {
+      const existing = await prisma.address.findFirst({
+        where: { customerId: effectiveCustomerId },
+        orderBy: [{ isDefault: "desc" }],
+        select: { id: true },
+      });
+      if (existing) {
+        await prisma.address.update({ where: { id: existing.id }, data });
+        resolvedAddressId = existing.id;
+      } else {
+        const created = await prisma.address.create({
+          data: { customerId: effectiveCustomerId, ...data },
+          select: { id: true },
+        });
+        resolvedAddressId = created.id;
+      }
+    } catch (err) {
+      console.warn("[orders-create] couldn't persist customer address", err);
+    }
+  }
+
   // Order-level source: any AI line dominates (the customer started with
   // the AI advisor); otherwise reorder if every line came from reorder;
   // otherwise direct. Upsell is line-only - an upsell add doesn't make
@@ -830,7 +884,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       source: orderSource,
       cashierId: input.cashierId ?? null,
       posShiftId: input.posShiftId ?? null,
-      deliveryAddressId: input.addressId ?? null,
+      deliveryAddressId: resolvedAddressId,
       deliveryNotes: input.deliveryNotes ?? null,
       customerNotes: input.customerNotes ?? null,
       customerPhoneSnap: input.guestPhone ?? null,
@@ -893,14 +947,16 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     }
   }
 
-  // Loyalty club opt-in ticked at checkout - enrol the resolved customer.
-  // Best-effort; never blocks the order. Implies marketing consent.
-  if (input.loyaltyConsent && effectiveCustomerId) {
+  // Account = club membership: every resolved customer is enrolled. Ticking
+  // the checkout opt-in additionally records explicit marketing consent;
+  // otherwise it's a silent auto-enrol (no marketing consent). Best-effort;
+  // never blocks the order.
+  if (effectiveCustomerId) {
     await ensureLoyaltyMember({
       tenantId: tenant.id,
       customerId: effectiveCustomerId,
-      joinSource: "checkout",
-      marketingConsent: true,
+      joinSource: input.loyaltyConsent ? "checkout" : "auto",
+      marketingConsent: input.loyaltyConsent === true,
     });
   }
 

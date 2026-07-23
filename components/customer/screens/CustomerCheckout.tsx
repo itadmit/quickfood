@@ -7,7 +7,7 @@ import { IcoChev, IcoArrowLeft, IcoBag, IcoPin, IcoClose, IcoCheck } from "@/com
 import { CustomerOtpLogin, type OtpCustomer } from "@/components/customer/CustomerOtpLogin";
 import { Modal, ModalBody } from "@/components/shared/Modal";
 import { LegalText } from "@/components/shared/LegalText";
-import { THEMES, type ThemeId } from "@/lib/themes";
+import { THEMES, themeVars, type ThemeId } from "@/lib/themes";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { useCart } from "@/components/customer/CartProvider";
 import { CartLineOptions } from "@/components/customer/CartLineOptions";
@@ -38,6 +38,7 @@ const PAYMENT_METHOD_LABELS: Record<CustomerPaymentMethod, string> = {
 export function CustomerCheckout({
   tenantSlug,
   initialCustomer = null,
+  initialAddress = null,
   requireEmail = false,
   cardEnabled = false,
   provider = null,
@@ -57,6 +58,14 @@ export function CustomerCheckout({
     phone: string;
     email: string | null;
   } | null;
+  /** Prefill the delivery address from the customer's saved default. */
+  initialAddress?: {
+    street: string;
+    city: string;
+    apartment: string | null;
+    floor: string | null;
+    notes: string | null;
+  } | null;
   requireEmail?: boolean;
   /** Tenant has an active card provider (grow OR cardcom). */
   cardEnabled?: boolean;
@@ -73,10 +82,10 @@ export function CustomerCheckout({
   const router = useRouter();
   const { lines, method, subtotal, deliveryFee, branch, tenant, clear, setMethod, hydrated, acceptedBundles, bundleDiscount } = useCart();
 
-  const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
-  const [floor, setFloor] = useState("");
-  const [apartment, setApartment] = useState("");
+  const [address, setAddress] = useState(initialAddress?.street ?? "");
+  const [city, setCity] = useState(initialAddress?.city ?? "");
+  const [floor, setFloor] = useState(initialAddress?.floor ?? "");
+  const [apartment, setApartment] = useState(initialAddress?.apartment ?? "");
   const [phone, setPhone] = useState(initialCustomer?.phone ?? "");
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [firstName, setFirstName] = useState(initialCustomer?.firstName ?? "");
@@ -104,13 +113,31 @@ export function CustomerCheckout({
     setLoginName([c.first_name, c.last_name].filter(Boolean).join(" ").trim());
     setLoginOpen(false);
   }
+
+  // Log out at checkout to order for / as someone else. Clears the prefilled
+  // identity + address so the next person starts clean.
+  async function handleLogout() {
+    await fetch("/api/v1/auth/logout", { method: "POST" }).catch(() => {});
+    setLoggedIn(false);
+    setLoginName("");
+    setFirstName("");
+    setLastName("");
+    setPhone("");
+    setEmail("");
+    setAddress("");
+    setCity("");
+    setApartment("");
+    setFloor("");
+    setDeliveryNotes("");
+    router.refresh();
+  }
   // Flipped on the first failed submit attempt: from then on EVERY invalid
   // field shows its red error (Shopify-style), not just touched ones.
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loyaltyConsent, setLoyaltyConsent] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
-  const [deliveryNotes, setDeliveryNotes] = useState("");
+  const [deliveryNotes, setDeliveryNotes] = useState(initialAddress?.notes ?? "");
   const [customerNotes, setCustomerNotes] = useState("");
   const [availableMethods, setAvailableMethods] = useState<CustomerPaymentMethod[]>([]);
   // Tri-state: while true, render a skeleton instead of the "merchant has
@@ -540,6 +567,19 @@ export function CustomerCheckout({
                   .filter(Boolean)
                   .join(" · ")
               : undefined,
+          // Structured address so the server can save it to the customer and
+          // prefill it next time (the concatenated delivery_notes above stays
+          // for the merchant's order display).
+          save_address:
+            method === "delivery" && address.trim()
+              ? {
+                  street: address.trim(),
+                  city: city.trim() || undefined,
+                  apartment: apartment.trim() || undefined,
+                  floor: floor.trim() || undefined,
+                  notes: deliveryNotes.trim() || undefined,
+                }
+              : undefined,
           guest_phone: phone || undefined,
           guest_first_name: firstName || undefined,
           guest_last_name: lastName || undefined,
@@ -811,11 +851,20 @@ export function CustomerCheckout({
         <Card>
           <CardTitle>פרטי קשר</CardTitle>
           {loggedIn ? (
-            <div className="mt-2 flex items-center gap-2 text-sm bg-qf-green-soft border border-qf-green-line text-qf-green-deep rounded-xl px-3 py-2">
-              <IcoCheck c="currentColor" s={16} />
-              <span className="font-medium truncate">
-                מחובר{loginName ? ` כ${loginName}` : ""}
+            <div className="mt-2 flex items-center justify-between gap-2 text-sm bg-qf-green-soft border border-qf-green-line text-qf-green-deep rounded-xl px-3 py-2">
+              <span className="flex items-center gap-2 min-w-0">
+                <IcoCheck c="currentColor" s={16} />
+                <span className="font-medium truncate">
+                  מחובר{loginName ? ` כ${loginName}` : ""}
+                </span>
               </span>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="shrink-0 text-xs font-semibold underline hover:opacity-80"
+              >
+                התנתקות
+              </button>
             </div>
           ) : (
             <button
@@ -1606,23 +1655,27 @@ export function CustomerCheckout({
         size="sm"
         ariaLabel="התחברות"
       >
-        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-qf-line-soft">
-          <h2 className="font-bold text-lg">התחברות</h2>
-          <button
-            type="button"
-            onClick={() => setLoginOpen(false)}
-            aria-label="סגור"
-            className="shrink-0 w-9 h-9 rounded-full grid place-items-center text-qf-mute hover:bg-qf-line-soft transition"
-          >
-            <IcoClose s={20} />
-          </button>
+        {/* The Modal portals outside the ThemeProvider subtree, so re-declare
+            the tenant theme vars here or the OTP form falls back to green. */}
+        <div style={themeVars((tenant?.themeId as ThemeId) ?? "fresh") as React.CSSProperties}>
+          <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-qf-line-soft">
+            <h2 className="font-bold text-lg">התחברות</h2>
+            <button
+              type="button"
+              onClick={() => setLoginOpen(false)}
+              aria-label="סגור"
+              className="shrink-0 w-9 h-9 rounded-full grid place-items-center text-qf-mute hover:bg-qf-line-soft transition"
+            >
+              <IcoClose s={20} />
+            </button>
+          </div>
+          <ModalBody>
+            <p className="text-sm text-qf-mute text-center mb-4">
+              נשלח קוד אימות בוואטסאפ והפרטים שלך ימולאו אוטומטית
+            </p>
+            <CustomerOtpLogin tenantSlug={tenantSlug} onSuccess={handleLoginSuccess} />
+          </ModalBody>
         </div>
-        <ModalBody>
-          <p className="text-sm text-qf-mute text-center mb-4">
-            נשלח קוד אימות בוואטסאפ והפרטים שלך ימולאו אוטומטית
-          </p>
-          <CustomerOtpLogin tenantSlug={tenantSlug} onSuccess={handleLoginSuccess} />
-        </ModalBody>
       </Modal>
     </div>
   );

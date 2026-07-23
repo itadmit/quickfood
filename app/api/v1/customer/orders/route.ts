@@ -19,6 +19,19 @@ const CreateOrderSchema = z.object({
   /** Chosen delivery city - resolves the per-zone fee/minimum on the server. */
   delivery_city: z.string().max(60).optional(),
   delivery_notes: z.string().max(200).optional(),
+  // Structured delivery address entered at checkout. When present for a
+  // resolved customer, it's saved as their default address so it prefills
+  // next time (and shows/edits in the personal area).
+  save_address: z
+    .object({
+      street: z.string().max(120),
+      city: z.string().max(60).optional(),
+      apartment: z.string().max(20).optional(),
+      floor: z.string().max(10).optional(),
+      entrance: z.string().max(10).optional(),
+      notes: z.string().max(200).optional(),
+    })
+    .optional(),
   customer_notes: z.string().max(500).optional(),
   payment_method: z.enum(["card", "cash", "apple_pay", "google_pay", "bit"]).default("cash"),
   tip: z.number().int().min(0).default(0),
@@ -140,6 +153,7 @@ export const POST = handler(async (req: Request) => {
       addressId: body.address_id ?? null,
       deliveryCity: body.delivery_city ?? null,
       deliveryNotes: body.delivery_notes ?? null,
+      deliveryAddress: body.save_address ?? null,
       customerNotes: body.customer_notes ?? null,
       paymentMethod: body.payment_method,
       tip: body.tip,

@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { getCustomerLoyalty } from "@/lib/loyalty/customer";
+import { ensureLoyaltyMember } from "@/lib/loyalty/membership";
 import { ProfileLoggedIn } from "./ProfileLoggedIn";
 import { ProfileLogin } from "./ProfileLogin";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
@@ -40,7 +41,7 @@ export default async function ProfilePage({
     );
   }
 
-  const [customer, orders, favorites] = await Promise.all([
+  const [customer, orders, addresses, favorites] = await Promise.all([
     prisma.customer.findUnique({
       where: { id: session.userId },
       select: { id: true, firstName: true, lastName: true, phone: true, email: true, createdAt: true },
@@ -50,6 +51,11 @@ export default async function ProfilePage({
       orderBy: { createdAt: "desc" },
       take: 10,
       select: { id: true, number: true, status: true, total: true, createdAt: true },
+    }),
+    prisma.address.findMany({
+      where: { customerId: session.userId },
+      orderBy: [{ isDefault: "desc" }],
+      select: { id: true, label: true, street: true, city: true, apartment: true, floor: true, entrance: true, notes: true, isDefault: true },
     }),
     prisma.favorite.findMany({
       where: { customerId: session.userId, item: { tenantId: tenant.id } },
@@ -79,6 +85,16 @@ export default async function ProfilePage({
     );
   }
 
+  // Account = club membership: visiting the personal area enrols the customer
+  // into the tenant's club (idempotent, no marketing consent), so they show
+  // in the merchant's members list.
+  await ensureLoyaltyMember({
+    tenantId: tenant.id,
+    customerId: customer.id,
+    joinSource: "auto",
+    marketingConsent: false,
+  });
+
   const loyalty = await getCustomerLoyalty(tenant.id, customer.id);
 
   return (
@@ -87,6 +103,17 @@ export default async function ProfilePage({
         tenantSlug={tenantSlug}
         loyalty={loyalty}
         businessType={tenant.businessType}
+        addresses={addresses.map((a) => ({
+          id: a.id,
+          label: a.label,
+          street: a.street,
+          city: a.city,
+          apartment: a.apartment,
+          floor: a.floor,
+          entrance: a.entrance,
+          notes: a.notes,
+          isDefault: a.isDefault,
+        }))}
         favorites={favorites.map((f) => ({
           id: f.item.id,
           name: f.item.name,

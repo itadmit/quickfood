@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Crown } from "lucide-react";
-import { IcoChev, IcoHeart, IcoReceipt, IcoUser } from "@/components/shared/Icons";
+import { IcoChev, IcoHeart, IcoReceipt, IcoPin } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { formatPrice, formatDate, formatPhone, fullName } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -45,6 +45,18 @@ interface Order {
   createdAt: string;
 }
 
+interface SavedAddress {
+  id: string;
+  label: string | null;
+  street: string;
+  city: string;
+  apartment: string | null;
+  floor: string | null;
+  entrance: string | null;
+  notes: string | null;
+  isDefault: boolean;
+}
+
 interface FavoriteItem {
   id: string;
   name: string;
@@ -73,6 +85,7 @@ export function ProfileLoggedIn({
   orders,
   loyalty,
   favorites = [],
+  addresses = [],
   businessType = "general",
 }: {
   tenantSlug: string;
@@ -80,6 +93,7 @@ export function ProfileLoggedIn({
   orders: Order[];
   loyalty?: Loyalty | null;
   favorites?: FavoriteItem[];
+  addresses?: SavedAddress[];
   businessType?: BusinessType;
 }) {
   const router = useRouter();
@@ -296,12 +310,16 @@ export function ProfileLoggedIn({
       )}
 
       <section className="px-5 mt-4 lg:px-0 lg:mt-5">
-        <div className="bg-white rounded-2xl border border-qf-line divide-y divide-qf-line">
-          <MenuRow icon={<IcoUser s={18} />} label="כתובות שמורות" hint="בקרוב" />
+        <h2 className="font-semibold mb-2">כתובות שמורות</h2>
+        <AddressList initial={addresses} />
+      </section>
+
+      <section className="px-5 mt-4 lg:px-0 lg:mt-5">
+        <div className="bg-white rounded-2xl border border-qf-line">
           <button
             type="button"
             onClick={logout}
-            className="w-full px-4 py-3 text-start text-qf-tomato text-sm font-medium hover:bg-qf-tomato-soft"
+            className="w-full px-4 py-3 text-start text-qf-tomato text-sm font-medium hover:bg-qf-tomato-soft rounded-2xl"
           >
             התנתקות
           </button>
@@ -311,20 +329,125 @@ export function ProfileLoggedIn({
   );
 }
 
-function MenuRow({
-  icon,
-  label,
-  hint,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  hint?: string;
-}) {
+function AddressList({ initial }: { initial: SavedAddress[] }) {
+  const [addresses, setAddresses] = useState(initial);
+  if (addresses.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl border border-qf-line p-4 text-sm text-qf-mute">
+        אין עדיין כתובת שמורה. הכתובת מההזמנה הבאה שלך תישמר כאן אוטומטית, וניתן יהיה לערוך אותה.
+      </div>
+    );
+  }
   return (
-    <div className="flex items-center gap-3 px-4 py-3 text-sm">
-      {icon}
-      <div className="flex-1">{label}</div>
-      {hint && <div className="text-xs text-qf-mute">{hint}</div>}
+    <div className="space-y-2">
+      {addresses.map((a) => (
+        <AddressCard
+          key={a.id}
+          address={a}
+          onSaved={(u) => setAddresses((cur) => cur.map((x) => (x.id === u.id ? u : x)))}
+          onDeleted={(id) => setAddresses((cur) => cur.filter((x) => x.id !== id))}
+        />
+      ))}
+    </div>
+  );
+}
+
+function AddressCard({
+  address,
+  onSaved,
+  onDeleted,
+}: {
+  address: SavedAddress;
+  onSaved: (a: SavedAddress) => void;
+  onDeleted: (id: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [street, setStreet] = useState(address.street);
+  const [city, setCity] = useState(address.city);
+  const [apartment, setApartment] = useState(address.apartment ?? "");
+  const [floor, setFloor] = useState(address.floor ?? "");
+  const [notes, setNotes] = useState(address.notes ?? "");
+  const [busy, setBusy] = useState(false);
+
+  const summary = [
+    [street, city].filter(Boolean).join(", "),
+    apartment ? `דירה ${apartment}` : "",
+    floor ? `קומה ${floor}` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  async function save() {
+    if (!street.trim() || !city.trim()) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/v1/customer/addresses/${address.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          street: street.trim(),
+          city: city.trim(),
+          apartment: apartment.trim() || null,
+          floor: floor.trim() || null,
+          notes: notes.trim() || null,
+        }),
+      });
+      if (res.ok) {
+        onSaved({ ...address, street, city, apartment: apartment || null, floor: floor || null, notes: notes || null });
+        setEditing(false);
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove() {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/v1/customer/addresses/${address.id}`, { method: "DELETE" });
+      if (res.ok) onDeleted(address.id);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-qf-line p-3">
+      {editing ? (
+        <div className="space-y-2">
+          <input value={street} onChange={(e) => setStreet(e.target.value)} placeholder="רחוב ומספר" className="w-full px-3 py-2 rounded-xl border border-qf-line text-sm outline-none focus:border-(--qf-primary)" />
+          <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="עיר" className="w-full px-3 py-2 rounded-xl border border-qf-line text-sm outline-none focus:border-(--qf-primary)" />
+          <div className="grid grid-cols-2 gap-2">
+            <input value={apartment} onChange={(e) => setApartment(e.target.value)} placeholder="דירה" className="px-3 py-2 rounded-xl border border-qf-line text-sm outline-none focus:border-(--qf-primary)" />
+            <input value={floor} onChange={(e) => setFloor(e.target.value)} placeholder="קומה" className="px-3 py-2 rounded-xl border border-qf-line text-sm outline-none focus:border-(--qf-primary)" />
+          </div>
+          <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="הוראות לשליח" className="w-full px-3 py-2 rounded-xl border border-qf-line text-sm outline-none focus:border-(--qf-primary)" />
+          <div className="flex gap-2 pt-1">
+            <button type="button" onClick={save} disabled={busy || !street.trim() || !city.trim()} className="flex-1 px-3 py-2 rounded-xl bg-(--qf-primary) text-white text-sm font-semibold disabled:opacity-50">
+              שמור
+            </button>
+            <button type="button" onClick={() => setEditing(false)} disabled={busy} className="px-3 py-2 rounded-xl border border-qf-line text-sm">
+              ביטול
+            </button>
+            <button type="button" onClick={remove} disabled={busy} className="px-3 py-2 rounded-xl text-qf-tomato text-sm font-medium hover:bg-qf-tomato-soft">
+              מחק
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-(--qf-soft) grid place-items-center shrink-0">
+            <IcoPin c="var(--qf-primary)" s={18} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium truncate">{summary || "כתובת"}</div>
+            {notes && <div className="text-xs text-qf-mute truncate mt-0.5">{notes}</div>}
+          </div>
+          <button type="button" onClick={() => setEditing(true)} className="shrink-0 text-sm text-(--qf-deep) font-medium">
+            עריכה
+          </button>
+        </div>
+      )}
     </div>
   );
 }

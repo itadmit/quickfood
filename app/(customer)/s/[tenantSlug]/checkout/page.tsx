@@ -3,6 +3,7 @@ import ReactDOM from "react-dom";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { getSession } from "@/lib/auth/session";
+import { ensureLoyaltyMember } from "@/lib/loyalty/membership";
 import { resolveTerms } from "@/lib/legal/terms";
 import { resolveLoyaltyConfig } from "@/lib/loyalty/config";
 import { getActiveCardProviderSummary } from "@/lib/payments/factory";
@@ -28,19 +29,51 @@ export default async function CheckoutPage({
     phone: string;
     email: string | null;
   } | null = null;
+  let initialAddress: {
+    street: string;
+    city: string;
+    apartment: string | null;
+    floor: string | null;
+    notes: string | null;
+  } | null = null;
   try {
     const session = await getSession();
     if (session?.type === "customer") {
-      const c = await prisma.customer.findUnique({
-        where: { id: session.userId },
-        select: { firstName: true, lastName: true, phone: true, email: true },
-      });
+      const [c, addr] = await Promise.all([
+        prisma.customer.findUnique({
+          where: { id: session.userId },
+          select: { firstName: true, lastName: true, phone: true, email: true },
+        }),
+        prisma.address.findFirst({
+          where: { customerId: session.userId },
+          orderBy: [{ isDefault: "desc" }],
+          select: { street: true, city: true, apartment: true, floor: true, notes: true },
+        }),
+      ]);
       if (c) {
         initialCustomer = {
           firstName: c.firstName,
           lastName: c.lastName,
           phone: c.phone,
           email: c.email,
+        };
+        // Account = club membership: a logged-in customer at checkout is
+        // enrolled (idempotent, no marketing consent). Awaited so it isn't
+        // dropped as background work on serverless.
+        await ensureLoyaltyMember({
+          tenantId: tenant.id,
+          customerId: session.userId,
+          joinSource: "auto",
+          marketingConsent: false,
+        });
+      }
+      if (addr) {
+        initialAddress = {
+          street: addr.street,
+          city: addr.city,
+          apartment: addr.apartment,
+          floor: addr.floor,
+          notes: addr.notes,
         };
       }
     }
@@ -142,6 +175,7 @@ export default async function CheckoutPage({
     <CustomerCheckout
       tenantSlug={tenantSlug}
       initialCustomer={initialCustomer}
+      initialAddress={initialAddress}
       requireEmail={requireEmail}
       cardEnabled={cardEnabled}
       provider={cardProvider?.provider ?? null}
@@ -152,7 +186,9 @@ export default async function CheckoutPage({
       pickupEnabled={settings?.pickupEnabled ?? true}
       termsText={termsText}
       loyaltyCheckout={{
-        show: loyalty.showCheckoutCheckbox,
+        // Logged-in customers are already members (auto-enrolled), so the
+        // opt-in only shows to guests.
+        show: loyalty.showCheckoutCheckbox && !initialCustomer,
         text: loyalty.checkoutConsentText,
       }}
     />

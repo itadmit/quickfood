@@ -1989,6 +1989,9 @@ enum LoyaltyJoinSource {
   popup
   // Added by the merchant from the dashboard.
   manual
+  // Auto-enrolled: registering (logging in) / ordering makes a customer a
+  // club member - account and membership are unified.
+  auto
 }
 
 // A customer's membership in a single tenant's loyalty club. The Customer
