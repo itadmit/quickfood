@@ -2,6 +2,8 @@ import type {
   WoltCategory,
   WoltItem,
   WoltMenu,
+  WoltOptionGroup,
+  WoltOptionGroupRefOnItem,
   WoltVenue,
   WoltVenueInfo,
 } from "./types";
@@ -115,6 +117,19 @@ interface AssortCategory {
   item_ids?: string[];
   subcategories?: AssortCategory[] | null;
 }
+// Per-item reference to a shared option group, carrying this item's own
+// selection limits (min/max/free) - the group definition lives in the
+// response's `options[]`.
+interface AssortItemOptionRef {
+  id: string;
+  option_id: string;
+  name: string;
+  multi_choice_config?: {
+    total_range?: { min?: number; max?: number } | null;
+    max_single_selections?: number | null;
+    free_selections?: number | null;
+  } | null;
+}
 interface AssortItem {
   id: string;
   name: string;
@@ -122,12 +137,56 @@ interface AssortItem {
   price?: number; // agorot
   images?: AssortImage[] | null;
   disabled_info?: unknown;
+  options?: AssortItemOptionRef[] | null;
+}
+// A shared modifier group definition. `type` is "choice" (single) or
+// "multi_choice"; `values[]` are the selectable options (price in agorot).
+interface AssortOptionValue {
+  id: string;
+  name: string;
+  price?: number;
+}
+interface AssortOptionGroup {
+  id: string;
+  name: string;
+  type: string;
+  values?: AssortOptionValue[] | null;
 }
 interface AssortResponse {
   categories?: AssortCategory[];
   items?: AssortItem[];
-  options?: unknown[];
+  options?: AssortOptionGroup[];
   variant_groups?: unknown[];
+}
+
+function mapOptionGroup(g: AssortOptionGroup): WoltOptionGroup {
+  return {
+    id: g.id,
+    name: g.name,
+    // Wolt "choice" = pick one; "multi_choice" = pick many. The internal
+    // model + commit.ts key off "Singlechoice" / "Multichoice".
+    type: g.type === "choice" ? "Singlechoice" : "Multichoice",
+    values: (g.values ?? []).map((v) => ({
+      id: v.id,
+      name: v.name,
+      price: v.price ?? 0,
+    })),
+  };
+}
+
+function mapItemOptionRef(r: AssortItemOptionRef): WoltOptionGroupRefOnItem {
+  const range = r.multi_choice_config?.total_range;
+  // `id` must be the shared group id so commit.ts's `parent ?? id` lookup
+  // resolves against the mapped option groups.
+  return {
+    id: r.option_id,
+    name: r.name,
+    minimum_total_selections: range?.min ?? 0,
+    maximum_total_selections: range?.max ?? 1,
+    maximum_single_selections:
+      r.multi_choice_config?.max_single_selections ?? undefined,
+    free_selections: r.multi_choice_config?.free_selections ?? 0,
+  };
 }
 
 async function getAssort(path: string): Promise<AssortResponse> {
@@ -191,14 +250,27 @@ export async function fetchMenu(slug: string): Promise<WoltMenu> {
     slug: c.slug,
   }));
 
-  // Items live behind a per-category call keyed by category slug.
+  // Items live behind a per-category call keyed by category slug. Each
+  // response also carries the shared option-group definitions its items
+  // reference, so we harvest those here too.
   const perCat = await mapLimit(flat, 5, async (c) => {
-    if (!c.slug) return { catId: c.id, items: [] as AssortItem[] };
+    if (!c.slug) {
+      return { catId: c.id, items: [] as AssortItem[], options: [] as AssortOptionGroup[] };
+    }
     const resp = await getAssort(
       `/venues/slug/${slug}/assortment/categories/slug/${encodeURIComponent(c.slug)}`,
     );
-    return { catId: c.id, items: resp.items ?? [] };
+    return { catId: c.id, items: resp.items ?? [], options: resp.options ?? [] };
   });
+
+  // Dedupe option groups by id across all category responses - the same
+  // group (eg "doneness") is repeated in every category whose items use it.
+  const groupMap = new Map<string, WoltOptionGroup>();
+  for (const { options } of perCat) {
+    for (const g of options) {
+      if (!groupMap.has(g.id)) groupMap.set(g.id, mapOptionGroup(g));
+    }
+  }
 
   const items: WoltItem[] = [];
   const seen = new Set<string>();
@@ -215,15 +287,19 @@ export async function fetchMenu(slug: string): Promise<WoltMenu> {
         baseprice: it.price ?? 0,
         image: it.images?.[0]?.url ?? null,
         images: (it.images ?? []).map((im) => im.url).filter(Boolean),
-        // Modifier groups (options/variant_groups) use a new shape not yet
-        // mapped - simple products (retail: pets/grocery/pharmacy) have none.
-        options: [],
+        options: (it.options ?? []).map(mapItemOptionRef),
         tags: [],
       });
     }
   }
 
-  return { id: slug, name: slug, categories, items, options: [] };
+  return {
+    id: slug,
+    name: slug,
+    categories,
+    items,
+    options: [...groupMap.values()],
+  };
 }
 
 export async function fetchImage(
