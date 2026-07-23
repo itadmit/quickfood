@@ -78,6 +78,7 @@ export async function commitImport(
 
   const categoriesIdMap = new Map<string, string>(); // wolt cat id → QF cat id
   let categoriesImported = 0;
+  const categoriesToImage: Array<{ qfCatId: string; sourceUrl: string }> = [];
 
   for (const [idx, c] of menu.categories.entries()) {
     const parent = c.parent_category_id ? catByWoltId.get(c.parent_category_id) : null;
@@ -107,6 +108,12 @@ export async function commitImport(
       });
       categoriesIdMap.set(c.id, saved.id);
       categoriesImported += 1;
+      // Wolt exposes a category-level image; carry it to R2 so the
+      // storefront's category-grid ("cubes") layout shows real photos.
+      // Skip when the QF row already has one so re-runs don't re-download.
+      if (c.image && !saved.imageUrl) {
+        categoriesToImage.push({ qfCatId: saved.id, sourceUrl: c.image });
+      }
     } catch (err) {
       errors.push({
         context: `category:${c.name}`,
@@ -341,6 +348,44 @@ export async function commitImport(
         } catch (err) {
           errors.push({
             context: `image:${qfItemId}`,
+            message: err instanceof Error ? err.message : String(err),
+          });
+          return false;
+        }
+      }),
+    );
+    imagesUploaded += results.filter(Boolean).length;
+  }
+
+  // Category images (same R2 flow, feeds the storefront cubes layout).
+  for (let i = 0; i < categoriesToImage.length; i += PARALLEL) {
+    const batch = categoriesToImage.slice(i, i + PARALLEL);
+    const results = await Promise.all(
+      batch.map(async ({ qfCatId, sourceUrl }) => {
+        const img = await fetchImage(sourceUrl);
+        if (!img) {
+          errors.push({
+            context: `category-image:${qfCatId}`,
+            message: `הורדת תמונת קטגוריה נכשלה (${sourceUrl})`,
+          });
+          return false;
+        }
+        try {
+          const ext = mimeExt(img.contentType);
+          const key = `tenants/${tenantId}/wolt-import/cat-${qfCatId}.${ext}`;
+          const publicUrl = await uploadBytes({
+            key,
+            body: img.bytes,
+            contentType: img.contentType,
+          });
+          await prisma.menuCategory.update({
+            where: { id: qfCatId },
+            data: { imageUrl: publicUrl },
+          });
+          return true;
+        } catch (err) {
+          errors.push({
+            context: `category-image:${qfCatId}`,
             message: err instanceof Error ? err.message : String(err),
           });
           return false;
