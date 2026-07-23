@@ -73,6 +73,9 @@ const SignupSchema = z.object({
       "cafe",
       "icecream",
       "mediterranean",
+      "pets",
+      "grocery",
+      "pharmacy",
       "general",
     ])
     .default("general"),

@@ -225,7 +225,15 @@ enum BusinessType {
   cafe
   icecream
   mediterranean
+  pets
+  grocery
+  pharmacy
   general
+}
+
+enum StorefrontLayout {
+  classic
+  category_grid
 }
 
 enum PendingPaymentStatus {
@@ -254,6 +262,7 @@ model Tenant {
   coverImage           String?        @map("cover_image")
   themeId              ThemeId        @default(fresh) @map("theme_id")
   businessType         BusinessType   @default(general) @map("business_type")
+  storefrontLayout     StorefrontLayout @default(classic) @map("storefront_layout")
   cuisineType          String?        @map("cuisine_type")
   /// Free-text "about" / tagline for the venue. Shown to customers on
   /// the storefront under the venue name, editable from Branding.

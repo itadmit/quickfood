@@ -27,6 +27,7 @@ import {
   type DeliveryChoice,
 } from "@/lib/delivery-city-storage";
 import { cn } from "@/lib/cn";
+import { CategoryGridBrowser } from "@/components/customer/CategoryGridBrowser";
 import { ItemDetailModal } from "@/components/customer/ItemDetailModal";
 import { ItemDetail } from "@/components/customer/screens/ItemDetail";
 import { DealComposer } from "@/components/customer/DealComposer";
@@ -110,6 +111,9 @@ interface Props {
     fixedPrice: number;
     itemImages: string[];
   }>;
+  /** Storefront browsing model. "category_grid" swaps the inline Wolt-style
+   *  menu for a category-cube grid (niche, opt-in via advanced settings). */
+  layoutMode?: "classic" | "category_grid";
 }
 
 export function CustomerHome({
@@ -131,6 +135,7 @@ export function CustomerHome({
   ratingSummary = null,
   deliveryEta = null,
   deals = [],
+  layoutMode = "classic",
 }: Props) {
   const [composerDealId, setComposerDealId] = useState<string | null>(null);
   const themeDefaultColor: CategoryColorKey =
@@ -234,7 +239,12 @@ export function CustomerHome({
 
   function closeModal() {
     setIsModalOpen(false);
-    router.replace(pathname, { scroll: false });
+    // Drop only the `item` param so other state (eg the cubes `cat` view)
+    // survives closing the modal.
+    const params = new URLSearchParams(searchParams);
+    params.delete("item");
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
 
   // Wolt-style "select your delivery city" flow. On first visit the
@@ -441,15 +451,18 @@ export function CustomerHome({
           {/* Search trigger - looks like an input but is a button. Tapping
               scrolls down to the inline menu and focuses the real search
               field there. Hidden on desktop since the menu (and its own
-              search input) is visible immediately without scroll. */}
-          <button
-            type="button"
-            onClick={focusMenuSearch}
-            className="lg:hidden w-full flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur px-4 py-2.5 rounded-full text-sm border border-white/25 text-start transition"
-          >
-            <IcoSearch c="rgba(255,255,255,0.9)" s={16} />
-            <span className="text-white/85">חיפוש בתפריט</span>
-          </button>
+              search input) is visible immediately without scroll. In cubes
+              mode the browser owns its own search bar, so skip this. */}
+          {layoutMode !== "category_grid" && (
+            <button
+              type="button"
+              onClick={focusMenuSearch}
+              className="lg:hidden w-full flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur px-4 py-2.5 rounded-full text-sm border border-white/25 text-start transition"
+            >
+              <IcoSearch c="rgba(255,255,255,0.9)" s={16} />
+              <span className="text-white/85">חיפוש בתפריט</span>
+            </button>
+          )}
 
           {/* Mobile-only tenant name (desktop renders it at the top of the hero).
               Small logo chip sits next to the name when uploaded. */}
@@ -596,6 +609,20 @@ export function CustomerHome({
         hasCustomerSession={hasCustomerSession}
       />
 
+      {layoutMode === "category_grid" ? (
+        <CategoryGridBrowser
+          tenantSlug={tenant.slug}
+          businessType={tenant.businessType}
+          categories={allCategories}
+          items={menuItems}
+          noticesByCategory={noticesByCategory}
+          noticesByItem={noticesByItem}
+          featuredBadgeLabel={featuredBadgeLabel}
+          themeDefaultColor={themeDefaultColor}
+          onItemOpen={onItemOpen}
+        />
+      ) : (
+      <>
       {/* Categories - horizontal scroll on mobile, wrap-grid on desktop */}
       <section className="px-5 mt-5 lg:max-w-7xl lg:mx-auto lg:px-6 lg:mt-10">
         <h2 className="text-base lg:text-xl font-semibold mb-2 lg:mb-4">קטגוריות</h2>
@@ -775,6 +802,8 @@ export function CustomerHome({
             />
           </div>
         </section>
+      )}
+      </>
       )}
 
       <BottomTabBar tenantSlug={tenant.slug} />

@@ -76,6 +76,9 @@ const BUSINESS_TYPES: Array<{ val: string; label: string }> = [
   { val: "cafe", label: "בית קפה" },
   { val: "icecream", label: "גלידה" },
   { val: "mediterranean", label: "ים תיכוני" },
+  { val: "pets", label: "בעלי חיים" },
+  { val: "grocery", label: "סופר / מכולת" },
+  { val: "pharmacy", label: "בית מרקחת / פארם" },
   { val: "general", label: "כללי" },
 ];
 

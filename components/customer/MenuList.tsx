@@ -18,6 +18,9 @@ export interface MenuListItem {
   images?: string[];
   tags: string[];
   featured?: boolean;
+  /** True when the item has sizes or option groups, so tapping must open the
+   *  detail modal instead of adding straight to the cart. */
+  hasOptions?: boolean;
 }
 
 export type NoticeScope = "store" | "category" | "item";

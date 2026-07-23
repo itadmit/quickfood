@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/client";
 import { SettingsHeader } from "../SettingsHeader";
 import { WoltImportClient } from "./WoltImportClient";
 import { AppearanceToggle } from "./AppearanceToggle";
+import { StorefrontLayoutToggle } from "./StorefrontLayoutToggle";
 import { InstallAppButton } from "./InstallAppButton";
 import { DeleteAllItems } from "./DeleteAllItems";
 import { ResetStore } from "./ResetStore";
@@ -43,7 +44,7 @@ export default async function AdvancedSettingsPage({
     }),
     prisma.tenant.findUnique({
       where: { id: session.tenantId },
-      select: { dashboardVersion: true, name: true },
+      select: { dashboardVersion: true, storefrontLayout: true, name: true },
     }),
     prisma.menuItem.count({ where: { tenantId: session.tenantId } }),
     prisma.order.count({ where: { tenantId: session.tenantId } }),
@@ -66,6 +67,19 @@ export default async function AdvancedSettingsPage({
         </header>
         <AppearanceToggle
           initial={(tenant?.dashboardVersion ?? "v2") as "v1" | "v2"}
+        />
+      </section>
+
+      <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-6">
+        <header className="mb-4">
+          <h2 className="text-lg font-bold">תצוגת החנות ללקוח</h2>
+          <p className="text-sm text-qf-mute mt-1 leading-relaxed">
+            איך הלקוחות מדפדפים בתפריט. ברירת המחדל - תפריט רציף. אפשר לעבור
+            לתצוגת קוביות קטגוריה (בסגנון וולט) - מתאים לקטלוגים רחבים.
+          </p>
+        </header>
+        <StorefrontLayoutToggle
+          initial={(tenant?.storefrontLayout ?? "classic") as "classic" | "category_grid"}
         />
       </section>
 

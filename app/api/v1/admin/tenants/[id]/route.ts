@@ -36,6 +36,9 @@ const PatchSchema = z.object({
       "cafe",
       "icecream",
       "mediterranean",
+      "pets",
+      "grocery",
+      "pharmacy",
       "general",
     ])
     .optional(),

@@ -164,6 +164,7 @@ export default async function HomePage({
       // Featured items bubble within their category so the merchandising
       // signal shows up where the eye lands first.
       orderBy: [{ categoryId: "asc" }, { featured: "desc" }, { position: "asc" }],
+      include: { _count: { select: { sizes: true, optionGroups: true } } },
     }),
     prisma.notice.findMany({
       where: { tenantId: tenant.id, active: true },
@@ -295,6 +296,7 @@ export default async function HomePage({
         coverImage: tenant.coverImage,
         themeId: tenant.themeId,
       }}
+      layoutMode={tenant.storefrontLayout}
       branch={
         branch
           ? {
@@ -326,6 +328,7 @@ export default async function HomePage({
         images: i.images,
         tags: i.tags,
         featured: i.featured,
+        hasOptions: i._count.sizes > 0 || i._count.optionGroups > 0,
       }))}
       featuredBadgeLabel={tenant.featuredBadgeLabel}
       notices={notices.map((n) => ({

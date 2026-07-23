@@ -23,6 +23,9 @@ export type BusinessType =
   | "cafe"
   | "icecream"
   | "mediterranean"
+  | "pets"
+  | "grocery"
+  | "pharmacy"
   | "general";
 
 export const BUSINESS_TYPES: Array<{ value: BusinessType; label: string }> = [
@@ -36,6 +39,9 @@ export const BUSINESS_TYPES: Array<{ value: BusinessType; label: string }> = [
   { value: "cafe", label: "בית קפה" },
   { value: "icecream", label: "גלידרייה" },
   { value: "mediterranean", label: "ים תיכוני" },
+  { value: "pets", label: "בעלי חיים" },
+  { value: "grocery", label: "סופר / מכולת" },
+  { value: "pharmacy", label: "בית מרקחת / פארם" },
   { value: "general", label: "כללי" },
 ];
 
@@ -153,6 +159,9 @@ const PLACEHOLDER_CONFIG: Record<
   cafe: { from: "#e8d9c5", to: "#b08961", symbol: "#3e2a16", dot: "#3e2a16" },
   icecream: { from: "#fadce8", to: "#e9a4c4", symbol: "#7a2b53", dot: "#7a2b53" },
   mediterranean: { from: "#dfe9d8", to: "#9fb98a", symbol: "#2c4624", dot: "#2c4624" },
+  pets: { from: "#dce9e4", to: "#94c0b0", symbol: "#1f4a3d", dot: "#1f4a3d" },
+  grocery: { from: "#e6efd9", to: "#a9c877", symbol: "#3a4a1a", dot: "#3a4a1a" },
+  pharmacy: { from: "#dde8f2", to: "#9dbcda", symbol: "#1d3a55", dot: "#1d3a55" },
   general: { from: "#ece6da", to: "#bdb39d", symbol: "#3a342a", dot: "#3a342a" },
 };
 
@@ -171,6 +180,9 @@ import {
   Sandwich,
   CookingPot,
   UtensilsCrossed,
+  PawPrint,
+  ShoppingBasket,
+  Pill,
 } from "lucide-react";
 
 const SYMBOL: Record<BusinessType, React.ComponentType<{ size: number; color: string; strokeWidth: number }>> = {
@@ -184,6 +196,9 @@ const SYMBOL: Record<BusinessType, React.ComponentType<{ size: number; color: st
   cafe: Coffee,
   icecream: IceCream,
   mediterranean: Soup,
+  pets: PawPrint,
+  grocery: ShoppingBasket,
+  pharmacy: Pill,
   general: UtensilsCrossed,
 };
 

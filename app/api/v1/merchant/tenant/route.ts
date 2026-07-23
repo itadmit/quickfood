@@ -79,6 +79,7 @@ export const PATCH = handler(async (req: Request) => {
       coverImage: body.cover_image,
       themeId: body.theme_id,
       businessType: body.business_type,
+      storefrontLayout: body.storefront_layout,
       cuisineType: body.cuisine_type,
       about: body.about,
       vatNumber: body.vat_number,

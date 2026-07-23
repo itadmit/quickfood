@@ -319,9 +319,13 @@ export const TenantPatchSchema = z.object({
       "cafe",
       "icecream",
       "mediterranean",
+      "pets",
+      "grocery",
+      "pharmacy",
       "general",
     ])
     .optional(),
+  storefront_layout: z.enum(["classic", "category_grid"]).optional(),
   cuisine_type: z.string().max(60).optional(),
   about: z.string().max(2000).transform(normalizeTenantAbout).nullable().optional(),
   vat_number: z.string().max(20).optional(),
@@ -539,6 +543,9 @@ export const TenantCreateSchema = z.object({
       "cafe",
       "icecream",
       "mediterranean",
+      "pets",
+      "grocery",
+      "pharmacy",
       "general",
     ])
     .default("general"),
