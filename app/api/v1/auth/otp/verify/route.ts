@@ -16,10 +16,13 @@ export const POST = handler(async (req: Request) => {
   const ok = await verifyOtp(phone, body.code);
   if (!ok) return apiError("invalid_otp", "קוד שגוי או פג תוקף", 401, "code");
 
-  const customer = await prisma.customer.upsert({
-    where: { phone },
-    update: { lastSeenAt: new Date() },
-    create: { phone, firstName: "", lastName: "" },
+  // A code is only ever issued to an existing member (see request route), so
+  // never create a customer here - just refresh last-seen.
+  const customer = await prisma.customer.findUnique({ where: { phone } });
+  if (!customer) return apiError("not_member", "המספר אינו רשום למועדון", 404, "phone");
+  await prisma.customer.update({
+    where: { id: customer.id },
+    data: { lastSeenAt: new Date() },
   });
 
   const { accessToken, refreshToken } = await issueTokensForCustomer(customer.id);

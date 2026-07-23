@@ -4,7 +4,6 @@ import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { getCustomerLoyalty } from "@/lib/loyalty/customer";
-import { ensureLoyaltyMember } from "@/lib/loyalty/membership";
 import { ProfileLoggedIn } from "./ProfileLoggedIn";
 import { ProfileLogin } from "./ProfileLogin";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
@@ -84,16 +83,6 @@ export default async function ProfilePage({
       </div>
     );
   }
-
-  // Account = club membership: visiting the personal area enrols the customer
-  // into the tenant's club (idempotent, no marketing consent), so they show
-  // in the merchant's members list.
-  await ensureLoyaltyMember({
-    tenantId: tenant.id,
-    customerId: customer.id,
-    joinSource: "auto",
-    marketingConsent: false,
-  });
 
   const loyalty = await getCustomerLoyalty(tenant.id, customer.id);
 

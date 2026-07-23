@@ -29,46 +29,59 @@ export const POST = handler(async (req: Request) => {
   checkRate(`otp:phone:${phone}`, 4);
   checkRate(`otp:ip:${clientIp(req)}`, 12);
 
-  // Brand the message with the storefront's business name (bold on WhatsApp).
-  const tenant = body.tenant_slug
-    ? await prisma.tenant.findUnique({
-        where: { slug: body.tenant_slug },
-        select: { id: true, name: true, status: true },
-      })
-    : null;
+  // Customer login is members-only, so the store context is required - a code
+  // is only ever sent to a phone that has joined THIS store's club.
+  if (!body.tenant_slug) {
+    return apiError("validation_error", "חסר מזהה חנות", 422, "tenant_slug");
+  }
+  const tenant = await prisma.tenant.findUnique({
+    where: { slug: body.tenant_slug },
+    select: { id: true, name: true, status: true },
+  });
+  if (!tenant) return apiError("not_found", "החנות לא נמצאה", 404, "tenant_slug");
 
   // Never relay for a suspended store, and never inject raw user-controlled
   // names (URLs / newlines) into the message body - that turns the OTP into
   // a spam carrier. sanitizeMessageName strips links and falls back to brand.
-  if (tenant && tenant.status === "suspended") {
+  if (tenant.status === "suspended") {
     return apiJson({ sent: true, expires_in: 0 });
   }
 
+  // Only send to a registered club member of THIS store. joinSource != auto
+  // excludes legacy auto-enrol rows (customers who only ordered as guests).
+  // Membership is per-tenant, so the same phone can belong to other stores'
+  // clubs without leaking a code here. Never create a new customer.
+  const member = await prisma.loyaltyMember.findFirst({
+    where: { tenantId: tenant.id, joinSource: { not: "auto" }, customer: { phone } },
+    select: { id: true },
+  });
+  if (!member) {
+    return apiError("not_member", "המספר אינו רשום למועדון הלקוחות של החנות", 404, "phone");
+  }
+
   const { code, expiresAt } = await issueOtp(phone);
-  const businessName = sanitizeMessageName(tenant?.name ?? "QuickFood");
+  const businessName = sanitizeMessageName(tenant.name);
   const minutes = Math.max(1, Math.round((expiresAt.getTime() - Date.now()) / 60_000));
   const message = `*${businessName}:*\nקוד ההתחברות שלך הוא ${code}\nהקוד תקף ל-${minutes} דקות.`;
 
   // Send over QuickFood's platform WhatsApp (managed iBot account) - the
   // platform absorbs the cost, so it never draws the merchant's credit pool.
   let delivered = false;
-  if (tenant) {
-    try {
-      const res = await sendWhatsApp({
-        tenantId: tenant.id,
-        to: phone,
-        body: message,
-        kind: "login_otp",
-        useManagedAccount: true,
-      });
-      delivered = res.status === "sent";
-    } catch (err) {
-      console.error("[otp] whatsapp send failed", err);
-    }
+  try {
+    const res = await sendWhatsApp({
+      tenantId: tenant.id,
+      to: phone,
+      body: message,
+      kind: "login_otp",
+      useManagedAccount: true,
+    });
+    delivered = res.status === "sent";
+  } catch (err) {
+    console.error("[otp] whatsapp send failed", err);
   }
 
-  // Fallback so login still works when WhatsApp isn't configured (or no tenant
-  // context) - mirrors the previous MVP behaviour.
+  // Fallback so login still works when WhatsApp isn't configured - mirrors the
+  // previous MVP behaviour.
   if (!delivered) {
     console.log(`[otp] ${phone} ← ${code}`);
   }

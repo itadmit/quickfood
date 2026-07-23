@@ -947,16 +947,15 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     }
   }
 
-  // Account = club membership: every resolved customer is enrolled. Ticking
-  // the checkout opt-in additionally records explicit marketing consent;
-  // otherwise it's a silent auto-enrol (no marketing consent). Best-effort;
-  // never blocks the order.
-  if (effectiveCustomerId) {
+  // Club membership is opt-in only: enrol solely when the customer ticked the
+  // checkout join checkbox. No silent auto-enrol - a guest who didn't consent
+  // stays a plain customer. Best-effort; never blocks the order.
+  if (effectiveCustomerId && input.loyaltyConsent) {
     await ensureLoyaltyMember({
       tenantId: tenant.id,
       customerId: effectiveCustomerId,
-      joinSource: input.loyaltyConsent ? "checkout" : "auto",
-      marketingConsent: input.loyaltyConsent === true,
+      joinSource: "checkout",
+      marketingConsent: true,
     });
   }
 

@@ -3,7 +3,6 @@ import ReactDOM from "react-dom";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { getSession } from "@/lib/auth/session";
-import { ensureLoyaltyMember } from "@/lib/loyalty/membership";
 import { resolveTerms } from "@/lib/legal/terms";
 import { resolveLoyaltyConfig } from "@/lib/loyalty/config";
 import { getActiveCardProviderSummary } from "@/lib/payments/factory";
@@ -57,15 +56,6 @@ export default async function CheckoutPage({
           phone: c.phone,
           email: c.email,
         };
-        // Account = club membership: a logged-in customer at checkout is
-        // enrolled (idempotent, no marketing consent). Awaited so it isn't
-        // dropped as background work on serverless.
-        await ensureLoyaltyMember({
-          tenantId: tenant.id,
-          customerId: session.userId,
-          joinSource: "auto",
-          marketingConsent: false,
-        });
       }
       if (addr) {
         initialAddress = {
