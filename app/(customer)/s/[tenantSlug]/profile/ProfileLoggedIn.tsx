@@ -115,37 +115,37 @@ export function ProfileLoggedIn({
   return (
     <div className="lg:max-w-2xl lg:mx-auto lg:pt-6 lg:pb-12">
       {loyalty && tc && (
-        <div className="flex items-center justify-between gap-3 px-4 py-2 bg-white border-b-2 border-black lg:rounded-t-2xl lg:border-2">
+        <div className="flex items-center justify-between gap-3 px-4 py-3 bg-white border-b-2 border-black lg:rounded-t-2xl lg:border-2">
           <div className="flex items-center gap-2 min-w-0">
-            <Crown size={16} color={tc.text} />
-            <span className="text-sm font-black truncate">שלום {firstName || "אורח"}</span>
+            <Crown size={20} color={tc.text} />
+            <span className="text-base font-black truncate">שלום {firstName || "אורח"}</span>
             <span
-              className="shrink-0 text-[11px] font-black px-2 py-0.5 rounded-full border"
+              className="shrink-0 text-xs font-black px-2.5 py-1 rounded-full border"
               style={{ backgroundColor: tc.bg, color: tc.text, borderColor: tc.border }}
             >
               לקוח {loyalty.tierName}
             </span>
           </div>
-          <div className="shrink-0 flex items-center gap-2">
+          <div className="shrink-0 flex items-center gap-2.5">
             <div className="text-end leading-tight">
-              <div className="text-[10px] text-qf-mute">
+              <div className="text-xs text-qf-mute">
                 {loyalty.redemptionEnabled ? "יתרת נקודות" : "נקודות שצברת"}
               </div>
-              <div className="text-sm font-black">
+              <div className="text-lg font-black tnum">
                 {loyalty.redemptionEnabled ? loyalty.balance : loyalty.points}
                 {loyalty.redemptionEnabled && loyalty.balanceValueShekels > 0 && (
-                  <span className="text-[10px] font-bold text-qf-mute"> · ₪{loyalty.balanceValueShekels}</span>
+                  <span className="text-xs font-bold text-qf-mute"> · ₪{loyalty.balanceValueShekels}</span>
                 )}
               </div>
             </div>
-            <div className="w-16">
-              <div className="h-1.5 rounded-full bg-black/10 overflow-hidden">
+            <div className="w-20">
+              <div className="h-2 rounded-full bg-black/10 overflow-hidden">
                 <div
                   className="h-full rounded-full"
                   style={{ width: `${loyalty.progressPct}%`, backgroundColor: tc.border }}
                 />
               </div>
-              <div className="text-[9px] text-qf-mute mt-0.5 text-center whitespace-nowrap">
+              <div className="text-[11px] text-qf-mute mt-1 text-center whitespace-nowrap">
                 {loyalty.nextTierName
                   ? `עוד ${loyalty.pointsToNext} ל${loyalty.nextTierName}`
                   : "הדרגה הגבוהה"}
@@ -154,7 +154,15 @@ export function ProfileLoggedIn({
           </div>
         </div>
       )}
-      <header className="bg-linear-to-b from-(--qf-primary) to-(--qf-deep) text-white px-5 pt-5 pb-7 rounded-b-3xl lg:rounded-3xl lg:px-8">
+      <header
+        className={cn(
+          "bg-linear-to-b from-(--qf-primary) to-(--qf-deep) text-white px-5 pt-5 pb-7 lg:px-8",
+          // When the loyalty bar sits above, keep the top square so the blue
+          // reads as one continuous card with the white strip. Standalone
+          // (no loyalty) it keeps its rounded top on desktop.
+          loyalty && tc ? "rounded-b-3xl" : "rounded-b-3xl lg:rounded-3xl",
+        )}
+      >
         <div className="flex items-center gap-3 mb-4">
           <Link
             href={`/s/${tenantSlug}`}
@@ -290,7 +298,6 @@ export function ProfileLoggedIn({
       <section className="px-5 mt-4 lg:px-0 lg:mt-5">
         <div className="bg-white rounded-2xl border border-qf-line divide-y divide-qf-line">
           <MenuRow icon={<IcoUser s={18} />} label="כתובות שמורות" hint="בקרוב" />
-          <MenuRow icon={<IcoReceipt s={18} />} label="אמצעי תשלום" hint="בקרוב" />
           <button
             type="button"
             onClick={logout}
