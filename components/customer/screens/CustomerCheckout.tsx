@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { IcoChev, IcoArrowLeft, IcoBag, IcoPin, IcoClose } from "@/components/shared/Icons";
+import { IcoChev, IcoArrowLeft, IcoBag, IcoPin, IcoClose, IcoCheck } from "@/components/shared/Icons";
+import { CustomerOtpLogin, type OtpCustomer } from "@/components/customer/CustomerOtpLogin";
 import { Modal, ModalBody } from "@/components/shared/Modal";
 import { LegalText } from "@/components/shared/LegalText";
 import { THEMES, type ThemeId } from "@/lib/themes";
@@ -36,6 +37,7 @@ const PAYMENT_METHOD_LABELS: Record<CustomerPaymentMethod, string> = {
 
 export function CustomerCheckout({
   tenantSlug,
+  initialCustomer = null,
   requireEmail = false,
   cardEnabled = false,
   provider = null,
@@ -48,6 +50,13 @@ export function CustomerCheckout({
   loyaltyCheckout = { show: false, text: "" },
 }: {
   tenantSlug: string;
+  /** Prefill + "logged in as" state for an already-authenticated customer. */
+  initialCustomer?: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email: string | null;
+  } | null;
   requireEmail?: boolean;
   /** Tenant has an active card provider (grow OR cardcom). */
   cardEnabled?: boolean;
@@ -68,12 +77,33 @@ export function CustomerCheckout({
   const [city, setCity] = useState("");
   const [floor, setFloor] = useState("");
   const [apartment, setApartment] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(initialCustomer?.phone ?? "");
   const [phoneTouched, setPhoneTouched] = useState(false);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState(initialCustomer?.firstName ?? "");
+  const [lastName, setLastName] = useState(initialCustomer?.lastName ?? "");
+  const [email, setEmail] = useState(initialCustomer?.email ?? "");
   const [emailTouched, setEmailTouched] = useState(false);
+  // Client-side auth state. Starts from the SSR session; can flip true when a
+  // guest logs in via the checkout OTP sheet (which also sets the cookies).
+  const [loggedIn, setLoggedIn] = useState(!!initialCustomer);
+  const [loginName, setLoginName] = useState(
+    [initialCustomer?.firstName, initialCustomer?.lastName]
+      .filter(Boolean)
+      .join(" ")
+      .trim(),
+  );
+  const [loginOpen, setLoginOpen] = useState(false);
+
+  // Guest logged in via the checkout sheet - the verify call already set the
+  // cookies, so we just prefill from the returned customer and flip state.
+  function handleLoginSuccess(c: OtpCustomer) {
+    setPhone(c.phone || "");
+    setFirstName((cur) => cur || c.first_name || "");
+    setLastName((cur) => cur || c.last_name || "");
+    setLoggedIn(true);
+    setLoginName([c.first_name, c.last_name].filter(Boolean).join(" ").trim());
+    setLoginOpen(false);
+  }
   // Flipped on the first failed submit attempt: from then on EVERY invalid
   // field shows its red error (Shopify-style), not just touched ones.
   const [submitAttempted, setSubmitAttempted] = useState(false);
@@ -780,6 +810,22 @@ export function CustomerCheckout({
         {/* 1. Contact - promoted to the top */}
         <Card>
           <CardTitle>פרטי קשר</CardTitle>
+          {loggedIn ? (
+            <div className="mt-2 flex items-center gap-2 text-sm bg-qf-green-soft border border-qf-green-line text-qf-green-deep rounded-xl px-3 py-2">
+              <IcoCheck c="currentColor" s={16} />
+              <span className="font-medium truncate">
+                מחובר{loginName ? ` כ${loginName}` : ""}
+              </span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setLoginOpen(true)}
+              className="mt-2 w-full text-start text-sm bg-(--qf-soft) border border-qf-line rounded-xl px-3 py-2 hover:border-(--qf-primary)/40 transition"
+            >
+              כבר לקוח שלנו? <span className="font-bold text-(--qf-deep)">התחברו</span> והפרטים ימולאו אוטומטית
+            </button>
+          )}
           <div className="grid grid-cols-2 gap-3 mt-3">
             <Field label="שם פרטי" required error={firstNameError} errorId="co-first-name-error">
               <Input
@@ -1551,6 +1597,31 @@ export function CustomerCheckout({
         </div>
         <ModalBody>
           <LegalText text={termsText} />
+        </ModalBody>
+      </Modal>
+
+      <Modal
+        open={loginOpen}
+        onClose={() => setLoginOpen(false)}
+        size="sm"
+        ariaLabel="התחברות"
+      >
+        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-qf-line-soft">
+          <h2 className="font-bold text-lg">התחברות</h2>
+          <button
+            type="button"
+            onClick={() => setLoginOpen(false)}
+            aria-label="סגור"
+            className="shrink-0 w-9 h-9 rounded-full grid place-items-center text-qf-mute hover:bg-qf-line-soft transition"
+          >
+            <IcoClose s={20} />
+          </button>
+        </div>
+        <ModalBody>
+          <p className="text-sm text-qf-mute text-center mb-4">
+            נשלח קוד אימות בוואטסאפ והפרטים שלך ימולאו אוטומטית
+          </p>
+          <CustomerOtpLogin tenantSlug={tenantSlug} onSuccess={handleLoginSuccess} />
         </ModalBody>
       </Modal>
     </div>

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import ReactDOM from "react-dom";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
+import { getSession } from "@/lib/auth/session";
 import { resolveTerms } from "@/lib/legal/terms";
 import { resolveLoyaltyConfig } from "@/lib/loyalty/config";
 import { getActiveCardProviderSummary } from "@/lib/payments/factory";
@@ -17,6 +18,35 @@ export default async function CheckoutPage({
   const { tenantSlug } = await params;
   const tenant = await resolveTenantBySlug(tenantSlug);
   if (!tenant) notFound();
+
+  // A logged-in customer should never re-type their identity at checkout.
+  // Pull their saved contact details and prefill the form (also drives the
+  // "logged in as..." indicator + hides the guest login prompt).
+  let initialCustomer: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email: string | null;
+  } | null = null;
+  try {
+    const session = await getSession();
+    if (session?.type === "customer") {
+      const c = await prisma.customer.findUnique({
+        where: { id: session.userId },
+        select: { firstName: true, lastName: true, phone: true, email: true },
+      });
+      if (c) {
+        initialCustomer = {
+          firstName: c.firstName,
+          lastName: c.lastName,
+          phone: c.phone,
+          email: c.email,
+        };
+      }
+    }
+  } catch (err) {
+    console.error("[checkout/page] customer session lookup failed", err);
+  }
 
   // Each query wrapped in its own try so one bad lookup doesn't kill the
   // whole checkout page render. (Both are non-critical - checkout still
@@ -111,6 +141,7 @@ export default async function CheckoutPage({
   return (
     <CustomerCheckout
       tenantSlug={tenantSlug}
+      initialCustomer={initialCustomer}
       requireEmail={requireEmail}
       cardEnabled={cardEnabled}
       provider={cardProvider?.provider ?? null}
