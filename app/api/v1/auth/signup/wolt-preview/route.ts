@@ -50,7 +50,7 @@ export const POST = handler(async (req: Request) => {
     } = { cutleryItem: null, noticeItems: [], flaggedNames: [] };
 
     try {
-      const menu = await fetchMenu(info.venueId);
+      const menu = await fetchMenu(info.slug);
       const items = menu.items.filter((it) => it.enabled !== false);
       // Wolt has no native cutlery / notice surfaces, so merchants
       // hack them in as zero-price menu items ("סכו״ם חד״פ", "הודעה

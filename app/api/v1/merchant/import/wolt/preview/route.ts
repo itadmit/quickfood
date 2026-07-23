@@ -44,7 +44,7 @@ export const POST = handler(async (req: Request) => {
 
   try {
     const venue = await resolveVenue(body.source_url);
-    const menu = await fetchMenu(venue.venueId);
+    const menu = await fetchMenu(venue.slug);
 
     const imagesCount = menu.items.filter((i) => !!i.image).length;
     const sampleItems = menu.items.slice(0, 8).map((i) => ({

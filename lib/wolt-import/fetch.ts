@@ -1,4 +1,10 @@
-import type { WoltMenu, WoltVenue, WoltVenueInfo } from "./types";
+import type {
+  WoltCategory,
+  WoltItem,
+  WoltMenu,
+  WoltVenue,
+  WoltVenueInfo,
+} from "./types";
 
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
@@ -83,25 +89,141 @@ export async function resolveVenue(url: string): Promise<WoltVenueInfo> {
       "לא הצלחנו לזהות את החנות בדף שוולט החזירה - ייתכן שהיא סגורה זמנית",
     );
   }
-  return { venueId: venue.id, name: venue.name || slug, venue };
+  return { venueId: venue.id, slug, name: venue.name || slug, venue };
 }
 
-export async function fetchMenu(venueId: string): Promise<WoltMenu> {
-  const res = await fetch(
-    `https://restaurant-api.wolt.com/v4/venues/${venueId}/menu`,
-    { headers: API_HEADERS },
-  );
+// ─── New Wolt consumer-assortment API ─────────────────────────────
+// Wolt retired the old `restaurant-api.wolt.com/v4/venues/{id}/menu`
+// endpoint (it now returns 410 Gone). The current public API is the
+// consumer-assortment service: a base call lists categories (each with
+// its own image + slug), and items are fetched per-category by slug.
+// We adapt that shape back into the internal WoltMenu the importer
+// already knows, so commit.ts stays unchanged.
+const ASSORT_API =
+  "https://consumer-api.wolt.com/consumer-api/consumer-assortment/v1";
+
+interface AssortImage {
+  url: string;
+  blurhash?: string | null;
+}
+interface AssortCategory {
+  id: string;
+  name: string;
+  description?: string;
+  slug?: string;
+  images?: AssortImage[] | null;
+  item_ids?: string[];
+  subcategories?: AssortCategory[] | null;
+}
+interface AssortItem {
+  id: string;
+  name: string;
+  description?: string;
+  price?: number; // agorot
+  images?: AssortImage[] | null;
+  disabled_info?: unknown;
+}
+interface AssortResponse {
+  categories?: AssortCategory[];
+  items?: AssortItem[];
+  options?: unknown[];
+  variant_groups?: unknown[];
+}
+
+async function getAssort(path: string): Promise<AssortResponse> {
+  const res = await fetch(`${ASSORT_API}${path}`, { headers: API_HEADERS });
   if (!res.ok) {
     throw new WoltFetchError(
       "menu_unreachable",
       `וולט החזירה ${res.status} בעת שליפת התפריט`,
     );
   }
-  const json = (await res.json()) as WoltMenu;
-  if (!Array.isArray(json.categories) || !Array.isArray(json.items)) {
+  return (await res.json()) as AssortResponse;
+}
+
+// Depth-first flatten so nested subcategories are imported too.
+function flattenCategories(cats: AssortCategory[]): AssortCategory[] {
+  const out: AssortCategory[] = [];
+  const walk = (list: AssortCategory[]) => {
+    for (const c of list) {
+      out.push(c);
+      if (c.subcategories?.length) walk(c.subcategories);
+    }
+  };
+  walk(cats);
+  return out;
+}
+
+// Bounded-concurrency map so a large catalog (dozens of categories)
+// doesn't fire hundreds of parallel requests at Wolt.
+async function mapLimit<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let cursor = 0;
+  async function worker() {
+    while (cursor < items.length) {
+      const i = cursor++;
+      out[i] = await fn(items[i]);
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, () => worker()),
+  );
+  return out;
+}
+
+export async function fetchMenu(slug: string): Promise<WoltMenu> {
+  const base = await getAssort(`/venues/slug/${slug}/assortment`);
+  const baseCats = base.categories ?? [];
+  if (baseCats.length === 0) {
     throw new WoltFetchError("menu_malformed", "פורמט תפריט וולט לא מוכר");
   }
-  return json;
+
+  const flat = flattenCategories(baseCats);
+  const categories: WoltCategory[] = flat.map((c) => ({
+    id: c.id,
+    name: c.name,
+    description: c.description,
+    image: c.images?.[0]?.url ?? null,
+    slug: c.slug,
+  }));
+
+  // Items live behind a per-category call keyed by category slug.
+  const perCat = await mapLimit(flat, 5, async (c) => {
+    if (!c.slug) return { catId: c.id, items: [] as AssortItem[] };
+    const resp = await getAssort(
+      `/venues/slug/${slug}/assortment/categories/slug/${encodeURIComponent(c.slug)}`,
+    );
+    return { catId: c.id, items: resp.items ?? [] };
+  });
+
+  const items: WoltItem[] = [];
+  const seen = new Set<string>();
+  for (const { catId, items: catItems } of perCat) {
+    for (const it of catItems) {
+      if (seen.has(it.id)) continue; // an item can surface under >1 category
+      seen.add(it.id);
+      items.push({
+        id: it.id,
+        name: it.name,
+        description: it.description,
+        category: catId,
+        enabled: it.disabled_info == null,
+        baseprice: it.price ?? 0,
+        image: it.images?.[0]?.url ?? null,
+        images: (it.images ?? []).map((im) => im.url).filter(Boolean),
+        // Modifier groups (options/variant_groups) use a new shape not yet
+        // mapped - simple products (retail: pets/grocery/pharmacy) have none.
+        options: [],
+        tags: [],
+      });
+    }
+  }
+
+  return { id: slug, name: slug, categories, items, options: [] };
 }
 
 export async function fetchImage(

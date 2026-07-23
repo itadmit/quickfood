@@ -101,6 +101,7 @@ export interface WoltVenue {
 
 export interface WoltVenueInfo {
   venueId: string;
+  slug: string;
   name: string;
   venue: WoltVenue;
 }
