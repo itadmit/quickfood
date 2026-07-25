@@ -366,7 +366,13 @@ export class GrowProvider extends BasePaymentProvider {
       // codes - Grow silently ignored it, so bank transfer kept showing.)
       const bankTransferEnabled =
         this.config!.settings?.bankTransferEnabled === true;
-      if (!bankTransferEnabled) {
+      if (this.config!.testMode) {
+        // Grow's sandbox only stubs the CREDIT-CARD rail; the wallets (Bit,
+        // PayBox, Apple Pay, Google Pay) always route to the real provider and
+        // move real money even when the SDK runs in DEV. So in test mode we
+        // whitelist credit card ONLY - a test charge must never reach a wallet.
+        body["transactionTypes[0]"] = 1; // credit card
+      } else if (!bankTransferEnabled) {
         body["transactionTypes[0]"] = 1; // credit card
         body["transactionTypes[1]"] = 6; // bit
         body["transactionTypes[5]"] = 5; // PayBox
