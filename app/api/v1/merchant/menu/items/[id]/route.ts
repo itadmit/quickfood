@@ -91,9 +91,11 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
   const { id } = await params;
   const body = MenuItemInputSchema.parse(await req.json());
 
-  const existing = await prisma.menuItem.findUnique({ where: { id }, select: { tenantId: true } });
+  const existing = await prisma.menuItem.findUnique({ where: { id }, select: { tenantId: true, basePrice: true } });
   if (!existing) return apiError("not_found", "פריט לא נמצא", 404);
   if (existing.tenantId !== session.tenantId) return apiError("forbidden", "אין הרשאה", 403);
+
+  const priceChanged = existing.basePrice !== body.base_price;
 
   const cat = await prisma.menuCategory.findUnique({
     where: { id: body.category_id },
@@ -141,6 +143,20 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
         position: i,
       })),
     }),
+    ...(priceChanged
+      ? [
+          prisma.menuPriceChange.create({
+            data: {
+              tenantId: session.tenantId,
+              menuItemId: id,
+              oldPrice: existing.basePrice,
+              newPrice: body.base_price,
+              source: "single",
+              changedBy: session.userId,
+            },
+          }),
+        ]
+      : []),
   ]);
 
   const resolveOptions = await resolveGroupOptions(body.option_groups);

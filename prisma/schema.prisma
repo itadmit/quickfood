@@ -549,6 +549,7 @@ model Tenant {
   notices          Notice[]
   smsLogs          SmsLog[]
   emailLogs        EmailLog[]
+  priceChanges     MenuPriceChange[]
   modifierSets     ModifierSet[]
   woltImports      WoltImport[]
   menuFileImports  MenuFileImport[]
@@ -1506,6 +1507,27 @@ model EmailLog {
   @@index([tenantId, createdAt(sort: Desc)])
   @@index([refKind, refId])
   @@map("email_logs")
+}
+
+model MenuPriceChange {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  // No FK to MenuItem: the log must survive the item being deleted.
+  menuItemId String   @map("menu_item_id") @db.Uuid
+  oldPrice   Int      @map("old_price")
+  newPrice   Int      @map("new_price")
+  // Groups every row written by one bulk operation; null for single-item edits.
+  batchId    String?  @map("batch_id") @db.Uuid
+  // e.g. "bulk_set", "bulk_percent_increase", "single".
+  source     String
+  // Membership/user id from the session (session.userId); null if unknown.
+  changedBy  String?  @map("changed_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([menuItemId, createdAt(sort: Desc)])
+  @@map("menu_price_changes")
 }
 
 model ReviewItem {

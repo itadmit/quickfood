@@ -23,6 +23,9 @@ const BulkPriceSchema = z
       // For percent_*: 0..200. For fixed_*: 0..10000. For set: 0..10000.
       value: z.number().min(0).max(10000),
     }),
+    // Guards the destructive "set every item to one price" case - the client
+    // must echo confirm:true after the merchant sees the second confirmation.
+    confirm: z.boolean().optional(),
   })
   .refine(
     (b) => b.scope !== "category" || !!b.category_id,
@@ -56,6 +59,21 @@ export const POST = handler(async (req: Request) => {
   if (!session.tenantId) return apiError("forbidden", "no tenant", 403);
 
   const body = BulkPriceSchema.parse(await req.json());
+
+  // Double protection: overwriting every item to a flat price is the one
+  // operation that can silently wipe a whole menu (it once flattened a store
+  // to a single price). Require an explicit confirmation for that case.
+  if (
+    body.scope === "all" &&
+    body.adjustment.type === "set" &&
+    body.confirm !== true
+  ) {
+    return apiError(
+      "confirmation_required",
+      "setting one price for the entire menu requires confirm:true",
+      409,
+    );
+  }
 
   // Load the candidate items first so we can compute new prices and skip
   // anything from outside the tenant in one round-trip. updateMany() can't
@@ -106,20 +124,36 @@ export const POST = handler(async (req: Request) => {
   // where the math lands on the same integer.
   const real = updates.filter((u) => u.newPrice !== u.oldPrice);
 
-  await prisma.$transaction(
-    real.map((u) =>
+  // Every row from this call shares one batch id so the audit log can group
+  // and, if needed, reverse a whole bulk operation.
+  const batchId = crypto.randomUUID();
+
+  await prisma.$transaction([
+    ...real.map((u) =>
       prisma.menuItem.update({
         where: { id: u.id },
         data: { basePrice: u.newPrice },
       }),
     ),
-  );
+    prisma.menuPriceChange.createMany({
+      data: real.map((u) => ({
+        tenantId: session.tenantId!,
+        menuItemId: u.id,
+        oldPrice: u.oldPrice,
+        newPrice: u.newPrice,
+        batchId,
+        source: `bulk_${body.adjustment.type}`,
+        changedBy: session.userId,
+      })),
+    }),
+  ]);
 
   for (const u of real) revalidateTag(`menu-item-${u.id}`, {});
 
   return apiJson({
     updated: real.length,
     skipped: updates.length - real.length,
+    batch_id: batchId,
     items: real.map((u) => ({ id: u.id, old_price: u.oldPrice, new_price: u.newPrice })),
   });
 });

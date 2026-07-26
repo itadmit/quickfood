@@ -49,11 +49,20 @@ export function BulkPriceModal({
   const [value, setValue] = useState<number>(5);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
-  async function apply() {
+  // Overwriting every item to one flat price is the destructive case that can
+  // wipe a whole menu - it gets a second confirmation step.
+  const dangerous = scope === "all" && type === "set";
+
+  async function apply(confirmed = false) {
     setError(null);
     if (scope === "category" && !categoryId) {
       setError("בחר קטגוריה");
+      return;
+    }
+    if (dangerous && !confirmed) {
+      setConfirming(true);
       return;
     }
     setBusy(true);
@@ -65,6 +74,7 @@ export function BulkPriceModal({
           scope,
           category_id: scope === "category" ? categoryId : undefined,
           adjustment: { type, value },
+          ...(dangerous ? { confirm: true } : {}),
         }),
       });
       const data = await res.json();
@@ -75,6 +85,7 @@ export function BulkPriceModal({
       onSuccess(data.updated as number);
     } finally {
       setBusy(false);
+      setConfirming(false);
     }
   }
 
@@ -120,7 +131,7 @@ export function BulkPriceModal({
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setScope("all")}
+                onClick={() => { setScope("all"); setConfirming(false); }}
                 className={cn(
                   "px-4 py-3 rounded-xl border text-sm font-medium transition",
                   scope === "all"
@@ -132,7 +143,7 @@ export function BulkPriceModal({
               </button>
               <button
                 type="button"
-                onClick={() => setScope("category")}
+                onClick={() => { setScope("category"); setConfirming(false); }}
                 className={cn(
                   "px-4 py-3 rounded-xl border text-sm font-medium transition",
                   scope === "category"
@@ -166,7 +177,7 @@ export function BulkPriceModal({
                 <button
                   key={t}
                   type="button"
-                  onClick={() => setType(t)}
+                  onClick={() => { setType(t); setConfirming(false); }}
                   title={TYPE_DESCRIPTIONS[t]}
                   className={cn(
                     "py-2 rounded-lg text-sm font-bold transition",
@@ -196,7 +207,7 @@ export function BulkPriceModal({
                 type="number"
                 min={0}
                 value={value}
-                onChange={(e) => setValue(Math.max(0, parseFloat(e.target.value) || 0))}
+                onChange={(e) => { setValue(Math.max(0, parseFloat(e.target.value) || 0)); setConfirming(false); }}
                 className="flex-1 px-4 py-2.5 outline-none bg-transparent tnum text-lg font-bold"
               />
               <span className="px-3 text-qf-mute font-semibold">
@@ -211,6 +222,16 @@ export function BulkPriceModal({
             <span className="font-bold tnum text-qf-ink">₪{previewPrice}</span>
           </div>
 
+          {confirming && (
+            <div className="bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm rounded-xl px-4 py-3 space-y-1">
+              <p className="font-semibold">שים לב — פעולה בלתי הפיכה</p>
+              <p>
+                כל הפריטים בתפריט יקבלו מחיר אחיד של ₪{Math.max(0, Math.round(value))}.
+                המחירים הקיימים יימחקו. לאשר?
+              </p>
+            </div>
+          )}
+
           {error && (
             <div className="bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm rounded-xl px-3 py-2">
               {error}
@@ -221,19 +242,30 @@ export function BulkPriceModal({
       <footer className="shrink-0 flex items-center justify-end gap-2 px-5 py-4 border-t border-qf-line bg-qf-bg/40">
         <button
           type="button"
-          onClick={onClose}
+          onClick={confirming ? () => setConfirming(false) : onClose}
           className="px-4 py-2 rounded-xl text-sm text-qf-ink2 hover:bg-qf-line-soft"
         >
-          ביטול
+          {confirming ? "חזור" : "ביטול"}
         </button>
-        <button
-          type="button"
-          onClick={apply}
-          disabled={busy}
-          className="px-5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-semibold disabled:opacity-60"
-        >
-          {busy ? "מעדכן..." : "החל על הפריטים"}
-        </button>
+        {confirming ? (
+          <button
+            type="button"
+            onClick={() => apply(true)}
+            disabled={busy}
+            className="px-5 py-2 rounded-xl bg-qf-tomato hover:brightness-95 text-white text-sm font-semibold disabled:opacity-60"
+          >
+            {busy ? "מעדכן..." : "כן, לדרוס את כל התפריט"}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => apply(false)}
+            disabled={busy}
+            className="px-5 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-semibold disabled:opacity-60"
+          >
+            {busy ? "מעדכן..." : "החל על הפריטים"}
+          </button>
+        )}
       </footer>
     </Modal>
   );
