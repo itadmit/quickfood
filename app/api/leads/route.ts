@@ -8,7 +8,21 @@ import { leadEmail } from "@/lib/email/templates";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const LEAD_TO = process.env.LEAD_INBOX ?? "hello@quickfood.co.il";
+// New-lead notifications go to the LEAD_INBOX list (comma-separated, default
+// hello@quickfood.co.il) plus two inboxes that always get a copy. Deduped so
+// an overlap between the env and the always-on addresses can't double-send.
+const LEAD_NOTIFY = Array.from(
+  new Set(
+    [
+      ...(process.env.LEAD_INBOX ?? "hello@quickfood.co.il")
+        .split(",")
+        .map((e) => e.trim())
+        .filter(Boolean),
+      "quickshop.israel@gmail.com",
+      "0547359@gmail.com",
+    ],
+  ),
+);
 
 const LeadSchema = z.object({
   name: z.string().trim().min(2, "שם קצר מדי").max(120),
@@ -72,24 +86,31 @@ export const POST = handler(async (req: Request) => {
     ip,
   });
 
-  const result = await sendEmail({
-    tenantId: null,
-    to: LEAD_TO,
-    subject: `ליד חדש: ${data.name}${data.restaurant ? ` · ${data.restaurant}` : ""}`,
-    body: text,
-    html,
-    replyTo: data.email,
-    kind: "lead",
-    refKind: "lead_source",
-    refId: data.source,
-  });
+  const subject = `ליד חדש: ${data.name}${data.restaurant ? ` · ${data.restaurant}` : ""}`;
+  let anySent = false;
+  for (const to of LEAD_NOTIFY) {
+    const result = await sendEmail({
+      tenantId: null,
+      to,
+      subject,
+      body: text,
+      html,
+      replyTo: data.email,
+      kind: "lead",
+      refKind: "lead_source",
+      refId: data.source,
+    });
+    if (result.status === "sent") anySent = true;
+  }
 
   await prisma.marketingLead.update({
     where: { id: stored.id },
-    data: { emailStatus: result.status },
+    data: { emailStatus: anySent ? "sent" : "failed" },
   });
 
-  if (result.status !== "sent") {
+  // The lead is already persisted; only report failure if not a single
+  // recipient got the notification.
+  if (!anySent) {
     throw apiError("send_failed", "לא הצלחנו לשלוח את הפנייה, נסה שוב", 502);
   }
 
