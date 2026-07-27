@@ -33,7 +33,8 @@ export function CustomerOtpLogin({
   const [notMember, setNotMember] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
 
-  async function requestOtp() {
+  async function requestOtp(overridePhone?: string) {
+    const p = overridePhone ?? phone;
     setBusy(true);
     setError(null);
     setNotMember(false);
@@ -41,7 +42,7 @@ export function CustomerOtpLogin({
       const res = await fetch("/api/v1/auth/otp/request", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ phone, tenant_slug: tenantSlug }),
+        body: JSON.stringify({ phone: p, tenant_slug: tenantSlug }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
@@ -101,7 +102,7 @@ export function CustomerOtpLogin({
         )}
         <button
           type="button"
-          onClick={requestOtp}
+          onClick={() => requestOtp()}
           disabled={!phone || busy}
           className="w-full py-3 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white font-medium disabled:opacity-60"
         >
@@ -120,10 +121,20 @@ export function CustomerOtpLogin({
           <LoyaltyJoinPopup
             tenantSlug={tenantSlug}
             open={joinOpen}
+            initialPhone={phone}
             onClose={() => {
               setJoinOpen(false);
               setNotMember(false);
               setError(null);
+            }}
+            onJoined={(p) => {
+              // Just joined → they're now a member; go straight to the OTP
+              // code step for the number they joined with (no re-typing).
+              setJoinOpen(false);
+              setNotMember(false);
+              setError(null);
+              setPhone(p);
+              void requestOtp(p);
             }}
           />
         )}

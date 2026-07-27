@@ -28,6 +28,11 @@ interface Props {
   // config/localStorage-gated popup is disabled. onClose fires on dismiss/done.
   open?: boolean;
   onClose?: () => void;
+  // Prefill the phone field (e.g. the number the customer typed at login).
+  initialPhone?: string;
+  // Fired after a successful join with the joined phone, so the login flow can
+  // continue straight to the OTP code step (join doesn't create a session).
+  onJoined?: (phone: string) => void;
 }
 
 // Persistent "already saw the popup" flag - only consulted when the club is
@@ -67,7 +72,7 @@ function birthdayToIso(display: string): string | null {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-export function LoyaltyJoinPopup({ tenantSlug, open, onClose }: Props) {
+export function LoyaltyJoinPopup({ tenantSlug, open, onClose, initialPhone, onJoined }: Props) {
   const controlled = open !== undefined;
   const [form, setForm] = useState<JoinForm | null>(null);
   const [showOnce, setShowOnce] = useState(true);
@@ -141,6 +146,12 @@ export function LoyaltyJoinPopup({ tenantSlug, open, onClose }: Props) {
     };
   }, [controlled, open, tenantSlug, form]);
 
+  // Prefill the phone with the number the customer typed at login when the
+  // popup is opened in controlled mode.
+  useEffect(() => {
+    if (open && initialPhone) setPhone(initialPhone);
+  }, [open, initialPhone]);
+
   function dismiss() {
     if (controlled) {
       setVisible(false);
@@ -212,9 +223,12 @@ export function LoyaltyJoinPopup({ tenantSlug, open, onClose }: Props) {
         /* ignore */
       }
       setDone(true);
+      const joinedPhone = phone.trim();
       window.setTimeout(() => {
         setVisible(false);
         if (controlled) onClose?.();
+        // Let the login flow continue straight to the OTP code step.
+        onJoined?.(joinedPhone);
         window.setTimeout(() => setForm(null), 200);
       }, 1800);
     } finally {
