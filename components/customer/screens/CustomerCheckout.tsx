@@ -917,6 +917,30 @@ export function CustomerCheckout({
                 />
               </Field>
             </div>
+            {emailRequired && (
+              <div className="col-span-2">
+                <Field label="דוא״ל" required error={emailError} errorId="co-email-error">
+                  <Input
+                    id="co-email"
+                    value={email}
+                    onChange={(v) => {
+                      setEmail(v);
+                      if (!emailTouched) setEmailTouched(true);
+                    }}
+                    onBlur={() => setEmailTouched(true)}
+                    placeholder="you@example.com"
+                    dir="ltr"
+                    inputMode="email"
+                    autoComplete="email"
+                    invalid={!!emailError}
+                    describedBy="co-email-error"
+                  />
+                </Field>
+                <div className="text-xs text-qf-mute mt-1">
+                  נשלח אליך מייל קצר עם עדכונים על ההזמנה
+                </div>
+              </div>
+            )}
           </div>
         </Card>
 
@@ -1052,30 +1076,6 @@ export function CustomerCheckout({
               {paymentMethod && paymentMethod !== "cash" && (
                 <div className="mt-2 text-xs text-qf-mute">
                   ניתן לשלם בכרטיס אשראי, Bit, Apple Pay ו-Google Pay.
-                </div>
-              )}
-              {emailRequired && (
-                <div className="mt-3">
-                  <Field label="דוא״ל" required error={emailError} errorId="co-email-error">
-                    <Input
-                      id="co-email"
-                      value={email}
-                      onChange={(v) => {
-                        setEmail(v);
-                        if (!emailTouched) setEmailTouched(true);
-                      }}
-                      onBlur={() => setEmailTouched(true)}
-                      placeholder="you@example.com"
-                      dir="ltr"
-                      inputMode="email"
-                      autoComplete="email"
-                      invalid={!!emailError}
-                      describedBy="co-email-error"
-                    />
-                  </Field>
-                  <div className="text-xs text-qf-mute mt-1">
-                    נשלח אליך מייל קצר עם עדכונים על ההזמנה
-                  </div>
                 </div>
               )}
             </>
