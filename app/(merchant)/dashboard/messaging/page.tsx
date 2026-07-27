@@ -103,10 +103,6 @@ export default async function MessagingPage() {
       whatsappBalance={tenant.whatsappCreditsRemaining}
       smsSender={tenant.smsSender ?? ""}
       billingReady={!!(tenant.billingCustomerId && tenant.billingPaymentMethodId)}
-      whatsapp={{
-        token: tenant.whatsappToken ?? "",
-        instanceId: tenant.whatsappInstanceId ?? "",
-      }}
       orderEvents={resolveOrderNotifySettings(tenant.notifySettings, tenant.notifyChannel)}
       merchantNewOrder={resolveMerchantNewOrderSettings(tenant.notifySettings)}
       review={{

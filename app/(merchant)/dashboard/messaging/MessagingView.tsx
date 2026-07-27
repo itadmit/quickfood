@@ -88,7 +88,6 @@ export function MessagingView({
   whatsappBalance: initialWaBalance,
   smsSender: initialSender,
   billingReady,
-  whatsapp,
   orderEvents,
   merchantNewOrder,
   review,
@@ -102,7 +101,6 @@ export function MessagingView({
   whatsappBalance: number;
   smsSender: string;
   billingReady: boolean;
-  whatsapp: { token: string; instanceId: string };
   orderEvents: OrderNotifySettings;
   merchantNewOrder: { email: boolean; whatsapp: boolean };
   review: { enabled: boolean; public: boolean; channel: NotifyChannel; delayMinutes: number };
@@ -155,8 +153,6 @@ export function MessagingView({
           setWaBalance={setWaBalance}
           smsSender={initialSender}
           billingReady={billingReady}
-          whatsapp={whatsapp}
-          availability={availability}
           managed={managed}
           logs={logs}
         />
@@ -195,8 +191,6 @@ function BalanceTab({
   setWaBalance,
   smsSender,
   billingReady,
-  whatsapp,
-  availability,
   managed,
   logs,
 }: {
@@ -206,8 +200,6 @@ function BalanceTab({
   setWaBalance: (n: number) => void;
   smsSender: string;
   billingReady: boolean;
-  whatsapp: { token: string; instanceId: string };
-  availability: Availability;
   managed: Managed;
   logs: LogRow[];
 }) {
@@ -385,13 +377,6 @@ function BalanceTab({
         )}
         <PackageGrid channel="sms" billingReady={billingReady} busy={busy} onBuy={buy} />
       </section>
-
-      <WhatsappSection
-        enabled={availability.whatsappEnabled}
-        connected={availability.whatsappConnected}
-        waBalance={waBalance}
-        initial={whatsapp}
-      />
 
       <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-2">
@@ -661,196 +646,6 @@ function PackageGrid({
         );
       })}
     </div>
-  );
-}
-
-/**
- * BYO-WhatsApp (legacy iBot connection). WhatsApp credit packages are no
- * longer sold - the section only renders for tenants that already unlocked
- * it, so they can keep using their remaining balance; new mailing goes
- * over SMS (or the official WhatsApp API, coming later).
- */
-function WhatsappSection({
-  enabled,
-  connected,
-  waBalance,
-  initial,
-}: {
-  enabled: boolean;
-  connected: boolean;
-  waBalance: number;
-  initial: { token: string; instanceId: string };
-}) {
-  const router = useRouter();
-  const [token, setToken] = useState(initial.token);
-  const [instanceId, setInstanceId] = useState(initial.instanceId);
-  const [saving, setSaving] = useState(false);
-  const [saveMsg, setSaveMsg] = useState<{ ok: boolean; msg: string } | null>(null);
-
-  const [testPhone, setTestPhone] = useState("");
-  const [testBusy, setTestBusy] = useState(false);
-  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
-
-  async function save() {
-    setSaving(true);
-    setSaveMsg(null);
-    try {
-      const res = await fetch("/api/v1/merchant/whatsapp/settings", {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ token: token.trim() || null, instance_id: instanceId.trim() || null }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setSaveMsg({ ok: false, msg: data?.error?.message ?? "שמירה נכשלה" });
-        return;
-      }
-      setSaveMsg({ ok: true, msg: "החיבור נשמר" });
-      router.refresh();
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function sendTest() {
-    setTestBusy(true);
-    setTestResult(null);
-    try {
-      const res = await fetch("/api/v1/merchant/whatsapp/test", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ to: testPhone.trim() }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setTestResult({ ok: false, message: data?.error?.message ?? "שליחה נכשלה" });
-        return;
-      }
-      const status: string = data.result?.status ?? "unknown";
-      setTestResult(
-        status === "sent"
-          ? { ok: true, message: "הודעת הבדיקה נשלחה. בדקו את הוואטסאפ." }
-          : {
-              ok: false,
-              message:
-                status === "invalid_recipient"
-                  ? "מספר טלפון לא תקין (פורמט: 05XXXXXXXX)"
-                  : status === "not_configured"
-                    ? "החיבור לא הוגדר. שמרו Token ו-Instance ID תקפים."
-                    : data.result?.providerMsg || `סטטוס: ${status}`,
-            },
-      );
-    } finally {
-      setTestBusy(false);
-    }
-  }
-
-  // WhatsApp packages are no longer sold - tenants that never unlocked the
-  // BYO connection simply don't see it.
-  if (!enabled) {
-    return null;
-  }
-
-  return (
-    <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h2 className="text-base lg:text-lg font-semibold">וואטסאפ (המספר שלך)</h2>
-          <p className="text-xs lg:text-sm text-qf-mute">
-            חיבור iBot Chat למספר העסקי שלכם. כל שליחה יורדת מיתרת הוואטסאפ ({waBalance.toLocaleString("he-IL")} זמינות).
-          </p>
-        </div>
-        <span
-          className={cn(
-            "shrink-0 px-2.5 py-1 rounded-full text-xs font-bold",
-            connected ? "bg-qf-green-soft text-qf-green-deep" : "bg-qf-line-soft text-qf-mute",
-          )}
-        >
-          {connected ? "מחובר" : "לא מחובר"}
-        </span>
-      </div>
-
-      <div className="grid grid-cols-1 gap-3">
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium block">Token (API key)</label>
-          <input
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            dir="ltr"
-            placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-            className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium block">Instance ID</label>
-          <input
-            value={instanceId}
-            onChange={(e) => setInstanceId(e.target.value)}
-            dir="ltr"
-            placeholder="abc123-instance"
-            className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm"
-          />
-          <div className="text-xs text-qf-mute">מזהה ה-instance של חיבור הוואטסאפ שלכם ב-iBot.</div>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={save}
-            disabled={saving}
-            className="py-2 px-4 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
-          >
-            {saving ? "שומר..." : "שמירת חיבור"}
-          </button>
-          {saveMsg && (
-            <span className={cn("text-sm", saveMsg.ok ? "text-qf-green-deep" : "text-qf-tomato")}>{saveMsg.msg}</span>
-          )}
-        </div>
-      </div>
-
-      <div className="border-t border-qf-line-soft pt-3 space-y-2">
-        <div className="text-sm font-medium">בדיקת חיבור</div>
-        <p className="text-xs text-qf-mute">שליחת הודעת בדיקה. הפלטפורמה סופגת את העלות - לא יורד מהיתרה.</p>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <input
-            type="tel"
-            inputMode="tel"
-            dir="ltr"
-            value={testPhone}
-            onChange={(e) => setTestPhone(e.target.value)}
-            placeholder="050-1234567"
-            className="flex-1 px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none tnum text-sm"
-          />
-          <button
-            type="button"
-            onClick={sendTest}
-            disabled={testBusy || !connected || testPhone.trim().length < 9}
-            className="px-4 py-2.5 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
-          >
-            {testBusy ? "שולח..." : "שליחת בדיקה"}
-          </button>
-        </div>
-        {!connected && <p className="text-xs text-qf-mute">יש לשמור Token ו-Instance ID לפני שליחת בדיקה.</p>}
-        {testResult && (
-          <div
-            className={cn(
-              "text-sm rounded-xl px-3 py-2 border",
-              testResult.ok
-                ? "bg-qf-green-soft border-(--qf-primary)/30 text-qf-green-deep"
-                : "bg-qf-tomato-soft border-qf-tomato/40 text-qf-tomato",
-            )}
-          >
-            {testResult.message}
-          </div>
-        )}
-      </div>
-
-      <div className="border-t border-qf-line-soft pt-3">
-        <p className="text-xs text-qf-mute leading-relaxed">
-          חבילות וואטסאפ אינן נמכרות יותר. היתרה הקיימת ({waBalance.toLocaleString("he-IL")}) ניתנת לניצול עד סיומה;
-          לדיוור מומלץ להשתמש ב-SMS.
-        </p>
-      </div>
-    </section>
   );
 }
 
