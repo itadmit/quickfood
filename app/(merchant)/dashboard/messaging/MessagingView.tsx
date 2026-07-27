@@ -164,6 +164,7 @@ export function MessagingView({
           review={review}
           smsSender={initialSender}
           availability={availability}
+          onUpgradeWhatsapp={() => setTab("balance")}
         />
       )}
       {tab === "club" && (
@@ -781,17 +782,20 @@ function NotificationsTab({
   review,
   smsSender,
   availability,
+  onUpgradeWhatsapp,
 }: {
   orderEvents: OrderNotifySettings;
   merchantNewOrder: { email: boolean; whatsapp: boolean };
   review: { enabled: boolean; public: boolean; channel: NotifyChannel; delayMinutes: number };
   smsSender: string;
   availability: Availability;
+  onUpgradeWhatsapp: () => void;
 }) {
   const router = useRouter();
-  // Email is the free default channel; paid rails are opt-in per event.
-  const ORDER_EVENT_CHANNELS: NotifyChannel[] = ["email", "sms", "whatsapp", "whatsapp_managed"];
-  const REVIEW_CHANNELS: NotifyChannel[] = ["off", "email", "sms", "whatsapp", "whatsapp_managed"];
+  // Email is the free default channel; SMS + the managed-WhatsApp package are
+  // the paid rails. BYO WhatsApp is retired, so it's no longer offered.
+  const ORDER_EVENT_CHANNELS: NotifyChannel[] = ["email", "sms", "whatsapp_managed"];
+  const REVIEW_CHANNELS: NotifyChannel[] = ["off", "email", "sms", "whatsapp_managed"];
 
   // Coerce an `off` channel (not offered for order events - use the toggle
   // instead) to the free email default so the picker always has a valid pick.
@@ -974,7 +978,23 @@ function NotificationsTab({
                 onChange={(c) => setRev((x) => ({ ...x, channel: c }))}
               />
               {rev.channel === "email" && (
-                <p className="text-xs text-qf-mute">כשבוחרים מייל, שדה האימייל יהפוך לחובה בצ׳קאאוט.</p>
+                <p className="text-xs text-qf-mute">
+                  ברירת המחדל. הביקורת נשלחת למי שהשאיר מייל בקופה; מי שלא - ידולג. כדי לחייב מייל בקופה, הפעילו זאת בהגדרות → קופה.
+                </p>
+              )}
+              {!availability.managedActive && (
+                <div className="rounded-xl border border-qf-yolk/40 bg-qf-yolk-soft px-3 py-2.5 flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs text-qf-ink2 leading-relaxed">
+                    לשליחת ביקורות בוואטסאפ (דרך המספר של QuickFood, ללא הגבלה) צריך חבילת וואטסאפ - ₪99 לחודש.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={onUpgradeWhatsapp}
+                    className="shrink-0 px-3 py-1.5 rounded-lg bg-(--qf-primary) text-white text-xs font-bold hover:bg-(--qf-deep) transition"
+                  >
+                    שדרוג לוואטסאפ
+                  </button>
+                </div>
               )}
             </div>
 

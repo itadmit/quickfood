@@ -108,12 +108,12 @@ export default async function CheckoutPage({
     console.error("[checkout/page] card provider lookup failed", err);
   }
 
-  // Email is required only when reviews go out by email, or the merchant
-  // explicitly opted in (Settings -> Checkout). Card payments no longer force
-  // it - the payment provider issues + emails the tax invoice itself.
-  const requireEmail =
-    (!!settings?.reviewsEnabled && settings.reviewsChannel === "email") ||
-    (settings?.checkoutRequireEmail ?? false);
+  // Email is required only when the merchant explicitly opts in (Settings ->
+  // Checkout). Reviews-by-email no longer force it: if the merchant hides the
+  // email field, the review reminder simply skips customers without an email
+  // (send-now returns no_email_on_customer). Card payments don't force it
+  // either - the payment provider issues + emails the tax invoice itself.
+  const requireEmail = settings?.checkoutRequireEmail ?? false;
 
   const cardEnabled = !!cardProvider;
 

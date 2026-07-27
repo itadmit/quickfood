@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Toggle as SharedToggle } from "@/components/shared/Toggle";
 import { SettingsSaveBar } from "@/components/merchant/SettingsSaveBar";
-import { cn } from "@/lib/cn";
 
 interface Initial {
   showTracking: boolean;
@@ -92,7 +91,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
         description={
           requireEmail
             ? "הלקוח חייב למלא כתובת מייל כדי להשלים הזמנה."
-            : "כתובת המייל לא נדרשת. חברת הסליקה (Grow / CardCom) מפיקה ושולחת את חשבונית המס, והלקוח מזין את המייל בעמוד התשלום שלה. (במסעדות עם ביקורות במייל - המייל עדיין נדרש.)"
+            : "כתובת המייל לא נדרשת ולא תוצג בקופה. חברת הסליקה (Grow / CardCom) מפיקה ושולחת את חשבונית המס, והלקוח מזין את המייל בעמוד התשלום שלה. אם הביקורות נשלחות במייל - הן פשוט ידלגו על לקוחות שלא השאירו מייל."
         }
         value={requireEmail}
         onChange={setRequireEmail}
