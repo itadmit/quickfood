@@ -44,7 +44,19 @@ export default async function MessagingPage() {
     prisma.smsLog.findMany({
       where: {
         tenantId: session.tenantId,
-        kind: { notIn: ["topup_credit", "wa_topup_credit"] },
+        // Hide internal/platform rows: billing top-ups, customer login/kiosk
+        // OTP codes (private auth codes the merchant must not see), and the
+        // platform's own onboarding message to the merchant. The send history
+        // is for the store's outbound customer notifications only.
+        kind: {
+          notIn: [
+            "topup_credit",
+            "wa_topup_credit",
+            "login_otp",
+            "kiosk_otp",
+            "admin_message",
+          ],
+        },
       },
       orderBy: { createdAt: "desc" },
       take: 50,
