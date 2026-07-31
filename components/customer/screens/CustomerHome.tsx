@@ -479,7 +479,7 @@ export function CustomerHome({
               </div>
             )}
             <div className="min-w-0">
-              <h1 className="text-2xl font-bold leading-tight drop-shadow-md truncate">{tenant.name}</h1>
+              <h1 className="text-2xl font-bold leading-tight drop-shadow-md line-clamp-2 break-words">{tenant.name}</h1>
               {tenant.cuisineType && (
                 <div className="text-sm text-white/90 drop-shadow truncate">{tenant.cuisineType}</div>
               )}
