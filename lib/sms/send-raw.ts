@@ -16,6 +16,13 @@ const DEFAULT_SENDER = process.env.SMS4FREE_DEFAULT_SENDER ?? "QuickFood";
 
 const CONSOLE_FALLBACK = process.env.SMS_PROVIDER === "console";
 
+// EMERGENCY KILL SWITCH (2026-08-05): the platform signup-OTP endpoint was
+// sprayed with random phone numbers, draining thousands of SMS on the shared
+// sms4free account. Platform SMS now only fires when explicitly enabled. Turn
+// back on (env PLATFORM_SMS_ENABLED=true) once a durable global rate limit is
+// in place.
+const PLATFORM_SMS_ENABLED = process.env.PLATFORM_SMS_ENABLED === "true";
+
 export interface SendRawSmsResult {
   status: "sent" | "invalid_recipient" | "failed";
   providerCode?: number;
@@ -23,6 +30,10 @@ export interface SendRawSmsResult {
 }
 
 export async function sendRawSms(to: string, body: string): Promise<SendRawSmsResult> {
+  if (!PLATFORM_SMS_ENABLED && !CONSOLE_FALLBACK) {
+    return { status: "failed", providerMsg: "platform SMS disabled (abuse mitigation)" };
+  }
+
   const recipient = normalizePhone(to);
 
   if (!isValidIsraeliMobile(recipient)) {
