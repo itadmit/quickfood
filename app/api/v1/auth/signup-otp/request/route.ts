@@ -54,7 +54,7 @@ export const POST = handler(async (req: Request) => {
   // Durable (cross-instance) per-IP cap - the in-memory checkRate above resets
   // per lambda, so a spammer hitting many instances slips past it.
   if (!(await hitDurable(`signup-otp:ip:${clientIp(req)}`, 10, 10 * 60_000))) {
-    return apiError("rate_limited", "יותר מדי בקשות. נסו שוב בעוד כמה דקות.", 429);
+    return apiError("rate_limited", "נחסמת זמנית עקב יותר מדי בקשות. נסו שוב בעוד כמה דקות.", 429);
   }
 
   const recent = await prisma.otpCode.findFirst({
@@ -98,7 +98,7 @@ export const POST = handler(async (req: Request) => {
   let providerMsg = wa.providerMsg;
 
   if (wa.status === "rate_limited") {
-    return apiError("rate_limited", "יותר מדי בקשות. נסו שוב בעוד כמה דקות.", 429);
+    return apiError("rate_limited", "נחסמת זמנית עקב יותר מדי בקשות. נסו שוב בעוד כמה דקות.", 429);
   }
   if (!channel) {
     const sms = await sendRawSms(localPhone, body);
