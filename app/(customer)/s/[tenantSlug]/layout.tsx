@@ -40,10 +40,15 @@ export async function generateMetadata({
   const previewImage = tenant.logoUrl || tenant.coverImage || null;
   const url = storefrontCanonical(tenant);
 
+  // Keep blocked stores (trial-ended / suspended) out of Google; active stores
+  // stay fully indexable.
+  const blocked = storefrontBlock(tenant) !== null;
+
   return {
     title,
     description,
     alternates: { canonical: url },
+    ...(blocked ? { robots: { index: false, follow: false } } : {}),
     ...(tenant.logoUrl
       ? { icons: { icon: tenant.logoUrl, apple: tenant.logoUrl } }
       : {}),
