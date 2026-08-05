@@ -15,6 +15,7 @@ import { prisma } from "@/lib/db/client";
 import { toE164 } from "@/lib/format";
 import { issueOtp } from "@/lib/auth/otp";
 import { sendRawSms } from "@/lib/sms/send-raw";
+import { sendRawWhatsApp } from "@/lib/whatsapp/send";
 import { checkRate } from "@/lib/api/rate-limit";
 import { hitDurable } from "@/lib/api/durable-rate-limit";
 
@@ -87,8 +88,26 @@ export const POST = handler(async (req: Request) => {
     `QuickFood · קוד אימות: ${code}\n` +
     `הקוד תקף ל-10 דקות. אם לא ביקשתם - אפשר להתעלם.`;
 
-  const res = await sendRawSms(localPhone, body);
-  if (res.status !== "sent") {
+  // Prefer managed WhatsApp (free); fall back to SMS only if WhatsApp isn't
+  // available. Both channels are durably rate-limited. If WhatsApp itself
+  // rate-limits us, we stop here (don't spill the spray over to SMS).
+  const waBody = `*QuickFood* · קוד אימות: ${code}\nהקוד תקף ל-10 דקות. אם לא ביקשתם - אפשר להתעלם.`;
+  const wa = await sendRawWhatsApp(localPhone, waBody);
+
+  let channel: "whatsapp" | "sms" | null = wa.status === "sent" ? "whatsapp" : null;
+  let providerMsg = wa.providerMsg;
+
+  if (wa.status === "rate_limited") {
+    return apiError("rate_limited", "יותר מדי בקשות. נסו שוב בעוד כמה דקות.", 429);
+  }
+  if (!channel) {
+    const sms = await sendRawSms(localPhone, body);
+    if (sms.status === "sent") {
+      channel = "sms";
+      providerMsg = sms.providerMsg;
+    }
+  }
+  if (!channel) {
     return apiError(
       "delivery_failed",
       "לא הצלחנו לשלוח את קוד האימות. בדקו את המספר ונסו שוב.",
@@ -98,10 +117,9 @@ export const POST = handler(async (req: Request) => {
 
   return apiJson({
     sent: true,
+    channel,
     retry_in: THROTTLE_SECONDS,
     expires_in: Math.max(0, Math.floor((expiresAt.getTime() - Date.now()) / 1000)),
-    // Surfaced for diagnostics - sms4free's "accepted" doesn't guarantee
-    // delivery (unverified sender gets dropped). Visible in the Network tab.
-    provider_msg: res.providerMsg || undefined,
+    provider_msg: providerMsg || undefined,
   });
 });

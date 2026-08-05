@@ -13,6 +13,7 @@
  * should treat that as a successful no-op, not an error.
  */
 import { prisma } from "@/lib/db/client";
+import { hitDurable } from "@/lib/api/durable-rate-limit";
 
 const BASE_URL = process.env.IBOT_BASE_URL ?? "https://ibot-chat.com/api/v1";
 const SEND_TEXT_PATH = "/send-text";
@@ -226,6 +227,52 @@ export async function sendWhatsApp(
     data: { status: "failed", providerMsg },
   });
   return { status: "failed", logId: log.id, providerMsg };
+}
+
+export interface SendRawWhatsAppResult {
+  status: "sent" | "invalid_recipient" | "not_configured" | "rate_limited" | "failed";
+  providerMsg?: string;
+}
+
+// Managed WhatsApp is cheap, but an open send is still abusable (a spray gets
+// our iBot number flagged/banned). Cap it durably like platform SMS.
+const WA_GLOBAL_CAP = 40; // per 10 min, all platform WhatsApp
+const WA_PER_RECIPIENT_CAP = 3; // per hour, same number
+
+/**
+ * Platform-level managed WhatsApp send: no tenant, no credit accounting, durable
+ * rate limited. For system messages that fire before any tenant exists (e.g.
+ * the signup OTP). Uses the platform's iBot creds (`platform_settings` singleton).
+ */
+export async function sendRawWhatsApp(to: string, body: string): Promise<SendRawWhatsAppResult> {
+  const recipient = normalizePhone(to);
+  if (!isValidIsraeliMobile(recipient)) {
+    return { status: "invalid_recipient", providerMsg: "bad phone format" };
+  }
+
+  if (!CONSOLE_FALLBACK) {
+    if (!(await hitDurable("platform-wa:global", WA_GLOBAL_CAP, 10 * 60_000))) {
+      return { status: "rate_limited", providerMsg: "global rate limit" };
+    }
+    if (!(await hitDurable(`platform-wa:to:${recipient}`, WA_PER_RECIPIENT_CAP, 60 * 60_000))) {
+      return { status: "rate_limited", providerMsg: "recipient rate limit" };
+    }
+  }
+
+  const platform = await prisma.platformSettings.findUnique({
+    where: { id: "singleton" },
+    select: { whatsappDefaultToken: true, whatsappDefaultInstanceId: true },
+  });
+  const token = platform?.whatsappDefaultToken ?? null;
+  const instanceId = platform?.whatsappDefaultInstanceId ?? null;
+  if (!token || !instanceId) {
+    return { status: "not_configured", providerMsg: "platform whatsapp not configured" };
+  }
+
+  const r = await callIBotSendText({ token, instanceId, jid: toJid(recipient), msg: body });
+  return r.ok
+    ? { status: "sent", providerMsg: r.message }
+    : { status: "failed", providerMsg: r.message };
 }
 
 /** "05X-XXXXXXX" / "+972 5X-XXXXXXX" / "9725X…" → "05XXXXXXXX". */
