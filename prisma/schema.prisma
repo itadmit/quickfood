@@ -1459,6 +1459,16 @@ model Review {
   @@map("reviews")
 }
 
+// Durable, cross-instance rate-limit buckets (in-memory limiters don't hold on
+// serverless). One row per key; atomic INSERT..ON CONFLICT increments/resets.
+model RateBucket {
+  key     String   @id
+  count   Int      @default(0)
+  resetAt DateTime @map("reset_at")
+
+  @@map("rate_buckets")
+}
+
 model SmsLog {
   id           String             @id @default(uuid()) @db.Uuid
   tenantId     String             @map("tenant_id") @db.Uuid

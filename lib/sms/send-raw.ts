@@ -7,6 +7,8 @@
  * For tenant-scoped sends (order updates, review reminders) use sendSms()
  * in ./send.ts instead - that one bills the merchant's credit balance.
  */
+import { hitDurable } from "@/lib/api/durable-rate-limit";
+
 const SEND_URL = "https://api.sms4free.co.il/ApiSMS/v2/SendSMS";
 
 const API_KEY = process.env.SMS4FREE_API_KEY ?? "";
@@ -16,12 +18,14 @@ const DEFAULT_SENDER = process.env.SMS4FREE_DEFAULT_SENDER ?? "QuickFood";
 
 const CONSOLE_FALLBACK = process.env.SMS_PROVIDER === "console";
 
-// EMERGENCY KILL SWITCH (2026-08-05): the platform signup-OTP endpoint was
-// sprayed with random phone numbers, draining thousands of SMS on the shared
-// sms4free account. Platform SMS now only fires when explicitly enabled. Turn
-// back on (env PLATFORM_SMS_ENABLED=true) once a durable global rate limit is
-// in place.
-const PLATFORM_SMS_ENABLED = process.env.PLATFORM_SMS_ENABLED === "true";
+// The platform signup-OTP endpoint was sprayed with random phone numbers
+// (2026-08-05), draining thousands of SMS on the shared sms4free account.
+// Platform SMS is now guarded by a DURABLE global + per-recipient rate limit
+// (below), so it's safe to keep on. Set PLATFORM_SMS_ENABLED=false to hard-kill.
+const PLATFORM_SMS_ENABLED = process.env.PLATFORM_SMS_ENABLED !== "false";
+// Hard ceiling on platform SMS spend even under attack.
+const GLOBAL_CAP = 25; // per 10 min, all platform SMS
+const PER_RECIPIENT_CAP = 3; // per hour, same number
 
 export interface SendRawSmsResult {
   status: "sent" | "invalid_recipient" | "failed";
@@ -38,6 +42,15 @@ export async function sendRawSms(to: string, body: string): Promise<SendRawSmsRe
 
   if (!isValidIsraeliMobile(recipient)) {
     return { status: "invalid_recipient", providerMsg: "bad phone format" };
+  }
+
+  if (!CONSOLE_FALLBACK) {
+    if (!(await hitDurable("platform-sms:global", GLOBAL_CAP, 10 * 60_000))) {
+      return { status: "failed", providerMsg: "platform SMS globally rate-limited" };
+    }
+    if (!(await hitDurable(`platform-sms:to:${recipient}`, PER_RECIPIENT_CAP, 60 * 60_000))) {
+      return { status: "failed", providerMsg: "recipient rate-limited" };
+    }
   }
 
   if (CONSOLE_FALLBACK) {

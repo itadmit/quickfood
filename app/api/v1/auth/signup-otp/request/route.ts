@@ -16,6 +16,7 @@ import { toE164 } from "@/lib/format";
 import { issueOtp } from "@/lib/auth/otp";
 import { sendRawSms } from "@/lib/sms/send-raw";
 import { checkRate } from "@/lib/api/rate-limit";
+import { hitDurable } from "@/lib/api/durable-rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,6 +50,11 @@ export const POST = handler(async (req: Request) => {
   // spray OTP SMS to many different victim numbers (SMS pumping). Cap per-IP.
   checkRate(`signup-otp:ip:${clientIp(req)}`, 8);
   checkRate(`signup-otp:phone:${e164}`, 4);
+  // Durable (cross-instance) per-IP cap - the in-memory checkRate above resets
+  // per lambda, so a spammer hitting many instances slips past it.
+  if (!(await hitDurable(`signup-otp:ip:${clientIp(req)}`, 10, 10 * 60_000))) {
+    return apiError("rate_limited", "יותר מדי בקשות. נסו שוב בעוד כמה דקות.", 429);
+  }
 
   const recent = await prisma.otpCode.findFirst({
     where: {
