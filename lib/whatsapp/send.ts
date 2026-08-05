@@ -236,7 +236,8 @@ export interface SendRawWhatsAppResult {
 
 // Managed WhatsApp is cheap, but an open send is still abusable (a spray gets
 // our iBot number flagged/banned). Cap it durably like platform SMS.
-const WA_GLOBAL_CAP = 40; // per 10 min, all platform WhatsApp
+const WA_GLOBAL_CAP = 15; // per 10 min, all platform WhatsApp (real signups are
+// a handful/hr; kept low to protect the iBot number's reputation from spray).
 const WA_PER_RECIPIENT_CAP = 3; // per hour, same number
 
 /**
