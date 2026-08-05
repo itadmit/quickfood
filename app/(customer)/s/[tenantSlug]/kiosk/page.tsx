@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
+import { isStorefrontBlocked } from "@/lib/tenant-billing";
 import { loadMenuItemForCustomer, type MenuItemForCustomer } from "@/lib/menu-item-load";
 import { normalizeKioskOverrides } from "@/lib/i18n/kiosk-messages";
 import { getActiveCardProviderSummary } from "@/lib/payments/factory";
@@ -45,6 +46,8 @@ export default async function KioskPage({
   const tenant = await resolveTenantBySlug(tenantSlug);
   if (!tenant) notFound();
   if (!tenant.kioskEnabled) notFound();
+  // Trial-ended / suspended stores don't take orders anywhere, kiosk included.
+  if (isStorefrontBlocked(tenant)) notFound();
 
   // "Card offered?" gate - true when ANY card provider (grow or cardcom) is
   // active. The kiosk itself is provider-agnostic: it hands the customer a

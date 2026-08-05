@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/client";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
 import { notifyMerchantNewOrder } from "@/lib/orders/notify-merchant";
 import { isItemVisibleNow } from "@/lib/menu-availability";
+import { isStorefrontBlocked } from "@/lib/tenant-billing";
 import { computeDeliveryFee } from "@/lib/delivery-fee";
 import { matchZoneByCity } from "@/lib/delivery-zone-match";
 import { sendTenantPush } from "@/lib/merchant/push";
@@ -166,8 +167,10 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   });
   if (!tenant) throw new CartValidationError("tenant_not_found");
   if (tenant.status !== "active") throw new CartValidationError("tenant_inactive");
-  // Store closed for non-payment (hub cancelled the base subscription).
-  if (tenant.billingSuspendedAt) throw new CartValidationError("tenant_inactive");
+  // Store closed for non-payment (hub cancelled the base subscription) OR the
+  // trial lapsed with no payment method. Gates ALL orders server-side incl.
+  // cash/pickup, which have no payment step of their own.
+  if (isStorefrontBlocked(tenant)) throw new CartValidationError("tenant_inactive");
 
   const branch = tenant.branches[0];
   if (!branch) throw new CartValidationError("no_branch");

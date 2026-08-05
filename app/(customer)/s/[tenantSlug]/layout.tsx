@@ -19,6 +19,7 @@ import { CampaignPopup } from "@/components/customer/CampaignPopup";
 import { CustomerChromeGate } from "@/components/customer/CustomerChromeGate";
 import { CustomerFooter } from "@/components/customer/CustomerFooter";
 import { StoreSuspended } from "@/components/customer/StoreSuspended";
+import { storefrontBlock } from "@/lib/tenant-billing";
 import { VisitBeacon } from "@/components/customer/VisitBeacon";
 import { QrLandingModal } from "@/components/customer/QrLandingModal";
 
@@ -106,16 +107,18 @@ export default async function CustomerLayout({
   const isOwnMerchant =
     session?.type === "merchant" && session.tenantId === tenant.id;
 
-  // Storefront closed for billing (hub cancelled the base subscription for
-  // non-payment) or an admin suspension. Replace the whole storefront with a
-  // neutral "temporarily closed" page - the owner gets a link to fix payment.
-  if (tenant.billingSuspendedAt || tenant.status === "suspended") {
+  // Storefront closed: billing suspension (hub cancelled for non-payment / admin
+  // suspend) OR the trial lapsed with no payment method. Replace the whole
+  // storefront with a neutral "closed" page - the owner gets a link to fix it.
+  const block = storefrontBlock(tenant);
+  if (block) {
     return (
       <ThemeProvider themeId={tenant.themeId} className="min-h-screen bg-qf-bg">
         <StoreSuspended
           tenantName={tenant.name}
           tenantLogoUrl={tenant.logoUrl}
           isOwner={isOwnMerchant}
+          reason={block}
         />
       </ThemeProvider>
     );
