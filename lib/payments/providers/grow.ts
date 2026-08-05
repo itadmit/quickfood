@@ -342,11 +342,16 @@ export class GrowProvider extends BasePaymentProvider {
       // `maxPaymentNum` lets the customer pick the number of installments in
       // the wallet, up to this value (Grow docs: "between 2 and the value").
       // The single-payment ("1 תשלום") option stays available by default.
-      // IMPORTANT: do NOT also send `paymentNum` - `paymentNum` *fixes* the
-      // number of payments, so sending paymentNum=1 pinned every charge to a
-      // single payment even when the customer chose more in the wallet.
+      // When installments are ALLOWED (>=2) we send only maxPaymentNum and NOT
+      // `paymentNum`, because `paymentNum` *fixes* the count (paymentNum=1 would
+      // pin every charge to a single payment even when the customer picked more).
+      // But when the merchant chose "1 payment / no installments" we MUST send
+      // `paymentNum=1` - otherwise Grow's wallet ignores it and defaults to
+      // offering 1-12 installments (the setting was silently not honored).
       if (maxInstallments >= 2) {
         body.maxPaymentNum = Math.min(maxInstallments, 12);
+      } else {
+        body.paymentNum = 1;
       }
 
       // Bank transfer is a poor fit for food orders, so it's off by default.
