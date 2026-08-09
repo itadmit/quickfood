@@ -30,6 +30,7 @@ export const POST = handler(async (req: Request) => {
   const body = (await req.json().catch(() => ({}))) as {
     accept?: boolean;
     context_type?: "subscription_setup" | "card_update";
+    vat_number?: string;
   };
   if (body.accept !== true) {
     return apiError(
@@ -66,6 +67,18 @@ export const POST = handler(async (req: Request) => {
     return apiError("invalid_state", "אין משתמש בעלים על העסק", 409);
   }
 
+  // Optional ח.פ entered on the billing screen: persist it and use it for the
+  // billing customer (falls back to whatever is already on the tenant).
+  const vatInput =
+    typeof body.vat_number === "string" ? body.vat_number.trim().slice(0, 20) : "";
+  const effectiveVat = vatInput || tenant.vatNumber || undefined;
+  if (vatInput && vatInput !== tenant.vatNumber) {
+    await prisma.tenant.update({
+      where: { id: tenant.id },
+      data: { vatNumber: vatInput },
+    });
+  }
+
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "";
 
   // Upsert the billing customer (idempotent by email on the hub) and repoint
@@ -76,7 +89,7 @@ export const POST = handler(async (req: Request) => {
       email: ownerEmail,
       name: tenant.name,
       phone: owner?.phone ?? undefined,
-      vat_number: tenant.vatNumber ?? undefined,
+      vat_number: effectiveVat,
       external_id: tenant.id,
       external_slug: tenant.slug,
       metadata: { tenant_id: tenant.id },

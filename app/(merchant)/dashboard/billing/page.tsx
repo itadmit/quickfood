@@ -29,6 +29,7 @@ export default async function BillingPage({
     where: { id: session.tenantId },
     select: {
       name: true,
+      vatNumber: true,
       billingCustomerId: true,
       billingSubscriptionId: true,
       billingPaymentMethodId: true,
@@ -59,6 +60,7 @@ export default async function BillingPage({
     <BillingView
       tenant={{
         name: tenant.name,
+        vatNumber: tenant.vatNumber ?? null,
         billingCustomerId: tenant.billingCustomerId,
         baseSubscriptionId: tenant.billingSubscriptionId,
         paymentMethodId: tenant.billingPaymentMethodId,

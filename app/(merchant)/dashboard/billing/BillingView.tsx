@@ -10,6 +10,7 @@ const POLL_TIMEOUT_MS = 60_000;
 
 interface TenantBilling {
   name: string;
+  vatNumber: string | null;
   billingCustomerId: string | null;
   baseSubscriptionId: string | null;
   paymentMethodId: string | null;
@@ -39,6 +40,7 @@ export function BillingView({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
+  const [vatNumber, setVatNumber] = useState(tenant.vatNumber ?? "");
   const [polling, setPolling] = useState(false);
   const [pollTimedOut, setPollTimedOut] = useState(false);
   const pollStartRef = useRef<number>(0);
@@ -133,7 +135,11 @@ export function BillingView({
       const res = await fetch("/api/v1/merchant/billing/setup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accept: true, context_type: contextType }),
+        body: JSON.stringify({
+          accept: true,
+          context_type: contextType,
+          vat_number: vatNumber.trim() || undefined,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -273,6 +279,18 @@ export function BillingView({
 
         {!setupComplete && (
           <div className="mt-5 border-t border-qf-line-soft pt-4 space-y-3">
+            <label className="block text-xs text-qf-ink2">
+              <span className="mb-1 block">ח.פ / עוסק מורשה (לחשבונית)</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={vatNumber}
+                onChange={(e) => setVatNumber(e.target.value)}
+                maxLength={20}
+                placeholder="לא חובה"
+                className="w-full sm:w-64 rounded-xl border border-qf-line-dash px-3 py-2 text-sm outline-none focus:border-(--qf-primary)"
+              />
+            </label>
             <label className="flex items-start gap-2 text-xs text-qf-ink2 cursor-pointer select-none">
               <input
                 type="checkbox"
