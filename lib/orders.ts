@@ -9,6 +9,11 @@ import { notifyOrderCustomer } from "@/lib/orders/notify-order-event";
 import { sendTenantPush } from "@/lib/merchant/push";
 import { sendOrderConfirmedEmail, sendOrderCancelledEmail } from "@/lib/orders/notify-customer";
 import { notifyMerchantNewOrder } from "@/lib/orders/notify-merchant";
+import {
+  pushOrderToDelivApp,
+  markOrderReadyDelivApp,
+  cancelOrderDelivApp,
+} from "@/lib/delivapp/dispatch";
 
 /**
  * Order status state machine. Defines which transitions are legal.
@@ -221,6 +226,9 @@ export async function advanceStatus(
       await notifyOrderCustomer(orderId, "ready").catch((err) => {
         console.error("[notify] ready failed", err);
       });
+      await markOrderReadyDelivApp(orderId).catch((err) => {
+        console.warn("[delivapp] ready dispatch failed", err);
+      });
     }
 
     if (to === "out_for_delivery" && options?.courierId && options.courierId !== order.courierId) {
@@ -257,6 +265,13 @@ export async function advanceStatus(
       await notifyOrderCustomer(orderId, "confirmed").catch((err) =>
         console.error("[notify] confirmed failed", err),
       );
+
+      // Mirror the accepted delivery order into DelivApp's dispatch app (opt-in
+      // per tenant; no-op otherwise). Only fires on the accept transition, so a
+      // rejected order is never dispatched to a courier.
+      await pushOrderToDelivApp(orderId).catch((err) =>
+        console.warn("[delivapp] create dispatch failed", err),
+      );
     }
 
     // A cancelled or refunded order returns any points it redeemed - the
@@ -283,6 +298,9 @@ export async function advanceStatus(
       }).catch((err) => console.warn("[webhook] dispatch failed", err));
       await sendOrderCancelledEmail(orderId, { reason: options?.reason ?? null }).catch(
         (err) => console.warn("[email] order cancelled failed", err),
+      );
+      await cancelOrderDelivApp(orderId).catch((err) =>
+        console.warn("[delivapp] cancel dispatch failed", err),
       );
     } else {
       await dispatchWebhook({

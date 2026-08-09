@@ -523,6 +523,15 @@ model Tenant {
   // "estimated commission saved" calc - always labelled estimated, never exact.
   growthSettings          Json      @default("{}") @map("growth_settings")
 
+  // DelivApp dispatch integration (per-tenant, opt-in). Every delivery order
+  // created on the storefront is pushed to DelivApp's management app in the
+  // background (in addition to the QuickFood dashboard), and DelivApp posts
+  // courier status updates back to our inbound webhook. Empty default = off.
+  // JSON shape: { enabled: bool, restId: string, appId: string,
+  // apiKey: string, inboundToken: string }. apiKey/inboundToken are secrets -
+  // never log them and never expose them to the customer storefront.
+  delivAppConfig          Json      @default("{}") @map("deliv_app_config")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -1173,6 +1182,14 @@ model Order {
 
   courierId String?  @map("courier_id") @db.Uuid
   courier   Courier? @relation(fields: [courierId], references: [id])
+
+  /// DelivApp dispatch mirror. delivAppBarcodeId = the BarcodeId returned by
+  /// DelivApp's create-order endpoint (used to cancel / query ETA later).
+  /// delivAppStatus = the last courier status code (1..8) DelivApp posted to
+  /// our inbound webhook. Both NULL for pickup orders + tenants without the
+  /// integration enabled.
+  delivAppBarcodeId String? @map("deliv_app_barcode_id")
+  delivAppStatus    Int?    @map("deliv_app_status")
 
   customerNotes         String? @map("customer_notes")
   customerPhoneSnap     String? @map("customer_phone_snap")
