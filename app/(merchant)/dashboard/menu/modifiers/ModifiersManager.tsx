@@ -744,6 +744,9 @@ function SetEditor({
             <IcoPlus c="var(--qf-deep)" s={12} /> הוספת אפשרות
           </button>
         </div>
+        <p className="text-[11px] text-qf-mute leading-relaxed">
+          בכל שורה: שם האפשרות · מחיר נוסף (₪){set.allowQty ? " · מקס׳ = מקסימום כמות" : ""} · תיבת הסימון = <b>ברירת מחדל</b> (מסומנת מראש ללקוח) · הכפתור הצהוב = זמינות (״זמין״/״אזל״).
+        </p>
         {set.options.length === 0 ? (
           <p className="text-xs text-qf-mute italic">הוסף לפחות אפשרות אחת.</p>
         ) : (
