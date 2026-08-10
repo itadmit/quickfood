@@ -903,7 +903,12 @@ export function ItemDetail({
         const selected = groupUnits(g);
         const remaining = Math.max(0, g.maxSelect - selected);
         const atMax = selected >= g.maxSelect;
-        const freeRemaining = Math.max(0, free - selected);
+        // Only free-eligible paid picks consume the "first N free" allowance -
+        // "always paid" options never count against it (they're always charged).
+        const freeEligibleUnits = pickedOptions(g).filter(
+          (u) => u.priceDelta > 0 && !u.excludeFromFree,
+        ).length;
+        const freeRemaining = Math.max(0, free - freeEligibleUnits);
         // Wolt-style free picks: while the group still has free slots left,
         // paid options show no price at all - the price tag appears only
         // once the free allowance is used up. Bundle groups keep their
@@ -995,6 +1000,10 @@ export function ItemDetail({
                 priceLabel = null;
               } else if (o.priceDelta < 0) {
                 priceLabel = `-${formatPrice(-o.priceDelta)}`;
+              } else if (o.excludeFromFree) {
+                // "Always paid" - never hidden behind the free allowance, so the
+                // customer isn't misled into thinking it's free.
+                priceLabel = `+${formatPrice(o.priceDelta)}`;
               } else if (!hidePriceWhileFree) {
                 priceLabel = `+${formatPrice(o.priceDelta)}`;
               } else if (checked) {
