@@ -256,6 +256,36 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
     }
   }
 
+  async function cancelAndClose() {
+    const ok = window.confirm(
+      `לעצור את המנוי ולסגור את ${t.name}?\nהמנוי יבוטל בסוף התקופה (לא יחויב בחיוב הבא) והאתר ייסגר מיד.`,
+    );
+    if (!ok) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/v1/admin/tenants/${t.id}/billing/cancel`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ suspend: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data?.error?.message ?? "הפעולה נכשלה");
+        return;
+      }
+      set("status", "suspended");
+      flash(
+        data.subscription_cancelled
+          ? "המנוי בוטל (לא יחויב בחיוב הבא) והאתר נסגר"
+          : "אין מנוי פעיל לביטול - האתר נסגר",
+      );
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function deleteTenant() {
     const ok = window.confirm(
       `מחיקת ${t.name}? הפעולה אינה הפיכה - כל המסעדה, ההזמנות, התפריט והמשתמשים יימחקו לצמיתות.`,
@@ -446,6 +476,15 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
             )}
           >
             {t.status === "active" ? "השעה" : "הפעל"}
+          </button>
+          <button
+            type="button"
+            onClick={cancelAndClose}
+            disabled={saving}
+            className="px-3 py-1.5 rounded-lg border border-qf-tomato/40 text-qf-tomato text-sm font-medium hover:bg-qf-tomato-soft"
+            title="מבטל את מנוי הפלטפורמה בסוף התקופה (לא יחויב בחיוב הבא) ומשעה את האתר"
+          >
+            עצור מנוי וסגור
           </button>
           <button
             type="button"
