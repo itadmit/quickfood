@@ -79,7 +79,7 @@ export function DelivAppForm({ initial }: { initial: Initial }) {
           <h2 className="text-lg font-black text-black">חיבור ל‑DelivApp</h2>
           <p className="text-sm text-black/60 leading-relaxed">
             כל הזמנת משלוח שתאשרו בקוויק‑פוד תישלח אוטומטית גם לאפליקציית הניהול של
-            DelivApp — בנוסף לדשבורד הרגיל. סימון &quot;מוכן&quot; וביטול הזמנה מסונכרנים גם
+            DelivApp, בנוסף לדשבורד הרגיל. סימון &quot;מוכן&quot; וביטול הזמנה מסונכרנים גם
             הם, ועדכוני סטטוס השליח חוזרים אוטומטית לדשבורד.
           </p>
         </div>
@@ -148,7 +148,7 @@ export function DelivAppForm({ initial }: { initial: Initial }) {
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder={apiKeySet ? "•••••••• (שמור — השאירו ריק כדי לא לשנות)" : "REST API Key מ‑DelivApp"}
+              placeholder={apiKeySet ? "•••••••• (שמור, השאירו ריק כדי לא לשנות)" : "REST API Key מ‑DelivApp"}
               dir="ltr"
             />
           </div>
@@ -162,7 +162,7 @@ export function DelivAppForm({ initial }: { initial: Initial }) {
           </h3>
           <p className="text-xs text-black/60 leading-relaxed">
             הדביקו את הכתובת הזו בהגדרות ה‑Webhook של DelivApp כדי שעדכוני סטטוס
-            השליח יחזרו לדשבורד. הכתובת סודית — אל תשתפו אותה.
+            השליח יחזרו לדשבורד. הכתובת סודית, אל תשתפו אותה.
           </p>
           <div className="flex items-center gap-2">
             <code
