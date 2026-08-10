@@ -1395,6 +1395,11 @@ function GroupEditor({
         className="w-full px-2.5 py-1.5 rounded-lg border border-qf-line-dash text-xs bg-white resize-none"
       />
       {group.options.length > 0 && (
+        <p className="text-[11px] text-qf-mute leading-relaxed px-0.5">
+          בכל שורה: שם האפשרות · מחיר נוסף (₪){group.allowQty ? " · מקס׳ = מקסימום כמות" : ""} · <b>מסומן מראש</b> = האפשרות מגיעה כבר מסומנת ללקוח (הוא יכול להסיר){group.type === "multi" ? " · תמיד בתשלום = לא נכללת במכסת החינם, תמיד מחויבת" : ""} · הכפתור הצהוב = זמינות (״זמין״/״אזל״).
+        </p>
+      )}
+      {group.options.length > 0 && (
         <div className="flex items-center gap-2 text-[10px] font-medium text-qf-mute px-0.5">
           <span className="w-5 shrink-0" aria-hidden />
           <span className="w-9 shrink-0" aria-hidden />
@@ -1402,7 +1407,7 @@ function GroupEditor({
           <span className="w-16 text-center shrink-0">{group.customHalfPrice ? "מלא" : "מחיר"}</span>
           {group.customHalfPrice && <span className="w-16 text-center shrink-0">חצי</span>}
           {group.type === "multi" && <span className="w-14 text-center shrink-0 leading-tight">תמיד בתשלום</span>}
-          <span className="w-6 shrink-0" aria-hidden />
+          <span className="w-14 text-center shrink-0 leading-tight">מסומן מראש</span>
           <span className="w-12 shrink-0" aria-hidden />
           <span className="w-8 shrink-0" aria-hidden />
         </div>
@@ -1522,8 +1527,8 @@ function GroupEditor({
               </label>
             )}
             <label
-              className="text-xs inline-flex items-center justify-center w-6 h-8 shrink-0"
-              title="ברירת מחדל"
+              className="text-xs inline-flex items-center justify-center w-14 h-8 shrink-0"
+              title="מסומן מראש ללקוח (ברירת מחדל)"
             >
               <input
                 type={group.type === "single" ? "radio" : "checkbox"}

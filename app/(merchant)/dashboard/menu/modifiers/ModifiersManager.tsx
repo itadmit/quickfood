@@ -748,7 +748,7 @@ function SetEditor({
           </button>
         </div>
         <p className="text-[11px] text-qf-mute leading-relaxed">
-          בכל שורה: שם האפשרות · מחיר נוסף (₪){set.allowQty ? " · מקס׳ = מקסימום כמות" : ""} · תיבת הסימון = <b>ברירת מחדל</b> (מסומנת מראש ללקוח) · הכפתור הצהוב = זמינות (״זמין״/״אזל״).
+          בכל שורה: שם האפשרות · מחיר נוסף (₪){set.allowQty ? " · מקס׳ = מקסימום כמות" : ""} · <b>מסומן מראש</b> = האפשרות מגיעה כבר מסומנת ללקוח (הוא יכול להסיר){isMulti ? " · תמיד בתשלום = לא נכללת במכסת החינם, תמיד מחויבת" : ""} · הכפתור הצהוב = זמינות (״זמין״/״אזל״).
         </p>
         {set.options.length === 0 ? (
           <p className="text-xs text-qf-mute italic">הוסף לפחות אפשרות אחת.</p>
@@ -762,7 +762,7 @@ function SetEditor({
             {set.customHalfPrice && <span className="w-16 text-center shrink-0">חצי</span>}
             {set.allowQty && <span className="w-16 text-center shrink-0">מקס׳</span>}
             {isMulti && <span className="w-14 text-center shrink-0 leading-tight">תמיד בתשלום</span>}
-            <span className="w-6 shrink-0" aria-hidden />
+            <span className="w-14 text-center shrink-0 leading-tight">מסומן מראש</span>
             <span className="w-12 shrink-0" aria-hidden />
             <span className="w-8 shrink-0" aria-hidden />
           </div>
@@ -883,8 +883,8 @@ function SetEditor({
                   </label>
                 )}
                 <label
-                  className="text-xs inline-flex items-center justify-center w-6 h-8 shrink-0"
-                  title="ברירת מחדל"
+                  className="text-xs inline-flex items-center justify-center w-14 h-8 shrink-0"
+                  title="מסומן מראש ללקוח (ברירת מחדל)"
                 >
                   <input
                     type={set.type === "single" ? "radio" : "checkbox"}
