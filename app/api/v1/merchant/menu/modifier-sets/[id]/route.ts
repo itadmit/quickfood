@@ -99,6 +99,7 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
           available: o.available,
           imageUrl: o.image_url ?? null,
           maxQuantity: o.max_quantity,
+          excludeFromFree: o.exclude_from_free,
           position: oi,
         })),
       });
@@ -144,6 +145,7 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
             available: o.available,
             imageUrl: o.image_url ?? null,
             maxQuantity: o.max_quantity,
+            excludeFromFree: o.exclude_from_free,
             position: oi,
           })),
         ),

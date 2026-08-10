@@ -232,7 +232,7 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
     for (const arr of byGroup.values()) {
       const free = arr[0].group.includedFree ?? 0;
       const paidSorted = arr
-        .filter((r) => r.opt.priceDelta > 0)
+        .filter((r) => r.opt.priceDelta > 0 && !r.opt.excludeFromFree)
         .sort((a, b) => a.opt.priceDelta - b.opt.priceDelta);
       for (const r of paidSorted.slice(0, free)) freedOptIds.add(r.opt.id);
     }

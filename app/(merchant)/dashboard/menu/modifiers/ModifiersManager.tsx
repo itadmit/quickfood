@@ -19,6 +19,7 @@ interface SetOption {
   available: boolean;
   imageUrl: string | null;
   maxQuantity: number;
+  excludeFromFree: boolean;
 }
 
 interface ModifierSet {
@@ -117,6 +118,7 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
         available: o.available,
         image_url: o.imageUrl,
         max_quantity: editing.allowQty ? (o.maxQuantity ?? 0) : 0,
+        exclude_from_free: o.excludeFromFree ?? false,
       })),
     };
     const url = editing.id
@@ -735,6 +737,7 @@ function SetEditor({
                     available: true,
                     imageUrl: null,
                     maxQuantity: 0,
+                    excludeFromFree: false,
                   },
                 ],
               })
@@ -758,6 +761,7 @@ function SetEditor({
             <span className="w-16 text-center shrink-0">{set.customHalfPrice ? "מלא" : "מחיר"}</span>
             {set.customHalfPrice && <span className="w-16 text-center shrink-0">חצי</span>}
             {set.allowQty && <span className="w-16 text-center shrink-0">מקס׳</span>}
+            {isMulti && <span className="w-14 text-center shrink-0 leading-tight">תמיד בתשלום</span>}
             <span className="w-6 shrink-0" aria-hidden />
             <span className="w-12 shrink-0" aria-hidden />
             <span className="w-8 shrink-0" aria-hidden />
@@ -857,6 +861,26 @@ function SetEditor({
                     title="מקסימום כמות לאפשרות הזו (0 = ללא הגבלה)"
                     placeholder="מקס׳"
                   />
+                )}
+                {isMulti && (
+                  <label
+                    className="inline-flex items-center justify-center w-14 h-8 shrink-0"
+                    title="תמיד בתשלום - לא נכללת במכסת החינם ולא תופסת מקום"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={o.excludeFromFree}
+                      onChange={(e) =>
+                        onChange({
+                          ...set,
+                          options: set.options.map((x, i) =>
+                            i === oi ? { ...x, excludeFromFree: e.target.checked } : x,
+                          ),
+                        })
+                      }
+                      className="cursor-pointer"
+                    />
+                  </label>
                 )}
                 <label
                   className="text-xs inline-flex items-center justify-center w-6 h-8 shrink-0"

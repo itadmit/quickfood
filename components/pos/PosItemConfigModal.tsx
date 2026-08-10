@@ -25,6 +25,7 @@ interface Option {
   halfPriceDelta?: number | null;
   isDefault: boolean;
   imageUrl?: string | null;
+  excludeFromFree?: boolean;
 }
 
 interface OptionGroup {
@@ -178,12 +179,12 @@ export function PosItemConfigModal({
       const gHalf = halfPicks[g.id] ?? {};
       return g.options
         .filter((o) => gHalf[o.id])
-        .map((o) => ({ id: o.id, priceDelta: o.priceDelta, halfPriceDelta: o.halfPriceDelta, half: gHalf[o.id] }));
+        .map((o) => ({ id: o.id, priceDelta: o.priceDelta, halfPriceDelta: o.halfPriceDelta, excludeFromFree: o.excludeFromFree, half: gHalf[o.id] }));
     }
     const selected = picks[g.id] ?? new Set<string>();
     return g.options
       .filter((o) => selected.has(o.id))
-      .map((o) => ({ id: o.id, priceDelta: o.priceDelta, halfPriceDelta: o.halfPriceDelta }));
+      .map((o) => ({ id: o.id, priceDelta: o.priceDelta, halfPriceDelta: o.halfPriceDelta, excludeFromFree: o.excludeFromFree }));
   }
 
   function groupPricingConfig(g: OptionGroup): GroupPricingConfig {

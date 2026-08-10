@@ -85,6 +85,7 @@ export const POST = handler(async (req: Request) => {
           available: o.available,
           imageUrl: o.image_url ?? null,
           maxQuantity: o.max_quantity,
+          excludeFromFree: o.exclude_from_free,
           position: oi,
         })),
       },

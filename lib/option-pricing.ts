@@ -7,6 +7,9 @@ export interface PricedOption {
   // customHalfPrice is on. null/undefined falls back to priceDelta.
   halfPriceDelta?: number | null;
   half?: OptionPlacement | null;
+  // "Always paid": never covered by includedFree/bundle, never consumes a free
+  // slot. Always charged its full priceDelta (+ half rules).
+  excludeFromFree?: boolean;
 }
 
 export interface GroupPricingConfig {
@@ -55,10 +58,15 @@ export function priceGroupOptions(
   };
 
   const out = new Map<string, number>();
+  // "Always paid" picks are charged full and are excluded from the free/bundle
+  // allocation entirely (they never consume a free slot or a bundle slot).
+  const alwaysPaid = picks.filter((p) => p.priceDelta > 0 && p.excludeFromFree);
   const paid = picks
-    .filter((p) => p.priceDelta > 0)
+    .filter((p) => p.priceDelta > 0 && !p.excludeFromFree)
     .sort((a, b) => a.priceDelta - b.priceDelta);
   const rest = picks.filter((p) => p.priceDelta <= 0);
+
+  for (const p of alwaysPaid) out.set(p.id, withHalf(p, p.priceDelta));
 
   if (bundleCount > 0) {
     let cap = bundlePrice;

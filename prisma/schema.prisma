@@ -990,6 +990,11 @@ model ItemOption {
   // the platter"). 0 = no per-option cap; the group's maxSelect still bounds
   // the total. Ignored when the group is not allowQty (one unit each anyway).
   maxQuantity Int            @default(0) @map("max_quantity")
+  // "Always paid": this option is never covered by the group's includedFree
+  // allowance (nor the bundle deal) and doesn't consume a free slot - it always
+  // charges its full priceDelta. For premium toppings inside an otherwise
+  // "first N free" group. Default false = normal (free-eligible).
+  excludeFromFree Boolean    @default(false) @map("exclude_from_free")
 
   @@index([groupId, position])
   @@map("item_options")
@@ -1060,6 +1065,8 @@ model ModifierSetOption {
   // Per-option quantity ceiling inherited by attached groups. See
   // ItemOption.maxQuantity.
   maxQuantity Int        @default(0) @map("max_quantity")
+  // "Always paid" - inherited by attached groups. See ItemOption.excludeFromFree.
+  excludeFromFree Boolean @default(false) @map("exclude_from_free")
   // Provenance for bulk imports - scoped per parent set so the same source
   // option id can re-appear if the merchant has two imported sets.
   externalId String?     @map("external_id") @db.VarChar(64)

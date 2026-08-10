@@ -39,6 +39,7 @@ interface Option {
   isDefault: boolean;
   imageUrl?: string | null;
   maxQuantity?: number;
+  excludeFromFree?: boolean;
 }
 type HalfPlacement = "left" | "right" | "full";
 
@@ -318,13 +319,13 @@ export function ItemDetail({
       const gHalf = halfPicks[g.id] ?? {};
       return g.options
         .filter((o) => gHalf[o.id])
-        .map((o) => ({ id: `${o.id}#0`, priceDelta: o.priceDelta, halfPriceDelta: o.halfPriceDelta, half: gHalf[o.id] }));
+        .map((o) => ({ id: `${o.id}#0`, priceDelta: o.priceDelta, halfPriceDelta: o.halfPriceDelta, excludeFromFree: o.excludeFromFree, half: gHalf[o.id] }));
     }
     const out: PricedOption[] = [];
     for (const o of g.options) {
       const q = optionQty(g, o.id);
       for (let i = 0; i < q; i++) {
-        out.push({ id: `${o.id}#${i}`, priceDelta: o.priceDelta, halfPriceDelta: o.halfPriceDelta });
+        out.push({ id: `${o.id}#${i}`, priceDelta: o.priceDelta, halfPriceDelta: o.halfPriceDelta, excludeFromFree: o.excludeFromFree });
       }
     }
     return out;

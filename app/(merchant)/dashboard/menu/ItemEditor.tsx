@@ -35,6 +35,7 @@ interface Option {
   available: boolean;
   imageUrl: string | null;
   maxQuantity: number;
+  excludeFromFree: boolean;
 }
 
 interface OptionGroup {
@@ -303,6 +304,7 @@ export function ItemEditor({
             available: o.available,
             image_url: o.imageUrl,
             max_quantity: g.allowQty ? (o.maxQuantity ?? 0) : 0,
+            exclude_from_free: o.excludeFromFree ?? false,
           })),
         })),
       };
@@ -1399,6 +1401,7 @@ function GroupEditor({
           <span className="flex-1 min-w-0">אפשרות</span>
           <span className="w-16 text-center shrink-0">{group.customHalfPrice ? "מלא" : "מחיר"}</span>
           {group.customHalfPrice && <span className="w-16 text-center shrink-0">חצי</span>}
+          {group.type === "multi" && <span className="w-14 text-center shrink-0 leading-tight">תמיד בתשלום</span>}
           <span className="w-6 shrink-0" aria-hidden />
           <span className="w-12 shrink-0" aria-hidden />
           <span className="w-8 shrink-0" aria-hidden />
@@ -1498,6 +1501,26 @@ function GroupEditor({
                 placeholder="מקס׳"
               />
             )}
+            {group.type === "multi" && (
+              <label
+                className="inline-flex items-center justify-center w-14 h-8 shrink-0"
+                title="תמיד בתשלום - לא נכללת במכסת החינם ולא תופסת מקום"
+              >
+                <input
+                  type="checkbox"
+                  checked={o.excludeFromFree}
+                  onChange={(e) =>
+                    onChange({
+                      ...group,
+                      options: group.options.map((x, idx) =>
+                        idx === oi ? { ...x, excludeFromFree: e.target.checked } : x,
+                      ),
+                    })
+                  }
+                  className="cursor-pointer"
+                />
+              </label>
+            )}
             <label
               className="text-xs inline-flex items-center justify-center w-6 h-8 shrink-0"
               title="ברירת מחדל"
@@ -1568,6 +1591,7 @@ function GroupEditor({
                 available: true,
                 imageUrl: null,
                 maxQuantity: 0,
+                excludeFromFree: false,
               },
             ],
           })

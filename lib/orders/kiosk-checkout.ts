@@ -105,6 +105,7 @@ async function priceKioskCart(input: CreateOrderInput): Promise<{
           id: `${o.id}#${i}`,
           priceDelta: o.priceDelta,
           halfPriceDelta: o.halfPriceDelta,
+          excludeFromFree: o.excludeFromFree,
           half: line.option_placements?.[o.id] ?? null,
         })),
       );

@@ -282,6 +282,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
           id: `${o.id}#${i}`,
           priceDelta: o.priceDelta,
           halfPriceDelta: o.halfPriceDelta,
+          excludeFromFree: o.excludeFromFree,
           half: placements[o.id] ?? null,
           option: o,
         })),
