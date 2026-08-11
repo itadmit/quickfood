@@ -48,6 +48,7 @@ interface InitialData {
   plan: string | null;
   billingSetupCompletedAt: string | null;
   trialEndsAt: string | null;
+  scheduledCloseAt: string | null;
   createdAt: string;
   counts: {
     orders: number;
@@ -258,7 +259,7 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
 
   async function cancelAndClose() {
     const ok = window.confirm(
-      `לעצור את המנוי ולסגור את ${t.name}?\nהמנוי יבוטל בסוף התקופה (לא יחויב בחיוב הבא) והאתר ייסגר מיד.`,
+      `לעצור את המנוי של ${t.name}?\nהמנוי יבוטל בסוף התקופה (לא יחויב בחיוב הבא). האתר יישאר פתוח וייסגר אוטומטית רק בתום התקופה.`,
     );
     if (!ok) return;
     setSaving(true);
@@ -267,19 +268,26 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
       const res = await fetch(`/api/v1/admin/tenants/${t.id}/billing/cancel`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ suspend: true }),
+        body: JSON.stringify({}),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(data?.error?.message ?? "הפעולה נכשלה");
         return;
       }
-      set("status", "suspended");
-      flash(
-        data.subscription_cancelled
-          ? "המנוי בוטל (לא יחויב בחיוב הבא) והאתר נסגר"
-          : "אין מנוי פעיל לביטול - האתר נסגר",
-      );
+      if (data.scheduled_close_at) {
+        set("scheduledCloseAt", data.scheduled_close_at as string);
+        flash(
+          `המנוי בוטל (לא יחויב בחיוב הבא). האתר ייסגר אוטומטית ב-${formatDate(data.scheduled_close_at)}`,
+        );
+      } else {
+        set("status", "suspended");
+        flash(
+          data.subscription_cancelled
+            ? "המנוי בוטל (לא יחויב בחיוב הבא) והאתר נסגר"
+            : "אין מנוי פעיל ואין תקופה לחכות לה - האתר נסגר",
+        );
+      }
       router.refresh();
     } finally {
       setSaving(false);
@@ -482,7 +490,7 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
             onClick={cancelAndClose}
             disabled={saving}
             className="px-3 py-1.5 rounded-lg border border-qf-tomato/40 text-qf-tomato text-sm font-medium hover:bg-qf-tomato-soft"
-            title="מבטל את מנוי הפלטפורמה בסוף התקופה (לא יחויב בחיוב הבא) ומשעה את האתר"
+            title="מבטל את מנוי הפלטפורמה בסוף התקופה (לא יחויב בחיוב הבא). האתר נשאר פתוח וייסגר אוטומטית רק בתום התקופה"
           >
             עצור מנוי וסגור
           </button>
@@ -500,6 +508,11 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
       {toast && (
         <div className="bg-qf-green-soft border border-(--qf-primary)/30 text-qf-green-deep rounded-xl px-3 py-2 text-sm">
           {toast}
+        </div>
+      )}
+      {t.scheduledCloseAt && t.status !== "suspended" && (
+        <div className="bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato rounded-xl px-3 py-2 text-sm">
+          המנוי בוטל - האתר ייסגר אוטומטית ב-{formatDate(t.scheduledCloseAt)}. עד אז הוא נשאר פתוח ופעיל.
         </div>
       )}
       {error && (

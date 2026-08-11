@@ -14,6 +14,12 @@ export const PATCH = handler(async (req: Request, { params }: { params: Promise<
   const body = Patch.parse(await req.json());
   const tenant = await prisma.tenant.findUnique({ where: { id }, select: { id: true } });
   if (!tenant) return apiError("not_found", "מסעדה לא נמצאה", 404);
-  const updated = await prisma.tenant.update({ where: { id }, data: { status: body.status } });
+  const updated = await prisma.tenant.update({
+    where: { id },
+    data: {
+      status: body.status,
+      ...(body.status === "active" ? { scheduledCloseAt: null } : {}),
+    },
+  });
   return apiJson({ tenant: { id: updated.id, status: updated.status } });
 });

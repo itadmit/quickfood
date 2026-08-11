@@ -495,6 +495,11 @@ model Tenant {
   // ("מנוי לא פעיל"); cleared automatically when a valid card / paid invoice
   // lands. Independent of the admin-managed `status` field.
   billingSuspendedAt      DateTime? @map("billing_suspended_at")
+  // Admin-scheduled storefront close. Set by "עצור מנוי וסגור" to the base
+  // subscription's current_period_end: the store stays open until this date,
+  // then the close-scheduled-tenants job flips `status` to suspended and clears
+  // this. Cleared when an admin re-activates the tenant.
+  scheduledCloseAt        DateTime? @map("scheduled_close_at")
   // 7-day local trial countdown set at signup. After this date, without a
   // saved payment method, the dashboard is fully locked.
   trialEndsAt             DateTime? @map("trial_ends_at")

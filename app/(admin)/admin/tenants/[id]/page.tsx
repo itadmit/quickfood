@@ -64,6 +64,7 @@ export default async function TenantDetailPage({
         billingSetupCompletedAt:
           tenant.billingSetupCompletedAt?.toISOString() ?? null,
         trialEndsAt: tenant.trialEndsAt?.toISOString() ?? null,
+        scheduledCloseAt: tenant.scheduledCloseAt?.toISOString() ?? null,
         createdAt: tenant.createdAt.toISOString(),
         counts: {
           orders: tenant._count.orders,

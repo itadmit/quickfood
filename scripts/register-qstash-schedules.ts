@@ -43,6 +43,14 @@ const JOBS: Job[] = [
     cron: "0 3 * * *",
     description: "Clear expired Tenant intro prices + hub custom_monthly_price overrides.",
   },
+  {
+    scheduleId: "quickfood-close-scheduled-tenants",
+    path: "/api/internal/jobs/close-scheduled-tenants",
+    // 04:00 UTC ≈ 07:00 Israel - suspend tenants whose scheduled close date
+    // (base subscription period end, set by "עצור מנוי וסגור") has passed.
+    cron: "0 4 * * *",
+    description: "Suspend tenants whose scheduledCloseAt has passed (close the store at period end).",
+  },
 ];
 
 async function main() {
