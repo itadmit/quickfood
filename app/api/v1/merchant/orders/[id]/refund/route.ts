@@ -1,8 +1,10 @@
+import { after } from "next/server";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
 import { sendOrderCancelledEmail } from "@/lib/orders/notify-customer";
+import { cancelOrderDelivApp } from "@/lib/delivapp/dispatch";
 import { getConfiguredProvider } from "@/lib/payments/factory";
 import { z } from "zod";
 import { PaymentTransactionStatus, type Prisma } from "@prisma/client";
@@ -150,21 +152,33 @@ export const POST = handler(
       });
     });
 
-    void dispatchWebhook({
-      tenantId: session.tenantId,
-      eventType: "order.refunded",
-      payload: {
-        order_id: order.id,
-        number: order.number,
-        amount: order.total,
-        payment_method: order.paymentMethod,
-        reason: body.reason ?? null,
-      },
-    });
+    // after(), not a bare `void` - un-awaited promises are dropped once the
+    // response is sent on Vercel, so the webhook and the email were both
+    // best-effort at best.
+    after(async () => {
+      await dispatchWebhook({
+        tenantId: session.tenantId!,
+        eventType: "order.refunded",
+        payload: {
+          order_id: order.id,
+          number: order.number,
+          amount: order.total,
+          payment_method: order.paymentMethod,
+          reason: body.reason ?? null,
+        },
+      }).catch((err) => console.warn("[webhook] refund dispatch failed", err));
 
-    void sendOrderCancelledEmail(order.id, { reason: body.reason ?? null }).catch((err) =>
-      console.warn("[email] order cancelled failed", err),
-    );
+      await sendOrderCancelledEmail(order.id, { reason: body.reason ?? null }).catch((err) =>
+        console.warn("[email] order cancelled failed", err),
+      );
+
+      // A refund never reaches advanceStatus, so nothing here used to tell
+      // DelivApp to stand the courier down - they kept driving to a delivery
+      // the customer had already been refunded for.
+      await cancelOrderDelivApp(order.id).catch((err) =>
+        console.warn("[delivapp] refund cancel failed", err),
+      );
+    });
 
     return apiJson({
       ok: true,
