@@ -38,22 +38,28 @@ async function recordDispatchEvent(
 }
 
 /**
- * DelivApp's create response is undocumented beyond the happy path and has been
- * observed without a top-level `BarcodeId`. Accept the common casings and one
- * level of the usual envelope keys rather than silently dropping the id.
+ * /delivery answers with the barcode as a BARE JSON string - the whole body is
+ * `"TDCA5NKK"`, not an object with a BarcodeId key (confirmed on order Y-4).
+ * The object shapes are kept as a fallback in case they ever wrap it.
  */
-function extractBarcodeId(data: Record<string, unknown>, depth = 0): string | null {
+function extractBarcodeId(data: unknown, depth = 0): string | null {
+  if (typeof data === "number") return String(data);
+  if (typeof data === "string") {
+    const s = data.trim();
+    // Guard against an error sentence being mistaken for an id.
+    return s && s.length <= 64 && !/\s/.test(s) ? s : null;
+  }
+  if (!data || typeof data !== "object" || Array.isArray(data)) return null;
+
+  const obj = data as Record<string, unknown>;
   for (const key of ["BarcodeId", "BarcodeID", "barcodeId", "barcode_id", "Barcode"]) {
-    const v = data[key];
+    const v = obj[key];
     if (v != null && v !== "") return String(v);
   }
   if (depth >= 2) return null;
   for (const key of ["result", "Result", "data", "Data", "response", "Response"]) {
-    const nested = data[key];
-    if (nested && typeof nested === "object" && !Array.isArray(nested)) {
-      const found = extractBarcodeId(nested as Record<string, unknown>, depth + 1);
-      if (found) return found;
-    }
+    const found = extractBarcodeId(obj[key], depth + 1);
+    if (found) return found;
   }
   return null;
 }
