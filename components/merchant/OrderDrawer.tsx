@@ -87,18 +87,28 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 
+export interface DelivAppInfo {
+  dispatchedAt: string | null;
+  barcodeId: string | null;
+  statusLabel: string | null;
+}
+
 export function OrderDrawer({
   orderId,
   onClose,
   onAdvance,
   receiptPrinter = "airprint",
   receiptSettings = DEFAULT_RECEIPT_SETTINGS,
+  delivApp,
 }: {
   orderId: string;
   onClose: () => void;
   onAdvance: (id: string) => void;
   receiptPrinter?: ReceiptPrinterType;
   receiptSettings?: ReceiptSettings;
+  // Passed down rather than fetched: the drawer reads the customer-facing
+  // order endpoint, and courier-dispatch internals have no business there.
+  delivApp?: DelivAppInfo | null;
 }) {
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -381,6 +391,34 @@ export function OrderDrawer({
                   {order.delivered_at && <TimelineRow label="נמסרה" at={order.delivered_at} done />}
                 </ol>
               </section>
+
+              {delivApp?.dispatchedAt && (
+                <section>
+                  <div className="text-xs font-semibold text-qf-mute mb-2">שליחות</div>
+                  <div className="rounded-xl border border-qf-line-soft px-3 py-2 space-y-0.5">
+                    <div className="text-sm font-medium">
+                      נשלח ל-DelivApp
+                      <span className="text-qf-mute font-normal">
+                        {" · "}
+                        {new Date(delivApp.dispatchedAt).toLocaleString("he-IL", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                    {delivApp.barcodeId && (
+                      <div className="text-xs text-qf-mute" dir="ltr">
+                        מדבקה: {delivApp.barcodeId}
+                      </div>
+                    )}
+                    {delivApp.statusLabel && (
+                      <div className="text-xs text-qf-mute">שליח: {delivApp.statusLabel}</div>
+                    )}
+                  </div>
+                </section>
+              )}
 
               {/* Items */}
               <section>

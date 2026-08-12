@@ -514,10 +514,10 @@ export function CustomerCheckout({
       failures.push({ sel: "#co-last-name", msg: "נא למלא שם משפחה" });
     if (!phone.trim() || !phoneLooksValid)
       failures.push({ sel: "#co-phone", msg: "מספר הטלפון אינו תקין. דוגמה: 0501234567" });
-    if (method === "delivery" && !address.trim())
-      failures.push({ sel: "#co-address", msg: "נא למלא רחוב ומספר" });
     if (method === "delivery" && !city)
       failures.push({ sel: "[data-co-city]", msg: "נא לבחור עיר" });
+    if (method === "delivery" && !address.trim())
+      failures.push({ sel: "#co-address", msg: "נא למלא רחוב ומספר" });
     if (emailRequired && !emailLooksValid)
       failures.push({ sel: "#co-email", msg: "כתובת המייל אינה תקינה" });
     if (!paymentMethod) failures.push({ sel: "[data-co-payment]", msg: "נא לבחור אמצעי תשלום" });
@@ -974,19 +974,6 @@ export function CustomerCheckout({
           <Card>
             <CardTitle>כתובת משלוח</CardTitle>
             <div className="grid grid-cols-2 gap-3 mt-3">
-              <div className="col-span-2">
-                <Field label="רחוב ומספר" required error={addressError} errorId="co-address-error">
-                  <Input
-                    id="co-address"
-                    value={address}
-                    onChange={setAddress}
-                    placeholder="הרצל 12"
-                    autoComplete="street-address"
-                    invalid={!!addressError}
-                    describedBy="co-address-error"
-                  />
-                </Field>
-              </div>
               <div className="col-span-2" data-co-city tabIndex={-1}>
                 <Field label="עיר" required error={cityError} errorId="co-city-error">
                   <CitySelect
@@ -999,6 +986,19 @@ export function CustomerCheckout({
                       // will charge for this city.
                       if (c) writeDeliveryChoice(tenantSlug, { kind: "delivery", city: c });
                     }}
+                  />
+                </Field>
+              </div>
+              <div className="col-span-2">
+                <Field label="רחוב ומספר" required error={addressError} errorId="co-address-error">
+                  <Input
+                    id="co-address"
+                    value={address}
+                    onChange={setAddress}
+                    placeholder="הרצל 12"
+                    autoComplete="street-address"
+                    invalid={!!addressError}
+                    describedBy="co-address-error"
                   />
                 </Field>
               </div>

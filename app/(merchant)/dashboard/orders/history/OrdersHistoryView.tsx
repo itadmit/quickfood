@@ -42,6 +42,9 @@ interface OrderRow {
   has_review: boolean;
   review_reminder_sent: boolean;
   kanban_hidden_at: string | null;
+  delivapp_dispatched_at: string | null;
+  delivapp_barcode_id: string | null;
+  delivapp_status_label: string | null;
 }
 
 interface Meta {
@@ -599,6 +602,16 @@ export function OrdersHistoryView({
           orderId={drawerOrderId}
           receiptPrinter={receiptPrinter}
           receiptSettings={receiptSettings}
+          delivApp={(() => {
+            const o = orders.find((x) => x.id === drawerOrderId);
+            return o?.delivapp_dispatched_at
+              ? {
+                  dispatchedAt: o.delivapp_dispatched_at,
+                  barcodeId: o.delivapp_barcode_id,
+                  statusLabel: o.delivapp_status_label,
+                }
+              : null;
+          })()}
           onClose={() => setDrawerOrderId(null)}
           onAdvance={(id) => {
             handleAdvance(id);
