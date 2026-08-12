@@ -623,6 +623,10 @@ export function OrdersHistoryView({
       {assignFor && (
         <AssignCourierModal
           orderNumber={assignFor.orderNumber}
+          delivApp={(() => {
+            const o = orders.find((x) => x.id === assignFor.orderId);
+            return o?.delivapp_dispatched_at ? { statusLabel: o.delivapp_status_label } : null;
+          })()}
           onAssign={async (courierId) => {
             await advance(assignFor.orderId, "out_for_delivery", courierId);
           }}

@@ -708,6 +708,10 @@ export function OrdersKanban({
       {assignFor && (
         <AssignCourierModal
           orderNumber={assignFor.orderNumber}
+          delivApp={(() => {
+            const o = orders.find((x) => x.id === assignFor.orderId);
+            return o?.delivAppDispatchedAt ? { statusLabel: o.delivAppStatusLabel } : null;
+          })()}
           onAssign={async (courierId) => {
             await advance(assignFor.orderId, "out_for_delivery", courierId);
           }}

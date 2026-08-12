@@ -27,16 +27,25 @@ export function AssignCourierModal({
   orderNumber,
   onAssign,
   onClose,
+  delivApp,
 }: {
   orderNumber: string;
   onAssign: (courierId: string) => Promise<void> | void;
   onClose: () => void;
+  // Set when the order was handed to DelivApp. The courier is picked in THEIR
+  // system and their webhook advances the order, so the in-house picker is the
+  // wrong default here - it used to greet the merchant with "no couriers
+  // available", which reads as a fault when nothing is wrong.
+  delivApp?: { statusLabel: string | null } | null;
 }) {
+  const managedByDelivApp = !!delivApp;
+  const [manual, setManual] = useState(!managedByDelivApp);
   const [couriers, setCouriers] = useState<CourierRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [assigningId, setAssigningId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!manual) return;
     let cancelled = false;
     fetch("/api/v1/merchant/couriers", { credentials: "include" })
       .then((r) => r.json())
@@ -48,7 +57,7 @@ export function AssignCourierModal({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [manual]);
 
   const eligible = (couriers ?? [])
     .filter((c) => c.status !== "offline")
@@ -94,18 +103,57 @@ export function AssignCourierModal({
       </header>
 
       <div className="flex-1 overflow-y-auto px-5 py-4">
-          {couriers == null && !error && (
+          {managedByDelivApp && !manual && (
+            <div className="space-y-3">
+              <div className="rounded-xl border border-qf-line bg-qf-line-soft px-4 py-3.5">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-9 h-9 rounded-xl bg-white border border-qf-line grid place-items-center shrink-0">
+                    <IcoBike c="#3a4a40" s={18} />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-sm">השליח מנוהל ב-DelivApp</div>
+                    {delivApp?.statusLabel && (
+                      <div className="text-xs text-qf-mute">
+                        סטטוס נוכחי: <bdi dir="ltr">{delivApp.statusLabel}</bdi>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <p className="text-xs text-qf-ink2 leading-relaxed mt-3">
+                  ההזמנה כבר נשלחה ל-DelivApp והשיוך לשליח נעשה אצלם. ההזמנה תתקדם
+                  ל&quot;בדרך ללקוח&quot; לבד ברגע שהשליח יאסוף אותה. אין צורך לעשות כאן כלום.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setManual(true)}
+                className="w-full text-center py-2.5 rounded-xl border border-qf-line-dash text-xs font-medium text-qf-mute hover:text-qf-ink hover:border-(--qf-primary) transition"
+              >
+                שיוך שליח פנימי במקום
+              </button>
+            </div>
+          )}
+
+          {manual && managedByDelivApp && (
+            <p className="text-xs text-qf-mute mb-3 leading-relaxed">
+              ההזמנה כבר אצל DelivApp. שיוך שליח פנימי כאן לא מבטל אותה אצלם - אם השליחות
+              שלהם לא רלוונטית, בטלו אותה בצד שלהם.
+            </p>
+          )}
+
+          {manual && couriers == null && !error && (
             <div className="text-center py-10 text-qf-mute text-sm">טוען שליחים…</div>
           )}
           {error && (
             <div className="text-center py-10 text-qf-tomato text-sm">{error}</div>
           )}
-          {couriers && eligible.length === 0 && (
+          {manual && couriers && eligible.length === 0 && (
             <div className="border-2 border-dashed border-qf-line-dash rounded-xl p-6 text-center text-sm text-qf-mute">
               אין שליחים זמינים. עברו למסך השליחים כדי להעלות מישהו למשמרת.
             </div>
           )}
-          {eligible.length > 0 && (
+          {manual && eligible.length > 0 && (
             <ul className="space-y-2">
               {eligible.map((c) => {
                 const overloaded =
