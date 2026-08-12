@@ -396,25 +396,32 @@ export function OrderDrawer({
                 <section>
                   <div className="text-xs font-semibold text-qf-mute mb-2">שליחות</div>
                   <div className="rounded-xl border border-qf-line-soft px-3 py-2 space-y-0.5">
+                    {/* Every Latin/numeric value sits in a <bdi> - without the
+                        isolation the neutral ":" and "·" get reordered around
+                        the Hebrew label and the barcode comes out scrambled. */}
                     <div className="text-sm font-medium">
                       נשלח ל-DelivApp
                       <span className="text-qf-mute font-normal">
                         {" · "}
-                        {new Date(delivApp.dispatchedAt).toLocaleString("he-IL", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        <bdi>
+                          {new Date(delivApp.dispatchedAt).toLocaleString("he-IL", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </bdi>
                       </span>
                     </div>
                     {delivApp.barcodeId && (
-                      <div className="text-xs text-qf-mute" dir="ltr">
-                        מדבקה: {delivApp.barcodeId}
+                      <div className="text-xs text-qf-mute">
+                        מדבקה: <bdi dir="ltr">{delivApp.barcodeId}</bdi>
                       </div>
                     )}
                     {delivApp.statusLabel && (
-                      <div className="text-xs text-qf-mute">שליח: {delivApp.statusLabel}</div>
+                      <div className="text-xs text-qf-mute">
+                        שליח: <bdi dir="ltr">{delivApp.statusLabel}</bdi>
+                      </div>
                     )}
                   </div>
                 </section>

@@ -840,6 +840,33 @@ function PaymentTag({ method, status }: { method: string; status: PaymentStatus 
   );
 }
 
+// Deliberately just the name - the board is dense, and the time, barcode and
+// courier status all live one tap away in the drawer.
+function DelivAppPill({ order }: { order: OrderRow }) {
+  const sentAt = order.delivAppDispatchedAt
+    ? new Date(order.delivAppDispatchedAt).toLocaleTimeString("he-IL", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+  const title = [
+    sentAt ? `נשלח ל-DelivApp ב-${sentAt}` : "נשלח ל-DelivApp",
+    order.delivAppBarcodeId ? `מדבקה: ${order.delivAppBarcodeId}` : null,
+    order.delivAppStatusLabel ? `שליח: ${order.delivAppStatusLabel}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  return (
+    <span
+      title={title}
+      className="text-[10px] font-black px-1.5 py-0.5 rounded-md border whitespace-nowrap shrink-0 bg-qf-line-soft text-qf-ink2 border-qf-line"
+    >
+      DelivApp
+    </span>
+  );
+}
+
 function Card({
   order,
   next,
@@ -980,6 +1007,7 @@ function Card({
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-sm font-semibold tnum shrink-0">{formatPrice(order.total)}</span>
           <PaymentTag method={order.paymentMethod} status={order.paymentStatus} />
+          {order.delivAppDispatchedAt && <DelivAppPill order={order} />}
         </div>
         <div className="flex items-center gap-1.5 ms-auto">
           <button
