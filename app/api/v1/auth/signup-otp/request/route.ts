@@ -1,28 +1,24 @@
 /**
  * POST /api/v1/auth/signup-otp/request
  *
- * Issues a 6-digit OTP to the prospective merchant's personal mobile during
- * signup (step 3) and sends it via SMS (sms4free). No tenant exists yet, so
- * this uses the platform-level sendRawSms - the platform absorbs the cost.
- *
- * Throttle: if an unused, unexpired code was issued for this phone in the
- * last 60s we don't re-send (double-tap + budget guard). The verify endpoint
- * trades a correct code for a short-lived phone_verify token.
+ * Issues a 6-digit OTP to the prospective merchant's email during signup
+ * (step 3) and sends it with Resend. No tenant exists yet, so this is a
+ * platform-level send. The verify endpoint trades a correct code for a
+ * short-lived email_verify token.
  */
 import { z } from "zod";
 import { apiError, apiJson, handler } from "@/lib/api-response";
 import { prisma } from "@/lib/db/client";
-import { toE164 } from "@/lib/format";
-import { issueOtp } from "@/lib/auth/otp";
-import { sendRawSms } from "@/lib/sms/send-raw";
-import { sendRawWhatsApp } from "@/lib/whatsapp/send";
+import { issueEmailOtp, normalizeEmail } from "@/lib/auth/otp";
+import { sendEmail } from "@/lib/email/send";
+import { otpEmail } from "@/lib/email/templates";
 import { checkRate } from "@/lib/api/rate-limit";
 import { hitDurable } from "@/lib/api/durable-rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const Body = z.object({ phone: z.string().min(3).max(20) });
+const Body = z.object({ email: z.string().email().max(160) });
 
 const THROTTLE_SECONDS = 60;
 
@@ -38,28 +34,22 @@ function clientIp(req: Request): string {
 export const POST = handler(async (req: Request) => {
   const parsed = Body.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) {
-    return apiError("invalid_body", "מספר טלפון לא תקין", 422, "phone");
+    return apiError("invalid_email", "כתובת מייל לא תקינה", 422, "email");
   }
 
-  const e164 = toE164(parsed.data.phone);
-  if (!e164) {
-    return apiError("invalid_phone", "מספר נייד לא תקין", 422, "phone");
-  }
+  const email = normalizeEmail(parsed.data.email);
 
-  // Abuse guard: this sends SMS on the platform's account. The per-phone
-  // throttle below stops double-taps, but without a per-IP cap a spammer can
-  // spray OTP SMS to many different victim numbers (SMS pumping). Cap per-IP.
+  // Free to send, but still capped: an open endpoint is a mail-bomb relay
+  // pointed at whatever address the attacker types, on our sending domain.
   checkRate(`signup-otp:ip:${clientIp(req)}`, 8);
-  checkRate(`signup-otp:phone:${e164}`, 4);
-  // Durable (cross-instance) per-IP cap - the in-memory checkRate above resets
-  // per lambda, so a spammer hitting many instances slips past it.
+  checkRate(`signup-otp:email:${email}`, 4);
   if (!(await hitDurable(`signup-otp:ip:${clientIp(req)}`, 10, 10 * 60_000))) {
     return apiError("rate_limited", "נחסמת זמנית עקב יותר מדי בקשות. נסו שוב בעוד כמה דקות.", 429);
   }
 
   const recent = await prisma.otpCode.findFirst({
     where: {
-      phone: e164,
+      email,
       usedAt: null,
       expiresAt: { gt: new Date() },
       createdAt: { gt: new Date(Date.now() - THROTTLE_SECONDS * 1000) },
@@ -80,46 +70,32 @@ export const POST = handler(async (req: Request) => {
     });
   }
 
-  const { code, expiresAt } = await issueOtp(e164);
+  const { code, expiresAt } = await issueEmailOtp(email);
+  const minutes = Math.max(1, Math.round((expiresAt.getTime() - Date.now()) / 60_000));
+  const { html, text } = otpEmail({ code, expiresInMinutes: minutes, purpose: "signup" });
 
-  // sms4free wants the local 05X form, not the +972 we key OtpCode by.
-  const localPhone = e164.startsWith("+972") ? "0" + e164.slice(4) : e164;
-  const body =
-    `QuickFood · קוד אימות: ${code}\n` +
-    `הקוד תקף ל-10 דקות. אם לא ביקשתם - אפשר להתעלם.`;
+  const res = await sendEmail({
+    tenantId: null,
+    to: email,
+    subject: `QuickFood · קוד האימות שלך: ${code}`,
+    body: text,
+    html,
+    kind: "signup_otp",
+  });
 
-  // Prefer managed WhatsApp (free); fall back to SMS only if WhatsApp isn't
-  // available. Both channels are durably rate-limited. If WhatsApp itself
-  // rate-limits us, we stop here (don't spill the spray over to SMS).
-  const waBody = `*QuickFood* · קוד אימות: ${code}\nהקוד תקף ל-10 דקות. אם לא ביקשתם - אפשר להתעלם.`;
-  const wa = await sendRawWhatsApp(localPhone, waBody);
-
-  let channel: "whatsapp" | "sms" | null = wa.status === "sent" ? "whatsapp" : null;
-  let providerMsg = wa.providerMsg;
-
-  if (wa.status === "rate_limited") {
-    return apiError("rate_limited", "נחסמת זמנית עקב יותר מדי בקשות. נסו שוב בעוד כמה דקות.", 429);
-  }
-  if (!channel) {
-    const sms = await sendRawSms(localPhone, body);
-    if (sms.status === "sent") {
-      channel = "sms";
-      providerMsg = sms.providerMsg;
-    }
-  }
-  if (!channel) {
+  if (res.status !== "sent") {
     return apiError(
       "delivery_failed",
-      "לא הצלחנו לשלוח את קוד האימות. בדקו את המספר ונסו שוב.",
+      "לא הצלחנו לשלוח את קוד האימות. בדקו את הכתובת ונסו שוב.",
       502,
+      "email",
     );
   }
 
   return apiJson({
     sent: true,
-    channel,
+    channel: "email",
     retry_in: THROTTLE_SECONDS,
     expires_in: Math.max(0, Math.floor((expiresAt.getTime() - Date.now()) / 1000)),
-    provider_msg: providerMsg || undefined,
   });
 });

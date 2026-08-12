@@ -10,7 +10,7 @@ import { createCustomer, BillingHubError } from "@/lib/billing-hub/client";
 import { sendEmail } from "@/lib/email/send";
 import { welcomeEmail, merchantSignupAdminEmail } from "@/lib/email/templates";
 import { sendWelcomeWhatsApp } from "@/lib/auth/send-welcome-whatsapp";
-import { verifyPhoneVerify } from "@/lib/auth/jwt";
+import { verifyEmailVerify } from "@/lib/auth/jwt";
 import { toE164 } from "@/lib/format";
 import { publish } from "@/lib/qstash/client";
 import { readFbCookies } from "@/lib/fb/capi";
@@ -107,11 +107,11 @@ const SignupSchema = z.object({
     .string({ required_error: "סיסמה חסרה" })
     .min(8, "סיסמה חייבת להכיל לפחות 8 תווים")
     .max(128, "סיסמה ארוכה מדי"),
-  // Proof the owner's mobile passed SMS-OTP (from /auth/signup-otp/verify).
+  // Proof the owner's email passed OTP (from /auth/signup-otp/verify).
   // The account cannot be created without it.
-  phone_verify_token: z
-    .string({ required_error: "יש לאמת את מספר הנייד" })
-    .min(10, "יש לאמת את מספר הנייד"),
+  email_verify_token: z
+    .string({ required_error: "יש לאמת את כתובת המייל" })
+    .min(10, "יש לאמת את כתובת המייל"),
   client_type: z.enum(["web", "mobile"]).default("web"),
   import_method: z
     .enum(["manual", "wolt", "menu_file", "whatsapp"])
@@ -152,17 +152,22 @@ export const POST = handler(async (req: Request) => {
     return apiError("validation_error", "Slug שמור או לא תקין", 422, "slug");
   }
 
-  // Hard gate: the personal mobile must have passed SMS-OTP, and the verified
-  // number must be the same one we're about to store on the owner account.
-  const phoneClaims = await verifyPhoneVerify(body.phone_verify_token);
-  const ownerE164 = toE164(body.owner_phone);
-  if (!phoneClaims || !ownerE164 || phoneClaims.phone !== ownerE164) {
+  // Hard gate: the owner's email must have passed OTP, and the verified
+  // address must be the same one we're about to store on the owner account.
+  const ownerEmail = body.owner_email.toLowerCase();
+  const emailClaims = await verifyEmailVerify(body.email_verify_token);
+  if (!emailClaims || emailClaims.email !== ownerEmail) {
     return apiError(
-      "phone_not_verified",
-      "יש לאמת את מספר הנייד בקוד שנשלח ב-SMS",
+      "email_not_verified",
+      "יש לאמת את כתובת המייל בקוד שנשלח אליה",
       422,
-      "owner_phone",
+      "owner_email",
     );
+  }
+
+  const ownerE164 = toE164(body.owner_phone);
+  if (!ownerE164) {
+    return apiError("validation_error", "מספר נייד לא תקין", 422, "owner_phone");
   }
 
   // Uniqueness checks

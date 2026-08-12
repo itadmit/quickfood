@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AuthPhoneField, AuthCodeField } from "@/components/shared/AuthFields";
+import { AuthEmailField, AuthCodeField } from "@/components/shared/AuthFields";
 import { IcoArrowLeft } from "@/components/shared/Icons";
 import { trackCustom } from "@/lib/fb/pixel";
 
@@ -12,10 +12,10 @@ const ROLE_HOME: Record<string, string> = {
   cashier: "/pos",
 };
 
-export default function PhoneLoginForm({ onUseEmail }: { onUseEmail?: () => void }) {
+export default function EmailOtpLoginForm({ onUsePassword }: { onUsePassword?: () => void }) {
   const router = useRouter();
-  const [step, setStep] = useState<"phone" | "code">("phone");
-  const [phone, setPhone] = useState("");
+  const [step, setStep] = useState<"email" | "code">("email");
+  const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export default function PhoneLoginForm({ onUseEmail }: { onUseEmail?: () => void
       const res = await fetch("/api/v1/merchant/auth/otp/request", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ email }),
       });
       const data = (await res.json()) as { error?: { message: string } };
       if (!res.ok) {
@@ -51,7 +51,7 @@ export default function PhoneLoginForm({ onUseEmail }: { onUseEmail?: () => void
       const res = await fetch("/api/v1/merchant/auth/otp/verify", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ phone, code, client_type: "web" }),
+        body: JSON.stringify({ email, code, client_type: "web" }),
       });
       const data = (await res.json()) as
         | { user: { role: string } }
@@ -62,7 +62,7 @@ export default function PhoneLoginForm({ onUseEmail }: { onUseEmail?: () => void
         return;
       }
       const role = "user" in data ? data.user.role : "";
-      trackCustom("Login", { role, method: "phone_otp" });
+      trackCustom("Login", { role, method: "email_otp" });
       router.push(ROLE_HOME[role] ?? "/dashboard");
       router.refresh();
       // Keep the spinner on through navigation - the dashboard is still loading.
@@ -73,36 +73,25 @@ export default function PhoneLoginForm({ onUseEmail }: { onUseEmail?: () => void
   }
 
   return (
-    <form onSubmit={step === "phone" ? requestCode : verifyCode} className="space-y-5">
-      {step === "phone" ? (
-        <AuthPhoneField
-          id="phone"
-          label="מספר טלפון"
-          value={phone}
-          onChange={setPhone}
-          required
-        />
+    <form onSubmit={step === "email" ? requestCode : verifyCode} className="space-y-5">
+      {step === "email" ? (
+        <AuthEmailField id="email" label="כתובת מייל" value={email} onChange={setEmail} required />
       ) : (
         <>
-          <AuthCodeField
-            id="code"
-            label="קוד מהוואטסאפ"
-            value={code}
-            onChange={setCode}
-            required
-          />
+          <AuthCodeField id="code" label="הקוד מהמייל" value={code} onChange={setCode} required />
           <p className="text-xs text-black/55 font-semibold text-center">
-            שלחנו קוד בן 6 ספרות בוואטסאפ ל-{phone}.{" "}
+            שלחנו קוד בן 6 ספרות אל <span dir="ltr">{email}</span>. אם הוא לא הגיע, כדאי לבדוק גם
+            בספאם.{" "}
             <button
               type="button"
               onClick={() => {
-                setStep("phone");
+                setStep("email");
                 setCode("");
                 setError(null);
               }}
               className="underline font-bold text-black/70 hover:text-black"
             >
-              שינוי מספר
+              שינוי כתובת
             </button>
           </p>
         </>
@@ -122,17 +111,17 @@ export default function PhoneLoginForm({ onUseEmail }: { onUseEmail?: () => void
         {busy ? (
           <>
             <span className="qf-spinner" aria-hidden />
-            <span>{step === "phone" ? "שולח קוד…" : "מתחבר…"}</span>
+            <span>{step === "email" ? "שולח קוד…" : "מתחבר…"}</span>
           </>
         ) : (
           <>
-            <span>{step === "phone" ? "שלח לי קוד בוואטסאפ" : "התחבר"}</span>
+            <span>{step === "email" ? "שלח לי קוד למייל" : "התחבר"}</span>
             <IcoArrowLeft c="currentColor" s={16} />
           </>
         )}
       </button>
 
-      {onUseEmail && (
+      {onUsePassword && (
         <>
           <div className="relative flex items-center gap-3 py-1">
             <div className="flex-1 h-[2px] bg-black/15" />
@@ -142,7 +131,7 @@ export default function PhoneLoginForm({ onUseEmail }: { onUseEmail?: () => void
 
           <button
             type="button"
-            onClick={onUseEmail}
+            onClick={onUsePassword}
             className="block w-full text-center py-3 rounded-xl bg-white border-2 border-black hover:bg-[#FFFBEC] text-sm font-bold text-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition"
           >
             התחברות עם אימייל וסיסמה

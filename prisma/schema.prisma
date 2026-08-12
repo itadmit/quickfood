@@ -1703,9 +1703,11 @@ model EmailVerificationToken {
   @@map("email_verification_tokens")
 }
 
+/// Exactly one of `phone` / `email` is set - the channel the code was sent on.
 model OtpCode {
   id        String    @id @default(uuid()) @db.Uuid
-  phone     String
+  phone     String?
+  email     String?
   codeHash  String    @map("code_hash")
   attempts  Int       @default(0)
   expiresAt DateTime  @map("expires_at")
@@ -1713,6 +1715,7 @@ model OtpCode {
   createdAt DateTime  @default(now()) @map("created_at")
 
   @@index([phone, createdAt(sort: Desc)])
+  @@index([email, createdAt(sort: Desc)])
   @@map("otp_codes")
 }
 

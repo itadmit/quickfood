@@ -350,6 +350,36 @@ export function passwordResetEmail({
   });
 }
 
+export function otpEmail({
+  code,
+  expiresInMinutes,
+  purpose,
+}: {
+  code: string;
+  expiresInMinutes: number;
+  purpose: "signup" | "login";
+}) {
+  const heading = purpose === "signup" ? "קוד לפתיחת החנות" : "קוד כניסה לדשבורד";
+  const lead =
+    purpose === "signup"
+      ? "כדי לסיים את פתיחת החנות, הזינו את הקוד הזה במסך ההרשמה."
+      : "כדי להיכנס לדשבורד, הזינו את הקוד הזה במסך ההתחברות.";
+
+  return renderRtlEmail({
+    subject: `QuickFood · קוד האימות שלך: ${code}`,
+    preheader: `הקוד תקף ל-${expiresInMinutes} דקות.`,
+    heading,
+    raw: true,
+    paragraphs: [
+      escape(lead),
+      `<div dir="ltr" style="margin:22px auto;padding:18px 12px;background-color:${BRAND.cream};border:2px solid ${BRAND.line};border-radius:16px;text-align:center;font-size:34px;font-weight:900;letter-spacing:10px;color:${BRAND.ink};font-family:'Courier New',Courier,monospace;">${escape(code)}</div>`,
+      escape(`הקוד תקף ל-${expiresInMinutes} דקות ומשמש פעם אחת בלבד.`),
+    ],
+    footerNote:
+      "לא ביקשתם קוד? אפשר להתעלם מהמייל - בלי הקוד אף אחד לא יכול להיכנס לחשבון. אל תעבירו את הקוד לאף אחד, גם לא לנציג שירות.",
+  });
+}
+
 export function courierMagicLinkEmail({
   courierName,
   businessName,

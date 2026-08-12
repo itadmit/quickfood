@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 import LoginForm from "./LoginForm";
-import PhoneLoginForm from "./PhoneLoginForm";
+import EmailOtpLoginForm from "./EmailOtpLoginForm";
 
-type Mode = "phone" | "email";
+type Mode = "otp" | "password";
 
 export default function LoginPanel() {
-  const [mode, setMode] = useState<Mode>("phone");
+  const [mode, setMode] = useState<Mode>("otp");
 
   return (
     <div className="space-y-5">
@@ -17,15 +17,15 @@ export default function LoginPanel() {
         aria-label="אופן התחברות"
         className="grid grid-cols-2 gap-2 p-1 rounded-2xl border-2 border-black bg-[#FFFBEC] shadow-[0_2px_0_#000]"
       >
-        <TabButton active={mode === "phone"} onClick={() => setMode("phone")}>
-          טלפון
+        <TabButton active={mode === "otp"} onClick={() => setMode("otp")}>
+          קוד חד-פעמי
         </TabButton>
-        <TabButton active={mode === "email"} onClick={() => setMode("email")}>
+        <TabButton active={mode === "password"} onClick={() => setMode("password")}>
           אימייל וסיסמה
         </TabButton>
       </div>
 
-      {mode === "phone" ? <PhoneLoginForm /> : <LoginForm />}
+      {mode === "otp" ? <EmailOtpLoginForm /> : <LoginForm />}
     </div>
   );
 }

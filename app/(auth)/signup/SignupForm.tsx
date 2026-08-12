@@ -208,7 +208,7 @@ export function SignupForm() {
     ownerPassword.length >= 8 &&
     ownerPhone.replace(/\D/g, "").length >= 9;
 
-  async function submit(phoneVerifyToken: string) {
+  async function submit(emailVerifyToken: string) {
     setBusy(true);
     setError(null);
     const importMethod = menuFileReady
@@ -253,7 +253,7 @@ export function SignupForm() {
           owner_phone: ownerPhone,
           owner_email: ownerEmail.toLowerCase(),
           owner_password: ownerPassword,
-          phone_verify_token: phoneVerifyToken,
+          email_verify_token: emailVerifyToken,
           client_type: "web",
           import_method: importMethod,
           ...venueExtras,
@@ -538,7 +538,7 @@ export function SignupForm() {
 
       {otpOpen && (
         <SignupOtpModal
-          phone={ownerPhone}
+          email={ownerEmail.toLowerCase()}
           onClose={() => setOtpOpen(false)}
           onVerified={async (token) => {
             await submit(token);

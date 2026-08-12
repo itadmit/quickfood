@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MessageSquare, X } from "lucide-react";
+import { Mail, X } from "lucide-react";
 import { Modal } from "@/components/shared/Modal";
 import { cn } from "@/lib/cn";
 
@@ -9,16 +9,16 @@ const OTP_LENGTH = 6;
 
 /**
  * Final signup step as a floating modal: the merchant fills name/phone/email/
- * password on step 3, hits "פתיחת חנות", and this pops to verify the mobile via
- * SMS-OTP. On a correct code it hands the parent the phone_verify_token and the
+ * password on step 3, hits "פתיחת חנות", and this pops to verify the email via
+ * OTP. On a correct code it hands the parent the email_verify_token and the
  * parent creates the store (onVerified runs the actual signup submit).
  */
 export function SignupOtpModal({
-  phone,
+  email,
   onVerified,
   onClose,
 }: {
-  phone: string;
+  email: string;
   /** Runs the real signup submit. Resolves when done (success navigates away). */
   onVerified: (token: string) => void | Promise<void>;
   onClose: () => void;
@@ -43,7 +43,7 @@ export function SignupOtpModal({
       const res = await fetch("/api/v1/auth/signup-otp/request", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ email }),
       });
       const d = await res.json();
       if (!res.ok) {
@@ -83,7 +83,7 @@ export function SignupOtpModal({
       const res = await fetch("/api/v1/auth/signup-otp/verify", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ phone, code: c }),
+        body: JSON.stringify({ email, code: c }),
       });
       const d = await res.json();
       if (!res.ok || !d.token) {
@@ -116,14 +116,14 @@ export function SignupOtpModal({
   }
 
   return (
-    <Modal open onClose={onClose} closeOnBackdrop={!busy} size="sm" ariaLabel="אימות מספר נייד">
+    <Modal open onClose={onClose} closeOnBackdrop={!busy} size="sm" ariaLabel="אימות כתובת מייל">
       <header className="flex items-center justify-between gap-3 px-5 pt-5 pb-3 border-b border-qf-line">
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="w-9 h-9 rounded-xl bg-[#F8CB1E] grid place-items-center shrink-0 border-2 border-black">
-            <MessageSquare size={18} className="text-black" />
+            <Mail size={18} className="text-black" />
           </span>
           <div className="min-w-0">
-            <h3 className="font-black text-lg leading-tight">אימות מספר נייד</h3>
+            <h3 className="font-black text-lg leading-tight">אימות כתובת מייל</h3>
             <p className="text-xs text-qf-mute">צעד אחרון לפתיחת החנות</p>
           </div>
         </div>
@@ -140,9 +140,12 @@ export function SignupOtpModal({
 
       <div className="px-5 py-4 space-y-4">
         <p className="text-sm text-black/70 leading-relaxed text-center">
-          שלחנו קוד בן 6 ספרות אל <span dir="ltr" className="font-bold">{phone}</span>.
+          שלחנו קוד בן 6 ספרות אל <span dir="ltr" className="font-bold break-all">{email}</span>.
           <br />
           הזינו אותו כדי לסיים:
+        </p>
+        <p className="text-xs text-qf-mute text-center -mt-2">
+          לא רואים את המייל? כדאי לבדוק גם בתיקיית הספאם.
         </p>
 
         <OtpInput

@@ -17,12 +17,12 @@ function getSecret(): Uint8Array {
 // when we wire `/api/v1/auth/refresh`.
 const ACCESS_TTL = "7d";
 const REFRESH_TTL = "30d";
-// Short-lived proof that a phone number passed SMS-OTP. Issued by the
+// Short-lived proof that an email address passed OTP. Issued by the
 // signup-otp/verify endpoint and consumed by the signup route - it lets the
 // merchant fill the rest of step 3 (or fix a typo) without the code expiring
 // out from under them, while keeping the window tight enough that a leaked
 // token is near-useless.
-const PHONE_VERIFY_TTL = "15m";
+const EMAIL_VERIFY_TTL = "15m";
 
 export interface AccessClaims extends JWTPayload {
   sub: string; // user id (customer or merchant)
@@ -58,25 +58,25 @@ export async function signRefresh(
     .sign(getSecret());
 }
 
-export interface PhoneVerifyClaims extends JWTPayload {
-  typ: "phone_verify";
-  phone: string; // canonical E.164
+export interface EmailVerifyClaims extends JWTPayload {
+  typ: "email_verify";
+  email: string; // lower-cased
 }
 
-export async function signPhoneVerify(phone: string): Promise<string> {
-  return new SignJWT({ typ: "phone_verify", phone })
+export async function signEmailVerify(email: string): Promise<string> {
+  return new SignJWT({ typ: "email_verify", email })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime(PHONE_VERIFY_TTL)
+    .setExpirationTime(EMAIL_VERIFY_TTL)
     .setIssuer("quickfood")
     .sign(getSecret());
 }
 
-export async function verifyPhoneVerify(token: string): Promise<PhoneVerifyClaims | null> {
+export async function verifyEmailVerify(token: string): Promise<EmailVerifyClaims | null> {
   try {
     const { payload } = await jwtVerify(token, getSecret(), { issuer: "quickfood" });
-    if (payload.typ !== "phone_verify" || typeof payload.phone !== "string") return null;
-    return payload as PhoneVerifyClaims;
+    if (payload.typ !== "email_verify" || typeof payload.email !== "string") return null;
+    return payload as EmailVerifyClaims;
   } catch {
     return null;
   }
