@@ -39,23 +39,25 @@ export const POST = handler(async (req: Request) => {
     return apiError("bad_payload", "order_id and delivery_status required", 400);
   }
 
-  // Resolve the order by its human number, then verify the inbound token
-  // matches THAT order's tenant config. This both authenticates the caller and
-  // scopes them to a single tenant (a leaked token can only touch its own store).
-  const order = await prisma.order.findFirst({
-    where: { number: orderNumber, delivAppBarcodeId: { not: null } },
-    select: { id: true, status: true, tenantId: true },
-  });
-  if (!order) return apiError("order_not_found", "unknown order", 404);
-
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: order.tenantId },
-    select: { delivAppConfig: true },
+  // Resolve the TENANT from the token first, then the order by (tenant, number).
+  // Order numbers are only unique per tenant, and keying the lookup off a stored
+  // BarcodeId used to 404 every callback for an order DelivApp accepted without
+  // returning one - which silently killed the whole inbound direction.
+  const tenant = await prisma.tenant.findFirst({
+    where: { delivAppConfig: { path: ["inboundToken"], equals: token } },
+    select: { id: true, delivAppConfig: true },
   });
   const cfg = resolveDelivAppConfig(tenant?.delivAppConfig);
-  if (!cfg || !cfg.inboundToken || cfg.inboundToken !== token) {
+  if (!tenant || !cfg || !cfg.inboundToken || cfg.inboundToken !== token) {
     return apiError("unauthorized", "bad token", 401);
   }
+
+  const order = await prisma.order.findFirst({
+    where: { tenantId: tenant.id, number: orderNumber },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, status: true },
+  });
+  if (!order) return apiError("order_not_found", "unknown order", 404);
 
   // DelivApp's docs expose no HMAC, but they echo the integration's
   // X-Parse-Application-Id on the webhook. Belt-and-suspenders: when that

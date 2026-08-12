@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { fullName } from "@/lib/format";
+import { DELIVAPP_STATUS_LABEL } from "@/lib/delivapp/map-status";
 
 export type OrderWithIncludes = Prisma.OrderGetPayload<{
   include: {
@@ -78,6 +79,10 @@ export function serializeOrder(o: OrderWithIncludes) {
     payment_status: o.paymentStatus,
     customer_notes: o.customerNotes,
     has_review: !!o.review,
+    delivapp_dispatched_at: o.delivAppDispatchedAt?.toISOString() ?? null,
+    delivapp_barcode_id: o.delivAppBarcodeId,
+    delivapp_status: o.delivAppStatus,
+    delivapp_status_label: o.delivAppStatus ? (DELIVAPP_STATUS_LABEL[o.delivAppStatus] ?? null) : null,
     kanban_hidden_at: o.kanbanHiddenAt?.toISOString() ?? null,
     created_at: o.createdAt.toISOString(),
     confirmed_at: o.confirmedAt?.toISOString() ?? null,

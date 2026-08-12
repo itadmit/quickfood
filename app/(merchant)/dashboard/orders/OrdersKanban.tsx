@@ -54,6 +54,9 @@ interface OrderRow {
   paymentMethod: string;
   total: number;
   createdAt: string;
+  delivAppDispatchedAt: string | null;
+  delivAppBarcodeId: string | null;
+  delivAppStatusLabel: string | null;
   items: Array<{
     id: string;
     name: string;
@@ -330,6 +333,9 @@ export function OrdersKanban({
         customerNotes: (o.customer_notes as string | null) ?? null,
         total: o.total as number,
         createdAt: o.created_at as string,
+        delivAppDispatchedAt: (o.delivapp_dispatched_at as string | null) ?? null,
+        delivAppBarcodeId: (o.delivapp_barcode_id as string | null) ?? null,
+        delivAppStatusLabel: (o.delivapp_status_label as string | null) ?? null,
         items: ((o.items as Array<Record<string, unknown>>) || []).map((it) => ({
           id: it.id as string,
           name: it.name as string,
@@ -824,6 +830,28 @@ function PaymentTag({ method, status }: { method: string; status: PaymentStatus 
   );
 }
 
+function DelivAppTag({ order }: { order: OrderRow }) {
+  const sentAt = order.delivAppDispatchedAt
+    ? new Date(order.delivAppDispatchedAt).toLocaleTimeString("he-IL", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+  return (
+    <div className="text-[11px] bg-qf-line-soft border border-qf-line rounded-lg px-2 py-1.5 text-qf-ink2 leading-snug">
+      <div className="font-black">נשלח ל-DelivApp{sentAt ? ` · ${sentAt}` : ""}</div>
+      {order.delivAppBarcodeId && (
+        <div className="text-qf-mute" dir="ltr">
+          מדבקה: {order.delivAppBarcodeId}
+        </div>
+      )}
+      {order.delivAppStatusLabel && (
+        <div className="text-qf-mute">שליח: {order.delivAppStatusLabel}</div>
+      )}
+    </div>
+  );
+}
+
 function Card({
   order,
   next,
@@ -959,6 +987,8 @@ function Card({
           {order.customerNotes}
         </div>
       )}
+
+      {order.delivAppDispatchedAt && <DelivAppTag order={order} />}
 
       <footer className="flex flex-wrap items-center gap-x-2 gap-y-2 pt-1">
         <div className="flex items-center gap-2 min-w-0">

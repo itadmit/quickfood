@@ -1200,8 +1200,12 @@ model Order {
   /// delivAppStatus = the last courier status code (1..8) DelivApp posted to
   /// our inbound webhook. Both NULL for pickup orders + tenants without the
   /// integration enabled.
-  delivAppBarcodeId String? @map("deliv_app_barcode_id")
-  delivAppStatus    Int?    @map("deliv_app_status")
+  delivAppBarcodeId String?   @map("deliv_app_barcode_id")
+  delivAppStatus    Int?      @map("deliv_app_status")
+  /// Set the moment a create call to DelivApp succeeded, even when their
+  /// response carried no BarcodeId. This - not the barcode - is the "did this
+  /// reach DelivApp" flag the dispatch guard and the inbound webhook rely on.
+  delivAppDispatchedAt DateTime? @map("deliv_app_dispatched_at")
 
   customerNotes         String? @map("customer_notes")
   customerPhoneSnap     String? @map("customer_phone_snap")

@@ -5,6 +5,7 @@ import { fullName } from "@/lib/format";
 import { OrdersKanban } from "./OrdersKanban";
 import { HIDE_UNPAID_NONCASH } from "@/lib/orders-visible";
 import { resolveReceiptSettings, type ReceiptPrinterType } from "@/lib/receipt-print";
+import { DELIVAPP_STATUS_LABEL } from "@/lib/delivapp/map-status";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +67,11 @@ export default async function OrdersPage() {
     paymentMethod: o.paymentMethod,
     total: o.total,
     createdAt: o.createdAt.toISOString(),
+    delivAppDispatchedAt: o.delivAppDispatchedAt?.toISOString() ?? null,
+    delivAppBarcodeId: o.delivAppBarcodeId,
+    delivAppStatusLabel: o.delivAppStatus
+      ? (DELIVAPP_STATUS_LABEL[o.delivAppStatus] ?? null)
+      : null,
     items: o.items.map((it) => {
       const raw = Array.isArray(it.selectedOptions)
         ? (it.selectedOptions as Array<Record<string, unknown>>)
