@@ -16,6 +16,7 @@
  */
 import { apiError, apiJson, handler } from "@/lib/api-response";
 import { prisma } from "@/lib/db/client";
+import type { Prisma } from "@prisma/client";
 import { advanceStatus, canTransition } from "@/lib/orders";
 import { resolveDelivAppConfig } from "@/lib/delivapp/config";
 import { mapDelivAppStatus, DELIVAPP_STATUS_LABEL } from "@/lib/delivapp/map-status";
@@ -73,6 +74,23 @@ export const POST = handler(async (req: Request) => {
   await prisma.order
     .update({ where: { id: order.id }, data: { delivAppStatus: code } })
     .catch((err) => console.warn("[delivapp] store status failed", err));
+
+  // delivAppStatus only holds the LATEST code, so without this every earlier
+  // courier event is lost and "which webhooks did you get?" is unanswerable
+  // once the platform logs roll off.
+  await prisma.orderEvent
+    .create({
+      data: {
+        orderId: order.id,
+        type: "delivapp_status",
+        payload: {
+          delivery_status: code,
+          label: DELIVAPP_STATUS_LABEL[code] ?? null,
+          body: body as unknown as Prisma.InputJsonValue,
+        } as unknown as Prisma.InputJsonValue,
+      },
+    })
+    .catch((err) => console.warn("[delivapp] status event log failed", err));
 
   const target = mapDelivAppStatus(code);
   if (target && target !== order.status && canTransition(order.status, target)) {
