@@ -72,13 +72,6 @@ export function Sidebar({ tenant, role }: { tenant: { name: string; logoLetter: 
         })}
       </nav>
 
-      <div className="rounded-2xl bg-qf-warm-dash/70 border border-qf-warm-dash px-3 py-3 flex items-start gap-2 text-xs">
-        <IcoFlame c="#c2421f" s={16} className="mt-0.5" />
-        <div>
-          <div className="font-medium text-qf-ink">שעת שיא קרבה</div>
-          <div className="text-qf-ink2/80">היערכו לעומס בשעות 19-21</div>
-        </div>
-      </div>
     </aside>
   );
 }

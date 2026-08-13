@@ -226,7 +226,13 @@ export function RestaurantInfoModal({
                         day?.active ? "text-qf-ink" : "text-qf-mute",
                       )}
                     >
-                      {day?.active ? `${day.open} - ${day.close}` : "סגור"}
+                      {day?.active ? (
+                        // Without the LTR isolation the RTL paragraph flips the
+                        // range and the closing time lands on the left.
+                        <bdi dir="ltr">{`${day.open} - ${day.close}`}</bdi>
+                      ) : (
+                        "סגור"
+                      )}
                     </span>
                   </li>
                 );

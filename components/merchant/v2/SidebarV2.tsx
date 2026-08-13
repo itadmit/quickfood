@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { IcoFlame, IcoChevDown } from "@/components/shared/Icons";
+import { IcoChevDown } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 import { NAV, type NavItem, type NavChild } from "./navConfig";
 import { canAccessDashboard } from "@/lib/auth/merchant-access";
@@ -54,17 +54,6 @@ export function SidebarV2({
         ))}
       </nav>
 
-      <div
-        className="mt-auto flex items-start gap-2.5 rounded-2xl border-2 border-black px-3 py-3 text-xs shadow-[0_3px_0_#000] bg-white"
-      >
-        <IcoFlame c="#c2421f" s={16} className="mt-0.5 shrink-0" />
-        <div className="min-w-0">
-          <div className="font-black text-black">שעת שיא קרבה</div>
-          <div className="text-black/70 leading-snug">
-            היערכו לעומס בשעות 19-21
-          </div>
-        </div>
-      </div>
     </aside>
   );
 }
