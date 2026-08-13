@@ -686,11 +686,35 @@ export function printReceiptIframe(order: ReceiptOrder, settings?: ReceiptSettin
 declare global {
   interface Window {
     qfSunmiPrint?: (pngBase64: string) => void | Promise<void>;
+    /** addJavascriptInterface bridge from the QuickFood Android wrapper. */
+    QuickFoodNative?: {
+      hasSunmiPrinter?: () => boolean;
+      printBase64?: (pngBase64: string) => void;
+    };
   }
 }
 
+/**
+ * Resolved lazily rather than at module load: the wrapper's JS interface is
+ * attached to the WebView, so it exists on first paint, but a standalone
+ * window.qfSunmiPrint may be injected later. Checking at print time covers both
+ * without any load-order assumption.
+ */
+function sunmiBridge(): ((pngBase64: string) => void | Promise<void>) | null {
+  if (typeof window === "undefined") return null;
+  if (typeof window.qfSunmiPrint === "function") return window.qfSunmiPrint;
+  const native = window.QuickFoodNative;
+  if (native && typeof native.printBase64 === "function") {
+    // hasSunmiPrinter is absent on older wrapper builds - treat that as "try
+    // anyway" so an app update isn't required just to attempt a print.
+    if (typeof native.hasSunmiPrinter === "function" && !native.hasSunmiPrinter()) return null;
+    return (b64: string) => native.printBase64!(b64);
+  }
+  return null;
+}
+
 export function hasSunmiBridge(): boolean {
-  return typeof window !== "undefined" && typeof window.qfSunmiPrint === "function";
+  return sunmiBridge() !== null;
 }
 
 function printSunmi(
@@ -698,8 +722,8 @@ function printSunmi(
   onUnhandled?: () => void,
   settings?: ReceiptSettings,
 ): void {
-  const bridge = typeof window !== "undefined" ? window.qfSunmiPrint : undefined;
-  if (typeof bridge !== "function") {
+  const bridge = sunmiBridge();
+  if (!bridge) {
     onUnhandled?.();
     return;
   }
