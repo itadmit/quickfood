@@ -17,7 +17,7 @@ import { recordRecentOrder } from "@/lib/recent-orders-storage";
 import { recordOrderToken } from "@/lib/order-access-storage";
 import { takeCheckoutPrefill } from "@/lib/checkout-prefill";
 import { readDeliveryChoice, writeDeliveryChoice } from "@/lib/delivery-city-storage";
-import { getTodayScheduleWindowMin } from "@/lib/branch-hours";
+import { getScheduleSlots, type ScheduleSlot } from "@/lib/branch-hours";
 import { CitySelect } from "@/components/customer/CitySelect";
 import { Toggle } from "@/components/shared/Toggle";
 import { GrowPaymentSdk, renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
@@ -152,15 +152,14 @@ export function CustomerCheckout({
   const [busyAlertOpen, setBusyAlertOpen] = useState(false);
 
   // Schedule-for-later. asap = deliver as soon as possible (the default);
-  // scheduledTime is a "HH:mm" string for today only (no multi-day picker
-  // for V1 - the most common use is "אסוף בעוד שעתיים" / "תספיק להגיע
-  // בשמונה"). The merchant's open hours could be enforced server-side
-  // later; for now we just let the merchant decline if it's outside hours.
-  const [scheduledTime, setScheduledTime] = useState<string>("");
+  // otherwise we hold the whole slot, whose `iso` is an absolute instant. It
+  // used to be a bare "HH:mm" rebuilt against today's date, which made a slot
+  // past midnight resolve to the wrong day for any branch open past 00:00.
+  const [scheduledSlot, setScheduledSlot] = useState<ScheduleSlot | null>(null);
   const [cutleryCount, setCutleryCount] = useState<number>(0);
   // Once the user taps "תזמן" we reveal the slot row even before they pick
   // a specific time. Without this the only signal of "schedule mode" would
-  // be a non-empty scheduledTime, so the user can't browse slots without
+  // be a picked slot, so the user can't browse slots without
   // committing to one.
   const [showSlots, setShowSlots] = useState(false);
 
@@ -381,44 +380,29 @@ export function CustomerCheckout({
     setCouponError(null);
   }
 
-  // Pre-computed time slots for today, every 15 min starting from now+30min
-  // (kitchen prep buffer) up to 23:00. Computed once per mount - a checkout
-  // session is short enough that drift doesn't matter, and scheduledIso()
-  // below already pushes past-times to tomorrow as a safety net.
-  const scheduleSlots = useMemo(() => {
-    const window = branch?.hours
-      ? getTodayScheduleWindowMin(branch.hours)
-      : { openMin: 0, closeMin: 23 * 60 };
-    if (!window) return [];
+  // Every bookable slot across the branch's open windows. Computed once per
+  // mount - a checkout session is short enough that drift doesn't matter.
+  const scheduleSlots = useMemo(
+    () => (branch?.hours ? getScheduleSlots(branch.hours) : []),
+    [branch?.hours],
+  );
 
-    const now = new Date();
-    let startMin = now.getHours() * 60 + now.getMinutes() + 30;
-    const overshoot = startMin % 15;
-    if (overshoot !== 0) startMin += 15 - overshoot;
-    startMin = Math.max(startMin, window.openMin);
-
-    const out: string[] = [];
-    for (let m = startMin; m < window.closeMin && m < 24 * 60; m += 15) {
-      out.push(`${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
+  // Slots grouped into day tabs, in order. A branch open past midnight puts
+  // tonight's tail under tomorrow's tab, which is where the customer expects
+  // to find 00:30.
+  const scheduleDays = useMemo(() => {
+    const out: Array<{ key: string; label: string; slots: ScheduleSlot[] }> = [];
+    for (const slot of scheduleSlots) {
+      const last = out[out.length - 1];
+      if (last?.key === slot.dayKey) last.slots.push(slot);
+      else out.push({ key: slot.dayKey, label: slot.dayLabel, slots: [slot] });
     }
     return out;
-  }, [branch?.hours]);
+  }, [scheduleSlots]);
 
-  /** Convert "HH:mm" to today's ISO datetime so the server gets a real
-      timestamp. Returns null if the input is empty/invalid. */
-  function scheduledIso(): string | null {
-    if (!scheduledTime) return null;
-    const [h, m] = scheduledTime.split(":").map(Number);
-    if (Number.isNaN(h) || Number.isNaN(m)) return null;
-    const d = new Date();
-    d.setHours(h, m, 0, 0);
-    // If the merchant chose a time that's already past, push to tomorrow -
-    // the customer probably typo'd; let them confirm before submit.
-    if (d.getTime() < Date.now() - 60_000) {
-      d.setDate(d.getDate() + 1);
-    }
-    return d.toISOString();
-  }
+  const [scheduleDayKey, setScheduleDayKey] = useState<string | null>(null);
+  const activeScheduleDay =
+    scheduleDays.find((d) => d.key === scheduleDayKey) ?? scheduleDays[0] ?? null;
   const itemCount = lines.reduce((n, l) => n + l.quantity, 0);
   const businessType = (tenant.businessType as BusinessType) ?? "general";
 
@@ -552,7 +536,7 @@ export function CustomerCheckout({
           payment_method: paymentMethod,
           tip,
           cutlery_count: cutleryCount,
-          scheduled_for: scheduledIso() ?? undefined,
+          scheduled_for: scheduledSlot?.iso ?? undefined,
           coupon_code: couponApplied?.code ?? undefined,
           applied_bundle_ids: acceptedBundles.length > 0 ? acceptedBundles.map((b) => b.id) : undefined,
           customer_notes: customerNotes || undefined,
@@ -1155,49 +1139,70 @@ export function CustomerCheckout({
             </div>
             <div className="grid grid-cols-2 gap-2 mt-3">
               <Pill
-                active={!showSlots && !scheduledTime}
+                active={!showSlots && !scheduledSlot}
                 onClick={() => {
-                  setScheduledTime("");
+                  setScheduledSlot(null);
                   setShowSlots(false);
                 }}
               >
                 בהקדם האפשרי
               </Pill>
               <Pill
-                active={showSlots || !!scheduledTime}
+                active={showSlots || !!scheduledSlot}
                 onClick={() => setShowSlots(true)}
               >
-                {scheduledTime ? `תזמן · ${scheduledTime}` : "תזמן לשעה"}
+                {scheduledSlot
+                  ? `תזמן · ${scheduledSlot.dayLabel} ${scheduledSlot.time}`
+                  : "תזמן לשעה"}
               </Pill>
             </div>
             {showSlots && (
               <div className="mt-3">
-                {scheduleSlots.length > 0 ? (
+                {activeScheduleDay ? (
                   <>
                     <p className="text-xs text-qf-mute mb-2">
-                      בחר שעת {method === "delivery" ? "מסירה" : "איסוף"} להיום
+                      בחר מועד {method === "delivery" ? "מסירה" : "איסוף"}
                     </p>
+                    {scheduleDays.length > 1 && (
+                      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 snap-x mb-2">
+                        {scheduleDays.map((d) => (
+                          <button
+                            key={d.key}
+                            type="button"
+                            onClick={() => setScheduleDayKey(d.key)}
+                            className={cn(
+                              "shrink-0 snap-start px-3 h-9 rounded-lg text-xs font-semibold border transition active:scale-[0.98]",
+                              activeScheduleDay.key === d.key
+                                ? "bg-qf-ink text-white border-transparent"
+                                : "bg-white text-qf-ink2 border-qf-line hover:border-(--qf-primary)/40",
+                            )}
+                          >
+                            {d.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 snap-x">
-                      {scheduleSlots.map((slot) => (
+                      {activeScheduleDay.slots.map((slot) => (
                         <button
-                          key={slot}
+                          key={slot.iso}
                           type="button"
-                          onClick={() => setScheduledTime(slot)}
+                          onClick={() => setScheduledSlot(slot)}
                           className={cn(
                             "shrink-0 snap-start px-4 h-11 rounded-xl text-sm font-semibold border transition tnum active:scale-[0.98]",
-                            scheduledTime === slot
+                            scheduledSlot?.iso === slot.iso
                               ? "bg-(--qf-primary) text-white border-transparent shadow-sm shadow-(--qf-primary)/25"
                               : "bg-white text-qf-ink2 border-qf-line hover:border-(--qf-primary)/40",
                           )}
                         >
-                          {slot}
+                          {slot.time}
                         </button>
                       ))}
                     </div>
                   </>
                 ) : (
                   <p className="text-sm text-qf-mute mt-2">
-                    לא נותרו שעות פנויות להיום - בחר &quot;בהקדם האפשרי&quot;.
+                    אין כרגע מועדים פנויים - בחר &quot;בהקדם האפשרי&quot;.
                   </p>
                 )}
               </div>
