@@ -346,7 +346,7 @@ export const TenantPatchSchema = z.object({
   // Cleared via the DB if a tenant ever needs to be re-shown.
   onboarding_dismissed: z.literal(true).optional(),
   dashboard_version: z.enum(["v1", "v2"]).optional(),
-  receipt_printer: z.enum(["airprint", "star", "epson", "escpos"]).optional(),
+  receipt_printer: z.enum(["airprint", "star", "epson", "escpos", "sunmi"]).optional(),
   receipt_settings: z
     .object({
       show_customer_name: z.boolean(),

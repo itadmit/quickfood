@@ -12,6 +12,7 @@ import {
   printReceipt,
   printReceiptIframe,
   buildReceiptHtml,
+  hasSunmiBridge,
   RECEIPT_PRINTER_LABEL,
   DEFAULT_RECEIPT_SETTINGS,
   type ReceiptOrder,
@@ -291,13 +292,19 @@ export function OrdersKanban({
       const detail = (data.order as ReceiptOrder | null) ?? null;
       if (!detail) return;
       const settings = receiptSettingsRef.current;
+      const printer = receiptPrinterRef.current;
       const native = typeof window !== "undefined" ? window.qfNativePrint : undefined;
-      if (typeof native === "function") {
+      // A SUNMI terminal drives its own built-in printer through the wrapper's
+      // AIDL bridge, so it auto-prints silently like the desktop app does -
+      // printReceipt handles the raster and the bridge call.
+      if (printer === "sunmi" && hasSunmiBridge()) {
+        printReceipt(detail, "sunmi", undefined, settings);
+      } else if (typeof native === "function") {
         await native(buildReceiptHtml(detail, settings));
-      } else if (receiptPrinterRef.current === "airprint") {
+      } else if (printer === "airprint") {
         printReceiptIframe(detail, settings);
       }
-      // Mobile-app printer families (star / epson / escpos) can't silently
+      // The URL-scheme printer families (star / epson / escpos) can't silently
       // auto-print from the board - the manual print button covers those.
     } catch {
       /* best-effort - never block the board on a print failure */

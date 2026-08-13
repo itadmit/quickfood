@@ -35,6 +35,11 @@ interface PrinterOption {
 
 const OPTIONS: PrinterOption[] = [
   {
+    type: "sunmi",
+    title: "קופת SUNMI (מדפסת מובנית)",
+    sub: "T2 · T2 Mini · V2 ועוד. המדפסת שבתוך הקופה, בלי אפליקציה נוספת. עובד רק מתוך אפליקציית QuickFood לאנדרואיד.",
+  },
+  {
     type: "star",
     title: "Star Micronics",
     sub: "mC-Print3 · TSP100 · TSP650 ועוד. זו המדפסת שוולט מספקים למסעדות.",
@@ -123,7 +128,7 @@ export function PrintingForm({
       if (res.ok) {
         setToast({ kind: "ok", msg: "נשמר" });
         router.refresh();
-        if (selected !== "airprint" && selected !== initial) setShowGuide(true);
+        if (APP_LINKS[selected] && selected !== initial) setShowGuide(true);
       } else {
         setToast({ kind: "err", msg: data.error?.message ?? "שמירה נכשלה" });
       }
@@ -190,7 +195,9 @@ export function PrintingForm({
             })}
           </div>
 
-          {selected !== "airprint" && (
+          {/* SUNMI has no companion app to install - the printer is driven by
+              our own wrapper - so it has no APP_LINKS entry and no guide. */}
+          {APP_LINKS[selected] && (
             <button
               type="button"
               onClick={() => setShowGuide(true)}

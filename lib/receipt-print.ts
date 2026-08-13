@@ -5,19 +5,23 @@
 //             1bpp raster image over tmprintassistant:// scheme
 //   escpos  - generic Bluetooth ESC/POS printers via the RawBT Android app,
 //             receives raw ESC/POS bytes (base64) over an intent: URL
+//   sunmi   - the printer built into a SUNMI POS terminal. Only reachable over
+//             SUNMI's native AIDL service, so it goes through the QuickFood
+//             Android wrapper's window.qfSunmiPrint bridge (see SUNMI_BRIDGE).
 //   airprint - the OS print dialog (window.print + print stylesheet)
-// Epson/escpos print an IMAGE rather than text because Hebrew over raw
+// Epson/escpos/sunmi print an IMAGE rather than text because Hebrew over raw
 // printer codepages is unreliable; rasterizing client-side sidesteps it.
 
 import { formatPrice, formatDateTime } from "@/lib/format";
 
-export type ReceiptPrinterType = "airprint" | "star" | "epson" | "escpos";
+export type ReceiptPrinterType = "airprint" | "star" | "epson" | "escpos" | "sunmi";
 
 export const RECEIPT_PRINTER_LABEL: Record<ReceiptPrinterType, string> = {
   airprint: "מדפסת רגילה (WiFi / AirPrint)",
   star: "Star Micronics",
   epson: "Epson TM",
   escpos: "מדפסת בלוטות' אחרת (אנדרואיד)",
+  sunmi: "קופת SUNMI (מדפסת מובנית)",
 };
 
 export const PAYMENT_METHOD_LABEL: Record<string, string> = {
@@ -667,6 +671,47 @@ export function printReceiptIframe(order: ReceiptOrder, settings?: ReceiptSettin
   }, 150);
 }
 
+// ─── SUNMI built-in printer ───────────────────────────────────
+// SUNMI terminals expose their printer only over a native AIDL service, which
+// a web page cannot bind to. The QuickFood Android wrapper implements the
+// bridge below and forwards to SunmiPrinterService.
+//
+//   window.qfSunmiPrint(pngBase64: string): void | Promise<void>
+//
+// pngBase64 is a bare base64 PNG (no data: prefix), 576px wide - the same
+// raster the ESC/POS path prints, so Hebrew renders as pixels instead of
+// relying on a printer codepage. The native side decodes it, calls
+// printBitmap(), feeds a few lines and cuts if the model has a cutter.
+
+declare global {
+  interface Window {
+    qfSunmiPrint?: (pngBase64: string) => void | Promise<void>;
+  }
+}
+
+export function hasSunmiBridge(): boolean {
+  return typeof window !== "undefined" && typeof window.qfSunmiPrint === "function";
+}
+
+function printSunmi(
+  order: ReceiptOrder,
+  onUnhandled?: () => void,
+  settings?: ReceiptSettings,
+): void {
+  const bridge = typeof window !== "undefined" ? window.qfSunmiPrint : undefined;
+  if (typeof bridge !== "function") {
+    onUnhandled?.();
+    return;
+  }
+  const canvas = renderReceiptCanvas(order, settings);
+  const b64 = canvas.toDataURL("image/png").split(",")[1] ?? "";
+  if (!b64) {
+    onUnhandled?.();
+    return;
+  }
+  void Promise.resolve(bridge(b64)).catch(() => onUnhandled?.());
+}
+
 // ─── Dispatch ─────────────────────────────────────────────────
 
 export function printReceipt(
@@ -684,6 +729,9 @@ export function printReceipt(
       break;
     case "escpos":
       printRawBt(order, onUnhandled, settings);
+      break;
+    case "sunmi":
+      printSunmi(order, onUnhandled, settings);
       break;
     default:
       window.print();
