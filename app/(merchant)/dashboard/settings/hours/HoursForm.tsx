@@ -59,6 +59,14 @@ export function HoursForm({
   return (
     <>
       <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5">
+        {/* Column headers only where the columns actually line up; the mobile
+            layout wraps the inputs onto their own row and labels them inline. */}
+        <div className="hidden sm:grid grid-cols-[1fr_120px_120px_100px] gap-x-3 items-center pb-2 mb-2 border-b border-qf-line-soft text-xs font-medium text-qf-mute">
+          <div>יום</div>
+          <div>שעת פתיחה</div>
+          <div>שעת סגירה</div>
+          <div />
+        </div>
         <div className="divide-y divide-qf-line-soft sm:divide-y-0 sm:space-y-2">
           {DAYS.map((d) => {
             const h = hours[d.key];
@@ -76,20 +84,32 @@ export function HoursForm({
                   />
                   <span className="text-xs text-qf-mute">{h.active ? "פתוח" : "סגור"}</span>
                 </label>
-                <input
-                  type="time"
-                  value={h.open}
-                  onChange={(e) => setDay(d.key, { open: e.target.value })}
-                  disabled={!h.active}
-                  className="col-start-1 sm:col-auto px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm disabled:opacity-50"
-                />
-                <input
-                  type="time"
-                  value={h.close}
-                  onChange={(e) => setDay(d.key, { close: e.target.value })}
-                  disabled={!h.active}
-                  className="px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm disabled:opacity-50"
-                />
+                <div className="col-start-1 sm:col-auto">
+                  <span className="block sm:hidden text-[10px] text-qf-mute mb-0.5">
+                    שעת פתיחה
+                  </span>
+                  <input
+                    type="time"
+                    aria-label={`${d.label} · שעת פתיחה`}
+                    value={h.open}
+                    onChange={(e) => setDay(d.key, { open: e.target.value })}
+                    disabled={!h.active}
+                    className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm disabled:opacity-50"
+                  />
+                </div>
+                <div>
+                  <span className="block sm:hidden text-[10px] text-qf-mute mb-0.5">
+                    שעת סגירה
+                  </span>
+                  <input
+                    type="time"
+                    aria-label={`${d.label} · שעת סגירה`}
+                    value={h.close}
+                    onChange={(e) => setDay(d.key, { close: e.target.value })}
+                    disabled={!h.active}
+                    className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm disabled:opacity-50"
+                  />
+                </div>
               </div>
             );
           })}
