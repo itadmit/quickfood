@@ -1,5 +1,6 @@
 "use client";
 
+import { useRoom } from "@/lib/realtime/useRoom";
 import { useCallback, useEffect, useState } from "react";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -33,11 +34,15 @@ export function PosQueue() {
 
   useEffect(() => {
     refetch();
+  }, [refetch]);
 
-    // SSE: subscribe to the merchant realtime stream and refetch on
-    // every new-order event. The endpoint already filters by tenant.
-    const es = new EventSource("/api/v1/realtime/merchant");
-    es.addEventListener("order.created", () => {
+  // Realtime over the shared Worker. Only new orders matter at the counter —
+  // a status change on something already in the queue is not worth a chime.
+  useRoom({
+    scope: { scope: "merchant" },
+    onResync: refetch,
+    onEvent: (event) => {
+      if (event !== "order.created") return;
       refetch();
       try {
         // Soft ping when something new lands at the counter.
@@ -53,9 +58,8 @@ export function PosQueue() {
       } catch {
         // No audio context on this device - fine, badge is enough.
       }
-    });
-    return () => es.close();
-  }, [refetch]);
+    },
+  });
 
   if (loading) {
     return <div className="p-6 text-center text-qf-mute">טוען תור...</div>;

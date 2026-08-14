@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useRoom } from "@/lib/realtime/useRoom";
 import { useRouter } from "next/navigation";
 import { IcoPhone, IcoClock, IcoCheck, IcoClose, IcoStar, IcoWhatsApp, IcoChev } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
@@ -191,81 +192,47 @@ export function OrderTracking({
     router.replace(`${window.location.pathname}?${params.toString()}${window.location.hash}`);
   }, [canReview, order.id, tenantSlug, router]);
 
-  // SSE updates - only relevant when the merchant opted into live tracking.
-  // For the lite thank-you screen, the page never refreshes (less work, less
-  // server load, and the customer doesn't expect a live timeline).
-  useEffect(() => {
-    if (!showTracking) return;
-    const es = new EventSource(`/api/v1/realtime/orders/${order.id}`);
-    es.addEventListener("snapshot", (e) => {
-      try {
-        const d = JSON.parse((e as MessageEvent).data) as {
-          status: string;
-          courier_name?: string | null;
-          courier_phone?: string | null;
-          courier_lat?: number | null;
-          courier_lng?: number | null;
-        };
+  // Realtime over the shared Cloudflare Worker, and only when the merchant
+  // opted into live tracking — on the lite thank-you screen the customer is
+  // not expecting a timeline, so there is nothing to keep in sync and no
+  // reason to hold a socket open.
+  //
+  // Every frame triggers a refetch of the order rather than carrying its own
+  // payload. The previous version applied a `snapshot` frame directly to
+  // state, which meant the screen showed whatever the last frame said even
+  // after a gap in which it had missed several.
+  const resync = useCallback(() => {
+    void fetch(`/api/v1/customer/orders/${order.id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data?.order) return;
+        const o = data.order;
         setOrder((prev) => ({
           ...prev,
-          status: d.status,
-          courier:
-            d.courier_name || prev.courier
-              ? {
-                  name: d.courier_name ?? prev.courier?.name ?? "",
-                  phone: d.courier_phone ?? prev.courier?.phone ?? "",
-                  lat: d.courier_lat ?? prev.courier?.lat ?? null,
-                  lng: d.courier_lng ?? prev.courier?.lng ?? null,
-                }
-              : prev.courier,
+          status: o.status,
+          readyAt: o.ready_at,
+          deliveredAt: o.delivered_at,
+          confirmedAt: o.confirmed_at,
+          preparingAt: o.preparing_at,
+          courier: o.courier
+            ? {
+                name: o.courier.name,
+                phone: o.courier.phone,
+                lat: o.courier.lat ?? null,
+                lng: o.courier.lng ?? null,
+              }
+            : prev.courier,
         }));
-      } catch {
-        /* ignore */
-      }
-    });
-    es.addEventListener("courier_location", (e) => {
-      try {
-        const d = JSON.parse((e as MessageEvent).data) as {
-          lat: number | null;
-          lng: number | null;
-        };
-        setOrder((prev) =>
-          prev.courier
-            ? { ...prev, courier: { ...prev.courier, lat: d.lat, lng: d.lng } }
-            : prev,
-        );
-      } catch {
-        /* ignore */
-      }
-    });
-    es.addEventListener("status_changed", () => {
-      void fetch(`/api/v1/customer/orders/${order.id}`)
-        .then((r) => r.json())
-        .then((data) => {
-          if (data?.order) {
-            const o = data.order;
-            setOrder((prev) => ({
-              ...prev,
-              status: o.status,
-              readyAt: o.ready_at,
-              deliveredAt: o.delivered_at,
-              confirmedAt: o.confirmed_at,
-              preparingAt: o.preparing_at,
-              courier: o.courier
-                ? {
-                    name: o.courier.name,
-                    phone: o.courier.phone,
-                    lat: o.courier.lat ?? null,
-                    lng: o.courier.lng ?? null,
-                  }
-                : prev.courier,
-            }));
-          }
-        })
-        .catch(() => {});
-    });
-    return () => es.close();
-  }, [order.id, showTracking]);
+      })
+      .catch(() => {});
+  }, [order.id]);
+
+  useRoom({
+    scope: { scope: "order", orderId: order.id },
+    enabled: showTracking,
+    onResync: resync,
+    onEvent: () => resync(),
+  });
 
   // E-commerce style: clean "thank you" receipt, no ETA hero, no live
   // step timeline, no branch contact card. Merchants get this by default;

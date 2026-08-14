@@ -19,10 +19,11 @@ export default async function KitchenPage() {
     redirect("/dashboard/login");
   }
 
-  // Single server query for the initial paint. After that the page
-  // lives on the existing /api/v1/realtime/merchant SSE feed (one
-  // shared connection across the merchant's tabs) + a manual refresh
-  // button. Zero polling, zero per-second DB hits.
+  // Single server query for the initial paint. After that the page lives on
+  // a WebSocket to the realtime Worker, which pushes only when the write path
+  // actually changes something. The SSE feed this used to use claimed "zero
+  // polling" but polled Postgres every 2 seconds inside the stream — the DB
+  // hits were simply moved from the browser to our own bill.
   const orders = await prisma.order.findMany({
     where: {
       tenantId: session.tenantId,

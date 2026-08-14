@@ -61,16 +61,11 @@ export async function GET() {
         get: { summary: "List webhook endpoints" },
         post: { summary: "Create a webhook endpoint (returns secret once)" },
       },
-      "/realtime/orders/{orderId}": {
-        get: {
-          summary: "SSE stream of order events (customer-facing)",
-          responses: { "200": { description: "text/event-stream" } },
-        },
-      },
-      "/realtime/merchant": {
-        get: {
-          summary: "SSE stream of tenant order events (merchant)",
-          responses: { "200": { description: "text/event-stream" } },
+      "/realtime/token": {
+        post: {
+          summary:
+            "Mint a listen-only WebSocket token for a room (merchant board or one order)",
+          responses: { "200": { description: "{ url, room, token }" } },
         },
       },
     },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRoom } from "@/lib/realtime/useRoom";
 import Link from "next/link";
 import { IcoClock, IcoPrinter, IcoFlame, IcoRefresh, IcoUndo, IcoClose, IcoBell, IcoBellOff } from "@/components/shared/Icons";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
@@ -413,69 +414,21 @@ export function OrdersKanban({
     }
   }
 
-  // SSE subscription to merchant tenant channel. The native EventSource
-  // auto-reconnect handles transient network blips, but a 5xx from the
-  // server (Vercel function timeout, deploy mid-stream) closes the
-  // connection permanently - so we re-open it with backoff. The
-  // visibilitychange listener also re-opens + immediately refreshes
-  // when the tab returns from background (mobile Safari kills the
-  // EventSource when the tab isn't focused).
-  const esRef = useRef<EventSource | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    let backoffMs = 1000;
-    let reconnectTimer: number | null = null;
-
-    function open() {
-      if (cancelled) return;
-      const es = new EventSource("/api/v1/realtime/merchant");
-      esRef.current = es;
-      es.addEventListener("open", () => {
-        backoffMs = 1000;
-      });
-      es.addEventListener("order.created", () => {
-        // refresh() detects the unseen id and rings the chime itself - see
-        // seenIdsRef. Dispatching here too would double-ring.
-        void refresh();
-      });
-      es.addEventListener("order.status_changed", () => void refresh());
-      // Refund/cancel writes an orderEvent of type "refunded" (not
-      // status_changed), so without this listener a cancelled order would linger
-      // on the board until the next reconnect/refocus refresh.
-      es.addEventListener("order.refunded", () => void refresh());
-      es.onerror = () => {
-        es.close();
-        esRef.current = null;
-        if (cancelled) return;
-        if (reconnectTimer != null) window.clearTimeout(reconnectTimer);
-        reconnectTimer = window.setTimeout(open, backoffMs);
-        backoffMs = Math.min(backoffMs * 2, 30_000);
-        // Always pull a fresh snapshot when we're disconnected so the
-        // merchant doesn't stare at a stale board while we back off.
-        void refresh();
-      };
-    }
-
-    function onVisibility() {
-      if (document.visibilityState !== "visible") return;
-      void refresh();
-      if (!esRef.current || esRef.current.readyState === EventSource.CLOSED) {
-        if (reconnectTimer != null) window.clearTimeout(reconnectTimer);
-        backoffMs = 1000;
-        open();
-      }
-    }
-
-    open();
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      cancelled = true;
-      if (reconnectTimer != null) window.clearTimeout(reconnectTimer);
-      document.removeEventListener("visibilitychange", onVisibility);
-      esRef.current?.close();
-      esRef.current = null;
-    };
-  }, [refresh]);
+  // Realtime over the shared Cloudflare Worker. Every frame is a nudge to
+  // refetch rather than a payload to apply: refresh() already dedups by order
+  // id and rings the new-order chime itself, and the board must agree with the
+  // database rather than with a sequence of frames it may have missed.
+  useRoom({
+    scope: { scope: "merchant" },
+    onResync: () => void refresh(),
+    onEvent: (event) => {
+      // order.created, order.status_changed, order.refunded and every other
+      // event type the write path emits all mean the same thing here. Listing
+      // them individually is how the old code let refunds go stale on the
+      // board until the next reconnect.
+      if (event.startsWith("order.")) void refresh();
+    },
+  });
 
   async function advance(orderId: string, to: Status | "delivered", courierId?: string) {
     pendingAdvancesRef.current.set(orderId, {

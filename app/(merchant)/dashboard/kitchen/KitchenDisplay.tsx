@@ -1,5 +1,6 @@
 "use client";
 
+import { useRoom } from "@/lib/realtime/useRoom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { IcoBell, IcoClock, IcoRefresh, IcoCheck } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
@@ -123,60 +124,16 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
     }
   }, []);
 
-  // SSE - shared with the Kanban (one EventSource per browser, since
-  // the route is the same URL). Refresh the whole list on any event;
-  // patch-level diffing isn't worth it for a 100-row list.
-  useEffect(() => {
-    let cancelled = false;
-    let backoffMs = 1000;
-    let reconnectTimer: number | null = null;
-    let es: EventSource | null = null;
-
-    function open() {
-      if (cancelled) return;
-      es = new EventSource("/api/v1/realtime/merchant");
-      es.addEventListener("open", () => {
-        backoffMs = 1000;
-      });
-      es.addEventListener("order.created", () => {
-        // refresh() detects the unseen id and rings the chime itself
-        // (see seenIdsRef) - works for both live SSE and reconnect paths.
-        void refresh();
-      });
-      es.addEventListener("order.status_changed", () => void refresh());
-      es.addEventListener("order.items_edited", () => void refresh());
-      es.addEventListener("order.item_prepared", () => void refresh());
-      es.onerror = () => {
-        es?.close();
-        es = null;
-        if (cancelled) return;
-        if (reconnectTimer != null) window.clearTimeout(reconnectTimer);
-        reconnectTimer = window.setTimeout(open, backoffMs);
-        backoffMs = Math.min(backoffMs * 2, 30_000);
-        void refresh();
-      };
-    }
-
-    function onVisibility() {
-      if (document.visibilityState !== "visible") return;
-      void refresh();
-      if (!es || es.readyState === EventSource.CLOSED) {
-        if (reconnectTimer != null) window.clearTimeout(reconnectTimer);
-        backoffMs = 1000;
-        open();
-      }
-    }
-
-    open();
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      cancelled = true;
-      if (reconnectTimer != null) window.clearTimeout(reconnectTimer);
-      document.removeEventListener("visibilitychange", onVisibility);
-      es?.close();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refresh]);
+  // Realtime over the shared Worker. Any order event refreshes the whole
+  // list — patch-level diffing is not worth it for a 100-row board, and
+  // refresh() already rings the chime for ids it has not seen.
+  useRoom({
+    scope: { scope: "merchant" },
+    onResync: () => void refresh(),
+    onEvent: (event) => {
+      if (event.startsWith("order.")) void refresh();
+    },
+  });
 
   // Chime is shared with the orders board (NewOrderChime) - same selected
   // sound, synthesized or the classic file. iOS/Chrome block autoplay until
