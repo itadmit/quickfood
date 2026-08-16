@@ -275,20 +275,18 @@ function TenantRow({
               </span>
             </>
           )}
-          {t.ownerEmail && (
-            <>
-              <span className="text-qf-line">·</span>
-              <a
-                href={`mailto:${t.ownerEmail}`}
-                className="inline-flex items-center gap-1 text-qf-ink2 hover:underline truncate"
-                title={t.ownerEmail}
-              >
-                <Mail size={10} className="shrink-0" />
-                <span className="truncate">{t.ownerEmail}</span>
-              </a>
-            </>
-          )}
         </div>
+        {t.ownerEmail && (
+          <a
+            href={`mailto:${t.ownerEmail}`}
+            className="text-[11px] text-qf-ink2 hover:underline flex items-center gap-1 mt-0.5 break-all"
+            title={t.ownerEmail}
+            dir="ltr"
+          >
+            <Mail size={11} className="shrink-0 text-qf-mute" />
+            {t.ownerEmail}
+          </a>
+        )}
         {!t.ownerVerified && (
           <span className="inline-block mt-1 px-1.5 py-px rounded bg-qf-tomato-soft text-qf-tomato text-[10px] font-medium">
             מייל לא אומת
