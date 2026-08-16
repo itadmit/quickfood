@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/format";
 import { THEMES } from "@/lib/themes";
 import { cn } from "@/lib/cn";
-import { Phone, LogIn, MessageCircle, BadgeCheck } from "lucide-react";
+import { Phone, LogIn, MessageCircle, BadgeCheck, Mail } from "lucide-react";
 
 interface Tenant {
   id: string;
@@ -273,6 +273,19 @@ function TenantRow({
                   </BadgeCheck>
                 )}
               </span>
+            </>
+          )}
+          {t.ownerEmail && (
+            <>
+              <span className="text-qf-line">·</span>
+              <a
+                href={`mailto:${t.ownerEmail}`}
+                className="inline-flex items-center gap-1 text-qf-ink2 hover:underline truncate"
+                title={t.ownerEmail}
+              >
+                <Mail size={10} className="shrink-0" />
+                <span className="truncate">{t.ownerEmail}</span>
+              </a>
             </>
           )}
         </div>
