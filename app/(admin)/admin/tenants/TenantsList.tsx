@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/format";
 import { THEMES } from "@/lib/themes";
 import { cn } from "@/lib/cn";
-import { Phone, LogIn, MessageCircle, BadgeCheck, Mail } from "lucide-react";
+import { Phone, LogIn, MessageCircle, BadgeCheck, Mail, Search, X } from "lucide-react";
 
 interface Tenant {
   id: string;
@@ -94,6 +94,7 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
   const [items] = useState(tenants);
   const [messageTo, setMessageTo] = useState<Tenant | null>(null);
   const [filter, setFilter] = useState<FilterKey | null>(null);
+  const [search, setSearch] = useState("");
 
   const counts = {
     total: items.length,
@@ -106,7 +107,22 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
     unverified: items.filter(FILTERS.unverified).length,
   };
 
-  const visible = filter ? items.filter(FILTERS[filter]) : items;
+  const q = search.trim().toLowerCase();
+  const qDigits = q.replace(/\D/g, "");
+  const matchesSearch = (t: Tenant) => {
+    if (!q) return true;
+    const text = [t.name, t.slug, t.ownerEmail, t.cuisineType]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    if (text.includes(q)) return true;
+    if (qDigits && t.ownerPhone && t.ownerPhone.replace(/\D/g, "").includes(qDigits)) return true;
+    return false;
+  };
+
+  const visible = items.filter(
+    (t) => (!filter || FILTERS[filter](t)) && matchesSearch(t),
+  );
   const toggle = (key: FilterKey) => setFilter((cur) => (cur === key ? null : key));
 
   return (
@@ -115,15 +131,20 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
         <div>
           <h1 className="text-2xl font-bold">לקוחות הפלטפורמה</h1>
           <p className="text-sm text-qf-mute">
-            {filter ? (
+            {filter || q ? (
               <>
-                מציג {visible.length} מתוך {counts.total} · {FILTER_LABEL[filter]}{" "}
+                מציג {visible.length} מתוך {counts.total}
+                {filter ? ` · ${FILTER_LABEL[filter]}` : ""}
+                {q ? ` · חיפוש: "${search.trim()}"` : ""}{" "}
                 <button
                   type="button"
-                  onClick={() => setFilter(null)}
+                  onClick={() => {
+                    setFilter(null);
+                    setSearch("");
+                  }}
                   className="text-(--qf-primary) hover:underline font-medium"
                 >
-                  נקה סינון
+                  נקה
                 </button>
               </>
             ) : (
@@ -131,12 +152,37 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
             )}
           </p>
         </div>
-        <Link
-          href="/admin/tenants/new"
-          className="px-3.5 py-2 rounded-xl bg-qf-ink text-white text-sm font-medium"
-        >
-          + לקוח חדש
-        </Link>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search
+              size={16}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-qf-mute pointer-events-none"
+            />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="חיפוש לפי שם, מייל, טלפון או slug"
+              className="w-64 pr-9 pl-8 py-2 rounded-xl border border-qf-line-dash text-sm focus:outline-none focus:ring-2 focus:ring-(--qf-primary)/30"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute left-2 top-1/2 -translate-y-1/2 text-qf-mute hover:text-qf-ink"
+                aria-label="נקה חיפוש"
+              >
+                <X size={15} />
+              </button>
+            )}
+          </div>
+          <Link
+            href="/admin/tenants/new"
+            className="px-3.5 py-2 rounded-xl bg-qf-ink text-white text-sm font-medium shrink-0"
+          >
+            + לקוח חדש
+          </Link>
+        </div>
       </header>
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
@@ -168,7 +214,11 @@ export function TenantsList({ tenants }: { tenants: Tenant[] }) {
         ))}
         {visible.length === 0 && (
           <div className="px-5 py-10 text-center text-sm text-qf-mute">
-            {filter ? "אין מסעדות בסינון הזה." : "עדיין אין מסעדות. הוסף את הראשונה."}
+            {q
+              ? `לא נמצאו מסעדות התואמות ל"${search.trim()}".`
+              : filter
+                ? "אין מסעדות בסינון הזה."
+                : "עדיין אין מסעדות. הוסף את הראשונה."}
           </div>
         )}
       </div>
