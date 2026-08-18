@@ -55,6 +55,9 @@ export function AssignCourierModal({
   const [couriers, setCouriers] = useState<CourierRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [assigningId, setAssigningId] = useState<string | null>(null);
+  // After a successful assign we stay open on a "send it to the courier on
+  // WhatsApp?" step instead of closing straight away.
+  const [assigned, setAssigned] = useState<CourierRow | null>(null);
 
   useEffect(() => {
     if (!manual) return;
@@ -84,7 +87,7 @@ export function AssignCourierModal({
     setAssigningId(c.id);
     try {
       await onAssign(c.id);
-      onClose();
+      setAssigned(c);
     } finally {
       setAssigningId(null);
     }
@@ -115,6 +118,40 @@ export function AssignCourierModal({
       </header>
 
       <div className="flex-1 overflow-y-auto px-5 py-4">
+          {assigned ? (
+            <div className="space-y-4 py-2">
+              <div className="flex items-center gap-3 rounded-xl border border-(--qf-primary)/40 bg-qf-green-soft px-4 py-3.5">
+                <span className="w-10 h-10 rounded-xl bg-white border border-qf-line grid place-items-center shrink-0">
+                  <IcoBike c="#0a5d2d" s={20} />
+                </span>
+                <div className="min-w-0">
+                  <div className="font-semibold text-sm">ההזמנה שויכה ל{assigned.name}</div>
+                  <div className="text-xs text-qf-mute" dir="ltr">{assigned.phone}</div>
+                </div>
+              </div>
+              <p className="text-sm text-qf-ink2 leading-relaxed">
+                רוצה לשלוח לשליח את פרטי ההזמנה בוואטסאפ?
+              </p>
+              <a
+                href={waLink(assigned.phone, waText ?? `הזמנה ${orderNumber}`)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => onClose()}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#25D366] text-white font-bold hover:bg-[#1fbb57] transition"
+              >
+                <IcoWhatsApp s={20} c="#fff" />
+                שלח בוואטסאפ
+              </a>
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full py-2.5 rounded-xl border border-qf-line-dash text-sm font-medium text-qf-mute hover:text-qf-ink hover:border-(--qf-primary) transition"
+              >
+                דלג / סיום
+              </button>
+            </div>
+          ) : (
+          <>
           {managedByDelivApp && !manual && (
             <div className="space-y-3">
               <div className="rounded-xl border border-qf-line bg-qf-line-soft px-4 py-3.5">
@@ -171,24 +208,13 @@ export function AssignCourierModal({
                 const overloaded =
                   c.status === "on_delivery" && c.deliveries_today >= c.max_concurrent;
                 return (
-                  <li key={c.id} className="flex items-stretch gap-2">
-                    <a
-                      href={waLink(c.phone, waText ?? `הזמנה ${orderNumber}`)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      title="שלח את ההזמנה לשליח בוואטסאפ"
-                      aria-label="שלח בוואטסאפ"
-                      className="shrink-0 w-12 rounded-xl border border-qf-line-dash grid place-items-center hover:border-[#25D366] hover:bg-[#25D366]/10 transition"
-                    >
-                      <IcoWhatsApp s={22} />
-                    </a>
+                  <li key={c.id}>
                     <button
                       type="button"
                       onClick={() => pick(c)}
                       disabled={assigningId != null}
                       className={cn(
-                        "flex-1 flex items-center gap-3 p-3 rounded-xl border text-right transition",
+                        "w-full flex items-center gap-3 p-3 rounded-xl border text-right transition",
                         assigningId === c.id
                           ? "border-(--qf-primary) bg-qf-green-soft"
                           : "border-qf-line-dash hover:border-(--qf-primary) hover:bg-qf-line-soft",
@@ -234,6 +260,8 @@ export function AssignCourierModal({
                 );
               })}
             </ul>
+          )}
+          </>
           )}
       </div>
     </Modal>
