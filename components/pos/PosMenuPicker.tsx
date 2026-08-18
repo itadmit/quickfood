@@ -20,6 +20,8 @@ export interface PosItem {
   categoryId: string;
   name: string;
   basePrice: number;
+  pricingMode?: string;
+  pricePerKg?: number | null;
   artType: string | null;
   imageUrl: string | null;
   defaultSize: { id: string; name: string; priceDelta: number; isDefault: boolean } | null;
@@ -65,7 +67,7 @@ export function PosMenuPicker({
     // Items with options OR multiple sizes go through the config modal so
     // the cashier picks them explicitly. A drink with one price + no
     // options is a direct add - fastest path for the bulk of the menu.
-    if (it.hasOptions || it.sizeCount > 1) {
+    if (it.hasOptions || it.sizeCount > 1 || it.pricingMode === "weight") {
       onConfigureItem(it.id);
       return;
     }
@@ -155,6 +157,7 @@ export function PosMenuPicker({
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 p-4">
           {filtered.map((it) => {
+            const isWeight = it.pricingMode === "weight" && it.pricePerKg != null;
             const total = it.basePrice + (it.defaultSize?.priceDelta ?? 0);
             return (
               <button
@@ -183,7 +186,9 @@ export function PosMenuPicker({
                 <div className="p-2 bg-white border-t-2 border-black/10">
                   <div className="text-xs font-bold leading-tight line-clamp-2">{it.name}</div>
                   <div className="flex items-center justify-between mt-1">
-                    <span className="text-sm font-black tnum">{formatPrice(total)}</span>
+                    <span className="text-sm font-black tnum">
+                      {isWeight ? `${formatPrice(it.pricePerKg!)} לק"ג` : formatPrice(total)}
+                    </span>
                     {it.hasRequiredOptions && (
                       <span
                         className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-qf-yolk-soft text-qf-ink"

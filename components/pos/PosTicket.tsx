@@ -115,25 +115,31 @@ export function PosTicket({ onEditLine }: { onEditLine?: (line: CartLine) => voi
                   >
                     <IcoEdit s={14} />
                   </button>
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => updateQuantity(l.lineId, l.quantity - 1)}
-                      className="w-8 h-8 rounded-lg bg-qf-line-soft grid place-items-center"
-                      aria-label="הפחת"
-                    >
-                      <IcoMinus s={14} c="#11231a" />
-                    </button>
-                    <span className="w-6 text-center tnum text-sm font-bold">{l.quantity}</span>
-                    <button
-                      type="button"
-                      onClick={() => updateQuantity(l.lineId, l.quantity + 1)}
-                      className="w-8 h-8 rounded-lg bg-qf-line-soft grid place-items-center"
-                      aria-label="הוסף"
-                    >
-                      <IcoPlus s={14} c="#11231a" />
-                    </button>
-                  </div>
+                  {l.weightGrams != null ? (
+                    <div className="inline-flex items-center px-2 h-8 rounded-lg bg-qf-line-soft tnum text-sm font-bold">
+                      {l.weightGrams} גרם
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(l.lineId, l.quantity - 1)}
+                        className="w-8 h-8 rounded-lg bg-qf-line-soft grid place-items-center"
+                        aria-label="הפחת"
+                      >
+                        <IcoMinus s={14} c="#11231a" />
+                      </button>
+                      <span className="w-6 text-center tnum text-sm font-bold">{l.quantity}</span>
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(l.lineId, l.quantity + 1)}
+                        className="w-8 h-8 rounded-lg bg-qf-line-soft grid place-items-center"
+                        aria-label="הוסף"
+                      >
+                        <IcoPlus s={14} c="#11231a" />
+                      </button>
+                    </div>
+                  )}
                   <div className="w-20 text-end tnum text-sm font-semibold">
                     {formatPrice(lineTotal)}
                   </div>

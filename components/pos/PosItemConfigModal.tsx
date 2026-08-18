@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { CartLine } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { priceGroupOptions, type PricedOption, type GroupPricingConfig } from "@/lib/option-pricing";
+import { weightPrice, MIN_WEIGHT_GRAMS, MAX_WEIGHT_GRAMS } from "@/lib/pricing";
 import { cn } from "@/lib/cn";
 import { IcoPlus, IcoMinus, IcoClose } from "@/components/shared/Icons";
 import { TouchTextarea } from "@/components/shared/TouchInput";
@@ -51,6 +52,8 @@ interface FullItem {
   name: string;
   description: string;
   basePrice: number;
+  pricingMode?: string;
+  pricePerKg?: number | null;
   artType: string | null;
   images?: string[];
   tags?: string[];
@@ -95,6 +98,15 @@ export function PosItemConfigModal({
   const [quantity, setQuantity] = useState(existingLine?.quantity ?? 1);
   const [notesOpen, setNotesOpen] = useState((existingLine?.notes ?? "").length > 0);
   const [flashGroupId, setFlashGroupId] = useState<string | null>(null);
+
+  const isWeight = item?.pricingMode === "weight" && item?.pricePerKg != null;
+  const pricePerKg = item?.pricePerKg ?? 0;
+  const clampGrams = (g: number) =>
+    Math.min(MAX_WEIGHT_GRAMS, Math.max(MIN_WEIGHT_GRAMS, Math.round(g)));
+  const [weightEntry, setWeightEntry] = useState<"weight" | "amount">("weight");
+  const [grams, setGrams] = useState<number>(existingLine?.weightGrams ?? 500);
+  const [amountStr, setAmountStr] = useState<string>("");
+  const weightBase = isWeight ? weightPrice(pricePerKg, grams) : 0;
 
   // Load the full item (sizes + option groups). The customer storefront's
   // public menu-item endpoint already returns exactly the shape we need -
@@ -207,8 +219,10 @@ export function PosItemConfigModal({
       const charges = priceGroupOptions(picked, groupPricingConfig(g));
       for (const c of charges.values()) oDelta += c;
     }
-    return (item.basePrice + sDelta + oDelta) * quantity;
-  }, [item, sizeId, picks, halfPicks, quantity]);
+    const base = isWeight ? weightBase : item.basePrice;
+    const qty = isWeight ? 1 : quantity;
+    return (base + sDelta + oDelta) * qty;
+  }, [item, sizeId, picks, halfPicks, quantity, isWeight, weightBase]);
 
   function toggleOption(group: OptionGroup, optionId: string) {
     setPicks((prev) => {
@@ -288,10 +302,12 @@ export function PosItemConfigModal({
       line: {
         itemId: item.id,
         name: item.name,
-        basePrice: item.basePrice,
+        basePrice: isWeight ? weightBase : item.basePrice,
         artType: item.artType,
         imageUrl: item.images?.[0] ?? null,
-        quantity,
+        quantity: isWeight ? 1 : quantity,
+        weightGrams: isWeight ? grams : null,
+        pricePerKg: isWeight ? pricePerKg : null,
         sizeId: size?.id ?? null,
         sizeName: size?.name ?? null,
         sizeDelta: size?.priceDelta ?? 0,
@@ -324,7 +340,9 @@ export function PosItemConfigModal({
         <div className="min-w-0">
           <h2 className="text-lg font-black truncate">{item.name}</h2>
           <p className="text-xs text-qf-mute mt-0.5">
-            מחיר בסיס {formatPrice(item.basePrice)}
+            {isWeight
+              ? `${formatPrice(pricePerKg)} לק"ג · ${formatPrice(pricePerKg / 10)} ל-100 גרם`
+              : `מחיר בסיס ${formatPrice(item.basePrice)}`}
           </p>
         </div>
         <button
@@ -338,6 +356,87 @@ export function PosItemConfigModal({
       </header>
 
       <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-5">
+        {isWeight && (
+          <section>
+            <SectionTitle title="משקל" />
+            <div className="flex items-center gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => setWeightEntry("weight")}
+                className={cn(
+                  "flex-1 h-11 rounded-xl text-sm font-bold border-2 transition",
+                  weightEntry === "weight"
+                    ? "border-(--qf-primary) bg-(--qf-soft) text-(--qf-deep)"
+                    : "border-qf-line-dash text-qf-ink2 bg-white",
+                )}
+              >
+                לפי משקל (גרם)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAmountStr(String(weightBase));
+                  setWeightEntry("amount");
+                }}
+                className={cn(
+                  "flex-1 h-11 rounded-xl text-sm font-bold border-2 transition",
+                  weightEntry === "amount"
+                    ? "border-(--qf-primary) bg-(--qf-soft) text-(--qf-deep)"
+                    : "border-qf-line-dash text-qf-ink2 bg-white",
+                )}
+              >
+                לפי סכום (₪)
+              </button>
+            </div>
+            {weightEntry === "weight" ? (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setGrams((g) => clampGrams(g - 50))}
+                  className="w-12 h-12 rounded-xl bg-white border-2 border-black grid place-items-center shadow-[0_2px_0_#000]"
+                  aria-label="הפחת 50 גרם"
+                >
+                  <IcoMinus s={16} c="#000" />
+                </button>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  value={grams}
+                  min={MIN_WEIGHT_GRAMS}
+                  max={MAX_WEIGHT_GRAMS}
+                  onChange={(e) => setGrams(clampGrams(Number(e.target.value) || 0))}
+                  className="flex-1 h-12 text-center text-lg font-black tnum border-2 border-qf-line-dash rounded-xl outline-none focus:border-(--qf-primary)"
+                />
+                <button
+                  type="button"
+                  onClick={() => setGrams((g) => clampGrams(g + 50))}
+                  className="w-12 h-12 rounded-xl bg-white border-2 border-black grid place-items-center shadow-[0_2px_0_#000]"
+                  aria-label="הוסף 50 גרם"
+                >
+                  <IcoPlus s={16} c="#000" />
+                </button>
+              </div>
+            ) : (
+              <input
+                type="number"
+                inputMode="decimal"
+                value={amountStr}
+                placeholder="סכום בשקלים"
+                onChange={(e) => {
+                  setAmountStr(e.target.value);
+                  const amount = Number(e.target.value) || 0;
+                  if (amount > 0 && pricePerKg > 0) {
+                    setGrams(clampGrams((amount / pricePerKg) * 1000));
+                  }
+                }}
+                className="w-full h-12 text-center text-lg font-black tnum border-2 border-qf-line-dash rounded-xl outline-none focus:border-(--qf-primary)"
+              />
+            )}
+            <div className="text-xs text-qf-mute mt-2 tnum">
+              {grams} גרם · {formatPrice(weightBase)}
+            </div>
+          </section>
+        )}
         {!sizeHidden && (
           <section>
             <SectionTitle title="גודל" required />
@@ -531,7 +630,7 @@ export function PosItemConfigModal({
 
       {/* Footer: qty + total + add */}
       <footer className="border-t-2 border-black px-5 py-4 bg-qf-bg/40 flex items-center gap-3">
-        <div className="flex items-center gap-1 shrink-0">
+        <div className={cn("flex items-center gap-1 shrink-0", isWeight && "hidden")}>
           <button
             type="button"
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}

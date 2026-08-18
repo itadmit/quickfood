@@ -25,6 +25,8 @@ export default async function PosRegisterPage() {
         name: true,
         categoryId: true,
         basePrice: true,
+        pricingMode: true,
+        pricePerKg: true,
         artType: true,
         images: true,
         sizes: {
@@ -55,6 +57,8 @@ export default async function PosRegisterPage() {
         categoryId: i.categoryId,
         name: i.name,
         basePrice: i.basePrice,
+        pricingMode: i.pricingMode,
+        pricePerKg: i.pricePerKg,
         artType: i.artType,
         imageUrl: i.images?.[0] ?? null,
         defaultSize:
