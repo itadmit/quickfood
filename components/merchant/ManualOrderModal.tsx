@@ -422,19 +422,33 @@ export function ManualOrderModal({ onClose }: { onClose: () => void }) {
           {/* Cart + customer */}
           <div className="overflow-y-auto p-4 space-y-3 bg-qf-line-soft/30">
             <div className="space-y-2">
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="שם הלקוח"
-                className="w-full px-3 py-2 rounded-lg border border-qf-line-dash text-sm"
-              />
-              <input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="טלפון"
-                dir="ltr"
-                className="w-full px-3 py-2 rounded-lg border border-qf-line-dash text-sm"
-              />
+              <label className="block">
+                <span className="text-xs font-medium text-qf-ink2 mb-1 block">
+                  שם הלקוח <span className="text-qf-tomato">*</span>
+                </span>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="שם הלקוח"
+                  required
+                  aria-required="true"
+                  className="w-full px-3 py-2 rounded-lg border border-qf-line-dash text-sm"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs font-medium text-qf-ink2 mb-1 block">
+                  טלפון <span className="text-qf-tomato">*</span>
+                </span>
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="טלפון"
+                  dir="ltr"
+                  required
+                  aria-required="true"
+                  className="w-full px-3 py-2 rounded-lg border border-qf-line-dash text-sm"
+                />
+              </label>
               <div className="grid grid-cols-2 gap-1.5">
                 <Pill active={method === "pickup"} onClick={() => setMethod("pickup")}>
                   איסוף
