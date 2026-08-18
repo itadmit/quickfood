@@ -52,7 +52,13 @@ export type ThemeId =
   | "charcoal"
   | "cobalt"
   | "sunflower"
-  | "apricot";
+  | "apricot"
+  | "teal"
+  | "ocean"
+  | "grape"
+  | "berry"
+  | "coffee"
+  | "rose";
 
 export interface Theme {
   id: ThemeId;
@@ -147,6 +153,60 @@ export const THEMES: Record<ThemeId, Theme> = {
     soft: "#fdeede",
     line: "#f6d6b4",
     onPrimary: "#000",
+  },
+  teal: {
+    id: "teal",
+    name: "טורקיז",
+    primary: "#0f8a8a",
+    deep: "#0a6060",
+    soft: "#e2f2f1",
+    line: "#bfe0dd",
+    onPrimary: "#fff",
+  },
+  ocean: {
+    id: "ocean",
+    name: "כחול ים",
+    primary: "#1577a6",
+    deep: "#0f5578",
+    soft: "#e2eef5",
+    line: "#b9d6e6",
+    onPrimary: "#fff",
+  },
+  grape: {
+    id: "grape",
+    name: "סגול ענבים",
+    primary: "#6b3fa0",
+    deep: "#4e2c78",
+    soft: "#efe8f7",
+    line: "#d5c4ec",
+    onPrimary: "#fff",
+  },
+  berry: {
+    id: "berry",
+    name: "פטל",
+    primary: "#c02b6e",
+    deep: "#921f52",
+    soft: "#fbe2ee",
+    line: "#f2b8d2",
+    onPrimary: "#fff",
+  },
+  coffee: {
+    id: "coffee",
+    name: "קפה",
+    primary: "#6f4a2f",
+    deep: "#513520",
+    soft: "#efe7df",
+    line: "#dac9b9",
+    onPrimary: "#fff",
+  },
+  rose: {
+    id: "rose",
+    name: "ורוד",
+    primary: "#d85c86",
+    deep: "#b23e66",
+    soft: "#fce6ed",
+    line: "#f5c2d4",
+    onPrimary: "#fff",
   },
 };
 

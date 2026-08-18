@@ -93,6 +93,12 @@ const THEMES: Array<{ val: string; label: string }> = [
   { val: "cobalt", label: "Cobalt" },
   { val: "sunflower", label: "Sunflower" },
   { val: "apricot", label: "Apricot" },
+  { val: "teal", label: "Teal" },
+  { val: "ocean", label: "Ocean" },
+  { val: "grape", label: "Grape" },
+  { val: "berry", label: "Berry" },
+  { val: "coffee", label: "Coffee" },
+  { val: "rose", label: "Rose" },
 ];
 
 const ROLE_LABEL: Record<string, string> = {

@@ -1448,6 +1448,12 @@ function Step2({
     "cobalt",
     "charcoal",
     "forest",
+    "teal",
+    "ocean",
+    "grape",
+    "berry",
+    "coffee",
+    "rose",
   ];
   return (
     <div className="space-y-6">
