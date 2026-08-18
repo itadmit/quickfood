@@ -10,6 +10,7 @@ import { matchZoneByCity } from "@/lib/delivery-zone-match";
 import { sendTenantPush } from "@/lib/merchant/push";
 import { sendTenantFcm } from "@/lib/merchant/fcm";
 import { priceGroupOptions } from "@/lib/option-pricing";
+import { weightPrice, MIN_WEIGHT_GRAMS, MAX_WEIGHT_GRAMS } from "@/lib/pricing";
 import { ensureLoyaltyMember } from "@/lib/loyalty/membership";
 import { isWithinOpenHours, type BranchHours } from "@/lib/branch-hours";
 import { printOrderTicket } from "@/lib/printing/print-order";
@@ -28,6 +29,9 @@ export type OrderItemSourceTag = "menu" | "ai_advisor" | "upsell" | "reorder";
 export interface CartLineInput {
   item_id: string;
   quantity: number;
+  /** Ordered weight in grams. Required for items with pricingMode="weight";
+   *  ignored for fixed-price items. */
+  weight_grams?: number | null;
   size_id?: string | null;
   option_ids?: string[];
   option_placements?: Record<string, "left" | "right" | "full">;
@@ -339,10 +343,20 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     if (!isItemVisibleNow(item)) {
       throw new CartValidationError("item_unavailable", line.item_id);
     }
-    if (line.quantity < 1 || line.quantity > 20) {
-      throw new CartValidationError("invalid_quantity", line.item_id);
+    const isWeight = item.pricingMode === "weight" && item.pricePerKg != null;
+    let weightGrams: number | null = null;
+    if (isWeight) {
+      const g = line.weight_grams ?? 0;
+      if (!Number.isInteger(g) || g < MIN_WEIGHT_GRAMS || g > MAX_WEIGHT_GRAMS) {
+        throw new CartValidationError("invalid_quantity", line.item_id);
+      }
+      weightGrams = g;
+    } else {
+      if (line.quantity < 1 || line.quantity > 20) {
+        throw new CartValidationError("invalid_quantity", line.item_id);
+      }
+      requireStock(item, line.quantity);
     }
-    requireStock(item, line.quantity);
 
     let sizeDelta = 0;
     let sizeSnapshot: string | null = null;
@@ -365,8 +379,10 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       line.option_placements ?? {},
     );
 
-    const unitPriceExact = item.basePrice + sizeDelta + optionsDelta;
-    const totalPriceExact = unitPriceExact * line.quantity;
+    const lineQuantity = isWeight ? 1 : line.quantity;
+    const base = isWeight ? weightPrice(item.pricePerKg!, weightGrams!) : item.basePrice;
+    const unitPriceExact = base + sizeDelta + optionsDelta;
+    const totalPriceExact = unitPriceExact * lineQuantity;
     const unitPrice = Math.round(unitPriceExact);
     const totalPrice = Math.round(totalPriceExact);
     subtotal += totalPrice;
@@ -374,7 +390,8 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     orderItemData.push({
       menuItemId: item.id,
       nameSnapshot: item.name,
-      quantity: line.quantity,
+      quantity: lineQuantity,
+      weightGrams,
       unitPrice,
       totalPrice,
       sizeId: line.size_id ?? null,

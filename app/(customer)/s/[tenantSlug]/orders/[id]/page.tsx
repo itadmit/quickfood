@@ -173,6 +173,7 @@ export default async function OrderTrackingPage({
             id: it.id,
             name: it.nameSnapshot,
             quantity: it.quantity,
+            weightGrams: it.weightGrams,
             total: it.totalPrice,
             size: it.sizeSnapshot,
             imageUrl: it.menuItem?.images?.[0] ?? null,

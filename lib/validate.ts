@@ -248,6 +248,9 @@ export const MenuItemInputSchema = z.object({
   description: z.string().max(800).default(""),
   category_id: UuidSchema,
   base_price: z.number().int().min(0),
+  // "fixed" (default) or "weight" (sold by kg; price_per_kg must be set).
+  pricing_mode: z.enum(["fixed", "weight"]).default("fixed"),
+  price_per_kg: z.number().int().min(1).nullable().optional(),
   prep_minutes: z.number().int().min(0).default(10),
   art_type: z.string().max(40).optional(),
   image_url: z.string().url().optional(),
@@ -268,6 +271,14 @@ export const MenuItemInputSchema = z.object({
   upsell_in_cart: z.boolean().default(false),
   sizes: z.array(ItemSizeInputSchema).default([]),
   option_groups: z.array(ItemOptionGroupInputSchema).default([]),
+}).superRefine((d, ctx) => {
+  if (d.pricing_mode === "weight" && (d.price_per_kg == null || d.price_per_kg < 1)) {
+    ctx.addIssue({
+      code: "custom",
+      message: "מחיר לק\"ג חובה במוצר לפי משקל",
+      path: ["price_per_kg"],
+    });
+  }
 });
 
 export const DealInputSchema = z.object({

@@ -7,9 +7,8 @@ import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemIm
 import { resolveCategoryStyle, type CategoryColorKey } from "@/lib/category-style";
 import { IcoSearch, IcoArrowLeft } from "@/components/shared/Icons";
 import { Check, Plus } from "lucide-react";
-import { formatPrice } from "@/lib/format";
 import { useCart } from "@/components/customer/CartProvider";
-import { NoticeCard, type MenuListItem, type NoticeRow } from "@/components/customer/MenuList";
+import { NoticeCard, menuCardPrice, type MenuListItem, type NoticeRow } from "@/components/customer/MenuList";
 import { cn } from "@/lib/cn";
 
 interface CategoryRow {
@@ -454,7 +453,7 @@ function ProductSquare({
 
   const footer = (
     <div className="p-3">
-      <div className="font-bold tnum text-base">{formatPrice(item.basePrice)}</div>
+      <div className="font-bold tnum text-base">{menuCardPrice(item)}</div>
       <div className="font-medium text-sm leading-tight line-clamp-2 mt-0.5">
         {item.name}
       </div>

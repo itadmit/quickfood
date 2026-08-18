@@ -90,6 +90,7 @@ export function serializeOrder(o: OrderWithIncludes) {
       id: it.id,
       name: it.nameSnapshot,
       quantity: it.quantity,
+      weight_grams: it.weightGrams ?? null,
       unit_price: it.unitPrice,
       total_price: it.totalPrice,
       size: it.sizeSnapshot,

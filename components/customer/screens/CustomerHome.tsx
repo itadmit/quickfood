@@ -13,6 +13,7 @@ import { CityPickerModal } from "@/components/customer/CityPickerModal";
 import {
   MenuList,
   NoticeCard,
+  menuCardPrice,
   type MenuListItem,
   type NoticeRow,
 } from "@/components/customer/MenuList";
@@ -73,6 +74,8 @@ interface Props {
     name: string;
     description: string;
     basePrice: number;
+    pricingMode?: string;
+    pricePerKg?: number | null;
     artType: string | null;
     images?: string[];
   }>;
@@ -695,7 +698,7 @@ export function CustomerHome({
                 <div className="p-3">
                   <div className="font-medium text-sm leading-tight line-clamp-1">{item.name}</div>
                   <div className="text-xs text-qf-mute line-clamp-2 mt-1">{item.description}</div>
-                  <div className="text-sm font-semibold mt-2 tnum">{formatPrice(item.basePrice)}</div>
+                  <div className="text-sm font-semibold mt-2 tnum">{menuCardPrice(item)}</div>
                 </div>
               </Link>
             ))}

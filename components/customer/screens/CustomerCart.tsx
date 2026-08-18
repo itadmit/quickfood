@@ -159,28 +159,34 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
                   <div className="text-xs text-qf-ink2 mt-0.5">הערה: {l.notes}</div>
                 )}
                 <div className="flex items-center justify-between mt-2.5">
-                  <div
-                    className="flex items-center bg-qf-bg rounded-full border border-qf-line"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => updateQuantity(l.lineId, l.quantity - 1)}
-                      className="w-9 h-9 grid place-items-center active:bg-qf-line-soft rounded-full transition"
-                      aria-label="הפחת"
+                  {l.weightGrams != null ? (
+                    <div className="inline-flex items-center gap-1 bg-qf-bg rounded-full border border-qf-line px-3 h-9 text-sm font-bold tnum">
+                      {l.weightGrams} גרם
+                    </div>
+                  ) : (
+                    <div
+                      className="flex items-center bg-qf-bg rounded-full border border-qf-line"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <IcoMinus s={16} />
-                    </button>
-                    <div className="w-7 text-center text-base font-bold tnum">{l.quantity}</div>
-                    <button
-                      type="button"
-                      onClick={() => updateQuantity(l.lineId, l.quantity + 1)}
-                      className="w-9 h-9 grid place-items-center active:bg-qf-line-soft rounded-full transition"
-                      aria-label="הוסף"
-                    >
-                      <IcoPlus c="#11231a" s={16} />
-                    </button>
-                  </div>
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(l.lineId, l.quantity - 1)}
+                        className="w-9 h-9 grid place-items-center active:bg-qf-line-soft rounded-full transition"
+                        aria-label="הפחת"
+                      >
+                        <IcoMinus s={16} />
+                      </button>
+                      <div className="w-7 text-center text-base font-bold tnum">{l.quantity}</div>
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(l.lineId, l.quantity + 1)}
+                        className="w-9 h-9 grid place-items-center active:bg-qf-line-soft rounded-full transition"
+                        aria-label="הוסף"
+                      >
+                        <IcoPlus c="#11231a" s={16} />
+                      </button>
+                    </div>
+                  )}
                   <div className="font-bold tnum text-base">{formatPrice(lineTotal)}</div>
                 </div>
               </div>

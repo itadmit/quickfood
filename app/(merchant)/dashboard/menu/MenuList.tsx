@@ -45,12 +45,21 @@ interface Item {
   description: string;
   categoryId: string;
   basePrice: number;
+  pricingMode?: string;
+  pricePerKg?: number | null;
   prepMinutes: number;
   available: boolean;
   featured: boolean;
   artType: string | null;
   sku: string | null;
   images: string[];
+}
+
+function itemPriceLabel(item: { basePrice: number; pricingMode?: string; pricePerKg?: number | null }): string {
+  if (item.pricingMode === "weight" && item.pricePerKg != null) {
+    return `${formatPrice(item.pricePerKg)} לק"ג`;
+  }
+  return formatPrice(item.basePrice);
 }
 
 export function MenuList({
@@ -456,7 +465,7 @@ export function MenuList({
                   />
                 </div>
                 <div className="flex-1 min-w-0 font-medium truncate">{item.name}</div>
-                <div className="shrink-0 text-sm tnum text-qf-mute">{formatPrice(item.basePrice)}</div>
+                <div className="shrink-0 text-sm tnum text-qf-mute">{itemPriceLabel(item)}</div>
               </div>
             )}
           </DragList>
@@ -519,12 +528,12 @@ export function MenuList({
               <div className="lg:hidden text-xs text-qf-mute flex items-center gap-2 mt-0.5">
                 <span className="truncate">{catMap[item.categoryId]}</span>
                 <span>·</span>
-                <span className="tnum font-medium text-qf-ink2">{formatPrice(item.basePrice)}</span>
+                <span className="tnum font-medium text-qf-ink2">{itemPriceLabel(item)}</span>
               </div>
               {item.sku && <div className="hidden lg:block text-xs text-qf-mute" dir="ltr">{item.sku}</div>}
             </div>
             <div className="hidden lg:block text-sm text-qf-ink2 truncate">{catMap[item.categoryId]}</div>
-            <div className="hidden lg:block text-sm tnum font-medium">{formatPrice(item.basePrice)}</div>
+            <div className="hidden lg:block text-sm tnum font-medium">{itemPriceLabel(item)}</div>
             <div className="hidden lg:block text-sm text-qf-ink2 tnum">{item.prepMinutes} דק&apos;</div>
             <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
               <Toggle

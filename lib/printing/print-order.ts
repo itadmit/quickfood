@@ -74,6 +74,7 @@ export async function printOrderTicket(orderId: string, trigger: PrintTrigger): 
       items: order.items.map((it) => ({
         name: it.nameSnapshot,
         quantity: it.quantity,
+        weight_grams: it.weightGrams,
         total_price: it.totalPrice,
         size: it.sizeSnapshot,
         options: it.selectedOptions,

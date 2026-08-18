@@ -590,6 +590,7 @@ export function CustomerCheckout({
               return {
                 item_id: l.itemId,
                 quantity: l.quantity,
+                weight_grams: l.weightGrams ?? undefined,
                 size_id: l.sizeId,
                 option_ids: l.options.map((o) => o.optionId),
                 option_placements: Object.keys(placements).length > 0 ? placements : undefined,

@@ -254,6 +254,8 @@ export default async function HomePage({
     name: p.name,
     description: p.description,
     basePrice: p.basePrice,
+    pricingMode: p.pricingMode,
+    pricePerKg: p.pricePerKg,
     artType: p.artType,
     images: p.images,
   }));
@@ -324,6 +326,8 @@ export default async function HomePage({
         name: i.name,
         description: i.description,
         basePrice: i.basePrice,
+        pricingMode: i.pricingMode,
+        pricePerKg: i.pricePerKg,
         artType: i.artType,
         images: i.images,
         tags: i.tags,

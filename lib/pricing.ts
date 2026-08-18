@@ -38,6 +38,15 @@ export function lineTotal(input: PriceInput): number {
   return unitPrice(input) * input.quantity;
 }
 
+/** Whole-shekel price for `grams` of a product priced at `pricePerKg` (₪/kg). */
+export function weightPrice(pricePerKg: number, grams: number): number {
+  return Math.round((pricePerKg * grams) / 1000);
+}
+
+/** Bounds for a weight-priced line, in grams. */
+export const MIN_WEIGHT_GRAMS = 10;
+export const MAX_WEIGHT_GRAMS = 20000;
+
 export interface SummaryInput {
   lines: PriceLine[];
   delivery_fee: number;

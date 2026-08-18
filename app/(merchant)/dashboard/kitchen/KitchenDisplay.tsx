@@ -20,6 +20,7 @@ interface Item {
   id: string;
   name: string;
   quantity: number;
+  weightGrams?: number | null;
   size: string | null;
   notes: string | null;
   preparedAt: string | null;
@@ -105,6 +106,7 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
               id: it.id as string,
               name: it.name as string,
               quantity: it.quantity as number,
+              weightGrams: (it.weight_grams as number | null) ?? null,
               size: (it.size as string | null) ?? null,
               notes: (it.notes as string | null) ?? null,
               preparedAt: (it.prepared_at as string | null) ?? null,
@@ -369,7 +371,9 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
                           </span>
                           <div className={cn("flex-1 min-w-0", prepared && "line-through opacity-70")}>
                             <div className="flex items-baseline gap-2">
-                              <span className="text-lg font-black tnum">{it.quantity}×</span>
+                              <span className="text-lg font-black tnum">
+                                {it.weightGrams != null ? `${it.weightGrams} גרם` : `${it.quantity}×`}
+                              </span>
                               <span className="text-lg font-bold">
                                 {it.name}
                                 {it.size ? ` · ${it.size}` : ""}

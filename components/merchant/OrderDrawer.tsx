@@ -66,6 +66,7 @@ interface OrderDetail {
     id: string;
     name: string;
     quantity: number;
+    weight_grams?: number | null;
     unit_price: number;
     total_price: number;
     size: string | null;
@@ -448,7 +449,9 @@ export function OrderDrawer({
                       >
                         <div className="min-w-0 flex-1">
                           <div className="text-sm font-medium flex items-center gap-2">
-                            <span className="tnum text-qf-mute">×{it.quantity}</span>
+                            <span className="tnum text-qf-mute">
+                              {it.weight_grams != null ? `${it.weight_grams} גרם` : `×${it.quantity}`}
+                            </span>
                             <span className="truncate">{it.name}</span>
                           </div>
                           {it.size && <div className="text-xs text-qf-mute">{it.size}</div>}
@@ -782,7 +785,8 @@ function PrintReceipt({ order, settings }: { order: OrderDetail; settings: Recei
         <div key={it.id} style={{ marginBottom: "3pt" }}>
           <div className="qf-pr-row">
             <span>
-              {it.quantity}× {it.name}
+              {it.weight_grams != null ? `${it.weight_grams} גרם · ` : `${it.quantity}× `}
+              {it.name}
               {it.size ? ` · ${it.size}` : ""}
             </span>
             <span>{formatPrice(it.total_price)}</span>

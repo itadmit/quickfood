@@ -100,6 +100,7 @@ export interface ReceiptOrder {
   items: Array<{
     name: string;
     quantity: number;
+    weight_grams?: number | null;
     total_price: number;
     size: string | null;
     options: unknown;
@@ -233,9 +234,10 @@ export function buildReceiptLines(
   lines.push({ kind: "rule" });
 
   for (const it of order.items) {
+    const qtyLabel = it.weight_grams != null ? `${it.weight_grams} גרם ·` : `${it.quantity}×`;
     lines.push({
       kind: "row",
-      right: `${it.quantity}× ${it.name}${it.size ? ` · ${it.size}` : ""}`,
+      right: `${qtyLabel} ${it.name}${it.size ? ` · ${it.size}` : ""}`,
       left: formatPrice(it.total_price),
       size: "normal",
     });

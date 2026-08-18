@@ -67,6 +67,7 @@ const CreateOrderSchema = z.object({
       z.object({
         item_id: z.string().uuid(),
         quantity: z.number().int().min(1).max(20),
+        weight_grams: z.number().int().min(1).max(20000).nullable().optional(),
         size_id: z.string().uuid().nullable().optional(),
         option_ids: z.array(z.string().uuid()).default([]),
         option_placements: z.record(z.string().uuid(), z.enum(["left", "right", "full"])).optional(),
@@ -165,6 +166,7 @@ export const POST = handler(async (req: Request) => {
       lines: body.lines.map((l) => ({
         item_id: l.item_id,
         quantity: l.quantity,
+        weight_grams: l.weight_grams ?? undefined,
         size_id: l.size_id ?? undefined,
         option_ids: l.option_ids,
         option_placements: l.option_placements,

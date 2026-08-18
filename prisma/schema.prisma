@@ -712,6 +712,13 @@ model MenuItem {
   imageNote   String?      @map("image_note")
   artType     String?      @map("art_type")
   basePrice   Int          @map("base_price")
+  // Pricing mode. "fixed" = basePrice per unit, integer quantity (default).
+  // "weight" = sold by weight: the customer/cashier enters grams and the
+  // line is priced pricePerKg * grams / 1000, rounded to whole shekels.
+  // basePrice is ignored for weight items (sizes/options still add on top).
+  pricingMode String       @default("fixed") @map("pricing_mode")
+  // Price per kilogram in whole shekels. Only set when pricingMode="weight".
+  pricePerKg  Int?         @map("price_per_kg")
   prepMinutes Int          @default(10) @map("prep_minutes")
   available   Boolean      @default(true)
   featured    Boolean      @default(false)
@@ -1305,6 +1312,10 @@ model OrderItem {
 
   nameSnapshot String @map("name_snapshot")
   quantity     Int    @default(1)
+  // Set for weight-priced lines: the ordered weight in grams. When non-null
+  // the line was sold by weight (quantity stays 1); unitPrice/totalPrice hold
+  // the computed, rounded shekel price for that weight. NULL = normal unit line.
+  weightGrams  Int?   @map("weight_grams")
   unitPrice    Int    @map("unit_price")
   totalPrice   Int    @map("total_price")
 

@@ -27,6 +27,7 @@ interface OrderItemRow {
   id: string;
   name: string;
   quantity: number;
+  weightGrams?: number | null;
   total: number;
   size: string | null;
   imageUrl: string | null;
@@ -481,7 +482,7 @@ export function OrderTracking({
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="font-medium truncate">{it.name}</div>
                   <div className="text-qf-mute text-xs tnum shrink-0">
-                    ×{it.quantity}
+                    {it.weightGrams != null ? `${it.weightGrams} גרם` : `×${it.quantity}`}
                   </div>
                 </div>
                 {it.size && (
@@ -887,7 +888,7 @@ function ThankYouView({
               <div className="flex items-center gap-2 min-w-0">
                 <div className="font-medium truncate">{it.name}</div>
                 <div className="text-qf-mute text-xs tnum shrink-0">
-                  ×{it.quantity}
+                  {it.weightGrams != null ? `${it.weightGrams} גרם` : `×${it.quantity}`}
                 </div>
               </div>
               {it.size && (

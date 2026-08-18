@@ -8,12 +8,26 @@ import { formatPrice } from "@/lib/format";
 import { FILTERABLE_TAG_LABELS, findTag, TONE_CLASSES } from "@/lib/dietary-tags";
 import { cn } from "@/lib/cn";
 
+/** Price label for a menu card - "₪X לק"ג" for weight items, else the fixed price. */
+export function menuCardPrice(item: {
+  basePrice: number;
+  pricingMode?: string;
+  pricePerKg?: number | null;
+}): string {
+  if (item.pricingMode === "weight" && item.pricePerKg != null) {
+    return `${formatPrice(item.pricePerKg)} לק"ג`;
+  }
+  return formatPrice(item.basePrice);
+}
+
 export interface MenuListItem {
   id: string;
   categoryId: string;
   name: string;
   description: string;
   basePrice: number;
+  pricingMode?: string;
+  pricePerKg?: number | null;
   artType: string | null;
   images?: string[];
   tags: string[];
@@ -409,7 +423,7 @@ export function MenuList({
                           )}
                         </div>
                         <div className="flex items-center justify-between mt-1.5">
-                          <div className="font-bold tnum text-base">{formatPrice(item.basePrice)}</div>
+                          <div className="font-bold tnum text-base">{menuCardPrice(item)}</div>
                         </div>
                       </div>
                     </Link>

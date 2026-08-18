@@ -63,6 +63,7 @@ interface OrderRow {
     id: string;
     name: string;
     quantity: number;
+    weightGrams?: number | null;
     size: string | null;
     options: Array<{ name: string; half?: "left" | "right" | "full" }>;
     notes: string | null;
@@ -348,6 +349,7 @@ export function OrdersKanban({
           id: it.id as string,
           name: it.name as string,
           quantity: it.quantity as number,
+          weightGrams: (it.weight_grams as number | null) ?? null,
           size: (it.size as string | null) ?? null,
           options: Array.isArray(it.options)
             ? (it.options as Array<{ name?: string; half?: string }>)
@@ -939,7 +941,7 @@ function Card({
           return (
             <li key={it.id} className="leading-tight">
               <div className="flex gap-1.5">
-                <span className="font-medium tnum shrink-0">{it.quantity}×</span>
+                <span className="font-medium tnum shrink-0">{it.weightGrams != null ? `${it.weightGrams} גרם` : `${it.quantity}×`}</span>
                 <span className="text-qf-ink2">
                   {it.name}
                   {it.size ? ` · ${it.size}` : ""}

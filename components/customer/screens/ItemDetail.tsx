@@ -13,6 +13,7 @@ import {
 } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { priceGroupOptions, type PricedOption, type GroupPricingConfig } from "@/lib/option-pricing";
+import { weightPrice, MIN_WEIGHT_GRAMS, MAX_WEIGHT_GRAMS } from "@/lib/pricing";
 import { cn } from "@/lib/cn";
 
 const KIOSK_NOTE_PRESETS = [
@@ -66,6 +67,8 @@ interface ItemData {
   name: string;
   description: string;
   basePrice: number;
+  pricingMode?: string;
+  pricePerKg?: number | null;
   artType: string | null;
   images?: string[];
   imageNote?: string | null;
@@ -184,6 +187,18 @@ export function ItemDetail({
   });
 
   const [quantity, setQuantity] = useState(editLine?.quantity ?? 1);
+
+  const isWeight = item.pricingMode === "weight" && item.pricePerKg != null;
+  const pricePerKg = item.pricePerKg ?? 0;
+  const clampGrams = (g: number) =>
+    Math.min(MAX_WEIGHT_GRAMS, Math.max(MIN_WEIGHT_GRAMS, Math.round(g)));
+  const [weightEntry, setWeightEntry] = useState<"weight" | "amount">("weight");
+  const [grams, setGrams] = useState<number>(editLine?.weightGrams ?? 500);
+  const [amountStr, setAmountStr] = useState<string>(
+    editLine?.weightGrams ? String(weightPrice(pricePerKg, editLine.weightGrams)) : "",
+  );
+  const weightBase = isWeight ? weightPrice(pricePerKg, grams) : 0;
+
   const [notes, setNotes] = useState(editLine?.notes ?? "");
   const [flashGroupId, setFlashGroupId] = useState<string | null>(null);
   const [addPhase, setAddPhase] = useState<"idle" | "loading" | "done">("idle");
@@ -364,8 +379,10 @@ export function ItemDetail({
       const charges = priceGroupOptions(picked, groupPricingConfig(g));
       for (const c of charges.values()) oDelta += c;
     }
-    return (item.basePrice + sDelta + oDelta) * quantity;
-  }, [item, sizeId, picks, optQtys, halfPicks, quantity]);
+    const base = isWeight ? weightBase : item.basePrice;
+    const qty = isWeight ? 1 : quantity;
+    return (base + sDelta + oDelta) * qty;
+  }, [item, sizeId, picks, optQtys, halfPicks, quantity, isWeight, weightBase]);
 
   const missingGroup = useMemo(() => {
     for (const g of item.optionGroups) {
@@ -480,10 +497,12 @@ export function ItemDetail({
     const payload = {
       itemId: item.id,
       name: item.name,
-      basePrice: item.basePrice,
+      basePrice: isWeight ? weightBase : item.basePrice,
       artType: item.artType,
       imageUrl: item.images?.[0] ?? null,
-      quantity,
+      quantity: isWeight ? 1 : quantity,
+      weightGrams: isWeight ? grams : null,
+      pricePerKg: isWeight ? pricePerKg : null,
       sizeId: size?.id ?? null,
       sizeName: size?.name ?? null,
       sizeDelta: size?.priceDelta ?? 0,
@@ -711,8 +730,112 @@ export function ItemDetail({
         {item.description && (
           <p className="text-sm text-qf-ink2 leading-relaxed mt-2">{item.description}</p>
         )}
-        <div className="text-base font-semibold tnum mt-3">{formatPrice(item.basePrice)}</div>
+        <div className="text-base font-semibold tnum mt-3">
+          {isWeight
+            ? `${formatPrice(pricePerKg)} לק"ג · ${formatPrice(pricePerKg / 10)} ל-100 גרם`
+            : formatPrice(item.basePrice)}
+        </div>
       </section>
+
+      {isWeight && (
+        <section className="bg-white mt-2 px-5 py-4">
+          <div className="flex items-center gap-2 mb-3">
+            <button
+              type="button"
+              onClick={() => setWeightEntry("weight")}
+              className={cn(
+                "flex-1 h-10 rounded-xl text-sm font-bold border-2 transition",
+                weightEntry === "weight"
+                  ? "border-(--qf-primary) bg-(--qf-soft) text-(--qf-deep)"
+                  : "border-qf-line-dash text-qf-ink2 bg-white",
+              )}
+            >
+              לפי משקל (גרם)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAmountStr(String(weightBase));
+                setWeightEntry("amount");
+              }}
+              className={cn(
+                "flex-1 h-10 rounded-xl text-sm font-bold border-2 transition",
+                weightEntry === "amount"
+                  ? "border-(--qf-primary) bg-(--qf-soft) text-(--qf-deep)"
+                  : "border-qf-line-dash text-qf-ink2 bg-white",
+              )}
+            >
+              לפי סכום (₪)
+            </button>
+          </div>
+
+          {weightEntry === "weight" ? (
+            <>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setGrams((g) => clampGrams(g - 50))}
+                  className="w-12 h-12 rounded-xl bg-qf-line-soft grid place-items-center active:bg-qf-line-dash"
+                  aria-label="הפחת 50 גרם"
+                >
+                  <IcoMinus s={18} />
+                </button>
+                <div className="flex-1 relative">
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={grams}
+                    min={MIN_WEIGHT_GRAMS}
+                    max={MAX_WEIGHT_GRAMS}
+                    onChange={(e) => setGrams(clampGrams(Number(e.target.value) || 0))}
+                    className="w-full h-12 text-center text-lg font-bold tnum bg-qf-bg border border-qf-line rounded-xl outline-none focus:border-(--qf-primary) focus:bg-white"
+                  />
+                  <span className="absolute inset-y-0 end-3 grid place-items-center text-sm text-qf-mute pointer-events-none">
+                    גרם
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setGrams((g) => clampGrams(g + 50))}
+                  className="w-12 h-12 rounded-xl bg-qf-line-soft grid place-items-center active:bg-qf-line-dash"
+                  aria-label="הוסף 50 גרם"
+                >
+                  <IcoPlus c="#11231a" s={18} />
+                </button>
+              </div>
+              <div className="text-sm text-qf-ink2 mt-2 tnum">
+                המחיר: <span className="font-bold">{formatPrice(weightBase)}</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="relative">
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={amountStr}
+                  placeholder="כמה תרצו לשלם?"
+                  onChange={(e) => {
+                    setAmountStr(e.target.value);
+                    const amount = Number(e.target.value) || 0;
+                    if (amount > 0 && pricePerKg > 0) {
+                      setGrams(clampGrams((amount / pricePerKg) * 1000));
+                    }
+                  }}
+                  className="w-full h-12 text-center text-lg font-bold tnum bg-qf-bg border border-qf-line rounded-xl outline-none focus:border-(--qf-primary) focus:bg-white"
+                />
+                <span className="absolute inset-y-0 end-3 grid place-items-center text-sm text-qf-mute pointer-events-none">
+                  ₪
+                </span>
+              </div>
+              <div className="text-sm text-qf-ink2 mt-2 tnum">
+                מקבלים בערך <span className="font-bold">{grams} גרם</span> · לתשלום{" "}
+                <span className="font-bold">{formatPrice(weightBase)}</span>
+              </div>
+            </>
+          )}
+        </section>
+      )}
 
       {/* Sizes (treated as required-single group) */}
       {item.sizes.length > 0 && (() => {
@@ -1140,6 +1263,7 @@ export function ItemDetail({
             className={cn(
               "flex items-center bg-qf-line-soft rounded-full",
               kioskMode && "shadow-sm",
+              isWeight && "hidden",
             )}
           >
             <button

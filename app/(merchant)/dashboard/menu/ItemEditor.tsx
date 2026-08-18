@@ -83,6 +83,8 @@ interface ItemData {
   description: string;
   categoryId: string;
   basePrice: number;
+  pricingMode: "fixed" | "weight";
+  pricePerKg: number | null;
   prepMinutes: number;
   artType: string | null;
   imageUrl: string | null;
@@ -108,6 +110,8 @@ const EMPTY_ITEM: ItemData = {
   description: "",
   categoryId: "",
   basePrice: 50,
+  pricingMode: "fixed",
+  pricePerKg: null,
   prepMinutes: 10,
   artType: null,
   imageUrl: null,
@@ -251,6 +255,11 @@ export function ItemEditor({
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
+    if (data.pricingMode === "weight" && (!data.pricePerKg || data.pricePerKg < 1)) {
+      setError("במוצר לפי משקל חובה להזין מחיר לק\"ג");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -258,7 +267,9 @@ export function ItemEditor({
         name: data.name,
         description: data.description,
         category_id: data.categoryId,
-        base_price: data.basePrice,
+        base_price: data.pricingMode === "weight" ? 0 : data.basePrice,
+        pricing_mode: data.pricingMode,
+        price_per_kg: data.pricingMode === "weight" ? data.pricePerKg : null,
         prep_minutes: data.prepMinutes,
         art_type: data.artType ?? undefined,
         image_url: data.imageUrl ?? undefined,
@@ -484,19 +495,68 @@ export function ItemEditor({
                 className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-base lg:text-sm"
               />
             </Field>
+            <Field label="שיטת תמחור">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => update("pricingMode", "fixed")}
+                  className={cn(
+                    "flex-1 h-11 rounded-xl text-sm font-bold border-2 transition",
+                    data.pricingMode === "fixed"
+                      ? "border-(--qf-primary) bg-(--qf-soft) text-(--qf-deep)"
+                      : "border-qf-line-dash text-qf-ink2 bg-white",
+                  )}
+                >
+                  מחיר קבוע ליחידה
+                </button>
+                <button
+                  type="button"
+                  onClick={() => update("pricingMode", "weight")}
+                  className={cn(
+                    "flex-1 h-11 rounded-xl text-sm font-bold border-2 transition",
+                    data.pricingMode === "weight"
+                      ? "border-(--qf-primary) bg-(--qf-soft) text-(--qf-deep)"
+                      : "border-qf-line-dash text-qf-ink2 bg-white",
+                  )}
+                >
+                  לפי משקל (₪ לק"ג)
+                </button>
+              </div>
+            </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="מחיר בסיס">
-                <div className="flex items-center border border-qf-line-dash rounded-xl focus-within:border-(--qf-primary)">
-                  <span className="px-3 text-qf-mute">₪</span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={data.basePrice}
-                    onChange={(e) => update("basePrice", parseInt(e.target.value, 10) || 0)}
-                    className="flex-1 py-2.5 outline-none bg-transparent tnum text-base lg:text-sm"
-                  />
-                </div>
-              </Field>
+              {data.pricingMode === "weight" ? (
+                <Field label='מחיר לק"ג'>
+                  <div className="flex items-center border border-qf-line-dash rounded-xl focus-within:border-(--qf-primary)">
+                    <span className="px-3 text-qf-mute">₪</span>
+                    <input
+                      type="number"
+                      min={1}
+                      value={data.pricePerKg ?? ""}
+                      placeholder="למשל 100"
+                      onChange={(e) => update("pricePerKg", parseInt(e.target.value, 10) || null)}
+                      className="flex-1 py-2.5 outline-none bg-transparent tnum text-base lg:text-sm"
+                    />
+                  </div>
+                  {data.pricePerKg ? (
+                    <span className="text-[11px] text-qf-mute mt-1 block">
+                      = {formatPrice(data.pricePerKg / 10)} ל-100 גרם
+                    </span>
+                  ) : null}
+                </Field>
+              ) : (
+                <Field label="מחיר בסיס">
+                  <div className="flex items-center border border-qf-line-dash rounded-xl focus-within:border-(--qf-primary)">
+                    <span className="px-3 text-qf-mute">₪</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={data.basePrice}
+                      onChange={(e) => update("basePrice", parseInt(e.target.value, 10) || 0)}
+                      className="flex-1 py-2.5 outline-none bg-transparent tnum text-base lg:text-sm"
+                    />
+                  </div>
+                </Field>
+              )}
               <Field label="זמן הכנה (דקות)">
                 <input
                   type="number"
@@ -918,7 +978,11 @@ export function ItemEditor({
             <div className="px-4 pt-4 space-y-1">
               <div className="font-semibold text-base">{data.name || "ללא שם"}</div>
               <div className="text-xs text-qf-mute line-clamp-3">{data.description || "אין תיאור"}</div>
-              <div className="font-bold tnum text-lg mt-2">{formatPrice(data.basePrice)}</div>
+              <div className="font-bold tnum text-lg mt-2">
+                {data.pricingMode === "weight"
+                  ? `${formatPrice(data.pricePerKg ?? 0)} לק"ג`
+                  : formatPrice(data.basePrice)}
+              </div>
             </div>
 
             {data.sizes.length > 0 && (

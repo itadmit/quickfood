@@ -17,6 +17,11 @@ export interface CartLine {
   artType: string | null;
   imageUrl: string | null;
   quantity: number;
+  /** Weight-priced line: the chosen weight in grams. When set, `basePrice`
+   *  already holds the computed whole-shekel price for this weight and
+   *  `quantity` stays 1. `pricePerKg` is kept so the line can be re-edited. */
+  weightGrams?: number | null;
+  pricePerKg?: number | null;
   sizeId: string | null;
   sizeName: string | null;
   sizeDelta: number;
