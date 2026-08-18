@@ -18,7 +18,7 @@ const PatchSchema = z.object({ featured: z.boolean() });
 
 export const PATCH = handler(
   async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
-    const session = await requireMerchant();
+    const session = await requireMerchant(["owner", "manager"]);
     if (!session.tenantId) return apiError("forbidden", "no tenant", 403);
 
     const { id } = await params;
