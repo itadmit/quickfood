@@ -21,6 +21,21 @@ import {
 } from "@/lib/category-style";
 import { cn } from "@/lib/cn";
 
+const HEBREW_DAYS = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"] as const;
+
+function minutesToHM(min: number | null): string {
+  if (min === null || min === undefined) return "";
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+function hmToMinutes(hm: string): number | null {
+  if (!hm) return null;
+  const [h, m] = hm.split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 60 + m;
+}
+
 export interface CategoryRow {
   id: string;
   name: string;
@@ -28,6 +43,9 @@ export interface CategoryRow {
   color: string | null;
   imageUrl: string | null;
   position: number;
+  availableFrom: number | null;
+  availableTo: number | null;
+  availableDays: number | null;
   upsellInCart: boolean;
   upsellBeforeCheckout: boolean;
   itemCount: number;
@@ -40,6 +58,9 @@ type Draft = {
   color: CategoryColorKey;
   imageUrl: string | null;
   position: number;
+  availableFrom: number | null;
+  availableTo: number | null;
+  availableDays: number | null;
   upsellInCart: boolean;
   upsellBeforeCheckout: boolean;
 };
@@ -50,6 +71,9 @@ const EMPTY_DRAFT: Draft = {
   color: DEFAULT_COLOR,
   imageUrl: null,
   position: 0,
+  availableFrom: null,
+  availableTo: null,
+  availableDays: null,
   upsellInCart: false,
   upsellBeforeCheckout: false,
 };
@@ -118,6 +142,9 @@ export function CategoriesView({
       color: style.colorKey,
       imageUrl: c.imageUrl,
       position: c.position,
+      availableFrom: c.availableFrom,
+      availableTo: c.availableTo,
+      availableDays: c.availableDays,
       upsellInCart: c.upsellInCart,
       upsellBeforeCheckout: c.upsellBeforeCheckout,
     });
@@ -143,6 +170,9 @@ export function CategoriesView({
         icon: editing.icon,
         color: editing.color,
         image_url: editing.imageUrl,
+        available_from: editing.availableFrom,
+        available_to: editing.availableTo,
+        available_days: editing.availableDays,
         upsell_in_cart: editing.upsellInCart,
         upsell_before_checkout: editing.upsellBeforeCheckout,
         ...(isCreate && { position: editing.position }),
@@ -493,6 +523,95 @@ function DraftModal({
               className="w-5 h-5 mt-0.5 shrink-0 accent-(--qf-primary)"
             />
           </label>
+
+          <div className="border-t border-qf-line-soft pt-4">
+            <div className="text-sm font-medium mb-1">מתי הקטגוריה מוצגת</div>
+            <p className="text-xs text-qf-mute mb-3 leading-relaxed">
+              הגבילו את הקטגוריה לימים / שעות מסוימים (למשל תפריט בוקר, או קטגוריה שזמינה רק בסופ&quot;ש). מחוץ לחלון - הקטגוריה וכל הפריטים שבה לא יופיעו בחנות.
+            </p>
+            <div className="flex items-baseline justify-between mb-2">
+              <span className="text-sm font-medium">חלון שעות</span>
+              <span
+                className={cn(
+                  "text-[11px] font-semibold px-2 py-0.5 rounded-md",
+                  draft.availableFrom === null && draft.availableTo === null
+                    ? "bg-qf-green-soft text-qf-green-deep"
+                    : "bg-qf-yolk-soft text-qf-ink",
+                )}
+              >
+                {draft.availableFrom === null && draft.availableTo === null
+                  ? "תמיד מוצגת"
+                  : `${minutesToHM(draft.availableFrom) || "-"} → ${minutesToHM(draft.availableTo) || "-"}`}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5">
+              <label className="flex flex-col gap-1">
+                <span className="text-[10px] text-qf-mute">משעה</span>
+                <input
+                  type="time"
+                  value={minutesToHM(draft.availableFrom)}
+                  onChange={(e) => onChange({ ...draft, availableFrom: hmToMinutes(e.target.value) })}
+                  className="px-3 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-(--qf-primary) outline-none tnum text-base lg:text-sm"
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-[10px] text-qf-mute">עד שעה</span>
+                <input
+                  type="time"
+                  value={minutesToHM(draft.availableTo)}
+                  onChange={(e) => onChange({ ...draft, availableTo: hmToMinutes(e.target.value) })}
+                  className="px-3 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-(--qf-primary) outline-none tnum text-base lg:text-sm"
+                />
+              </label>
+            </div>
+            {(draft.availableFrom !== null || draft.availableTo !== null) && (
+              <button
+                type="button"
+                onClick={() => onChange({ ...draft, availableFrom: null, availableTo: null })}
+                className="text-xs text-qf-mute hover:text-qf-ink underline mt-2 inline-block"
+              >
+                אפס חלון שעות
+              </button>
+            )}
+            <div className="mt-4">
+              <span className="text-sm font-medium block mb-2">ימים בשבוע</span>
+              <div className="flex gap-1.5">
+                {HEBREW_DAYS.map((label, i) => {
+                  const mask = 1 << i;
+                  const days = draft.availableDays ?? 0b1111111;
+                  const on = (days & mask) !== 0;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => {
+                        const current = draft.availableDays ?? 0b1111111;
+                        const next = on ? current & ~mask : current | mask;
+                        onChange({ ...draft, availableDays: next === 0b1111111 ? null : next });
+                      }}
+                      className={cn(
+                        "w-10 h-10 lg:w-9 lg:h-9 rounded-lg text-sm lg:text-xs font-bold transition shrink-0",
+                        on
+                          ? "bg-(--qf-primary) text-white"
+                          : "bg-qf-line-soft text-qf-mute hover:bg-qf-line-dash/60",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              {draft.availableDays !== null && (
+                <button
+                  type="button"
+                  onClick={() => onChange({ ...draft, availableDays: null })}
+                  className="text-xs text-qf-mute hover:text-qf-ink underline mt-2 inline-block"
+                >
+                  אפס לכל הימים
+                </button>
+              )}
+            </div>
+          </div>
 
           {error && (
             <div className="text-xs bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato rounded-lg px-3 py-2">

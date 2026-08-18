@@ -26,6 +26,34 @@ export interface AvailabilityFields {
   stockRemaining: number | null;
 }
 
+export interface CategoryAvailabilityFields {
+  active: boolean;
+  availableFrom: number | null;
+  availableTo: number | null;
+  availableDays: number | null;
+}
+
+/**
+ * Whether a category is currently shown to customers. Same time/day windowing
+ * as items (reuses isItemVisibleNow); `active` maps to `available` and there's
+ * no stock concept for a category.
+ */
+export function isCategoryVisibleNow(
+  cat: CategoryAvailabilityFields,
+  now: Date = new Date(),
+): boolean {
+  return isItemVisibleNow(
+    {
+      available: cat.active,
+      availableFrom: cat.availableFrom,
+      availableTo: cat.availableTo,
+      availableDays: cat.availableDays,
+      stockRemaining: null,
+    },
+    now,
+  );
+}
+
 export function isItemVisibleNow(item: AvailabilityFields, now: Date = new Date()): boolean {
   if (!item.available) return false;
   if (item.stockRemaining !== null && item.stockRemaining <= 0) return false;

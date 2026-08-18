@@ -3,7 +3,7 @@ import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db/client";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
 import { notifyMerchantNewOrder } from "@/lib/orders/notify-merchant";
-import { isItemVisibleNow } from "@/lib/menu-availability";
+import { isItemVisibleNow, isCategoryVisibleNow } from "@/lib/menu-availability";
 import { isStorefrontBlocked } from "@/lib/tenant-billing";
 import { computeDeliveryFee } from "@/lib/delivery-fee";
 import { matchZoneByCity } from "@/lib/delivery-zone-match";
@@ -213,6 +213,9 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     where: { id: { in: itemIds }, tenantId: tenant.id, available: true },
     include: {
       sizes: true,
+      category: {
+        select: { active: true, availableFrom: true, availableTo: true, availableDays: true },
+      },
       optionGroups: {
         include: {
           options: true,
@@ -343,6 +346,9 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     if (!isItemVisibleNow(item)) {
       throw new CartValidationError("item_unavailable", line.item_id);
     }
+    if (item.category && !isCategoryVisibleNow(item.category)) {
+      throw new CartValidationError("item_unavailable", line.item_id);
+    }
     const isWeight = item.pricingMode === "weight" && item.pricePerKg != null;
     let weightGrams: number | null = null;
     if (isWeight) {
@@ -441,6 +447,9 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
           }
           const item = itemsById.get(unit.item_id);
           if (!item || !isItemVisibleNow(item)) {
+            throw new CartValidationError("item_unavailable", unit.item_id);
+          }
+          if (item.category && !isCategoryVisibleNow(item.category)) {
             throw new CartValidationError("item_unavailable", unit.item_id);
           }
           requireStock(item, dl.quantity);

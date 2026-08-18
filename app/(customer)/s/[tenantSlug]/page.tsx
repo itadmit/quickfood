@@ -4,7 +4,7 @@ import { storefrontCanonical } from "@/lib/storefront-url";
 import { prisma } from "@/lib/db/client";
 import { getSession } from "@/lib/auth/session";
 import { CustomerHome } from "@/components/customer/screens/CustomerHome";
-import { isItemVisibleNow } from "@/lib/menu-availability";
+import { isItemVisibleNow, isCategoryVisibleNow } from "@/lib/menu-availability";
 import { fingerprintOrderItems } from "@/lib/order-reorder";
 
 export const dynamic = "force-dynamic";
@@ -231,8 +231,14 @@ export default async function HomePage({
         }
       : null;
 
-  const menuItems = allMenuItems.filter((i) => isItemVisibleNow(i));
-  const categories = allCategories.slice(0, 8);
+  // Categories can be time/day-windowed too - outside the window the category
+  // and all its items drop off the storefront.
+  const visibleCategories = allCategories.filter((c) => isCategoryVisibleNow(c));
+  const visibleCatIds = new Set(visibleCategories.map((c) => c.id));
+  const menuItems = allMenuItems.filter(
+    (i) => isItemVisibleNow(i) && visibleCatIds.has(i.categoryId),
+  );
+  const categories = visibleCategories.slice(0, 8);
 
   const seenCity = new Set<string>();
   const deliveryCities: string[] = [];
@@ -249,16 +255,18 @@ export default async function HomePage({
   }
   deliveryCities.sort((a, b) => a.localeCompare(b, "he-IL"));
 
-  const popularSerialized = popular.map((p) => ({
-    id: p.id,
-    name: p.name,
-    description: p.description,
-    basePrice: p.basePrice,
-    pricingMode: p.pricingMode,
-    pricePerKg: p.pricePerKg,
-    artType: p.artType,
-    images: p.images,
-  }));
+  const popularSerialized = popular
+    .filter((p) => isItemVisibleNow(p) && visibleCatIds.has(p.categoryId))
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      basePrice: p.basePrice,
+      pricingMode: p.pricingMode,
+      pricePerKg: p.pricePerKg,
+      artType: p.artType,
+      images: p.images,
+    }));
 
   const branch = tenant.branches[0];
 
@@ -319,7 +327,7 @@ export default async function HomePage({
       ratingSummary={ratingSummary}
       deliveryEta={deliveryEta}
       categories={categories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color, imageUrl: c.imageUrl }))}
-      allCategories={allCategories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color, imageUrl: c.imageUrl }))}
+      allCategories={visibleCategories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color, imageUrl: c.imageUrl }))}
       menuItems={menuItems.map((i) => ({
         id: i.id,
         categoryId: i.categoryId,

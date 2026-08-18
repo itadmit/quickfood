@@ -667,6 +667,15 @@ model MenuCategory {
   position Int     @default(0)
   active   Boolean @default(true)
 
+  // Optional time-of-day / weekday windowing for the whole category -
+  // same contract as MenuItem.availableFrom/To/Days. Outside the window
+  // the category and all its items disappear from the storefront. Minutes
+  // since midnight (0..1439); availableDays is a 7-bit mask (bit 0 = Sun),
+  // NULL = no restriction.
+  availableFrom Int? @map("available_from")
+  availableTo   Int? @map("available_to")
+  availableDays Int? @map("available_days")
+
   // When true, items from this category are surfaced as the cart-page
   // upsell carousel ("מומלץ עבורך"). Merchants typically flag drinks /
   // sides / desserts. If no category is flagged we fall back to a
