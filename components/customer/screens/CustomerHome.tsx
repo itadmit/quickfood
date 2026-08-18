@@ -565,11 +565,11 @@ export function CustomerHome({
                 <button
                   type="button"
                   onClick={() => setInfoOpen(true)}
-                  aria-label="פרטי המסעדה"
+                  aria-label="פרטי העסק"
                   className="inline-flex items-center gap-1.5 text-qf-ink2 hover:underline whitespace-nowrap"
                 >
                   <IcoInfo s={15} c="currentColor" />
-                  <span className="hidden lg:inline text-xs font-bold">פרטי המסעדה</span>
+                  <span className="hidden lg:inline text-xs font-bold">פרטי העסק</span>
                 </button>
               </>
             )}
