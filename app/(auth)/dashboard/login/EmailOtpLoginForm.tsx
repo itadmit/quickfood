@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AuthEmailField, AuthCodeField } from "@/components/shared/AuthFields";
 import { IcoArrowLeft } from "@/components/shared/Icons";
@@ -93,6 +94,12 @@ export default function EmailOtpLoginForm({ onUsePassword }: { onUsePassword?: (
             >
               שינוי כתובת
             </button>
+          </p>
+          <p className="text-xs text-black/55 font-semibold text-center">
+            לא קיבלת קוד? ודאי שהמייל נכון, או{" "}
+            <Link href="/signup" className="underline font-bold text-black/70 hover:text-black">
+              הירשמי כאן
+            </Link>
           </p>
         </>
       )}
