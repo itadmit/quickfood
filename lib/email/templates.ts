@@ -405,6 +405,31 @@ export function courierMagicLinkEmail({
   });
 }
 
+export function courierAssignedEmail({
+  courierName,
+  businessName,
+  orderNumber,
+  detailLines,
+  orderUrl,
+}: {
+  courierName: string;
+  businessName: string;
+  orderNumber: string;
+  detailLines: string[];
+  orderUrl?: string;
+}) {
+  return renderRtlEmail({
+    subject: `הזמנה ${orderNumber} שויכה אליך · ${businessName}`,
+    preheader: "יש לך הזמנה חדשה למשלוח.",
+    heading: `שלום ${courierName}`,
+    paragraphs: [
+      `הזמנה ${orderNumber} שויכה אליך למשלוח.`,
+      ...detailLines,
+    ],
+    button: orderUrl ? { href: orderUrl, label: "פתח את ההזמנה" } : undefined,
+  });
+}
+
 export function verifyEmailEmail({
   ownerName,
   businessName,

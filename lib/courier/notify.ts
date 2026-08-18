@@ -2,6 +2,8 @@ import { prisma } from "@/lib/db/client";
 import { sendWhatsApp } from "@/lib/whatsapp/send";
 import { sendSms } from "@/lib/sms/send";
 import { sendCourierPush } from "@/lib/courier/push";
+import { sendEmail } from "@/lib/email/send";
+import { courierAssignedEmail } from "@/lib/email/templates";
 
 function formatAddress(addr: {
   street?: string | null;
@@ -33,7 +35,7 @@ export async function notifyCourierAssigned(orderId: string, courierId: string):
   if (!order) return;
   const courier = await prisma.courier.findUnique({
     where: { id: courierId },
-    select: { phone: true, tenantId: true },
+    select: { phone: true, tenantId: true, name: true, email: true },
   });
   if (!courier) return;
 
@@ -60,6 +62,29 @@ export async function notifyCourierAssigned(orderId: string, courierId: string):
     tag: `order-${orderId}`,
     requireInteraction: true,
   }).catch((err) => console.warn("[push] courier assigned failed", err));
+
+  // Email (in addition to push + WhatsApp/SMS) when the courier has one on file.
+  if (courier.email) {
+    const { html, text } = courierAssignedEmail({
+      courierName: courier.name,
+      businessName: order.tenant?.name ?? "המסעדה",
+      orderNumber: order.number,
+      detailLines: lines.slice(1) as string[],
+      orderUrl: process.env.NEXT_PUBLIC_APP_URL
+        ? `${process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")}/courier/orders/${orderId}`
+        : undefined,
+    });
+    void sendEmail({
+      tenantId: courier.tenantId,
+      to: courier.email,
+      subject: `הזמנה ${order.number} שויכה אליך`,
+      body: text,
+      html,
+      kind: "courier_assigned",
+      refKind: "order",
+      refId: orderId,
+    }).catch((err) => console.warn("[email] courier assigned failed", err));
+  }
 
   const wa = await sendWhatsApp({
     tenantId: courier.tenantId,

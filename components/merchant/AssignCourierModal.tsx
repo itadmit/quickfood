@@ -1,9 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { IcoBike, IcoPhone } from "@/components/shared/Icons";
+import { IcoBike, IcoPhone, IcoWhatsApp } from "@/components/shared/Icons";
 import { Modal } from "@/components/shared/Modal";
 import { cn } from "@/lib/cn";
+
+/** Israeli phone → wa.me international form (972…), digits only. */
+function waLink(phone: string, text: string): string {
+  let digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("0")) digits = `972${digits.slice(1)}`;
+  else if (!digits.startsWith("972")) digits = `972${digits}`;
+  return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+}
 
 interface CourierRow {
   id: string;
@@ -28,10 +36,14 @@ export function AssignCourierModal({
   onAssign,
   onClose,
   delivApp,
+  waText,
 }: {
   orderNumber: string;
   onAssign: (courierId: string) => Promise<void> | void;
   onClose: () => void;
+  /** Prebuilt order summary for the "send on WhatsApp" button. When omitted the
+   *  button falls back to just the order number. */
+  waText?: string;
   // Set when the order was handed to DelivApp. The courier is picked in THEIR
   // system and their webhook advances the order, so the in-house picker is the
   // wrong default here - it used to greet the merchant with "no couriers
@@ -159,13 +171,24 @@ export function AssignCourierModal({
                 const overloaded =
                   c.status === "on_delivery" && c.deliveries_today >= c.max_concurrent;
                 return (
-                  <li key={c.id}>
+                  <li key={c.id} className="flex items-stretch gap-2">
+                    <a
+                      href={waLink(c.phone, waText ?? `הזמנה ${orderNumber}`)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      title="שלח את ההזמנה לשליח בוואטסאפ"
+                      aria-label="שלח בוואטסאפ"
+                      className="shrink-0 w-12 rounded-xl border border-qf-line-dash grid place-items-center hover:border-[#25D366] hover:bg-[#25D366]/10 transition"
+                    >
+                      <IcoWhatsApp s={22} />
+                    </a>
                     <button
                       type="button"
                       onClick={() => pick(c)}
                       disabled={assigningId != null}
                       className={cn(
-                        "w-full flex items-center gap-3 p-3 rounded-xl border text-right transition",
+                        "flex-1 flex items-center gap-3 p-3 rounded-xl border text-right transition",
                         assigningId === c.id
                           ? "border-(--qf-primary) bg-qf-green-soft"
                           : "border-qf-line-dash hover:border-(--qf-primary) hover:bg-qf-line-soft",

@@ -70,6 +70,23 @@ interface OrderRow {
   }>;
 }
 
+function buildCourierWaText(o: OrderRow): string {
+  const items = o.items
+    .map((it) => `• ${it.weightGrams != null ? `${it.weightGrams} גרם` : `${it.quantity}×`} ${it.name}`)
+    .join("\n");
+  const pay = o.paymentMethod === "cash" ? "תשלום במזומן ביד" : "שולם מראש";
+  return [
+    `הזמנה ${o.number}`,
+    `לקוח: ${o.customerName}`,
+    o.customerPhone ? `טלפון: ${o.customerPhone}` : null,
+    o.customerNotes ? `הערות: ${o.customerNotes}` : null,
+    items ? `\nפריטים:\n${items}` : null,
+    `\nסכום: ${formatPrice(o.total)} · ${pay}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 const COLUMNS: Array<{
   status: Status[];
   title: string;
@@ -537,7 +554,11 @@ export function OrdersKanban({
         void advance(orderId, "delivered");
         return;
       }
-      setAssignFor({ orderId, orderNumber: o?.number ?? "" });
+      setAssignFor({
+        orderId,
+        orderNumber: o?.number ?? "",
+        waText: o ? buildCourierWaText(o) : undefined,
+      });
       return;
     }
     void advance(orderId, to);
@@ -552,7 +573,7 @@ export function OrdersKanban({
 
   const [drawerOrderId, setDrawerOrderId] = useState<string | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
-  const [assignFor, setAssignFor] = useState<{ orderId: string; orderNumber: string } | null>(null);
+  const [assignFor, setAssignFor] = useState<{ orderId: string; orderNumber: string; waText?: string } | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
   function pushToast(kind: ToastKind, message: string) {
     setToast({ id: Date.now(), kind, message });
@@ -670,6 +691,7 @@ export function OrdersKanban({
       {assignFor && (
         <AssignCourierModal
           orderNumber={assignFor.orderNumber}
+          waText={assignFor.waText}
           delivApp={(() => {
             const o = orders.find((x) => x.id === assignFor.orderId);
             return o?.delivAppDispatchedAt ? { statusLabel: o.delivAppStatusLabel } : null;
