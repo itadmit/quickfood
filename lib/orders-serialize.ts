@@ -7,6 +7,15 @@ export type OrderWithIncludes = Prisma.OrderGetPayload<{
     items: true;
     customer: { select: { id: true; firstName: true; lastName: true; phone: true } };
     review: { select: { id: true } };
+    deliveryAddress: {
+      select: {
+        street: true;
+        city: true;
+        apartment: true;
+        floor: true;
+        entrance: true;
+      };
+    };
   };
 }>;
 
@@ -17,7 +26,29 @@ export const ORDER_INCLUDE = {
   // "send review now" button on the merchant's Orders History page
   // (button hidden when a review row already exists).
   review: { select: { id: true } },
+  deliveryAddress: {
+    select: { street: true, city: true, apartment: true, floor: true, entrance: true },
+  },
 } satisfies Prisma.OrderInclude;
+
+/** One-line delivery address for handoffs (courier WhatsApp, receipts).
+ *  Null for pickup orders or when no address is on file. */
+export function formatDeliveryAddress(addr: {
+  street: string;
+  city: string;
+  apartment?: string | null;
+  floor?: string | null;
+  entrance?: string | null;
+} | null): string | null {
+  if (!addr) return null;
+  const base = [addr.street, addr.city].filter(Boolean).join(", ");
+  const extra = [
+    addr.apartment ? `דירה ${addr.apartment}` : null,
+    addr.floor ? `קומה ${addr.floor}` : null,
+    addr.entrance ? `כניסה ${addr.entrance}` : null,
+  ].filter(Boolean);
+  return extra.length ? `${base} (${extra.join(", ")})` : base || null;
+}
 
 // Single source of truth for the option shape exposed to clients (order
 // drawer, receipt, kanban, kitchen). Keeps `half` so split pizzas render
@@ -78,6 +109,7 @@ export function serializeOrder(o: OrderWithIncludes) {
     payment_method: o.paymentMethod,
     payment_status: o.paymentStatus,
     customer_notes: o.customerNotes,
+    delivery_address: formatDeliveryAddress(o.deliveryAddress),
     has_review: !!o.review,
     delivapp_dispatched_at: o.delivAppDispatchedAt?.toISOString() ?? null,
     delivapp_barcode_id: o.delivAppBarcodeId,

@@ -5,7 +5,7 @@ import { useRoom } from "@/lib/realtime/useRoom";
 import Link from "next/link";
 import { IcoClock, IcoPrinter, IcoFlame, IcoRefresh, IcoUndo, IcoClose, IcoBell, IcoBellOff } from "@/components/shared/Icons";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
-import { formatPrice, formatElapsedMinutes } from "@/lib/format";
+import { formatPrice, formatElapsedMinutes, formatTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import {
   consumePassPrntResult,
@@ -52,6 +52,7 @@ interface OrderRow {
   customerName: string;
   customerPhone: string;
   customerNotes: string | null;
+  deliveryAddress: string | null;
   paymentStatus: PaymentStatus;
   paymentMethod: string;
   total: number;
@@ -77,8 +78,10 @@ function buildCourierWaText(o: OrderRow): string {
   const pay = o.paymentMethod === "cash" ? "תשלום במזומן ביד" : "שולם מראש";
   return [
     `הזמנה ${o.number}`,
+    `שעה: ${formatTime(o.createdAt)}`,
     `לקוח: ${o.customerName}`,
     o.customerPhone ? `טלפון: ${o.customerPhone}` : null,
+    o.deliveryAddress ? `כתובת: ${o.deliveryAddress}` : null,
     o.customerNotes ? `הערות: ${o.customerNotes}` : null,
     items ? `\nפריטים:\n${items}` : null,
     `\nסכום: ${formatPrice(o.total)} · ${pay}`,
@@ -357,6 +360,7 @@ export function OrdersKanban({
           (o.customer_phone as string | null) ||
           "",
         customerNotes: (o.customer_notes as string | null) ?? null,
+        deliveryAddress: (o.delivery_address as string | null) ?? null,
         total: o.total as number,
         createdAt: o.created_at as string,
         delivAppDispatchedAt: (o.delivapp_dispatched_at as string | null) ?? null,

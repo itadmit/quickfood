@@ -5,6 +5,7 @@ import { fullName } from "@/lib/format";
 import { OrdersKanban } from "./OrdersKanban";
 import { HIDE_UNPAID_NONCASH } from "@/lib/orders-visible";
 import { resolveReceiptSettings, type ReceiptPrinterType } from "@/lib/receipt-print";
+import { formatDeliveryAddress } from "@/lib/orders-serialize";
 import { DELIVAPP_STATUS_LABEL } from "@/lib/delivapp/map-status";
 
 export const dynamic = "force-dynamic";
@@ -47,6 +48,9 @@ export default async function OrdersPage() {
         },
       },
       customer: { select: { id: true, firstName: true, lastName: true, phone: true } },
+      deliveryAddress: {
+        select: { street: true, city: true, apartment: true, floor: true, entrance: true },
+      },
     },
     orderBy: { createdAt: "asc" },
     take: 200,
@@ -63,6 +67,7 @@ export default async function OrdersPage() {
       "אורח",
     customerPhone: o.customer?.phone || o.customerPhoneSnap || "",
     customerNotes: o.customerNotes,
+    deliveryAddress: formatDeliveryAddress(o.deliveryAddress),
     paymentStatus: o.paymentStatus as "pending" | "paid" | "failed" | "refunded",
     paymentMethod: o.paymentMethod,
     total: o.total,
