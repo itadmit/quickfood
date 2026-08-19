@@ -109,6 +109,7 @@ export function serializeOrder(o: OrderWithIncludes) {
     payment_method: o.paymentMethod,
     payment_status: o.paymentStatus,
     customer_notes: o.customerNotes,
+    delivery_notes: o.deliveryNotes,
     delivery_address: formatDeliveryAddress(o.deliveryAddress),
     has_review: !!o.review,
     delivapp_dispatched_at: o.delivAppDispatchedAt?.toISOString() ?? null,

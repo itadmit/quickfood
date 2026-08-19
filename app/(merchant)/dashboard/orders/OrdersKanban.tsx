@@ -52,6 +52,7 @@ interface OrderRow {
   customerName: string;
   customerPhone: string;
   customerNotes: string | null;
+  deliveryNotes: string | null;
   deliveryAddress: string | null;
   paymentStatus: PaymentStatus;
   paymentMethod: string;
@@ -82,6 +83,7 @@ function buildCourierWaText(o: OrderRow): string {
     `לקוח: ${o.customerName}`,
     o.customerPhone ? `טלפון: ${o.customerPhone}` : null,
     o.deliveryAddress ? `כתובת: ${o.deliveryAddress}` : null,
+    o.deliveryNotes ? `הערות למשלוח: ${o.deliveryNotes}` : null,
     o.customerNotes ? `הערות: ${o.customerNotes}` : null,
     items ? `\nפריטים:\n${items}` : null,
     `\nסכום: ${formatPrice(o.total)} · ${pay}`,
@@ -360,6 +362,7 @@ export function OrdersKanban({
           (o.customer_phone as string | null) ||
           "",
         customerNotes: (o.customer_notes as string | null) ?? null,
+        deliveryNotes: (o.delivery_notes as string | null) ?? null,
         deliveryAddress: (o.delivery_address as string | null) ?? null,
         total: o.total as number,
         createdAt: o.created_at as string,

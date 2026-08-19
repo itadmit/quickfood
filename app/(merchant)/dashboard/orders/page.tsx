@@ -67,6 +67,7 @@ export default async function OrdersPage() {
       "אורח",
     customerPhone: o.customer?.phone || o.customerPhoneSnap || "",
     customerNotes: o.customerNotes,
+    deliveryNotes: o.deliveryNotes,
     deliveryAddress: formatDeliveryAddress(o.deliveryAddress),
     paymentStatus: o.paymentStatus as "pending" | "paid" | "failed" | "refunded",
     paymentMethod: o.paymentMethod,
