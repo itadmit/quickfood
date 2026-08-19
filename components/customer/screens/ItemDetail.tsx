@@ -193,7 +193,12 @@ export function ItemDetail({
   const clampGrams = (g: number) =>
     Math.min(MAX_WEIGHT_GRAMS, Math.max(MIN_WEIGHT_GRAMS, Math.round(g)));
   const [weightEntry, setWeightEntry] = useState<"weight" | "amount">("weight");
-  const [grams, setGrams] = useState<number>(editLine?.weightGrams ?? 500);
+  // The grams field is string-backed so it can be cleared/retyped freely; the
+  // numeric value is derived + clamped for pricing, and the string is
+  // normalised on blur. Binding grams straight to a clamped number made the
+  // input snap back to MIN on every backspace, so it could never be emptied.
+  const [gramsStr, setGramsStr] = useState<string>(String(editLine?.weightGrams ?? 500));
+  const grams = clampGrams(Number(gramsStr) || MIN_WEIGHT_GRAMS);
   const [amountStr, setAmountStr] = useState<string>(
     editLine?.weightGrams ? String(weightPrice(pricePerKg, editLine.weightGrams)) : "",
   );
@@ -774,7 +779,7 @@ export function ItemDetail({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setGrams((g) => clampGrams(g - 50))}
+                  onClick={() => setGramsStr(String(clampGrams(grams - 50)))}
                   className="w-12 h-12 rounded-xl bg-qf-line-soft grid place-items-center active:bg-qf-line-dash"
                   aria-label="הפחת 50 גרם"
                 >
@@ -782,12 +787,11 @@ export function ItemDetail({
                 </button>
                 <div className="flex-1 relative">
                   <input
-                    type="number"
+                    type="text"
                     inputMode="numeric"
-                    value={grams}
-                    min={MIN_WEIGHT_GRAMS}
-                    max={MAX_WEIGHT_GRAMS}
-                    onChange={(e) => setGrams(clampGrams(Number(e.target.value) || 0))}
+                    value={gramsStr}
+                    onChange={(e) => setGramsStr(e.target.value.replace(/[^\d]/g, ""))}
+                    onBlur={() => setGramsStr(String(clampGrams(Number(gramsStr) || MIN_WEIGHT_GRAMS)))}
                     className="w-full h-12 text-center text-lg font-bold tnum bg-qf-bg border border-qf-line rounded-xl outline-none focus:border-(--qf-primary) focus:bg-white"
                   />
                   <span className="absolute inset-y-0 end-3 grid place-items-center text-sm text-qf-mute pointer-events-none">
@@ -796,7 +800,7 @@ export function ItemDetail({
                 </div>
                 <button
                   type="button"
-                  onClick={() => setGrams((g) => clampGrams(g + 50))}
+                  onClick={() => setGramsStr(String(clampGrams(grams + 50)))}
                   className="w-12 h-12 rounded-xl bg-qf-line-soft grid place-items-center active:bg-qf-line-dash"
                   aria-label="הוסף 50 גרם"
                 >
@@ -819,7 +823,7 @@ export function ItemDetail({
                     setAmountStr(e.target.value);
                     const amount = Number(e.target.value) || 0;
                     if (amount > 0 && pricePerKg > 0) {
-                      setGrams(clampGrams((amount / pricePerKg) * 1000));
+                      setGramsStr(String(clampGrams((amount / pricePerKg) * 1000)));
                     }
                   }}
                   className="w-full h-12 text-center text-lg font-bold tnum bg-qf-bg border border-qf-line rounded-xl outline-none focus:border-(--qf-primary) focus:bg-white"

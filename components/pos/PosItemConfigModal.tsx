@@ -104,7 +104,10 @@ export function PosItemConfigModal({
   const clampGrams = (g: number) =>
     Math.min(MAX_WEIGHT_GRAMS, Math.max(MIN_WEIGHT_GRAMS, Math.round(g)));
   const [weightEntry, setWeightEntry] = useState<"weight" | "amount">("weight");
-  const [grams, setGrams] = useState<number>(existingLine?.weightGrams ?? 500);
+  // String-backed so the field can be cleared/retyped; the numeric value is
+  // derived + clamped for pricing (mirrors the customer ItemDetail fix).
+  const [gramsStr, setGramsStr] = useState<string>(String(existingLine?.weightGrams ?? 500));
+  const grams = clampGrams(Number(gramsStr) || MIN_WEIGHT_GRAMS);
   const [amountStr, setAmountStr] = useState<string>("");
   const weightBase = isWeight ? weightPrice(pricePerKg, grams) : 0;
 
@@ -392,24 +395,23 @@ export function PosItemConfigModal({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setGrams((g) => clampGrams(g - 50))}
+                  onClick={() => setGramsStr(String(clampGrams(grams - 50)))}
                   className="w-12 h-12 rounded-xl bg-white border-2 border-black grid place-items-center shadow-[0_2px_0_#000]"
                   aria-label="הפחת 50 גרם"
                 >
                   <IcoMinus s={16} c="#000" />
                 </button>
                 <input
-                  type="number"
+                  type="text"
                   inputMode="numeric"
-                  value={grams}
-                  min={MIN_WEIGHT_GRAMS}
-                  max={MAX_WEIGHT_GRAMS}
-                  onChange={(e) => setGrams(clampGrams(Number(e.target.value) || 0))}
+                  value={gramsStr}
+                  onChange={(e) => setGramsStr(e.target.value.replace(/[^\d]/g, ""))}
+                  onBlur={() => setGramsStr(String(clampGrams(Number(gramsStr) || MIN_WEIGHT_GRAMS)))}
                   className="flex-1 h-12 text-center text-lg font-black tnum border-2 border-qf-line-dash rounded-xl outline-none focus:border-(--qf-primary)"
                 />
                 <button
                   type="button"
-                  onClick={() => setGrams((g) => clampGrams(g + 50))}
+                  onClick={() => setGramsStr(String(clampGrams(grams + 50)))}
                   className="w-12 h-12 rounded-xl bg-white border-2 border-black grid place-items-center shadow-[0_2px_0_#000]"
                   aria-label="הוסף 50 גרם"
                 >
@@ -426,7 +428,7 @@ export function PosItemConfigModal({
                   setAmountStr(e.target.value);
                   const amount = Number(e.target.value) || 0;
                   if (amount > 0 && pricePerKg > 0) {
-                    setGrams(clampGrams((amount / pricePerKg) * 1000));
+                    setGramsStr(String(clampGrams((amount / pricePerKg) * 1000)));
                   }
                 }}
                 className="w-full h-12 text-center text-lg font-black tnum border-2 border-qf-line-dash rounded-xl outline-none focus:border-(--qf-primary)"
