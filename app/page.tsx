@@ -1371,59 +1371,84 @@ function Pricing() {
         <div className={styles.pricingHead}>
           <div className={styles.sectionEyebrow}>כמה זה עולה</div>
           <h2 className={styles.sectionTitle}>
-            תוכנית אחת. <em>מחיר קבוע לכל החיים.</em>
+            שתי תוכניות. <em>אותה מערכת בדיוק.</em>
           </h2>
           <p className={styles.sectionLede}>
-            בלי דרגות תמחור, בלי הפתעות בעוד שנה, בלי שדרוגים כפויים. אותו מחיר היום, אותו מחיר בעוד עשר שנים - בלי תלות בכמה הזמנות יצאו לך החודש.
+            בוחרים את מודל התמחור שמתאים לנפח שלכם - אחוז זעום על הזמנה, או אפס אחוזים במחיר חודשי קבוע. אותן תכונות בדיוק בשתי התוכניות. כל המחירים לפני מע״מ, קבועים לכל החיים.
           </p>
         </div>
 
-        <div className={styles.priceSingleWrap}>
-          <article className={styles.priceSingle}>
-            <div className={styles.priceSingleHead}>
-              <div className={styles.priceSingleTag}>תוכנית יחידה · מחיר קבוע</div>
-              <div className={styles.priceSingleAmounts}>
-                <div className={styles.priceSingleAmount}>
-                  <span className={styles.priceSingleNum}>₪299</span>
-                  <span className={styles.priceSingleUnit}>/ חודש</span>
-                </div>
-                <div className={styles.priceSingleSub}>+ מע״מ. מחיר קבוע לכל החיים.</div>
-              </div>
-              <div className={styles.priceSingleFee}>
-                <span className={styles.priceSingleFeeNum}>0.5%</span>
-                <span className={styles.priceSingleFeeLabel}>
-                  עמלת סליקה לכל הזמנה
-                  <small> + מע״מ.</small>
-                </span>
-              </div>
-              <Link
-                href="/signup"
-                className={`${styles.btn} ${styles.btnLg} ${styles.btnInk} ${styles.btnFull}`}
-              >
-                QuickFood, תפתחו לי חנות <IcoArrowLeft c="currentColor" s={14} />
-              </Link>
-              <div className={styles.priceSingleNote}>
-                7 ימים על חשבוננו · בלי כרטיס אשראי · בלי שיחת מכירה
-              </div>
+        <div className={styles.priceDuo}>
+          <article className={styles.pricePlan}>
+            <div className={styles.pricePlanTag}>סטנדרט</div>
+            <div className={styles.pricePlanAmount}>
+              <span className={styles.pricePlanNum}>₪299</span>
+              <span className={styles.pricePlanUnit}>/ חודש</span>
             </div>
-            <div className={styles.priceSingleBody}>
-              <div className={styles.priceSingleIncluded}>כלול במחיר:</div>
-              <ul className={styles.priceFeatures}>
-                {features.map((f) => (
-                  <li key={f}>{f}</li>
-                ))}
-              </ul>
-              <div className={styles.priceSingleAddon}>
-                <div className={styles.priceSingleAddonTag}>אופציונלי</div>
-                <div className={styles.priceSingleAddonBody}>
-                  <strong>חבילות וואטסאפ + SMS החל מ-₪39.</strong>
-                  <span>
-                    קונים פעם אחת, נשלפת אוטומטית לאישור הזמנה, ליציאה לדרך ולבקשות ביקורת. מייל חינם, ללא הגבלה.
-                  </span>
-                </div>
-              </div>
+            <div className={styles.pricePlanSub}>+ מע״מ · מחיר קבוע לכל החיים</div>
+            <div className={styles.pricePlanFee}>
+              <span className={styles.pricePlanFeeNum}>0.5%</span>
+              <span className={styles.pricePlanFeeLabel}>
+                עמלת סליקה לכל הזמנה
+                <small> + מע״מ</small>
+              </span>
             </div>
+            <p className={styles.pricePlanFit}>
+              משלמים אחוז זעום רק כשמוכרים. מתאים לנפח נמוך עד בינוני.
+            </p>
+            <Link
+              href="/signup"
+              className={`${styles.btn} ${styles.btnLg} ${styles.btnInk} ${styles.btnFull}`}
+            >
+              מתחילים בסטנדרט <IcoArrowLeft c="currentColor" s={14} />
+            </Link>
           </article>
+
+          <article className={`${styles.pricePlan} ${styles.pricePlanFeatured}`}>
+            <div className={styles.pricePlanTag}>0% עמלה</div>
+            <div className={styles.pricePlanAmount}>
+              <span className={styles.pricePlanNum}>₪450</span>
+              <span className={styles.pricePlanUnit}>/ חודש</span>
+            </div>
+            <div className={styles.pricePlanSub}>+ מע״מ · מחיר קבוע לכל החיים</div>
+            <div className={styles.pricePlanFee}>
+              <span className={styles.pricePlanFeeNum}>0%</span>
+              <span className={styles.pricePlanFeeLabel}>
+                בלי אחוז על אף הזמנה
+                <small> לא משנה כמה תמכרו</small>
+              </span>
+            </div>
+            <p className={styles.pricePlanFit}>
+              מחיר חודשי קבוע, אפס אחוזים. משתלם ברגע שהנפח עולה.
+            </p>
+            <Link
+              href="/signup?plan=no-commission"
+              className={`${styles.btn} ${styles.btnLg} ${styles.btnInk} ${styles.btnFull}`}
+            >
+              מתחילים בלי עמלות <IcoArrowLeft c="currentColor" s={14} />
+            </Link>
+          </article>
+        </div>
+
+        <div className={styles.priceShared}>
+          <div className={styles.priceSingleIncluded}>כלול בשתי התוכניות:</div>
+          <ul className={styles.priceFeatures}>
+            {features.map((f) => (
+              <li key={f}>{f}</li>
+            ))}
+          </ul>
+          <div className={styles.priceSingleAddon}>
+            <div className={styles.priceSingleAddonTag}>אופציונלי</div>
+            <div className={styles.priceSingleAddonBody}>
+              <strong>חבילות וואטסאפ + SMS החל מ-₪39.</strong>
+              <span>
+                קונים פעם אחת, נשלפת אוטומטית לאישור הזמנה, ליציאה לדרך ולבקשות ביקורת. מייל חינם, ללא הגבלה.
+              </span>
+            </div>
+          </div>
+          <div className={styles.priceSharedNote}>
+            7 ימים על חשבוננו · בלי כרטיס אשראי · בלי שיחת מכירה
+          </div>
         </div>
       </div>
     </section>

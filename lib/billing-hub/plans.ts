@@ -13,6 +13,16 @@ export const BASE_PLAN_CODE = "quickfood_base";
 export const BASE_PLAN_PRICE = 299;
 
 /**
+ * Zero-commission plan - ₪450/mo + VAT, mirrored on the hub as
+ * quickfood_no_commission. Same feature set as the base plan; the merchant
+ * pays a fixed monthly price and 0% platform commission on orders (vs. the
+ * base plan's 0.5% clearing fee). Assigned per-tenant on the hub - the local
+ * `plans` row (see prisma/seed.ts) is the catalog entry for it.
+ */
+export const NO_COMMISSION_PLAN_CODE = "quickfood_no_commission";
+export const NO_COMMISSION_PLAN_PRICE = 450;
+
+/**
  * Negotiated intro price (pre-VAT shekels) for the tenant's base plan, or
  * null when none is active. Active = both fields set and the end date is
  * still in the future; the expire-intro-prices job clears the fields (and

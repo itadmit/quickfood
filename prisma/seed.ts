@@ -27,6 +27,23 @@ async function main() {
     update: {},
   });
 
+  // Zero-commission plan - ₪450/mo + VAT, 0% platform commission on orders
+  // (vs. the base plan's 0.5%). Hub plan code: quickfood_no_commission.
+  await prisma.plan.upsert({
+    where: { id: "00000000-0000-0000-0000-000000000003" },
+    create: {
+      id: "00000000-0000-0000-0000-000000000003",
+      name: "ללא עמלות",
+      priceMonthly: 450,
+      features: { commission: 0, planCode: "quickfood_no_commission", pretaxPrice: true },
+    },
+    update: {
+      name: "ללא עמלות",
+      priceMonthly: 450,
+      features: { commission: 0, planCode: "quickfood_no_commission", pretaxPrice: true },
+    },
+  });
+
   // ─── Demo tenant: פיצרייה ורדה (theme: fresh) ──────────────────
   const COVER_IMAGE =
     "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1600&q=80";
