@@ -334,9 +334,9 @@ export function DashboardViewV2({
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <div className="text-sm font-bold truncate">{it.name}</div>
-                        <div className="text-xs text-black/60 tnum">×{it.count}</div>
+                      <div className="flex items-baseline justify-between gap-2 min-w-0">
+                        <div className="text-sm font-bold truncate min-w-0">{it.name}</div>
+                        <div className="text-xs text-black/60 tnum shrink-0">×{it.count}</div>
                       </div>
                       <div className="h-2 bg-black/10 rounded-full overflow-hidden mt-1">
                         <div

@@ -199,9 +199,9 @@ export function DashboardView({
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <div className="text-sm font-medium truncate">{it.name}</div>
-                        <div className="text-xs text-qf-mute tnum">×{it.count}</div>
+                      <div className="flex items-baseline justify-between gap-2 min-w-0">
+                        <div className="text-sm font-medium truncate min-w-0">{it.name}</div>
+                        <div className="text-xs text-qf-mute tnum shrink-0">×{it.count}</div>
                       </div>
                       <div className="h-1.5 bg-qf-line-soft rounded-full overflow-hidden mt-1">
                         <div
