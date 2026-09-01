@@ -1,11 +1,13 @@
 /**
- * Sends the merchant welcome message over WhatsApp using the PLATFORM iBot
- * account (platform_settings.whatsapp_default_*), same as the login OTP -
- * the sender is QuickFood's own number, so "just reply to this message"
- * works as the support channel and no tenant SMS credits are charged.
+ * Sends the merchant welcome message over WhatsApp.
+ *
+ * Preferred route is the MacroDroid webhook (free - our own Android device
+ * sends from the real WhatsApp app). If that phone is unreachable we fall
+ * back to the metered platform iBot account, so the sender stays QuickFood's
+ * own number either way and "just reply to this message" keeps working.
  *
  * Fire-and-forget from the signup after() block: returns false on missing
- * config / bad number / iBot failure so the caller can log and move on.
+ * config / bad number / provider failure so the caller can log and move on.
  */
 import { prisma } from "@/lib/db/client";
 import {
@@ -14,6 +16,7 @@ import {
   isValidIsraeliMobile,
   toJid,
 } from "@/lib/whatsapp/send";
+import { isMacroDroidConfigured, sendViaMacroDroid } from "@/lib/whatsapp/macrodroid";
 
 export async function sendWelcomeWhatsApp({
   phone,
@@ -42,6 +45,21 @@ export async function sendWelcomeWhatsApp({
     `כניסה לדשבורד:\n${dashboardUrl}\n\n` +
     `החנות שלכם באוויר כאן:\n${storeUrl}\n\n` +
     `צריכים עזרה? פשוט השיבו להודעה הזאת ונשמח לעזור.`;
+
+  if (isMacroDroidConfigured()) {
+    const viaDevice = await sendViaMacroDroid({
+      phone: local,
+      message: msg,
+      vars: {
+        name: ownerName,
+        business: businessName,
+        dashboard: dashboardUrl,
+        store: storeUrl,
+      },
+    });
+    if (viaDevice.ok) return true;
+    console.warn("[welcome-whatsapp] macrodroid failed, falling back to ibot:", viaDevice.detail);
+  }
 
   const platform = await prisma.platformSettings.findUnique({
     where: { id: "singleton" },
