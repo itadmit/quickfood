@@ -14,3 +14,12 @@ saves.
 
 To report the current context size and whether a reset is worth it, run
 `~/bin/claude-bot-status.sh` and relay what it prints.
+
+## Replying on Telegram
+
+Messages arrive wrapped in a `<channel source="plugin:telegram:telegram">` envelope.
+Response text you write normally stays in the terminal — the person on Telegram
+receives only what you send with the `reply` tool. Answer every channel message
+with a `reply` call, including short acknowledgements, clarifying questions, and
+"working on it" notes. If you finish a turn without calling `reply`, the person
+sees silence and reads it as a hung bot.
