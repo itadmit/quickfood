@@ -63,7 +63,7 @@ export function CityPickerModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="qf-city-picker-title"
-      className="fixed inset-0 z-50 grid place-items-end sm:place-items-center bg-black/60 px-4 pb-4 sm:p-6"
+      className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6"
       onClick={() => {
         if (!required) onClose();
       }}
