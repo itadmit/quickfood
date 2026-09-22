@@ -113,6 +113,11 @@ const SignupSchema = z.object({
     .string({ required_error: "יש לאמת את כתובת המייל" })
     .min(10, "יש לאמת את כתובת המייל"),
   client_type: z.enum(["web", "mobile"]).default("web"),
+  // The signup form states, next to the phone field, that service updates go
+  // out over WhatsApp. Defaults true so the mobile client and any older
+  // caller that never sends the field keep working; a client that means to
+  // withhold consent has to say so explicitly.
+  whatsapp_opt_in: z.boolean().default(true),
   import_method: z
     .enum(["manual", "wolt", "menu_file", "whatsapp"])
     .default("manual"),
@@ -236,6 +241,8 @@ export const POST = handler(async (req: Request) => {
             // email round-trip. Mark verified so the email-verification
             // gate (dashboard banner / billing) treats the account as live.
             emailVerifiedAt: new Date(),
+            // Evidence of consent, not just a line we rendered once.
+            whatsappOptInAt: body.whatsapp_opt_in ? new Date() : null,
           },
         ],
       },
@@ -315,15 +322,25 @@ export const POST = handler(async (req: Request) => {
       console.warn("[signup] welcome email failed", err);
     }
     try {
-      const sent = await sendWelcomeWhatsApp({
-        phone: body.owner_phone,
-        ownerName: owner.name,
-        businessName: tenant.name,
-        dashboardUrl: `${appUrl}/dashboard`,
-        storeUrl: `${appUrl}/s/${tenant.slug}`,
-        tenantId: tenant.id,
-      });
-      if (!sent) console.warn("[signup] welcome whatsapp not sent");
+      // No consent, no WhatsApp. The welcome email above already went out,
+      // so the merchant is not left without a greeting either way.
+      //
+      // An `if` rather than an early return: this block sits inside the
+      // shared after() callback, and returning here would also skip the
+      // admin notification and the follow-up job scheduled below it.
+      if (!body.whatsapp_opt_in) {
+        console.info("[signup] welcome whatsapp skipped - no opt-in");
+      } else {
+        const sent = await sendWelcomeWhatsApp({
+          phone: body.owner_phone,
+          ownerName: owner.name,
+          businessName: tenant.name,
+          dashboardUrl: `${appUrl}/dashboard`,
+          storeUrl: `${appUrl}/s/${tenant.slug}`,
+          tenantId: tenant.id,
+        });
+        if (!sent) console.warn("[signup] welcome whatsapp not sent");
+      }
     } catch (err) {
       console.warn("[signup] welcome whatsapp failed", err);
     }

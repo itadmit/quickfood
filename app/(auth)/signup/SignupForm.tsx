@@ -256,6 +256,9 @@ export function SignupForm() {
           email_verify_token: emailVerifyToken,
           client_type: "web",
           import_method: importMethod,
+          // The notice under the phone field is the consent; sending it
+          // explicitly records when it was given rather than inferring it.
+          whatsapp_opt_in: true,
           ...venueExtras,
         }),
       });

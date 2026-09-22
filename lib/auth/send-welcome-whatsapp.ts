@@ -1,21 +1,24 @@
 /**
  * Sends the merchant welcome message over WhatsApp.
  *
- * Three routes, tried in order:
+ * Quick Chat (Meta Cloud API) is the route. It sends from QuickFood's own
+ * verified business number, is the only one actually within WhatsApp's terms,
+ * and puts the merchant's reply in the Quick Chat inbox the team works in.
  *
- *   1. Quick Chat (Meta Cloud API) - the official one. Sends from QuickFood's
- *      verified number, cannot get a device banned, and puts the reply in the
- *      Quick Chat inbox the team already watches. We hand it both the full
- *      text and an approved template and let it pick by the 24-hour window:
- *      a fresh signup has never messaged us, so that is the template.
- *   2. MacroDroid - our own Android phone sending from the real WhatsApp app.
- *      Free, unofficial, and only as reliable as that phone being online.
- *   3. iBot - metered, unofficial, last resort.
+ * One call covers both sides of Meta's 24-hour rule: we hand Quick Chat the
+ * full text *and* the approved `signup_confirmation` template and let it pick.
+ * A fresh signup has never messaged us, so that is the template; the free-text
+ * branch is what a returning merchant gets, at no charge.
  *
- * Quick Chat leads because it is the only route that is actually within
- * WhatsApp's terms. The two below it stay as fallbacks so a merchant still
- * gets their welcome if the template is mid-review or Quick Chat is down -
- * and they carry the full long-form text, which a template cannot.
+ * The MacroDroid relay - an Android phone of ours replaying into the real
+ * WhatsApp app - is gone. It was free and entirely outside WhatsApp's terms:
+ * it worked right up until the number got banned, and nobody watched the
+ * replies it collected.
+ *
+ * iBot stays as a single fallback, and only until `signup_confirmation` clears
+ * Meta's review. Until then a template send fails and a new merchant would get
+ * no welcome at all. Once the template is APPROVED, delete the block at the
+ * bottom of this file and the import with it.
  *
  * Fire-and-forget from the signup after() block: returns false on missing
  * config / bad number / provider failure so the caller can log and move on.
@@ -27,7 +30,6 @@ import {
   isValidIsraeliMobile,
   toJid,
 } from "@/lib/whatsapp/send";
-import { isMacroDroidConfigured, sendViaMacroDroid } from "@/lib/whatsapp/macrodroid";
 import { isQuickChatConfigured, sendViaQuickChat } from "@/lib/whatsapp/quickchat";
 
 /** Approved UTILITY template on QuickFood's WABA. Body takes {{1}}=owner
@@ -87,21 +89,7 @@ export async function sendWelcomeWhatsApp({
     console.warn("[welcome-whatsapp] quickchat failed, falling back:", viaQuickChat.detail);
   }
 
-  if (isMacroDroidConfigured()) {
-    const viaDevice = await sendViaMacroDroid({
-      phone: local,
-      message: msg,
-      vars: {
-        name: ownerName,
-        business: businessName,
-        dashboard: dashboardUrl,
-        store: storeUrl,
-      },
-    });
-    if (viaDevice.ok) return true;
-    console.warn("[welcome-whatsapp] macrodroid failed, falling back to ibot:", viaDevice.detail);
-  }
-
+  // ── Temporary: remove once `signup_confirmation` is APPROVED ──────────
   const platform = await prisma.platformSettings.findUnique({
     where: { id: "singleton" },
     select: {

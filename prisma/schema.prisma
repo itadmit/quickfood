@@ -1640,6 +1640,13 @@ model MerchantUser {
   tfaSecret         String?                   @map("tfa_secret")
   lastLoginAt       DateTime?                 @map("last_login_at")
   emailVerifiedAt   DateTime?                 @map("email_verified_at")
+  // When the owner accepted the WhatsApp notice shown next to the phone
+  // field at signup. Meta expects consent at the point of collection before
+  // a business messages someone, and "we showed a line on a form once" is
+  // not evidence - this timestamp is. Null for accounts created before the
+  // notice existed; those still get service messages, since the signup
+  // itself is the transaction the message is about.
+  whatsappOptInAt   DateTime?                 @map("whatsapp_opt_in_at")
   createdAt         DateTime                  @default(now()) @map("created_at")
   passwordResets    PasswordResetToken[]
   emailVerifications EmailVerificationToken[]
