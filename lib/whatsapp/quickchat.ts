@@ -12,9 +12,9 @@
  * A brand-new merchant has never messaged us, so in practice this sends the
  * template - the free-text path is what a returning merchant gets.
  *
- * Every failure is a soft one: the caller keeps iBot as a fallback until the
- * template clears review, and signup must never fail because a messaging
- * provider hiccuped.
+ * Every failure is a soft one - it returns `ok: false` rather than throwing.
+ * There is no fallback behind it any more, so a failure means no welcome
+ * went out; signup itself must still never fail over it.
  */
 import { normalizePhone, isValidIsraeliMobile } from "@/lib/whatsapp/send";
 

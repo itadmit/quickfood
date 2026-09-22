@@ -10,26 +10,18 @@
  * A fresh signup has never messaged us, so that is the template; the free-text
  * branch is what a returning merchant gets, at no charge.
  *
- * The MacroDroid relay - an Android phone of ours replaying into the real
- * WhatsApp app - is gone. It was free and entirely outside WhatsApp's terms:
- * it worked right up until the number got banned, and nobody watched the
- * replies it collected.
- *
- * iBot stays as a single fallback, and only until `signup_confirmation` clears
- * Meta's review. Until then a template send fails and a new merchant would get
- * no welcome at all. Once the template is APPROVED, delete the block at the
- * bottom of this file and the import with it.
+ * There is deliberately no fallback. Both previous ones were unofficial: the
+ * MacroDroid relay drove an Android phone of ours into the real WhatsApp app,
+ * and iBot is an unofficial gateway. Each worked right up until the sending
+ * number got banned, and neither put replies anywhere a person watched.
+ * `signup_confirmation` is APPROVED, so the official route covers this send
+ * on its own - and a failure that shows up in logs is worth more than a
+ * silent fall back onto something that can cost us the number.
  *
  * Fire-and-forget from the signup after() block: returns false on missing
  * config / bad number / provider failure so the caller can log and move on.
  */
-import { prisma } from "@/lib/db/client";
-import {
-  callIBotSendText,
-  normalizePhone,
-  isValidIsraeliMobile,
-  toJid,
-} from "@/lib/whatsapp/send";
+import { normalizePhone, isValidIsraeliMobile } from "@/lib/whatsapp/send";
 import { isQuickChatConfigured, sendViaQuickChat } from "@/lib/whatsapp/quickchat";
 
 /** Approved UTILITY template on QuickFood's WABA. Body takes {{1}}=owner
@@ -67,46 +59,30 @@ export async function sendWelcomeWhatsApp({
     `החנות שלכם באוויר כאן:\n${storeUrl}\n\n` +
     `צריכים עזרה? פשוט השיבו להודעה הזאת ונשמח לעזור.`;
 
-  if (isQuickChatConfigured()) {
-    const viaQuickChat = await sendViaQuickChat({
-      phone: local,
-      text: msg,
-      contactName: ownerName,
-      template: {
-        name: SIGNUP_TEMPLATE,
-        language: "he",
-        variables: [ownerName, businessName],
-      },
-      idempotencyKey: `qf-signup-welcome:${tenantId}`,
-    });
-    if (viaQuickChat.ok) {
-      console.info(
-        `[welcome-whatsapp] quickchat ok (${viaQuickChat.detail})` +
-          `${viaQuickChat.billable ? " [billed]" : ""}`,
-      );
-      return true;
-    }
-    console.warn("[welcome-whatsapp] quickchat failed, falling back:", viaQuickChat.detail);
-  }
-
-  // ── Temporary: remove once `signup_confirmation` is APPROVED ──────────
-  const platform = await prisma.platformSettings.findUnique({
-    where: { id: "singleton" },
-    select: {
-      whatsappDefaultToken: true,
-      whatsappDefaultInstanceId: true,
-    },
-  });
-
-  if (!platform?.whatsappDefaultToken || !platform.whatsappDefaultInstanceId) {
+  if (!isQuickChatConfigured()) {
+    console.warn("[welcome-whatsapp] QUICKCHAT_API_KEY missing - nothing sent");
     return false;
   }
 
-  const res = await callIBotSendText({
-    token: platform.whatsappDefaultToken,
-    instanceId: platform.whatsappDefaultInstanceId,
-    jid: toJid(local),
-    msg,
+  const sent = await sendViaQuickChat({
+    phone: local,
+    text: msg,
+    contactName: ownerName,
+    template: {
+      name: SIGNUP_TEMPLATE,
+      language: "he",
+      variables: [ownerName, businessName],
+    },
+    idempotencyKey: `qf-signup-welcome:${tenantId}`,
   });
-  return res.ok;
+
+  if (!sent.ok) {
+    console.error("[welcome-whatsapp] quickchat send failed:", sent.detail);
+    return false;
+  }
+
+  console.info(
+    `[welcome-whatsapp] quickchat ok (${sent.detail})${sent.billable ? " [billed]" : ""}`,
+  );
+  return true;
 }
