@@ -321,6 +321,7 @@ export const POST = handler(async (req: Request) => {
         businessName: tenant.name,
         dashboardUrl: `${appUrl}/dashboard`,
         storeUrl: `${appUrl}/s/${tenant.slug}`,
+        tenantId: tenant.id,
       });
       if (!sent) console.warn("[signup] welcome whatsapp not sent");
     } catch (err) {

@@ -4,8 +4,10 @@
  *   npx tsx --env-file=.env.local scripts/test-macrodroid.ts 0501234567
  *   npx tsx --env-file=.env.local scripts/test-macrodroid.ts 0501234567 --welcome
  *
- * --welcome runs the real signup path (sendWelcomeWhatsApp), so it exercises
- * the full-length Hebrew body and the iBot fallback exactly as production does.
+ * --welcome runs the real signup path (sendWelcomeWhatsApp), which now prefers
+ * Quick Chat (official Cloud API) and falls back to MacroDroid then iBot. With
+ * QUICKCHAT_API_KEY set locally this sends the approved template; without it,
+ * the full-length Hebrew body goes out over the device exactly as before.
  */
 async function main() {
   const phone = process.argv[2];
@@ -28,6 +30,9 @@ async function main() {
       businessName: "פיצה בדיקה",
       dashboardUrl: "https://quickfood.co.il/dashboard",
       storeUrl: "https://quickfood.co.il/s/test-pizza",
+      // A fixed id so repeated runs dedupe on Quick Chat's side instead of
+      // sending (and billing for) a template on every invocation.
+      tenantId: "test-tenant",
     });
     console.log({ sent });
     process.exit(sent ? 0 : 1);

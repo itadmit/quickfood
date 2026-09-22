@@ -1543,6 +1543,14 @@ function Step3({
           placeholder="050-1234567"
           className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
         />
+        {/* Opt-in notice, stated where the number is actually collected -
+            Meta expects consent at the point of collection before a business
+            messages someone on WhatsApp. Its own line rather than the Field
+            `hint`, which shares a flex row with the label and would squeeze
+            on a narrow screen. */}
+        <p className="text-xs font-medium text-black/55">
+          בהרשמה אתם מאשרים קבלת עדכוני שירות בוואטסאפ למספר הזה.
+        </p>
       </Field>
       <Field label="אימייל" required>
         <input
