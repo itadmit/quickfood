@@ -181,7 +181,12 @@ export function resolveLoyaltyConfig(raw: unknown, tenantName = "העסק"): Loy
       buttonText: asString(form.buttonText, d.joinForm.buttonText),
       imageUrl: typeof form.imageUrl === "string" && form.imageUrl ? form.imageUrl : null,
       collectName: asBool(form.collectName, d.joinForm.collectName),
-      collectEmail: asBool(form.collectEmail, d.joinForm.collectEmail),
+      // Not a preference any more. The member's login code is delivered by
+      // email and nothing else, so a store that skips the field would enrol
+      // people who can never log in. Stored `false` values (one store had
+      // one) are deliberately ignored rather than migrated — the resolver is
+      // the single place this is decided.
+      collectEmail: true,
       collectBirthday: asBool(form.collectBirthday, d.joinForm.collectBirthday),
       consentText: asString(form.consentText, d.joinForm.consentText),
     },

@@ -381,14 +381,17 @@ export function LoyaltyView({
                 />
                 שם
               </label>
-              <label className="flex items-center gap-2 text-sm font-semibold">
-                <Toggle
-                  checked={config.joinForm.collectEmail}
-                  onChange={(v) => patchForm("collectEmail", v)}
-                  aria-label="אסוף אימייל"
-                />
-                אימייל
-              </label>
+              {/* Not a toggle: the member's login code goes out by email and
+                  nothing else, so turning this off would enrol people who can
+                  never log in. Shown as fixed rather than hidden, so a
+                  merchant looking for the old switch sees why it is gone. */}
+              <span
+                className="flex items-center gap-2 text-sm font-semibold text-black/45"
+                title="המייל משמש לשליחת קוד הכניסה של הלקוח — לכן הוא נאסף תמיד"
+              >
+                <span aria-hidden>✓</span>
+                אימייל <span className="text-xs font-medium">(קבוע — קוד הכניסה נשלח אליו)</span>
+              </span>
               <label className="flex items-center gap-2 text-sm font-semibold">
                 <Toggle
                   checked={config.joinForm.collectBirthday}

@@ -354,19 +354,35 @@ export function otpEmail({
   code,
   expiresInMinutes,
   purpose,
+  businessName,
 }: {
   code: string;
   expiresInMinutes: number;
-  purpose: "signup" | "login";
+  /** `customer_login` is a diner entering a store's loyalty club, not a
+   *  merchant reaching the dashboard - the copy differs entirely. */
+  purpose: "signup" | "login" | "customer_login";
+  /** Store name, for customer_login. The diner knows the restaurant, not us. */
+  businessName?: string;
 }) {
-  const heading = purpose === "signup" ? "קוד לפתיחת החנות" : "קוד כניסה לדשבורד";
+  const heading =
+    purpose === "signup"
+      ? "קוד לפתיחת החנות"
+      : purpose === "customer_login"
+        ? "קוד הכניסה שלך"
+        : "קוד כניסה לדשבורד";
   const lead =
     purpose === "signup"
       ? "כדי לסיים את פתיחת החנות, הזינו את הקוד הזה במסך ההרשמה."
-      : "כדי להיכנס לדשבורד, הזינו את הקוד הזה במסך ההתחברות.";
+      : purpose === "customer_login"
+        ? `כדי להיכנס למועדון של ${businessName ?? "החנות"}, הזינו את הקוד הזה במסך ההתחברות.`
+        : "כדי להיכנס לדשבורד, הזינו את הקוד הזה במסך ההתחברות.";
 
   return renderRtlEmail({
-    subject: `QuickFood · קוד האימות שלך: ${code}`,
+    // A diner recognises the restaurant, not the platform behind it.
+    subject:
+      purpose === "customer_login" && businessName
+        ? `${businessName} · קוד הכניסה שלך: ${code}`
+        : `QuickFood · קוד האימות שלך: ${code}`,
     preheader: `הקוד תקף ל-${expiresInMinutes} דקות.`,
     heading,
     raw: true,

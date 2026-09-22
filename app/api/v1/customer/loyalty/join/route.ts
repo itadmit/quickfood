@@ -16,7 +16,10 @@ const JoinSchema = z.object({
   phone: z.string().optional(),
   first_name: z.string().max(40).optional(),
   last_name: z.string().max(40).optional(),
-  email: z.string().email().optional(),
+  // Required, because it is now the only channel a member can receive their
+  // login code on. Optional here would quietly enrol people who can never
+  // log in — which is exactly the state the 5 pre-existing members are in.
+  email: z.string({ required_error: "נדרשת כתובת מייל" }).email("כתובת מייל לא תקינה"),
   birthday: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   marketing_consent: z.boolean().optional(),
   // Growth attribution captured at the loyalty-join (signup) moment.
@@ -40,6 +43,17 @@ export const POST = handler(async (req: Request) => {
 
   let customerId: string | null = isCustomer ? session.userId : null;
 
+  // A logged-in customer skips the lookup below, so their address would never
+  // be stored — and a member without one cannot receive a login code.
+  if (customerId) {
+    await prisma.customer
+      .updateMany({
+        where: { id: customerId, email: null },
+        data: { email: body.email.trim() },
+      })
+      .catch(() => {});
+  }
+
   if (!customerId) {
     if (!body.phone) {
       return apiError("phone_required", "נדרש מספר טלפון", 422, "phone");
@@ -57,7 +71,9 @@ export const POST = handler(async (req: Request) => {
       const updates: Record<string, string> = {};
       if (!existing.firstName && body.first_name) updates.firstName = body.first_name;
       if (!existing.lastName && body.last_name) updates.lastName = body.last_name;
-      if (!existing.email && body.email) updates.email = body.email.trim();
+      // Backfills the address for anyone who ordered as a guest before this
+      // field was required — that is what makes their login work afterwards.
+      if (!existing.email) updates.email = body.email.trim();
       if (!existing.birthday && body.birthday) updates.birthday = body.birthday;
       if (Object.keys(updates).length) {
         await prisma.customer.update({ where: { id: existing.id }, data: updates }).catch(() => {});
@@ -69,7 +85,7 @@ export const POST = handler(async (req: Request) => {
             phone,
             firstName: body.first_name ?? "",
             lastName: body.last_name ?? "",
-            email: body.email?.trim() ?? null,
+            email: body.email.trim(),
             birthday: body.birthday ?? null,
             marketingConsent: body.marketing_consent === true,
           },

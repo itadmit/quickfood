@@ -177,6 +177,13 @@ export function LoyaltyJoinPopup({ tenantSlug, open, onClose, initialPhone, onJo
       setError("נא להזין מספר טלפון");
       return;
     }
+    // Checked client-side too so the member is told before the round-trip:
+    // the login code is emailed, so joining without an address would strand
+    // them at the login screen later with no way in.
+    if (!email.trim()) {
+      setError("נא להזין אימייל - קוד הכניסה שלכם יישלח לשם");
+      return;
+    }
     if (!consent) {
       setError("יש לאשר את התקנון ומדיניות הפרטיות");
       return;
@@ -197,7 +204,7 @@ export function LoyaltyJoinPopup({ tenantSlug, open, onClose, initialPhone, onJo
           phone: phone.trim(),
           first_name: firstName.trim() || undefined,
           last_name: lastName.trim() || undefined,
-          email: email.trim() || undefined,
+          email: email.trim(),
           birthday: birthdayIso || undefined,
           marketing_consent: true,
           attribution_source:
@@ -322,7 +329,9 @@ export function LoyaltyJoinPopup({ tenantSlug, open, onClose, initialPhone, onJo
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     type="email"
-                    placeholder="אימייל"
+                    required
+                    aria-required="true"
+                    placeholder="אימייל (קוד הכניסה יישלח לשם)"
                     dir="ltr"
                     className="w-full rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none text-right"
                   />

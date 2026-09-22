@@ -24,7 +24,6 @@ import { apiError, apiJson, handler } from "@/lib/api-response";
 import { prisma } from "@/lib/db/client";
 import { toE164 } from "@/lib/format";
 import { issueOtp } from "@/lib/auth/otp";
-import { sendWhatsApp } from "@/lib/whatsapp/send";
 import { sendSms } from "@/lib/sms/send";
 
 export const runtime = "nodejs";
@@ -96,34 +95,19 @@ export const POST = handler(async (req: Request) => {
     `${tenant.name} · קוד אימות: ${code}\n` +
     `הקוד תקף ל-10 דקות. אם לא ביקשת - אפשר להתעלם.`;
 
-  // sendWhatsApp + sendSms validate the recipient as local 05X via
-  // /^05\d{8}$/ - passing the E.164 form (+972…) trips
-  // invalid_recipient and silently fails BOTH channels, surfacing as a
-  // 502 here. Keep `e164` as the OtpCode key (so verify() can find it),
-  // but hand the providers the local format they actually accept.
+  // sendSms validates the recipient as local 05X via /^05\d{8}$/ - passing
+  // the E.164 form (+972…) trips invalid_recipient and fails silently,
+  // surfacing as a 502 here. Keep `e164` as the OtpCode key (so verify() can
+  // find it), but hand the provider the local format it actually accepts.
   const localPhone = e164.startsWith("+972") ? "0" + e164.slice(4) : e164;
 
-  // Try WhatsApp first. sendWhatsApp auto-falls-back to the platform
-  // default iBot account when the tenant hasn't connected their own.
+  // SMS only. This used to try WhatsApp first, via the platform's unofficial
+  // iBot account, and fall back to SMS - we are off iBot, and a kiosk has no
+  // email address to send to (it collects a phone at a physical terminal), so
+  // SMS is the channel. skipCredit keeps it off the merchant's budget: a
+  // login code is platform UX, not a message they chose to send.
   let channel: "whatsapp" | "sms" | null = null;
   let lastProviderMsg = "";
-  try {
-    const wa = await sendWhatsApp({
-      tenantId: tenant.id,
-      to: localPhone,
-      body,
-      kind: "kiosk_otp",
-      refKind: "phone",
-      refId: e164,
-      // OTP delivery shouldn't burn the merchant's SMS budget - codes
-      // are a platform-level UX feature, not a marketing message.
-      skipCredit: true,
-    });
-    if (wa.status === "sent") channel = "whatsapp";
-    else lastProviderMsg = wa.providerMsg ?? wa.status;
-  } catch (err) {
-    lastProviderMsg = err instanceof Error ? err.message : "whatsapp_error";
-  }
 
   if (!channel) {
     try {
