@@ -236,9 +236,8 @@ export const POST = handler(async (req: Request) => {
             phone: body.owner_phone,
             phoneE164: ownerE164,
             role: "owner",
-            // Identity is now proven by SMS-OTP on the mobile, not by an
-            // email round-trip. Mark verified so the email-verification
-            // gate (dashboard banner / billing) treats the account as live.
+            // The email passed OTP before this handler ran; mark it verified
+            // so the email-verification gate treats the account as live.
             emailVerifiedAt: new Date(),
             // Evidence of consent, not just a line we rendered once.
             whatsappOptInAt: body.whatsapp_opt_in ? new Date() : null,
@@ -259,7 +258,7 @@ export const POST = handler(async (req: Request) => {
   );
 
   // Start a 7-day local trial. The merchant gets full dashboard access
-  // immediately; SMS purchases are gated behind billing setup, and after
+  // immediately; paid add-ons are gated behind billing setup, and after
   // the trial expires the whole dashboard locks until they pay.
   const trialEndsAt = new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
 
@@ -297,8 +296,8 @@ export const POST = handler(async (req: Request) => {
   }
 
   // Welcome + admin-notify emails - fire-and-forget; signup must not fail
-  // if Resend hiccups. The account is already active (phone verified via
-  // SMS-OTP), so the email is a plain contact channel - no "activate" link.
+  // if Resend hiccups. The account is already active (email verified via
+  // OTP), so the email is a plain contact channel - no "activate" link.
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://quickfood.co.il").replace(/\/$/, "");
   after(async () => {
     try {

@@ -1533,7 +1533,7 @@ function Step3({
           className="w-full px-3.5 py-3 rounded-xl border-2 border-black bg-[#FFFBEC] hover:bg-white focus:bg-white focus:border-black focus:shadow-[0_0_0_3px_#F8CB1E] outline-none transition font-semibold text-black placeholder:text-black/35 placeholder:font-normal"
         />
       </Field>
-      <Field label="מספר נייד אישי" hint="נאמת בקוד SMS בסיום" required>
+      <Field label="מספר נייד אישי" required>
         <input
           type="tel"
           value={phone}
@@ -1555,7 +1555,7 @@ function Step3({
           בהרשמה אתם מאשרים קבלת עדכוני שירות בוואטסאפ למספר הזה.
         </p>
       </Field>
-      <Field label="אימייל" required>
+      <Field label="אימייל" hint="קוד אימות יישלח לכאן" required>
         <input
           type="email"
           value={email}
