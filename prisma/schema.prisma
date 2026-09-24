@@ -37,6 +37,12 @@ enum ThemeId {
   cobalt
   sunflower
   apricot
+  teal
+  ocean
+  grape
+  berry
+  coffee
+  rose
 }
 
 enum RestaurantStatus {

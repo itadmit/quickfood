@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { THEME_IDS } from "@/lib/themes";
 
 /**
  * zod schemas - shared between API Route Handlers and (eventually) OpenAPI auto-gen.
@@ -318,7 +319,7 @@ export const TenantPatchSchema = z.object({
   logo_letter: z.string().min(1).max(2).optional(),
   logo_url: z.string().url().nullable().optional(),
   cover_image: z.string().url().nullable().optional(),
-  theme_id: z.enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt", "sunflower", "apricot"]).optional(),
+  theme_id: z.enum(THEME_IDS).optional(),
   business_type: z
     .enum([
       "pizza",
@@ -543,9 +544,7 @@ export const TenantCreateSchema = z.object({
     .regex(/^[a-z0-9-]+$/, "slug must be lowercase letters, digits and hyphens"),
   name: z.string().min(1).max(120),
   logo_letter: z.string().min(1).max(2),
-  theme_id: z
-    .enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt", "sunflower", "apricot"])
-    .default("fresh"),
+  theme_id: z.enum(THEME_IDS).default("fresh"),
   business_type: z
     .enum([
       "pizza",

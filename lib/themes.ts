@@ -43,22 +43,25 @@ export const DASHBOARD_TOKENS = {
   blueSoft: "#e1ebf7",
 } as const;
 
-export type ThemeId =
-  | "fresh"
-  | "basil"
-  | "forest"
-  | "olive"
-  | "tomato"
-  | "charcoal"
-  | "cobalt"
-  | "sunflower"
-  | "apricot"
-  | "teal"
-  | "ocean"
-  | "grape"
-  | "berry"
-  | "coffee"
-  | "rose";
+export const THEME_IDS = [
+  "fresh",
+  "basil",
+  "forest",
+  "olive",
+  "tomato",
+  "charcoal",
+  "cobalt",
+  "sunflower",
+  "apricot",
+  "teal",
+  "ocean",
+  "grape",
+  "berry",
+  "coffee",
+  "rose",
+] as const;
+
+export type ThemeId = (typeof THEME_IDS)[number];
 
 export interface Theme {
   id: ThemeId;

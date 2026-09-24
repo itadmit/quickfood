@@ -14,6 +14,7 @@ import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { deletePrefix } from "@/lib/storage/r2";
+import { THEME_IDS } from "@/lib/themes";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,9 +22,7 @@ export const dynamic = "force-dynamic";
 const PatchSchema = z.object({
   name: z.string().trim().min(2).max(120).optional(),
   status: z.enum(["active", "suspended", "trial"]).optional(),
-  theme_id: z
-    .enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt", "sunflower", "apricot"])
-    .optional(),
+  theme_id: z.enum(THEME_IDS).optional(),
   business_type: z
     .enum([
       "pizza",

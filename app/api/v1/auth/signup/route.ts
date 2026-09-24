@@ -15,6 +15,7 @@ import { toE164 } from "@/lib/format";
 import { publish } from "@/lib/qstash/client";
 import { readFbCookies } from "@/lib/fb/capi";
 import { after } from "next/server";
+import { THEME_IDS } from "@/lib/themes";
 
 const TRIAL_DAYS = 7;
 
@@ -79,9 +80,7 @@ const SignupSchema = z.object({
       "general",
     ])
     .default("general"),
-  theme_id: z
-    .enum(["fresh", "basil", "forest", "olive", "tomato", "charcoal", "cobalt", "sunflower", "apricot"])
-    .default("fresh"),
+  theme_id: z.enum(THEME_IDS).default("fresh"),
   cuisine_type: z.string().max(60, "סוג מטבח ארוך מדי").optional(),
   branch_address: z
     .string({ required_error: "כתובת הסניף חסרה" })
