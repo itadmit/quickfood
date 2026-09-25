@@ -1465,9 +1465,9 @@ function Step2({
         אפשר לשנות מאוחר יותר בהגדרות.
       </p>
 
-      <div className="inline-flex items-center gap-3.5 px-4 py-3 bg-white border-2 border-black rounded-2xl shadow-[0_3px_0_#000]">
+      <div className="flex w-fit max-w-full flex-wrap items-center gap-x-3.5 gap-y-2.5 px-4 py-3 bg-white border-2 border-black rounded-2xl shadow-[0_3px_0_#000]">
         <span className="text-xs font-black text-black">ערכת צבע</span>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {SWATCH_ORDER.map((id) => {
             const t = THEMES[id];
             const active = themeId === id;
@@ -1478,7 +1478,7 @@ function Step2({
                 onClick={() => setThemeId(id)}
                 aria-label={t.name}
                 aria-pressed={active}
-                className="w-[26px] h-[26px] rounded-full border-2 border-black p-0 cursor-pointer transition-transform hover:scale-110"
+                className="w-[26px] h-[26px] shrink-0 rounded-full border-2 border-black p-0 cursor-pointer transition-transform hover:scale-110"
                 style={{
                   background: t.primary,
                   outline: active ? "2px solid #000" : "none",
