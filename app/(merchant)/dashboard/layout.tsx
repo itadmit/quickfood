@@ -150,6 +150,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             hasPaymentMethod={hasPaymentMethod}
             trialDaysLeft={trialDaysLeft}
             trialExpired={trialExpired}
+            termsPending={!tenant.termsAcknowledgedAt}
           />
           <TopbarV2
             user={user}
@@ -207,6 +208,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             hasPaymentMethod={hasPaymentMethod}
             trialDaysLeft={trialDaysLeft}
             trialExpired={trialExpired}
+            termsPending={!tenant.termsAcknowledgedAt}
           />
           <Topbar
             user={user}

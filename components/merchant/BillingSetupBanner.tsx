@@ -9,10 +9,12 @@ export function BillingSetupBanner({
   hasPaymentMethod,
   trialDaysLeft,
   trialExpired,
+  termsPending = false,
 }: {
   hasPaymentMethod: boolean;
   trialDaysLeft: number | null;
   trialExpired: boolean;
+  termsPending?: boolean;
 }) {
   const pathname = usePathname() ?? "";
   const [tipOpen, setTipOpen] = useState(false);
@@ -31,6 +33,9 @@ export function BillingSetupBanner({
   }, [tipOpen]);
 
   if (hasPaymentMethod) return null;
+  // One banner at a time: the terms notice outranks the trial countdown
+  // and comes back on its own once the merchant approves the terms.
+  if (termsPending) return null;
   if (pathname.startsWith("/dashboard/billing")) return null;
   if (trialExpired) return null;
   if (dismissed) return null;
