@@ -17,14 +17,13 @@ export function TermsAckBanner({ acknowledged }: { acknowledged: boolean }) {
             <AlertTriangle size={14} color="var(--qf-deep)" strokeWidth={2.2} />
           </div>
           <div className="flex-1 min-w-0 leading-snug">
-            <span className="font-medium">
-              כדי שחברת הסליקה תאשר אותך חובה להציג תקנון, אז עשינו לך את החיים
-              קלים עם קצת AI,
-            </span>{" "}
             <span className="text-qf-ink2">
-              אבל באחריותך הבלעדית לבדוק, לערוך, להתאים ולאשר את התקנון בהתאם
-              לפעילות העסק ולדרישות החוק וחברת הסליקה. קוויק פוד אינה נושאת
-              באחריות לתוכן התקנון או לשימוש בו.
+              כדי שחברת הסליקה תאשר אותך חובה להציג תקנון, אז עשינו לך את החיים
+              קלים עם קצת AI, אבל{" "}
+              <span className="font-bold text-qf-ink">באחריותך הבלעדית</span>{" "}
+              לבדוק, לערוך, להתאים ולאשר את התקנון בהתאם לפעילות העסק ולדרישות
+              החוק וחברת הסליקה. קוויק פוד אינה נושאת באחריות לתוכן התקנון או
+              לשימוש בו.
             </span>
           </div>
         </div>
