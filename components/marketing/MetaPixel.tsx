@@ -3,21 +3,26 @@
 import Script from "next/script";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { FB_PIXEL_ID, isMarketingPath } from "@/lib/fb/config";
+import { FB_PIXEL_ID, isTrackablePage } from "@/lib/fb/config";
+import { useHostname } from "@/lib/hooks/use-hostname";
 import { pageview, trackCustom } from "@/lib/fb/pixel";
 
 function PixelEvents() {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (isMarketingPath(pathname)) pageview();
+    if (isTrackablePage(pathname, location.hostname)) pageview();
   }, [pathname]);
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
       const el = e.target as HTMLElement | null;
-      const link = el?.closest?.('a[href^="/signup"]');
-      if (link) trackCustom("ClickSignup", { source: location.pathname });
+      const link = el?.closest?.<HTMLAnchorElement>("a[href]");
+      if (!link) return;
+      const href = link.getAttribute("href") ?? "";
+      if (/^\/signup|\/\/[^/]*quickfood\.co\.il\/signup/.test(href)) {
+        trackCustom("ClickSignup", { source: location.pathname });
+      }
     }
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
@@ -28,7 +33,9 @@ function PixelEvents() {
 
 export function MetaPixel() {
   const pathname = usePathname();
-  if (!FB_PIXEL_ID || !isMarketingPath(pathname)) return null;
+  const host = useHostname();
+
+  if (!FB_PIXEL_ID || !isTrackablePage(pathname, host)) return null;
 
   return (
     <>

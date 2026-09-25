@@ -14,7 +14,7 @@ import { BusinessTypeSelect } from "@/components/shared/BusinessTypeSelect";
 import { WoltTermsTrigger, WoltTermsGateModal } from "@/components/shared/wolt/WoltTermsModal";
 import { StorefrontPreviewPhone } from "@/components/shared/wolt/StorefrontPreviewPhone";
 import { cn } from "@/lib/cn";
-import { track } from "@/lib/fb/pixel";
+import { track, trackCustom } from "@/lib/fb/pixel";
 import { gaEvent } from "@/lib/ga/gtag";
 
 type SlugStatus = "idle" | "checking" | "available" | "taken" | "invalid" | "reserved" | "too_short";
@@ -171,6 +171,35 @@ export function SignupForm() {
   // token is held only long enough to pass into submit().
   const [otpOpen, setOtpOpen] = useState(false);
 
+  const funnelSent = useRef<Record<string, boolean>>({});
+
+  function trackFunnelStep(step: "view" | "details" | "verify") {
+    if (funnelSent.current[step]) return;
+    funnelSent.current[step] = true;
+    if (step === "view") {
+      track("ViewContent", { content_name: "signup" });
+      gaEvent("signup_view");
+      return;
+    }
+    if (step === "details") {
+      track("Lead", { content_name: businessType });
+      gaEvent("signup_details_done", { business_type: businessType });
+      return;
+    }
+    track("InitiateCheckout", { content_name: businessType, currency: "ILS", value: 299 });
+    gaEvent("signup_verify_started", { business_type: businessType });
+  }
+
+  useEffect(() => {
+    trackFunnelStep("view");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (step === 3) trackFunnelStep("details");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
   function autoSlug(v: string) {
     // simple Hebrew ← slug
     const map: Record<string, string> = {};
@@ -265,6 +294,14 @@ export function SignupForm() {
       const data = await res.json();
       if (!res.ok) {
         const field = data.error?.field as string | undefined;
+        trackCustom("SignupFailed", {
+          code: data.error?.code ?? res.status,
+          field: field ?? "unknown",
+        });
+        gaEvent("signup_failed", {
+          code: String(data.error?.code ?? res.status),
+          field: field ?? "unknown",
+        });
         setError(data.error?.message ?? "ההרשמה נכשלה");
         const stepByField: Record<string, 1 | 2 | 3> = {
           business_name: 1,
@@ -513,7 +550,10 @@ export function SignupForm() {
           <button
             type="button"
             disabled={!canSubmit || busy || otpOpen}
-            onClick={() => setOtpOpen(true)}
+            onClick={() => {
+              trackFunnelStep("verify");
+              setOtpOpen(true);
+            }}
             className="px-5 py-3 rounded-xl bg-[#F8CB1E] hover:bg-[#ffd84a] text-black text-base font-black border-2 border-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] transition disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
           >
             {busy ? (

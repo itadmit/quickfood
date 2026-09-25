@@ -4,7 +4,8 @@ import Script from "next/script";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { GA_MEASUREMENT_ID } from "@/lib/ga/config";
-import { isMarketingPath } from "@/lib/fb/config";
+import { isTrackablePage } from "@/lib/fb/config";
+import { useHostname } from "@/lib/hooks/use-hostname";
 import { pageview, gaEvent } from "@/lib/ga/gtag";
 
 function GaEvents() {
@@ -18,14 +19,18 @@ function GaEvents() {
       initial.current = false;
       return;
     }
-    if (isMarketingPath(pathname)) pageview(pathname);
+    if (isTrackablePage(pathname, location.hostname)) pageview(pathname);
   }, [pathname]);
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
       const el = e.target as HTMLElement | null;
-      const link = el?.closest?.('a[href^="/signup"]');
-      if (link) gaEvent("signup_cta_click", { source: location.pathname });
+      const link = el?.closest?.<HTMLAnchorElement>("a[href]");
+      if (!link) return;
+      const href = link.getAttribute("href") ?? "";
+      if (/^\/signup|\/\/[^/]*quickfood\.co\.il\/signup/.test(href)) {
+        gaEvent("signup_cta_click", { source: location.pathname });
+      }
     }
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
@@ -36,7 +41,9 @@ function GaEvents() {
 
 export function GoogleAnalytics() {
   const pathname = usePathname();
-  if (!GA_MEASUREMENT_ID || !isMarketingPath(pathname)) return null;
+  const host = useHostname();
+
+  if (!GA_MEASUREMENT_ID || !isTrackablePage(pathname, host)) return null;
 
   return (
     <>
