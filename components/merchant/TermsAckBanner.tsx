@@ -32,7 +32,7 @@ export function TermsAckBanner({ acknowledged }: { acknowledged: boolean }) {
             href="/dashboard/settings/legal"
             className="qf-billing-cta inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-xs font-medium flex-1 sm:flex-none whitespace-nowrap"
           >
-            לצפייה ואישור התקנון
+            לצפייה ואישור התקנון של החנות שלך
           </Link>
         </div>
       </div>
