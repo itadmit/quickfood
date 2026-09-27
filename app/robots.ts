@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
-
-const BASE = "https://quickfood.co.il";
+import { SITE_URL } from "@/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -10,6 +9,11 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
         // Private surfaces - never useful to Google and risk leaking
         // half-finished UI / API responses if indexed.
+        //
+        // Note /ads/* and /dev are deliberately NOT here: they send a
+        // `noindex` header instead. A disallowed page can't be crawled, so
+        // Google never reads the noindex and an already-indexed URL would
+        // linger. Disallow hides pages; noindex removes them.
         disallow: [
           "/api/",
           "/dashboard/",
@@ -20,7 +24,7 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: `${BASE}/sitemap.xml`,
-    host: BASE,
+    sitemap: `${SITE_URL}/sitemap.xml`,
+    host: SITE_URL,
   };
 }
