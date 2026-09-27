@@ -15,6 +15,19 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
+  // /home2 was an alternate homepage that competed with / for the same
+  // queries. Removed, but kept as a permanent redirect so any campaign
+  // link still pointing there lands on the real homepage instead of a 404.
+  async redirects() {
+    return [
+      {
+        source: "/home2",
+        destination: "/",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
