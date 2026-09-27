@@ -2378,7 +2378,7 @@
   background: var(--ink); color: var(--cream); padding: 56px 0 24px;
 }
 .footGrid {
-  display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 32px;
+  display: grid; grid-template-columns: 1.4fr repeat(4, 1fr); gap: 26px;
   padding-bottom: 32px; border-bottom: 1px solid rgba(241,233,216,0.15);
 }
 .footBrand { font-family: var(--font-pacifico), "Pacifico", cursive; font-weight: 400; font-size: 38px; letter-spacing: 0.01em; line-height: 1.25; }

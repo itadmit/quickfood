@@ -1,49 +1,122 @@
+import Link from "next/link";
+import type { Metadata } from "next";
 import { LegalShell } from "@/components/shared/LegalShell";
+import { POSTS, postModified, readingMinutes } from "@/lib/blog";
+import { SITE_URL, ORG_ID } from "@/lib/site";
 
-export const metadata = {
-  title: "בלוג - QuickFood",
-  description:
-    "תובנות ומספרים מהשטח על איך להפעיל אתר הזמנות לצד הערוצים הגדולים, להחזיר את הלקוחות הקבועים, ולחסוך עמלות על ההזמנות החוזרות.",
+const DESCRIPTION =
+  "מדריכים מעשיים לניהול הצד העסקי של מסעדה: כמה באמת עולה הזמנה באגרגטור, איך להחזיר את הלקוחות הקבועים להזמנה ישירה, ואיך לבנות תפריט דיגיטלי שמוכר יותר.";
+
+export const metadata: Metadata = {
+  title: "הבלוג של QuickFood - רווחיות, תפריט ולקוחות חוזרים",
+  description: DESCRIPTION,
+  alternates: { canonical: `${SITE_URL}/blog` },
 };
 
 export default function BlogPage() {
+  // Blog + ItemList so the listing is eligible to show as a set of articles
+  // rather than one generic page.
+  const schema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Blog",
+        "@id": `${SITE_URL}/blog#blog`,
+        url: `${SITE_URL}/blog`,
+        name: "הבלוג של QuickFood",
+        description: DESCRIPTION,
+        inLanguage: "he-IL",
+        publisher: { "@id": ORG_ID },
+      },
+      {
+        "@type": "ItemList",
+        itemListElement: POSTS.map((post, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          url: `${SITE_URL}/blog/${post.slug}`,
+          name: post.title,
+        })),
+      },
+    ],
+  };
+
   return (
-    <LegalShell
-      title="הבלוג"
-      subtitle="כאן יעלו פוסטים על הצד העסקי של ניהול מסעדה - מספרים מהשטח, איך להוציא את ההזמנות החוזרות מהעמלה, ומקרי בוחן של מסעדות שמפעילות אתר משלהן לצד וולט."
-      chipLabel="QUICKFOOD · בלוג"
-      backHref="/"
-      backLabel="לדף הבית"
-    >
-      <section>
-        <h2>בקרוב</h2>
-        <p>
-          הבלוג בעבודה. הפוסטים הראשונים יעסקו בנושאים האלה:
-        </p>
-        <ul>
-          <li>איך להעביר את הלקוחות הקבועים מהאגרגטור לאתר שלכם - מבלי לאבד את החדשים</li>
-          <li>איך לבנות תפריט דיגיטלי שמוכר יותר - מודיפיירים, אפ-סלים, ותמונות</li>
-          <li>אוטומציות מנצחות עם Make ו-Zapier - מהזמנה לקבלה לדוח חודשי</li>
-          <li>case studies של מסעדנים שמפעילים אתר משלהם לצד וולט - איך השתנה הרווח החודשי</li>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      />
+      <LegalShell
+        title="הבלוג"
+        subtitle="הצד העסקי של ניהול מסעדה - מספרים מהשטח, לא תיאוריה. איך לחשב מה הזמנה באמת עולה לך, איך להחזיר את הלקוחות הקבועים, ואיך לבנות תפריט שמוכר."
+        chipLabel="QUICKFOOD · בלוג"
+        backHref="/"
+        backLabel="לדף הבית"
+      >
+        <ul className="!list-none !ps-0 !my-0">
+          {POSTS.map((post) => (
+            <li
+              key={post.slug}
+              className="!mb-0 border-b-2 border-black/10 py-6 first:pt-0 last:border-b-0 last:pb-0"
+            >
+              <div className="mb-2 flex items-center gap-2 text-[12px] font-black tracking-wide text-black/55">
+                <span className="rounded-full bg-black/[0.07] px-2.5 py-1">
+                  {post.category}
+                </span>
+                <span>{readingMinutes(post)} דקות קריאה</span>
+              </div>
+              <h2 className="!mb-2">
+                <Link href={`/blog/${post.slug}`} className="!no-underline">
+                  {post.title}
+                </Link>
+              </h2>
+              <p className="!mb-3 text-black/70">{post.description}</p>
+              <Link
+                href={`/blog/${post.slug}`}
+                className="text-[14px] font-black"
+              >
+                קרא את המדריך
+              </Link>
+              <time
+                className="mt-2 block text-[12px] font-bold text-black/45"
+                dateTime={postModified(post)}
+              >
+                {formatHebrewDate(postModified(post))}
+              </time>
+            </li>
+          ))}
         </ul>
-      </section>
 
-      <section>
-        <h2>רוצים לקבל הודעה כשעולה הפוסט הראשון?</h2>
-        <p>
-          שלחו לנו מייל ל-<a href="mailto:hello@quickfood.co.il?subject=הירשם לבלוג">hello@quickfood.co.il</a>{" "}
-          ונוסיף אתכם לרשימת תפוצה (לא ספאם, פוסט אחד בחודש בערך).
-        </p>
-      </section>
-
-      <section>
-        <h2>יש לכם רעיון לפוסט?</h2>
-        <p>
-          אם יש נושא שאתם רוצים שנעמיק בו - עמלות, KPI, אופטימיזציה של תפריט,
-          UX של checkout, הפעלת SMS marketing - תכתבו לנו ל-
-          <a href="mailto:hello@quickfood.co.il">hello@quickfood.co.il</a>.
-        </p>
-      </section>
-    </LegalShell>
+        <section className="mt-10">
+          <h2>יש נושא שאתה רוצה שנעמיק בו?</h2>
+          <p>
+            עמלות, KPI, אופטימיזציה של תפריט, UX של checkout, שיווק ב-SMS -
+            תכתוב לנו ל-
+            <a href="mailto:hello@quickfood.co.il">hello@quickfood.co.il</a> ונוסיף
+            את זה לרשימה.
+          </p>
+        </section>
+      </LegalShell>
+    </>
   );
+}
+
+function formatHebrewDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const months = [
+    "ינואר",
+    "פברואר",
+    "מרץ",
+    "אפריל",
+    "מאי",
+    "יוני",
+    "יולי",
+    "אוגוסט",
+    "ספטמבר",
+    "אוקטובר",
+    "נובמבר",
+    "דצמבר",
+  ];
+  return `${d.getDate()} ב${months[d.getMonth()]} ${d.getFullYear()}`;
 }

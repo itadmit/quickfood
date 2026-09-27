@@ -1664,6 +1664,13 @@ function Footer() {
             <a href="#pricing">תמחור</a>
           </div>
           <div className={styles.footCol}>
+            <h5>פתרונות</h5>
+            <Link href="/solutions/restaurant">אתר הזמנות למסעדה</Link>
+            <Link href="/solutions/pizzeria">מערכת הזמנות לפיצריה</Link>
+            <Link href="/solutions/cafe">מערכת הזמנות לבית קפה</Link>
+            <Link href="/solutions/delivery-commissions">הורדת עמלות משלוחים</Link>
+          </div>
+          <div className={styles.footCol}>
             <h5>חברה</h5>
             <Link href="/about">אודות</Link>
             <Link href="/blog">בלוג</Link>
