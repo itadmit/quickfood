@@ -65,6 +65,35 @@ export interface GrowLeadInput {
   website?: string;
 }
 
+const BIDI_MARKS = /[​-‏‪-‮⁦-⁩﻿]/g;
+const HEBREW_MARKS = /[֑-ֽֿ׀-ׇ]/g;
+const QUOTE_CHARS = /["'`׳״‘’“”]/g;
+const SEPARATOR_CHARS = /[|•·*<>\\/=+~^{}[\]@#$%&_;,:!?()]/g;
+
+export function sanitizeGrowText(value: string): string {
+  return value
+    .normalize("NFKC")
+    .replace(BIDI_MARKS, "")
+    .replace(HEBREW_MARKS, "")
+    .replace(QUOTE_CHARS, "")
+    .replace(SEPARATOR_CHARS, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function sanitizeGrowDigits(value: string): string {
+  return value.replace(BIDI_MARKS, "").replace(/\D/g, "");
+}
+
+export function sanitizeGrowPhone(value: string): string {
+  const digits = sanitizeGrowDigits(value);
+  return digits.startsWith("972") ? `0${digits.slice(3)}` : digits;
+}
+
+export function sanitizeGrowUrl(value: string): string {
+  return value.replace(BIDI_MARKS, "").replace(/\s+/g, "").trim();
+}
+
 export async function submitGrowLead(input: GrowLeadInput): Promise<string> {
   const jar = new Map<string, string>();
 
@@ -95,10 +124,10 @@ export async function submitGrowLead(input: GrowLeadInput): Promise<string> {
   }
 
   const cellValuesByColumnId: Record<string, unknown> = {
-    [FIELD.businessNumber]: input.businessNumber,
-    [FIELD.businessName]: input.businessName,
-    [FIELD.phone]: input.phone,
-    [FIELD.website]: input.website ?? "",
+    [FIELD.businessNumber]: sanitizeGrowDigits(input.businessNumber),
+    [FIELD.businessName]: sanitizeGrowText(input.businessName),
+    [FIELD.phone]: sanitizeGrowPhone(input.phone),
+    [FIELD.website]: sanitizeGrowUrl(input.website ?? ""),
     [FIELD.marketer]: MARKETER_OPTION,
     [FIELD.package]: [PACKAGE_RECORD],
   };

@@ -2,19 +2,42 @@ import { z } from "zod";
 import { apiError, apiJson, handler } from "@/lib/api-response";
 import { prisma } from "@/lib/db/client";
 import { getSession } from "@/lib/auth/session";
-import { submitGrowLead } from "@/lib/grow-signup";
+import {
+  sanitizeGrowDigits,
+  sanitizeGrowPhone,
+  sanitizeGrowText,
+  sanitizeGrowUrl,
+  submitGrowLead,
+} from "@/lib/grow-signup";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const GrowSignupSchema = z.object({
-  businessNumber: z.string().trim().min(5).max(20),
-  businessName: z.string().trim().min(2).max(120),
+  businessNumber: z
+    .string()
+    .transform(sanitizeGrowDigits)
+    .refine((v) => v.length >= 5 && v.length <= 20, {
+      message: "יש להזין מספר עוסק או ת.ז תקין (ספרות בלבד)",
+    }),
+  businessName: z
+    .string()
+    .transform(sanitizeGrowText)
+    .refine((v) => v.length >= 2 && v.length <= 120, {
+      message: "יש להזין שם עסק תקין",
+    }),
   phone: z
     .string()
-    .trim()
-    .regex(/^05\d{8}$/, { message: "יש להזין מספר נייד תקין (05XXXXXXXX)" }),
-  website: z.string().trim().min(3, { message: "לינק לאתר חובה" }).max(200),
+    .transform(sanitizeGrowPhone)
+    .refine((v) => /^05\d{8}$/.test(v), {
+      message: "יש להזין מספר נייד תקין (05XXXXXXXX)",
+    }),
+  website: z
+    .string()
+    .transform(sanitizeGrowUrl)
+    .refine((v) => v.length >= 3 && v.length <= 200, {
+      message: "לינק לאתר חובה",
+    }),
 });
 
 export const POST = handler(async (req: Request) => {

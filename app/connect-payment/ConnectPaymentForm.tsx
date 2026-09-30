@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 import { IcoCreditCard, IcoCheck } from "@/components/shared/Icons";
+import {
+  sanitizeGrowDigits,
+  sanitizeGrowPhone,
+  sanitizeGrowText,
+  sanitizeGrowUrl,
+} from "@/lib/grow-signup";
 
 interface Props {
   prefill: { businessName: string; businessNumber: string; phone: string; website: string };
@@ -12,10 +18,13 @@ const FIELD_CLS =
 const LABEL_CLS = "block text-sm font-black text-black mb-1.5";
 
 export function ConnectPaymentForm({ prefill }: Props) {
-  const [businessName, setBusinessName] = useState(prefill.businessName);
-  const [businessNumber, setBusinessNumber] = useState(prefill.businessNumber);
-  const [phone, setPhone] = useState(prefill.phone);
-  const [website, setWebsite] = useState(prefill.website);
+  const [businessName, setBusinessName] = useState(sanitizeGrowText(prefill.businessName));
+  const [businessNumber, setBusinessNumber] = useState(sanitizeGrowDigits(prefill.businessNumber));
+  const [phone, setPhone] = useState(() => {
+    const digits = sanitizeGrowPhone(prefill.phone);
+    return /^05\d{8}$/.test(digits) ? digits : "";
+  });
+  const [website, setWebsite] = useState(sanitizeGrowUrl(prefill.website));
   const [status, setStatus] = useState<"idle" | "sending" | "done">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -23,11 +32,20 @@ export function ConnectPaymentForm({ prefill }: Props) {
     e.preventDefault();
     setError(null);
     setStatus("sending");
+    const cleanName = sanitizeGrowText(businessName);
+    const cleanWebsite = sanitizeGrowUrl(website);
+    setBusinessName(cleanName);
+    setWebsite(cleanWebsite);
     try {
       const res = await fetch("/api/v1/grow-signup", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ businessName, businessNumber, phone, website }),
+        body: JSON.stringify({
+          businessName: cleanName,
+          businessNumber,
+          phone,
+          website: cleanWebsite,
+        }),
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
@@ -104,9 +122,14 @@ export function ConnectPaymentForm({ prefill }: Props) {
             className={FIELD_CLS}
             value={businessName}
             onChange={(e) => setBusinessName(e.target.value)}
+            onBlur={(e) => setBusinessName(sanitizeGrowText(e.target.value))}
             placeholder="הפיצרייה של דני"
+            maxLength={120}
             required
           />
+          <p className="text-[11px] text-black/45 mt-1">
+            {'בלי גרשיים ותווים מיוחדים - Grow דוחים שם עסק שמכיל אותם. כתבו "בעמ" ולא "בע״מ".'}
+          </p>
         </div>
 
         <div>
@@ -117,9 +140,10 @@ export function ConnectPaymentForm({ prefill }: Props) {
             id="businessNumber"
             className={FIELD_CLS}
             value={businessNumber}
-            onChange={(e) => setBusinessNumber(e.target.value)}
+            onChange={(e) => setBusinessNumber(sanitizeGrowDigits(e.target.value))}
             inputMode="numeric"
             placeholder="123456789"
+            maxLength={20}
             required
           />
         </div>
@@ -132,10 +156,11 @@ export function ConnectPaymentForm({ prefill }: Props) {
             id="phone"
             className={FIELD_CLS}
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => setPhone(sanitizeGrowPhone(e.target.value))}
             inputMode="tel"
             placeholder="0501234567"
             pattern="05\d{8}"
+            maxLength={10}
             required
           />
           <p className="text-[11px] text-black/45 mt-1">
@@ -151,8 +176,9 @@ export function ConnectPaymentForm({ prefill }: Props) {
             id="website"
             className={FIELD_CLS}
             value={website}
-            onChange={(e) => setWebsite(e.target.value)}
+            onChange={(e) => setWebsite(sanitizeGrowUrl(e.target.value))}
             placeholder="example.co.il"
+            maxLength={200}
             required
           />
         </div>
