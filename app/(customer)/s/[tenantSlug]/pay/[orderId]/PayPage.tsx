@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { formatPrice } from "@/lib/format";
 import { GrowPaymentSdk, renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
 import { HostedPaymentFrame } from "@/components/customer/HostedPaymentFrame";
+import type { CardProviderType } from "@/lib/payments/types";
 import {
   buildKioskT,
   type KioskOverrides,
@@ -24,14 +25,14 @@ interface PayPageProps {
     invoiceUrl: string | null;
     customerEmailMasked: string | null;
   };
-  /** Tenant has an active card provider (grow OR cardcom). */
+  /** Tenant has an active card provider (grow / cardcom / hyp). */
   cardEnabled: boolean;
-  provider: "grow" | "cardcom" | null;
+  provider: CardProviderType | null;
   testMode: boolean;
   displayMode: "iframe" | "redirect" | null;
   /** Grow SDK wallet auth code (grow only). */
   initialAuthCode: string | null;
-  /** CardCom hosted-page URL (cardcom only). */
+  /** Hosted-page URL (cardcom / hyp). */
   initialPaymentUrl: string | null;
   stringOverrides: KioskOverrides;
   justPaid: boolean;
@@ -308,7 +309,7 @@ export function PayPage({
             </div>
           )}
 
-          {provider === "cardcom" ? (
+          {provider !== "grow" ? (
             paymentUrl && (
               <HostedPaymentFrame
                 paymentUrl={paymentUrl}

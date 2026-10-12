@@ -4,7 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GROW_SIGNUP_URL } from "@/lib/grow-signup";
-import { IcoCash, IcoCheck, IcoCreditCard } from "@/components/shared/Icons";
+import {
+  IcoCash,
+  IcoCheck,
+  IcoCopy,
+  IcoCreditCard,
+  IcoInfo,
+} from "@/components/shared/Icons";
 import { Toggle as SharedToggle } from "@/components/shared/Toggle";
 import { SettingsSaveBar } from "@/components/merchant/SettingsSaveBar";
 
@@ -32,6 +38,17 @@ interface CardComState {
   document_type: string;
 }
 
+interface HypState {
+  is_active: boolean;
+  test_mode: boolean;
+  masof: string;
+  pass_p: string;
+  api_key: string;
+  max_installments: number;
+  display_mode: "iframe" | "redirect";
+  send_invoice: boolean;
+}
+
 type CustomerPaymentMethod = "cash" | "card" | "bit" | "apple_pay" | "google_pay";
 
 const PAYMENT_METHOD_LABELS: Record<CustomerPaymentMethod, string> = {
@@ -47,15 +64,23 @@ interface Initial {
   default_payment_method: CustomerPaymentMethod | null;
   grow: GrowState;
   cardcom: CardComState;
+  hyp: HypState;
 }
 
 interface Props {
   initial: Initial;
   canEditApplePay: boolean;
   customDomain: string | null;
+  /** Address the merchant must configure on their Hyp terminal. */
+  hypReturnUrl: string;
 }
 
-export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) {
+export function PaymentsForm({
+  initial,
+  canEditApplePay,
+  customDomain,
+  hypReturnUrl,
+}: Props) {
   const router = useRouter();
   const [v, setV] = useState<Initial>(initial);
   const [saving, setSaving] = useState(false);
@@ -64,30 +89,49 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
   function setCash(b: boolean) {
     setV((x) => ({ ...x, accepts_cash: b }));
   }
+  // Only one card provider may be active at a time - switching one on switches
+  // the other two off, so the checkout resolver is never ambiguous.
   function setGrow<K extends keyof GrowState>(k: K, val: GrowState[K]) {
     setV((x) => {
-      // Only one card provider at a time - turning Grow on disables CardCom.
-      const cardcom =
-        k === "is_active" && val === true
-          ? { ...x.cardcom, is_active: false }
-          : x.cardcom;
-      return { ...x, grow: { ...x.grow, [k]: val }, cardcom };
+      const exclusive = k === "is_active" && val === true;
+      return {
+        ...x,
+        grow: { ...x.grow, [k]: val },
+        cardcom: exclusive ? { ...x.cardcom, is_active: false } : x.cardcom,
+        hyp: exclusive ? { ...x.hyp, is_active: false } : x.hyp,
+      };
     });
   }
   function setCardcom<K extends keyof CardComState>(k: K, val: CardComState[K]) {
     setV((x) => {
-      const grow =
-        k === "is_active" && val === true
-          ? { ...x.grow, is_active: false }
-          : x.grow;
-      return { ...x, cardcom: { ...x.cardcom, [k]: val }, grow };
+      const exclusive = k === "is_active" && val === true;
+      return {
+        ...x,
+        cardcom: { ...x.cardcom, [k]: val },
+        grow: exclusive ? { ...x.grow, is_active: false } : x.grow,
+        hyp: exclusive ? { ...x.hyp, is_active: false } : x.hyp,
+      };
+    });
+  }
+  function setHyp<K extends keyof HypState>(k: K, val: HypState[K]) {
+    setV((x) => {
+      const exclusive = k === "is_active" && val === true;
+      return {
+        ...x,
+        hyp: { ...x.hyp, [k]: val },
+        grow: exclusive ? { ...x.grow, is_active: false } : x.grow,
+        cardcom: exclusive ? { ...x.cardcom, is_active: false } : x.cardcom,
+      };
     });
   }
   function setDefaultMethod(m: CustomerPaymentMethod | null) {
     setV((x) => ({ ...x, default_payment_method: m }));
   }
 
-  const hasAnyActive = v.accepts_cash || v.grow.is_active || v.cardcom.is_active;
+  const cardActive = v.grow.is_active || v.cardcom.is_active || v.hyp.is_active;
+  const hasAnyActive = v.accepts_cash || cardActive;
+  const multipleCardProviders =
+    [v.grow.is_active, v.cardcom.is_active, v.hyp.is_active].filter(Boolean).length > 1;
 
   // Methods that are currently enabled - this drives the default-method
   // dropdown so the merchant can't pick a method that won't appear at
@@ -95,7 +139,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
   // (which is also the order on the customer's pill grid).
   const enabledMethods: CustomerPaymentMethod[] = [];
   if (v.accepts_cash) enabledMethods.push("cash");
-  if (v.grow.is_active || v.cardcom.is_active) {
+  if (cardActive) {
     enabledMethods.push("card", "bit", "apple_pay", "google_pay");
   }
   // If the previously-saved default is no longer enabled, drop it on the
@@ -148,6 +192,16 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
             create_invoice: v.cardcom.create_invoice,
             document_type: v.cardcom.document_type || undefined,
           },
+          hyp: {
+            is_active: v.hyp.is_active,
+            test_mode: v.hyp.test_mode,
+            masof: v.hyp.masof || undefined,
+            pass_p: v.hyp.pass_p || undefined,
+            api_key: v.hyp.api_key || undefined,
+            max_installments: v.hyp.max_installments,
+            display_mode: v.hyp.display_mode,
+            send_invoice: v.hyp.send_invoice,
+          },
         }),
       });
       const data = (await res.json()) as { error?: { message?: string } };
@@ -198,10 +252,17 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
           checked={v.cardcom.is_active}
           onChange={(b) => setCardcom("is_active", b)}
         />
+        <MethodRow
+          icon={<IcoCreditCard s={20} />}
+          title="אשראי דרך חברת Hyp (יעד שריג)"
+          sub="סליקת אשראי דרך מסוף Hyp · תשלומים · Bit לפי הגדרת המסוף · דורש הגדרת כתובת חזרה בפורטל"
+          checked={v.hyp.is_active}
+          onChange={(b) => setHyp("is_active", b)}
+        />
 
-        {(v.grow.is_active && v.cardcom.is_active) && (
+        {multipleCardProviders && (
           <div className="rounded-xl bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm px-3.5 py-2.5">
-            אפשר להפעיל רק ספק סליקה אחד בו-זמנית (Grow או CardCom).
+            אפשר להפעיל רק ספק סליקה אחד בו-זמנית (Grow / CardCom / Hyp).
           </div>
         )}
 
@@ -211,7 +272,7 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
           </div>
         )}
 
-        {!v.grow.is_active && (
+        {!cardActive && (
           <div className="rounded-xl border-2 border-qf-yolk/50 bg-qf-yolk-soft px-4 py-3.5 flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="flex-1 min-w-0">
               <div className="font-semibold text-sm text-qf-ink">אין לך עדיין סליקה?</div>
@@ -579,6 +640,142 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
         </div>
       )}
 
+      {/* Hyp config - only when Hyp is enabled */}
+      {v.hyp.is_active && (
+        <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
+          <div>
+            <h2 className="font-semibold text-base lg:text-lg">הגדרות חשבון Hyp</h2>
+            <p className="text-sm text-qf-mute mt-0.5">
+              מקבלים את הפרטים מחשבון הסליקה שלכם ב-Hyp (לשעבר יעד שריג / YaadPay).
+            </p>
+          </div>
+
+          {/* The one step a merchant cannot skip: Hyp doesn't accept a return
+              address per transaction, so without this the payment goes through
+              at Hyp and the order never gets marked as paid. */}
+          <div className="rounded-xl border-2 border-qf-yolk/50 bg-qf-yolk-soft px-4 py-3.5 space-y-2">
+            <div className="flex items-center gap-2">
+              <IcoInfo c="var(--qf-deep)" s={16} />
+              <span className="font-bold text-sm text-qf-ink">
+                חובה: הגדרת כתובת חזרה בפורטל של Hyp
+              </span>
+            </div>
+            <p className="text-xs text-qf-ink2 leading-relaxed">
+              בפורטל Hyp → הגדרות מסוף → &quot;הפנייה לאחר עסקה&quot;: בחר
+              &quot;לינק מותאם אישית&quot; והזן את הכתובת הבאה{" "}
+              <span className="font-bold">גם לעסקה שהצליחה וגם לעסקה שנכשלה</span>.
+              בלי זה התשלום יתבצע אצל Hyp אבל ההזמנה לא תסומן כשולמה.
+            </p>
+            <CopyBox value={hypReturnUrl} />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field
+              label="מצב פעולה"
+              hint="ל-Hyp אין סביבת סנדבוקס משותפת - בשני המצבים צריך למלא את פרטי המסוף שלך. סמן &quot;סביבת טסטים&quot; אם המסוף שהזנת הוא מסוף בדיקות."
+            >
+              <Toggle
+                checked={!v.hyp.test_mode}
+                onChange={(b) => setHyp("test_mode", !b)}
+                label={v.hyp.test_mode ? "סביבת טסטים" : "מסוף חי"}
+              />
+            </Field>
+            <Field
+              label="מספר תשלומים מקסימלי"
+              hint="1 = ללא תשלומים. עד 12 חודשי תשלומים, בכפוף להגדרת המסוף."
+            >
+              <select
+                value={v.hyp.max_installments}
+                onChange={(e) => setHyp("max_installments", parseInt(e.target.value, 10))}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none bg-white tnum"
+              >
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+                  <option key={n} value={n}>
+                    {n === 1 ? "תשלום אחד (ללא תשלומים)" : `עד ${n} תשלומים`}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field
+              label="אופן הצגת עמוד התשלום"
+              hint="הפניה = מעבר לעמוד Hyp וחזרה. חלון מוטמע = iframe בתוך העמוד."
+            >
+              <select
+                value={v.hyp.display_mode}
+                onChange={(e) => setHyp("display_mode", e.target.value as "iframe" | "redirect")}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none bg-white"
+              >
+                <option value="redirect">הפניה לעמוד Hyp</option>
+                <option value="iframe">חלון מוטמע (iframe)</option>
+              </select>
+            </Field>
+            <Field
+              label="חשבונית במייל מ-Hyp"
+              hint="כבוי כברירת מחדל - QuickFood שולחת את אישור ההזמנה, והפעלה תשלח ללקוח שני מיילים."
+            >
+              <Toggle
+                checked={v.hyp.send_invoice}
+                onChange={(b) => setHyp("send_invoice", b)}
+                label={v.hyp.send_invoice ? "נשלחת מ-Hyp" : "כבוי"}
+              />
+            </Field>
+          </div>
+
+          <Field label="מספר מסוף (Masof)" hint="מספר המסוף שקיבלת מ-Hyp. דוגמה: 0010131918">
+            <input
+              value={v.hyp.masof}
+              onChange={(e) => setHyp("masof", e.target.value.trim())}
+              dir="ltr"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="0010131918"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
+            />
+          </Field>
+          <Field
+            label="סיסמת API (PassP)"
+            hint="סיסמת ה-API של המסוף ב-Hyp - לא סיסמת ההתחברות לפורטל ולא ל-QuickFood."
+          >
+            <input
+              type="text"
+              name="hyp-pass-p"
+              value={v.hyp.pass_p}
+              onChange={(e) => setHyp("pass_p", e.target.value.trim())}
+              dir="ltr"
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
+              spellCheck={false}
+              placeholder="סיסמת API מ-Hyp"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
+            />
+          </Field>
+          <Field
+            label="מפתח API (KEY)"
+            hint="המפתח שמשמש לחתימת הבקשה ולאימות העסקה מול Hyp."
+          >
+            <input
+              type="text"
+              name="hyp-api-key"
+              value={v.hyp.api_key}
+              onChange={(e) => setHyp("api_key", e.target.value.trim())}
+              dir="ltr"
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
+              spellCheck={false}
+              placeholder="מפתח API מ-Hyp"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
+            />
+          </Field>
+
+          <div className="rounded-xl bg-qf-line-soft border border-qf-line-dash px-4 py-3 text-xs text-qf-ink2 leading-relaxed">
+            זיכויים ב-Hyp מתבצעים ידנית בפורטל של Hyp - כפתור הזיכוי בלוח הניהול
+            לא יעבוד עבור עסקאות Hyp.
+          </div>
+        </div>
+      )}
+
       {/* Apple Pay verification - only when Grow is on AND tenant has custom domain */}
       {v.grow.is_active && (
         <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
@@ -628,6 +825,43 @@ export function PaymentsForm({ initial, canEditApplePay, customDomain }: Props) 
     </div>
       <SettingsSaveBar saving={saving} onSave={save} toast={toast} disabled={!hasAnyActive} />
     </>
+  );
+}
+
+/**
+ * Read-only value with a copy button. Used for the Hyp return address, which
+ * the merchant has to paste into Hyp's portal by hand.
+ */
+function CopyBox({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard blocked - the text is selectable as a fallback */
+    }
+  }
+
+  return (
+    <div className="flex items-stretch gap-2">
+      <code
+        dir="ltr"
+        className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-white border border-qf-line-dash font-mono text-[11px] text-qf-ink break-all select-all"
+      >
+        {value}
+      </code>
+      <button
+        type="button"
+        onClick={copy}
+        className="shrink-0 px-3 rounded-lg bg-qf-ink text-white text-xs font-medium hover:opacity-90 inline-flex items-center gap-1.5"
+      >
+        {copied ? <IcoCheck c="#fff" s={12} /> : <IcoCopy c="#fff" s={13} />}
+        {copied ? "הועתק" : "העתק"}
+      </button>
+    </div>
   );
 }
 

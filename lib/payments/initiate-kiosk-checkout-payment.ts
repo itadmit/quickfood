@@ -92,7 +92,8 @@ export async function initiateKioskCheckoutPayment(
     where: { id: checkout.id },
     data: {
       // Column is named grow_process_id for historical reasons; it holds
-      // whichever provider's request id (Grow processId / CardCom LowProfileId).
+      // whichever provider's request id (Grow processId / CardCom LowProfileId
+      // / Hyp Order reference).
       growProcessId: result.providerRequestId,
       authCode: result.sdkAuthCode,
       providerResponse: (result.providerResponse ?? {}) as object,

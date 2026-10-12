@@ -22,6 +22,7 @@ import { CitySelect } from "@/components/customer/CitySelect";
 import { Toggle } from "@/components/shared/Toggle";
 import { GrowPaymentSdk, renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
 import { HostedPaymentFrame } from "@/components/customer/HostedPaymentFrame";
+import type { CardProviderType } from "@/lib/payments/types";
 import { BusyAlertModal } from "@/components/customer/BranchStatusModal";
 import { AttributionPrompt } from "@/components/customer/AttributionPrompt";
 
@@ -67,9 +68,9 @@ export function CustomerCheckout({
     notes: string | null;
   } | null;
   requireEmail?: boolean;
-  /** Tenant has an active card provider (grow OR cardcom). */
+  /** Tenant has an active card provider (grow / cardcom / hyp). */
   cardEnabled?: boolean;
-  provider?: "grow" | "cardcom" | null;
+  provider?: CardProviderType | null;
   testMode?: boolean;
   displayMode?: "iframe" | "redirect" | null;
   /** Show the "how did you hear about us?" attribution prompt. */
@@ -232,8 +233,8 @@ export function CustomerCheckout({
     | { orderId: string; authCode: string; thankYouUrl: string; testMode: boolean }
     | null
   >(null);
-  // CardCom hosted-page equivalent. Redirect mode navigates away immediately;
-  // iframe mode shows an overlay with the embedded LowProfile page.
+  // Hosted-page equivalent for CardCom / Hyp. Redirect mode navigates away
+  // immediately; iframe mode shows an overlay with the embedded page.
   const [hostedPayment, setHostedPayment] = useState<
     { paymentUrl: string; displayMode: "iframe" | "redirect" } | null
   >(null);
@@ -1561,7 +1562,7 @@ export function CustomerCheckout({
           enabled, so the SDK has ~1s to do its async setup while the
           customer fills out the form. The wallet itself only renders when
           we trigger `renderGrowWallet(authCode)` after /pay/initiate. */}
-      {provider === "cardcom" && hostedPayment?.displayMode === "iframe" && (
+      {hostedPayment?.displayMode === "iframe" && (
         <div
           role="dialog"
           aria-modal="true"
@@ -1586,7 +1587,7 @@ export function CustomerCheckout({
           </div>
         </div>
       )}
-      {provider === "cardcom" && hostedPayment?.displayMode === "redirect" && (
+      {hostedPayment?.displayMode === "redirect" && (
         <HostedPaymentFrame
           paymentUrl={hostedPayment.paymentUrl}
           displayMode="redirect"

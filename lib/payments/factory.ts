@@ -13,7 +13,9 @@ import { prisma } from "@/lib/db/client";
 import { PaymentProvider } from "@prisma/client";
 import { GrowProvider } from "./providers/grow";
 import { CardComProvider } from "./providers/cardcom";
+import { HypProvider } from "./providers/hyp";
 import type {
+  CardProviderType,
   IPaymentProvider,
   ProviderConfig,
   ProviderCredentials,
@@ -26,6 +28,7 @@ type ProviderCtor = new () => IPaymentProvider;
 const REGISTRY: Partial<Record<ProviderType, ProviderCtor>> = {
   grow: GrowProvider,
   cardcom: CardComProvider,
+  hyp: HypProvider,
   // cash has no provider implementation - handled inline by order code
 };
 
@@ -74,11 +77,12 @@ export interface ActiveCardProvider {
 }
 
 /**
- * Resolve the tenant's single active card provider (grow OR cardcom). Cash is
- * never a "card provider". The merchant settings enforce that only one non-cash
- * provider is active at a time; if two rows are somehow active, the most
- * recently updated one wins (deterministic). Returns null when the tenant has
- * no active card provider (identical to the old grow-only "provider_unavailable").
+ * Resolve the tenant's single active card provider (grow / cardcom / hyp).
+ * Cash is never a "card provider". The merchant settings enforce that only one
+ * non-cash provider is active at a time; if two rows are somehow active, the
+ * most recently updated one wins (deterministic). Returns null when the tenant
+ * has no active card provider (identical to the old grow-only
+ * "provider_unavailable").
  */
 export async function getActiveCardProvider(
   tenantId: string,
@@ -112,7 +116,7 @@ export async function getActiveCardProvider(
  * provider is active and how to present it - no provider instantiation.
  */
 export async function getActiveCardProviderSummary(tenantId: string): Promise<{
-  provider: "grow" | "cardcom";
+  provider: CardProviderType;
   testMode: boolean;
   displayMode: "iframe" | "redirect";
 } | null> {
@@ -129,7 +133,7 @@ export async function getActiveCardProviderSummary(tenantId: string): Promise<{
   const row = rows[0];
   const settings = (row.settings ?? {}) as ProviderSettings;
   return {
-    provider: row.provider as "grow" | "cardcom",
+    provider: row.provider as CardProviderType,
     testMode: row.testMode,
     displayMode: settings.displayMode === "iframe" ? "iframe" : "redirect",
   };

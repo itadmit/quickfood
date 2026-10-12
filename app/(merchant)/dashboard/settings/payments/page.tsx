@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { PaymentProvider } from "@prisma/client";
+import { buildHypReturnUrl } from "@/lib/payments/providers/hyp";
 import { SettingsHeader } from "../SettingsHeader";
 import { PaymentsForm } from "./PaymentsForm";
 
@@ -32,6 +33,18 @@ interface CardComSettings {
   documentType?: string;
 }
 
+interface HypCredentials {
+  masof?: string;
+  passP?: string;
+  apiKey?: string;
+}
+
+interface HypSettings {
+  maxInstallments?: number;
+  displayMode?: "iframe" | "redirect";
+  hypSendInvoice?: boolean;
+}
+
 export default async function PaymentsSettingsPage() {
   const session = await getSession();
   if (!session || session.type !== "merchant" || !session.tenantId) {
@@ -40,11 +53,16 @@ export default async function PaymentsSettingsPage() {
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
-    select: { acceptsCash: true, customDomain: true, defaultPaymentMethod: true },
+    select: {
+      slug: true,
+      acceptsCash: true,
+      customDomain: true,
+      defaultPaymentMethod: true,
+    },
   });
   if (!tenant) redirect("/dashboard/login");
 
-  const [config, cardcomConfig] = await Promise.all([
+  const [config, cardcomConfig, hypConfig] = await Promise.all([
     prisma.paymentProviderConfig.findUnique({
       where: {
         tenantId_provider: {
@@ -65,11 +83,24 @@ export default async function PaymentsSettingsPage() {
       // Degrade gracefully if the `cardcom` enum value isn't in the DB yet
       // (code deployed before the migration is applied) - show it as inactive.
       .catch(() => null),
+    prisma.paymentProviderConfig
+      .findUnique({
+        where: {
+          tenantId_provider: {
+            tenantId: session.tenantId,
+            provider: PaymentProvider.hyp,
+          },
+        },
+      })
+      // Same grace period for the `hyp` enum value.
+      .catch(() => null),
   ]);
   const creds = (config?.credentials ?? {}) as GrowCredentials;
   const settings = (config?.settings ?? {}) as GrowSettings;
   const ccCreds = (cardcomConfig?.credentials ?? {}) as CardComCredentials;
   const ccSettings = (cardcomConfig?.settings ?? {}) as CardComSettings;
+  const hypCreds = (hypConfig?.credentials ?? {}) as HypCredentials;
+  const hypSettings = (hypConfig?.settings ?? {}) as HypSettings;
 
   return (
     <div className="space-y-5">
@@ -103,7 +134,18 @@ export default async function PaymentsSettingsPage() {
             create_invoice: ccSettings.createInvoice ?? false,
             document_type: ccSettings.documentType ?? "Order",
           },
+          hyp: {
+            is_active: hypConfig?.isActive ?? false,
+            test_mode: hypConfig?.testMode ?? true,
+            masof: hypCreds.masof ?? "",
+            pass_p: hypCreds.passP ?? "",
+            api_key: hypCreds.apiKey ?? "",
+            max_installments: hypSettings.maxInstallments ?? 1,
+            display_mode: hypSettings.displayMode ?? "redirect",
+            send_invoice: hypSettings.hypSendInvoice ?? false,
+          },
         }}
+        hypReturnUrl={buildHypReturnUrl(tenant.slug)}
       />
     </div>
   );

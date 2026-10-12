@@ -13,6 +13,7 @@
 import { apiError, apiJson, handler } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
+import { buildHypReturnUrl } from "@/lib/payments/providers/hyp";
 import { MerchantPaymentsPatchSchema } from "@/lib/validate";
 import { PaymentMethod, PaymentProvider, Prisma } from "@prisma/client";
 
@@ -48,6 +49,20 @@ interface CardComSettings {
   [k: string]: unknown;
 }
 
+interface HypCredentials {
+  masof?: string;
+  passP?: string;
+  apiKey?: string;
+  [k: string]: unknown;
+}
+
+interface HypSettings {
+  maxInstallments?: number;
+  displayMode?: "iframe" | "redirect";
+  hypSendInvoice?: boolean;
+  [k: string]: unknown;
+}
+
 export const GET = handler(async () => {
   const session = await requireMerchant();
   if (!session.tenantId) return apiError("forbidden", "no tenant", 403);
@@ -55,6 +70,7 @@ export const GET = handler(async () => {
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
     select: {
+      slug: true,
       acceptsCash: true,
       customDomain: true,
       defaultPaymentMethod: true,
@@ -62,7 +78,7 @@ export const GET = handler(async () => {
   });
   if (!tenant) return apiError("not_found", "tenant not found", 404);
 
-  const [config, cardcomConfig] = await Promise.all([
+  const [config, cardcomConfig, hypConfig] = await Promise.all([
     prisma.paymentProviderConfig.findUnique({
       where: {
         tenantId_provider: {
@@ -83,12 +99,25 @@ export const GET = handler(async () => {
       // Degrade gracefully if the `cardcom` enum value isn't in the DB yet
       // (code deployed before the migration is applied) - show it as inactive.
       .catch(() => null),
+    prisma.paymentProviderConfig
+      .findUnique({
+        where: {
+          tenantId_provider: {
+            tenantId: session.tenantId,
+            provider: PaymentProvider.hyp,
+          },
+        },
+      })
+      // Same grace period for the `hyp` enum value.
+      .catch(() => null),
   ]);
 
   const credentials = (config?.credentials ?? {}) as GrowCredentials;
   const settings = (config?.settings ?? {}) as GrowSettings;
   const ccCreds = (cardcomConfig?.credentials ?? {}) as CardComCredentials;
   const ccSettings = (cardcomConfig?.settings ?? {}) as CardComSettings;
+  const hypCreds = (hypConfig?.credentials ?? {}) as HypCredentials;
+  const hypSettings = (hypConfig?.settings ?? {}) as HypSettings;
 
   return apiJson({
     accepts_cash: tenant.acceptsCash,
@@ -116,6 +145,19 @@ export const GET = handler(async () => {
       create_invoice: ccSettings.createInvoice ?? false,
       document_type: ccSettings.documentType ?? "Order",
     },
+    hyp: {
+      is_active: hypConfig?.isActive ?? false,
+      test_mode: hypConfig?.testMode ?? true,
+      masof: hypCreds.masof ?? "",
+      pass_p: hypCreds.passP ?? "",
+      api_key: hypCreds.apiKey ?? "",
+      max_installments: hypSettings.maxInstallments ?? 1,
+      display_mode: hypSettings.displayMode ?? "redirect",
+      send_invoice: hypSettings.hypSendInvoice ?? false,
+      // The address the merchant must paste into their Hyp terminal - Hyp has
+      // no per-request return URL, so this is the only result channel.
+      return_url: buildHypReturnUrl(tenant.slug),
+    },
   });
 });
 
@@ -132,9 +174,10 @@ export const PATCH = handler(async (req: Request) => {
     const chosen = body.default_payment_method;
     const growActive = body.grow?.is_active ?? false;
     const cardcomActive = body.cardcom?.is_active ?? false;
+    const hypActive = body.hyp?.is_active ?? false;
     const allowed = new Set<PaymentMethod>();
     if (body.accepts_cash) allowed.add(PaymentMethod.cash);
-    if (growActive || cardcomActive) {
+    if (growActive || cardcomActive || hypActive) {
       allowed.add(PaymentMethod.card);
       allowed.add(PaymentMethod.bit);
       allowed.add(PaymentMethod.apple_pay);
@@ -326,6 +369,84 @@ export const PATCH = handler(async (req: Request) => {
         settings: nextSettings as Prisma.InputJsonValue,
         testMode: body.cardcom.test_mode ?? existing?.testMode ?? true,
         isActive: body.cardcom.is_active,
+      },
+    });
+  }
+
+  // 4) Hyp provider config (optional in the payload)
+  if (body.hyp) {
+    const existing = await prisma.paymentProviderConfig.findUnique({
+      where: {
+        tenantId_provider: {
+          tenantId: session.tenantId,
+          provider: PaymentProvider.hyp,
+        },
+      },
+    });
+
+    const prevCreds = (existing?.credentials ?? {}) as HypCredentials;
+    const prevSettings = (existing?.settings ?? {}) as HypSettings;
+
+    const nextCreds: HypCredentials = { ...prevCreds };
+    if (body.hyp.masof !== undefined) {
+      if (body.hyp.masof === "") delete nextCreds.masof;
+      else nextCreds.masof = body.hyp.masof;
+    }
+    if (body.hyp.pass_p !== undefined) {
+      if (body.hyp.pass_p === "") delete nextCreds.passP;
+      else nextCreds.passP = body.hyp.pass_p;
+    }
+    if (body.hyp.api_key !== undefined) {
+      if (body.hyp.api_key === "") delete nextCreds.apiKey;
+      else nextCreds.apiKey = body.hyp.api_key;
+    }
+
+    const nextSettings: HypSettings = { ...prevSettings };
+    if (body.hyp.max_installments !== undefined) {
+      nextSettings.maxInstallments = body.hyp.max_installments;
+    }
+    if (body.hyp.display_mode !== undefined) {
+      nextSettings.displayMode = body.hyp.display_mode;
+    }
+    if (body.hyp.send_invoice !== undefined) {
+      nextSettings.hypSendInvoice = body.hyp.send_invoice;
+    }
+
+    // Unlike Grow/CardCom there is no sandbox fallback - Hyp gives us no
+    // shared test terminal, so all three credentials are required to activate
+    // in either mode.
+    if (
+      body.hyp.is_active &&
+      (!nextCreds.masof || !nextCreds.passP || !nextCreds.apiKey)
+    ) {
+      return apiError(
+        "validation_error",
+        "יש למלא מספר מסוף (Masof), סיסמת API (PassP) ומפתח API (KEY) לפני הפעלת Hyp",
+        422,
+        "masof",
+      );
+    }
+
+    await prisma.paymentProviderConfig.upsert({
+      where: {
+        tenantId_provider: {
+          tenantId: session.tenantId,
+          provider: PaymentProvider.hyp,
+        },
+      },
+      create: {
+        tenantId: session.tenantId,
+        provider: PaymentProvider.hyp,
+        credentials: nextCreds as Prisma.InputJsonValue,
+        settings: nextSettings as Prisma.InputJsonValue,
+        testMode: body.hyp.test_mode ?? true,
+        isActive: body.hyp.is_active,
+      },
+      update: {
+        credentials: nextCreds as Prisma.InputJsonValue,
+        settings: nextSettings as Prisma.InputJsonValue,
+        testMode: body.hyp.test_mode ?? existing?.testMode ?? true,
+        isActive: body.hyp.is_active,
       },
     });
   }

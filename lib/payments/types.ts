@@ -7,7 +7,13 @@
 
 import type { PaymentProvider } from "@prisma/client";
 
-export type ProviderType = PaymentProvider; // "cash" | "grow"
+export type ProviderType = PaymentProvider; // "cash" | "grow" | "cardcom" | "hyp"
+
+/**
+ * Card-processing providers - everything except `cash`. Exactly one of these
+ * may be active per tenant; widening the Prisma enum widens this with it.
+ */
+export type CardProviderType = Exclude<ProviderType, "cash">;
 
 export type TransactionStatus = "pending" | "processing" | "success" | "failed" | "cancelled";
 
@@ -24,11 +30,17 @@ export interface ProviderCredentials {
   terminalNumber?: string;
   apiName?: string;
   apiPassword?: string;
+  // Hyp (ex-YaadPay) per-merchant. All three mandatory - Hyp has no shared
+  // sandbox terminal on our side. `apiKey` doubles as Hyp's KEY param (the
+  // field above is Grow's; they live in separate PaymentProviderConfig rows
+  // so there is no collision).
+  masof?: string; // Hyp terminal number
+  passP?: string; // Hyp API password (PassP)
   // Generic
   [key: string]: string | undefined;
 }
 
-/** How a redirect/hosted-page provider (CardCom) surfaces its payment page. */
+/** How a redirect/hosted-page provider (CardCom, Hyp) surfaces its page. */
 export type PaymentDisplayMode = "iframe" | "redirect";
 
 export interface ProviderSettings {
@@ -38,6 +50,9 @@ export interface ProviderSettings {
   displayMode?: PaymentDisplayMode;
   createInvoice?: boolean;
   documentType?: string; // CardCom DocumentTypeToCreate (e.g. "Order")
+  // Hyp: let Hyp mail its own invoice (SendHesh). Off by default - QuickFood
+  // sends its own order emails and we don't want duplicates.
+  hypSendInvoice?: boolean;
   [key: string]: unknown;
 }
 

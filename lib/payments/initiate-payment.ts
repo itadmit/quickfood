@@ -42,9 +42,10 @@ export type InitiateOrderPaymentResult =
   | { ok: false; code: string; message: string; status: number };
 
 /**
- * Build the Grow payment process for an order and persist a pending-payment
- * row. Idempotency is the caller's concern: invoking twice creates two
- * pending rows (harmless - the callback reconciles by orderReference).
+ * Build the payment process for an order with whichever provider the tenant
+ * has active, and persist a pending-payment row. Idempotency is the caller's
+ * concern: invoking twice creates two pending rows (harmless - the callback
+ * reconciles by orderReference, newest first).
  */
 export async function initiateOrderPayment(
   orderId: string,
@@ -68,8 +69,8 @@ export async function initiateOrderPayment(
     return { ok: false, code: "cash_payment", message: "הזמנת מזומן לא דורשת אתחול תשלום", status: 400 };
   }
 
-  // Resolve whichever card provider the tenant has active (grow or cardcom).
-  // Runs in parallel with the customer read - they're independent.
+  // Resolve whichever card provider the tenant has active (grow / cardcom /
+  // hyp). Runs in parallel with the customer read - they're independent.
   const [active, customer] = await Promise.all([
     getActiveCardProvider(order.tenantId),
     order.customerId

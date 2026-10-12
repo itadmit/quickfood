@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { formatPrice } from "@/lib/format";
 import { GrowPaymentSdk, renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
 import { HostedPaymentFrame } from "@/components/customer/HostedPaymentFrame";
+import type { CardProviderType } from "@/lib/payments/types";
 import {
   buildKioskT,
   type KioskOverrides,
@@ -20,7 +21,7 @@ interface Props {
     expiresAt: string;
   };
   cardEnabled: boolean;
-  provider: "grow" | "cardcom" | null;
+  provider: CardProviderType | null;
   testMode: boolean;
   displayMode: "iframe" | "redirect" | null;
   initialAuthCode: string | null;
@@ -265,7 +266,7 @@ export function PayCheckoutPage({
             </div>
           )}
 
-          {provider === "cardcom" ? (
+          {provider !== "grow" ? (
             paymentUrl && (
               <HostedPaymentFrame
                 paymentUrl={paymentUrl}

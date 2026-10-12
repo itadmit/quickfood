@@ -645,23 +645,41 @@ export const MerchantPaymentsPatchSchema = z
         document_type: z.string().max(32).optional(),
       })
       .optional(),
+    /** Hyp (ex-YaadPay / Yaad Sarig) - per-tenant terminal (Masof) + API
+     *  credentials. A third card provider; only one may be active at a time.
+     *  Note: Hyp has no shared sandbox, so all three fields are mandatory
+     *  before activation regardless of test_mode. */
+    hyp: z
+      .object({
+        is_active: z.boolean(),
+        test_mode: z.boolean().optional(),
+        masof: z.string().max(32).optional(),
+        pass_p: z.string().max(128).optional(),
+        api_key: z.string().max(128).optional(),
+        max_installments: z.number().int().min(1).max(12).optional(),
+        display_mode: z.enum(["iframe", "redirect"]).optional(),
+        send_invoice: z.boolean().optional(),
+      })
+      .optional(),
   })
   .refine(
     (v) =>
       v.accepts_cash ||
       (v.grow?.is_active ?? false) ||
-      (v.cardcom?.is_active ?? false),
+      (v.cardcom?.is_active ?? false) ||
+      (v.hyp?.is_active ?? false),
     {
-      message: "חייב להפעיל לפחות אמצעי תשלום אחד (מזומן / Grow / CardCom)",
+      message: "חייב להפעיל לפחות אמצעי תשלום אחד (מזומן / Grow / CardCom / Hyp)",
       path: ["accepts_cash"],
     },
   )
   .refine(
     // Exactly one card provider at a time - the initiate resolver picks the
     // single active non-cash provider, so two active would be ambiguous.
-    (v) => !((v.grow?.is_active ?? false) && (v.cardcom?.is_active ?? false)),
+    (v) =>
+      [v.grow?.is_active, v.cardcom?.is_active, v.hyp?.is_active].filter(Boolean).length <= 1,
     {
-      message: "אפשר להפעיל רק ספק סליקה אחד (Grow או CardCom) בו-זמנית",
+      message: "אפשר להפעיל רק ספק סליקה אחד (Grow / CardCom / Hyp) בו-זמנית",
       path: ["cardcom"],
     },
   );
