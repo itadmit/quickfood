@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useLayoutEffect } from "react";
-import { IcoClose, IcoStar, IcoPhone, IcoPin, IcoClock, IcoBike } from "@/components/shared/Icons";
+import { IcoClose, IcoStar, IcoPhone, IcoPin, IcoClock, IcoBike, IcoBag } from "@/components/shared/Icons";
 import { formatPrice, formatEtaRange } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { BranchHours, DayKey } from "@/lib/branch-hours";
@@ -136,6 +136,12 @@ export function RestaurantInfoModal({
 
           <section className="space-y-2">
             <h3 className="text-sm font-bold mb-2">פרטי קשר</h3>
+            {address && (
+              <div className="flex items-start gap-2.5 text-sm text-qf-ink2">
+                <IcoBag s={16} c="#7c8a82" className="mt-0.5 shrink-0" />
+                <span>איסוף עצמי: {address}</span>
+              </div>
+            )}
             <a
               href={mapsHref}
               target="_blank"
