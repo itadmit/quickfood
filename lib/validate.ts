@@ -339,6 +339,7 @@ export const TenantPatchSchema = z.object({
     ])
     .optional(),
   storefront_layout: z.enum(["classic", "category_grid"]).optional(),
+  show_categories_rail: z.boolean().optional(),
   cuisine_type: z.string().max(60).optional(),
   about: z.string().max(2000).transform(normalizeTenantAbout).nullable().optional(),
   vat_number: z.string().max(20).optional(),

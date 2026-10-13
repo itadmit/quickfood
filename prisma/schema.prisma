@@ -270,6 +270,10 @@ model Tenant {
   themeId              ThemeId        @default(fresh) @map("theme_id")
   businessType         BusinessType   @default(general) @map("business_type")
   storefrontLayout     StorefrontLayout @default(classic) @map("storefront_layout")
+  /// When false the "קטגוריות" rail is hidden from the classic storefront
+  /// home page. Default true keeps the current behaviour. Only affects the
+  /// classic layout - the category_grid layout is built around categories.
+  showCategoriesRail   Boolean        @default(true) @map("show_categories_rail")
   cuisineType          String?        @map("cuisine_type")
   /// Free-text "about" / tagline for the venue. Shown to customers on
   /// the storefront under the venue name, editable from Branding.

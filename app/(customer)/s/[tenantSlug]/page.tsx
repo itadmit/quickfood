@@ -378,6 +378,7 @@ export default async function HomePage({
       nationwideDelivery={nationwideDelivery}
       pickupEnabled={tenant.pickupEnabled}
       methodPopupEnabled={tenant.methodPopupEnabled}
+      showCategoriesRail={tenant.showCategoriesRail}
       bannerCampaign={bannerCampaign}
       hasCustomerSession={session?.type === "customer"}
       pendingReviewOrderId={pendingReview?.id ?? null}

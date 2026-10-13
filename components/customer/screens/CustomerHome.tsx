@@ -108,6 +108,9 @@ interface Props {
    *  customer chooses the method inside checkout. The location chip still
    *  opens it manually. */
   methodPopupEnabled?: boolean;
+  /** When false the "קטגוריות" rail is hidden from the classic home. Only
+   *  affects the classic layout; the category_grid layout ignores it. */
+  showCategoriesRail?: boolean;
   bannerCampaign?: CampaignBannerData | null;
   hasCustomerSession?: boolean;
   pendingReviewOrderId?: string | null;
@@ -142,6 +145,7 @@ export function CustomerHome({
   nationwideDelivery = false,
   pickupEnabled = true,
   methodPopupEnabled = true,
+  showCategoriesRail = true,
   bannerCampaign = null,
   hasCustomerSession = false,
   pendingReviewOrderId = null,
@@ -646,7 +650,9 @@ export function CustomerHome({
         />
       ) : (
       <>
-      {/* Categories - horizontal scroll on mobile, wrap-grid on desktop */}
+      {/* Categories - horizontal scroll on mobile, wrap-grid on desktop.
+          Merchant-hideable via Settings → קופה ("הצג מקטע קטגוריות"). */}
+      {showCategoriesRail && categories.length > 0 && (
       <section className="px-5 mt-5 lg:max-w-7xl lg:mx-auto lg:px-6 lg:mt-10">
         <h2 className="text-base lg:text-xl font-semibold mb-2 lg:mb-4">קטגוריות</h2>
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-5 px-5 lg:mx-0 lg:px-0 lg:overflow-visible lg:grid lg:grid-cols-6 xl:grid-cols-8 lg:gap-3">
@@ -681,6 +687,7 @@ export function CustomerHome({
           })}
         </div>
       </section>
+      )}
 
       {/* Popular items - horizontal scroll on mobile, multi-col grid on desktop */}
       {popular.length > 0 && (

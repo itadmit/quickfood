@@ -12,6 +12,7 @@ interface Initial {
   scheduledOrdersEnabled: boolean;
   pickupEnabled: boolean;
   methodPopupEnabled: boolean;
+  showCategoriesRail: boolean;
   cutleryEnabled: boolean;
   cutleryLabel: string;
   cutleryPrice: number;
@@ -29,6 +30,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
   );
   const [pickupEnabled, setPickupEnabled] = useState(initial.pickupEnabled);
   const [methodPopupEnabled, setMethodPopupEnabled] = useState(initial.methodPopupEnabled);
+  const [showCategoriesRail, setShowCategoriesRail] = useState(initial.showCategoriesRail);
   const [tipEnabled, setTipEnabled] = useState(initial.tipEnabled);
   const [cutleryEnabled, setCutleryEnabled] = useState(initial.cutleryEnabled);
   const [cutleryLabel, setCutleryLabel] = useState(initial.cutleryLabel);
@@ -53,6 +55,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
           scheduled_orders_enabled: scheduledOrdersEnabled,
           pickup_enabled: pickupEnabled,
           method_popup_enabled: methodPopupEnabled,
+          show_categories_rail: showCategoriesRail,
           tip_enabled: tipEnabled,
           cutlery_enabled: cutleryEnabled,
           cutlery_label: cutleryLabel.trim() || "סכו״ם חד״פ",
@@ -142,6 +145,17 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
         }
         value={methodPopupEnabled}
         onChange={setMethodPopupEnabled}
+      />
+
+      <Toggle
+        label="הצג מקטע קטגוריות בעמוד הבית"
+        description={
+          showCategoriesRail
+            ? "בראש עמוד הבית של החנות מוצג מקטע 'קטגוריות' עם סמלי הקטגוריות ללחיצה מהירה."
+            : "מקטע הקטגוריות מוסתר מעמוד הבית. הלקוח רואה ישר את הפריטים הפופולריים והתפריט המלא. (רלוונטי לתצוגת התפריט הרציף.)"
+        }
+        value={showCategoriesRail}
+        onChange={setShowCategoriesRail}
       />
 
       <Toggle

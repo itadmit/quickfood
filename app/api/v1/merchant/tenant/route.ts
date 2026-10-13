@@ -80,6 +80,7 @@ export const PATCH = handler(async (req: Request) => {
       themeId: body.theme_id,
       businessType: body.business_type,
       storefrontLayout: body.storefront_layout,
+      showCategoriesRail: body.show_categories_rail,
       cuisineType: body.cuisine_type,
       about: body.about,
       vatNumber: body.vat_number,
