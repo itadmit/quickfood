@@ -18,6 +18,7 @@ interface Initial {
   cutleryPrice: number;
   cutleryFreeAbove: number | null;
   tipEnabled: boolean;
+  customerNotesEnabled: boolean;
 }
 
 export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
@@ -32,6 +33,9 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
   const [methodPopupEnabled, setMethodPopupEnabled] = useState(initial.methodPopupEnabled);
   const [showCategoriesRail, setShowCategoriesRail] = useState(initial.showCategoriesRail);
   const [tipEnabled, setTipEnabled] = useState(initial.tipEnabled);
+  const [customerNotesEnabled, setCustomerNotesEnabled] = useState(
+    initial.customerNotesEnabled,
+  );
   const [cutleryEnabled, setCutleryEnabled] = useState(initial.cutleryEnabled);
   const [cutleryLabel, setCutleryLabel] = useState(initial.cutleryLabel);
   const [cutleryPrice, setCutleryPrice] = useState(initial.cutleryPrice / 100);
@@ -57,6 +61,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
           method_popup_enabled: methodPopupEnabled,
           show_categories_rail: showCategoriesRail,
           tip_enabled: tipEnabled,
+          customer_notes_enabled: customerNotesEnabled,
           cutlery_enabled: cutleryEnabled,
           cutlery_label: cutleryLabel.trim() || "סכו״ם חד״פ",
           cutlery_price: Math.max(0, Math.round(Number(cutleryPrice) * 100) || 0),
@@ -167,6 +172,17 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
         }
         value={tipEnabled}
         onChange={setTipEnabled}
+      />
+
+      <Toggle
+        label="הצג שדה 'הערה למסעדה' בקופה"
+        description={
+          customerNotesEnabled
+            ? "הלקוח רואה שדה טקסט חופשי להערות למסעדה."
+            : "שדה ההערות מוסתר מהקופה."
+        }
+        value={customerNotesEnabled}
+        onChange={setCustomerNotesEnabled}
       />
 
       <div className="pt-3 border-t border-qf-line-soft space-y-4">

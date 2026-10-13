@@ -112,6 +112,7 @@ interface TenantInfo {
   businessType?: string;
   scheduledOrdersEnabled?: boolean;
   tipEnabled?: boolean;
+  customerNotesEnabled?: boolean;
   cutleryEnabled?: boolean;
   cutleryLabel?: string;
   cutleryPrice?: number;

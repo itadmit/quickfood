@@ -1308,16 +1308,18 @@ export function CustomerCheckout({
         )}
 
         {/* 6. Notes */}
-        <Card>
-          <CardTitle>הערה למסעדה</CardTitle>
-          <textarea
-            value={customerNotes}
-            onChange={(e) => setCustomerNotes(e.target.value)}
-            rows={2}
-            placeholder="הערות למסעדה"
-            className="w-full mt-3 bg-qf-bg border border-qf-line rounded-2xl px-4 py-3 text-base outline-none focus:border-(--qf-primary) focus:bg-white resize-none transition"
-          />
-        </Card>
+        {tenant.customerNotesEnabled !== false && (
+          <Card>
+            <CardTitle>הערה למסעדה</CardTitle>
+            <textarea
+              value={customerNotes}
+              onChange={(e) => setCustomerNotes(e.target.value)}
+              rows={2}
+              placeholder="הערות למסעדה"
+              className="w-full mt-3 bg-qf-bg border border-qf-line rounded-2xl px-4 py-3 text-base outline-none focus:border-(--qf-primary) focus:bg-white resize-none transition"
+            />
+          </Card>
+        )}
 
         {/* How did you hear about us - non-blocking, skippable. Merchant can
             hide it in Settings -> Checkout. */}

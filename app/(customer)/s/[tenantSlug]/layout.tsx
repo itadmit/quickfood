@@ -142,6 +142,7 @@ export default async function CustomerLayout({
           businessType: tenant.businessType,
           scheduledOrdersEnabled: tenant.scheduledOrdersEnabled,
           tipEnabled: tenant.tipEnabled,
+          customerNotesEnabled: tenant.customerNotesEnabled,
           cutleryEnabled: tenant.cutleryEnabled,
           cutleryLabel: tenant.cutleryLabel,
           cutleryPrice: tenant.cutleryPrice,

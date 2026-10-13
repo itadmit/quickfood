@@ -355,6 +355,9 @@ model Tenant {
   // When false, the "טיפ לשליח" line is hidden from the delivery checkout.
   // For businesses that don't want to prompt for courier tips.
   tipEnabled        Boolean @default(true) @map("tip_enabled")
+  /// When false the "הערה למסעדה" free-text note card is hidden from the
+  /// storefront checkout. Default true keeps the current behaviour.
+  customerNotesEnabled Boolean @default(true) @map("customer_notes_enabled")
 
   // Monotonic per-tenant order counter. Used by orders-create to assign
   // sequential numbers (M-1, M-2, M-3...) instead of the legacy random

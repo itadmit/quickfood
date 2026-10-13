@@ -27,6 +27,7 @@ export default async function CheckoutSettingsPage() {
       cutleryPrice: true,
       cutleryFreeAbove: true,
       tipEnabled: true,
+      customerNotesEnabled: true,
     },
   });
   if (!tenant) redirect("/dashboard/login");
@@ -48,6 +49,7 @@ export default async function CheckoutSettingsPage() {
           cutleryPrice: tenant.cutleryPrice,
           cutleryFreeAbove: tenant.cutleryFreeAbove,
           tipEnabled: tenant.tipEnabled,
+          customerNotesEnabled: tenant.customerNotesEnabled,
         }}
       />
     </div>
