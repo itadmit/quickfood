@@ -129,6 +129,8 @@ interface TenantInfo {
 }
 
 interface BranchInfo {
+  name?: string;
+  address?: string;
   deliveryFee: number;
   serviceFee: number;
   minOrder: number;

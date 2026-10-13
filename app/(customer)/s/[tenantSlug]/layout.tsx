@@ -153,6 +153,8 @@ export default async function CustomerLayout({
         branch={
           branch
             ? {
+                name: branch.name,
+                address: branch.address,
                 deliveryFee: branch.deliveryFee,
                 serviceFee: branch.serviceFee,
                 minOrder: branch.minOrder,

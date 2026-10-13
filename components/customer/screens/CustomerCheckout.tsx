@@ -1018,7 +1018,9 @@ export function CustomerCheckout({
           <Card>
             <CardTitle>פרטי איסוף</CardTitle>
             <p className="text-sm text-qf-ink2 mt-2">
-              ההזמנה תהיה מוכנה לאיסוף מהסניף ברגע שתאושר על ידי המסעדה.
+              {branch?.address
+                ? `ההזמנה תהיה מוכנה לאיסוף מהסניף ב${branch.address} ברגע שתאושר על ידי המסעדה.`
+                : "ההזמנה תהיה מוכנה לאיסוף מהסניף ברגע שתאושר על ידי המסעדה."}
             </p>
           </Card>
         )}
