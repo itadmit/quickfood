@@ -278,6 +278,11 @@ model Tenant {
   /// replaces the computed "X-Y דק'" / "X-Y ימים" string verbatim (e.g.
   /// "אספקה תוך 1-2 ימים" for a shipping-model store). NULL keeps the default.
   etaLabel             String?        @map("eta_label")
+  /// Phone number for the storefront floating WhatsApp button. When set, a
+  /// green WhatsApp FAB is rendered on the customer storefront linking to
+  /// wa.me/<number>. NULL hides the button. Stored as the raw local/intl
+  /// string the merchant typed; normalised to wa.me intl form at render.
+  whatsappButtonPhone  String?        @map("whatsapp_button_phone")
   cuisineType          String?        @map("cuisine_type")
   /// Free-text "about" / tagline for the venue. Shown to customers on
   /// the storefront under the venue name, editable from Branding.
