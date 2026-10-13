@@ -46,6 +46,7 @@ export const POST = handler(async (req: Request, { params }: { params: Promise<{
       name: body.name,
       radiusKm: body.radius_km,
       cities: normalizeCities(body.cities),
+      nationwide: body.nationwide,
       deliveryFee: body.delivery_fee,
       minOrder: body.min_order,
       freeDeliveryAbove: body.free_delivery_above ?? null,

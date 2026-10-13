@@ -22,6 +22,7 @@ export default async function ZonesSettingsPage() {
       <SettingsHeader subtitle={`לאן מגיע המשלוח · ${branch.name}`} />
       <ZonesView
         branchId={branch.id}
+        etaUnit={branch.etaUnit}
         freeDelivery={{
           minOrder: branch.freeDeliveryMinOrder,
           minItems: branch.freeDeliveryMinItems,
@@ -31,6 +32,7 @@ export default async function ZonesSettingsPage() {
           name: z.name,
           radiusKm: z.radiusKm ? Number(z.radiusKm) : null,
           cities: z.cities,
+          nationwide: z.nationwide,
           deliveryFee: z.deliveryFee,
           minOrder: z.minOrder,
           freeDeliveryAbove: z.freeDeliveryAbove,

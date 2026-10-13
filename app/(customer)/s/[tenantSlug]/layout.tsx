@@ -160,6 +160,7 @@ export default async function CustomerLayout({
                 busyEtaBoostMinutes: branch.busyEtaBoostMinutes,
                 freeDeliveryMinOrder: branch.freeDeliveryMinOrder,
                 freeDeliveryMinItems: branch.freeDeliveryMinItems,
+                etaUnit: branch.etaUnit,
                 hours: (branch.hours ?? null) as BranchHours | null,
               }
             : null
@@ -167,6 +168,7 @@ export default async function CustomerLayout({
         zones={(branch?.zones ?? []).map((z) => ({
           name: z.name,
           cities: z.cities,
+          nationwide: z.nationwide,
           deliveryFee: z.deliveryFee,
           minOrder: z.minOrder,
           freeDeliveryAbove: z.freeDeliveryAbove,

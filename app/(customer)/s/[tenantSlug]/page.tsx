@@ -118,9 +118,9 @@ export default async function HomePage({
   const zonesPromise = primaryBranchId
     ? prisma.deliveryZone.findMany({
         where: { branchId: primaryBranchId, active: true },
-        select: { name: true, cities: true },
+        select: { name: true, cities: true, nationwide: true },
       })
-    : Promise.resolve([] as { name: string; cities: string[] }[]);
+    : Promise.resolve([] as { name: string; cities: string[]; nationwide: boolean }[]);
 
   const reviewsForSummaryPromise =
     tenant.reviewsEnabled && tenant.reviewsPublic
@@ -240,9 +240,13 @@ export default async function HomePage({
   );
   const categories = visibleCategories.slice(0, 8);
 
+  // A nationwide zone delivers to any address, so the storefront lets the
+  // customer type their own city instead of picking from this list.
+  const nationwideDelivery = zones.some((z) => z.nationwide);
   const seenCity = new Set<string>();
   const deliveryCities: string[] = [];
   for (const z of zones) {
+    if (z.nationwide) continue;
     const list = z.cities.length > 0 ? z.cities : [z.name];
     for (const c of list) {
       const trimmed = c.trim();
@@ -326,6 +330,7 @@ export default async function HomePage({
       }
       ratingSummary={ratingSummary}
       deliveryEta={deliveryEta}
+      etaUnit={branch?.etaUnit ?? "minutes"}
       categories={categories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color, imageUrl: c.imageUrl }))}
       allCategories={visibleCategories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color, imageUrl: c.imageUrl }))}
       menuItems={menuItems.map((i) => ({
@@ -370,6 +375,7 @@ export default async function HomePage({
       popular={popularSerialized}
       recentOrders={recentOrdersSerialized}
       deliveryCities={deliveryCities}
+      nationwideDelivery={nationwideDelivery}
       pickupEnabled={tenant.pickupEnabled}
       bannerCampaign={bannerCampaign}
       hasCustomerSession={session?.type === "customer"}

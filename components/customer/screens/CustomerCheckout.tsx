@@ -47,6 +47,7 @@ export function CustomerCheckout({
   displayMode = null,
   showAttribution = true,
   deliveryCities = [],
+  nationwideDelivery = false,
   pickupEnabled = true,
   termsText = "",
   loyaltyCheckout = { show: false, text: "" },
@@ -76,6 +77,9 @@ export function CustomerCheckout({
   /** Show the "how did you hear about us?" attribution prompt. */
   showAttribution?: boolean;
   deliveryCities?: string[];
+  /** Store delivers to any address (nationwide zone) - the city field lets
+   *  the customer type any city instead of only picking from the list. */
+  nationwideDelivery?: boolean;
   pickupEnabled?: boolean;
   termsText?: string;
   loyaltyCheckout?: { show: boolean; text: string };
@@ -281,8 +285,11 @@ export function CustomerCheckout({
     const match = deliveryCities.find(
       (c) => c.toLocaleLowerCase("he-IL") === choice.city.toLocaleLowerCase("he-IL"),
     );
-    if (match) setCity((cur) => cur || match);
-  }, [tenantSlug, deliveryCities]);
+    // Nationwide stores accept any typed city, so prefill the stored choice
+    // even when it isn't in the (possibly empty) suggestion list.
+    const resolved = match ?? (nationwideDelivery ? choice.city : null);
+    if (resolved) setCity((cur) => cur || resolved);
+  }, [tenantSlug, deliveryCities, nationwideDelivery]);
 
   useEffect(() => {
     const prefill = takeCheckoutPrefill(tenantSlug);
@@ -935,7 +942,7 @@ export function CustomerCheckout({
             and a single-option toggle is just noise. Switching here flips
             the cart method, which re-renders the address/pickup card below
             and drops the delivery fee for pickup. */}
-        {deliveryCities.length > 0 && pickupEnabled && (
+        {(deliveryCities.length > 0 || nationwideDelivery) && pickupEnabled && (
           <Card>
             <CardTitle>שיטת קבלה</CardTitle>
             <div className="grid grid-cols-2 gap-2 mt-3">
@@ -964,6 +971,8 @@ export function CustomerCheckout({
                 <Field label="עיר" required error={cityError} errorId="co-city-error">
                   <CitySelect
                     cities={deliveryCities}
+                    allowCustom={nationwideDelivery}
+                    placeholder={nationwideDelivery ? "הקלידו עיר" : "בחרו עיר"}
                     value={city}
                     onChange={(c) => {
                       setCity(c);

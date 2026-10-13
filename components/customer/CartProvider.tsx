@@ -136,6 +136,7 @@ interface BranchInfo {
   busyEtaBoostMinutes: number;
   freeDeliveryMinOrder?: number | null;
   freeDeliveryMinItems?: number | null;
+  etaUnit?: string;
   hours?: BranchHours | null;
 }
 

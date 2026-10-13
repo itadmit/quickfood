@@ -611,6 +611,10 @@ model Branch {
   // delivery zone defines its own min/max. Editable in branding settings.
   defaultEtaMin Int            @default(25) @map("default_eta_min")
   defaultEtaMax Int            @default(35) @map("default_eta_max")
+  // Unit the ETA numbers (branch defaults + every zone's min/max) are shown
+  // in: "minutes" (default, food delivery) or "days" (shipping-model stores
+  // that quote "1-2 ימים"). Store-wide so the display stays consistent.
+  etaUnit     String           @default("minutes") @map("eta_unit")
   hours       Json             @default("{}")
   minOrder    Int              @default(0) @map("min_order")
   deliveryFee Int              @default(0) @map("delivery_fee")
@@ -645,6 +649,11 @@ model DeliveryZone {
   /// Stored as plain strings (Hebrew city names) so merchants can
   /// type freely; the picker also offers a curated suggestion list.
   cities      String[] @default([])
+  // Nationwide catch-all: when true this zone matches ANY delivery city
+  // (ignores `cities`) and is used as the fallback when no city-specific
+  // zone matches - lets a store deliver to any address at a flat fee
+  // alongside its regular city zones.
+  nationwide  Boolean  @default(false)
   deliveryFee Int      @map("delivery_fee")
   // Per-zone minimum order (shekels); 0 = no minimum. Overrides the
   // branch-level floor when the order resolves to this zone.

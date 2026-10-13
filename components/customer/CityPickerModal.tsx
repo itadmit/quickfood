@@ -12,6 +12,10 @@ interface Props {
   coverImage: string | null;
   /** Cities the merchant has marked as covered (union of all active zones). */
   cities: string[];
+  /** Store delivers nationwide (has a nationwide zone). When true the delivery
+   *  tab lets the customer type any city/address instead of only picking from
+   *  `cities`. */
+  nationwide?: boolean;
   /** Merchant-level toggle. When false the pickup option is rendered as a
    *  muted, non-selectable tab - the modal still opens so the customer
    *  sees why their tap on "איסוף" did nothing. Defaults to true. */
@@ -39,6 +43,7 @@ export function CityPickerModal({
   tenantName,
   coverImage,
   cities,
+  nationwide = false,
   pickupEnabled = true,
   branchAddress,
   required,
@@ -57,6 +62,7 @@ export function CityPickerModal({
   }, [cities, query]);
 
   const hasCities = cities.length > 0;
+  const deliveryAvailable = hasCities || nationwide;
 
   return (
     <div
@@ -124,13 +130,17 @@ export function CityPickerModal({
               מה כתובת המשלוח?
             </h2>
             <p className="text-sm text-black/65 leading-snug">
-              {hasCities && pickupEnabled
-                ? `בדקו אם ${tenantName} מגיעים עד אליכם - בחרו עיר למשלוח, או הזמינו לאיסוף עצמי מהסניף.`
-                : hasCities && !pickupEnabled
-                  ? `${tenantName} מציעים משלוחים בלבד - בחרו את העיר שלכם.`
-                  : !hasCities && pickupEnabled
-                    ? "המסעדה לא הגדירה ערי משלוח. אפשר להזמין לאיסוף עצמי מהסניף."
-                    : "המסעדה לא מציעה משלוחים ולא איסוף עצמי בשלב זה."}
+              {nationwide
+                ? pickupEnabled
+                  ? `${tenantName} שולחים לכל הארץ - הקלידו את הכתובת שלכם, או הזמינו לאיסוף עצמי.`
+                  : `${tenantName} שולחים לכל הארץ - הקלידו את הכתובת שלכם.`
+                : hasCities && pickupEnabled
+                  ? `בדקו אם ${tenantName} מגיעים עד אליכם - בחרו עיר למשלוח, או הזמינו לאיסוף עצמי מהסניף.`
+                  : hasCities && !pickupEnabled
+                    ? `${tenantName} מציעים משלוחים בלבד - בחרו את העיר שלכם.`
+                    : !hasCities && pickupEnabled
+                      ? "המסעדה לא הגדירה ערי משלוח. אפשר להזמין לאיסוף עצמי מהסניף."
+                      : "המסעדה לא מציעה משלוחים ולא איסוף עצמי בשלב זה."}
             </p>
           </header>
 
@@ -144,13 +154,13 @@ export function CityPickerModal({
             <button
               type="button"
               onClick={() => setMethod("delivery")}
-              disabled={!hasCities}
+              disabled={!deliveryAvailable}
               className={cn(
                 "py-2.5 text-sm rounded-xl transition font-bold inline-flex items-center justify-center gap-1.5",
                 method === "delivery"
                   ? "bg-black text-white"
                   : "text-black/70 hover:text-black",
-                !hasCities && "opacity-40 cursor-not-allowed",
+                !deliveryAvailable && "opacity-40 cursor-not-allowed",
               )}
             >
               <IcoPin s={14} c="currentColor" />
@@ -174,7 +184,49 @@ export function CityPickerModal({
           </div>
 
           {method === "delivery" ? (
-            hasCities ? (
+            nationwide ? (
+              <div className="space-y-3">
+                <div
+                  className="flex items-center gap-2 border-2 border-black rounded-xl px-3.5 py-2.5 focus-within:bg-white focus-within:shadow-[0_2px_0_#000] transition"
+                  style={{
+                    backgroundColor: "color-mix(in srgb, var(--qf-primary) 10%, white)",
+                  }}
+                >
+                  <IcoPin c="currentColor" s={16} />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="הקלידו את העיר / היישוב שלכם"
+                    className="flex-1 bg-transparent outline-none text-sm font-medium text-black placeholder:text-black/40"
+                  />
+                </div>
+                {query.trim() !== "" && filtered.length > 0 && (
+                  <ul className="max-h-44 overflow-y-auto -mx-1 px-1 space-y-1">
+                    {filtered.slice(0, 20).map((c) => (
+                      <li key={c}>
+                        <button
+                          type="button"
+                          onClick={() => onChoose({ kind: "delivery", city: c })}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-start text-sm font-bold text-black border-2 border-transparent hover:border-black hover:bg-(--qf-primary)/10 transition"
+                        >
+                          <IcoPin c="currentColor" s={16} />
+                          <span className="flex-1">{c}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <button
+                  type="button"
+                  disabled={query.trim() === ""}
+                  onClick={() => onChoose({ kind: "delivery", city: query.trim() })}
+                  className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) text-white rounded-xl h-12 text-base font-black border-2 border-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] inline-flex items-center justify-center gap-2 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <IcoCheck c="currentColor" s={18} />
+                  אישור משלוח לכתובת
+                </button>
+              </div>
+            ) : hasCities ? (
               <>
                 <div
                   className="flex items-center gap-2 border-2 border-black rounded-xl px-3.5 py-2.5 focus-within:bg-white focus-within:shadow-[0_2px_0_#000] transition"

@@ -141,13 +141,16 @@ export default async function CheckoutPage({
 
   const branchId = tenant.branches[0]?.id;
   const deliveryCities: string[] = [];
+  let nationwideDelivery = false;
   if (branchId) {
     const zones = await prisma.deliveryZone.findMany({
       where: { branchId, active: true },
-      select: { name: true, cities: true },
+      select: { name: true, cities: true, nationwide: true },
     });
+    nationwideDelivery = zones.some((z) => z.nationwide);
     const seen = new Set<string>();
     for (const z of zones) {
+      if (z.nationwide) continue;
       const list = z.cities.length > 0 ? z.cities : [z.name];
       for (const c of list) {
         const trimmed = c.trim();
@@ -173,6 +176,7 @@ export default async function CheckoutPage({
       displayMode={cardProvider?.displayMode ?? null}
       showAttribution={settings?.checkoutShowAttribution ?? true}
       deliveryCities={deliveryCities}
+      nationwideDelivery={nationwideDelivery}
       pickupEnabled={settings?.pickupEnabled ?? true}
       termsText={termsText}
       loyaltyCheckout={{

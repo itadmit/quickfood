@@ -8,6 +8,9 @@ interface Props {
   value: string;
   onChange: (city: string) => void;
   placeholder?: string;
+  /** Nationwide stores: let the customer type any city, not only pick from
+   *  `cities`. The typed value becomes a selectable "deliver to …" option. */
+  allowCustom?: boolean;
 }
 
 export function CitySelect({
@@ -15,6 +18,7 @@ export function CitySelect({
   value,
   onChange,
   placeholder = "בחרו עיר",
+  allowCustom = false,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -56,6 +60,14 @@ export function CitySelect({
     prevValueRef.current = value;
   }, [value, open]);
 
+  const trimmedQuery = query.trim();
+  const customValue =
+    allowCustom &&
+    trimmedQuery !== "" &&
+    !cities.some((c) => c.toLocaleLowerCase("he-IL") === trimmedQuery.toLocaleLowerCase("he-IL"))
+      ? trimmedQuery
+      : null;
+
   return (
     <div ref={wrapRef} className="relative">
       <button
@@ -82,14 +94,14 @@ export function CitySelect({
 
       {open && (
         <div className="absolute inset-x-0 top-full mt-2 bg-white border border-qf-line rounded-2xl shadow-xl shadow-black/10 z-20 overflow-hidden animate-qf-bubble-in">
-          {cities.length > 6 && (
+          {(cities.length > 6 || allowCustom) && (
             <div className="p-2 border-b border-qf-line-soft">
               <div className="flex items-center gap-2 bg-qf-bg/60 rounded-xl px-3 py-2">
                 <IcoSearch c="currentColor" s={16} />
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="חפש עיר"
+                  placeholder={allowCustom ? "הקלידו עיר / יישוב" : "חפש עיר"}
                   className="flex-1 bg-transparent outline-none text-sm font-medium text-black placeholder:text-qf-mute"
                   autoFocus
                 />
@@ -100,10 +112,28 @@ export function CitySelect({
             role="listbox"
             className="max-h-64 overflow-y-auto py-1"
           >
-            {filtered.length === 0 ? (
-              <li className="text-center text-sm text-qf-mute py-6">
-                לא מצאנו עיר תואמת
+            {customValue && (
+              <li>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={false}
+                  onClick={() => pick(customValue)}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-start text-sm font-bold text-(--qf-deep) hover:bg-qf-bg/60 transition"
+                >
+                  <IcoPin c="var(--qf-deep)" s={14} />
+                  <span className="truncate">{`משלוח ל"${customValue}"`}</span>
+                </button>
               </li>
+            )}
+            {filtered.length === 0 ? (
+              customValue ? null : (
+                <li className="text-center text-sm text-qf-mute py-6">
+                  {allowCustom && trimmedQuery === ""
+                    ? "הקלידו את שם העיר"
+                    : "לא מצאנו עיר תואמת"}
+                </li>
+              )
             ) : (
               filtered.map((c) => {
                 const selected = c === value;

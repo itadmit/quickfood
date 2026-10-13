@@ -442,6 +442,9 @@ export const DeliveryZoneInputSchema = z.object({
   geometry: z.unknown().optional(),
   /** Cities this zone delivers to. Trimmed + deduped on the server. */
   cities: z.array(z.string().min(1).max(60)).max(200).optional(),
+  /** Nationwide catch-all: delivers to any address (ignores `cities`) and
+   *  is used as the fallback when no city-specific zone matches. */
+  nationwide: z.boolean().default(false),
   delivery_fee: z.number().int().min(0),
   /** Per-zone minimum order (shekels). 0 = no minimum for this zone. */
   min_order: z.number().int().min(0).default(0),

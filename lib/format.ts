@@ -8,6 +8,23 @@ export function formatPrice(amount: number): string {
 }
 
 /**
+ * Delivery-ETA range for display. `unit` is the branch's etaUnit:
+ * "minutes" (default) keeps the "X-Y דק'" food-delivery style; "days"
+ * renders shipping-model stores as "1-2 ימים" / "יום".
+ */
+export function formatEtaRange(
+  min: number,
+  max: number,
+  unit: string = "minutes",
+): string {
+  if (unit === "days") {
+    if (min === max) return min === 1 ? "יום" : `${min} ימים`;
+    return `${min}-${max} ימים`;
+  }
+  return `${min}-${max} דק'`;
+}
+
+/**
  * Compose a display "full name" from first/last parts.  Used everywhere
  * UI needs a one-line label (dashboard order rows, notifications,
  * payment provider snapshots).  Returns the empty string when both are

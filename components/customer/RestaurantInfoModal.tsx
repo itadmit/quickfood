@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useLayoutEffect } from "react";
 import { IcoClose, IcoStar, IcoPhone, IcoPin, IcoClock, IcoBike } from "@/components/shared/Icons";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatEtaRange } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { BranchHours, DayKey } from "@/lib/branch-hours";
 
@@ -20,6 +20,7 @@ interface Props {
   serviceFee: number;
   rating: { average: number; count: number } | null;
   deliveryEta: { min: number; max: number } | null;
+  etaUnit?: string;
   onClose: () => void;
 }
 
@@ -46,6 +47,7 @@ export function RestaurantInfoModal({
   serviceFee,
   rating,
   deliveryEta,
+  etaUnit = "minutes",
   onClose,
 }: Props) {
   useLayoutEffect(() => {
@@ -187,7 +189,7 @@ export function RestaurantInfoModal({
                 <div className="flex items-center justify-between py-2">
                   <dt className="text-qf-mute">זמן משלוח משוער</dt>
                   <dd className="tnum font-medium">
-                    {deliveryEta.min}-{deliveryEta.max} דק&apos;
+                    {formatEtaRange(deliveryEta.min, deliveryEta.max, etaUnit)}
                   </dd>
                 </div>
               )}

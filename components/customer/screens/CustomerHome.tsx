@@ -20,7 +20,7 @@ import {
 import { useMenuSearch } from "@/components/customer/MenuSearchProvider";
 import { resolveCategoryStyle, THEME_DEFAULT_CATEGORY_COLOR, type CategoryColorKey } from "@/lib/category-style";
 import { useCart } from "@/components/customer/CartProvider";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatEtaRange } from "@/lib/format";
 import { SmartImg } from "@/components/shared/SmartImg";
 import {
   readDeliveryChoice,
@@ -63,6 +63,9 @@ interface Props {
   } | null;
   ratingSummary?: { average: number; count: number } | null;
   deliveryEta?: { min: number; max: number } | null;
+  /** Unit the delivery-time numbers are shown in: "minutes" (default) or
+   *  "days" (shipping-model stores). */
+  etaUnit?: string;
   categories: Array<{ id: string; name: string; icon: string | null; color: string | null; imageUrl?: string | null }>;
   /** All active categories for the inline menu list below (the `categories`
    *  prop above is capped at 8 for the icon rail). */
@@ -94,6 +97,9 @@ interface Props {
    *  picker; empty = merchant hasn't configured zones, picker still
    *  offers pickup as an option. */
   deliveryCities?: string[];
+  /** Store delivers to any address (has a nationwide zone) - delivery is
+   *  offered even when no city list is configured. */
+  nationwideDelivery?: boolean;
   /** Tenant-level toggle ("הגדרות → קופה → אפשר איסוף עצמי"). When false the
    *  "איסוף" tab on the storefront becomes a disabled affordance - clicking
    *  it opens the picker modal explaining the store is delivery-only. */
@@ -129,6 +135,7 @@ export function CustomerHome({
   popular,
   recentOrders = [],
   deliveryCities = [],
+  nationwideDelivery = false,
   pickupEnabled = true,
   bannerCampaign = null,
   hasCustomerSession = false,
@@ -137,6 +144,7 @@ export function CustomerHome({
   featuredBadgeLabel = null,
   ratingSummary = null,
   deliveryEta = null,
+  etaUnit = "minutes",
   deals = [],
   layoutMode = "classic",
 }: Props) {
@@ -183,9 +191,9 @@ export function CustomerHome({
   const baseEta = effectiveDeliveryEta ?? { min: 25, max: 35 };
   const displayDeliveryFee = (cartBranch ?? branch)?.deliveryFee ?? 0;
   const displayMinOrder = (cartBranch ?? branch)?.minOrder ?? 0;
-  const etaLabel = busy
-    ? `${baseEta.min + busyBoost}-${baseEta.max + busyBoost} דק'`
-    : `${baseEta.min}-${baseEta.max} דק'`;
+  // The busy boost is a minutes concept; don't add it in days mode.
+  const boost = busy && etaUnit !== "days" ? busyBoost : 0;
+  const etaLabel = formatEtaRange(baseEta.min + boost, baseEta.max + boost, etaUnit);
 
 
   // Entry alerts. Busy is once-per-day, dismissable; closed shows every
@@ -281,14 +289,14 @@ export function CustomerHome({
     // pickup). Treat it as no choice so the picker re-opens and the
     // customer re-confirms with the methods that are currently offered.
     const stale =
-      (existing?.kind === "delivery" && deliveryCities.length === 0) ||
+      (existing?.kind === "delivery" && deliveryCities.length === 0 && !nationwideDelivery) ||
       (existing?.kind === "pickup" && !pickupEnabled);
     setChoice(stale ? null : existing);
     if (!existing || stale) {
       setPickerOpen(true);
       setPickerRequired(true);
     }
-  }, [tenant.slug, deliveryCities.length, pickupEnabled]);
+  }, [tenant.slug, deliveryCities.length, nationwideDelivery, pickupEnabled]);
 
   function applyChoice(next: { kind: "delivery"; city: string } | { kind: "pickup" }) {
     setChoice(next);
@@ -406,7 +414,9 @@ export function CustomerHome({
           <div className="bg-white/20 backdrop-blur rounded-2xl p-1 grid grid-cols-2 mb-4 lg:max-w-sm">
             {(["delivery", "pickup"] as const).map((m) => {
               const available =
-                m === "delivery" ? deliveryCities.length > 0 : pickupEnabled;
+                m === "delivery"
+                  ? deliveryCities.length > 0 || nationwideDelivery
+                  : pickupEnabled;
               return (
                 <button
                   key={m}
@@ -792,13 +802,14 @@ export function CustomerHome({
           tenantName={tenant.name}
           coverImage={tenant.coverImage ?? null}
           cities={deliveryCities}
+          nationwide={nationwideDelivery}
           pickupEnabled={pickupEnabled}
           branchAddress={branch?.address ?? null}
           required={pickerRequired}
           initialMethod={
             !pickupEnabled
               ? "delivery"
-              : method === "pickup" || deliveryCities.length === 0
+              : method === "pickup" || (deliveryCities.length === 0 && !nationwideDelivery)
                 ? "pickup"
                 : "delivery"
           }
@@ -852,6 +863,7 @@ export function CustomerHome({
           serviceFee={branch.serviceFee ?? 0}
           rating={ratingSummary}
           deliveryEta={effectiveDeliveryEta}
+          etaUnit={etaUnit}
           onClose={() => setInfoOpen(false)}
         />
       )}

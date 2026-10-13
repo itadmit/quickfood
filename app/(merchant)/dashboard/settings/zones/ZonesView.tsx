@@ -6,12 +6,14 @@ import { IcoClose } from "@/components/shared/Icons";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { cn } from "@/lib/cn";
+import { formatEtaRange } from "@/lib/format";
 
 interface Zone {
   id: string;
   name: string;
   radiusKm: number | null;
   cities: string[];
+  nationwide: boolean;
   deliveryFee: number;
   minOrder: number;
   freeDeliveryAbove: number | null;
@@ -24,6 +26,7 @@ interface ZoneDraft {
   name: string;
   radiusKm: number;
   citiesRaw: string;
+  nationwide: boolean;
   deliveryFee: number;
   minOrder: number;
   freeDeliveryAbove: number;
@@ -35,6 +38,7 @@ const EMPTY_DRAFT: ZoneDraft = {
   name: "",
   radiusKm: 3,
   citiesRaw: "",
+  nationwide: false,
   deliveryFee: 14,
   minOrder: 0,
   freeDeliveryAbove: 0,
@@ -47,6 +51,7 @@ function draftFromZone(z: Zone): ZoneDraft {
     name: z.name,
     radiusKm: z.radiusKm ?? 0,
     citiesRaw: z.cities.join(", "),
+    nationwide: z.nationwide,
     deliveryFee: z.deliveryFee,
     minOrder: z.minOrder,
     freeDeliveryAbove: z.freeDeliveryAbove ?? 0,
@@ -65,15 +70,21 @@ function parseCities(raw: string): string[] {
 
 export function ZonesView({
   branchId,
+  etaUnit: initialEtaUnit,
   freeDelivery,
   initial,
 }: {
   branchId: string;
+  etaUnit: string;
   freeDelivery: { minOrder: number | null; minItems: number | null };
   initial: Zone[];
 }) {
   const router = useRouter();
   const [zones, setZones] = useState(initial);
+  const [etaUnit, setEtaUnit] = useState<"minutes" | "days">(
+    initialEtaUnit === "days" ? "days" : "minutes",
+  );
+  const [savingEtaUnit, setSavingEtaUnit] = useState(false);
   const [adding, setAdding] = useState(false);
   const [addForm, setAddForm] = useState<ZoneDraft>(EMPTY_DRAFT);
   const [busy, setBusy] = useState(false);
@@ -108,6 +119,7 @@ export function ZonesView({
           name: addForm.name,
           radius_km: addForm.radiusKm > 0 ? addForm.radiusKm : undefined,
           cities: parseCities(addForm.citiesRaw),
+          nationwide: addForm.nationwide,
           delivery_fee: addForm.deliveryFee,
           min_order: addForm.minOrder,
           free_delivery_above: addForm.freeDeliveryAbove > 0 ? addForm.freeDeliveryAbove : null,
@@ -127,6 +139,7 @@ export function ZonesView({
         name: addForm.name,
         radiusKm: addForm.radiusKm > 0 ? addForm.radiusKm : null,
         cities: parseCities(addForm.citiesRaw),
+        nationwide: addForm.nationwide,
         deliveryFee: addForm.deliveryFee,
         minOrder: addForm.minOrder,
         freeDeliveryAbove: addForm.freeDeliveryAbove > 0 ? addForm.freeDeliveryAbove : null,
@@ -165,6 +178,7 @@ export function ZonesView({
           name: editForm.name,
           radius_km: editForm.radiusKm > 0 ? editForm.radiusKm : undefined,
           cities,
+          nationwide: editForm.nationwide,
           delivery_fee: editForm.deliveryFee,
           min_order: editForm.minOrder,
           free_delivery_above: editForm.freeDeliveryAbove > 0 ? editForm.freeDeliveryAbove : null,
@@ -186,6 +200,7 @@ export function ZonesView({
                   name: editForm.name,
                   radiusKm: editForm.radiusKm > 0 ? editForm.radiusKm : null,
                   cities,
+                  nationwide: editForm.nationwide,
                   deliveryFee: editForm.deliveryFee,
                   minOrder: editForm.minOrder,
                   freeDeliveryAbove: editForm.freeDeliveryAbove > 0 ? editForm.freeDeliveryAbove : null,
@@ -231,6 +246,31 @@ export function ZonesView({
       pushToast("err", "שגיאת רשת - בדוק חיבור ונסה שוב");
     } finally {
       setSavingFd(false);
+    }
+  }
+
+  async function saveEtaUnit(next: "minutes" | "days") {
+    const prev = etaUnit;
+    setEtaUnit(next);
+    setSavingEtaUnit(true);
+    try {
+      const res = await fetch(`/api/v1/merchant/branches/${branchId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ eta_unit: next }),
+      });
+      if (!res.ok) {
+        setEtaUnit(prev);
+        pushToast("err", "השמירה נכשלה");
+        return;
+      }
+      pushToast("ok", "נשמר");
+      router.refresh();
+    } catch {
+      setEtaUnit(prev);
+      pushToast("err", "שגיאת רשת - בדוק חיבור ונסה שוב");
+    } finally {
+      setSavingEtaUnit(false);
     }
   }
 
@@ -306,6 +346,41 @@ export function ZonesView({
         </div>
       </div>
 
+      {/* Delivery-time unit: minutes (local food) or days (nationwide / shipping). */}
+      <div className="bg-white rounded-2xl border border-qf-line-dash">
+        <header className="px-4 lg:px-5 py-4 border-b border-qf-line-soft">
+          <div className="font-semibold">יחידת זמן משלוח</div>
+          <div className="text-xs text-qf-mute">
+            איך יוצג זמן המשלוח המשוער ללקוח - בדקות (משלוח מקומי) או בימים (משלוח ארצי / שילוח).
+          </div>
+        </header>
+        <div className="px-4 lg:px-5 py-4">
+          <div className="inline-grid grid-cols-2 gap-1 p-1 rounded-xl bg-qf-line-soft/60">
+            {(
+              [
+                ["minutes", "דקות"],
+                ["days", "ימים"],
+              ] as const
+            ).map(([val, label]) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => val !== etaUnit && saveEtaUnit(val)}
+                disabled={savingEtaUnit}
+                className={cn(
+                  "px-6 py-2 rounded-lg text-sm font-medium transition disabled:opacity-60",
+                  etaUnit === val
+                    ? "bg-white shadow text-(--qf-deep)"
+                    : "text-qf-mute hover:text-qf-ink",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white rounded-2xl border border-qf-line-dash">
         <header className="px-4 lg:px-5 py-4 border-b border-qf-line-soft flex items-center justify-between gap-2">
           <div>
@@ -323,7 +398,7 @@ export function ZonesView({
 
         {adding && (
           <div className="px-4 lg:px-5 py-4 border-b border-qf-line-soft space-y-3 bg-qf-line-soft/40">
-            <ZoneFields draft={addForm} onChange={setAddForm} />
+            <ZoneFields draft={addForm} onChange={setAddForm} etaUnit={etaUnit} />
             <div className="flex justify-end">
               <button
                 type="button"
@@ -349,7 +424,7 @@ export function ZonesView({
                   key={z.id}
                   className="px-4 lg:px-5 py-4 space-y-3 bg-qf-line-soft/40"
                 >
-                  <ZoneFields draft={editForm} onChange={setEditForm} />
+                  <ZoneFields draft={editForm} onChange={setEditForm} etaUnit={etaUnit} />
                   <div className="flex items-center gap-2 justify-end">
                     <button
                       type="button"
@@ -373,14 +448,25 @@ export function ZonesView({
                   <div className="grid grid-cols-[1fr_auto] gap-3 items-center">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 items-center">
                       <div>
-                        <div className="font-medium">{z.name}</div>
+                        <div className="font-medium flex items-center gap-1.5">
+                          {z.name}
+                          {z.nationwide && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-qf-green-soft text-qf-green-deep">
+                              ארצי
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-qf-mute tnum">
-                          {z.radiusKm ? `רדיוס ${z.radiusKm} ק״מ` : "ללא רדיוס"}
+                          {z.nationwide
+                            ? "משלוח לכל כתובת"
+                            : z.radiusKm
+                              ? `רדיוס ${z.radiusKm} ק״מ`
+                              : "ללא רדיוס"}
                         </div>
                       </div>
                       <div className="text-sm tnum">₪{z.deliveryFee}</div>
                       <div className="text-sm text-qf-ink2 tnum">
-                        {z.minEta}-{z.maxEta} דק׳
+                        {formatEtaRange(z.minEta, z.maxEta, etaUnit)}
                       </div>
                       <button
                         type="button"
@@ -415,7 +501,7 @@ export function ZonesView({
                     </div>
                   </div>
 
-                  {z.cities.length === 0 ? (
+                  {z.nationwide ? null : z.cities.length === 0 ? (
                     <button
                       type="button"
                       onClick={() => startEdit(z)}
@@ -466,12 +552,24 @@ export function ZonesView({
 function ZoneFields({
   draft,
   onChange,
+  etaUnit,
 }: {
   draft: ZoneDraft;
   onChange: (d: ZoneDraft) => void;
+  etaUnit: "minutes" | "days";
 }) {
+  const etaWord = etaUnit === "days" ? "ימים" : "דק׳";
   return (
     <>
+      <label className="flex items-center gap-2 text-sm font-medium">
+        <input
+          type="checkbox"
+          checked={draft.nationwide}
+          onChange={(e) => onChange({ ...draft, nationwide: e.target.checked })}
+          className="w-4 h-4 accent-[var(--qf-primary)]"
+        />
+        <span>משלוח לכל הארץ (כל כתובת, ללא תלות ברשימת הערים)</span>
+      </label>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2 items-end">
         <Field label="שם">
           <input
@@ -518,7 +616,7 @@ function ZoneFields({
             className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
           />
         </Field>
-        <Field label="זמן משלוח משוער מינ׳">
+        <Field label={`זמן אספקה מינ׳ (${etaWord})`}>
           <input
             type="number"
             min={0}
@@ -527,7 +625,7 @@ function ZoneFields({
             className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm tnum"
           />
         </Field>
-        <Field label="זמן משלוח משוער מקס׳">
+        <Field label={`זמן אספקה מקס׳ (${etaWord})`}>
           <input
             type="number"
             min={0}
@@ -537,15 +635,17 @@ function ZoneFields({
           />
         </Field>
       </div>
-      <Field label="ערים בכיסוי (מפרידים בפסיק)">
-        <textarea
-          value={draft.citiesRaw}
-          onChange={(e) => onChange({ ...draft, citiesRaw: e.target.value })}
-          rows={2}
-          placeholder="תל אביב יפו, רמת גן, גבעתיים"
-          className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm bg-white resize-none"
-        />
-      </Field>
+      {!draft.nationwide && (
+        <Field label="ערים בכיסוי (מפרידים בפסיק)">
+          <textarea
+            value={draft.citiesRaw}
+            onChange={(e) => onChange({ ...draft, citiesRaw: e.target.value })}
+            rows={2}
+            placeholder="תל אביב יפו, רמת גן, גבעתיים"
+            className="w-full px-2.5 py-2 rounded-lg border border-qf-line-dash text-sm bg-white resize-none"
+          />
+        </Field>
+      )}
     </>
   );
 }
