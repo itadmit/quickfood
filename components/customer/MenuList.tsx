@@ -287,7 +287,7 @@ export function MenuList({
         </div>
       )}
 
-      <div className="sticky top-15 z-20 bg-qf-bg/95 backdrop-blur border-b border-qf-line lg:top-16 lg:mt-0">
+      <div className="sticky top-0 z-20 bg-qf-bg/95 backdrop-blur border-b border-qf-line lg:top-16 lg:mt-0">
         <div className="flex gap-1.5 overflow-x-auto qf-hscroll px-4 py-2.5">
           {visibleCategories.map((c) => {
             const active = activeCat === c.id;

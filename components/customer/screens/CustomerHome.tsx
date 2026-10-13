@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { IcoPin, IcoSearch, IcoClock, IcoBike, IcoArrowLeft, IcoStar, IcoInfo } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
@@ -264,16 +264,6 @@ export function CustomerHome({
   // ever rendered inside the menu section.
   const { query: menuQuery, setQuery: setMenuQuery } = useMenuSearch();
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
-  const menuSearchRef = useRef<HTMLInputElement | null>(null);
-
-  function focusMenuSearch() {
-    // iOS only opens the keyboard for a focus() made synchronously inside
-    // the tap gesture - the old scroll-then-focus-after-400ms left the field
-    // focused but keyboardless on iPhone, which read as "search is broken".
-    menuSearchRef.current?.focus({ preventScroll: true });
-    const el = document.getElementById("menu-section");
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
 
   function toggleTag(t: string) {
     setActiveTags((prev) => {
@@ -451,20 +441,32 @@ export function CustomerHome({
             })}
           </div>
 
-          {/* Search trigger - looks like an input but is a button. Tapping
-              scrolls down to the inline menu and focuses the real search
-              field there. Hidden on desktop since the menu (and its own
-              search input) is visible immediately without scroll. In cubes
+          {/* Mobile menu search - the single search field on mobile (desktop
+              has its own in CustomerTopNav). Lives in the hero and filters the
+              menu below live via the shared MenuSearchProvider query. In cubes
               mode the browser owns its own search bar, so skip this. */}
           {layoutMode !== "category_grid" && (
-            <button
-              type="button"
-              onClick={focusMenuSearch}
-              className="lg:hidden w-full flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur px-4 py-2.5 rounded-full text-sm border border-white/25 text-start transition"
-            >
+            <div className="lg:hidden w-full flex items-center gap-2 bg-white/20 focus-within:bg-white/30 backdrop-blur px-4 py-2.5 rounded-full text-sm border border-white/25 transition">
               <IcoSearch c="rgba(255,255,255,0.9)" s={16} />
-              <span className="text-white/85">חיפוש בתפריט</span>
-            </button>
+              <input
+                type="search"
+                value={menuQuery}
+                onChange={(e) => setMenuQuery(e.target.value)}
+                placeholder="חיפוש בתפריט"
+                aria-label="חיפוש בתפריט"
+                className="flex-1 bg-transparent outline-none border-0 appearance-none text-white placeholder:text-white/75 [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
+              />
+              {menuQuery && (
+                <button
+                  type="button"
+                  onClick={() => setMenuQuery("")}
+                  className="text-xs text-white/80 hover:text-white shrink-0"
+                  aria-label="נקה חיפוש"
+                >
+                  נקה
+                </button>
+              )}
+            </div>
           )}
 
           {/* Mobile-only tenant name (desktop renders it at the top of the hero).
@@ -758,33 +760,6 @@ export function CustomerHome({
             </div>
           )}
           <h2 className="text-base lg:text-xl font-semibold mb-3">התפריט המלא</h2>
-          {/* Mobile-only search input - sticks to the top of the viewport
-              once the user scrolls past the heading, sitting just above the
-              MenuList sticky category bar (which adjusts its sticky top to
-              compensate). Desktop renders the search in CustomerTopNav. */}
-          <div className="sticky top-0 z-30 -mx-5 px-5 pt-2 pb-2 bg-qf-bg/95 backdrop-blur mb-2 lg:hidden">
-            <div className="bg-white rounded-full flex items-center gap-2.5 px-5 h-11 border border-qf-line focus-within:ring-2 focus-within:ring-(--qf-primary)">
-              <IcoSearch c="#7c8a82" s={18} />
-              <input
-                ref={menuSearchRef}
-                type="search"
-                value={menuQuery}
-                onChange={(e) => setMenuQuery(e.target.value)}
-                placeholder="חיפוש בתפריט"
-                className="flex-1 bg-transparent outline-none border-0 appearance-none text-[15px] text-qf-ink placeholder:text-qf-mute [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
-              />
-              {menuQuery && (
-                <button
-                  type="button"
-                  onClick={() => setMenuQuery("")}
-                  className="text-xs text-qf-mute hover:text-qf-ink shrink-0"
-                  aria-label="נקה חיפוש"
-                >
-                  נקה
-                </button>
-              )}
-            </div>
-          </div>
           <div className="-mx-5 lg:mx-0">
             <MenuList
               tenantSlug={tenant.slug}
