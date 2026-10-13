@@ -309,6 +309,7 @@ export default async function HomePage({
         businessType: tenant.businessType,
         coverImage: tenant.coverImage,
         themeId: tenant.themeId,
+        etaLabel: tenant.etaLabel,
       }}
       layoutMode={tenant.storefrontLayout}
       branch={

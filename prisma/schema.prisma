@@ -274,6 +274,10 @@ model Tenant {
   /// home page. Default true keeps the current behaviour. Only affects the
   /// classic layout - the category_grid layout is built around categories.
   showCategoriesRail   Boolean        @default(true) @map("show_categories_rail")
+  /// Per-tenant override for the storefront delivery-ETA label. When set it
+  /// replaces the computed "X-Y דק'" / "X-Y ימים" string verbatim (e.g.
+  /// "אספקה תוך 1-2 ימים" for a shipping-model store). NULL keeps the default.
+  etaLabel             String?        @map("eta_label")
   cuisineType          String?        @map("cuisine_type")
   /// Free-text "about" / tagline for the venue. Shown to customers on
   /// the storefront under the venue name, editable from Branding.

@@ -50,6 +50,7 @@ interface Props {
     businessType?: BusinessType;
     coverImage?: string | null;
     themeId?: string | null;
+    etaLabel?: string | null;
   };
   branch: {
     address: string;
@@ -202,7 +203,9 @@ export function CustomerHome({
   const displayMinOrder = (cartBranch ?? branch)?.minOrder ?? 0;
   // The busy boost is a minutes concept; don't add it in days mode.
   const boost = busy && etaUnit !== "days" ? busyBoost : 0;
-  const etaLabel = formatEtaRange(baseEta.min + boost, baseEta.max + boost, etaUnit);
+  const etaLabel =
+    tenant.etaLabel?.trim() ||
+    formatEtaRange(baseEta.min + boost, baseEta.max + boost, etaUnit);
 
 
   // Entry alerts. Busy is once-per-day, dismissable; closed shows every
