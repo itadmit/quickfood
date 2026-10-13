@@ -90,6 +90,7 @@ export const PATCH = handler(async (req: Request) => {
       checkoutShowAttribution: body.checkout_show_attribution,
       scheduledOrdersEnabled: body.scheduled_orders_enabled,
       pickupEnabled: body.pickup_enabled,
+      methodPopupEnabled: body.method_popup_enabled,
       cutleryEnabled: body.cutlery_enabled,
       cutleryLabel: body.cutlery_label,
       cutleryPrice: body.cutlery_price,

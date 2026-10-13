@@ -11,6 +11,7 @@ interface Initial {
   showAttribution: boolean;
   scheduledOrdersEnabled: boolean;
   pickupEnabled: boolean;
+  methodPopupEnabled: boolean;
   cutleryEnabled: boolean;
   cutleryLabel: string;
   cutleryPrice: number;
@@ -27,6 +28,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
     initial.scheduledOrdersEnabled,
   );
   const [pickupEnabled, setPickupEnabled] = useState(initial.pickupEnabled);
+  const [methodPopupEnabled, setMethodPopupEnabled] = useState(initial.methodPopupEnabled);
   const [tipEnabled, setTipEnabled] = useState(initial.tipEnabled);
   const [cutleryEnabled, setCutleryEnabled] = useState(initial.cutleryEnabled);
   const [cutleryLabel, setCutleryLabel] = useState(initial.cutleryLabel);
@@ -50,6 +52,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
           checkout_show_attribution: showAttribution,
           scheduled_orders_enabled: scheduledOrdersEnabled,
           pickup_enabled: pickupEnabled,
+          method_popup_enabled: methodPopupEnabled,
           tip_enabled: tipEnabled,
           cutlery_enabled: cutleryEnabled,
           cutlery_label: cutleryLabel.trim() || "סכו״ם חד״פ",
@@ -128,6 +131,17 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
         }
         value={pickupEnabled}
         onChange={setPickupEnabled}
+      />
+
+      <Toggle
+        label="חלונית בחירת משלוח/איסוף בכניסה לחנות"
+        description={
+          methodPopupEnabled
+            ? "בכניסה לחנות נפתחת חלונית שבה הלקוח בוחר משלוח או איסוף (ועיר) לפני שהוא מתחיל להזמין."
+            : "אין חלונית בכניסה - הלקוח גולש ישר ובוחר שיטת קבלה בתוך הקופה, כמו חנות אונליין רגילה. אפשר עדיין לפתוח את הבורר ידנית מכפתור הכתובת למעלה."
+        }
+        value={methodPopupEnabled}
+        onChange={setMethodPopupEnabled}
       />
 
       <Toggle

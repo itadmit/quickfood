@@ -104,6 +104,10 @@ interface Props {
    *  "איסוף" tab on the storefront becomes a disabled affordance - clicking
    *  it opens the picker modal explaining the store is delivery-only. */
   pickupEnabled?: boolean;
+  /** When false the delivery/pickup picker does NOT auto-open on entry - the
+   *  customer chooses the method inside checkout. The location chip still
+   *  opens it manually. */
+  methodPopupEnabled?: boolean;
   bannerCampaign?: CampaignBannerData | null;
   hasCustomerSession?: boolean;
   pendingReviewOrderId?: string | null;
@@ -137,6 +141,7 @@ export function CustomerHome({
   deliveryCities = [],
   nationwideDelivery = false,
   pickupEnabled = true,
+  methodPopupEnabled = true,
   bannerCampaign = null,
   hasCustomerSession = false,
   pendingReviewOrderId = null,
@@ -292,11 +297,14 @@ export function CustomerHome({
       (existing?.kind === "delivery" && deliveryCities.length === 0 && !nationwideDelivery) ||
       (existing?.kind === "pickup" && !pickupEnabled);
     setChoice(stale ? null : existing);
-    if (!existing || stale) {
+    // When the merchant disabled the entry popup, never auto-open it - the
+    // customer picks the method inside checkout. The location chip can still
+    // open it on demand.
+    if ((!existing || stale) && methodPopupEnabled) {
       setPickerOpen(true);
       setPickerRequired(true);
     }
-  }, [tenant.slug, deliveryCities.length, nationwideDelivery, pickupEnabled]);
+  }, [tenant.slug, deliveryCities.length, nationwideDelivery, pickupEnabled, methodPopupEnabled]);
 
   function applyChoice(next: { kind: "delivery"; city: string } | { kind: "pickup" }) {
     setChoice(next);

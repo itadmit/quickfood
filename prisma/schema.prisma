@@ -328,6 +328,12 @@ model Tenant {
 
   pickupEnabled   Boolean @default(true) @map("pickup_enabled")
 
+  // When false the storefront does NOT auto-open the delivery/pickup popup on
+  // entry - the customer browses and chooses the method inside checkout (a
+  // plain e-commerce flow). The location chip can still open the picker
+  // manually. Default true keeps the current popup behaviour.
+  methodPopupEnabled Boolean @default(true) @map("method_popup_enabled")
+
   cutleryEnabled    Boolean @default(false) @map("cutlery_enabled")
   cutleryLabel      String  @default("סכו״ם חד״פ") @map("cutlery_label")
   cutleryPrice      Int     @default(0) @map("cutlery_price")
