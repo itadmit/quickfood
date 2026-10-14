@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRoom } from "@/lib/realtime/useRoom";
+import { fetchWithSession } from "@/lib/auth/client-session";
 import Link from "next/link";
 import { IcoClock, IcoPrinter, IcoFlame, IcoRefresh, IcoUndo, IcoClose, IcoBell, IcoBellOff } from "@/components/shared/Icons";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
@@ -340,8 +341,11 @@ export function OrdersKanban({
       // cache:"no-store" so a service worker or browser intermediate
       // never serves a stale active-orders list that still includes a
       // card the merchant just hid via the X icon.
-      const res = await fetch("/api/v1/merchant/orders?status=active", {
-        credentials: "include",
+      // fetchWithSession, not fetch: an expired session used to fall into the
+      // `!res.ok` bail below, so the board kept its last snapshot forever and
+      // never rang again. Now a 401 either rolls the session or locks the
+      // screen via SessionKeepAlive.
+      const res = await fetchWithSession("/api/v1/merchant/orders?status=active", {
         cache: "no-store",
       });
       if (!res.ok) return;

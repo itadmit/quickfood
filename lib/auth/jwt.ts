@@ -10,13 +10,15 @@ function getSecret(): Uint8Array {
   return enc.encode(s);
 }
 
-// Access TTL bumped from 15m → 7d to match the cookie max-age, since
-// we don't yet have a refresh endpoint that would roll a new access
-// token before this expires. With both at 7d the user stays signed in
-// for a full week; the 30-day refresh cookie still backs it up for
-// when we wire `/api/v1/auth/refresh`.
-const ACCESS_TTL = "7d";
-const REFRESH_TTL = "30d";
+// A till that silently loses its session stops ringing for new orders, so
+// these windows are deliberately long: 30 days of access, backed by a
+// 180-day refresh token. The dashboard rolls both in the background
+// (SessionKeepAlive → POST /api/v1/auth/refresh), so a store that opens the
+// board at least once a month is never signed out at all. Changing a user's
+// role or tenant still needs them to re-login - stateless tokens can't be
+// revoked mid-window.
+const ACCESS_TTL = "30d";
+const REFRESH_TTL = "180d";
 // Short-lived proof that an email address passed OTP. Issued by the
 // signup-otp/verify endpoint and consumed by the signup route - it lets the
 // merchant fill the rest of step 3 (or fix a typo) without the code expiring

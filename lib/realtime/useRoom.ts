@@ -21,6 +21,8 @@
  */
 import { useEffect, useRef } from "react";
 
+import { fetchWithSession } from "@/lib/auth/client-session";
+
 type Frame = { event?: string; data?: Record<string, unknown> };
 
 export interface UseRoomArgs {
@@ -66,7 +68,11 @@ export function useRoom({ scope, onEvent, onResync, enabled = true }: UseRoomArg
       if (cancelled || document.visibilityState !== "visible") return;
       let cfg: { enabled?: boolean; url?: string; room?: string; token?: string } | null;
       try {
-        const res = await fetch("/api/v1/realtime/token", {
+        // The merchant scope 401s on an expired session, and the retry loop
+        // below would otherwise hide that behind a polite 30s backoff
+        // forever. fetchWithSession rolls the session once, then escalates to
+        // SESSION_EXPIRED_EVENT so the merchant is actually told.
+        const res = await fetchWithSession("/api/v1/realtime/token", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: key,

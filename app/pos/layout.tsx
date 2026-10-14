@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/client";
 import { canAccessDashboard } from "@/lib/auth/merchant-access";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import { PosShell } from "@/components/pos/PosShell";
+import { SessionKeepAlive } from "@/components/merchant/SessionKeepAlive";
 
 export const dynamic = "force-dynamic";
 
@@ -73,6 +74,7 @@ export default async function PosLayout({
 
   return (
     <ThemeProvider themeId={tenant.themeId} className="min-h-screen bg-qf-bg">
+      <SessionKeepAlive />
       <PosShell
         cashier={{ id: user.id, name: user.name, role: user.role }}
         tenant={{ id: tenant.id, slug: tenant.slug, name: tenant.name, logoLetter: tenant.logoLetter }}

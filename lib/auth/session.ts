@@ -77,30 +77,29 @@ function claimsToSession(c: AccessClaims, via: Session["via"]): Session {
   };
 }
 
+// Kept in step with ACCESS_TTL / REFRESH_TTL in ./jwt - a cookie that
+// outlives its token just turns "signed out" into "signed out silently".
+const ACCESS_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+const REFRESH_COOKIE_MAX_AGE = 60 * 60 * 24 * 180;
+
 export async function setSessionCookies(
   accessToken: string,
   refreshToken: string,
 ): Promise<void> {
   const jar = await cookies();
-  // 7-day access cookie - was 15min, which logged the user out every
-  // quarter hour because we don't have a /api/v1/auth/refresh route
-  // or a middleware that rolls the access token from the refresh
-  // cookie. Until that's wired, a longer-lived access cookie stops
-  // the constant disconnects. The refresh cookie still backs it up
-  // for 30 days. TODO: add a refresh endpoint + return to 15min.
   jar.set(ACCESS_COOKIE, accessToken, {
     httpOnly: true,
     secure: isProd,
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: ACCESS_COOKIE_MAX_AGE,
   });
   jar.set(REFRESH_COOKIE, refreshToken, {
     httpOnly: true,
     secure: isProd,
     sameSite: "strict",
     path: "/api/v1/auth",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: REFRESH_COOKIE_MAX_AGE,
   });
 }
 

@@ -18,6 +18,7 @@ import { OnboardingWelcome } from "@/components/merchant/OnboardingWelcome";
 import { SupportFAB } from "@/components/merchant/SupportFAB";
 import { DashboardFooter } from "@/components/merchant/DashboardFooter";
 import { MerchantPushSubscribe } from "@/components/merchant/MerchantPushSubscribe";
+import { SessionKeepAlive } from "@/components/merchant/SessionKeepAlive";
 import { RoleRouteGuard } from "@/components/merchant/RoleRouteGuard";
 import { TermsAckGate } from "@/components/merchant/TermsAckGate";
 import { TermsAckBanner } from "@/components/merchant/TermsAckBanner";
@@ -124,6 +125,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <ThemeProvider themeId={tenant.themeId}>
       <AccessibilityWidget />
+      <SessionKeepAlive renew={!impersonating} />
       {isV2 ? (
         // `dash-v2` is the hook that retunes the design tokens (qf-bg,
         // qf-ink, qf-line, qf-green → cream / black / yellow) for every

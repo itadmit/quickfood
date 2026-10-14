@@ -1,6 +1,7 @@
 "use client";
 
 import { useRoom } from "@/lib/realtime/useRoom";
+import { fetchWithSession } from "@/lib/auth/client-session";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { IcoBell, IcoClock, IcoRefresh, IcoCheck } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
@@ -73,7 +74,7 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
   const refresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      const res = await fetch("/api/v1/merchant/orders?status=active", { credentials: "include" });
+      const res = await fetchWithSession("/api/v1/merchant/orders?status=active");
       if (!res.ok) return;
       const data = await res.json();
       const raw = data.orders as Array<Record<string, unknown>>;
