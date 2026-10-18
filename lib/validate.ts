@@ -668,6 +668,11 @@ export const MerchantPaymentsPatchSchema = z
         /** J5 "late charge": authorize + hold now, capture later from the
          *  dashboard. Hyp-only. Persisted as settings.deferredCapture. */
         late_charge: z.boolean().optional(),
+        /** Sub-mode of late_charge: hold the order as pending-approval and
+         *  capture the J5 hold when the merchant accepts it, instead of
+         *  auto-confirming + a manual "charge now". Persisted as
+         *  settings.captureOnApproval. */
+        capture_on_approval: z.boolean().optional(),
       })
       .optional(),
   })

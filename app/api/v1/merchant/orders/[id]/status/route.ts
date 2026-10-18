@@ -1,8 +1,11 @@
+import { after } from "next/server";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { OrderStatusPatchSchema } from "@/lib/validate";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { advanceStatus, OrderTransitionError } from "@/lib/orders";
+import { captureOrder } from "@/lib/payments/capture-order";
+import { printOrderTicket } from "@/lib/printing/print-order";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,11 +51,42 @@ export const PATCH = handler(
       }
     }
 
+    // J5 capture-on-approval: an order that's still `pending` but already
+    // `authorized` is a held J5 charge waiting for the merchant to accept it.
+    // Accepting it (→ confirmed / preparing) captures the money FIRST - if the
+    // card is declined at capture we block the approval so the merchant never
+    // confirms an order they couldn't charge. Rejecting (→ cancelled) skips
+    // capture and lets the hold expire on its own.
+    const isApprovalCapture =
+      order.status === "pending" &&
+      (body.status === "confirmed" || body.status === "preparing") &&
+      order.paymentStatus === "authorized";
+
+    if (isApprovalCapture) {
+      const cap = await captureOrder({ orderId: id, tenantId: order.tenantId });
+      if (!cap.ok && cap.code !== "already_paid") {
+        if (cap.code === "unsupported") {
+          return apiError("capture_unsupported", cap.message, 400);
+        }
+        if (cap.code === "capture_failed") {
+          return apiError("capture_failed", cap.message, 400);
+        }
+        return apiError("conflict", cap.message, 409);
+      }
+    }
+
     try {
       const updated = await advanceStatus(id, body.status, {
         courierId: body.courier_id,
         changedBy: session.userId,
       });
+
+      // The kitchen ticket was deliberately NOT printed when the J5 hold
+      // landed (the order was awaiting approval). Now that it's accepted and
+      // the money captured, print it.
+      if (isApprovalCapture) {
+        after(() => printOrderTicket(id, "card_paid"));
+      }
 
       // Implicit "cash collected" - when a cash order moves from
       // pending → confirmed, the merchant is acknowledging they took

@@ -66,6 +66,12 @@ export interface ProviderSettings {
   // "charge now" in the dashboard. Hyp-only for now. When off, charge
   // immediately (J4), the historical behaviour.
   deferredCapture?: boolean;
+  // Sub-mode of `deferredCapture`: instead of auto-confirming the order and
+  // waiting for a manual "charge now", hold the order in `pending` (awaiting
+  // merchant approval, NOT in the kitchen) and capture the J5 hold the moment
+  // the merchant accepts it ("אשר וקבל"). Only meaningful when
+  // `deferredCapture` is also on. Hyp-only.
+  captureOnApproval?: boolean;
   [key: string]: unknown;
 }
 

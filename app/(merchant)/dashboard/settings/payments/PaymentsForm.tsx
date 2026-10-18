@@ -48,6 +48,7 @@ interface HypState {
   display_mode: "iframe" | "redirect";
   send_invoice: boolean;
   late_charge: boolean;
+  capture_on_approval: boolean;
 }
 
 type CustomerPaymentMethod = "cash" | "card" | "bit" | "apple_pay" | "google_pay";
@@ -203,6 +204,7 @@ export function PaymentsForm({
             display_mode: v.hyp.display_mode,
             send_invoice: v.hyp.send_invoice,
             late_charge: v.hyp.late_charge,
+            capture_on_approval: v.hyp.late_charge && v.hyp.capture_on_approval,
           },
         }),
       });
@@ -730,9 +732,19 @@ export function PaymentsForm({
               <div className="min-w-0">
                 <div className="font-semibold text-sm text-qf-ink">חיוב מאוחר (J5)</div>
                 <p className="text-xs text-qf-ink2 mt-0.5 leading-relaxed">
-                  במקום לחייב מיד, המערכת תתפוס מסגרת בכרטיס הלקוח בעת ההזמנה.
-                  הכסף ייגבה בפועל רק כשתלחץ &quot;חייב עכשיו&quot; על ההזמנה בלוח הניהול.
-                  ההזמנה נכנסת למטבח כרגיל.
+                  {v.hyp.capture_on_approval ? (
+                    <>
+                      במקום לחייב מיד, המערכת תתפוס מסגרת בכרטיס הלקוח בעת ההזמנה.
+                      ההזמנה תיכנס כ&quot;ממתינה לאישור&quot; ולא תיכנס למטבח, והכסף ייגבה
+                      אוטומטית ברגע שתאשרו אותה.
+                    </>
+                  ) : (
+                    <>
+                      במקום לחייב מיד, המערכת תתפוס מסגרת בכרטיס הלקוח בעת ההזמנה.
+                      הכסף ייגבה בפועל רק כשתלחץ &quot;חייב עכשיו&quot; על ההזמנה בלוח הניהול.
+                      ההזמנה נכנסת למטבח כרגיל.
+                    </>
+                  )}
                 </p>
               </div>
               <Toggle
@@ -742,10 +754,28 @@ export function PaymentsForm({
               />
             </div>
             {v.hyp.late_charge && (
-              <p className="text-[11px] text-qf-ink leading-relaxed rounded-lg bg-qf-yolk-soft border border-qf-yolk/40 px-3 py-2">
-                שים לב: מסגרת שנתפסה ולא חויבה פוקעת אצל חברת האשראי (בדרך כלל כ-5 ימים).
-                יש לחייב את ההזמנה לפני שהמסגרת פוקעת, אחרת הכסף לא ייגבה.
-              </p>
+              <>
+                {/* Sub-mode: capture when the merchant approves, instead of a
+                    manual "charge now". Only meaningful while late charge is on. */}
+                <div className="flex items-start justify-between gap-3 rounded-lg bg-qf-cloud/60 border border-qf-line-dash px-3 py-2.5">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-xs text-qf-ink">גבייה באישור ההזמנה</div>
+                    <p className="text-[11px] text-qf-ink2 mt-0.5 leading-relaxed">
+                      ההזמנה תמתין לאישור שלכם לפני שנכנסת למטבח, והכסף ייגבה אוטומטית
+                      ברגע שתלחצו &quot;אשר וקבל&quot;. אם הכרטיס נדחה בגבייה - האישור ייעצר.
+                    </p>
+                  </div>
+                  <Toggle
+                    checked={v.hyp.capture_on_approval}
+                    onChange={(b) => setHyp("capture_on_approval", b)}
+                    label={v.hyp.capture_on_approval ? "פעיל" : "כבוי"}
+                  />
+                </div>
+                <p className="text-[11px] text-qf-ink leading-relaxed rounded-lg bg-qf-yolk-soft border border-qf-yolk/40 px-3 py-2">
+                  שים לב: מסגרת שנתפסה ולא חויבה פוקעת אצל חברת האשראי (בדרך כלל כ-5 ימים).
+                  יש לחייב את ההזמנה לפני שהמסגרת פוקעת, אחרת הכסף לא ייגבה.
+                </p>
+              </>
             )}
           </div>
 

@@ -44,6 +44,7 @@ interface HypSettings {
   displayMode?: "iframe" | "redirect";
   hypSendInvoice?: boolean;
   deferredCapture?: boolean;
+  captureOnApproval?: boolean;
 }
 
 export default async function PaymentsSettingsPage() {
@@ -145,6 +146,7 @@ export default async function PaymentsSettingsPage() {
             display_mode: hypSettings.displayMode ?? "redirect",
             send_invoice: hypSettings.hypSendInvoice ?? false,
             late_charge: hypSettings.deferredCapture ?? false,
+            capture_on_approval: hypSettings.captureOnApproval ?? false,
           },
         }}
         hypReturnUrl={buildHypReturnUrl(tenant.slug)}

@@ -19,6 +19,7 @@ import { advanceStatus, canTransition } from "@/lib/orders";
 import { printOrderTicket } from "@/lib/printing/print-order";
 import { checkoutRefToId, materializeKioskCheckout } from "@/lib/orders/kiosk-checkout";
 import { recordOrderCommission } from "@/lib/billing-hub/commission";
+import { alertMerchantNewOrder } from "@/lib/orders/notify-merchant";
 import type { IPaymentProvider, ParsedCallback, TransactionStatus } from "./types";
 import {
   OrderStatus,
@@ -225,9 +226,15 @@ export async function finalizeProviderCallback({
 
   // ── J5 hold branch ─────────────────────────────────────────────────────
   // The card was authorized and the amount reserved, but NOT captured. Record
-  // the authorization so the merchant can capture it later from the dashboard,
-  // confirm the order + print the kitchen ticket, but leave the order UNPAID
-  // and bill no commission until the capture succeeds.
+  // the authorization so the merchant can capture it later, but leave the
+  // order UNPAID and bill no commission until the capture succeeds.
+  //
+  // Two sub-modes (settings.captureOnApproval):
+  //   - OFF (default): auto-confirm the order so the kitchen works and print
+  //     the ticket; the merchant captures manually with "חייב עכשיו".
+  //   - ON: hold the order in `pending` (awaiting approval, NOT in the kitchen)
+  //     and alert the merchant to accept it - accepting runs the capture, and
+  //     the ticket prints then. See the status route.
   if (parsed.status === "authorized") {
     const existingAuth = await prisma.paymentTransaction.findUnique({
       where: {
@@ -277,8 +284,21 @@ export async function finalizeProviderCallback({
         });
       });
 
-      await confirmAndBill(pending.orderId, logPrefix, { bill: false });
-      after(() => printOrderTicket(pending!.orderId, "card_paid"));
+      const cfg = await prisma.paymentProviderConfig.findUnique({
+        where: { tenantId_provider: { tenantId: tenant.id, provider: providerType } },
+        select: { settings: true },
+      });
+      const captureOnApproval =
+        (cfg?.settings as { captureOnApproval?: boolean } | null)?.captureOnApproval === true;
+
+      if (captureOnApproval) {
+        // Leave the order pending for the merchant to approve; the auto-confirm
+        // push won't fire, so alert them here. Ticket prints at approval.
+        after(() => alertMerchantNewOrder(pending!.orderId));
+      } else {
+        await confirmAndBill(pending.orderId, logPrefix, { bill: false });
+        after(() => printOrderTicket(pending!.orderId, "card_paid"));
+      }
     }
 
     void provider
