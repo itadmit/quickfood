@@ -61,6 +61,7 @@ interface HypSettings {
   displayMode?: "iframe" | "redirect";
   hypSendInvoice?: boolean;
   deferredCapture?: boolean;
+  captureOnApproval?: boolean;
   [k: string]: unknown;
 }
 
@@ -156,6 +157,7 @@ export const GET = handler(async () => {
       display_mode: hypSettings.displayMode ?? "redirect",
       send_invoice: hypSettings.hypSendInvoice ?? false,
       late_charge: hypSettings.deferredCapture ?? false,
+      capture_on_approval: hypSettings.captureOnApproval ?? false,
       // The address the merchant must paste into their Hyp terminal - Hyp has
       // no per-request return URL, so this is the only result channel.
       return_url: buildHypReturnUrl(tenant.slug),
@@ -415,6 +417,14 @@ export const PATCH = handler(async (req: Request) => {
     }
     if (body.hyp.late_charge !== undefined) {
       nextSettings.deferredCapture = body.hyp.late_charge;
+    }
+    if (body.hyp.capture_on_approval !== undefined) {
+      nextSettings.captureOnApproval = body.hyp.capture_on_approval;
+    }
+    // Capture-on-approval is a sub-mode of late charge - it's meaningless
+    // without a J5 hold to capture, so force it off whenever late charge is off.
+    if (nextSettings.deferredCapture !== true) {
+      nextSettings.captureOnApproval = false;
     }
 
     // Unlike Grow/CardCom there is no sandbox fallback - Hyp gives us no

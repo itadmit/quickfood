@@ -10,6 +10,8 @@
  * creation, card on the payment callback. Best-effort and non-throwing.
  */
 import { prisma } from "@/lib/db/client";
+import { sendTenantPush } from "@/lib/merchant/push";
+import { sendTenantFcm } from "@/lib/merchant/fcm";
 import { sendEmail } from "@/lib/email/send";
 import { merchantNewOrderEmail, type OrderConfirmedItem } from "@/lib/email/templates";
 import { resolveMerchantNewOrderSettings } from "@/lib/messaging/notify-settings";
@@ -40,6 +42,41 @@ async function sendOwnerWhatsApp(phone: string, msg: string): Promise<void> {
     jid: toJid(local),
     msg,
   });
+}
+
+/**
+ * Full new-order alert to the merchant: dashboard web-push + native FCM push +
+ * the owner email/WhatsApp. Use when an order lands in a state the merchant
+ * must act on but the status machine won't fire its own confirm-time alert -
+ * today that's a J5 capture-on-approval order, which sits in `pending` waiting
+ * for the merchant to accept it (the auto-confirm push never runs). Mirrors the
+ * storefront-cash new-order alert in orders-create. Best-effort, non-throwing.
+ */
+export async function alertMerchantNewOrder(orderId: string): Promise<void> {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { tenantId: true, number: true, total: true, method: true },
+  });
+  if (!order) return;
+
+  const body = `${order.total} ש"ח · ${order.method === "delivery" ? "משלוח" : "איסוף"}`;
+  await sendTenantPush(order.tenantId, {
+    title: `הזמנה חדשה - ${order.number}`,
+    body,
+    url: "/dashboard/orders",
+    tag: `order-${orderId}`,
+    requireInteraction: true,
+  }).catch((err) => console.warn("[notify-merchant] push failed", err));
+
+  await sendTenantFcm(order.tenantId, {
+    orderId,
+    title: `הזמנה חדשה - ${order.number}`,
+    body,
+  }).catch((err) => console.warn("[notify-merchant] fcm failed", err));
+
+  await notifyMerchantNewOrder(orderId).catch((err) =>
+    console.warn("[notify-merchant] owner alert failed", err),
+  );
 }
 
 export async function notifyMerchantNewOrder(orderId: string): Promise<void> {
