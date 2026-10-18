@@ -11,6 +11,7 @@ import {
   IcoCheck,
   IcoPlus,
   IcoMinus,
+  IcoCreditCard,
 } from "@/components/shared/Icons";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
@@ -120,6 +121,7 @@ export function OrderDrawer({
   const [confirmRefund, setConfirmRefund] = useState(false);
   const [refundReason, setRefundReason] = useState("");
   const [refunding, setRefunding] = useState(false);
+  const [capturing, setCapturing] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingAddress, setEditingAddress] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -224,6 +226,22 @@ export function OrderDrawer({
     } finally {
       setSavingEdit(false);
     }
+  }
+
+  async function performCapture() {
+    if (!order) return;
+    setCapturing(true);
+    const res = await fetch(`/api/v1/merchant/orders/${order.id}/capture`, {
+      method: "POST",
+    });
+    const data = await res.json().catch(() => ({}));
+    setCapturing(false);
+    if (!res.ok) {
+      pushToast("err", data?.error?.message ?? "החיוב נכשל");
+      return;
+    }
+    pushToast("ok", "ההזמנה חויבה");
+    await reload();
   }
 
   async function performRefund() {
@@ -556,18 +574,22 @@ export function OrderDrawer({
                       "text-xs font-black px-2 py-0.5 rounded-md border whitespace-nowrap",
                       order.payment_status === "paid"
                         ? "bg-qf-green-soft text-qf-green-deep border-qf-green-deep/30"
-                        : order.payment_method === "cash"
-                          ? "bg-qf-yolk-soft text-qf-ink2 border-qf-yolk/60"
-                          : "bg-qf-line-soft text-qf-ink2 border-qf-line",
+                        : order.payment_status === "authorized"
+                          ? "bg-qf-yolk-soft text-qf-ink border-qf-yolk/60"
+                          : order.payment_method === "cash"
+                            ? "bg-qf-yolk-soft text-qf-ink2 border-qf-yolk/60"
+                            : "bg-qf-line-soft text-qf-ink2 border-qf-line",
                     )}
                   >
                     {order.payment_status === "paid"
                       ? order.payment_method === "cash"
                         ? "שולם · מזומן"
                         : "שולם · אשראי"
-                      : order.payment_method === "cash"
-                        ? "מזומן"
-                        : "אשראי"}
+                      : order.payment_status === "authorized"
+                        ? "מורשה · ממתין לחיוב"
+                        : order.payment_method === "cash"
+                          ? "מזומן"
+                          : "אשראי"}
                   </span>
                 </div>
               </section>
@@ -602,6 +624,17 @@ export function OrderDrawer({
                 className="px-3 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm inline-flex items-center gap-2"
               >
                 <IcoPrinter s={14} /> מדפסת קופה
+              </button>
+            )}
+            {order.payment_status === "authorized" && (
+              <button
+                type="button"
+                onClick={performCapture}
+                disabled={capturing}
+                className="px-3 py-2 rounded-xl bg-qf-yolk text-qf-ink hover:brightness-95 text-sm font-semibold disabled:opacity-50 inline-flex items-center gap-2"
+              >
+                <IcoCreditCard c="#11231a" s={14} />
+                {capturing ? "מחייב..." : "חייב עכשיו"}
               </button>
             )}
             {order.status !== "refunded" && order.status !== "cancelled" && (

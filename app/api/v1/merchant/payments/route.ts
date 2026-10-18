@@ -60,6 +60,7 @@ interface HypSettings {
   maxInstallments?: number;
   displayMode?: "iframe" | "redirect";
   hypSendInvoice?: boolean;
+  deferredCapture?: boolean;
   [k: string]: unknown;
 }
 
@@ -154,6 +155,7 @@ export const GET = handler(async () => {
       max_installments: hypSettings.maxInstallments ?? 1,
       display_mode: hypSettings.displayMode ?? "redirect",
       send_invoice: hypSettings.hypSendInvoice ?? false,
+      late_charge: hypSettings.deferredCapture ?? false,
       // The address the merchant must paste into their Hyp terminal - Hyp has
       // no per-request return URL, so this is the only result channel.
       return_url: buildHypReturnUrl(tenant.slug),
@@ -410,6 +412,9 @@ export const PATCH = handler(async (req: Request) => {
     }
     if (body.hyp.send_invoice !== undefined) {
       nextSettings.hypSendInvoice = body.hyp.send_invoice;
+    }
+    if (body.hyp.late_charge !== undefined) {
+      nextSettings.deferredCapture = body.hyp.late_charge;
     }
 
     // Unlike Grow/CardCom there is no sandbox fallback - Hyp gives us no

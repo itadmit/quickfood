@@ -43,6 +43,7 @@ interface HypSettings {
   maxInstallments?: number;
   displayMode?: "iframe" | "redirect";
   hypSendInvoice?: boolean;
+  deferredCapture?: boolean;
 }
 
 export default async function PaymentsSettingsPage() {
@@ -143,6 +144,7 @@ export default async function PaymentsSettingsPage() {
             max_installments: hypSettings.maxInstallments ?? 1,
             display_mode: hypSettings.displayMode ?? "redirect",
             send_invoice: hypSettings.hypSendInvoice ?? false,
+            late_charge: hypSettings.deferredCapture ?? false,
           },
         }}
         hypReturnUrl={buildHypReturnUrl(tenant.slug)}

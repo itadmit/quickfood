@@ -47,6 +47,7 @@ interface HypState {
   max_installments: number;
   display_mode: "iframe" | "redirect";
   send_invoice: boolean;
+  late_charge: boolean;
 }
 
 type CustomerPaymentMethod = "cash" | "card" | "bit" | "apple_pay" | "google_pay";
@@ -201,6 +202,7 @@ export function PaymentsForm({
             max_installments: v.hyp.max_installments,
             display_mode: v.hyp.display_mode,
             send_invoice: v.hyp.send_invoice,
+            late_charge: v.hyp.late_charge,
           },
         }),
       });
@@ -719,6 +721,32 @@ export function PaymentsForm({
                 label={v.hyp.send_invoice ? "נשלחת מ-Hyp" : "כבוי"}
               />
             </Field>
+          </div>
+
+          {/* Late charge (J5) - changes order behaviour, so it gets its own
+              explained card rather than a terse row in the grid above. */}
+          <div className="rounded-xl border-2 border-qf-line-dash px-4 py-3.5 space-y-2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="font-semibold text-sm text-qf-ink">חיוב מאוחר (J5)</div>
+                <p className="text-xs text-qf-ink2 mt-0.5 leading-relaxed">
+                  במקום לחייב מיד, המערכת תתפוס מסגרת בכרטיס הלקוח בעת ההזמנה.
+                  הכסף ייגבה בפועל רק כשתלחץ &quot;חייב עכשיו&quot; על ההזמנה בלוח הניהול.
+                  ההזמנה נכנסת למטבח כרגיל.
+                </p>
+              </div>
+              <Toggle
+                checked={v.hyp.late_charge}
+                onChange={(b) => setHyp("late_charge", b)}
+                label={v.hyp.late_charge ? "פעיל" : "כבוי"}
+              />
+            </div>
+            {v.hyp.late_charge && (
+              <p className="text-[11px] text-qf-ink leading-relaxed rounded-lg bg-qf-yolk-soft border border-qf-yolk/40 px-3 py-2">
+                שים לב: מסגרת שנתפסה ולא חויבה פוקעת אצל חברת האשראי (בדרך כלל כ-5 ימים).
+                יש לחייב את ההזמנה לפני שהמסגרת פוקעת, אחרת הכסף לא ייגבה.
+              </p>
+            )}
           </div>
 
           <Field label="מספר מסוף (Masof)" hint="מספר המסוף שקיבלת מ-Hyp. דוגמה: 0010131918">

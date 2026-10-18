@@ -36,6 +36,8 @@
 
 import { BasePaymentProvider } from "../base";
 import type {
+  CaptureRequest,
+  CaptureResponse,
   InitiatePaymentRequest,
   InitiatePaymentResponse,
   ParsedCallback,
@@ -98,6 +100,11 @@ export class HypProvider extends BasePaymentProvider {
 
   private get displayMode(): PaymentDisplayMode {
     return this.config!.settings?.displayMode === "iframe" ? "iframe" : "redirect";
+  }
+
+  /** "Late charge": send J5 (authorize + hold) instead of J4 (charge now). */
+  private get deferredCapture(): boolean {
+    return this.config!.settings?.deferredCapture === true;
   }
 
   /**
@@ -180,7 +187,9 @@ export class HypProvider extends BasePaymentProvider {
         ...(itemised
           ? { Pritim: "True", heshDesc: this.buildHeshDesc(req.items) }
           : {}),
-        J5: "False", // immediate charge, not auth-only
+        // J5=True reserves the amount (CCode 700/800) without charging; the
+        // merchant captures it later from the dashboard. J5=False charges now.
+        J5: this.deferredCapture ? "True" : "False",
         Postpone: "False",
         ClientName: nameParts[0] || "",
         ClientLName: nameParts.slice(1).join(" ") || "",
@@ -318,11 +327,17 @@ export class HypProvider extends BasePaymentProvider {
       };
     }
 
-    this.log("Verified", { order: data.Order, ccode, id: data.Id });
+    // CCode 700/800 is a J5 hold (authorized + reserved), NOT a completed
+    // charge. The VERIFY round-trip above already proved it's genuine; here we
+    // just flag it as `authorized` so the finalizer records the auth and lets
+    // the merchant capture it later instead of marking the order paid.
+    const isHold = ccode === "700" || ccode === "800";
+
+    this.log("Verified", { order: data.Order, ccode, id: data.Id, hold: isHold });
 
     return {
-      success: true,
-      status: "success",
+      success: !isHold,
+      status: isHold ? "authorized" : "success",
       providerTransactionId: data.Id ? String(data.Id) : "",
       providerRequestId: data.Order ? String(data.Order) : undefined,
       approvalNumber: data.ACode || undefined,
@@ -330,8 +345,8 @@ export class HypProvider extends BasePaymentProvider {
       currency: "ILS",
       orderReference: data.Order ? String(data.Order) : undefined,
       cardLastFour: data.L4digit || undefined,
-      // Hyp's token UID (returned because MoreData=True). Not usable for
-      // refunds - kept so a future tokenised-charge flow has it.
+      // Hyp's token UID (returned because MoreData=True). For a J5 hold this is
+      // the `inputObj.originalUid` the capture call needs.
       providerToken: data.UID || undefined,
       rawData: { ...(data as Record<string, unknown>), verify: Object.fromEntries(verified) },
     };
@@ -352,6 +367,128 @@ export class HypProvider extends BasePaymentProvider {
       errorCode: "hyp_refund_manual",
       errorMessage: "זיכוי ב-Hyp מתבצע ידנית בפורטל של Hyp (יעד שריג)",
     };
+  }
+
+  /**
+   * Capture ("charge now") a prior J5 hold. Hyp needs two server-to-server
+   * calls, both authenticated by Masof+PassP (no browser, no signature):
+   *   1. action=getToken&TransId=<Id>  -> the saved card Token + Tokef (MM/YY).
+   *      The J5 redirect never carries the card token/expiry; they're fetched
+   *      here by the hold's transaction id.
+   *   2. action=soft with Token=True + the authorization's AuthNum (ACode) and
+   *      the original UID/amount -> charges the reserved amount. CCode=0 = done.
+   *
+   * NOTE: this path has never run against a live Hyp terminal (neither
+   * QuickFood nor QuickShop ever captured a J5). Verify it end-to-end on the
+   * store's Hyp test terminal before trusting it with a live customer.
+   */
+  async capture(req: CaptureRequest): Promise<CaptureResponse> {
+    this.ensureConfigured();
+    try {
+      if (!req.providerTransactionId) {
+        return {
+          success: false,
+          errorCode: "hyp_capture_no_txn",
+          errorMessage: "חסר מזהה עסקת ההרשאה",
+        };
+      }
+
+      // Step 1 - fetch the stored card token + expiry by the hold's TransId.
+      const tokenResp = new URLSearchParams(
+        (
+          await this.request({
+            action: "getToken",
+            Masof: this.masof,
+            PassP: this.passP,
+            TransId: req.providerTransactionId,
+            UTF8: "True",
+            UTF8out: "True",
+          })
+        ).trim(),
+      );
+      const token = tokenResp.get("Token");
+      const tokef = tokenResp.get("Tokef"); // MM/YY
+      if (!token || !tokef) {
+        this.logError("getToken returned no token", {
+          transId: req.providerTransactionId,
+          ccode: tokenResp.get("CCode"),
+          errMsg: tokenResp.get("errMsg"),
+        });
+        return {
+          success: false,
+          errorCode: tokenResp.get("CCode") || "hyp_capture_no_token",
+          errorMessage: tokenResp.get("errMsg") || "לא ניתן לשלוף את טוקן הכרטיס מההרשאה",
+          rawData: Object.fromEntries(tokenResp.entries()),
+        };
+      }
+
+      const [tmonth, tyearRaw] = tokef.split("/");
+      const tyear = (tyearRaw || "").slice(-2);
+
+      const data = (req.rawData && typeof req.rawData === "object" ? req.rawData : {}) as Record<
+        string,
+        unknown
+      >;
+      const userId = data.UserId ? String(data.UserId) : "000000000";
+      const clientName = data.ClientName ? String(data.ClientName) : "";
+      const info = data.Info ? String(data.Info) : "";
+
+      // Step 2 - charge the reserved amount against the authorization.
+      const softResp = new URLSearchParams(
+        (
+          await this.request({
+            action: "soft",
+            Masof: this.masof,
+            PassP: this.passP,
+            UserId: userId,
+            ClientName: clientName,
+            Token: "True",
+            CC: token,
+            Tmonth: (tmonth || "").padStart(2, "0"),
+            Tyear: tyear,
+            AuthNum: req.approvalNumber || "",
+            Amount: this.amountStr(req.amount),
+            // Hyp wants the ORIGINAL authorized amount in agorot (subunits).
+            "inputObj.originalAmount": String(Math.round(this.formatAmount(req.amount) * 100)),
+            "inputObj.originalUid": req.providerToken || "",
+            "inputObj.authorizationCodeManpik": "7",
+            Info: info,
+            Coin: COIN_ILS,
+            UTF8: "True",
+            UTF8out: "True",
+          })
+        ).trim(),
+      );
+
+      const cc = softResp.get("CCode");
+      if (cc === "0") {
+        return {
+          success: true,
+          providerTransactionId: softResp.get("Id") || req.providerTransactionId,
+          approvalNumber: softResp.get("ACode") || req.approvalNumber,
+          rawData: Object.fromEntries(softResp.entries()),
+        };
+      }
+
+      this.logError("soft capture rejected", {
+        transId: req.providerTransactionId,
+        ccode: cc,
+        errMsg: softResp.get("errMsg"),
+      });
+      return {
+        success: false,
+        errorCode: cc || "hyp_capture_failed",
+        errorMessage: softResp.get("errMsg") || `גביית ההרשאה נכשלה (CCode=${cc})`,
+        rawData: Object.fromEntries(softResp.entries()),
+      };
+    } catch (error) {
+      this.logError("capture failed", error);
+      return {
+        success: false,
+        errorCode: "hyp_capture_error",
+        errorMessage: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
   }
 
   /**

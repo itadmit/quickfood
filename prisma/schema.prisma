@@ -78,6 +78,7 @@ enum PaymentMethod {
 
 enum PaymentStatus {
   pending
+  authorized
   paid
   failed
   refunded
@@ -252,6 +253,7 @@ enum PendingPaymentStatus {
 }
 
 enum PaymentTransactionStatus {
+  authorized
   success
   failed
   refunded

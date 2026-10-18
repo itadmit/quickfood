@@ -665,6 +665,9 @@ export const MerchantPaymentsPatchSchema = z
         max_installments: z.number().int().min(1).max(12).optional(),
         display_mode: z.enum(["iframe", "redirect"]).optional(),
         send_invoice: z.boolean().optional(),
+        /** J5 "late charge": authorize + hold now, capture later from the
+         *  dashboard. Hyp-only. Persisted as settings.deferredCapture. */
+        late_charge: z.boolean().optional(),
       })
       .optional(),
   })

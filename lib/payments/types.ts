@@ -15,7 +15,15 @@ export type ProviderType = PaymentProvider; // "cash" | "grow" | "cardcom" | "hy
  */
 export type CardProviderType = Exclude<ProviderType, "cash">;
 
-export type TransactionStatus = "pending" | "processing" | "success" | "failed" | "cancelled";
+export type TransactionStatus =
+  | "pending"
+  | "processing"
+  | "success"
+  // J5 hold: the card was authorized and the amount reserved, but NOT captured.
+  // The money only moves once the merchant captures it (see IPaymentProvider.capture).
+  | "authorized"
+  | "failed"
+  | "cancelled";
 
 // ─── Configuration ─────────────────────────────────────────────
 
@@ -53,6 +61,11 @@ export interface ProviderSettings {
   // Hyp: let Hyp mail its own invoice (SendHesh). Off by default - QuickFood
   // sends its own order emails and we don't want duplicates.
   hypSendInvoice?: boolean;
+  // "Late charge" (J5 / חיוב מאוחר): authorize + reserve the amount on the card
+  // at order time, and only capture the money later when the merchant presses
+  // "charge now" in the dashboard. Hyp-only for now. When off, charge
+  // immediately (J4), the historical behaviour.
+  deferredCapture?: boolean;
   [key: string]: unknown;
 }
 
@@ -148,6 +161,27 @@ export interface RefundResponse {
   errorMessage?: string;
 }
 
+// ─── Deferred capture (J5 "late charge") ───────────────────────
+// Capture a previously-authorized hold so the money actually moves. Built from
+// the stored authorization transaction; `rawData` is the original J5 callback
+// (carries provider-specific fields the capture call needs, e.g. Hyp's UserId).
+export interface CaptureRequest {
+  providerTransactionId: string; // the authorization's transaction id
+  approvalNumber?: string; // the authorization code (Hyp ACode)
+  providerToken?: string; // provider token captured at auth (Hyp UID)
+  amount: number; // shekels to capture (<= authorized amount)
+  rawData?: Record<string, unknown>; // original authorization callback params
+}
+
+export interface CaptureResponse {
+  success: boolean;
+  providerTransactionId?: string; // the NEW charge transaction id
+  approvalNumber?: string;
+  errorCode?: string;
+  errorMessage?: string;
+  rawData?: Record<string, unknown>;
+}
+
 // ─── Provider interface ────────────────────────────────────────
 
 export interface IPaymentProvider {
@@ -164,4 +198,8 @@ export interface IPaymentProvider {
   parseCallback(body: unknown): ParsedCallback | Promise<ParsedCallback>;
   acknowledgeCallback(parsed: ParsedCallback): Promise<{ success: boolean; error?: string }>;
   refund(req: RefundRequest): Promise<RefundResponse>;
+  // Optional: only providers that support "late charge" (J5) implement this.
+  // Captures a hold recorded by a prior `authorized` callback. Absent on
+  // providers that don't support deferred capture.
+  capture?(req: CaptureRequest): Promise<CaptureResponse>;
 }

@@ -46,7 +46,13 @@ export interface FinalizeCallbackResult {
  * unconditionally, including for orders the merchant had already cancelled
  * while the callback was in flight - which billed them for cash they never got.
  */
-async function confirmAndBill(orderId: string, logPrefix: string): Promise<void> {
+async function confirmAndBill(
+  orderId: string,
+  logPrefix: string,
+  // A J5 hold confirms the order (so the kitchen works) but must NOT bill the
+  // commission yet - that happens at capture, when the money actually moves.
+  { bill = true }: { bill?: boolean } = {},
+): Promise<void> {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     select: { status: true },
@@ -56,12 +62,14 @@ async function confirmAndBill(orderId: string, logPrefix: string): Promise<void>
   try {
     await advanceStatus(orderId, OrderStatus.confirmed, {
       changedBy: "payment_callback",
-      reason: "payment_received",
+      reason: bill ? "payment_received" : "payment_authorized",
     });
   } catch (err) {
     console.error(`${logPrefix} advanceStatus failed`, err);
     return;
   }
+
+  if (!bill) return;
 
   void recordOrderCommission(orderId).catch((err) => {
     console.error(`${logPrefix} commission record failed`, err);
@@ -213,6 +221,71 @@ export async function finalizeProviderCallback({
       status: parsed.status,
       error: "amount_mismatch",
     };
+  }
+
+  // ── J5 hold branch ─────────────────────────────────────────────────────
+  // The card was authorized and the amount reserved, but NOT captured. Record
+  // the authorization so the merchant can capture it later from the dashboard,
+  // confirm the order + print the kitchen ticket, but leave the order UNPAID
+  // and bill no commission until the capture succeeds.
+  if (parsed.status === "authorized") {
+    const existingAuth = await prisma.paymentTransaction.findUnique({
+      where: {
+        provider_providerTransactionId: {
+          provider: providerType,
+          providerTransactionId: parsed.providerTransactionId,
+        },
+      },
+    });
+
+    if (!existingAuth) {
+      await prisma.$transaction(async (tx) => {
+        await tx.paymentTransaction.create({
+          data: {
+            tenantId: tenant.id,
+            orderId: pending!.orderId,
+            pendingPaymentId: pending!.id,
+            provider: providerType,
+            status: PaymentTransactionStatus.authorized,
+            amount: parsed.amount,
+            currency: parsed.currency || "ILS",
+            providerTransactionId: parsed.providerTransactionId,
+            providerRequestId: parsed.providerRequestId,
+            providerToken: parsed.providerToken,
+            approvalNumber: parsed.approvalNumber,
+            cardBrand: parsed.cardBrand,
+            cardLastFour: parsed.cardLastFour,
+            providerResponse: parsed.rawData as object,
+          },
+        });
+
+        await tx.pendingPayment.update({
+          where: { id: pending!.id },
+          data: {
+            status: PendingPaymentStatus.confirmed,
+            confirmedAt: new Date(),
+            providerResponse: parsed.rawData as object,
+          },
+        });
+
+        await tx.order.update({
+          where: { id: pending!.orderId },
+          data: {
+            paymentStatus: PaymentStatus.authorized,
+            paymentIntentId: parsed.providerTransactionId,
+          },
+        });
+      });
+
+      await confirmAndBill(pending.orderId, logPrefix, { bill: false });
+      after(() => printOrderTicket(pending!.orderId, "card_paid"));
+    }
+
+    void provider
+      .acknowledgeCallback(parsed)
+      .catch((err) => console.error(`${logPrefix} authorized ack threw`, err));
+
+    return { matched: true, kind: "order", orderId: pending.orderId, status: parsed.status };
   }
 
   // Idempotency: if we've already created a transaction for this provider/txnId,
