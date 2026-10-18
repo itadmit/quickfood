@@ -297,6 +297,15 @@ export function OrdersKanban({
   // from the server-rendered initial list so existing orders stay silent.
   const seenIdsRef = useRef<Set<string>>(new Set(initial.map((o) => o.id)));
 
+  // Resolved after mount: the bridge is injected into the WebView, so reading
+  // it during render would differ between server and client markup.
+  const [nativePrinterApp, setNativePrinterApp] = useState(false);
+  useEffect(() => {
+    setNativePrinterApp(hasSunmiBridge());
+  }, []);
+  // pushToast is declared below and only ever calls a state setter, so one
+  // captured reference stays valid for the life of the board.
+  const toastRef = useRef<(kind: ToastKind, message: string) => void>(() => {});
   // Auto-print reads settings/printer via refs so the useCallback([]) refresh
   // loop never prints with a stale config after the merchant changes settings.
   const receiptSettingsRef = useRef(receiptSettings);
@@ -310,29 +319,48 @@ export function OrdersKanban({
   // native bridge (prints on the OS default printer even when minimized);
   // otherwise the browser silent-print path (airprint family + --kiosk-printing).
   const autoPrintOrder = useCallback(async (orderId: string) => {
+    // Every branch that gives up says so. This used to fail silently, which is
+    // indistinguishable from "the order never arrived" for a merchant watching
+    // an empty printer.
+    const toast = toastRef.current;
     try {
       const res = await fetch(`/api/v1/customer/orders/${orderId}`, { cache: "no-store" });
-      if (!res.ok) return;
+      if (!res.ok) {
+        toast("err", "הדפסה אוטומטית: טעינת ההזמנה נכשלה");
+        return;
+      }
       const data = await res.json();
       const detail = (data.order as ReceiptOrder | null) ?? null;
-      if (!detail) return;
+      if (!detail) {
+        toast("err", "הדפסה אוטומטית: ההזמנה לא נמצאה");
+        return;
+      }
       const settings = receiptSettingsRef.current;
       const printer = receiptPrinterRef.current;
+      // From app 1.5 a new-order push prints through a hidden WebView whether
+      // or not this board is open, so printing here too would duplicate it.
+      if (window.QuickFoodNative?.hasNativeAutoPrint?.()) return;
       const native = typeof window !== "undefined" ? window.qfNativePrint : undefined;
       // A SUNMI terminal drives its own built-in printer through the wrapper's
       // AIDL bridge, so it auto-prints silently like the desktop app does -
       // printReceipt handles the raster and the bridge call.
-      if (printer === "sunmi" && hasSunmiBridge()) {
+      if (printer === "sunmi") {
+        if (!hasSunmiBridge()) {
+          toast("err", "הדפסה אוטומטית: אין חיבור למדפסת הקופה");
+          return;
+        }
         printReceipt(detail, "sunmi", undefined, settings);
       } else if (typeof native === "function") {
         await native(buildReceiptHtml(detail, settings));
       } else if (printer === "airprint") {
         printReceiptIframe(detail, settings);
+      } else {
+        // star / epson / escpos open a helper app by URL scheme - a background
+        // tab can't do that, so the manual print button covers those.
+        toast("err", `הדפסה אוטומטית לא נתמכת עבור ${RECEIPT_PRINTER_LABEL[printer]}`);
       }
-      // The URL-scheme printer families (star / epson / escpos) can't silently
-      // auto-print from the board - the manual print button covers those.
     } catch {
-      /* best-effort - never block the board on a print failure */
+      toast("err", "הדפסה אוטומטית נכשלה");
     }
   }, []);
 
@@ -589,6 +617,9 @@ export function OrdersKanban({
   function pushToast(kind: ToastKind, message: string) {
     setToast({ id: Date.now(), kind, message });
   }
+  useEffect(() => {
+    toastRef.current = pushToast;
+  });
 
   useEffect(() => {
     const result = consumePassPrntResult();
@@ -634,13 +665,18 @@ export function OrdersKanban({
             >
               היסטוריה
             </Link>
-            <button
-              type="button"
-              className="hidden sm:inline-flex px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm items-center gap-2 shadow-[0_2px_0_#000] hover:bg-black/5"
-              onClick={() => window.print()}
-            >
-              <IcoPrinter s={16} /> הדפסת תור
-            </button>
+            {/* Browser print of the whole board. Inside the POS app it only
+                opens Android's print dialog, which can't reach the built-in
+                printer - two print buttons, one of which never works. */}
+            {!nativePrinterApp && (
+              <button
+                type="button"
+                className="hidden sm:inline-flex px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black font-bold text-sm items-center gap-2 shadow-[0_2px_0_#000] hover:bg-black/5"
+                onClick={() => window.print()}
+              >
+                <IcoPrinter s={16} /> הדפסת תור
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setManualOpen(true)}

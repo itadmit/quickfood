@@ -692,6 +692,13 @@ declare global {
     QuickFoodNative?: {
       hasSunmiPrinter?: () => boolean;
       printBase64?: (pngBase64: string) => void;
+      /** Printer model / firmware / cut counter as JSON, for remote support. */
+      sunmiInfo?: () => string;
+      /** Present from app 1.5: a push wakes the app and prints even when it is
+       *  backgrounded, so the board must not auto-print the same order too. */
+      hasNativeAutoPrint?: () => boolean;
+      /** Called by the hidden print WebView to release the print service. */
+      printDone?: () => void;
     };
   }
 }
