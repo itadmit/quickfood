@@ -19,6 +19,7 @@ import { formatPrice, formatDateTime, formatRelativeMinutes } from "@/lib/format
 import { cn } from "@/lib/cn";
 import {
   printReceipt,
+  hasSunmiBridge,
   groupSelectedOptions,
   DEFAULT_RECEIPT_SETTINGS,
   type ReceiptPrinterType,
@@ -118,6 +119,11 @@ export function OrderDrawer({
   // everything else and the receipt is the only thing on the page.
   const [printMounted, setPrintMounted] = useState(false);
   useEffect(() => setPrintMounted(true), []);
+  // Inside the POS app window.print() only opens Android's print dialog, which
+  // cannot reach the built-in printer - so the browser print button is hidden
+  // there and "מדפסת קופה" is left as the only way to print.
+  const [nativePrinterApp, setNativePrinterApp] = useState(false);
+  useEffect(() => setNativePrinterApp(hasSunmiBridge()), []);
   const [confirmRefund, setConfirmRefund] = useState(false);
   const [refundReason, setRefundReason] = useState("");
   const [refunding, setRefunding] = useState(false);
@@ -599,13 +605,15 @@ export function OrderDrawer({
 
         {order && (
           <footer className="border-t border-qf-line-soft px-5 py-3 flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="px-3 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm inline-flex items-center gap-2"
-            >
-              <IcoPrinter s={14} /> הדפסה
-            </button>
+            {!nativePrinterApp && (
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-3 py-2 rounded-xl border border-qf-line-dash hover:bg-qf-line-soft text-sm inline-flex items-center gap-2"
+              >
+                <IcoPrinter s={14} /> הדפסה
+              </button>
+            )}
             {receiptPrinter !== "airprint" && (
               <button
                 type="button"
