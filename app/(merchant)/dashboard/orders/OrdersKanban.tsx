@@ -195,10 +195,14 @@ export function OrdersKanban({
   initial,
   receiptPrinter = "airprint",
   receiptSettings = DEFAULT_RECEIPT_SETTINGS,
+  daysDelivery = false,
 }: {
   initial: OrderRow[];
   receiptPrinter?: ReceiptPrinterType;
   receiptSettings?: ReceiptSettings;
+  /** Shipping-model store (branch etaUnit = "days"): suppress the minutes-based
+   *  "חורג" overdue flag and the repeated new-order nudge. */
+  daysDelivery?: boolean;
 }) {
   const [orders, setOrders] = useState<OrderRow[]>(initial);
   // `now` stays null until after mount so SSR and the first client paint
@@ -236,6 +240,10 @@ export function OrdersKanban({
   }, [orders, dismissedNudges]);
 
   useEffect(() => {
+    // A store that fulfils over days doesn't need the "pick this up now"
+    // nagging - the repeated wiggle/chime only makes sense when an order is
+    // minutes from getting cold. The one-time arrival chime still fires.
+    if (daysDelivery) return;
     const id = window.setInterval(() => {
       const dueIds = ordersRef.current
         .filter((o) => NEW_COLUMN_STATUSES.includes(o.status) && !dismissedRef.current.has(o.id))
@@ -256,7 +264,7 @@ export function OrdersKanban({
       window.clearInterval(id);
       if (shakeTimerRef.current != null) window.clearTimeout(shakeTimerRef.current);
     };
-  }, []);
+  }, [daysDelivery]);
 
   // Drop dismissals for orders that have left the active board so localStorage
   // doesn't accumulate stale ids forever.
@@ -755,6 +763,7 @@ export function OrdersKanban({
             key={col.title}
             {...col}
             now={now}
+            daysDelivery={daysDelivery}
             shakingIds={shakingIds}
             dismissedNudges={dismissedNudges}
             printingIds={printingIds}
@@ -823,6 +832,7 @@ function Column({
   next,
   actionLabel,
   now,
+  daysDelivery,
   shakingIds,
   dismissedNudges,
   printingIds,
@@ -840,6 +850,7 @@ function Column({
   next: Status;
   actionLabel: string;
   now: number | null;
+  daysDelivery: boolean;
   shakingIds: Set<string>;
   dismissedNudges: Set<string>;
   printingIds: Set<string>;
@@ -890,6 +901,7 @@ function Column({
                       : actionLabel
               }
               now={now}
+              daysDelivery={daysDelivery}
               shaking={shakingIds.has(o.id)}
               nudgeDismissed={dismissedNudges.has(o.id)}
               printing={printingIds.has(o.id)}
@@ -968,6 +980,7 @@ function Card({
   next,
   actionLabel,
   now,
+  daysDelivery,
   shaking,
   nudgeDismissed,
   printing,
@@ -983,6 +996,7 @@ function Card({
   actionLabel: string;
   /** `null` until the client-side timer has ticked at least once - keeps SSR and first paint identical. */
   now: number | null;
+  daysDelivery: boolean;
   shaking: boolean;
   nudgeDismissed: boolean;
   printing: boolean;
@@ -997,7 +1011,10 @@ function Card({
   const elapsedMin =
     now != null ? Math.floor((now - new Date(order.createdAt).getTime()) / 60_000) : null;
   const isLate =
-    elapsedMin != null && elapsedMin > SLA_MINUTES_BEFORE_LATE && order.status !== "out_for_delivery";
+    !daysDelivery &&
+    elapsedMin != null &&
+    elapsedMin > SLA_MINUTES_BEFORE_LATE &&
+    order.status !== "out_for_delivery";
 
   const target: Status | "delivered" = order.status === "out_for_delivery" ? "delivered" : next;
 

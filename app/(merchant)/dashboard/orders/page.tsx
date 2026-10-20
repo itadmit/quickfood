@@ -21,6 +21,14 @@ export default async function OrdersPage() {
     select: { receiptPrinter: true, receiptSettings: true },
   });
 
+  // Shipping-model stores (etaUnit = "days") fulfil over days, not minutes,
+  // so the board's "חורג" overdue flag and the new-order nagging don't apply.
+  const branch = await prisma.branch.findFirst({
+    where: { tenantId: session.tenantId },
+    orderBy: { isPrimary: "desc" },
+    select: { etaUnit: true },
+  });
+
   const orders = await prisma.order.findMany({
     where: {
       tenantId: session.tenantId,
@@ -104,6 +112,7 @@ export default async function OrdersPage() {
       initial={initial}
       receiptPrinter={(tenant?.receiptPrinter ?? "airprint") as ReceiptPrinterType}
       receiptSettings={resolveReceiptSettings(tenant?.receiptSettings)}
+      daysDelivery={branch?.etaUnit === "days"}
     />
   );
 }
