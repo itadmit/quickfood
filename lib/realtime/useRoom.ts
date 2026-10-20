@@ -13,6 +13,8 @@
  *
  *   • the socket is closed when the tab is hidden. It costs nothing to
  *     reopen and the old code's failure to do this was a standing bill.
+ *     `keepOpenWhenHidden` opts a screen out - a till that auto-prints is
+ *     meant to work precisely while nobody is looking at it.
  *   • every reconnect calls `onResync` before anything else, because events
  *     that happened while disconnected are simply not replayed — the socket
  *     is a nudge, never the source of truth.
@@ -33,9 +35,30 @@ export interface UseRoomArgs {
   /** Called on connect, on reconnect, and when the tab returns to the front. */
   onResync?: () => void;
   enabled?: boolean;
+  /** Connection state, for screens that show the merchant whether they are live. */
+  onStatus?: (connected: boolean) => void;
+  /**
+   * Hold the socket open while the screen is hidden.
+   *
+   * Off by default - a forgotten browser tab holding a socket open is the
+   * cost this hook set out to remove. A till is the exception: it is a single
+   * device per store whose whole job is to print an order the moment it
+   * lands, and the merchant presses Home the second they start making food.
+   * Closing the socket there means the order is only noticed when someone
+   * walks back to the screen, which is the one thing auto-print exists to
+   * avoid.
+   */
+  keepOpenWhenHidden?: boolean;
 }
 
-export function useRoom({ scope, onEvent, onResync, enabled = true }: UseRoomArgs) {
+export function useRoom({
+  scope,
+  onEvent,
+  onResync,
+  enabled = true,
+  onStatus,
+  keepOpenWhenHidden = false,
+}: UseRoomArgs) {
   // Held in refs so a caller passing inline functions does not tear the
   // socket down and rebuild it on every render. Synced in an effect rather
   // than during render: React may render without committing, and writing a
@@ -43,9 +66,11 @@ export function useRoom({ scope, onEvent, onResync, enabled = true }: UseRoomArg
   // handler that was never actually mounted.
   const onEventRef = useRef(onEvent);
   const onResyncRef = useRef(onResync);
+  const onStatusRef = useRef(onStatus);
   useEffect(() => {
     onEventRef.current = onEvent;
     onResyncRef.current = onResync;
+    onStatusRef.current = onStatus;
   });
 
   const key = JSON.stringify(scope);
@@ -57,15 +82,17 @@ export function useRoom({ scope, onEvent, onResync, enabled = true }: UseRoomArg
     let backoff = 1000;
     let timer: ReturnType<typeof setTimeout> | null = null;
 
+    const awake = () => keepOpenWhenHidden || document.visibilityState === "visible";
+
     const retry = () => {
-      if (cancelled || document.visibilityState !== "visible") return;
+      if (cancelled || !awake()) return;
       if (timer) clearTimeout(timer);
       timer = setTimeout(connect, backoff);
       backoff = Math.min(backoff * 2, 30_000);
     };
 
     async function connect() {
-      if (cancelled || document.visibilityState !== "visible") return;
+      if (cancelled || !awake()) return;
       let cfg: { enabled?: boolean; url?: string; room?: string; token?: string } | null;
       try {
         // The merchant scope 401s on an expired session, and the retry loop
@@ -100,6 +127,7 @@ export function useRoom({ scope, onEvent, onResync, enabled = true }: UseRoomArg
 
       ws.onopen = () => {
         backoff = 1000;
+        onStatusRef.current?.(true);
         // Anything that happened while we were away is not replayed, so the
         // first thing a fresh connection does is re-read the truth.
         onResyncRef.current?.();
@@ -115,6 +143,7 @@ export function useRoom({ scope, onEvent, onResync, enabled = true }: UseRoomArg
       };
       ws.onclose = () => {
         socket = null;
+        onStatusRef.current?.(false);
         retry();
       };
       ws.onerror = () => {
@@ -136,10 +165,13 @@ export function useRoom({ scope, onEvent, onResync, enabled = true }: UseRoomArg
         return;
       }
       // Hidden: drop the socket. Nobody is looking, and holding it open is
-      // exactly the cost this migration set out to remove.
+      // exactly the cost this migration set out to remove - unless this screen
+      // prints unattended, in which case being away is the whole point.
+      if (keepOpenWhenHidden) return;
       if (timer) clearTimeout(timer);
       socket?.close();
       socket = null;
+      onStatusRef.current?.(false);
     };
 
     void connect();
@@ -151,5 +183,5 @@ export function useRoom({ scope, onEvent, onResync, enabled = true }: UseRoomArg
       socket?.close();
       socket = null;
     };
-  }, [key, enabled]);
+  }, [key, enabled, keepOpenWhenHidden]);
 }

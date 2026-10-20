@@ -179,6 +179,18 @@ const PREVIOUS_STATUS: Partial<Record<Status, Status>> = {
   ready: "preparing",
 };
 
+function StatusDot({ ok, label }: { ok: boolean; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        aria-hidden
+        className={cn("w-2 h-2 rounded-full", ok ? "bg-qf-green" : "bg-qf-tomato")}
+      />
+      {label}
+    </span>
+  );
+}
+
 export function OrdersKanban({
   initial,
   receiptPrinter = "airprint",
@@ -303,6 +315,12 @@ export function OrdersKanban({
   useEffect(() => {
     setNativePrinterApp(hasSunmiBridge());
   }, []);
+  // "It didn't print" has too many possible causes to debug by asking the
+  // merchant questions: the live connection, the toggle, the bridge, and the
+  // print attempt itself each fail differently and all of them look identical
+  // from the front of the shop. The strip below names which one.
+  const [realtimeUp, setRealtimeUp] = useState(false);
+  const [lastPrint, setLastPrint] = useState<{ ok: boolean; msg: string; n: number } | null>(null);
   // pushToast is declared below and only ever calls a state setter, so one
   // captured reference stays valid for the life of the board.
   const toastRef = useRef<(kind: ToastKind, message: string) => void>(() => {});
@@ -323,16 +341,20 @@ export function OrdersKanban({
     // indistinguishable from "the order never arrived" for a merchant watching
     // an empty printer.
     const toast = toastRef.current;
+    const report = (ok: boolean, msg: string) => {
+      setLastPrint((prev) => ({ ok, msg, n: (prev?.n ?? 0) + 1 }));
+      if (!ok) toast("err", `הדפסה אוטומטית: ${msg}`);
+    };
     try {
       const res = await fetch(`/api/v1/customer/orders/${orderId}`, { cache: "no-store" });
       if (!res.ok) {
-        toast("err", "הדפסה אוטומטית: טעינת ההזמנה נכשלה");
+        report(false, "טעינת ההזמנה נכשלה");
         return;
       }
       const data = await res.json();
       const detail = (data.order as ReceiptOrder | null) ?? null;
       if (!detail) {
-        toast("err", "הדפסה אוטומטית: ההזמנה לא נמצאה");
+        report(false, "ההזמנה לא נמצאה");
         return;
       }
       const settings = receiptSettingsRef.current;
@@ -346,21 +368,24 @@ export function OrdersKanban({
       // printReceipt handles the raster and the bridge call.
       if (printer === "sunmi") {
         if (!hasSunmiBridge()) {
-          toast("err", "הדפסה אוטומטית: אין חיבור למדפסת הקופה");
+          report(false, "אין חיבור למדפסת הקופה");
           return;
         }
         printReceipt(detail, "sunmi", undefined, settings);
+        report(true, `הזמנה ${detail.number} נשלחה למדפסת`);
       } else if (typeof native === "function") {
         await native(buildReceiptHtml(detail, settings));
+        report(true, `הזמנה ${detail.number} נשלחה למדפסת`);
       } else if (printer === "airprint") {
         printReceiptIframe(detail, settings);
+        report(true, `הזמנה ${detail.number} נשלחה למדפסת`);
       } else {
         // star / epson / escpos open a helper app by URL scheme - a background
         // tab can't do that, so the manual print button covers those.
-        toast("err", `הדפסה אוטומטית לא נתמכת עבור ${RECEIPT_PRINTER_LABEL[printer]}`);
+        report(false, `לא נתמך עבור ${RECEIPT_PRINTER_LABEL[printer]}`);
       }
     } catch {
-      toast("err", "הדפסה אוטומטית נכשלה");
+      report(false, "ההדפסה נכשלה");
     }
   }, []);
 
@@ -478,6 +503,10 @@ export function OrdersKanban({
   // database rather than with a sequence of frames it may have missed.
   useRoom({
     scope: { scope: "merchant" },
+    // A till that auto-prints must stay subscribed while minimised - that is
+    // the state it spends most of its day in.
+    keepOpenWhenHidden: nativePrinterApp && receiptSettings.autoPrintOnNew,
+    onStatus: setRealtimeUp,
     onResync: () => void refresh(),
     onEvent: (event) => {
       // order.created, order.status_changed, order.refunded and every other
@@ -487,6 +516,17 @@ export function OrdersKanban({
       if (event.startsWith("order.")) void refresh();
     },
   });
+
+  // Safety net for a till that prints unattended. The board has no polling of
+  // its own - without a live socket it shows whatever it loaded with and never
+  // notices a new order, so auto-print simply never runs and nothing says why.
+  // Only while the socket is actually down, and only where a missed order means
+  // missed food.
+  useEffect(() => {
+    if (!receiptSettings.autoPrintOnNew || realtimeUp) return;
+    const id = window.setInterval(() => void refresh(), 20_000);
+    return () => window.clearInterval(id);
+  }, [receiptSettings.autoPrintOnNew, realtimeUp, refresh]);
 
   async function advance(orderId: string, to: Status | "delivered", courierId?: string) {
     pendingAdvancesRef.current.set(orderId, {
@@ -687,6 +727,27 @@ export function OrdersKanban({
           </>
         }
       />
+
+      {receiptSettings.autoPrintOnNew && (
+        <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border border-qf-line-dash bg-qf-card px-3 py-2 text-xs text-qf-mute">
+          <StatusDot ok={realtimeUp} label={realtimeUp ? "מחובר לשרת" : "מנותק מהשרת"} />
+          <StatusDot
+            ok={receiptPrinter !== "sunmi" || nativePrinterApp}
+            label={
+              receiptPrinter !== "sunmi"
+                ? RECEIPT_PRINTER_LABEL[receiptPrinter]
+                : nativePrinterApp
+                  ? "מדפסת הקופה מחוברת"
+                  : "מדפסת הקופה לא נמצאה"
+            }
+          />
+          <span className="text-qf-mute">
+            {lastPrint
+              ? `הדפסה אחרונה: ${lastPrint.msg} (${lastPrint.n})`
+              : "טרם נשלחה הדפסה אוטומטית מאז פתיחת המסך"}
+          </span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 lg:gap-4">
         {byColumn.map((col) => (
