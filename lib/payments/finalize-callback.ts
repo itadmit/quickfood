@@ -20,6 +20,7 @@ import { printOrderTicket } from "@/lib/printing/print-order";
 import { checkoutRefToId, materializeKioskCheckout } from "@/lib/orders/kiosk-checkout";
 import { recordOrderCommission } from "@/lib/billing-hub/commission";
 import { alertMerchantNewOrder } from "@/lib/orders/notify-merchant";
+import { publishOrderCreated } from "@/lib/realtime/worker";
 import type { IPaymentProvider, ParsedCallback, TransactionStatus } from "./types";
 import {
   OrderStatus,
@@ -294,6 +295,18 @@ export async function finalizeProviderCallback({
       if (captureOnApproval) {
         // Leave the order pending for the merchant to approve; the auto-confirm
         // push won't fire, so alert them here. Ticket prints at approval.
+        // We also never advanceStatus, so no order.status_changed event fires -
+        // nudge any open board to refetch so the hold shows up live as a
+        // pending-approval card, not only on the next manual reload.
+        const held = await prisma.order.findUnique({
+          where: { id: pending.orderId },
+          select: { number: true },
+        });
+        publishOrderCreated(tenant.id, {
+          id: pending.orderId,
+          number: held?.number ?? "",
+          status: OrderStatus.pending,
+        });
         after(() => alertMerchantNewOrder(pending!.orderId));
       } else {
         await confirmAndBill(pending.orderId, logPrefix, { bill: false });
