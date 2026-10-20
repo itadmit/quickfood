@@ -430,8 +430,17 @@ export class HypProvider extends BasePaymentProvider {
         unknown
       >;
       const userId = data.UserId ? String(data.UserId) : "000000000";
-      const clientName = data.ClientName ? String(data.ClientName) : "";
       const info = data.Info ? String(data.Info) : "";
+
+      // Hyp rejects a nameless `soft` capture with CCode=401 ("first or last
+      // name is required"). The authorization echoes the customer's full name
+      // back in Fild1; split it into the two halves Hyp wants (ClientName +
+      // ClientLName), preferring the order's own name snapshot when the caller
+      // passes it, so the charge reads under the same name as the J5 hold.
+      const rawName = data.Fild1 ? String(data.Fild1).trim() : "";
+      const nameParts = rawName.split(/\s+/).filter(Boolean);
+      const clientName = (req.customerFirstName || nameParts[0] || "").trim();
+      const clientLName = (req.customerLastName || nameParts.slice(1).join(" ") || "").trim();
 
       // Step 2 - charge the reserved amount against the authorization.
       const softResp = new URLSearchParams(
@@ -442,6 +451,7 @@ export class HypProvider extends BasePaymentProvider {
             PassP: this.passP,
             UserId: userId,
             ClientName: clientName,
+            ClientLName: clientLName,
             Token: "True",
             CC: token,
             Tmonth: (tmonth || "").padStart(2, "0"),

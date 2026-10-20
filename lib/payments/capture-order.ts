@@ -35,7 +35,14 @@ export async function captureOrder({
 }): Promise<CaptureOrderResult> {
   const order = await prisma.order.findFirst({
     where: { id: orderId, tenantId },
-    select: { id: true, number: true, total: true, paymentStatus: true },
+    select: {
+      id: true,
+      number: true,
+      total: true,
+      paymentStatus: true,
+      customerFirstNameSnap: true,
+      customerLastNameSnap: true,
+    },
   });
   if (!order) return { ok: false, code: "not_found", message: "הזמנה לא נמצאה" };
 
@@ -73,6 +80,8 @@ export async function captureOrder({
     providerToken: auth.providerToken ?? undefined,
     amount: auth.amount, // exactly what was authorized
     rawData: (auth.providerResponse ?? undefined) as Record<string, unknown> | undefined,
+    customerFirstName: order.customerFirstNameSnap ?? undefined,
+    customerLastName: order.customerLastNameSnap ?? undefined,
   });
 
   if (!result.success) {

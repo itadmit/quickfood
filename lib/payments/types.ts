@@ -177,6 +177,11 @@ export interface CaptureRequest {
   providerToken?: string; // provider token captured at auth (Hyp UID)
   amount: number; // shekels to capture (<= authorized amount)
   rawData?: Record<string, unknown>; // original authorization callback params
+  // Cardholder name. Hyp's `soft` capture is rejected with CCode=401 ("first
+  // or last name is required") unless the name the authorization was made with
+  // is echoed back on the charge.
+  customerFirstName?: string;
+  customerLastName?: string;
 }
 
 export interface CaptureResponse {
