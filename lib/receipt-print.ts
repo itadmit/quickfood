@@ -45,6 +45,8 @@ export type ReceiptSettings = {
    *  off). Prints silently inside the QuickFood desktop app (native bridge) or
    *  via the browser's silent print (Chrome --kiosk-printing). */
   autoPrintOnNew: boolean;
+  /** Browser/desktop receipt box width, including its padding, in mm. */
+  printWidthMm: number;
 };
 
 export const DEFAULT_RECEIPT_SETTINGS: ReceiptSettings = {
@@ -55,6 +57,7 @@ export const DEFAULT_RECEIPT_SETTINGS: ReceiptSettings = {
   showItemNotes: true,
   showOrderNotes: true,
   autoPrintOnNew: false,
+  printWidthMm: 70,
 };
 
 // Stored as snake_case JSON; a missing key means "on" for the show_* fields so
@@ -71,7 +74,14 @@ export function resolveReceiptSettings(raw: unknown): ReceiptSettings {
     showItemNotes: on("show_item_notes"),
     showOrderNotes: on("show_order_notes"),
     autoPrintOnNew: o["auto_print_on_new"] === true,
+    printWidthMm: normalizePrintWidth(o["print_width_mm"]),
   };
+}
+
+export function normalizePrintWidth(value: unknown): number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 48 && value <= 76
+    ? value
+    : 70;
 }
 
 export interface ReceiptOrder {
@@ -320,20 +330,21 @@ function receiptBodyHtml(order: ReceiptOrder, settings?: ReceiptSettings): strin
     .join("\n");
 }
 
-// AirPrint / browser print. mm + @page, 72mm content centred on an 80mm page -
+// AirPrint / browser print. Configurable content centred on an 80mm page -
 // mirrors the order-drawer .qf-print-receipt look. Used by printReceiptIframe.
 export function buildReceiptHtml(order: ReceiptOrder, settings?: ReceiptSettings): string {
   const body = receiptBodyHtml(order, settings);
+  const width = normalizePrintWidth(settings?.printWidthMm);
   return `<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8"><style>
 @page{size:80mm auto;margin:0}
-html,body{margin:0}
-.r{width:70mm;max-width:70mm;box-sizing:border-box;padding:2mm;margin:0 8mm 0 2mm;color:#000;background:#fff;font-family:ui-monospace,Menlo,Consolas,monospace,Arial,sans-serif;font-size:11pt;line-height:1.35;direction:rtl}
+html,body{margin:0;width:80mm;padding:0}
+.r{width:${width}mm;max-width:${width}mm;box-sizing:border-box;padding:2mm;margin:0 ${(80 - width) / 2}mm;overflow-wrap:anywhere;color:#000;background:#fff;font-family:ui-monospace,Menlo,Consolas,monospace,Arial,sans-serif;font-size:11pt;line-height:1.35;direction:rtl}
 h1{font-size:16pt;font-weight:800;text-align:center;margin:0 0 4pt}
 .rule{border-top:1px dashed #000;margin:4pt 0}
-.row{display:table;width:100%}
+.row{display:table;table-layout:fixed;width:100%}
 .row>span{display:table-cell;vertical-align:top}
 .row>span:first-child{text-align:right}
-.row>span:last-child{text-align:left;white-space:nowrap;width:1%;padding-right:4pt}
+.row>span+span{text-align:left;width:32%;padding-right:4pt;overflow-wrap:anywhere}
 .muted{font-size:9pt}
 .total{font-size:14pt;font-weight:800}
 .grp{font-size:10.5pt;font-weight:800;margin-top:5pt;margin-bottom:1pt}

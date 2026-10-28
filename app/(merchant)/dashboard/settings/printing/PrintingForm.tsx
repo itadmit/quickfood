@@ -7,7 +7,7 @@ import { SettingsSaveBar } from "@/components/merchant/SettingsSaveBar";
 import type { ReceiptPrinterType, ReceiptSettings } from "@/lib/receipt-print";
 import type { CloudPrinterSettings } from "@/lib/printing/settings";
 
-const RECEIPT_FIELDS: Array<{ key: keyof ReceiptSettings; label: string }> = [
+const RECEIPT_FIELDS: Array<{ key: Exclude<keyof ReceiptSettings, "printWidthMm">; label: string }> = [
   { key: "showCustomerName", label: "הצג שם לקוח" },
   { key: "showCustomerPhone", label: "הצג טלפון לקוח" },
   { key: "showOptions", label: "הצג תוספות ואפשרויות" },
@@ -24,6 +24,7 @@ const SETTINGS_API_KEY: Record<keyof ReceiptSettings, string> = {
   showItemNotes: "show_item_notes",
   showOrderNotes: "show_order_notes",
   autoPrintOnNew: "auto_print_on_new",
+  printWidthMm: "print_width_mm",
 };
 
 interface PrinterOption {
@@ -111,6 +112,7 @@ export function PrintingForm({
           RECEIPT_FIELDS.map((f) => [SETTINGS_API_KEY[f.key], settings[f.key]]),
         ),
         auto_print_on_new: settings.autoPrintOnNew,
+        print_width_mm: settings.printWidthMm,
       };
       const printer_settings = {
         enabled: cloud.enabled,
@@ -143,6 +145,17 @@ export function PrintingForm({
   return (
     <>
       <div className="space-y-5">
+        <div className="bg-white rounded-2xl border border-qf-line-dash p-4 space-y-2">
+          <label htmlFor="print-width" className="block font-semibold">רוחב תוכן הבון (מ״מ)</label>
+          <select id="print-width" value={settings.printWidthMm}
+            onChange={(e) => setSettings((prev) => ({ ...prev, printWidthMm: Number(e.target.value) }))}
+            className="border border-qf-line-dash rounded-lg p-2">
+            {Array.from({ length: 29 }, (_, i) => i + 48).map((width) => (
+              <option key={width} value={width}>{width} מ״מ</option>
+            ))}
+          </select>
+          <p className="text-sm text-qf-mute">להדפסה דרך הדפדפן או אפליקציית המחשב, על נייר 80 מ״מ. אם הצדדים נחתכים, הקטינו את הרוחב ושמרו לפני הדפסת ניסיון. הגדרה זו אינה משנה הדפסה ישירה דרך RawBT, Star, Epson או SUNMI.</p>
+        </div>
         <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
           <div>
             <h2 className="font-semibold text-base lg:text-lg">איזו מדפסת קבלות יש לכם?</h2>

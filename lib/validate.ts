@@ -379,6 +379,7 @@ export const TenantPatchSchema = z.object({
       show_item_notes: z.boolean(),
       show_order_notes: z.boolean(),
       auto_print_on_new: z.boolean(),
+      print_width_mm: z.number().int().min(48).max(76),
     })
     .partial()
     .optional(),

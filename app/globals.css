@@ -441,16 +441,13 @@ label[for][class*="shadow-[0_"] {
     transform: none !important;
   }
   @page {
-    /* Match the driver's actual paper (80mm) so the browser doesn't offset a
-       narrower page on the roll. Sizing the page narrower than the paper made
-       the POS80 place the content hard against one edge - it printed shifted
-       right, clipping the RTL text start (right) while wasting ~8mm on the
-       left. With an 80mm page + centered 72mm receipt the content sits in the
-       middle of the printable area with a safe margin on both sides. */
     size: 80mm auto;
     margin: 0;
   }
   body {
+    width: 80mm;
+    margin: 0;
+    padding: 0;
     background: white;
   }
   /* The receipt is portaled to <body>, so hiding every other top-level node
@@ -467,11 +464,8 @@ label[for][class*="shadow-[0_"] {
     max-width: 70mm;
     box-sizing: border-box;
     padding: 2mm;
-    /* The POS80's printable window is offset ~3mm left of the paper centre, so
-       a symmetric center still clipped the rightmost Hebrew character. Push the
-       receipt left with an asymmetric margin (more on the right, less on the
-       left - the amount column on the left always had spare room). */
-    margin: 0 8mm 0 2mm;
+    margin: 0 5mm;
+    overflow-wrap: anywhere;
     color: #000;
     background: #fff;
     font-family: ui-monospace, Menlo, Consolas, monospace, Arial, sans-serif;
@@ -494,6 +488,7 @@ label[for][class*="shadow-[0_"] {
      on-screen preview is correct; table-cell is honoured reliably. */
   .qf-print-receipt .qf-pr-row {
     display: table;
+    table-layout: fixed;
     width: 100%;
   }
   .qf-print-receipt .qf-pr-row > span {
@@ -503,10 +498,10 @@ label[for][class*="shadow-[0_"] {
   .qf-print-receipt .qf-pr-row > span:first-child {
     text-align: right;
   }
-  .qf-print-receipt .qf-pr-row > span:last-child {
+  .qf-print-receipt .qf-pr-row > span + span {
     text-align: left;
-    white-space: nowrap;
-    width: 1%;
+    overflow-wrap: anywhere;
+    width: 32%;
     padding-right: 4pt;
   }
   .qf-print-receipt .qf-pr-muted {
