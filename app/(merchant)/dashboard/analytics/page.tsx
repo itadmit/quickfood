@@ -9,6 +9,7 @@ import {
   operationalHealth,
   insights,
   visitorStats,
+  cartAddStats,
   parseCustomBounds,
   type Range,
 } from "@/lib/analytics";
@@ -56,7 +57,7 @@ export default async function AnalyticsPage({
   const apiRange: Range = range;
   const bounds = custom ?? undefined;
 
-  const [sum, hr, items, channels, segments, ops, ins, visitors] = await Promise.all([
+  const [sum, hr, items, channels, segments, ops, ins, visitors, cartAdds] = await Promise.all([
     summary(session.tenantId, apiRange, bounds),
     hourly(session.tenantId, apiRange, bounds),
     topItems(session.tenantId, apiRange, 8, bounds),
@@ -65,6 +66,7 @@ export default async function AnalyticsPage({
     operationalHealth(session.tenantId, apiRange, bounds),
     insights(session.tenantId, apiRange, bounds),
     visitorStats(session.tenantId, apiRange, bounds),
+    cartAddStats(session.tenantId, apiRange, bounds),
   ]);
 
   return (
@@ -80,6 +82,7 @@ export default async function AnalyticsPage({
       ops={ops}
       insights={ins}
       visitors={visitors}
+      cartAdds={cartAdds}
     />
   );
 }

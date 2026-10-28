@@ -361,6 +361,14 @@ export const TenantPatchSchema = z.object({
   // Cleared via the DB if a tenant ever needs to be re-shown.
   onboarding_dismissed: z.literal(true).optional(),
   dashboard_version: z.enum(["v1", "v2"]).optional(),
+  // Per-store Facebook pixel id. Digits only (Meta pixel ids are numeric).
+  // "" clears it (route maps empty → null); omitted → left unchanged.
+  facebook_pixel_id: z
+    .string()
+    .trim()
+    .regex(/^(\d{5,20})?$/, "מזהה הפיקסל חייב להיות 5-20 ספרות")
+    .nullable()
+    .optional(),
   receipt_printer: z.enum(["airprint", "star", "epson", "escpos", "sunmi"]).optional(),
   receipt_settings: z
     .object({

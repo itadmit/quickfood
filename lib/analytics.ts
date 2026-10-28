@@ -255,6 +255,29 @@ async function visitorBucket(tenantId: string, from: Date, to: Date) {
   };
 }
 
+/**
+ * Add-to-cart actions for the range. Counts every time a customer added an
+ * item to the cart on the storefront (owner self-previews excluded). Sourced
+ * from the first-party StorefrontCartAdd daily counter - independent of the
+ * Meta pixel, so it works whether or not the store configured one.
+ */
+export async function cartAddStats(tenantId: string, range: Range, custom?: CustomBounds) {
+  const { from, to, previousFrom, previousTo } = rangeBounds(range, custom);
+  const [cur, prev] = await Promise.all([
+    cartAddBucket(tenantId, from, to),
+    cartAddBucket(tenantId, previousFrom, previousTo),
+  ]);
+  return { adds: { value: cur, delta: pctDelta(cur, prev) } };
+}
+
+async function cartAddBucket(tenantId: string, from: Date, to: Date) {
+  const rows = await prisma.storefrontCartAdd.findMany({
+    where: { tenantId, day: { gte: from, lt: to } },
+    select: { adds: true },
+  });
+  return rows.reduce((acc, r) => acc + r.adds, 0);
+}
+
 export async function hourly(tenantId: string, range: Range, custom?: CustomBounds) {
   const { from, to, previousFrom, previousTo } = rangeBounds(range, custom);
   const [cur, prev] = await Promise.all([

@@ -433,6 +433,14 @@ model Tenant {
   // Advanced → Appearance.
   dashboardVersion String @default("v2") @map("dashboard_version") @db.VarChar(10)
 
+  // Per-store Facebook/Meta Pixel. When set, the storefront loads THIS
+  // tenant's own pixel (init + PageView, AddToCart, InitiateCheckout,
+  // Purchase) so the merchant can run retargeting / conversion ads on their
+  // own shoppers. Digits only; null/empty = no pixel. Set in Settings →
+  // פיקסל ומעקב. Distinct from the platform marketing pixel, which never
+  // loads on /s/ storefronts.
+  facebookPixelId String? @map("facebook_pixel_id") @db.VarChar(32)
+
   // Receipt printer family for the orders dashboard print button.
   // airprint = OS print dialog (window.print), star = Star PassPRNT app,
   // epson = Epson TM Print Assistant app, escpos = generic Bluetooth
@@ -599,6 +607,7 @@ model Tenant {
   woltImports      WoltImport[]
   menuFileImports  MenuFileImport[]
   storefrontVisits StorefrontVisit[]
+  storefrontCartAdds StorefrontCartAdd[]
   woltConnections  WoltConnection[]
   growLeads        GrowLead[]
   posShifts        PosShift[]
@@ -2326,6 +2335,25 @@ model StorefrontVisit {
   @@unique([tenantId, visitorId, day])
   @@index([tenantId, day])
   @@map("storefront_visits")
+}
+
+/// First-party add-to-cart counter. One row per (tenant, Israel-day), bumped
+/// every time a customer adds an item to the cart on the storefront. Owner
+/// self-previews are skipped. Powers the dashboard's "הוספות לסל" funnel
+/// metric alongside StorefrontVisit — no dependency on GA/Meta.
+model StorefrontCartAdd {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  // Israel-local midnight instant for the day these adds belong to.
+  day       DateTime
+  adds      Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at")
+  lastAt    DateTime @default(now()) @map("last_at")
+
+  @@unique([tenantId, day])
+  @@index([tenantId, day])
+  @@map("storefront_cart_adds")
 }
 
 /// AI-extracted menu import from an uploaded PDF or photo. Mirrors the

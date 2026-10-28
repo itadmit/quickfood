@@ -22,6 +22,7 @@ import { CustomerFooter } from "@/components/customer/CustomerFooter";
 import { StoreSuspended } from "@/components/customer/StoreSuspended";
 import { storefrontBlock } from "@/lib/tenant-billing";
 import { VisitBeacon } from "@/components/customer/VisitBeacon";
+import { StorefrontPixel } from "@/components/customer/StorefrontPixel";
 import { QrLandingModal } from "@/components/customer/QrLandingModal";
 
 export async function generateMetadata({
@@ -195,6 +196,9 @@ export default async function CustomerLayout({
           </CustomerChromeGate>
           <div className="max-w-md mx-auto bg-qf-bg min-h-screen relative shadow-md lg:max-w-none lg:mx-0 lg:shadow-none">
             {!isOwnMerchant && <VisitBeacon tenantSlug={tenant.slug} />}
+            {!isOwnMerchant && tenant.facebookPixelId && (
+              <StorefrontPixel pixelId={tenant.facebookPixelId} />
+            )}
             {!isOwnMerchant && <QrLandingModal tenantSlug={tenant.slug} />}
             {children}
             {pendingReview && (

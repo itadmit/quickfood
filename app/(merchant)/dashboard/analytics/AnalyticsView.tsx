@@ -124,6 +124,7 @@ export function AnalyticsView({
   ops,
   insights,
   visitors,
+  cartAdds,
 }: {
   range: RangeKey;
   customFrom: string | null;
@@ -136,6 +137,7 @@ export function AnalyticsView({
   ops: Ops;
   insights: Insight[];
   visitors: VisitorStats;
+  cartAdds: { adds: KPI };
 }) {
   const router = useRouter();
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -280,13 +282,19 @@ export function AnalyticsView({
         />
       </section>
 
-      {/* TRAFFIC ROW - first-party storefront visits */}
-      <section className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+      {/* TRAFFIC ROW - first-party storefront visits + add-to-cart funnel */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard
           label="מבקרים בחנות"
           value={String(visitors.unique_visitors.value ?? 0)}
           delta={visitors.unique_visitors.delta}
           subline="גולשים שונים שנכנסו לאתר"
+        />
+        <KpiCard
+          label="הוספות לסל"
+          value={String(cartAdds.adds.value ?? 0)}
+          delta={cartAdds.adds.delta}
+          subline="פעמים שהוסיפו פריט לסל"
         />
         <KpiCard
           label="לקוחות מזוהים"

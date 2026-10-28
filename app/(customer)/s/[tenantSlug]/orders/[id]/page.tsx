@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { getSession } from "@/lib/auth/session";
 import { OrderTracking } from "@/components/customer/screens/OrderTracking";
+import { StorePurchaseEvent } from "@/components/customer/StorePurchaseEvent";
 import { verifyReviewToken } from "@/lib/reviews/token";
 
 export const dynamic = "force-dynamic";
@@ -102,7 +103,17 @@ export default async function OrderTrackingPage({
     : null;
 
   return (
-    <OrderTracking
+    <>
+      {tenant.facebookPixelId && (
+        <StorePurchaseEvent
+          orderId={order.id}
+          value={order.total}
+          contentIds={order.items
+            .map((it) => it.menuItemId)
+            .filter((x): x is string => !!x)}
+        />
+      )}
+      <OrderTracking
       tenantSlug={tenant.slug}
       tenantName={tenant.name}
       tenantLogoUrl={tenant.logoUrl}
@@ -196,6 +207,7 @@ export default async function OrderTrackingPage({
           : null
       }
       showTracking={tenantSettings?.checkoutShowTracking ?? true}
-    />
+      />
+    </>
   );
 }

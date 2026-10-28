@@ -12,6 +12,7 @@ const TABS = [
   { href: "/dashboard/settings/checkout", label: "צ׳ק אאוט" },
   { href: "/dashboard/settings/domain", label: "דומיין מותאם" },
   { href: "/dashboard/settings/sales", label: "מכירות ואפסיילים" },
+  { href: "/dashboard/settings/marketing", label: "פיקסל ומעקב" },
   { href: "/dashboard/settings/kiosk", label: "קיוסק" },
   { href: "/dashboard/settings/printing", label: "מדפסת קבלות" },
   { href: "/dashboard/settings/webhooks", label: "Webhooks (POS / מדפסות)" },

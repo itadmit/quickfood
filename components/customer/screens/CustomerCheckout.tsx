@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { sfTrack } from "@/lib/fb/storefront";
 import { IcoChev, IcoArrowLeft, IcoBag, IcoPin, IcoClose, IcoCheck } from "@/components/shared/Icons";
 import { CustomerOtpLogin, type OtpCustomer } from "@/components/customer/CustomerOtpLogin";
 import { Modal, ModalBody } from "@/components/shared/Modal";
@@ -86,6 +87,21 @@ export function CustomerCheckout({
 }) {
   const router = useRouter();
   const { lines, method, subtotal, deliveryFee, branch, tenant, clear, setMethod, hydrated, acceptedBundles, bundleDiscount } = useCart();
+
+  // Store-pixel InitiateCheckout - fired once per checkout view, after the
+  // cart has hydrated and only when it has items. No-op when no pixel is set.
+  const firedCheckout = useRef(false);
+  useEffect(() => {
+    if (!hydrated || firedCheckout.current || lines.length === 0) return;
+    firedCheckout.current = true;
+    sfTrack("InitiateCheckout", {
+      content_type: "product",
+      content_ids: lines.map((l) => l.itemId),
+      num_items: lines.reduce((a, l) => a + l.quantity, 0),
+      value: Math.max(0, subtotal - bundleDiscount),
+      currency: "ILS",
+    });
+  }, [hydrated, lines, subtotal, bundleDiscount]);
 
   const [address, setAddress] = useState(initialAddress?.street ?? "");
   const [city, setCity] = useState(initialAddress?.city ?? "");

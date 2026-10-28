@@ -5,6 +5,7 @@ import { computeDeliveryFee } from "@/lib/delivery-fee";
 import { matchZoneByCity, type ZoneForMatch } from "@/lib/delivery-zone-match";
 import { readDeliveryChoice, DELIVERY_CHOICE_EVENT } from "@/lib/delivery-city-storage";
 import type { BranchHours } from "@/lib/branch-hours";
+import { trackCartAdd } from "@/components/customer/cartTracking";
 
 export type CartLineSource = "menu" | "ai_advisor" | "upsell" | "reorder";
 
@@ -268,6 +269,11 @@ export function CartProvider({
           const quantity = Math.max(1, clampToStock(s.lines, withId, withId.quantity));
           return { ...s, lines: [...s.lines, { ...withId, quantity }] };
         });
+        try {
+          trackCartAdd(tenant.slug, line);
+        } catch {
+          /* tracking must never disrupt the cart */
+        }
       },
       addMany: (newLines) => {
         if (newLines.length === 0) return;

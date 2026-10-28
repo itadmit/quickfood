@@ -100,6 +100,10 @@ export const PATCH = handler(async (req: Request) => {
       customerNotesEnabled: body.customer_notes_enabled,
       onboardingDismissedAt: body.onboarding_dismissed ? new Date() : undefined,
       dashboardVersion: body.dashboard_version,
+      facebookPixelId:
+        body.facebook_pixel_id === undefined
+          ? undefined
+          : body.facebook_pixel_id || null,
       receiptPrinter: body.receipt_printer,
       receiptSettings: body.receipt_settings,
       printerSettings: body.printer_settings,
