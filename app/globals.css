@@ -441,11 +441,18 @@ label[for][class*="shadow-[0_"] {
     transform: none !important;
   }
   @page {
-    size: 80mm auto;
+    size: auto;
     margin: 0;
   }
+  /* RTL belongs to the receipt, not the physical page. A fixed 80mm RTL
+     body overflows left when the driver exposes a narrower printable area. */
+  html {
+    direction: ltr;
+  }
   body {
-    width: 80mm;
+    direction: ltr;
+    width: 100%;
+    max-width: 80mm;
     margin: 0;
     padding: 0;
     background: white;
@@ -461,10 +468,10 @@ label[for][class*="shadow-[0_"] {
     display: block;
     position: static;
     width: 70mm;
-    max-width: 70mm;
+    max-width: calc(100% - 8mm);
     box-sizing: border-box;
     padding: 2mm;
-    margin: 0 5mm;
+    margin: 0 auto;
     overflow-wrap: anywhere;
     color: #000;
     background: #fff;

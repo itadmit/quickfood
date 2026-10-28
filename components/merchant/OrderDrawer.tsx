@@ -792,7 +792,7 @@ function ReceiptOptionGroups({ options, withPrices }: { options: unknown; withPr
 function PrintReceipt({ order, settings }: { order: OrderDetail; settings: ReceiptSettings }) {
   const addr = order.delivery_address;
   return (
-    <div className="qf-print-receipt" style={{ width: `${normalizePrintWidth(settings.printWidthMm)}mm`, maxWidth: `${normalizePrintWidth(settings.printWidthMm)}mm`, margin: `0 ${(80 - normalizePrintWidth(settings.printWidthMm)) / 2}mm` }}>
+    <div className="qf-print-receipt" style={{ width: `${normalizePrintWidth(settings.printWidthMm)}mm` }}>
       <h1>#{order.number}</h1>
       <div className="qf-pr-row qf-pr-muted">
         <span>{formatDateTime(order.created_at)}</span>

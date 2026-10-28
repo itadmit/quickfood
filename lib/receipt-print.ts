@@ -330,15 +330,18 @@ function receiptBodyHtml(order: ReceiptOrder, settings?: ReceiptSettings): strin
     .join("\n");
 }
 
-// AirPrint / browser print. Configurable content centred on an 80mm page -
+// AirPrint / browser print. The driver owns the paper size; shrink the receipt
+// to its printable area and keep physical page geometry LTR even for RTL text.
+// Configurable content width (including padding), capped at the available area -
 // mirrors the order-drawer .qf-print-receipt look. Used by printReceiptIframe.
 export function buildReceiptHtml(order: ReceiptOrder, settings?: ReceiptSettings): string {
   const body = receiptBodyHtml(order, settings);
   const width = normalizePrintWidth(settings?.printWidthMm);
   return `<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8"><style>
-@page{size:80mm auto;margin:0}
-html,body{margin:0;width:80mm;padding:0}
-.r{width:${width}mm;max-width:${width}mm;box-sizing:border-box;padding:2mm;margin:0 ${(80 - width) / 2}mm;overflow-wrap:anywhere;color:#000;background:#fff;font-family:ui-monospace,Menlo,Consolas,monospace,Arial,sans-serif;font-size:11pt;line-height:1.35;direction:rtl}
+@page{size:auto;margin:0}
+html{margin:0;padding:0;direction:ltr}
+body{margin:0;padding:0;width:100%;max-width:80mm;direction:ltr}
+.r{width:${width}mm;max-width:calc(100% - 8mm);box-sizing:border-box;padding:2mm;margin:0 auto;overflow-wrap:anywhere;color:#000;background:#fff;font-family:ui-monospace,Menlo,Consolas,monospace,Arial,sans-serif;font-size:11pt;line-height:1.35;direction:rtl}
 h1{font-size:16pt;font-weight:800;text-align:center;margin:0 0 4pt}
 .rule{border-top:1px dashed #000;margin:4pt 0}
 .row{display:table;table-layout:fixed;width:100%}
