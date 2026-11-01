@@ -8,9 +8,9 @@ import { THEME_IDS } from "@/lib/themes";
 
 export const PhoneSchema = z
   .string()
-  .min(7)
-  .max(20)
-  .regex(/^[\d+\-\s()]+$/, { message: "phone format invalid" });
+  .min(7, "מספר טלפון חייב להכיל לפחות 7 ספרות")
+  .max(20, "מספר הטלפון ארוך מדי")
+  .regex(/^[\d+\-\s()]+$/, { message: "מספר הטלפון מכיל תווים לא חוקיים" });
 
 export const EmailSchema = z.string().email();
 
