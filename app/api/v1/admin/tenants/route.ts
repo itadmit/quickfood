@@ -61,6 +61,12 @@ export const POST = handler(async (req: Request) => {
 
   const passwordHash = await bcrypt.hash(body.owner.password, 10);
 
+  // Match self-serve signup: give the store a 7-day local trial and mark the
+  // owner's email verified (an admin creating the store vouches for it).
+  // Without these the tenant is born "ניסיון הסתיים" / "מייל לא אומת".
+  const TRIAL_DAYS = 7;
+  const trialEndsAt = new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+
   const tenant = await prisma.tenant.create({
     data: {
       slug: body.slug,
@@ -70,6 +76,7 @@ export const POST = handler(async (req: Request) => {
       businessType: body.business_type,
       cuisineType: body.cuisine_type,
       status: "active",
+      trialEndsAt,
       branches: {
         create: [
           {
@@ -100,6 +107,7 @@ export const POST = handler(async (req: Request) => {
             passwordHash,
             name: body.owner.name,
             role: "owner",
+            emailVerifiedAt: new Date(),
           },
         ],
       },
