@@ -43,6 +43,22 @@ export const POST = handler(async (req: Request) => {
   const existing = await prisma.tenant.findUnique({ where: { slug: body.slug } });
   if (existing) return apiError("validation_error", "slug כבר קיים", 409, "slug");
 
+  // Owner email is globally unique (one merchant account per email). Guard it
+  // the same way as the slug so a reused email returns a clear message instead
+  // of a raw 500 from the nested create's P2002.
+  const ownerEmail = body.owner.email.toLowerCase();
+  const existingOwner = await prisma.merchantUser.findUnique({
+    where: { email: ownerEmail },
+  });
+  if (existingOwner) {
+    return apiError(
+      "validation_error",
+      "אימייל הבעלים כבר קיים במערכת (כל חנות דורשת אימייל ייחודי)",
+      409,
+      "email",
+    );
+  }
+
   const passwordHash = await bcrypt.hash(body.owner.password, 10);
 
   const tenant = await prisma.tenant.create({
@@ -80,7 +96,7 @@ export const POST = handler(async (req: Request) => {
       merchantUsers: {
         create: [
           {
-            email: body.owner.email.toLowerCase(),
+            email: ownerEmail,
             passwordHash,
             name: body.owner.name,
             role: "owner",
