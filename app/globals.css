@@ -9,6 +9,10 @@
   --color-qf-green-soft: #e7f5ec;
   --color-qf-green-line: #cfe8d8;
   --color-qf-mint: #bef0cf;
+  /* Success stays green independently of the dashboard brand palette. */
+  --color-qf-success-soft: #edf3df;
+  --color-qf-success-line: #c2d2a5;
+  --color-qf-success-ink: #3f5f2b;
   --color-qf-bg: #f7f6f2;
   --color-qf-bg-dash: #f5f4ef;
   --color-qf-card: #ffffff;

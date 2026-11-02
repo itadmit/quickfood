@@ -259,7 +259,7 @@ function BalanceTab({
       {(success || error) && (
         <div>
           {success && (
-            <div className="text-sm bg-qf-green-soft border border-(--qf-primary)/30 text-qf-green-deep rounded-xl px-3 py-2">
+            <div className="text-sm bg-qf-success-soft border border-qf-success-line text-qf-success-ink rounded-xl px-3 py-2">
               {success}
             </div>
           )}
@@ -320,7 +320,7 @@ function BalanceTab({
               className={cn(
                 "text-sm rounded-xl px-3 py-2 border",
                 testResult.ok
-                  ? "bg-qf-green-soft border-(--qf-primary)/30 text-qf-green-deep"
+                  ? "bg-qf-success-soft border-qf-success-line text-qf-success-ink"
                   : "bg-qf-tomato-soft border-qf-tomato/40 text-qf-tomato",
               )}
             >
