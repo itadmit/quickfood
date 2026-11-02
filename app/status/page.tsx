@@ -21,7 +21,7 @@ const COMPONENTS: Component[] = [
   { name: "דשבורד מסעדן", description: "ניהול הזמנות, תפריט והגדרות", status: "operational" },
   { name: "סליקה (Grow Payments)", description: "ארנקים, Bit, Apple Pay, Google Pay, אשראי", status: "operational" },
   { name: "וואטסאפ (iBot Chat)", description: "אישורי הזמנה ו׳יצא לדרך׳ מהמספר שלך", status: "operational" },
-  { name: "SMS (sms4free)", description: "התראות לקוח כשוואטסאפ לא זמין", status: "operational" },
+  { name: "SMS", description: "התראות לקוח כשוואטסאפ לא זמין", status: "operational" },
   { name: "מייל (Resend)", description: "תזכורות ביקורת ועדכוני הזמנה", status: "operational" },
   { name: "Webhooks יוצאים", description: "אירועי הזמנה לקופות ולמערכות חיצוניות", status: "operational" },
   { name: "אחסון תמונות (R2)", description: "תמונות תפריט, לוגו ותמונת נושא", status: "operational" },

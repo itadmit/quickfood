@@ -1,5 +1,5 @@
 /**
- * Platform-level SMS sender - calls sms4free.co.il directly with NO tenant
+ * Platform-level SMS sender - uses the central messaging API, with NO tenant
  * context, credit gate, or SmsLog row. Use this for system messages that
  * fire before (or independent of) any tenant existing, e.g. the signup
  * phone-OTP. The platform absorbs the cost.
@@ -7,14 +7,12 @@
  * For tenant-scoped sends (order updates, review reminders) use sendSms()
  * in ./send.ts instead - that one bills the merchant's credit balance.
  */
+import { sendPoplySms } from "@/lib/poply/client";
+import { normalizeSmsPhone } from "./phone";
+import { smsFailureMessage } from "./messages";
 import { hitDurable } from "@/lib/api/durable-rate-limit";
 
-const SEND_URL = "https://api.sms4free.co.il/ApiSMS/v2/SendSMS";
-
-const API_KEY = process.env.SMS4FREE_API_KEY ?? "";
-const USER = process.env.SMS4FREE_USER ?? "";
-const PASS = process.env.SMS4FREE_PASS ?? "";
-const DEFAULT_SENDER = process.env.SMS4FREE_DEFAULT_SENDER ?? "QuickFood";
+const DEFAULT_SENDER = process.env.SMS_DEFAULT_SENDER ?? "QuickFood";
 
 const CONSOLE_FALLBACK = process.env.SMS_PROVIDER === "console";
 
@@ -58,42 +56,18 @@ export async function sendRawSms(to: string, body: string): Promise<SendRawSmsRe
     return { status: "sent", providerCode: 1, providerMsg: "console fallback" };
   }
 
-  if (!API_KEY || !USER || !PASS) {
-    return {
-      status: "failed",
-      providerMsg: "sms4free not configured (missing SMS4FREE_USER/PASS/API_KEY)",
-    };
-  }
-
   let providerCode = 0;
   let providerMsg = "";
   try {
-    const res = await fetch(SEND_URL, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        key: API_KEY,
-        user: USER,
-        pass: PASS,
-        sender: DEFAULT_SENDER,
-        recipient,
-        msg: body,
-      }),
-    });
-    const data = (await res.json().catch(() => ({}))) as {
-      status?: number;
-      message?: string;
-    };
-    providerCode = data.status ?? 0;
-    providerMsg = data.message ?? "";
+    const result = await sendPoplySms({ to: recipient, message: body, sender: DEFAULT_SENDER });
+    if (!result.ok) console.warn("[sms] central messaging API rejected request", result.error);
+    providerCode = result.ok ? 1 : 0;
+    providerMsg = result.ok ? "ההודעה התקבלה לשליחה" : smsFailureMessage(result.error);
   } catch (err) {
-    providerMsg = err instanceof Error ? err.message : "fetch_failed";
+    providerMsg = smsFailureMessage(err instanceof Error ? err.message : undefined);
   }
 
-  // sms4free: status > 0 ⇒ ACCEPTED for delivery (returns the recipient
-  // count). Note this is "accepted", not "delivered" - an unverified
-  // alphanumeric sender can be accepted here yet dropped by the carrier, so
-  // we log the provider's exact code/message to diagnose silent non-delivery.
+  // API acceptance is not proof of delivery to the handset.
   console.log(
     `[sms-raw] to=${recipient} sender=${DEFAULT_SENDER} code=${providerCode} msg=${providerMsg || "-"}`,
   );
@@ -103,9 +77,9 @@ export async function sendRawSms(to: string, body: string): Promise<SendRawSmsRe
   return { status: "failed", providerCode, providerMsg };
 }
 
-/** "05X-XXXXXXX" → "05XXXXXXXX". sms4free wants digits-only. */
+/** Normalize Israeli mobile numbers before validation. */
 function normalizePhone(raw: string): string {
-  return raw.replace(/[^\d]/g, "");
+  return normalizeSmsPhone(raw);
 }
 
 function isValidIsraeliMobile(digits: string): boolean {

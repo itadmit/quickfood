@@ -1,5 +1,5 @@
 /**
- * SMS test send - used by the merchant dashboard to verify sms4free credentials
+ * SMS test send - used by the merchant dashboard to verify the configured SMS connection
  * and sender approval before the merchant buys a credit package. Bypasses the
  * per-tenant credit gate (platform absorbs the cost), but still rate-limited
  * via a 60-second cooldown per tenant.

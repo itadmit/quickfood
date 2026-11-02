@@ -1,5 +1,6 @@
 "use client";
 
+import { smsFailureMessage } from "@/lib/sms/messages";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -267,7 +268,7 @@ function BalanceTab({
           message:
             status === "invalid_recipient"
               ? "מספר טלפון לא תקין (פורמט: 05XXXXXXXX)"
-              : data.result?.providerMsg || `סטטוס: ${status}`,
+              : smsFailureMessage(data.result?.providerMsg),
         });
       }
     } finally {
@@ -516,7 +517,7 @@ function BalanceTab({
                   </div>
                   <div className="text-sm mt-0.5 wrap-break-word">{l.body}</div>
                   {l.providerMsg && l.status !== "sent" && l.status !== "delivered" && (
-                    <div className="text-xs text-qf-tomato mt-0.5">{l.providerMsg}</div>
+                    <div className="text-xs text-qf-tomato mt-0.5">{smsFailureMessage(l.providerMsg)}</div>
                   )}
                 </div>
               </li>
@@ -1129,7 +1130,7 @@ function ClubTab({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-base lg:text-lg font-semibold">דיוור לחברי המועדון</h2>
-          <p className="text-xs text-qf-mute">שליחת מבצעים והטבות לפי מסלול. אימייל ו-SMS דרך Poply, וואטסאפ דרך iBot.</p>
+          <p className="text-xs text-qf-mute">שליחת מבצעים והטבות ללקוחות באימייל, ב-SMS ובוואטסאפ, בהתאם למסלול.</p>
         </div>
         <div className="text-xs text-qf-mute">
           יתרה: <span className="font-bold text-qf-ink2">{balance.toLocaleString("he-IL")}</span>
