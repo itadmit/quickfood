@@ -1,5 +1,7 @@
 "use client";
 
+import { Price } from "@/components/shared/Price";
+import { originalPrice } from "@/lib/compare-price";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -1376,7 +1378,7 @@ export function CustomerCheckout({
                     <div className="flex items-start justify-between gap-2">
                       <div className="font-medium text-sm leading-tight">{l.name}</div>
                       <div className="text-sm tnum font-medium shrink-0">
-                        {formatPrice(lineTotal)}
+                        <Price amount={lineTotal} originalAmount={originalPrice(lineTotal, l.basePrice * l.quantity, l.compareAtPrice != null ? l.compareAtPrice * l.quantity : null)} />
                       </div>
                     </div>
                     {l.sizeName && (
@@ -1464,7 +1466,7 @@ export function CustomerCheckout({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="font-medium text-sm leading-tight">{l.name}</div>
-                        <div className="text-sm tnum font-medium shrink-0">{formatPrice(lineTotal)}</div>
+                        <div className="text-sm tnum font-medium shrink-0"><Price amount={lineTotal} originalAmount={originalPrice(lineTotal, l.basePrice * l.quantity, l.compareAtPrice != null ? l.compareAtPrice * l.quantity : null)} /></div>
                       </div>
                       {l.sizeName && (
                         <div className="text-xs text-qf-mute mt-0.5">{l.sizeName}</div>

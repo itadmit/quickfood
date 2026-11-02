@@ -1,5 +1,6 @@
 "use client";
 
+import { Price } from "@/components/shared/Price";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -391,7 +392,8 @@ interface Kpis {
 
 interface SearchResults {
   orders: Array<{ id: string; number: string; total: number; status: string; customer: string; created_at: string }>;
-  items: Array<{ id: string; name: string; base_price: number; available: boolean; art_type: string | null }>;
+  items: Array<{ id: string; name: string; base_price: number;
+  compare_at_price?: number | null; available: boolean; art_type: string | null }>;
   customers: Array<{ id: string; name: string; phone: string; orders_count: number }>;
 }
 
@@ -506,7 +508,7 @@ function SearchPalette({ onClose }: { onClose: () => void }) {
                       className="w-full text-start px-4 py-2 hover:bg-qf-line-soft flex items-center justify-between gap-2"
                     >
                       <div className="text-sm">{it.name}</div>
-                      <div className="text-xs tnum">{formatPrice(it.base_price)}</div>
+                      <div className="text-xs tnum"><Price amount={it.base_price} originalAmount={it.compare_at_price} /></div>
                     </button>
                   ))}
                 </Section>

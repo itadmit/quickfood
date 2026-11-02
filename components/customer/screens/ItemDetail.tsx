@@ -1,5 +1,7 @@
 "use client";
 
+import { Price } from "@/components/shared/Price";
+import { originalPrice } from "@/lib/compare-price";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -67,6 +69,7 @@ interface ItemData {
   name: string;
   description: string;
   basePrice: number;
+  compareAtPrice?: number | null;
   pricingMode?: string;
   pricePerKg?: number | null;
   artType: string | null;
@@ -503,6 +506,7 @@ export function ItemDetail({
       itemId: item.id,
       name: item.name,
       basePrice: isWeight ? weightBase : item.basePrice,
+      compareAtPrice: item.compareAtPrice != null ? (isWeight ? weightPrice(item.compareAtPrice, grams) : item.compareAtPrice) : null,
       artType: item.artType,
       imageUrl: item.images?.[0] ?? null,
       quantity: isWeight ? 1 : quantity,
@@ -737,8 +741,8 @@ export function ItemDetail({
         )}
         <div className="text-base font-semibold tnum mt-3">
           {isWeight
-            ? `${formatPrice(pricePerKg)} לק"ג · ${formatPrice(pricePerKg / 10)} ל-100 גרם`
-            : formatPrice(item.basePrice)}
+            ? <><Price amount={pricePerKg} originalAmount={item.compareAtPrice} /> לק״ג · {formatPrice(pricePerKg / 10)} ל-100 גרם</>
+            : <Price amount={item.basePrice} originalAmount={item.compareAtPrice} />}
         </div>
       </section>
 
@@ -897,7 +901,7 @@ export function ItemDetail({
                   active={sizeId === s.id}
                   onClick={() => setSizeId(s.id)}
                   label={s.name}
-                  priceLabel={formatPrice(item.basePrice + s.priceDelta)}
+                  priceLabel={<Price amount={item.basePrice + s.priceDelta} originalAmount={item.compareAtPrice != null ? item.compareAtPrice + s.priceDelta : null} />}
                   priceTone="absolute"
                   radio
                 />
@@ -1122,7 +1126,7 @@ export function ItemDetail({
               // the current selection, so blocking the row would leave the
               // customer stuck on their first choice - the "can't switch" bug.
               const blocked = !isSingle && !checked && atMax;
-              let priceLabel: string | null;
+              let priceLabel: React.ReactNode;
               if (o.priceDelta === 0) {
                 priceLabel = null;
               } else if (o.priceDelta < 0) {
@@ -1322,7 +1326,7 @@ export function ItemDetail({
             {addPhase === "idle" ? (
               <>
                 <span>{ctaLabel}</span>
-                <span className="tnum">{formatPrice(total)}</span>
+                <span className="tnum"><Price amount={total} originalAmount={originalPrice(total, (isWeight ? weightBase : item.basePrice) * (isWeight ? 1 : quantity), (item.compareAtPrice != null ? (isWeight ? weightPrice(item.compareAtPrice, grams) : item.compareAtPrice) * (isWeight ? 1 : quantity) : null))} /></span>
               </>
             ) : addPhase === "loading" ? (
               <>
@@ -1485,7 +1489,7 @@ function Row({
   active: boolean;
   onClick: () => void;
   label: string;
-  priceLabel: string | null;
+  priceLabel: React.ReactNode;
   priceTone: "absolute" | "delta";
   radio?: boolean;
   imageUrl?: string | null;

@@ -681,6 +681,7 @@ export interface OrderConfirmedItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  originalTotalPrice?: number | null;
   notes?: string | null;
   options?: Array<{ name: string; priceDelta: number }>;
   imageUrl?: string | null;
@@ -688,6 +689,11 @@ export interface OrderConfirmedItem {
 
 function formatShekels(amount: number): string {
   return `${amount.toLocaleString("he-IL")} ש"ח`;
+}
+
+function withOrderItemText(email: { html: string; text: string }, items: OrderConfirmedItem[]) {
+  const lines = items.map(it => `${it.quantity}× ${it.name}: ${formatShekels(it.totalPrice)}${it.originalTotalPrice != null && it.originalTotalPrice > it.totalPrice ? ` (מחיר לפני הנחה: ${formatShekels(it.originalTotalPrice)})` : ""}`);
+  return { ...email, text: `${email.text}\n\nפירוט הזמנה\n${lines.join("\n")}` };
 }
 
 function itemsTable(items: OrderConfirmedItem[]): string {
@@ -723,7 +729,7 @@ function itemsTable(items: OrderConfirmedItem[]): string {
           ${notesLine}
         </td>
         <td valign="${valign}" dir="ltr" style="padding:10px 0 10px 12px;border-bottom:1px solid #f0e8d2;font-size:14px;font-weight:700;color:${BRAND.ink};white-space:nowrap;text-align:left;">
-          ${escape(formatShekels(it.totalPrice))}
+          ${it.originalTotalPrice != null && it.originalTotalPrice > it.totalPrice ? `<del style="font-size:12px;font-weight:400;color:${BRAND.mute};margin-inline-end:8px;">${escape(formatShekels(it.originalTotalPrice))}</del>` : ""}${escape(formatShekels(it.totalPrice))}
         </td>
       </tr>`;
     })
@@ -848,7 +854,7 @@ export function orderConfirmedEmail({
     itemsTable(items) +
     summaryTable;
 
-  return renderRtlEmail({
+  return withOrderItemText(renderRtlEmail({
     subject: `תודה על ההזמנה ב-${businessName} · ${orderNumber}`,
     preheader: `הזמנה ${orderNumber} התקבלה ב-${businessName}. סה"כ ${formatShekels(total)}.`,
     heading: `תודה ${customerName}!`,
@@ -862,7 +868,7 @@ export function orderConfirmedEmail({
     whatsappButton: whatsappLink ? { href: whatsappLink, label: "צ'אט בוואטסאפ" } : undefined,
     brand: businessName,
     footerNote: `נשלח בשם ${businessName}.`,
-  });
+  }), items);
 }
 
 export function merchantNewOrderEmail({
@@ -929,7 +935,7 @@ export function merchantNewOrderEmail({
     itemsTable(items) +
     summaryTable;
 
-  return renderRtlEmail({
+  return withOrderItemText(renderRtlEmail({
     subject: `הזמנה חדשה ב-${businessName} · ${orderNumber} · ${formatShekels(total)}`,
     preheader: `${methodLabel} · ${paymentLabel} · סה"כ ${formatShekels(total)}`,
     heading: `הזמנה חדשה - ${orderNumber}`,
@@ -939,7 +945,7 @@ export function merchantNewOrderEmail({
     raw: true,
     button: { href: dashboardUrl, label: "לניהול ההזמנות" },
     tail,
-  });
+  }), items);
 }
 
 /**

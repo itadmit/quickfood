@@ -1,3 +1,4 @@
+import { weightPrice } from "@/lib/pricing";
 import { prisma } from "@/lib/db/client";
 import { splitDeliveryNotes, type CheckoutPrefill } from "@/lib/checkout-prefill";
 
@@ -62,6 +63,9 @@ export interface RebuildLine {
   itemId: string;
   name: string;
   basePrice: number;
+  compareAtPrice?: number | null;
+  weightGrams?: number | null;
+  pricePerKg?: number | null;
   artType: string | null;
   imageUrl: string | null;
   quantity: number;
@@ -119,6 +123,7 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
           nameSnapshot: true,
           quantity: true,
           totalPrice: true,
+          weightGrams: true,
           sizeId: true,
           selectedOptions: true,
           notes: true,
@@ -245,10 +250,20 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
       priceDelta: freedOptIds.has(r.opt.id) ? 0 : r.opt.priceDelta,
     }));
 
+    const isWeight = menuItem.pricingMode === "weight";
+    if (isWeight && (it.weightGrams == null || menuItem.pricePerKg == null)) {
+      issues.push({ kind: "item_unavailable", name: menuItem.name });
+      continue;
+    }
+    const lineBase = isWeight ? weightPrice(menuItem.pricePerKg!, it.weightGrams!) : menuItem.basePrice;
+    const comparisonBase = menuItem.compareAtPrice == null ? null : (isWeight ? weightPrice(menuItem.compareAtPrice, it.weightGrams!) : menuItem.compareAtPrice);
     lines.push({
       itemId: menuItem.id,
       name: menuItem.name,
-      basePrice: menuItem.basePrice,
+      basePrice: lineBase,
+      compareAtPrice: comparisonBase,
+      weightGrams: isWeight ? it.weightGrams : null,
+      pricePerKg: isWeight ? menuItem.pricePerKg : null,
       artType: menuItem.artType,
       imageUrl: menuItem.images?.[0] ?? menuItem.imageUrl ?? null,
       quantity: it.quantity,
@@ -263,7 +278,7 @@ export async function rebuildCartFromOrder(orderId: string): Promise<RebuildResu
     // the comparison subtotals - comparing snapshots of items we couldn't
     // restore would inflate the "old" side and confuse the customer.
     const optsDelta = liveOptions.reduce((a, o) => a + o.priceDelta, 0);
-    const newUnit = menuItem.basePrice + sizeDelta + optsDelta;
+    const newUnit = lineBase + sizeDelta + optsDelta;
     newSubtotal += newUnit * it.quantity;
     oldSubtotal += it.totalPrice;
   }

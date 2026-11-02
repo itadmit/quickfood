@@ -1,5 +1,7 @@
 "use client";
 
+import { originalPrice } from "@/lib/compare-price";
+import { Price } from "@/components/shared/Price";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { IcoBag, IcoPlus, IcoMinus, IcoClose, IcoArrowLeft } from "@/components/shared/Icons";
@@ -103,7 +105,7 @@ export function MenuCartSidebar({ tenantSlug, businessType }: Props) {
                           <IcoPlus c="#11231a" s={12} />
                         </button>
                       </div>
-                      <div className="font-semibold tnum text-sm">{formatPrice(lineTotal)}</div>
+                      <div className="font-semibold tnum text-sm"><Price amount={lineTotal} originalAmount={originalPrice(lineTotal, l.basePrice * l.quantity, l.compareAtPrice != null ? l.compareAtPrice * l.quantity : null)} /></div>
                     </div>
                   </div>
                 </li>

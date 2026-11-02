@@ -1,5 +1,6 @@
 "use client";
 
+import { Price } from "@/components/shared/Price";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { IcoPlus, IcoClose } from "@/components/shared/Icons";
@@ -20,6 +21,7 @@ interface PickerItem {
   id: string;
   name: string;
   basePrice: number;
+  compareAtPrice?: number | null;
   categoryId: string;
   available: boolean;
   image: string | null;
@@ -34,6 +36,7 @@ interface DealSlotRow {
     id: string;
     name: string;
     base_price: number;
+  compare_at_price?: number | null;
     available: boolean;
     image: string | null;
     /** Pinned size for this item in the deal; null/undefined = customer chooses. */
@@ -578,6 +581,7 @@ function DealEditor({
                             id: item.id,
                             name: item.name,
                             base_price: item.basePrice,
+                            compare_at_price: item.compareAtPrice,
                             available: item.available,
                             image: item.image,
                           },
@@ -653,7 +657,7 @@ function ItemPicker({
                 {item.name}
                 {!item.available && <span className="text-qf-tomato text-xs ms-1.5">(מוסתר)</span>}
               </span>
-              <span className="text-xs text-qf-mute tnum shrink-0">{formatPrice(item.basePrice)}</span>
+              <span className="text-xs text-qf-mute tnum shrink-0"><Price amount={item.basePrice} originalAmount={item.compareAtPrice} /></span>
             </button>
           );
         })}

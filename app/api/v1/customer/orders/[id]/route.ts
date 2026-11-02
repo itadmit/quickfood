@@ -135,6 +135,8 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
         quantity: it.quantity,
         unit_price: it.unitPrice,
         total_price: it.totalPrice,
+        original_unit_price: it.originalUnitPrice,
+      original_total_price: it.originalTotalPrice,
         size: it.sizeSnapshot,
         options: serializeSelectedOptions(it.selectedOptions),
         notes: it.notes,

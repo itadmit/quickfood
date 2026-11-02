@@ -91,7 +91,7 @@ export const POST = handler(async (req: Request) => {
   };
   const items = await prisma.menuItem.findMany({
     where,
-    select: { id: true, basePrice: true },
+    select: { id: true, basePrice: true, compareAtPrice: true, pricingMode: true },
   });
 
   if (items.length === 0) {
@@ -118,8 +118,12 @@ export const POST = handler(async (req: Request) => {
     id: it.id,
     oldPrice: it.basePrice,
     newPrice: computeNew(it.basePrice),
+    compareAtPrice: it.pricingMode === "weight" ? null : it.compareAtPrice,
   }));
 
+  if (updates.some(u => u.compareAtPrice != null && u.newPrice >= u.compareAtPrice)) {
+    return apiError("validation_error", "המחיר החדש חייב להיות נמוך מהמחיר לפני הנחה. עדכנו תחילה את המחיר לפני הנחה בפריטים הרלוונטיים", 422);
+  }
   // Skip no-op writes - useful when "+0%" was sent by accident or for items
   // where the math lands on the same integer.
   const real = updates.filter((u) => u.newPrice !== u.oldPrice);

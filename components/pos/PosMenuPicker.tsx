@@ -1,8 +1,8 @@
 "use client";
 
+import { Price } from "@/components/shared/Price";
 import { useMemo, useState } from "react";
 import { usePosCart } from "@/components/pos/PosCartProvider";
-import { formatPrice } from "@/lib/format";
 import { resolveCategoryStyle } from "@/lib/category-style";
 import { cn } from "@/lib/cn";
 import { IcoSearch } from "@/components/shared/Icons";
@@ -20,6 +20,7 @@ export interface PosItem {
   categoryId: string;
   name: string;
   basePrice: number;
+  compareAtPrice?: number | null;
   pricingMode?: string;
   pricePerKg?: number | null;
   artType: string | null;
@@ -76,6 +77,7 @@ export function PosMenuPicker({
       itemId: it.id,
       name: it.name,
       basePrice: it.basePrice,
+      compareAtPrice: it.compareAtPrice,
       artType: it.artType,
       imageUrl: it.imageUrl,
       quantity: 1,
@@ -187,7 +189,7 @@ export function PosMenuPicker({
                   <div className="text-xs font-bold leading-tight line-clamp-2">{it.name}</div>
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-sm font-black tnum">
-                      {isWeight ? `${formatPrice(it.pricePerKg!)} לק"ג` : formatPrice(total)}
+                      {isWeight ? <><Price amount={it.pricePerKg!} originalAmount={it.compareAtPrice} /> לק״ג</> : <Price amount={total} originalAmount={it.compareAtPrice != null ? total + it.compareAtPrice - it.basePrice : null} />}
                     </span>
                     {it.hasRequiredOptions && (
                       <span

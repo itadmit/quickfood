@@ -1,5 +1,6 @@
 "use client";
 
+import { Price } from "@/components/shared/Price";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -25,6 +26,7 @@ interface ItemRow {
   id: string;
   name: string;
   basePrice: number;
+  compareAtPrice?: number | null;
 }
 type DraftAddon = { itemId: string; qty: number };
 interface Draft {
@@ -323,7 +325,7 @@ export function BundlesView({
               >
                 {items.map((i) => (
                   <option key={i.id} value={i.id}>
-                    {i.name} · {formatPrice(i.basePrice)}
+                    {i.name} · <Price amount={i.basePrice} originalAmount={i.compareAtPrice} />
                   </option>
                 ))}
               </select>
@@ -353,7 +355,7 @@ export function BundlesView({
                   <option value="">- ללא מוצר משודרג (השתמש בתוספות סטטיות למטה) -</option>
                   {items.map((i) => (
                     <option key={i.id} value={i.id}>
-                      {i.name} · {formatPrice(i.basePrice)}
+                      {i.name} · <Price amount={i.basePrice} originalAmount={i.compareAtPrice} />
                     </option>
                   ))}
                 </select>

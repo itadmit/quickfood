@@ -49,7 +49,7 @@ export const GET = handler(async (req: Request) => {
         select: {
           id: true,
           name: true,
-          basePrice: true,
+          basePrice: true, compareAtPrice: true,
           images: true,
           imageUrl: true,
           available: true,
@@ -61,7 +61,7 @@ export const GET = handler(async (req: Request) => {
             select: {
               id: true,
               name: true,
-              basePrice: true,
+              basePrice: true, compareAtPrice: true,
               images: true,
               imageUrl: true,
               available: true,
@@ -87,7 +87,7 @@ export const GET = handler(async (req: Request) => {
   }
   const triggerItems = await prisma.menuItem.findMany({
     where: { id: { in: [...triggerItemIds] } },
-    select: { id: true, basePrice: true },
+    select: { id: true, basePrice: true, compareAtPrice: true },
   });
   const triggerPriceById = new Map(triggerItems.map((it) => [it.id, it.basePrice]));
 
@@ -124,6 +124,7 @@ export const GET = handler(async (req: Request) => {
             id: b.linkedItem.id,
             name: b.linkedItem.name,
             base_price: b.linkedItem.basePrice,
+            compare_at_price: b.linkedItem.compareAtPrice,
             image_url:
               b.linkedItem.images?.[0] ?? b.linkedItem.imageUrl ?? null,
           },
@@ -159,6 +160,7 @@ export const GET = handler(async (req: Request) => {
           item_id: a.itemId,
           name: a.item.name,
           base_price: a.item.basePrice,
+          compare_at_price: a.item.compareAtPrice,
           image_url: a.item.images?.[0] ?? a.item.imageUrl ?? null,
           qty: a.qty,
         })),

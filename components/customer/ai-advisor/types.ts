@@ -17,6 +17,7 @@ export interface AIRecommendItem {
   id: string;
   name: string;
   basePrice: number;
+  compareAtPrice?: number | null;
   description: string | null;
   imageUrl: string | null;
   href: string;
@@ -26,6 +27,7 @@ export interface AIProposal {
   itemId: string;
   itemName: string;
   basePrice: number;
+  compareAtPrice?: number | null;
   quantity: number;
   sizeId: string | null;
   sizeName: string | null;

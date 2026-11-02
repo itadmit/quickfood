@@ -18,15 +18,15 @@ export default async function BundlesPage() {
       include: {
         triggers: { include: { item: { select: { id: true, name: true } } } },
         addons: {
-          include: { item: { select: { id: true, name: true, basePrice: true } } },
+          include: { item: { select: { id: true, name: true, basePrice: true, compareAtPrice: true } } },
         },
-        linkedItem: { select: { id: true, name: true, basePrice: true } },
+        linkedItem: { select: { id: true, name: true, basePrice: true, compareAtPrice: true } },
       },
     }),
     prisma.menuItem.findMany({
       where: { tenantId: session.tenantId, available: true },
       orderBy: [{ position: "asc" }],
-      select: { id: true, name: true, basePrice: true },
+      select: { id: true, name: true, basePrice: true, compareAtPrice: true },
     }),
   ]);
 

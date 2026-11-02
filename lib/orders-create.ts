@@ -1,3 +1,4 @@
+import { comparisonSnapshot } from "@/lib/compare-price";
 import { after } from "next/server";
 import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db/client";
@@ -388,6 +389,9 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     const lineQuantity = isWeight ? 1 : line.quantity;
     const base = isWeight ? weightPrice(item.pricePerKg!, weightGrams!) : item.basePrice;
     const unitPriceExact = base + sizeDelta + optionsDelta;
+    const originalBase = item.compareAtPrice != null && item.compareAtPrice > (isWeight ? item.pricePerKg! : item.basePrice)
+      ? (isWeight ? weightPrice(item.compareAtPrice, weightGrams!) : item.compareAtPrice) : null;
+    const { originalUnitPrice, originalTotalPrice } = comparisonSnapshot(unitPriceExact, base, originalBase, lineQuantity);
     const totalPriceExact = unitPriceExact * lineQuantity;
     const unitPrice = Math.round(unitPriceExact);
     const totalPrice = Math.round(totalPriceExact);
@@ -400,6 +404,8 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       weightGrams,
       unitPrice,
       totalPrice,
+      originalUnitPrice,
+      originalTotalPrice,
       sizeId: line.size_id ?? null,
       sizeSnapshot,
       selectedOptions: selectedOptions as unknown as Prisma.InputJsonValue,
@@ -654,7 +660,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       if (!addonsSatisfied) continue;
       const itemRows = await prisma.menuItem.findMany({
         where: { id: { in: b.addons.map((a) => a.itemId) } },
-        select: { id: true, basePrice: true },
+        select: { id: true, basePrice: true, compareAtPrice: true },
       });
       const priceById = new Map(itemRows.map((r) => [r.id, r.basePrice]));
       const fullPrice = b.addons.reduce(

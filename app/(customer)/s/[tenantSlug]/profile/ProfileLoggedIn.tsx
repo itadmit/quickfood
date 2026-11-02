@@ -1,5 +1,6 @@
 "use client";
 
+import { Price } from "@/components/shared/Price";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -62,6 +63,7 @@ interface FavoriteItem {
   name: string;
   description: string;
   basePrice: number;
+  compareAtPrice?: number | null;
   images: string[];
   artType: string | null;
   available: boolean;
@@ -298,7 +300,7 @@ export function ProfileLoggedIn({
                   )}
                 </div>
                 <div className="shrink-0 text-end">
-                  <div className="tnum font-semibold text-sm">{formatPrice(f.basePrice)}</div>
+                  <div className="tnum font-semibold text-sm"><Price amount={f.basePrice} originalAmount={f.compareAtPrice} /></div>
                   {!f.available && (
                     <div className="text-[10px] text-qf-tomato mt-0.5">לא זמין כרגע</div>
                   )}

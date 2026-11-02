@@ -1,9 +1,9 @@
 "use client";
 
+import { Price } from "@/components/shared/Price";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { IcoCheck, IcoPlus } from "@/components/shared/Icons";
-import { formatPrice } from "@/lib/format";
 import type { AIChatMessage, AIProposal, AIRecommendItem } from "./types";
 
 interface Props {
@@ -148,7 +148,7 @@ function RecommendCard({ item, onClose }: { item: AIRecommendItem; onClose: () =
       )}
       <div className="p-2.5">
         <div className="text-sm font-bold leading-tight line-clamp-2">{item.name}</div>
-        <div className="text-xs text-qf-mute mt-0.5">{formatPrice(item.basePrice)}</div>
+        <div className="text-xs text-qf-mute mt-0.5"><Price amount={item.basePrice} originalAmount={item.compareAtPrice} /></div>
       </div>
     </Link>
   );
@@ -201,7 +201,7 @@ function ProposalCard({
           )}
           {proposal.notes && <div className="text-xs italic text-qf-mute mt-0.5">"{proposal.notes}"</div>}
         </div>
-        <div className="text-sm font-bold tnum self-start">{formatPrice(total)}</div>
+        <div className="text-sm font-bold tnum self-start"><Price amount={total} originalAmount={proposal.compareAtPrice != null ? total + (proposal.compareAtPrice - proposal.basePrice) * proposal.quantity : null} /></div>
       </div>
       {resolved ? (
         <div className="w-full px-4 py-3 bg-qf-green-soft text-qf-green-deep font-bold text-sm flex items-center justify-center gap-1.5">
@@ -217,7 +217,7 @@ function ProposalCard({
             className="flex-1 px-4 py-3 bg-black text-white font-bold text-sm flex items-center justify-center gap-1.5 hover:bg-black/85 transition disabled:opacity-60"
           >
             <IcoPlus c="currentColor" s={14} />
-            הוסף לעגלה · {formatPrice(total)}
+            הוסף לעגלה · <Price amount={total} originalAmount={proposal.compareAtPrice != null ? total + (proposal.compareAtPrice - proposal.basePrice) * proposal.quantity : null} />
           </button>
           <button
             type="button"

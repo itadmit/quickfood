@@ -1,5 +1,7 @@
 "use client";
 
+import { Price } from "@/components/shared/Price";
+import { originalPrice } from "@/lib/compare-price";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IcoClose, IcoPlus, IcoMinus, IcoCheck, IcoSearch } from "@/components/shared/Icons";
@@ -28,6 +30,7 @@ interface MenuItem {
   id: string;
   name: string;
   basePrice: number;
+  compareAtPrice?: number | null;
   artType: string | null;
   available: boolean;
   sizes: Array<{ id: string; name: string; priceDelta: number; isDefault: boolean }>;
@@ -54,6 +57,7 @@ interface CartLine {
   name: string;
   qty: number;
   unit: number;
+  originalUnit?: number | null;
   sizeId: string | null;
   sizeName: string | null;
   options: SelectedOption[];
@@ -161,6 +165,7 @@ export function ManualOrderModal({ onClose }: { onClose: () => void }) {
             id: it.id as string,
             name: it.name as string,
             basePrice: it.base_price as number,
+            compareAtPrice: it.compare_at_price as number | null,
             artType: it.art_type as string | null,
             available: it.available as boolean,
             sizes: ((it.sizes as Array<Record<string, unknown>>) ?? []).map((s) => ({
@@ -235,6 +240,7 @@ export function ManualOrderModal({ onClose }: { onClose: () => void }) {
               name: item.name,
               qty: 1,
               unit,
+              originalUnit: originalPrice(unit, item.basePrice, item.compareAtPrice),
               sizeId: sizeRow?.id ?? null,
               sizeName: sizeRow?.name ?? null,
               options: optionList,
@@ -406,7 +412,7 @@ export function ManualOrderModal({ onClose }: { onClose: () => void }) {
                   <div className="text-sm font-medium leading-tight">{it.name}</div>
                   <div className="flex items-center justify-between mt-1">
                     <div className="text-xs text-qf-mute tnum">
-                      {formatPrice(it.basePrice)}
+                      <Price amount={it.basePrice} originalAmount={it.compareAtPrice} />
                     </div>
                     {needsConfig(it) && (
                       <span className="text-[10px] text-qf-mute bg-qf-line-soft rounded px-1.5 py-0.5">
@@ -539,7 +545,7 @@ export function ManualOrderModal({ onClose }: { onClose: () => void }) {
                         </div>
                       )}
                       <div className="text-xs text-qf-mute tnum mt-0.5">
-                        {formatPrice(l.unit)} × {l.qty} = {formatPrice(l.unit * l.qty)}
+                        <Price amount={l.unit} originalAmount={l.originalUnit} /> × {l.qty} = <Price amount={l.unit * l.qty} originalAmount={l.originalUnit != null ? l.originalUnit * l.qty : null} />
                       </div>
                     </div>
                     <div className="flex items-center bg-qf-line-soft rounded-full shrink-0">
@@ -674,7 +680,7 @@ function ConfigurePanel({
       <header className="px-4 py-3 border-b border-qf-line-soft flex items-center justify-between">
         <div className="min-w-0">
           <div className="text-sm font-bold truncate">{item.name}</div>
-          <div className="text-xs text-qf-mute tnum">{formatPrice(unit)}</div>
+          <div className="text-xs text-qf-mute tnum"><Price amount={unit} originalAmount={originalPrice(unit, item.basePrice, item.compareAtPrice)} /></div>
         </div>
         <button
           type="button"
@@ -793,7 +799,7 @@ function ConfigurePanel({
               : undefined
           }
         >
-          {canConfirm ? `הוסף לסל · ${formatPrice(unit)}` : "השלם בחירות חובה"}
+          {canConfirm ? `הוסף לסל · $<Price amount={unit} originalAmount={originalPrice(unit, item.basePrice, item.compareAtPrice)} />` : "השלם בחירות חובה"}
         </button>
       </footer>
     </div>

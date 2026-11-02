@@ -1,23 +1,24 @@
 "use client";
 
+import { Price } from "@/components/shared/Price";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { resolveCategoryStyle, type CategoryColorKey } from "@/lib/category-style";
-import { formatPrice } from "@/lib/format";
 import { FILTERABLE_TAG_LABELS, findTag, TONE_CLASSES } from "@/lib/dietary-tags";
 import { cn } from "@/lib/cn";
 
-/** Price label for a menu card - "₪X לק"ג" for weight items, else the fixed price. */
+/** Price label for a menu card - "₪X לק״ג" for weight items, else the fixed price. */
 export function menuCardPrice(item: {
   basePrice: number;
+  compareAtPrice?: number | null;
   pricingMode?: string;
   pricePerKg?: number | null;
-}): string {
+}): React.ReactNode {
   if (item.pricingMode === "weight" && item.pricePerKg != null) {
-    return `${formatPrice(item.pricePerKg)} לק"ג`;
+    return <><Price amount={item.pricePerKg} originalAmount={item.compareAtPrice} /> לק״ג</>;
   }
-  return formatPrice(item.basePrice);
+  return <Price amount={item.basePrice} originalAmount={item.compareAtPrice} />;
 }
 
 export interface MenuListItem {
@@ -26,6 +27,7 @@ export interface MenuListItem {
   name: string;
   description: string;
   basePrice: number;
+  compareAtPrice?: number | null;
   pricingMode?: string;
   pricePerKg?: number | null;
   artType: string | null;

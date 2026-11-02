@@ -90,6 +90,7 @@ export async function sendOrderConfirmedEmail(orderId: string): Promise<void> {
     quantity: it.quantity,
     unitPrice: it.unitPrice,
     totalPrice: it.totalPrice,
+    originalTotalPrice: it.originalTotalPrice,
     notes: it.notes,
     options: parseOptions(it.selectedOptions),
     imageUrl: it.menuItem?.images?.[0] ?? it.menuItem?.imageUrl ?? null,

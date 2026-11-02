@@ -1,5 +1,7 @@
 "use client";
 
+import { originalPrice } from "@/lib/compare-price";
+import { Price } from "@/components/shared/Price";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { useCart, type CartLine } from "@/components/customer/CartProvider";
@@ -72,6 +74,9 @@ interface KioskItem {
   name: string;
   description: string | null;
   basePrice: number;
+  compareAtPrice?: number | null;
+  pricingMode?: string;
+  pricePerKg?: number | null;
   artType: string | null;
   imageUrl: string | null;
   tags: string[];
@@ -94,6 +99,7 @@ interface BundleSuggestion {
     id: string;
     name: string;
     base_price: number;
+  compare_at_price?: number | null;
     image_url: string | null;
   };
   /** Legacy mode - addons get injected directly into the cart. */
@@ -101,6 +107,7 @@ interface BundleSuggestion {
     item_id: string;
     name: string;
     base_price: number;
+  compare_at_price?: number | null;
     image_url: string | null;
     qty: number;
   }>;
@@ -418,6 +425,7 @@ export function KioskApp({
           itemId: a.item_id,
           name: a.name,
           basePrice: a.base_price,
+          compareAtPrice: a.compare_at_price,
           artType: detail?.artType ?? null,
           imageUrl: a.image_url,
           quantity: 1,
@@ -630,7 +638,7 @@ export function KioskApp({
           const hasRequiredGroup = (detail?.optionGroups ?? []).some(
             (g) => g.required === true,
           );
-          return { ...it, needsConfig: hasMultipleSizes || hasRequiredGroup };
+          return { ...it, needsConfig: it.pricingMode === "weight" || hasMultipleSizes || hasRequiredGroup };
         })
         .sort((a, b) => a.basePrice - b.basePrice)
         .slice(0, 4);
@@ -656,6 +664,7 @@ export function KioskApp({
       itemId: it.id,
       name: it.name,
       basePrice: it.basePrice,
+      compareAtPrice: it.compareAtPrice,
       artType: it.artType,
       imageUrl: it.imageUrl,
       quantity: 1,
@@ -1958,7 +1967,7 @@ export function KioskApp({
                     </div>
                     <div className="p-4 space-y-1">
                       <div className="text-base font-bold leading-snug line-clamp-2 min-h-[2.6em] text-qf-ink">{it.name}</div>
-                      <div className="text-base font-semibold text-qf-ink2 tnum">{formatPrice(it.basePrice)}</div>
+                      <div className="text-base font-semibold text-qf-ink2 tnum"><><Price amount={it.pricingMode === "weight" ? (it.pricePerKg ?? 0) : it.basePrice} originalAmount={it.compareAtPrice} />{it.pricingMode === "weight" ? " לק״ג" : ""}</></div>
                     </div>
                   </button>
                 ))}
@@ -2129,7 +2138,7 @@ export function KioskApp({
                               <IcoPlus c="#11231a" s={20} />
                             </button>
                           </div>
-                          <div className="text-lg font-black tnum text-qf-ink">{formatPrice(lineTotal)}</div>
+                          <div className="text-lg font-black tnum text-qf-ink"><Price amount={lineTotal} originalAmount={originalPrice(lineTotal, l.basePrice * l.quantity, l.compareAtPrice != null ? l.compareAtPrice * l.quantity : null)} /></div>
                         </div>
                       </div>
                     </div>
@@ -2225,7 +2234,7 @@ export function KioskApp({
                           {it.name}
                         </div>
                         <div className="text-xs text-qf-mute tnum mt-1">
-                          {formatPrice(it.basePrice)}
+                          <><Price amount={it.pricingMode === "weight" ? (it.pricePerKg ?? 0) : it.basePrice} originalAmount={it.compareAtPrice} />{it.pricingMode === "weight" ? " לק״ג" : ""}</>
                         </div>
                       </div>
                       <button
@@ -2312,7 +2321,7 @@ export function KioskApp({
                       <div className="text-base font-bold leading-tight line-clamp-2 min-h-[2.4em]">
                         {it.name}
                       </div>
-                      <div className="text-sm text-qf-mute tnum mt-1">{formatPrice(it.basePrice)}</div>
+                      <div className="text-sm text-qf-mute tnum mt-1"><><Price amount={it.pricingMode === "weight" ? (it.pricePerKg ?? 0) : it.basePrice} originalAmount={it.compareAtPrice} />{it.pricingMode === "weight" ? " לק״ג" : ""}</></div>
                     </div>
                   </button>
                 ))}

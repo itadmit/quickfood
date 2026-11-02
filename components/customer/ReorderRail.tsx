@@ -32,6 +32,9 @@ interface RebuildLine {
   itemId: string;
   name: string;
   basePrice: number;
+  compareAtPrice?: number | null;
+  weightGrams?: number | null;
+  pricePerKg?: number | null;
   artType: string | null;
   imageUrl: string | null;
   quantity: number;
@@ -130,6 +133,9 @@ export function ReorderRail({
               itemId: l.itemId,
               name: l.name,
               basePrice: l.basePrice,
+              compareAtPrice: l.compareAtPrice,
+              weightGrams: l.weightGrams,
+              pricePerKg: l.pricePerKg,
               artType: l.artType,
               imageUrl: l.imageUrl,
               quantity: l.quantity,

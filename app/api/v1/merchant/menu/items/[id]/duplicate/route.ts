@@ -73,6 +73,7 @@ export const POST = handler(async (_req, { params }: { params: Promise<{ id: str
       name: newName,
       description: source.description,
       basePrice: source.basePrice,
+      compareAtPrice: source.compareAtPrice,
       prepMinutes: source.prepMinutes,
       artType: source.artType,
       imageUrl: newImageUrl,

@@ -47,6 +47,7 @@ export default async function MenuPage() {
         description: i.description,
         categoryId: i.categoryId,
         basePrice: i.basePrice,
+        compareAtPrice: i.compareAtPrice,
         pricingMode: i.pricingMode,
         pricePerKg: i.pricePerKg,
         prepMinutes: i.prepMinutes,

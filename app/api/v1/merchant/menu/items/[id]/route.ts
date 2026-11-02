@@ -32,6 +32,7 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
       description: item.description,
       category_id: item.categoryId,
       base_price: item.basePrice,
+      compare_at_price: item.compareAtPrice,
       pricing_mode: item.pricingMode,
       price_per_kg: item.pricePerKg,
       prep_minutes: item.prepMinutes,
@@ -94,10 +95,14 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
   const { id } = await params;
   const body = MenuItemInputSchema.parse(await req.json());
 
-  const existing = await prisma.menuItem.findUnique({ where: { id }, select: { tenantId: true, basePrice: true } });
+  const existing = await prisma.menuItem.findUnique({ where: { id }, select: { tenantId: true, basePrice: true, compareAtPrice: true } });
   if (!existing) return apiError("not_found", "פריט לא נמצא", 404);
   if (existing.tenantId !== session.tenantId) return apiError("forbidden", "אין הרשאה", 403);
 
+  const compareAtPrice = body.compare_at_price === undefined ? existing.compareAtPrice : body.compare_at_price;
+  if (compareAtPrice != null && compareAtPrice <= (body.pricing_mode === "weight" ? (body.price_per_kg ?? 0) : body.base_price)) {
+    return apiError("validation_error", "המחיר לפני הנחה חייב להיות גבוה מהמחיר הנוכחי", 422, "compare_at_price");
+  }
   const priceChanged = existing.basePrice !== body.base_price;
 
   const cat = await prisma.menuCategory.findUnique({
@@ -117,6 +122,7 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
         name: body.name,
         description: body.description,
         basePrice: body.base_price,
+        compareAtPrice,
         pricingMode: body.pricing_mode,
         pricePerKg: body.pricing_mode === "weight" ? (body.price_per_kg ?? null) : null,
         prepMinutes: body.prep_minutes,

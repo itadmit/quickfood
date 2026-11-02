@@ -15,6 +15,7 @@ export interface CartLine {
   itemId: string;
   name: string;
   basePrice: number;
+  compareAtPrice?: number | null;
   artType: string | null;
   imageUrl: string | null;
   quantity: number;

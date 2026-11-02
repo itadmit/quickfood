@@ -76,6 +76,8 @@ export async function printOrderTicket(orderId: string, trigger: PrintTrigger): 
         quantity: it.quantity,
         weight_grams: it.weightGrams,
         total_price: it.totalPrice,
+        original_unit_price: it.originalUnitPrice,
+      original_total_price: it.originalTotalPrice,
         size: it.sizeSnapshot,
         options: it.selectedOptions,
         notes: it.notes,

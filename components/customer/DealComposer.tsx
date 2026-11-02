@@ -33,6 +33,7 @@ interface ComposerItem {
   id: string;
   name: string;
   basePrice: number;
+  compareAtPrice?: number | null;
   artType: string | null;
   images?: string[];
   sizes?: ComposerSize[];

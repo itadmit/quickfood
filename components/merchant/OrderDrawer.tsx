@@ -1,5 +1,6 @@
 "use client";
 
+import { Price } from "@/components/shared/Price";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -72,6 +73,7 @@ interface OrderDetail {
     weight_grams?: number | null;
     unit_price: number;
     total_price: number;
+    original_total_price?: number | null;
     size: string | null;
     options: unknown;
     notes: string | null;
@@ -488,7 +490,7 @@ export function OrderDrawer({
                           )}
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <div className="text-sm font-semibold tnum">{formatPrice(it.total_price)}</div>
+                          <div className="text-sm font-semibold tnum"><Price amount={it.total_price} originalAmount={it.original_total_price} /></div>
                           {canEdit && (
                             <>
                               <button
@@ -831,7 +833,7 @@ function PrintReceipt({ order, settings }: { order: OrderDetail; settings: Recei
               {it.name}
               {it.size ? ` · ${it.size}` : ""}
             </span>
-            <span>{formatPrice(it.total_price)}</span>
+            <span><Price amount={it.total_price} originalAmount={it.original_total_price} /></span>
           </div>
           {settings.showOptions &&
             Array.isArray(it.options) &&

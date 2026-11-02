@@ -249,6 +249,7 @@ export const MenuItemInputSchema = z.object({
   description: z.string().max(800).default(""),
   category_id: UuidSchema,
   base_price: z.number().int().min(0),
+  compare_at_price: z.number().int().positive().nullable().optional(),
   // "fixed" (default) or "weight" (sold by kg; price_per_kg must be set).
   pricing_mode: z.enum(["fixed", "weight"]).default("fixed"),
   price_per_kg: z.number().int().min(1).nullable().optional(),
@@ -273,6 +274,9 @@ export const MenuItemInputSchema = z.object({
   sizes: z.array(ItemSizeInputSchema).default([]),
   option_groups: z.array(ItemOptionGroupInputSchema).default([]),
 }).superRefine((d, ctx) => {
+  if (d.compare_at_price != null && d.compare_at_price <= (d.pricing_mode === "weight" ? (d.price_per_kg ?? 0) : d.base_price)) {
+    ctx.addIssue({ code: "custom", message: "המחיר לפני הנחה חייב להיות גבוה מהמחיר הנוכחי", path: ["compare_at_price"] });
+  }
   if (d.pricing_mode === "weight" && (d.price_per_kg == null || d.price_per_kg < 1)) {
     ctx.addIssue({
       code: "custom",

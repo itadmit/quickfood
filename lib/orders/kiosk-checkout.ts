@@ -135,8 +135,8 @@ async function priceKioskCart(input: CreateOrderInput): Promise<{
       },
       include: {
         triggers: { select: { itemId: true } },
-        addons: { include: { item: { select: { basePrice: true } } } },
-        linkedItem: { select: { basePrice: true } },
+        addons: { include: { item: { select: { basePrice: true, compareAtPrice: true } } } },
+        linkedItem: { select: { basePrice: true, compareAtPrice: true } },
       },
     });
     const cartItemIds = new Set(input.lines.map((l) => l.item_id));

@@ -115,6 +115,8 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [emailDrafts, setEmailDrafts] = useState<Record<string, string>>({});
+  const [savingEmail, setSavingEmail] = useState<string | null>(null);
   const [showDuplicate, setShowDuplicate] = useState(false);
 
   function set<K extends keyof InitialData>(k: K, v: InitialData[K]) {
@@ -124,6 +126,24 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
   function flash(msg: string) {
     setToast(msg);
     setTimeout(() => setToast(null), 2500);
+  }
+
+  async function saveUserEmail(userId: string) {
+    setSavingEmail(userId);
+    setError(null);
+    try {
+      const res = await fetch(`/api/v1/admin/tenants/${t.id}/users/${userId}`, {
+        method: "PATCH", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: emailDrafts[userId] }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data?.error?.message ?? "עדכון המייל נכשל"); return; }
+      setT(prev => ({ ...prev, users: prev.users.map(u => u.id === userId ? { ...u, email: data.email, emailVerifiedAt: data.email_verified_at } : u) }));
+      setEmailDrafts(prev => { const next = { ...prev }; delete next[userId]; return next; });
+      flash("המייל עודכן. הכתובת החדשה ממתינה לאימות");
+      router.refresh();
+    } catch { setError("עדכון המייל נכשל. נסו שוב."); }
+    finally { setSavingEmail(null); }
   }
 
   async function save() {
@@ -776,7 +796,18 @@ export function TenantDetail({ initial }: { initial: InitialData }) {
                   className="text-xs text-qf-mute flex items-center gap-2 mt-0.5"
                   dir="ltr"
                 >
-                  <span className="truncate">{u.email}</span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input type="email" aria-label={`מייל של ${u.name}`} dir="ltr"
+                      value={emailDrafts[u.id] ?? u.email}
+                      onChange={e => setEmailDrafts(prev => ({ ...prev, [u.id]: e.target.value }))}
+                      className="min-w-0 w-56 max-w-full rounded-lg border border-qf-line-dash bg-white px-2 py-1.5 text-sm text-qf-ink" />
+                    {emailDrafts[u.id] !== undefined && emailDrafts[u.id] !== u.email && (
+                      <button type="button" disabled={savingEmail === u.id || !emailDrafts[u.id]?.trim()}
+                        onClick={() => saveUserEmail(u.id)} className="rounded-lg border border-qf-line-dash px-2 py-1.5 text-xs text-qf-ink disabled:opacity-50">
+                        {savingEmail === u.id ? "שומר..." : "שמירת מייל"}
+                      </button>
+                    )}
+                  </div>
                   {u.phone && (
                     <>
                       <span className="text-qf-line">·</span>

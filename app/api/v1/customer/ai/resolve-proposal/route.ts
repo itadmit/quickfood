@@ -98,6 +98,7 @@ export const POST = handler(async (req: Request) => {
       itemId: item.id,
       itemName: item.name,
       basePrice: item.basePrice,
+      compareAtPrice: item.compareAtPrice,
       quantity: body.quantity ?? 1,
       sizeId,
       sizeName,

@@ -770,6 +770,7 @@ model MenuItem {
   imageNote   String?      @map("image_note")
   artType     String?      @map("art_type")
   basePrice   Int          @map("base_price")
+  compareAtPrice Int?      @map("compare_at_price")
   // Pricing mode. "fixed" = basePrice per unit, integer quantity (default).
   // "weight" = sold by weight: the customer/cashier enters grams and the
   // line is priced pricePerKg * grams / 1000, rounded to whole shekels.
@@ -1380,6 +1381,8 @@ model OrderItem {
   weightGrams  Int?   @map("weight_grams")
   unitPrice    Int    @map("unit_price")
   totalPrice   Int    @map("total_price")
+  originalUnitPrice Int? @map("original_unit_price")
+  originalTotalPrice Int? @map("original_total_price")
 
   sizeId       String? @map("size_id") @db.Uuid
   sizeSnapshot String? @map("size_snapshot")

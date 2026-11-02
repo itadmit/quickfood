@@ -217,6 +217,10 @@ export async function commitImport(
       continue;
     }
     try {
+      const previous = await prisma.menuItem.findUnique({
+        where: { tenantId_externalSource_externalId: { tenantId, externalSource: SOURCE, externalId: it.id } },
+        select: { compareAtPrice: true, pricingMode: true },
+      });
       const saved = await prisma.menuItem.upsert({
         where: {
           tenantId_externalSource_externalId: {
@@ -231,6 +235,7 @@ export async function commitImport(
           name: cleanImportedName(it.name),
           description: cleanImportedText(it.description),
           basePrice: agorotToShekel(it.baseprice ?? 0),
+          ...(previous?.pricingMode !== "weight" && previous?.compareAtPrice != null && previous.compareAtPrice <= agorotToShekel(it.baseprice ?? 0) ? { compareAtPrice: null } : {}),
           available: it.enabled !== false,
           position: idx,
           externalSource: SOURCE,
@@ -241,6 +246,7 @@ export async function commitImport(
           name: cleanImportedName(it.name),
           description: cleanImportedText(it.description),
           basePrice: agorotToShekel(it.baseprice ?? 0),
+          ...(previous?.pricingMode !== "weight" && previous?.compareAtPrice != null && previous.compareAtPrice <= agorotToShekel(it.baseprice ?? 0) ? { compareAtPrice: null } : {}),
           available: it.enabled !== false,
           position: idx,
         },

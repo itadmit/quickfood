@@ -69,6 +69,7 @@ function serializeItem(i: ItemWithExtras) {
     images: i.images,
     art_type: i.artType,
     base_price: i.basePrice,
+    compare_at_price: i.compareAtPrice,
     prep_minutes: i.prepMinutes,
     tags: i.tags,
     available: i.available,

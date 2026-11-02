@@ -1,5 +1,6 @@
 "use client";
 
+import { Price } from "@/components/shared/Price";
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/customer/CartProvider";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
@@ -7,12 +8,12 @@ import { ItemDetailModal } from "@/components/customer/ItemDetailModal";
 import { ItemDetail } from "@/components/customer/screens/ItemDetail";
 import ItemModalSkeleton from "@/components/customer/ItemModalSkeleton";
 import { IcoCheck, IcoPlus } from "@/components/shared/Icons";
-import { formatPrice } from "@/lib/format";
 
 interface UpsellItem {
   id: string;
   name: string;
   basePrice: number;
+  compareAtPrice?: number | null;
   imageUrl: string | null;
   needsConfig?: boolean;
 }
@@ -107,6 +108,7 @@ export function usePreCheckoutUpsell(tenantSlug: string) {
       itemId: it.id,
       name: it.name,
       basePrice: it.basePrice,
+      compareAtPrice: it.compareAtPrice,
       artType: null,
       imageUrl: it.imageUrl,
       quantity: 1,
@@ -163,7 +165,7 @@ export function usePreCheckoutUpsell(tenantSlug: string) {
                           {it.name}
                         </div>
                         <div className="text-xs text-qf-mute tnum mt-1">
-                          {formatPrice(it.basePrice)}
+                          <Price amount={it.basePrice} originalAmount={it.compareAtPrice} />
                         </div>
                       </div>
                       <span className="absolute top-2 start-2 w-8 h-8 rounded-full bg-white shadow-md grid place-items-center">

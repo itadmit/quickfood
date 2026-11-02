@@ -11,7 +11,7 @@ export const DEAL_INCLUDE = {
         orderBy: { position: "asc" as const },
         include: {
           item: {
-            select: { id: true, name: true, basePrice: true, available: true, images: true },
+            select: { id: true, name: true, basePrice: true, compareAtPrice: true, available: true, images: true },
           },
         },
       },
@@ -36,7 +36,8 @@ export interface DealWithSlots {
     choices: Array<{
       itemId: string;
       fixedSizeId: string | null;
-      item: { id: string; name: string; basePrice: number; available: boolean; images: string[] };
+      item: { id: string; name: string; basePrice: number;
+  compareAtPrice?: number | null; available: boolean; images: string[] };
     }>;
   }>;
 }
@@ -60,6 +61,7 @@ export function serializeDeal(deal: DealWithSlots) {
         id: c.item.id,
         name: c.item.name,
         base_price: c.item.basePrice,
+        compare_at_price: c.item.compareAtPrice,
         available: c.item.available,
         image: c.item.images[0] ?? null,
         fixedSizeId: c.fixedSizeId,

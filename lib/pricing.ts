@@ -7,6 +7,7 @@ export interface PriceLine {
   name: string;
   quantity: number;
   base_price: number;
+  compare_at_price?: number | null;
   size_delta: number;
   options_delta: number;
   unit_price: number;
@@ -25,6 +26,7 @@ export interface CartSummary {
 
 export interface PriceInput {
   base_price: number;
+  compare_at_price?: number | null;
   size_delta?: number;
   options_delta?: number;
   quantity: number;

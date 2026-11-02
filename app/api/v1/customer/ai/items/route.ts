@@ -22,7 +22,7 @@ export const GET = handler(async (req: Request) => {
       id: true,
       name: true,
       description: true,
-      basePrice: true,
+      basePrice: true, compareAtPrice: true,
       images: true,
       imageUrl: true,
     },
@@ -36,6 +36,7 @@ export const GET = handler(async (req: Request) => {
       name: r.name,
       description: r.description,
       basePrice: r.basePrice,
+      compareAtPrice: r.compareAtPrice,
       imageUrl: r.images?.[0] ?? r.imageUrl ?? null,
       href: `/s/${slug}/menu/${r.id}`,
     }));

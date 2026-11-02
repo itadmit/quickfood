@@ -393,6 +393,7 @@ function ProductSquare({
       itemId: item.id,
       name: item.name,
       basePrice: item.basePrice,
+      compareAtPrice: item.compareAtPrice,
       artType: item.artType,
       imageUrl: item.images?.[0] ?? null,
       quantity: 1,

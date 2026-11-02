@@ -1,10 +1,10 @@
 "use client";
 
+import { Price } from "@/components/shared/Price";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { formatPrice } from "@/lib/format";
 import { IcoEye, IcoEdit, IcoTrash, IcoClose, IcoCheck, IcoMore, IcoStar, IcoCopy, IcoSearch } from "@/components/shared/Icons";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
@@ -45,6 +45,7 @@ interface Item {
   description: string;
   categoryId: string;
   basePrice: number;
+  compareAtPrice?: number | null;
   pricingMode?: string;
   pricePerKg?: number | null;
   prepMinutes: number;
@@ -55,11 +56,12 @@ interface Item {
   images: string[];
 }
 
-function itemPriceLabel(item: { basePrice: number; pricingMode?: string; pricePerKg?: number | null }): string {
+function itemPriceLabel(item: { basePrice: number;
+  compareAtPrice?: number | null; pricingMode?: string; pricePerKg?: number | null }): React.ReactNode {
   if (item.pricingMode === "weight" && item.pricePerKg != null) {
-    return `${formatPrice(item.pricePerKg)} לק"ג`;
+    return <><Price amount={item.pricePerKg} originalAmount={item.compareAtPrice} /> לק״ג</>;
   }
-  return formatPrice(item.basePrice);
+  return <Price amount={item.basePrice} originalAmount={item.compareAtPrice} />;
 }
 
 export function MenuList({

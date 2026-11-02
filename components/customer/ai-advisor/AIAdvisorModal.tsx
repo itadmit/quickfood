@@ -168,6 +168,7 @@ export function AIAdvisorModal({
         itemId: proposal.itemId,
         name: proposal.itemName,
         basePrice: proposal.basePrice,
+        compareAtPrice: proposal.compareAtPrice,
         artType: null,
         imageUrl: proposal.imageUrl,
         quantity: proposal.quantity,

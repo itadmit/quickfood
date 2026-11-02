@@ -1,5 +1,6 @@
 "use client";
 
+import { Price } from "@/components/shared/Price";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
@@ -29,6 +30,7 @@ interface OrderItemRow {
   quantity: number;
   weightGrams?: number | null;
   total: number;
+  originalTotal?: number | null;
   size: string | null;
   imageUrl: string | null;
   notes: string | null;
@@ -491,7 +493,7 @@ export function OrderTracking({
                 <CartLineOptions options={it.options} compact />
               </div>
               <div className="font-medium tnum shrink-0">
-                {formatPrice(it.total)}
+                <Price amount={it.total} originalAmount={it.originalTotal} />
               </div>
             </div>
           ))}
@@ -902,7 +904,7 @@ function ThankYouView({
               )}
             </div>
             <div className="font-medium tnum shrink-0">
-              {formatPrice(it.total)}
+              <Price amount={it.total} originalAmount={it.originalTotal} />
             </div>
           </div>
         ))}

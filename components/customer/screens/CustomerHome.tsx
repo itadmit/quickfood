@@ -78,6 +78,7 @@ interface Props {
     name: string;
     description: string;
     basePrice: number;
+  compareAtPrice?: number | null;
     pricingMode?: string;
     pricePerKg?: number | null;
     artType: string | null;

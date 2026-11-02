@@ -24,7 +24,7 @@ export default async function DealsPage() {
       select: {
         id: true,
         name: true,
-        basePrice: true,
+        basePrice: true, compareAtPrice: true,
         categoryId: true,
         available: true,
         images: true,
@@ -48,6 +48,7 @@ export default async function DealsPage() {
         id: i.id,
         name: i.name,
         basePrice: i.basePrice,
+        compareAtPrice: i.compareAtPrice,
         categoryId: i.categoryId,
         available: i.available,
         image: i.images[0] ?? null,

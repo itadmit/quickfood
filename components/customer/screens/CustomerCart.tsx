@@ -1,5 +1,7 @@
 "use client";
 
+import { originalPrice } from "@/lib/compare-price";
+import { Price } from "@/components/shared/Price";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -187,7 +189,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
                       </button>
                     </div>
                   )}
-                  <div className="font-bold tnum text-base">{formatPrice(lineTotal)}</div>
+                  <div className="font-bold tnum text-base"><Price amount={lineTotal} originalAmount={originalPrice(lineTotal, l.basePrice * l.quantity, l.compareAtPrice != null ? l.compareAtPrice * l.quantity : null)} /></div>
                 </div>
               </div>
             </div>

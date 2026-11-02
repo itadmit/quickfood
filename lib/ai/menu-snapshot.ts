@@ -32,6 +32,7 @@ export interface AIMenuItem {
   name: string;
   description: string | null;
   basePrice: number;
+  compareAtPrice?: number | null;
   tags: string[];
   category: string;
   imageUrl: string | null;
@@ -86,6 +87,7 @@ export async function loadAIMenuSnapshot(tenantId: string): Promise<AIMenuSnapsh
         name: item.name,
         description: item.description,
         basePrice: item.basePrice,
+        compareAtPrice: item.compareAtPrice,
         tags: item.tags,
         category: cat.name,
         imageUrl: item.images?.[0] ?? item.imageUrl ?? null,

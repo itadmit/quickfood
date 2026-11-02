@@ -241,6 +241,7 @@ export const POST = handler(
               images: it.images,
               artType: it.artType,
               basePrice: it.basePrice,
+              compareAtPrice: it.compareAtPrice,
               prepMinutes: it.prepMinutes,
               available: it.available,
               featured: it.featured,

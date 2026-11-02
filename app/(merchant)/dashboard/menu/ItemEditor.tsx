@@ -1,5 +1,6 @@
 "use client";
 
+import { Price } from "@/components/shared/Price";
 import Link from "next/link";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -83,6 +84,7 @@ interface ItemData {
   description: string;
   categoryId: string;
   basePrice: number;
+  compareAtPrice?: number | null;
   pricingMode: "fixed" | "weight";
   pricePerKg: number | null;
   prepMinutes: number;
@@ -110,6 +112,7 @@ const EMPTY_ITEM: ItemData = {
   description: "",
   categoryId: "",
   basePrice: 50,
+  compareAtPrice: null,
   pricingMode: "fixed",
   pricePerKg: null,
   prepMinutes: 10,
@@ -250,6 +253,10 @@ export function ItemEditor({
   }
 
   async function save() {
+    if (data.compareAtPrice != null && (!Number.isInteger(data.compareAtPrice) || data.compareAtPrice <= (data.pricingMode === "weight" ? (data.pricePerKg ?? 0) : data.basePrice))) {
+      setError("המחיר לפני הנחה חייב להיות מספר שלם הגבוה מהמחיר הנוכחי");
+      return;
+    }
     if (!data.name || !data.categoryId || data.basePrice < 0) {
       setError("חובה: שם, קטגוריה, ומחיר תקין");
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -267,6 +274,7 @@ export function ItemEditor({
         name: data.name,
         description: data.description,
         category_id: data.categoryId,
+        compare_at_price: data.compareAtPrice ?? null,
         base_price: data.pricingMode === "weight" ? 0 : data.basePrice,
         pricing_mode: data.pricingMode,
         price_per_kg: data.pricingMode === "weight" ? data.pricePerKg : null,
@@ -519,13 +527,13 @@ export function ItemEditor({
                       : "border-qf-line-dash text-qf-ink2 bg-white",
                   )}
                 >
-                  לפי משקל (₪ לק"ג)
+                  לפי משקל (₪ לק״ג)
                 </button>
               </div>
             </Field>
             <div className="grid grid-cols-2 gap-3">
               {data.pricingMode === "weight" ? (
-                <Field label='מחיר לק"ג'>
+                <Field label='מחיר לק״ג'>
                   <div className="flex items-center border border-qf-line-dash rounded-xl focus-within:border-(--qf-primary)">
                     <span className="px-3 text-qf-mute">₪</span>
                     <input
@@ -557,6 +565,13 @@ export function ItemEditor({
                   </div>
                 </Field>
               )}
+              <Field label={data.pricingMode === "weight" ? 'מחיר לפני הנחה (₪ לק״ג)' : "מחיר לפני הנחה"}>
+                <input type="number" aria-label="מחיר לפני הנחה" step={1} min={(data.pricingMode === "weight" ? (data.pricePerKg ?? 0) : data.basePrice) + 1}
+                  value={data.compareAtPrice ?? ""} placeholder="אופציונלי"
+                  onChange={(e) => update("compareAtPrice", e.target.value === "" ? null : Number(e.target.value))}
+                  className="w-full px-3 py-2.5 border border-qf-line-dash rounded-xl outline-none focus:border-(--qf-primary) tnum" />
+                <span className="text-xs text-qf-mute">יוצג מחוק לצד המחיר הנוכחי. השאירו ריק להסרה.</span>
+              </Field>
               <Field label="זמן הכנה (דקות)">
                 <input
                   type="number"
@@ -980,8 +995,8 @@ export function ItemEditor({
               <div className="text-xs text-qf-mute line-clamp-3">{data.description || "אין תיאור"}</div>
               <div className="font-bold tnum text-lg mt-2">
                 {data.pricingMode === "weight"
-                  ? `${formatPrice(data.pricePerKg ?? 0)} לק"ג`
-                  : formatPrice(data.basePrice)}
+                  ? <><Price amount={data.pricePerKg ?? 0} originalAmount={data.compareAtPrice} /> לק״ג</>
+                  : <Price amount={data.basePrice} originalAmount={data.compareAtPrice} />}
               </div>
             </div>
 

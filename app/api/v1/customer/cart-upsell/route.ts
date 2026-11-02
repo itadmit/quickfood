@@ -84,7 +84,7 @@ export const GET = handler(async (req: Request) => {
     select: {
       id: true,
       name: true,
-      basePrice: true,
+      basePrice: true, compareAtPrice: true,
       images: true,
       imageUrl: true,
       // Counts let the cart-side "+" button decide whether tapping it
@@ -112,6 +112,7 @@ export const GET = handler(async (req: Request) => {
         id: i.id,
         name: i.name,
         basePrice: i.basePrice,
+        compareAtPrice: i.compareAtPrice,
         imageUrl: i.images?.[0] ?? i.imageUrl ?? null,
         // True when tapping "+" has to open the picker: required
         // modifiers OR a size choice. Optional-only groups don't

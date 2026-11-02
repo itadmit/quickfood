@@ -1,5 +1,6 @@
 "use client";
 
+import { Price } from "@/components/shared/Price";
 import { useEffect, useState } from "react";
 import { MenuItemImage } from "@/components/shared/MenuItemImage";
 import { formatPrice } from "@/lib/format";
@@ -12,6 +13,7 @@ interface FullItem {
   name: string;
   description: string;
   base_price: number;
+  compare_at_price?: number | null;
   art_type: string | null;
   tags: string[];
   images?: string[];
@@ -109,7 +111,7 @@ export function ItemPreviewModal({ itemId, onClose }: { itemId: string; onClose:
                   <p className="text-sm text-qf-ink2 leading-relaxed">{item.description}</p>
                 )}
                 <div className="text-xs text-qf-mute tnum">
-                  מחיר בסיס {formatPrice(item.base_price)}
+                  מחיר בסיס <Price amount={item.base_price} originalAmount={item.compare_at_price} />
                   {sizeDelta !== 0 && ` · גודל ${sizeDelta > 0 ? "+" : ""}${sizeDelta}`}
                   {defaultOptsDelta !== 0 && ` · ברירת מחדל +${defaultOptsDelta}`}
                 </div>
@@ -162,7 +164,7 @@ export function ItemPreviewModal({ itemId, onClose }: { itemId: string; onClose:
 
             <div className="px-5 py-4 mt-3 border-t border-qf-line bg-qf-bg-dash flex items-center justify-between text-sm">
               <span className="text-qf-mute">סה״כ בברירת מחדל</span>
-              <span className="font-semibold tnum">{formatPrice(totalBase)}</span>
+              <span className="font-semibold tnum"><Price amount={totalBase} originalAmount={item.compare_at_price != null ? totalBase + item.compare_at_price - item.base_price : null} /></span>
             </div>
             <div className="px-5 pb-5 pt-2 text-[11px] text-qf-mute text-center">
               תצוגה מקדימה - כך הלקוח יראה את הפריט באפליקציה

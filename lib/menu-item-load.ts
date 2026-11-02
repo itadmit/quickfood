@@ -43,6 +43,7 @@ async function _fetch(tenantSlug: string, itemId: string) {
       name: row.name,
       description: row.description,
       basePrice: row.basePrice,
+      compareAtPrice: row.compareAtPrice,
       pricingMode: row.pricingMode,
       pricePerKg: row.pricePerKg,
       artType: row.artType,

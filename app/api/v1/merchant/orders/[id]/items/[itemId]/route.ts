@@ -45,7 +45,7 @@ async function loadAndAuthorize(
       tip: true,
       discount: true,
       items: {
-        select: { id: true, unitPrice: true, totalPrice: true, quantity: true, nameSnapshot: true },
+        select: { id: true, unitPrice: true, originalUnitPrice: true, totalPrice: true, quantity: true, nameSnapshot: true },
       },
     },
   });
@@ -108,7 +108,7 @@ export const PATCH = handler(
         await tx.orderItem.update({
           where: { id: itemId },
           data: {
-            ...(body.quantity !== undefined ? { quantity: nextQty, totalPrice: nextItemTotal } : {}),
+            ...(body.quantity !== undefined ? { quantity: nextQty, totalPrice: nextItemTotal, originalTotalPrice: item.originalUnitPrice != null ? item.originalUnitPrice * nextQty : null } : {}),
             ...(body.notes !== undefined ? { notes: body.notes } : {}),
             ...(body.prepared !== undefined
               ? { preparedAt: body.prepared ? new Date() : null }

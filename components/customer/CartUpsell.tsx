@@ -1,5 +1,6 @@
 "use client";
 
+import { Price } from "@/components/shared/Price";
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/customer/CartProvider";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
@@ -7,12 +8,12 @@ import { ItemDetailModal } from "@/components/customer/ItemDetailModal";
 import { ItemDetail } from "@/components/customer/screens/ItemDetail";
 import ItemModalSkeleton from "@/components/customer/ItemModalSkeleton";
 import { IcoPlus, IcoCheck } from "@/components/shared/Icons";
-import { formatPrice } from "@/lib/format";
 
 interface UpsellItem {
   id: string;
   name: string;
   basePrice: number;
+  compareAtPrice?: number | null;
   imageUrl: string | null;
   needsConfig?: boolean;
 }
@@ -73,6 +74,7 @@ export function CartUpsell({ tenantSlug }: { tenantSlug: string }) {
       itemId: it.id,
       name: it.name,
       basePrice: it.basePrice,
+      compareAtPrice: it.compareAtPrice,
       artType: null,
       imageUrl: it.imageUrl,
       quantity: 1,
@@ -129,7 +131,7 @@ export function CartUpsell({ tenantSlug }: { tenantSlug: string }) {
                   </div>
                   <div className="p-2.5">
                     <div className="text-sm font-bold leading-tight line-clamp-2 min-h-[2.5em]">{it.name}</div>
-                    <div className="text-xs text-qf-mute mt-1 tnum">{formatPrice(it.basePrice)}</div>
+                    <div className="text-xs text-qf-mute mt-1 tnum"><Price amount={it.basePrice} originalAmount={it.compareAtPrice} /></div>
                   </div>
                 </button>
                 <button

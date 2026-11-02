@@ -26,12 +26,14 @@ export interface BundleSuggestion {
     id: string;
     name: string;
     base_price: number;
+  compare_at_price?: number | null;
     image_url: string | null;
   };
   addons?: Array<{
     item_id: string;
     name: string;
     base_price: number;
+  compare_at_price?: number | null;
     image_url: string | null;
     qty: number;
   }>;
@@ -164,6 +166,7 @@ export function CartBundleProvider({
             itemId: a.item_id,
             name: a.name,
             basePrice: a.base_price,
+            compareAtPrice: a.compare_at_price,
             artType: null,
             imageUrl: a.image_url,
             quantity: 1,

@@ -56,7 +56,7 @@ export const GET = handler(async (req: Request) => {
       },
       orderBy: { name: "asc" },
       take: 5,
-      select: { id: true, name: true, basePrice: true, available: true, artType: true },
+      select: { id: true, name: true, basePrice: true, compareAtPrice: true, available: true, artType: true },
     }),
     prisma.customer.findMany({
       where: {
@@ -94,6 +94,7 @@ export const GET = handler(async (req: Request) => {
       id: i.id,
       name: i.name,
       base_price: i.basePrice,
+      compare_at_price: i.compareAtPrice,
       available: i.available,
       art_type: i.artType,
     })),

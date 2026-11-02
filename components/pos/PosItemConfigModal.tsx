@@ -1,5 +1,7 @@
 "use client";
 
+import { originalPrice } from "@/lib/compare-price";
+import { Price } from "@/components/shared/Price";
 import { useEffect, useMemo, useState } from "react";
 import type { CartLine } from "@/components/customer/CartProvider";
 import { formatPrice } from "@/lib/format";
@@ -52,6 +54,7 @@ interface FullItem {
   name: string;
   description: string;
   basePrice: number;
+  compareAtPrice?: number | null;
   pricingMode?: string;
   pricePerKg?: number | null;
   artType: string | null;
@@ -306,6 +309,7 @@ export function PosItemConfigModal({
         itemId: item.id,
         name: item.name,
         basePrice: isWeight ? weightBase : item.basePrice,
+        compareAtPrice: item.compareAtPrice != null ? (isWeight ? weightPrice(item.compareAtPrice, grams) : item.compareAtPrice) : null,
         artType: item.artType,
         imageUrl: item.images?.[0] ?? null,
         quantity: isWeight ? 1 : quantity,
@@ -344,8 +348,8 @@ export function PosItemConfigModal({
           <h2 className="text-lg font-black truncate">{item.name}</h2>
           <p className="text-xs text-qf-mute mt-0.5">
             {isWeight
-              ? `${formatPrice(pricePerKg)} לק"ג · ${formatPrice(pricePerKg / 10)} ל-100 גרם`
-              : `מחיר בסיס ${formatPrice(item.basePrice)}`}
+              ? <><Price amount={pricePerKg} originalAmount={item.compareAtPrice} /> לק״ג · {formatPrice(pricePerKg / 10)} ל-100 גרם</>
+              : `מחיר בסיס $<Price amount={item.basePrice} originalAmount={item.compareAtPrice} />`}
           </p>
         </div>
         <button
@@ -666,7 +670,7 @@ export function PosItemConfigModal({
                 ? "עדכן שורה"
                 : "הוסף לכרטיסייה"}
           </span>
-          <span className="tnum">{formatPrice(lineTotal)}</span>
+          <span className="tnum"><Price amount={lineTotal} originalAmount={originalPrice(lineTotal, (isWeight ? weightBase : item.basePrice) * (isWeight ? 1 : quantity), item.compareAtPrice != null ? (isWeight ? weightPrice(item.compareAtPrice, grams) : item.compareAtPrice) * (isWeight ? 1 : quantity) : null)} /></span>
         </button>
       </footer>
     </Shell>

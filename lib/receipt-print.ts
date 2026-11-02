@@ -112,6 +112,7 @@ export interface ReceiptOrder {
     quantity: number;
     weight_grams?: number | null;
     total_price: number;
+    original_total_price?: number | null;
     size: string | null;
     options: unknown;
     notes: string | null;
@@ -199,7 +200,7 @@ export function formatSelectedOptions(options: unknown, opts?: FormatOptionsOpts
 
 export type ReceiptLine =
   | { kind: "title"; text: string }
-  | { kind: "row"; right: string; left?: string; size: "normal" | "muted" | "total" }
+  | { kind: "row"; right: string; left?: string; originalLeft?: string; size: "normal" | "muted" | "total" }
   | { kind: "text"; text: string; size: "normal" | "muted" }
   | { kind: "group"; text: string }
   | { kind: "opt"; text: string }
@@ -249,6 +250,7 @@ export function buildReceiptLines(
       kind: "row",
       right: `${qtyLabel} ${it.name}${it.size ? ` · ${it.size}` : ""}`,
       left: formatPrice(it.total_price),
+      originalLeft: it.original_total_price != null && it.original_total_price > it.total_price ? formatPrice(it.original_total_price) : undefined,
       size: "normal",
     });
     if (settings.showOptions) {
@@ -324,7 +326,7 @@ function receiptBodyHtml(order: ReceiptOrder, settings?: ReceiptSettings): strin
         case "row":
           return `<div class="row ${l.size === "total" ? "total" : l.size === "muted" ? "muted" : ""}"><span>${esc(
             l.right,
-          )}</span>${l.left !== undefined ? `<span>${esc(l.left)}</span>` : ""}</div>`;
+          )}</span>${l.left !== undefined ? `<span>${l.originalLeft ? `<del style="font-size:0.8em;margin-inline-end:8px;">${esc(l.originalLeft)}</del>` : ""}${esc(l.left)}</span>` : ""}</div>`;
       }
     })
     .join("\n");
@@ -487,7 +489,9 @@ function layoutReceipt(
     const font = l.size === "total" ? FONTS.total : l.size === "muted" ? FONTS.muted : FONTS.normal;
     const lh = l.size === "total" ? LINE_H.total : l.size === "muted" ? LINE_H.muted : LINE_H.normal;
     ctx.font = font;
-    const leftWidth = l.left !== undefined ? ctx.measureText(l.left).width : 0;
+    const oldWidth = l.originalLeft ? ctx.measureText(l.originalLeft).width : 0;
+    const oldSpace = oldWidth ? oldWidth + 8 : 0;
+    const leftWidth = l.left !== undefined ? ctx.measureText(l.left).width + oldSpace : 0;
     const rightMax = W - MARGIN * 2 - (leftWidth ? leftWidth + 18 : 0);
     const parts = wrapText(ctx, l.right, rightMax);
     parts.forEach((part, i) => {
@@ -496,7 +500,11 @@ function layoutReceipt(
         ctx.fillText(part, W - MARGIN, y);
         if (i === 0 && l.left !== undefined) {
           ctx.textAlign = "left";
-          ctx.fillText(l.left, MARGIN, y);
+          if (l.originalLeft) {
+            ctx.fillText(l.originalLeft, MARGIN, y);
+            ctx.beginPath(); ctx.moveTo(MARGIN, y - 5); ctx.lineTo(MARGIN + oldWidth, y - 5); ctx.stroke();
+          }
+          ctx.fillText(l.left, MARGIN + oldSpace, y);
         }
       }
       y += lh;

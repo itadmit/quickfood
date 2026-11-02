@@ -46,8 +46,8 @@ export const GET = handler(async () => {
     orderBy: [{ position: "asc" }, { createdAt: "asc" }],
     include: {
       triggers: { include: { item: { select: { id: true, name: true } } } },
-      addons: { include: { item: { select: { id: true, name: true, basePrice: true } } } },
-      linkedItem: { select: { id: true, name: true, basePrice: true, imageUrl: true } },
+      addons: { include: { item: { select: { id: true, name: true, basePrice: true, compareAtPrice: true } } } },
+      linkedItem: { select: { id: true, name: true, basePrice: true, compareAtPrice: true, imageUrl: true } },
     },
   });
   return apiJson({
@@ -67,6 +67,7 @@ export const GET = handler(async () => {
             id: b.linkedItem.id,
             name: b.linkedItem.name,
             base_price: b.linkedItem.basePrice,
+            compare_at_price: b.linkedItem.compareAtPrice,
             image_url: b.linkedItem.imageUrl,
           }
         : null,
@@ -74,6 +75,7 @@ export const GET = handler(async () => {
         id: a.itemId,
         name: a.item.name,
         base_price: a.item.basePrice,
+        compare_at_price: a.item.compareAtPrice,
         qty: a.qty,
       })),
     })),

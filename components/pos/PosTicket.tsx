@@ -1,5 +1,7 @@
 "use client";
 
+import { originalPrice } from "@/lib/compare-price";
+import { Price } from "@/components/shared/Price";
 import { useState } from "react";
 import { usePosCart } from "@/components/pos/PosCartProvider";
 import { formatPrice } from "@/lib/format";
@@ -141,7 +143,7 @@ export function PosTicket({ onEditLine }: { onEditLine?: (line: CartLine) => voi
                     </div>
                   )}
                   <div className="w-20 text-end tnum text-sm font-semibold">
-                    {formatPrice(lineTotal)}
+                    <Price amount={lineTotal} originalAmount={originalPrice(lineTotal, l.basePrice * l.quantity, l.compareAtPrice != null ? l.compareAtPrice * l.quantity : null)} />
                   </div>
                   <button
                     type="button"

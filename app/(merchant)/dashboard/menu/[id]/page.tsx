@@ -94,6 +94,7 @@ export default async function ItemEditPage({
         description: item.description,
         categoryId: item.categoryId,
         basePrice: item.basePrice,
+        compareAtPrice: item.compareAtPrice,
         pricingMode: item.pricingMode === "weight" ? "weight" : "fixed",
         pricePerKg: item.pricePerKg,
         prepMinutes: item.prepMinutes,
