@@ -1,24 +1,24 @@
 import type { Metadata, Viewport } from "next";
-import { Noto_Sans_Hebrew, Pacifico } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { RouteProgress } from "@/components/shared/RouteProgress";
 import { ScrollToTop } from "@/components/shared/ScrollToTop";
 import { MetaPixel } from "@/components/marketing/MetaPixel";
 import { GoogleAnalytics } from "@/components/marketing/GoogleAnalytics";
 
-const notoHebrew = Noto_Sans_Hebrew({
-  subsets: ["hebrew", "latin"],
-  // 300 + 900 added so light captions and the bold V2 sidebar /
-  // headlines render at the actual weight instead of falling back
-  // to the nearest available (300 → 400, 900 → 800).
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
+// Bundle the fonts so production builds never depend on Google Fonts URLs.
+const notoHebrew = localFont({
+  src: "./fonts/NotoSansHebrew.ttf",
+  weight: "300 900",
+  style: "normal",
   variable: "--font-noto-hebrew",
   display: "swap",
 });
 
-const pacifico = Pacifico({
-  subsets: ["latin"],
-  weight: ["400"],
+const pacifico = localFont({
+  src: "./fonts/Pacifico-Regular.ttf",
+  weight: "400",
+  style: "normal",
   variable: "--font-pacifico-src",
   display: "swap",
 });
