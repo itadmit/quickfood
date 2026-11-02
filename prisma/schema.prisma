@@ -1236,6 +1236,10 @@ model Order {
   paymentStatus   PaymentStatus @default(pending) @map("payment_status")
   paymentIntentId String?       @map("payment_intent_id")
 
+  purchasePixelClaim String? @map("purchase_pixel_claim")
+  purchasePixelClaimedAt DateTime? @map("purchase_pixel_claimed_at")
+  purchasePixelReportedAt DateTime? @map("purchase_pixel_reported_at")
+
   /// Provenance for orders ingested from an external marketplace (Wolt and
   /// friends). externalSource = "wolt"; externalId = the marketplace order
   /// id. The unique pair makes the order webhook idempotent - a retried

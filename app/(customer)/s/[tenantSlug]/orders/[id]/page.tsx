@@ -4,6 +4,7 @@ import { resolveTenantBySlug } from "@/lib/slug";
 import { getSession } from "@/lib/auth/session";
 import { OrderTracking } from "@/components/customer/screens/OrderTracking";
 import { StorePurchaseEvent } from "@/components/customer/StorePurchaseEvent";
+import { purchaseToken } from "@/lib/fb/purchase-token";
 import { verifyReviewToken } from "@/lib/reviews/token";
 
 export const dynamic = "force-dynamic";
@@ -107,10 +108,8 @@ export default async function OrderTrackingPage({
       {tenant.facebookPixelId && (
         <StorePurchaseEvent
           orderId={order.id}
-          value={order.total}
-          contentIds={order.items
-            .map((it) => it.menuItemId)
-            .filter((x): x is string => !!x)}
+          pixelId={tenant.facebookPixelId}
+          token={purchaseToken(order.id)}
         />
       )}
       <OrderTracking

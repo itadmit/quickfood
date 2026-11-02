@@ -29,3 +29,17 @@ export function sfTrack(event: string, params: Params = {}) {
     /* fire and forget */
   }
 }
+
+/** Purchase must wait for the real library, not merely its bootstrap queue. */
+export function storefrontPixelReady(pixelId: string): boolean {
+  return activePixelId === pixelId && typeof window !== "undefined" &&
+    typeof (window.fbq as ((...args: unknown[]) => void) & { callMethod?: unknown } | undefined)?.callMethod === "function";
+}
+
+export function sfPurchase(pixelId: string, orderId: string, params: Params): boolean {
+  if (!storefrontPixelReady(pixelId)) return false;
+  try {
+    window.fbq!("trackSingle", pixelId, "Purchase", params, { eventID: `purchase:${orderId}` });
+    return true;
+  } catch { return false; }
+}
