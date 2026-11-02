@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { storefrontCanonical } from "@/lib/storefront-url";
 import { prisma } from "@/lib/db/client";
@@ -6,6 +7,8 @@ import { getSession } from "@/lib/auth/session";
 import { CustomerHome } from "@/components/customer/screens/CustomerHome";
 import { isItemVisibleNow, isCategoryVisibleNow } from "@/lib/menu-availability";
 import { fingerprintOrderItems } from "@/lib/order-reorder";
+import { LANG_COOKIE, resolveLang } from "@/lib/i18n/langs";
+import { buildMenuLocalizer } from "@/lib/i18n/translate-menu";
 
 export const dynamic = "force-dynamic";
 
@@ -297,6 +300,20 @@ export default async function HomePage({
     headline_image: o.items[0]?.menuItem?.images?.[0] ?? null,
   }));
 
+  // Opt-in storefront language: resolve the visitor's choice against the
+  // tenant's enabled set, then auto-translate (cached) the menu content so the
+  // home page renders in the chosen language. Hebrew is a no-op.
+  const lang = resolveLang(
+    (await cookies()).get(LANG_COOKIE)?.value,
+    tenant.storefrontLanguages,
+  );
+  const loc = await buildMenuLocalizer(tenant.id, lang, {
+    categories: visibleCategories,
+    items: menuItems,
+    deals: activeDeals,
+    notices,
+  });
+
   return (
     <CustomerHome
       tenant={{
@@ -333,13 +350,13 @@ export default async function HomePage({
       ratingSummary={ratingSummary}
       deliveryEta={deliveryEta}
       etaUnit={branch?.etaUnit ?? "minutes"}
-      categories={categories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color, imageUrl: c.imageUrl }))}
-      allCategories={visibleCategories.map((c) => ({ id: c.id, name: c.name, icon: c.icon, color: c.color, imageUrl: c.imageUrl }))}
+      categories={categories.map((c) => ({ id: c.id, name: loc("menu_category", c.id, "name", c.name), icon: c.icon, color: c.color, imageUrl: c.imageUrl }))}
+      allCategories={visibleCategories.map((c) => ({ id: c.id, name: loc("menu_category", c.id, "name", c.name), icon: c.icon, color: c.color, imageUrl: c.imageUrl }))}
       menuItems={menuItems.map((i) => ({
         id: i.id,
         categoryId: i.categoryId,
-        name: i.name,
-        description: i.description,
+        name: loc("menu_item", i.id, "name", i.name),
+        description: loc("menu_item", i.id, "description", i.description),
         basePrice: i.basePrice,
         compareAtPrice: i.compareAtPrice,
         pricingMode: i.pricingMode,
@@ -357,8 +374,8 @@ export default async function HomePage({
         categoryId: n.categoryId,
         itemId: n.itemId,
         kind: n.kind,
-        title: n.title,
-        body: n.body,
+        title: loc("notice", n.id, "title", n.title),
+        body: loc("notice", n.id, "body", n.body),
       }))}
       deals={activeDeals
         .filter((d) =>
@@ -366,8 +383,8 @@ export default async function HomePage({
         )
         .map((d) => ({
           id: d.id,
-          name: d.name,
-          description: d.description,
+          name: loc("deal", d.id, "name", d.name),
+          description: loc("deal", d.id, "description", d.description),
           imageUrl: d.imageUrl,
           fixedPrice: d.fixedPrice,
           itemImages: d.slots
@@ -375,7 +392,11 @@ export default async function HomePage({
             .filter((x): x is string => !!x)
             .slice(0, 3),
         }))}
-      popular={popularSerialized}
+      popular={popularSerialized.map((p) => ({
+        ...p,
+        name: loc("menu_item", p.id, "name", p.name),
+        description: loc("menu_item", p.id, "description", p.description),
+      }))}
       recentOrders={recentOrdersSerialized}
       deliveryCities={deliveryCities}
       nationwideDelivery={nationwideDelivery}

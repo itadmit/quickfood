@@ -272,6 +272,12 @@ model Tenant {
   themeId              ThemeId        @default(fresh) @map("theme_id")
   businessType         BusinessType   @default(general) @map("business_type")
   storefrontLayout     StorefrontLayout @default(classic) @map("storefront_layout")
+  /// Languages the storefront offers. Always includes "he" (the default +
+  /// source language). Extra codes ("en", "ru") turn on the customer-facing
+  /// language switcher; an opt-in per store. Default = Hebrew only, so stores
+  /// that don't enable it are unaffected. UI strings come from a dictionary;
+  /// menu content is auto-translated + cached (see Translation model).
+  storefrontLanguages  String[]       @default(["he"]) @map("storefront_languages")
   /// When false the "קטגוריות" rail is hidden from the classic storefront
   /// home page. Default true keeps the current behaviour. Only affects the
   /// classic layout - the category_grid layout is built around categories.
@@ -608,6 +614,7 @@ model Tenant {
   menuFileImports  MenuFileImport[]
   storefrontVisits StorefrontVisit[]
   storefrontCartAdds StorefrontCartAdd[]
+  translations     Translation[]
   woltConnections  WoltConnection[]
   growLeads        GrowLead[]
   posShifts        PosShift[]
@@ -2361,6 +2368,33 @@ model StorefrontCartAdd {
   @@unique([tenantId, day])
   @@index([tenantId, day])
   @@map("storefront_cart_adds")
+}
+
+/// Cache of auto-translated storefront content (menu item names/descriptions,
+/// category names, option names, store "about", …). Generic by (entityType,
+/// entityId, field, lang). `sourceHash` is a hash of the Hebrew source string;
+/// when the merchant edits the source the hash changes and the row is treated
+/// as stale → re-translated on next read. UI chrome is NOT stored here (it
+/// comes from a static dictionary); only merchant-authored content is.
+model Translation {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  entityType String   @map("entity_type") @db.VarChar(32)
+  entityId   String   @map("entity_id")
+  field      String   @db.VarChar(32)
+  lang       String   @db.VarChar(8)
+  sourceHash String   @map("source_hash") @db.VarChar(64)
+  text       String
+  /// True when a merchant hand-edited this translation; auto-retranslation on
+  /// source change leaves manual overrides alone (future dashboard feature).
+  manual     Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([entityType, entityId, field, lang])
+  @@index([tenantId, lang])
+  @@map("translations")
 }
 
 /// AI-extracted menu import from an uploaded PDF or photo. Mirrors the

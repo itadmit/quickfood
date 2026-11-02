@@ -80,6 +80,10 @@ export const PATCH = handler(async (req: Request) => {
       themeId: body.theme_id,
       businessType: body.business_type,
       storefrontLayout: body.storefront_layout,
+      storefrontLanguages:
+        body.storefront_languages === undefined
+          ? undefined
+          : Array.from(new Set(["he", ...body.storefront_languages])),
       showCategoriesRail: body.show_categories_rail,
       cuisineType: body.cuisine_type,
       about: body.about,

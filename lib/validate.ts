@@ -343,6 +343,9 @@ export const TenantPatchSchema = z.object({
     ])
     .optional(),
   storefront_layout: z.enum(["classic", "category_grid"]).optional(),
+  // Enabled storefront languages. "he" is always implied; the route re-adds it
+  // and dedupes, so the client only needs to send the extras it wants on.
+  storefront_languages: z.array(z.enum(["he", "en", "ru"])).max(3).optional(),
   show_categories_rail: z.boolean().optional(),
   cuisine_type: z.string().max(60).optional(),
   about: z.string().max(2000).transform(normalizeTenantAbout).nullable().optional(),

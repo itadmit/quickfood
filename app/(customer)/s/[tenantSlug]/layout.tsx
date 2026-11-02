@@ -24,6 +24,9 @@ import { storefrontBlock } from "@/lib/tenant-billing";
 import { VisitBeacon } from "@/components/customer/VisitBeacon";
 import { StorefrontPixel } from "@/components/customer/StorefrontPixel";
 import { QrLandingModal } from "@/components/customer/QrLandingModal";
+import { LocaleProvider } from "@/components/customer/LocaleProvider";
+import { cookies } from "next/headers";
+import { dirFor, LANG_COOKIE, resolveLang, type Lang } from "@/lib/i18n/langs";
 
 export async function generateMetadata({
   params,
@@ -89,6 +92,15 @@ export default async function CustomerLayout({
   if (!tenant) notFound();
   const branch = tenant.branches[0];
 
+  // Opt-in storefront language: the enabled set always includes Hebrew; the
+  // visitor's cookie choice is honoured only if the tenant enabled it. Drives
+  // the UI-string dictionary + page direction (en/ru are LTR).
+  const enabledLangs = (tenant.storefrontLanguages ?? ["he"]) as Lang[];
+  const lang = resolveLang(
+    (await cookies()).get(LANG_COOKIE)?.value,
+    tenant.storefrontLanguages,
+  );
+
   // Pull the customer's most recent delivered + un-reviewed + un-dismissed
   // order so we can pop the rating modal across all customer pages. Skipped
   // for guests, and when the tenant disabled reviews.
@@ -132,7 +144,8 @@ export default async function CustomerLayout({
   }
 
   return (
-    <ThemeProvider themeId={tenant.themeId} className="min-h-screen bg-qf-bg">
+    <ThemeProvider themeId={tenant.themeId} className="min-h-screen bg-qf-bg" dir={dirFor(lang)}>
+      <LocaleProvider lang={lang} enabled={enabledLangs}>
       <CartProvider
         tenant={{
           id: tenant.id,
@@ -243,6 +256,7 @@ export default async function CustomerLayout({
         </MenuSearchProvider>
         </CartBundleProvider>
       </CartProvider>
+      </LocaleProvider>
     </ThemeProvider>
   );
 }

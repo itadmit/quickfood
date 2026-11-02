@@ -6,6 +6,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { IcoPin, IcoSearch, IcoClock, IcoBike, IcoArrowLeft, IcoStar, IcoInfo } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
+import { LanguageSwitcher } from "@/components/customer/LanguageSwitcher";
 import { LoyaltyJoinPopup } from "@/components/customer/LoyaltyJoinPopup";
 import { CampaignBanner, type CampaignBannerData } from "@/components/customer/CampaignBanner";
 import { ReorderRail } from "@/components/customer/ReorderRail";
@@ -388,7 +389,10 @@ export function CustomerHome({
               <IcoPin c="#fff" s={14} />
               <span className="truncate max-w-45">{locationLabel}</span>
             </button>
-            {aiAdvisorEnabled && <AIAdvisorTopButton />}
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher compact />
+              {aiAdvisorEnabled && <AIAdvisorTopButton />}
+            </div>
           </div>
 
           {/* Tenant name - promoted to a prominent title on desktop */}

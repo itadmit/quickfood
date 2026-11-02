@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { IcoUser, IcoMenuList, IcoHome, IcoBag, IcoSearch, IcoStar } from "@/components/shared/Icons";
 import { useCart } from "./CartProvider";
 import { useMenuSearch } from "./MenuSearchProvider";
+import { useLocale } from "./LocaleProvider";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import { formatPrice } from "@/lib/format";
 import { SmartImg } from "@/components/shared/SmartImg";
 import { cn } from "@/lib/cn";
@@ -28,6 +30,7 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
   const path = usePathname() || "";
   const { itemCount, subtotal, tenant } = useCart();
   const { query, setQuery } = useMenuSearch();
+  const { t } = useLocale();
 
   const homePath = `/s/${tenantSlug}`;
   const onHome = path === homePath;
@@ -100,8 +103,8 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="חיפוש בתפריט"
-              aria-label="חיפוש בתפריט"
+              placeholder={t("nav.searchPlaceholder")}
+              aria-label={t("nav.searchPlaceholder")}
               className="flex-1 bg-transparent outline-none border-0 appearance-none text-sm text-qf-ink placeholder:text-qf-mute [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
             />
             {query && (
@@ -131,7 +134,7 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
             )}
           >
             <IcoHome c={onHome && !menuActive ? "var(--qf-primary)" : "#3a4a40"} s={16} />
-            <span>בית</span>
+            <span>{t("nav.home")}</span>
           </Link>
           <Link
             href={`${homePath}#menu-section`}
@@ -144,7 +147,7 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
             )}
           >
             <IcoMenuList c={menuActive ? "var(--qf-primary)" : "#3a4a40"} s={16} />
-            <span>תפריט</span>
+            <span>{t("nav.menu")}</span>
           </Link>
           {showReviewsLink && (
             <Link
@@ -161,7 +164,7 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
                 fill={onReviews ? "var(--qf-primary)" : "none"}
                 s={16}
               />
-              <span>ביקורות</span>
+              <span>{t("nav.reviews")}</span>
             </Link>
           )}
           <Link
@@ -181,11 +184,11 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
                 </span>
               )}
             </span>
-            <span>הסל שלי</span>
+            <span>{t("nav.myCart")}</span>
           </Link>
           <Link
             href={`/s/${tenantSlug}/profile`}
-            aria-label="אזור אישי"
+            aria-label={t("nav.account")}
             className={cn(
               "inline-flex items-center gap-2 px-3 h-10 rounded-full text-sm font-medium transition",
               onProfile
@@ -194,9 +197,11 @@ export function CustomerTopNav({ tenantSlug, tenantName, logoLetter, logoUrl }: 
             )}
           >
             <IcoUser c={onProfile ? "var(--qf-primary)" : "#3a4a40"} s={16} />
-            <span>אזור אישי</span>
+            <span>{t("nav.account")}</span>
           </Link>
         </nav>
+
+        <LanguageSwitcher />
 
         {!onCartLike && itemCount > 0 && (
           <Link
