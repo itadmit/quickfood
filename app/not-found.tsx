@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Rubik } from "next/font/google";
+import localFont from "next/font/local";
 import { Home, MessageCircle, LayoutDashboard, ArrowRight, Search } from "lucide-react";
 import styles from "./not-found.module.css";
 
-const rubik = Rubik({
-  subsets: ["latin", "hebrew"],
-  weight: ["400", "500", "700", "800", "900"],
-  variable: "--font-rubik",
-  display: "swap",
+const rubik = localFont({
+  src: [{ path: "./fonts/Rubik.ttf", weight: "300 900", style: "normal" }, { path: "./fonts/Rubik-Italic.ttf", weight: "300 900", style: "italic" }],
+  variable: "--font-rubik", display: "swap",
 });
 
 export const metadata: Metadata = {

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Rubik, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { IcoArrowLeft } from "@/components/shared/Icons";
 import { LeadForm } from "@/components/marketing/LeadForm";
 import { WhatsAppFAB } from "../_components/WhatsAppFAB";
@@ -21,19 +21,14 @@ import {
 } from "lucide-react";
 import styles from "../page.module.css";
 
-const rubik = Rubik({
-  subsets: ["latin", "hebrew"],
-  weight: ["400", "500", "700", "800", "900"],
-  style: ["normal", "italic"],
-  variable: "--font-rubik",
-  display: "swap",
+const rubik = localFont({
+  src: [{ path: "../fonts/Rubik.ttf", weight: "300 900", style: "normal" }, { path: "../fonts/Rubik-Italic.ttf", weight: "300 900", style: "italic" }],
+  variable: "--font-rubik", display: "swap",
 });
 
-const mono = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  variable: "--font-mono",
-  display: "swap",
+const mono = localFont({
+  src: "../fonts/JetBrainsMono.ttf", weight: "100 800",
+  variable: "--font-mono", display: "swap",
 });
 
 export const metadata: Metadata = {
