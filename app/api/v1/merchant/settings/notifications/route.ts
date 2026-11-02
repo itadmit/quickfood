@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const Schema = z.object({
-  channel: z.enum(["off", "email", "sms", "whatsapp", "whatsapp_managed"]),
+  channel: z.enum(["off", "email", "sms", "whatsapp", "whatsapp_managed"]).refine((v): boolean => v !== "whatsapp" && v !== "whatsapp_managed", "ניתן להשתמש ב-SMS או באימייל בלבד"),
 });
 
 async function availability(tenantId: string) {

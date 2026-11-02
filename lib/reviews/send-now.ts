@@ -13,7 +13,6 @@
 
 import { prisma } from "@/lib/db/client";
 import { sendSms } from "@/lib/sms/send";
-import { sendWhatsApp } from "@/lib/whatsapp/send";
 import { sendEmail } from "@/lib/email/send";
 import { reviewReminderEmail } from "@/lib/email/templates";
 import { signReviewToken } from "@/lib/reviews/token";
@@ -130,38 +129,6 @@ export async function sendReviewReminderNow(
 
   const shortBody = `${hello}, איך הייתה ההזמנה מ-${order.tenant.name}?
 דקה לדרג: ${link}`;
-
-  if (order.tenant.reviewsChannel === "whatsapp_managed") {
-    if (!order.tenant.reviewsWhatsappSubscriptionId) {
-      return { ok: false, reason: "whatsapp_managed_inactive" };
-    }
-    const result = await sendWhatsApp({
-      tenantId: order.tenant.id,
-      to: order.customer.phone,
-      body: shortBody,
-      kind: "review_reminder",
-      refKind: "order",
-      refId: order.id,
-      useManagedAccount: true,
-    });
-    return {
-      ok: true,
-      channel: "whatsapp_managed",
-      providerStatus: result.status,
-    };
-  }
-
-  if (order.tenant.reviewsChannel === "whatsapp") {
-    const result = await sendWhatsApp({
-      tenantId: order.tenant.id,
-      to: order.customer.phone,
-      body: shortBody,
-      kind: "review_reminder",
-      refKind: "order",
-      refId: order.id,
-    });
-    return { ok: true, channel: "whatsapp", providerStatus: result.status };
-  }
 
   const result = await sendSms({
     tenantId: order.tenant.id,

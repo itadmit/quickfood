@@ -146,7 +146,7 @@ export function KioskSettingsForm({
             <label htmlFor="kiosk-require-phone" className="flex-1 cursor-pointer">
               <div className="text-sm font-bold">חובה למלא טלפון ושם</div>
               <div className="text-xs text-qf-mute mt-0.5 leading-relaxed">
-                לפני הזמנה הלקוח מזין טלפון, ולפני תשלום מאשר את שמו. נשלח לו חשבונית בוואטסאפ או אסמס, ונקשר את ההזמנה ללקוח קיים אם יש (לפי הטלפון). מומלץ כשאתם רוצים לקרוא ללקוח בשם כשההזמנה מוכנה.
+                לפני הזמנה הלקוח מזין טלפון, ולפני תשלום מאשר את שמו. נשלח לו חשבונית באסמס, ונקשר את ההזמנה ללקוח קיים אם יש (לפי הטלפון). מומלץ כשאתם רוצים לקרוא ללקוח בשם כשההזמנה מוכנה.
               </div>
             </label>
           </div>

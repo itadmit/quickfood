@@ -39,6 +39,7 @@ export type OrderNotifySettings = Record<OrderNotifyEvent, OrderEventConfig>;
 const CHANNELS: NotifyChannel[] = ["off", "email", "sms", "whatsapp", "whatsapp_managed"];
 
 function asChannel(v: unknown, fallback: NotifyChannel): NotifyChannel {
+  if (v === "whatsapp" || v === "whatsapp_managed") return "sms";
   return typeof v === "string" && (CHANNELS as string[]).includes(v)
     ? (v as NotifyChannel)
     : fallback;
@@ -105,7 +106,7 @@ export function resolveMerchantNewOrderSettings(raw: unknown): MerchantNewOrderS
       : undefined;
   return {
     email: asBool(src?.email, true),
-    whatsapp: asBool(src?.whatsapp, false),
+    whatsapp: false,
   };
 }
 
@@ -113,7 +114,7 @@ export function resolveOrderNotifySettings(
   raw: unknown,
   legacyNotifyChannel: NotifyChannel,
 ): OrderNotifySettings {
-  const d = defaultFromLegacy(legacyNotifyChannel);
+  const d = defaultFromLegacy(asChannel(legacyNotifyChannel, "email"));
   if (!raw || typeof raw !== "object") return d;
   const r = raw as Record<string, unknown>;
   const out = {} as OrderNotifySettings;

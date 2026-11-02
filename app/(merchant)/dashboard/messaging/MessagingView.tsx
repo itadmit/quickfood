@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import { SettingsSaveBar } from "@/components/merchant/SettingsSaveBar";
 import { Toggle } from "@/components/shared/Toggle";
-import { Modal } from "@/components/shared/Modal";
 import { RelativeTime } from "@/components/shared/RelativeTime";
 import { cn } from "@/lib/cn";
 import {
@@ -47,15 +46,7 @@ interface Availability {
   smsAvailable: boolean;
   whatsappEnabled: boolean;
   whatsappConnected: boolean;
-  whatsappAvailable: boolean;
   managedActive: boolean;
-}
-
-interface Managed {
-  active: boolean;
-  cancelAtPeriodEnd: boolean;
-  currentPeriodEnd: string | null;
-  basePrice: number;
 }
 
 interface LogRow {
@@ -69,51 +60,37 @@ interface LogRow {
   createdAt: string;
 }
 
-function formatDate(iso: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime())
-    ? ""
-    : d.toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit", year: "numeric" });
-}
-
 function channelAvailable(ch: NotifyChannel, a: Availability): boolean {
   if (ch === "off" || ch === "email") return true;
   if (ch === "sms") return a.smsAvailable;
-  if (ch === "whatsapp") return a.whatsappAvailable;
-  return a.managedActive;
+  return false;
 }
 
 export function MessagingView({
   balance: initialBalance,
-  whatsappBalance: initialWaBalance,
   smsSender: initialSender,
   billingReady,
   orderEvents,
   merchantNewOrder,
   review,
   availability,
-  managed,
   tiers,
   audience,
   logs,
 }: {
   balance: number;
-  whatsappBalance: number;
   smsSender: string;
   billingReady: boolean;
   orderEvents: OrderNotifySettings;
   merchantNewOrder: { email: boolean; whatsapp: boolean };
   review: { enabled: boolean; public: boolean; channel: NotifyChannel; delayMinutes: number };
   availability: Availability;
-  managed: Managed;
   tiers: Record<Tier, string>;
   audience: Array<{ tier: Tier; hasEmail: boolean; hasPhone: boolean }>;
   logs: LogRow[];
 }) {
   const [tab, setTab] = useState<Tab>("balance");
   const [balance, setBalance] = useState(initialBalance);
-  const [waBalance, setWaBalance] = useState(initialWaBalance);
   const hasCredits = balance > 0;
 
   return (
@@ -150,11 +127,8 @@ export function MessagingView({
         <BalanceTab
           balance={balance}
           setBalance={setBalance}
-          waBalance={waBalance}
-          setWaBalance={setWaBalance}
           smsSender={initialSender}
           billingReady={billingReady}
-          managed={managed}
           logs={logs}
         />
       )}
@@ -165,7 +139,6 @@ export function MessagingView({
           review={review}
           smsSender={initialSender}
           availability={availability}
-          onUpgradeWhatsapp={() => setTab("balance")}
         />
       )}
       {tab === "club" && (
@@ -176,7 +149,6 @@ export function MessagingView({
           tiers={tiers}
           audience={audience}
           smsAvailable={availability.smsAvailable}
-          whatsappAvailable={availability.whatsappAvailable}
           onGoBuy={() => setTab("balance")}
         />
       )}
@@ -189,20 +161,14 @@ export function MessagingView({
 function BalanceTab({
   balance,
   setBalance,
-  waBalance,
-  setWaBalance,
   smsSender,
   billingReady,
-  managed,
   logs,
 }: {
   balance: number;
   setBalance: (n: number) => void;
-  waBalance: number;
-  setWaBalance: (n: number) => void;
   smsSender: string;
   billingReady: boolean;
-  managed: Managed;
   logs: LogRow[];
 }) {
   const router = useRouter();
@@ -214,9 +180,6 @@ function BalanceTab({
   const [testBusy, setTestBusy] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
 
-  const [subscribeModalOpen, setSubscribeModalOpen] = useState(false);
-  const [managedBusy, setManagedBusy] = useState(false);
-  const [managedError, setManagedError] = useState<string | null>(null);
 
   async function buy(pkg: string, channel: "sms" | "whatsapp" = "sms") {
     setBusy(`${channel}:${pkg}`);
@@ -234,8 +197,7 @@ function BalanceTab({
         return;
       }
       if (typeof data.credits_remaining === "number") {
-        if (channel === "whatsapp") setWaBalance(data.credits_remaining);
-        else setBalance(data.credits_remaining);
+        setBalance(data.credits_remaining);
       }
       const charged = typeof data.total_amount === "number" ? ` · חויב ₪${data.total_amount.toFixed(2)}` : "";
       setSuccess(`נוספו ${data.added} הודעות ליתרת ${channel === "whatsapp" ? "וואטסאפ" : "SMS"}${charged}`);
@@ -276,57 +238,6 @@ function BalanceTab({
     }
   }
 
-  async function subscribeManaged() {
-    setManagedBusy(true);
-    setManagedError(null);
-    try {
-      const res = await fetch("/api/v1/merchant/settings/reviews/whatsapp-managed/subscribe", {
-        method: "POST",
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setManagedError(data?.error?.message ?? "הפעלת המנוי נכשלה");
-        return;
-      }
-      setSubscribeModalOpen(false);
-      router.refresh();
-    } finally {
-      setManagedBusy(false);
-    }
-  }
-
-  async function cancelManaged() {
-    if (!confirm("מנוי ווטסאפ של QuickFood יסתיים בתום תקופת החיוב הנוכחית ולא יתחדש. להמשיך?")) return;
-    setManagedBusy(true);
-    setManagedError(null);
-    try {
-      const res = await fetch("/api/v1/merchant/settings/reviews/whatsapp-managed/cancel", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) setManagedError(data?.error?.message ?? "ביטול המנוי נכשל");
-      else router.refresh();
-    } finally {
-      setManagedBusy(false);
-    }
-  }
-
-  async function resumeManaged() {
-    setManagedBusy(true);
-    setManagedError(null);
-    try {
-      const res = await fetch("/api/v1/merchant/settings/reviews/whatsapp-managed/resume", {
-        method: "POST",
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) setManagedError(data?.error?.message ?? "ביטול הביטול נכשל");
-      else router.refresh();
-    } finally {
-      setManagedBusy(false);
-    }
-  }
 
   return (
     <div className="space-y-5">
@@ -335,11 +246,6 @@ function BalanceTab({
           <div className="text-xs text-qf-mute">יתרת SMS</div>
           <div className="text-2xl lg:text-3xl font-bold tnum mt-1">{balance.toLocaleString("he-IL")}</div>
           <div className="text-xs text-qf-mute mt-0.5">הודעות SMS זמינות</div>
-        </div>
-        <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5">
-          <div className="text-xs text-qf-mute">יתרת וואטסאפ</div>
-          <div className="text-2xl lg:text-3xl font-bold tnum mt-1">{waBalance.toLocaleString("he-IL")}</div>
-          <div className="text-xs text-qf-mute mt-0.5">הודעות וואטסאפ זמינות</div>
         </div>
         <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5">
           <div className="text-xs text-qf-mute">שם השולח ב-SMS</div>
@@ -380,72 +286,7 @@ function BalanceTab({
         <PackageGrid channel="sms" billingReady={billingReady} busy={busy} onBuy={buy} />
       </section>
 
-      <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div>
-            <h2 className="text-base lg:text-lg font-semibold">ווטסאפ של QuickFood</h2>
-            <p className="text-xs lg:text-sm text-qf-mute">
-              מנוי חודשי לשליחת התראות הזמנה וביקורות בוואטסאפ של QuickFood, ללא הגבלת שליחות וללא ניכוי מהיתרה.{" "}
-              <b className="text-qf-ink">שימו לב: החבילה מיועדת לחיווי וביקורות בלבד - היא אינה מאפשרת שליחת דיוור בוואטסאפ.</b>
-            </p>
-          </div>
-          {managed.active ? (
-            <span className="shrink-0 px-2.5 py-1 rounded-full bg-qf-green-soft text-qf-green-deep text-xs font-bold">
-              פעיל
-            </span>
-          ) : (
-            <span className="shrink-0 px-2.5 py-1 rounded-full bg-qf-line-soft text-qf-mute text-xs font-bold">
-              {managed.basePrice}₪ + מע״מ / חודש
-            </span>
-          )}
-        </div>
-        {managed.active ? (
-          <div className="rounded-xl border border-qf-line-dash bg-qf-bg/40 px-3 py-2.5 text-xs space-y-1">
-            {managed.cancelAtPeriodEnd ? (
-              <>
-                <div className="text-qf-tomato">
-                  המנוי יסתיים ב-{formatDate(managed.currentPeriodEnd)} ולא יתחדש.
-                </div>
-                <button
-                  type="button"
-                  onClick={resumeManaged}
-                  disabled={managedBusy}
-                  className="text-(--qf-deep) underline underline-offset-2 hover:text-(--qf-primary) disabled:opacity-60"
-                >
-                  ביטול הביטול (חזרה לפעיל)
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="text-qf-ink2">
-                  מנוי פעיל · {managed.basePrice}₪ + מע״מ לחודש
-                  {managed.currentPeriodEnd && <> · יחודש ב-{formatDate(managed.currentPeriodEnd)}</>}
-                </div>
-                <button
-                  type="button"
-                  onClick={cancelManaged}
-                  disabled={managedBusy}
-                  className="text-qf-tomato underline underline-offset-2 hover:opacity-80 disabled:opacity-60"
-                >
-                  ביטול המנוי בסוף התקופה
-                </button>
-              </>
-            )}
-            {managedError && <div className="text-qf-tomato">{managedError}</div>}
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => {
-              setManagedError(null);
-              setSubscribeModalOpen(true);
-            }}
-            className="py-2 px-4 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium"
-          >
-            הפעלת מנוי
-          </button>
-        )}
-      </section>
+
 
       {balance > 0 && (
         <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-3">
@@ -526,82 +367,8 @@ function BalanceTab({
         )}
       </section>
 
-      {subscribeModalOpen && (
-        <ManagedSubscribeModal
-          basePrice={managed.basePrice}
-          billingReady={billingReady}
-          busy={managedBusy}
-          error={managedError}
-          onConfirm={subscribeManaged}
-          onClose={() => setSubscribeModalOpen(false)}
-        />
-      )}
-    </div>
-  );
-}
 
-function ManagedSubscribeModal({
-  basePrice,
-  billingReady,
-  busy,
-  error,
-  onConfirm,
-  onClose,
-}: {
-  basePrice: number;
-  billingReady: boolean;
-  busy: boolean;
-  error: string | null;
-  onConfirm: () => void;
-  onClose: () => void;
-}) {
-  const totalWithVat = (basePrice * 1.18).toFixed(2);
-  return (
-    <Modal open onClose={onClose} closeOnBackdrop={!busy} size="sm" ariaLabel="הפעלת ווטסאפ של QuickFood">
-      <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-4">
-        <div className="space-y-1">
-          <div className="font-semibold">הפעלת ווטסאפ של QuickFood</div>
-          <div className="text-sm text-qf-ink2">
-            שליחת התראות הזמנה וביקורות בוואטסאפ של QuickFood, ללא הגבלת שליחות בחודש. השליחות לא מנכות מהיתרה.
-          </div>
-          <div className="text-xs font-bold text-qf-tomato bg-qf-tomato-soft border border-qf-tomato/30 rounded-xl px-3 py-2">
-            החבילה מיועדת לחיווי וביקורות בלבד - היא אינה מאפשרת שליחת דיוור בוואטסאפ.
-          </div>
-        </div>
-        <div className="rounded-xl border border-qf-line-dash bg-qf-bg/50 p-3 text-sm space-y-0.5">
-          <div className="font-medium">{basePrice}₪ + מע״מ / חודש</div>
-          <div className="text-xs text-qf-mute">סה״כ {totalWithVat}₪ כולל מע״מ · חיוב חודשי על הכרטיס השמור</div>
-        </div>
-        {!billingReady && (
-          <div className="text-xs text-qf-tomato">
-            יש להשלים{" "}
-            <Link href="/dashboard/billing" className="underline underline-offset-2">
-              הגדרת חיוב
-            </Link>{" "}
-            לפני הפעלת המנוי.
-          </div>
-        )}
-        {error && <div className="text-xs text-qf-tomato">{error}</div>}
-        <div className="flex justify-end gap-2 pt-1">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={busy}
-            className="px-4 py-2 rounded-xl border border-qf-line-dash text-sm hover:border-qf-line disabled:opacity-60"
-          >
-            ביטול
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={busy || !billingReady}
-            className="px-4 py-2 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-60"
-          >
-            {busy ? "מפעיל..." : `הפעל ב-${basePrice}₪/חודש`}
-          </button>
-        </div>
-      </div>
-    </Modal>
+    </div>
   );
 }
 
@@ -769,7 +536,7 @@ function EventTextEditor({
             ))}
           </div>
           <p className="text-[11px] text-qf-mute">
-            המשתנים (כמו {"{order}"} ו-{"{waze}"}) מוחלפים אוטומטית בעת השליחה. הטקסט משתנה לפי הערוץ - וואטסאפ עשיר, SMS קצר.
+            המשתנים (כמו {"{order}"} ו-{"{waze}"}) מוחלפים אוטומטית בעת השליחה. הטקסט מותאם לערוץ השליחה.
           </p>
         </div>
       )}
@@ -783,20 +550,18 @@ function NotificationsTab({
   review,
   smsSender,
   availability,
-  onUpgradeWhatsapp,
 }: {
   orderEvents: OrderNotifySettings;
   merchantNewOrder: { email: boolean; whatsapp: boolean };
   review: { enabled: boolean; public: boolean; channel: NotifyChannel; delayMinutes: number };
   smsSender: string;
   availability: Availability;
-  onUpgradeWhatsapp: () => void;
 }) {
   const router = useRouter();
   // Email is the free default channel; SMS + the managed-WhatsApp package are
   // the paid rails. BYO WhatsApp is retired, so it's no longer offered.
-  const ORDER_EVENT_CHANNELS: NotifyChannel[] = ["email", "sms", "whatsapp_managed"];
-  const REVIEW_CHANNELS: NotifyChannel[] = ["off", "email", "sms", "whatsapp_managed"];
+  const ORDER_EVENT_CHANNELS: NotifyChannel[] = ["email", "sms"];
+  const REVIEW_CHANNELS: NotifyChannel[] = ["off", "email", "sms"];
 
   // Coerce an `off` channel (not offered for order events - use the toggle
   // instead) to the free email default so the picker always has a valid pick.
@@ -879,25 +644,14 @@ function NotificationsTab({
               <span className="text-xs text-qf-mute"> · נשלח לכתובת המייל של בעל החשבון</span>
             </span>
           </label>
-          <label className="flex items-center gap-2.5 text-sm">
-            <input
-              type="checkbox"
-              checked={ownerAlert.whatsapp}
-              onChange={(e) => setOwnerAlert((x) => ({ ...x, whatsapp: e.target.checked }))}
-              className="w-4 h-4 accent-(--qf-primary)"
-            />
-            <span>
-              וואטסאפ
-              <span className="text-xs text-qf-mute"> · נשלח למספר הנייד של בעל החשבון, ללא עלות</span>
-            </span>
-          </label>
+
         </section>
 
         <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-4">
           <div>
             <h2 className="text-base lg:text-lg font-semibold">עדכוני סטטוס הזמנה ללקוח</h2>
             <p className="text-xs text-qf-mute">
-              מה לשלוח ללקוח בכל שלב, ובאיזה ערוץ. מייל הוא ברירת המחדל וללא עלות; SMS ו-וואטסאפ נגבים מהיתרה.
+              מה לשלוח ללקוח בכל שלב, ובאיזה ערוץ. מייל הוא ברירת המחדל וללא עלות; SMS נגבה מהיתרה.
             </p>
           </div>
           <label className="flex items-center justify-between gap-3 pb-1">
@@ -983,20 +737,7 @@ function NotificationsTab({
                   ברירת המחדל. הביקורת נשלחת למי שהשאיר מייל בקופה; מי שלא - ידולג. כדי לחייב מייל בקופה, הפעילו זאת בהגדרות → קופה.
                 </p>
               )}
-              {!availability.managedActive && (
-                <div className="rounded-xl border border-qf-yolk/40 bg-qf-yolk-soft px-3 py-2.5 flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-xs text-qf-ink2 leading-relaxed">
-                    לשליחת ביקורות בוואטסאפ (דרך המספר של QuickFood, ללא הגבלה) צריך חבילת וואטסאפ - ₪99 לחודש.
-                  </span>
-                  <button
-                    type="button"
-                    onClick={onUpgradeWhatsapp}
-                    className="shrink-0 px-3 py-1.5 rounded-lg bg-(--qf-primary) text-white text-xs font-bold hover:bg-(--qf-deep) transition"
-                  >
-                    שדרוג לוואטסאפ
-                  </button>
-                </div>
-              )}
+
             </div>
 
             <div className={cn("grid grid-cols-1 sm:grid-cols-2 gap-3", rev.channel === "off" && "opacity-60 pointer-events-none")}>
@@ -1047,7 +788,6 @@ function ClubTab({
   tiers,
   audience,
   smsAvailable,
-  whatsappAvailable,
   onGoBuy,
 }: {
   hasCredits: boolean;
@@ -1056,7 +796,6 @@ function ClubTab({
   tiers: Record<Tier, string>;
   audience: Array<{ tier: Tier; hasEmail: boolean; hasPhone: boolean }>;
   smsAvailable: boolean;
-  whatsappAvailable: boolean;
   onGoBuy: () => void;
 }) {
   const [channel, setChannel] = useState<"email" | "sms" | "whatsapp">("email");
@@ -1130,7 +869,7 @@ function ClubTab({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-base lg:text-lg font-semibold">דיוור לחברי המועדון</h2>
-          <p className="text-xs text-qf-mute">שליחת מבצעים והטבות ללקוחות באימייל, ב-SMS ובוואטסאפ, בהתאם למסלול.</p>
+          <p className="text-xs text-qf-mute">שליחת מבצעים והטבות ללקוחות באימייל, ב-SMS בהתאם למסלול.</p>
         </div>
         <div className="text-xs text-qf-mute">
           יתרה: <span className="font-bold text-qf-ink2">{balance.toLocaleString("he-IL")}</span>
@@ -1143,7 +882,6 @@ function ClubTab({
           {([
             { id: "email" as const, label: "אימייל", available: true },
             { id: "sms" as const, label: "SMS", available: smsAvailable },
-            { id: "whatsapp" as const, label: "וואטסאפ", available: whatsappAvailable },
           ]).map((c) => (
             <button
               key={c.id}

@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 const MAX_RECIPIENTS = 2000;
 
 const BroadcastSchema = z.object({
-  channel: z.enum(["email", "sms", "whatsapp"]),
+  channel: z.enum(["email", "sms", "whatsapp"]).refine((v): boolean => v !== "whatsapp", "ערוץ וואטסאפ אינו זמין כרגע"),
   tier: z.enum(["all", "silver", "gold", "platinum"]).default("all"),
   subject: z.string().max(160).optional(),
   body: z.string().min(1).max(2000),

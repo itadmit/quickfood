@@ -14,7 +14,7 @@ const Schema = z.object({
   enabled: z.boolean().optional(),
   public: z.boolean().optional(),
   channel: z
-    .enum(["off", "email", "sms", "whatsapp", "whatsapp_managed"])
+    .enum(["off", "email", "sms", "whatsapp", "whatsapp_managed"]).refine((v): boolean => v !== "whatsapp" && v !== "whatsapp_managed", "ערוץ וואטסאפ אינו זמין כרגע")
     .optional(),
   // Bounded between 5 minutes and 24 hours
   delay_minutes: z.number().int().min(5).max(1440).optional(),

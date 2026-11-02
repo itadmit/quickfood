@@ -58,7 +58,7 @@ export const GET = handler(async (req: Request) => {
 
 const Body = z.object({
   segment: z.enum(GROWTH_SEGMENTS),
-  channel: z.enum(["email", "sms", "whatsapp"]),
+  channel: z.enum(["email", "sms", "whatsapp"]).refine((v): boolean => v !== "whatsapp", "ערוץ וואטסאפ אינו זמין כרגע"),
   subject: z.string().max(160).optional(),
   body: z.string().min(1).max(2000),
 });

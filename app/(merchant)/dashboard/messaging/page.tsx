@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
-import { getSubscription, BillingHubError } from "@/lib/billing-hub/client";
-import { REVIEWS_WHATSAPP_BASE_PRICE } from "@/lib/billing-hub/plans";
 import { loadLoyaltyData } from "@/lib/loyalty/members";
 import {
   resolveOrderNotifySettings,
@@ -81,26 +79,10 @@ export default async function MessagingPage() {
 
   const a = resolveMessagingAvailability(tenant);
 
-  const managed = {
-    active: !!tenant.reviewsWhatsappSubscriptionId,
-    cancelAtPeriodEnd: false,
-    currentPeriodEnd: null as string | null,
-    basePrice: REVIEWS_WHATSAPP_BASE_PRICE,
-  };
-  if (tenant.reviewsWhatsappSubscriptionId) {
-    try {
-      const detail = await getSubscription(tenant.reviewsWhatsappSubscriptionId);
-      managed.cancelAtPeriodEnd = detail.cancel_at_period_end;
-      managed.currentPeriodEnd = detail.current_period_end;
-    } catch (err) {
-      if (!(err instanceof BillingHubError)) throw err;
-    }
-  }
 
   return (
     <MessagingView
       balance={tenant.smsCreditsRemaining}
-      whatsappBalance={tenant.whatsappCreditsRemaining}
       smsSender={tenant.smsSender ?? ""}
       billingReady={!!(tenant.billingCustomerId && tenant.billingPaymentMethodId)}
       orderEvents={resolveOrderNotifySettings(tenant.notifySettings, tenant.notifyChannel)}
@@ -108,17 +90,15 @@ export default async function MessagingPage() {
       review={{
         enabled: tenant.reviewsEnabled,
         public: tenant.reviewsPublic,
-        channel: tenant.reviewsChannel,
+        channel: tenant.reviewsChannel === "whatsapp" || tenant.reviewsChannel === "whatsapp_managed" ? "sms" : tenant.reviewsChannel,
         delayMinutes: tenant.reviewsDelayMinutes,
       }}
       availability={{
         smsAvailable: a.smsAvailable,
         whatsappEnabled: a.whatsappEnabled,
         whatsappConnected: a.whatsappConnected,
-        whatsappAvailable: a.whatsappAvailable,
         managedActive: a.managedActive,
       }}
-      managed={managed}
       tiers={{
         silver: config.tiers.silver.name,
         gold: config.tiers.gold.name,

@@ -20,7 +20,6 @@ const SUGGESTED_BODY: Record<string, string> = {
 };
 
 const CHANNELS: { key: "email" | "sms" | "whatsapp"; label: string }[] = [
-  { key: "whatsapp", label: "וואטסאפ" },
   { key: "sms", label: "SMS" },
   { key: "email", label: "אימייל" },
 ];
@@ -32,7 +31,7 @@ export function SendCampaignModal({
   segment: string;
   onClose: () => void;
 }) {
-  const [channel, setChannel] = useState<"email" | "sms" | "whatsapp">("whatsapp");
+  const [channel, setChannel] = useState<"email" | "sms" | "whatsapp">("sms");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState(SUGGESTED_BODY[segment] ?? "");
   const [preview, setPreview] = useState<{ recipients: number; remaining: number | null } | null>(null);

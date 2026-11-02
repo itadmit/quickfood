@@ -12,7 +12,7 @@
 import { CouponType } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { resolveLoyaltyConfig, renderBirthdayGreeting } from "@/lib/loyalty/config";
-import { sendWhatsApp } from "@/lib/whatsapp/send";
+import { sendSms } from "@/lib/sms/send";
 import { formatDate } from "@/lib/format";
 
 export interface BirthdayRunResult {
@@ -95,7 +95,7 @@ export async function issueBirthdayCoupons(): Promise<BirthdayRunResult> {
         coupon: code,
         expiry: formatDate(validUntil),
       });
-      const res = await sendWhatsApp({
+      const res = await sendSms({
         tenantId,
         to: m.customer.phone,
         body,

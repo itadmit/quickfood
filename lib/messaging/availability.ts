@@ -32,14 +32,12 @@ export interface MessagingAvailability {
 export function resolveMessagingAvailability(
   t: MessagingAvailabilityInput,
 ): MessagingAvailability {
-  const whatsappConnected = !!(t.whatsappToken && t.whatsappInstanceId);
   return {
     smsAvailable: t.smsCreditsRemaining > 0,
-    whatsappEnabled: t.whatsappEnabled,
-    whatsappConnected,
-    whatsappAvailable:
-      t.whatsappEnabled && whatsappConnected && t.whatsappCreditsRemaining > 0,
-    managedActive: !!t.reviewsWhatsappSubscriptionId,
+    whatsappEnabled: false,
+    whatsappConnected: false,
+    whatsappAvailable: false,
+    managedActive: false,
     smsCredits: t.smsCreditsRemaining,
     whatsappCredits: t.whatsappCreditsRemaining,
   };

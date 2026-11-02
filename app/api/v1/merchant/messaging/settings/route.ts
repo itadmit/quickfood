@@ -30,7 +30,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SmsSenderRegex = /^[A-Za-z0-9]{1,11}$/;
-const ChannelEnum = z.enum(["off", "email", "sms", "whatsapp", "whatsapp_managed"]);
+const ChannelEnum = z.enum(["off", "email", "sms", "whatsapp", "whatsapp_managed"]).refine((v): boolean => v !== "whatsapp" && v !== "whatsapp_managed", "ניתן להשתמש ב-SMS או באימייל בלבד");
 const EventEnum = z.enum(["confirmed", "ready", "on_the_way", "delivered"]);
 
 const Schema = z.object({
@@ -61,7 +61,7 @@ const Schema = z.object({
   merchant_new_order: z
     .object({
       email: z.boolean(),
-      whatsapp: z.boolean(),
+      whatsapp: z.boolean().refine((v): boolean => !v, "ערוץ וואטסאפ אינו זמין כרגע"),
     })
     .optional(),
 });

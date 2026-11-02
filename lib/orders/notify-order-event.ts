@@ -14,7 +14,6 @@
  */
 import { prisma } from "@/lib/db/client";
 import { sendSms } from "@/lib/sms/send";
-import { sendWhatsApp } from "@/lib/whatsapp/send";
 import { sendEmail } from "@/lib/email/send";
 import { orderStatusEmail } from "@/lib/email/templates";
 import { appBaseUrl } from "@/lib/orders/notify-customer";
@@ -47,34 +46,6 @@ async function sendViaChannel(
   refId: string,
 ): Promise<void> {
   if (ch === "off" || ch === "email") return;
-
-  if (ch === "whatsapp_managed") {
-    // Paid managed add-on; if it isn't active, skip (no silent fallback to
-    // the merchant's own pool).
-    if (!tenant.reviewsWhatsappSubscriptionId) return;
-    await sendWhatsApp({
-      tenantId: tenant.id,
-      to,
-      body,
-      kind,
-      refKind: "order",
-      refId,
-      useManagedAccount: true,
-    });
-    return;
-  }
-
-  if (ch === "whatsapp") {
-    await sendWhatsApp({
-      tenantId: tenant.id,
-      to,
-      body,
-      kind,
-      refKind: "order",
-      refId,
-    });
-    return;
-  }
 
   await sendSms({ tenantId: tenant.id, to, body, kind, refKind: "order", refId });
 }
