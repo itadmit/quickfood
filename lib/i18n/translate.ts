@@ -20,6 +20,10 @@ import type { Lang } from "./langs";
 const TRANSLATE_MODEL =
   process.env.TRANSLATE_MODEL || process.env.CLAUDE_MODEL || "claude-haiku-4-5-20251001";
 
+// Max strings per Claude call. Keeps each JSON response well within max_tokens
+// so it never truncates (a whole menu in one call does).
+const TRANSLATE_CHUNK = 30;
+
 const LANG_NAME: Record<Exclude<Lang, "he">, string> = {
   en: "English",
   ru: "Russian",
@@ -81,18 +85,25 @@ export async function translateBatch(
   }
 
   if (misses.length > 0) {
-    const translated = await callClaude(
-      misses.map((m) => m.text),
-      lang,
-    ).catch((e) => {
-      console.error("[i18n] translate batch failed:", e);
-      return null;
-    });
-
-    if (translated && translated.length === misses.length) {
+    // Chunk the strings: one Claude call for the whole menu overflows
+    // max_tokens and truncates the JSON array, which then fails to parse and
+    // silently falls back to Hebrew. Small batches keep each response intact.
+    // Each chunk persists independently, so a single failed chunk doesn't lose
+    // the rest.
+    for (let start = 0; start < misses.length; start += TRANSLATE_CHUNK) {
+      const chunk = misses.slice(start, start + TRANSLATE_CHUNK);
+      const translated = await callClaude(
+        chunk.map((m) => m.text),
+        lang,
+      ).catch((e) => {
+        console.error("[i18n] translate chunk failed:", e);
+        return null;
+      });
+      if (!translated) continue;
       await Promise.all(
-        misses.map((m, idx) => {
+        chunk.map((m, idx) => {
           const text = translated[idx];
+          if (text == null) return Promise.resolve(); // leave fallback; retried next pass
           out.set(keyOf(m), text);
           return prisma.translation
             .upsert({
@@ -127,44 +138,55 @@ export async function translateBatch(
   return out;
 }
 
-async function callClaude(texts: string[], lang: Exclude<Lang, "he">): Promise<string[] | null> {
+/**
+ * Translate `texts` into `lang`. Returns an array aligned to the input where
+ * each entry is the translation or `null` when that line wasn't returned.
+ * Uses a numbered-line input + index-keyed JSON object output so a miscount or
+ * a dropped line only loses that one string (which falls back / retries) rather
+ * than discarding the whole batch. Returns null only on a total failure.
+ */
+async function callClaude(
+  texts: string[],
+  lang: Exclude<Lang, "he">,
+): Promise<(string | null)[] | null> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return null;
 
   const client = new Anthropic({ apiKey });
+  const numbered = texts.map((t, i) => `${i + 1}. ${t}`).join("\n");
   const system =
     `You are a professional menu translator for a food-ordering storefront. ` +
-    `Translate each Hebrew string into ${LANG_NAME[lang]}. Keep it natural, ` +
-    `concise and appetizing. Keep proper brand/dish names that have no common ` +
-    `translation. Never add notes or quotes around items. Return ONLY a JSON ` +
-    `array of strings — same length and same order as the input array.`;
+    `Translate each numbered Hebrew line into ${LANG_NAME[lang]}. Keep it ` +
+    `natural, concise and appetizing. Keep proper brand/dish names that have ` +
+    `no common translation. Return ONLY a JSON object mapping each line NUMBER ` +
+    `(as a string key) to its translation, covering every number, e.g. ` +
+    `{"1":"...","2":"..."}. No extra text, no markdown.`;
 
   const res = await client.messages.create({
     model: TRANSLATE_MODEL,
     max_tokens: 4096,
     system,
-    messages: [{ role: "user", content: JSON.stringify(texts) }],
+    messages: [{ role: "user", content: numbered }],
   });
 
   const block = res.content.find((b) => b.type === "text");
   const raw = block && block.type === "text" ? block.text : "";
-  return parseJsonArray(raw, texts.length);
+  return parseIndexed(raw, texts.length);
 }
 
-function parseJsonArray(raw: string, expectedLength: number): string[] | null {
+function parseIndexed(raw: string, n: number): (string | null)[] | null {
   try {
-    const start = raw.indexOf("[");
-    const end = raw.lastIndexOf("]");
+    const start = raw.indexOf("{");
+    const end = raw.lastIndexOf("}");
     if (start < 0 || end <= start) return null;
-    const arr = JSON.parse(raw.slice(start, end + 1));
-    if (
-      Array.isArray(arr) &&
-      arr.length === expectedLength &&
-      arr.every((x) => typeof x === "string")
-    ) {
-      return arr as string[];
+    const obj = JSON.parse(raw.slice(start, end + 1)) as Record<string, unknown>;
+    if (typeof obj !== "object" || obj === null) return null;
+    const out: (string | null)[] = [];
+    for (let i = 0; i < n; i++) {
+      const v = obj[String(i + 1)];
+      out.push(typeof v === "string" && v.trim() ? v : null);
     }
-    return null;
+    return out;
   } catch {
     return null;
   }
