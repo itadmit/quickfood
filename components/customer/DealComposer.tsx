@@ -12,6 +12,9 @@ interface ComposerOption {
   name: string;
   priceDelta: number;
   isDefault: boolean;
+  /** Per-option quantity ceiling for allowQty groups. 0 = no per-option cap
+   *  (the group's maxSelect still bounds the total). */
+  maxQuantity?: number;
 }
 interface ComposerGroup {
   id: string;
@@ -21,6 +24,9 @@ interface ComposerGroup {
   minSelect: number;
   maxSelect: number;
   includedFree?: number;
+  /** Wolt-style "same topping multiple times" - shows a +/- stepper per
+   *  picked option (multi groups only), exactly like a normal item. */
+  allowQty?: boolean;
   options: ComposerOption[];
 }
 interface ComposerSize {
@@ -72,6 +78,27 @@ interface UnitSel {
   itemId: string | null;
   sizeId: string | null;
   optionIds: Set<string>;
+  /** Per-option quantity for allowQty groups (optionId → count). A picked
+   *  option with no entry here is quantity 1. Ignored for non-allowQty
+   *  groups, which stay one-unit-each exactly as before. */
+  qtys: Record<string, number>;
+}
+
+/** Units of a picked option: 1 unless the group is allowQty/multi, then the
+ *  tracked quantity. Mirrors ItemDetail.optionQty so the preview and payload
+ *  match a normal item. */
+function unitOptionQty(group: ComposerGroup, u: UnitSel, optionId: string): number {
+  if (!u.optionIds.has(optionId)) return 0;
+  if (!group.allowQty || group.type !== "multi" || group.maxSelect <= 1) return 1;
+  return Math.max(1, u.qtys[optionId] ?? 1);
+}
+
+/** Total units picked in a group (sum of per-option quantities). Equals the
+ *  distinct count for non-allowQty groups. Bounds maxSelect / required. */
+function groupTotalUnits(group: ComposerGroup, u: UnitSel): number {
+  let n = 0;
+  for (const o of group.options) n += unitOptionQty(group, u, o.id);
+  return n;
 }
 
 /** The item's default size id (or its first size), null when it has no sizes. */
@@ -84,13 +111,25 @@ function defaultSizeId(item: ComposerItem | undefined): string | null {
  *  priceGroupOptions: the cheapest `includedFree` PAID picks are free,
  *  zero/negative-delta picks are unaffected. Returned map keeps the preview
  *  identical to what the order will actually charge. */
-function groupCharges(group: ComposerGroup, picked: Set<string>): Map<string, number> {
-  const chosen = group.options.filter((o) => picked.has(o.id));
+function groupCharges(group: ComposerGroup, u: UnitSel): Map<string, number> {
   const free = group.includedFree ?? 0;
-  const paid = chosen.filter((o) => o.priceDelta > 0).sort((a, b) => a.priceDelta - b.priceDelta);
+  // One entry per UNIT (an option picked 3× contributes three units), so the
+  // cheapest-free allocation matches the server's per-unit pricing.
+  const paid: Array<{ id: string; price: number }> = [];
   const out = new Map<string, number>();
-  paid.forEach((o, i) => out.set(o.id, i < free ? 0 : o.priceDelta));
-  for (const o of chosen) if (o.priceDelta <= 0) out.set(o.id, o.priceDelta);
+  for (const o of group.options) {
+    const qty = unitOptionQty(group, u, o.id);
+    if (qty === 0) continue;
+    for (let i = 0; i < qty; i++) {
+      if (o.priceDelta > 0) paid.push({ id: o.id, price: o.priceDelta });
+      else out.set(o.id, (out.get(o.id) ?? 0) + o.priceDelta);
+    }
+  }
+  paid.sort((a, b) => a.price - b.price);
+  paid.forEach((unit, i) => {
+    const charge = i < free ? 0 : unit.price;
+    out.set(unit.id, (out.get(unit.id) ?? 0) + charge);
+  });
   return out;
 }
 
@@ -135,6 +174,7 @@ export function DealComposer({
               itemId: preItemId,
               sizeId: preItemId ? (preLocked ?? defaultSizeId(d.items[preItemId])) : null,
               optionIds: new Set(),
+              qtys: {},
             });
           }
         }
@@ -181,6 +221,7 @@ export function DealComposer({
           itemId,
           sizeId: locked ?? defaultSizeId(items[itemId]),
           optionIds: new Set<string>(),
+          qtys: {},
         };
       }),
     );
@@ -195,17 +236,49 @@ export function DealComposer({
       prev.map((u, i) => {
         if (i !== unitIdx) return u;
         const next = new Set(u.optionIds);
+        const qtys = { ...u.qtys };
         if (group.type === "single") {
-          for (const o of group.options) next.delete(o.id);
+          for (const o of group.options) {
+            next.delete(o.id);
+            delete qtys[o.id];
+          }
           next.add(optionId);
         } else if (next.has(optionId)) {
           next.delete(optionId);
+          delete qtys[optionId];
         } else {
-          const pickedInGroup = group.options.filter((o) => next.has(o.id)).length;
-          if (pickedInGroup >= group.maxSelect) return u;
+          if (groupTotalUnits(group, u) >= group.maxSelect) return u;
           next.add(optionId);
         }
-        return { ...u, optionIds: next };
+        return { ...u, optionIds: next, qtys };
+      }),
+    );
+  }
+
+  /** +/- a picked option's quantity in an allowQty group. Respects the group's
+   *  total maxSelect and the option's own maxQuantity; stepping down to 0
+   *  removes the pick. */
+  function bumpOptionQty(unitIdx: number, group: ComposerGroup, optionId: string, delta: 1 | -1) {
+    setUnits((prev) =>
+      prev.map((u, i) => {
+        if (i !== unitIdx) return u;
+        const cur = unitOptionQty(group, u, optionId);
+        if (delta > 0) {
+          if (groupTotalUnits(group, u) >= group.maxSelect) return u;
+          const cap = group.options.find((o) => o.id === optionId)?.maxQuantity ?? 0;
+          if (cap > 0 && cur >= cap) return u;
+        }
+        const nextQty = cur + delta;
+        const next = new Set(u.optionIds);
+        const qtys = { ...u.qtys };
+        if (nextQty <= 0) {
+          next.delete(optionId);
+          delete qtys[optionId];
+        } else {
+          next.add(optionId);
+          qtys[optionId] = nextQty;
+        }
+        return { ...u, optionIds: next, qtys };
       }),
     );
   }
@@ -221,7 +294,7 @@ export function DealComposer({
       const item = items[u.itemId];
       if (!item) return;
       for (const g of item.optionGroups) {
-        for (const [oid, charge] of groupCharges(g, u.optionIds)) {
+        for (const [oid, charge] of groupCharges(g, u)) {
           const key = `${ui}:${g.id}:${oid}`;
           perKey.set(key, charge);
           if (charge > 0) positive.push({ key, charge });
@@ -262,9 +335,8 @@ export function DealComposer({
       const item = items[u.itemId];
       if (!item) return true;
       for (const g of item.optionGroups) {
-        const picked = g.options.filter((o) => u.optionIds.has(o.id)).length;
         const floor = g.required ? Math.max(1, g.minSelect) : g.minSelect;
-        if (g.required && picked < floor) return true;
+        if (g.required && groupTotalUnits(g, u) < floor) return true;
       }
     }
     return units.length === 0;
@@ -298,10 +370,11 @@ export function DealComposer({
       for (const g of item.optionGroups) {
         for (const o of g.options) {
           if (!u.optionIds.has(o.id)) continue;
+          const q = unitOptionQty(g, u, o.id);
           displayOptions.push({
             groupId: g.id,
             optionId: o.id,
-            name: o.name,
+            name: q > 1 ? `${o.name} ×${q}` : o.name,
             groupName: `${u.label} · ${g.name}`,
             priceDelta: chargeByPick.get(`${ui}:${g.id}:${o.id}`) ?? 0,
           });
@@ -323,12 +396,20 @@ export function DealComposer({
       source: "menu",
       deal: {
         dealId: deal.id,
-        units: units.map((u) => ({
-          slotId: u.slotId,
-          itemId: u.itemId!,
-          sizeId: u.sizeId,
-          optionIds: Array.from(u.optionIds),
-        })),
+        units: units.map((u) => {
+          // Expand per-option quantity into repeated ids - the server counts
+          // occurrences to price allowQty groups. Non-qty groups emit one id
+          // each, identical to the previous Array.from(optionIds).
+          const unitItem = items[u.itemId!];
+          const optionIds: string[] = [];
+          for (const g of unitItem.optionGroups) {
+            for (const o of g.options) {
+              const q = unitOptionQty(g, u, o.id);
+              for (let k = 0; k < q; k++) optionIds.push(o.id);
+            }
+          }
+          return { slotId: u.slotId, itemId: u.itemId!, sizeId: u.sizeId, optionIds };
+        }),
       },
     });
     setAdded(true);
@@ -490,10 +571,11 @@ export function DealComposer({
 
                   {chosen &&
                     chosen.optionGroups.map((g) => {
-                      const picked = g.options.filter((o) => u.optionIds.has(o.id)).length;
+                      const units = groupTotalUnits(g, u);
                       const floor = g.required ? Math.max(1, g.minSelect) : g.minSelect;
-                      const missing = g.required && picked < floor;
-                      const atMax = g.type === "multi" && picked >= g.maxSelect;
+                      const missing = g.required && units < floor;
+                      const atMax = g.type === "multi" && units >= g.maxSelect;
+                      const qtyEnabled = !!g.allowQty && g.type === "multi" && g.maxSelect > 1;
                       return (
                       <div key={g.id} className="rounded-xl bg-qf-line-soft/40 border border-qf-line p-3 space-y-1.5">
                         <div className="text-xs font-semibold text-qf-ink2 flex items-center gap-1.5">
@@ -513,7 +595,7 @@ export function DealComposer({
                                   : "bg-white border border-qf-line text-qf-mute font-normal",
                               )}
                             >
-                              {picked}/{g.maxSelect}
+                              {units}/{g.maxSelect}
                             </span>
                           )}
                         </div>
@@ -534,6 +616,45 @@ export function DealComposer({
                         <div className="flex flex-wrap gap-1.5">
                           {g.options.map((o) => {
                             const active = u.optionIds.has(o.id);
+                            // allowQty + selected → a compact −/qty/+ stepper,
+                            // mirroring a normal item. Everything else keeps the
+                            // original tap-to-toggle pill unchanged.
+                            if (qtyEnabled && active) {
+                              const q = unitOptionQty(g, u, o.id);
+                              const cap = o.maxQuantity ?? 0;
+                              const canInc = !atMax && (cap === 0 || q < cap);
+                              return (
+                                <div
+                                  key={o.id}
+                                  className="inline-flex items-center gap-1.5 rounded-lg border border-(--qf-primary) bg-(--qf-primary)/5 ps-2.5 pe-1 py-1 text-xs"
+                                >
+                                  <span className="font-medium text-qf-ink">{o.name}</span>
+                                  {o.priceDelta > 0 && (
+                                    <span className="tnum text-qf-mute">+₪{o.priceDelta}</span>
+                                  )}
+                                  <span className="inline-flex items-center gap-1 ms-0.5">
+                                    <button
+                                      type="button"
+                                      aria-label="הפחתה"
+                                      onClick={() => bumpOptionQty(ui, g, o.id, -1)}
+                                      className="w-5 h-5 rounded-md grid place-items-center bg-white border border-qf-line text-qf-ink font-bold leading-none"
+                                    >
+                                      −
+                                    </button>
+                                    <span className="tnum w-4 text-center font-bold text-qf-ink">{q}</span>
+                                    <button
+                                      type="button"
+                                      aria-label="הוספה"
+                                      disabled={!canInc}
+                                      onClick={() => bumpOptionQty(ui, g, o.id, 1)}
+                                      className="w-5 h-5 rounded-md grid place-items-center bg-white border border-qf-line text-qf-ink font-bold leading-none disabled:opacity-40"
+                                    >
+                                      +
+                                    </button>
+                                  </span>
+                                </div>
+                              );
+                            }
                             return (
                               <button
                                 key={o.id}
