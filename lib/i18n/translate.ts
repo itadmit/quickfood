@@ -44,6 +44,12 @@ function sourceHash(s: string): string {
   return createHash("sha256").update(s).digest("hex").slice(0, 32);
 }
 
+/** Hash of a source string, for stamping manual overrides so they stay valid
+ *  (shares the exact hashing the auto-translator uses). */
+export function translationSourceHash(s: string): string {
+  return sourceHash(s);
+}
+
 /**
  * Translate `items` into `lang`, returning a map keyed `type:id:field` →
  * translated text (Hebrew source as fallback). Safe to call on every render —
@@ -73,14 +79,16 @@ export async function translateBatch(
         field: i.field,
       })),
     },
-    select: { entityType: true, entityId: true, field: true, sourceHash: true, text: true },
+    select: { entityType: true, entityId: true, field: true, sourceHash: true, text: true, manual: true },
   });
   const cachedMap = new Map(cached.map((c) => [keyOf(c), c]));
 
   const misses: TransItem[] = [];
   for (const i of real) {
     const c = cachedMap.get(keyOf(i));
-    if (c && c.sourceHash === sourceHash(i.text)) out.set(keyOf(i), c.text);
+    // A manual override always wins and is never re-translated. An auto row is
+    // reused only while its Hebrew source is unchanged.
+    if (c && (c.manual || c.sourceHash === sourceHash(i.text))) out.set(keyOf(i), c.text);
     else misses.push(i);
   }
 
