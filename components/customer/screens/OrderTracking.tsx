@@ -12,6 +12,7 @@ import { CartLineOptions } from "@/components/customer/CartLineOptions";
 import { formatPrice, formatTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { readOrderToken } from "@/lib/order-access-storage";
+import { useLocale } from "@/components/customer/LocaleProvider";
 
 const CourierMap = dynamic(
   () => import("@/components/customer/CourierMap").then((m) => m.CourierMap),
@@ -69,21 +70,21 @@ interface OrderData {
 }
 
 const COMMON_STAGES = [
-  { key: "received", label: "התקבלה" },
-  { key: "accepted", label: "אושרה" },
-  { key: "preparing", label: "בהכנה" },
+  { key: "received", labelKey: "order.stageReceived" },
+  { key: "accepted", labelKey: "order.stageAccepted" },
+  { key: "preparing", labelKey: "order.stagePreparing" },
 ] as const;
 const DELIVERY_TAIL = [
-  { key: "delivering", label: "בדרך" },
-  { key: "delivered", label: "נמסר" },
+  { key: "delivering", labelKey: "order.stageOnTheWay" },
+  { key: "delivered", labelKey: "order.stageDelivered" },
 ] as const;
-const PICKUP_TAIL = [{ key: "delivered", label: "נאסף" }] as const;
+const PICKUP_TAIL = [{ key: "delivered", labelKey: "order.stagePickedUp" }] as const;
 
-function stagesFor(method: "delivery" | "pickup"): Array<{ key: string; label: string }> {
+function stagesFor(method: "delivery" | "pickup"): Array<{ key: string; labelKey: string }> {
   // For pickup the "ready" step doubles as the "come collect it" cue.
   const ready = {
     key: "ready",
-    label: method === "pickup" ? "מוכן לאיסוף" : "מוכנה",
+    labelKey: method === "pickup" ? "order.stageReadyPickup" : "order.stageReady",
   };
   return [...COMMON_STAGES, ready, ...(method === "delivery" ? DELIVERY_TAIL : PICKUP_TAIL)];
 }
@@ -107,27 +108,27 @@ function stageOf(status: string, method: "delivery" | "pickup"): number {
  * Header sentence per order status - replaces the old fixed "25-35 minutes"
  * ETA with a plain-language status line (product decision 2026-07-19).
  */
-function statusHeadline(status: string, method: "delivery" | "pickup"): string {
+function statusHeadlineKey(status: string, method: "delivery" | "pickup"): string {
   switch (status) {
     case "pending":
-      return "קיבלנו את ההזמנה";
+      return "order.headlineReceived";
     case "confirmed":
-      return "מישהו במסעדה ראה ואישר את ההזמנה";
+      return "order.headlineConfirmed";
     case "preparing":
     case "in_oven":
-      return "אנחנו מכינים את ההזמנה ברגע זה";
+      return "order.headlinePreparing";
     case "ready":
       return method === "pickup"
-        ? "ההזמנה מוכנה וממתינה לאיסוף"
-        : "ההזמנה מוכנה וממתינה לשליח";
+        ? "order.headlineReadyPickup"
+        : "order.headlineReadyDelivery";
     case "out_for_delivery":
-      return "ההזמנה בדרך אליך";
+      return "order.headlineOnTheWay";
     case "delivered":
       return method === "pickup"
-        ? "ההזמנה נאספה, בתאבון!"
-        : "ההזמנה נמסרה לך, בתאבון!";
+        ? "order.headlinePickedUp"
+        : "order.headlineDelivered";
     default:
-      return "קיבלנו את ההזמנה";
+      return "order.headlineReceived";
   }
 }
 
@@ -169,6 +170,7 @@ export function OrderTracking({
   showTracking?: boolean;
 }) {
   const router = useRouter();
+  const { t } = useLocale();
   const [order, setOrder] = useState(initialOrder);
   const [review, setReview] = useState<ExistingReview | null>(existingReview);
   const stages = stagesFor(order.method);
@@ -266,11 +268,13 @@ export function OrderTracking({
         tenantCoverImage={tenantCoverImage}
         orderNumber={order.number}
         headline={
-          isCancelled ? "ההזמנה בוטלה" : statusHeadline(order.status, order.method)
+          isCancelled
+            ? t("order.cancelledHeadline")
+            : t(statusHeadlineKey(order.status, order.method))
         }
         subhead={
           isCancelled
-            ? `ההזמנה בוטלה. לא בוצע חיוב נוסף. לכל שאלה אפשר לפנות ל${tenantName}.`
+            ? `${t("order.cancelledSubheadPrefix")}${tenantName}.`
             : null
         }
         showCheck={!isCancelled && (isJustPlaced || isDelivered)}
@@ -286,23 +290,25 @@ export function OrderTracking({
                 <IcoClose c="#c2421f" s={20} />
               </div>
               <div>
-                <div className="font-bold text-qf-tomato">ההזמנה בוטלה</div>
+                <div className="font-bold text-qf-tomato">{t("order.cancelledTitle")}</div>
                 <p className="text-xs text-qf-mute mt-1 leading-relaxed">
-                  ההזמנה כבר לא בהכנה ולא תגיע. אם זו טעות או שיש שאלה, אפשר לפנות
-                  ל{tenantName}. רוצים להזמין שוב? לחצו על "הזמנה חדשה" למטה.
+                  {t("order.cancelledBodyPrefix")}
+                  {tenantName}. {t("order.cancelledBodySuffix")}
                 </p>
               </div>
             </div>
           ) : (
           <>
           <div>
-            <div className="font-semibold">{stages[stage]?.label}</div>
+            <div className="font-semibold">
+              {stages[stage] ? t(stages[stage].labelKey) : null}
+            </div>
             <div className="text-xs text-qf-mute">
-              {order.status === "preparing" && "המסעדה התחילה להכין את ההזמנה שלך"}
+              {order.status === "preparing" && t("order.detailPreparing")}
               {order.status === "ready" &&
-                (order.method === "pickup" ? "מוכן לאיסוף" : "מחכה לשליח")}
-              {order.status === "out_for_delivery" && "השליח בדרך אליך"}
-              {order.status === "delivered" && "תודה רבה ובתיאבון!"}
+                (order.method === "pickup" ? t("order.detailReadyPickup") : t("order.detailReadyDelivery"))}
+              {order.status === "out_for_delivery" && t("order.detailOnTheWay")}
+              {order.status === "delivered" && t("order.detailDelivered")}
             </div>
           </div>
 
@@ -356,7 +362,7 @@ export function OrderTracking({
                       done ? "text-qf-ink font-medium" : "text-qf-mute",
                     )}
                   >
-                    {s.label}
+                    {t(s.labelKey)}
                   </div>
                 </li>
               );
@@ -365,14 +371,14 @@ export function OrderTracking({
 
           <div className="pt-3 border-t border-qf-line-soft space-y-1.5 text-xs text-qf-mute">
             {order.confirmedAt && (
-              <Timestamp icon label="אושרה" t={order.confirmedAt} />
+              <Timestamp icon label={t("order.tsAccepted")} t={order.confirmedAt} />
             )}
             {order.preparingAt && (
-              <Timestamp icon label="בהכנה" t={order.preparingAt} />
+              <Timestamp icon label={t("order.tsPreparing")} t={order.preparingAt} />
             )}
-            {order.readyAt && <Timestamp icon label="מוכנה" t={order.readyAt} />}
+            {order.readyAt && <Timestamp icon label={t("order.tsReady")} t={order.readyAt} />}
             {order.deliveredAt && (
-              <Timestamp icon label="נמסרה" t={order.deliveredAt} />
+              <Timestamp icon label={t("order.tsDelivered")} t={order.deliveredAt} />
             )}
           </div>
 
@@ -382,7 +388,7 @@ export function OrderTracking({
                 <span className="absolute inline-flex w-full h-full rounded-full bg-qf-green-deep/60 animate-ping" />
                 <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-qf-green-deep" />
               </span>
-              <span>הסטטוס מתעדכן כאן בזמן אמת - אין צורך לרענן את העמוד</span>
+              <span>{t("order.liveUpdates")}</span>
             </div>
           )}
           </>
@@ -400,7 +406,7 @@ export function OrderTracking({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-sm">{order.courier.name}</div>
-                <div className="text-xs text-qf-mute">השליח שלך</div>
+                <div className="text-xs text-qf-mute">{t("order.yourCourier")}</div>
               </div>
               {order.courier.phone && (
                 <a
@@ -463,7 +469,7 @@ export function OrderTracking({
 
       {/* Items */}
       <section className="px-5 mt-4 lg:px-0">
-        <h2 className="font-semibold mb-2">פירוט ההזמנה</h2>
+        <h2 className="font-semibold mb-2">{t("order.summaryTitle")}</h2>
         <div className="bg-white rounded-2xl border border-qf-line divide-y divide-qf-line-soft">
           {order.items.map((it) => (
             <div
@@ -484,7 +490,7 @@ export function OrderTracking({
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="font-medium truncate">{it.name}</div>
                   <div className="text-qf-mute text-xs tnum shrink-0">
-                    {it.weightGrams != null ? `${it.weightGrams} גרם` : `×${it.quantity}`}
+                    {it.weightGrams != null ? `${it.weightGrams} ${t("order.gramsUnit")}` : `×${it.quantity}`}
                   </div>
                 </div>
                 {it.size && (
@@ -498,7 +504,7 @@ export function OrderTracking({
             </div>
           ))}
           <div className="px-4 py-3 flex items-center justify-between text-sm font-semibold">
-            <div>סה״כ</div>
+            <div>{t("cart.total")}</div>
             <div className="tnum">{formatPrice(order.total)}</div>
           </div>
         </div>
@@ -531,7 +537,7 @@ export function OrderTracking({
           href={`/s/${tenantSlug}#menu-section`}
           className="block text-center py-3 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white font-medium text-sm"
         >
-          הזמנה חדשה
+          {t("order.newOrder")}
         </Link>
       </section>
     </div>
@@ -580,6 +586,7 @@ function ReviewCard({
   review: ExistingReview | null;
   onSubmitted: (r: ExistingReview) => void;
 }) {
+  const { t } = useLocale();
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [text, setText] = useState("");
@@ -595,7 +602,7 @@ function ReviewCard({
   if (review) {
     return (
       <div className="bg-white rounded-2xl border border-qf-line p-4">
-        <div className="text-sm font-semibold mb-2">תודה על הדירוג שלך</div>
+        <div className="text-sm font-semibold mb-2">{t("order.reviewThanks")}</div>
         <div className="flex items-center gap-1 mb-2">
           {[1, 2, 3, 4, 5].map((n) => (
             <IcoStar
@@ -611,7 +618,7 @@ function ReviewCard({
         )}
         {review.replyText && (
           <div className="mt-3 bg-qf-green-soft border-s-4 border-(--qf-primary) rounded-e-lg ps-3 py-2 text-sm">
-            <div className="text-xs text-qf-green-deep font-medium">תשובת המסעדה</div>
+            <div className="text-xs text-qf-green-deep font-medium">{t("order.restaurantReply")}</div>
             <div className="mt-0.5 text-qf-ink2 leading-relaxed">{review.replyText}</div>
           </div>
         )}
@@ -648,7 +655,7 @@ function ReviewCard({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data?.error?.message ?? "שגיאה בשליחת הדירוג");
+        setError(data?.error?.message ?? t("order.reviewError"));
         return;
       }
       onSubmitted({
@@ -659,7 +666,7 @@ function ReviewCard({
         replyAt: data.review.reply_at ?? null,
       });
     } catch {
-      setError("שגיאה בשליחת הדירוג");
+      setError(t("order.reviewError"));
     } finally {
       setBusy(false);
     }
@@ -669,8 +676,8 @@ function ReviewCard({
 
   return (
     <div className="bg-white rounded-2xl border border-qf-line p-4">
-      <div className="text-base font-semibold">איך הייתה ההזמנה?</div>
-      <p className="text-xs text-qf-mute mt-0.5 mb-3">הדירוג עוזר למסעדה להשתפר</p>
+      <div className="text-base font-semibold">{t("order.reviewPrompt")}</div>
+      <p className="text-xs text-qf-mute mt-0.5 mb-3">{t("order.reviewHelp")}</p>
 
       <div
         className="flex items-center gap-1 mb-3"
@@ -680,7 +687,7 @@ function ReviewCard({
           <button
             key={n}
             type="button"
-            aria-label={`${n} כוכבים`}
+            aria-label={`${n} ${t("order.stars")}`}
             onClick={() => setRating(n)}
             onMouseEnter={() => setHover(n)}
             className="p-1 -m-1"
@@ -697,7 +704,7 @@ function ReviewCard({
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="ספר/י עוד (לא חובה)"
+        placeholder={t("order.reviewPlaceholder")}
         rows={3}
         maxLength={1000}
         className="w-full bg-qf-bg/60 border border-qf-line rounded-xl px-3 py-2 text-sm outline-none focus:border-(--qf-primary) resize-none"
@@ -705,7 +712,7 @@ function ReviewCard({
 
       {items.length > 0 && (
         <div className="mt-3 pt-3 border-t border-qf-line-soft">
-          <div className="text-sm font-medium mb-2">דירוג למוצרים (לא חובה)</div>
+          <div className="text-sm font-medium mb-2">{t("order.itemRatings")}</div>
           <div className="space-y-2">
             {items.map((it) => {
               const r = itemRatings[it.id] ?? 0;
@@ -727,7 +734,7 @@ function ReviewCard({
                         <button
                           key={n}
                           type="button"
-                          aria-label={`${it.name}: ${n} כוכבים`}
+                          aria-label={`${it.name}: ${n} ${t("order.stars")}`}
                           onClick={() =>
                             setItemRatings((prev) => ({
                               ...prev,
@@ -751,7 +758,7 @@ function ReviewCard({
                       onClick={() => setExpandItem(isOpen ? null : it.id)}
                       className="mt-1 text-xs text-(--qf-deep) underline"
                     >
-                      {isOpen ? "סגור הערה" : "הוסף הערה"}
+                      {isOpen ? t("order.closeNote") : t("order.addNote")}
                     </button>
                   )}
                   {r > 0 && isOpen && (
@@ -760,7 +767,7 @@ function ReviewCard({
                       onChange={(e) =>
                         setItemTexts((prev) => ({ ...prev, [it.id]: e.target.value }))
                       }
-                      placeholder="מה עבד או לא עבד במנה הזו?"
+                      placeholder={t("order.itemNotePlaceholder")}
                       rows={2}
                       maxLength={500}
                       className="mt-2 w-full bg-qf-bg/60 border border-qf-line rounded-lg px-3 py-2 text-xs outline-none focus:border-(--qf-primary) resize-none"
@@ -785,7 +792,7 @@ function ReviewCard({
         disabled={rating < 1 || busy}
         className="mt-3 w-full py-2.5 rounded-xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white font-medium text-sm disabled:opacity-60"
       >
-        {busy ? "שולח..." : "שליחת דירוג"}
+        {busy ? t("order.reviewSending") : t("order.reviewSubmit")}
       </button>
     </div>
   );
@@ -820,6 +827,7 @@ function ThankYouView({
   review: ExistingReview | null;
   onReviewSubmitted: (r: ExistingReview) => void;
 }) {
+  const { t } = useLocale();
   // Same URL serves three intents - pick the framing that fits.
   //  - "review": delivered + can rate + hasn't yet → the review form is the
   //    protagonist (this is what email-reminder lands on)
@@ -835,19 +843,19 @@ function ThankYouView({
   const headerProps =
     mode === "review"
       ? {
-          headline: "איך הייתה ההזמנה?",
-          subhead: `נשמח לשמוע איך היה אצל ${tenantName}`,
+          headline: t("order.reviewPrompt"),
+          subhead: `${t("order.reviewSubheadPrefix")}${tenantName}`,
           showCheck: false,
         }
       : mode === "thanks_for_review"
       ? {
-          headline: "תודה על הדירוג!",
-          subhead: `הרושם שלך עוזר ל${tenantName} להשתפר`,
+          headline: t("order.reviewThanksHeadline"),
+          subhead: `${t("order.reviewThanksSubheadPrefix")}${tenantName}${t("order.reviewThanksSubheadSuffix")}`,
           showCheck: true,
         }
       : {
-          headline: "תודה על ההזמנה!",
-          subhead: `קיבלנו את ההזמנה שלך אצל ${tenantName}`,
+          headline: t("order.thankYou"),
+          subhead: `${t("order.thankYouSubheadPrefix")}${tenantName}`,
           showCheck: true,
         };
 
@@ -865,9 +873,9 @@ function ThankYouView({
   const itemsSection = (
     <section className="px-5 mt-4 lg:px-0">
       <div className="flex items-center justify-between mb-2">
-        <h2 className="font-semibold">פירוט ההזמנה</h2>
+        <h2 className="font-semibold">{t("order.summaryTitle")}</h2>
         <span className="text-xs text-qf-mute">
-          {order.method === "delivery" ? "משלוח" : "איסוף"}
+          {order.method === "delivery" ? t("method.delivery") : t("method.pickup")}
         </span>
       </div>
       <div className="bg-white rounded-2xl border border-qf-line divide-y divide-qf-line-soft">
@@ -890,7 +898,7 @@ function ThankYouView({
               <div className="flex items-center gap-2 min-w-0">
                 <div className="font-medium truncate">{it.name}</div>
                 <div className="text-qf-mute text-xs tnum shrink-0">
-                  {it.weightGrams != null ? `${it.weightGrams} גרם` : `×${it.quantity}`}
+                  {it.weightGrams != null ? `${it.weightGrams} ${t("order.gramsUnit")}` : `×${it.quantity}`}
                 </div>
               </div>
               {it.size && (
@@ -899,7 +907,7 @@ function ThankYouView({
               <CartLineOptions options={it.options} compact />
               {it.notes && (
                 <div className="mt-1 text-xs text-qf-yolk-deep">
-                  הערה: {it.notes}
+                  {t("order.noteLabel")}: {it.notes}
                 </div>
               )}
             </div>
@@ -909,24 +917,24 @@ function ThankYouView({
           </div>
         ))}
         <div className="px-4 py-3 space-y-1 text-sm">
-          <SummaryRow label="פריטים" value={order.subtotal} />
+          <SummaryRow label={t("order.summaryItems")} value={order.subtotal} />
           {order.deliveryFee > 0 && (
-            <SummaryRow label="דמי משלוח" value={order.deliveryFee} />
+            <SummaryRow label={t("cart.deliveryFee")} value={order.deliveryFee} />
           )}
           {order.serviceFee > 0 && (
-            <SummaryRow label="דמי שירות" value={order.serviceFee} />
+            <SummaryRow label={t("order.serviceFee")} value={order.serviceFee} />
           )}
           {order.cutleryFee > 0 && (
-            <SummaryRow label="סכו״ם" value={order.cutleryFee} />
+            <SummaryRow label={t("order.cutleryFee")} value={order.cutleryFee} />
           )}
           {order.tip > 0 && (
-            <SummaryRow label="טיפ לשליח" value={order.tip} />
+            <SummaryRow label={t("order.courierTip")} value={order.tip} />
           )}
           {order.discount > 0 && (
-            <SummaryRow label="הנחה" value={-order.discount} muted />
+            <SummaryRow label={t("order.discount")} value={-order.discount} muted />
           )}
           <div className="pt-1 mt-1 border-t border-qf-line-soft flex items-center justify-between font-semibold text-base">
-            <div>סה״כ ששולם</div>
+            <div>{t("order.totalPaid")}</div>
             <div className="tnum">{formatPrice(order.total)}</div>
           </div>
         </div>
@@ -991,7 +999,7 @@ function ThankYouView({
           href={`/s/${tenantSlug}#menu-section`}
           className="block text-center py-3 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white font-medium text-sm"
         >
-          הזמנה חדשה
+          {t("order.newOrder")}
         </Link>
       </section>
     </div>
@@ -1026,6 +1034,7 @@ function BrandedHeader({
   showCheck: boolean;
   bigNumber: boolean;
 }) {
+  const { t } = useLocale();
   const initial = tenantName.slice(0, 1);
 
   return (
@@ -1105,7 +1114,7 @@ function BrandedHeader({
           </div>
           <div className="min-w-0 flex-1">
             <div className="font-semibold truncate">{tenantName}</div>
-            <div className="text-xs text-(--qf-deep) font-medium">חזרה לתפריט</div>
+            <div className="text-xs text-(--qf-deep) font-medium">{t("order.backToMenu")}</div>
           </div>
           <IcoChev s={18} c="#7c8a82" className="shrink-0 rotate-180" />
         </Link>
@@ -1128,13 +1137,15 @@ function ShareCTA({
   orderNumber: string;
   method: "delivery" | "pickup";
 }) {
+  const { t } = useLocale();
+
   function currentUrl(): string {
     if (typeof window === "undefined") return "";
     return window.location.href;
   }
 
   function shareMessage(): string {
-    return `הזמנתי מ-${tenantName} (הזמנה #${orderNumber}). אפשר לעקוב אחרי הסטטוס פה: ${currentUrl()}`;
+    return `${t("order.shareMsgPrefix")}${tenantName} (${t("order.shareMsgOrder")}#${orderNumber}). ${t("order.shareMsgFollow")} ${currentUrl()}`;
   }
 
   function onWhatsApp() {
@@ -1149,7 +1160,7 @@ function ShareCTA({
     }
     try {
       await navigator.share({
-        title: `הזמנה אצל ${tenantName}`,
+        title: `${t("order.shareTitlePrefix")}${tenantName}`,
         text: shareMessage(),
         url: currentUrl(),
       });
@@ -1162,11 +1173,11 @@ function ShareCTA({
     <div className="bg-white rounded-2xl border border-qf-line p-4">
       <div className="font-semibold text-sm">
         {method === "delivery"
-          ? "עוד מישהו מחכה להזמנה?"
-          : "מישהו אחר צריך לאסוף את ההזמנה?"}
+          ? t("order.shareHeadingDelivery")
+          : t("order.shareHeadingPickup")}
       </div>
       <p className="text-xs text-qf-mute mt-0.5 mb-3">
-        שתפו אותו בקלות בסטטוס ההזמנה.
+        {t("order.shareBody")}
       </p>
       <div className="flex flex-col sm:flex-row gap-2">
         <button
@@ -1175,14 +1186,14 @@ function ShareCTA({
           className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1FB955] text-white font-medium text-sm transition"
         >
           <IcoWhatsApp c="#fff" s={18} />
-          <span>שיתוף בוואטסאפ</span>
+          <span>{t("order.shareWhatsApp")}</span>
         </button>
         <button
           type="button"
           onClick={onNativeShare}
           className="flex-1 py-2.5 rounded-xl border border-qf-line bg-white hover:bg-qf-line-soft text-qf-ink font-medium text-sm transition"
         >
-          שיתוף אחר
+          {t("order.shareOther")}
         </button>
       </div>
     </div>
@@ -1201,10 +1212,11 @@ function ReviewsTeaser({
   tenantName: string;
   reviews: PublicReview[];
 }) {
+  const { t } = useLocale();
   return (
     <div className="bg-white rounded-2xl border border-qf-line p-4">
       <div className="flex items-center justify-between mb-3">
-        <div className="font-semibold text-sm">מה אומרים על {tenantName}</div>
+        <div className="font-semibold text-sm">{t("order.teaserPrefix")}{tenantName}</div>
       </div>
       <div className="space-y-3">
         {reviews.map((r) => (

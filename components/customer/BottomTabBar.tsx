@@ -5,10 +5,12 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { IcoHome, IcoMenuList, IcoBag, IcoUser, IcoStar } from "@/components/shared/Icons";
 import { useCart } from "./CartProvider";
+import { useLocale } from "@/components/customer/LocaleProvider";
 import { cn } from "@/lib/cn";
 
 export function BottomTabBar({ tenantSlug }: { tenantSlug: string }) {
   const path = usePathname() || "";
+  const { t } = useLocale();
   const { itemCount, tenant } = useCart();
   const showReviewsTab = !!tenant?.reviewsPublic;
 
@@ -52,19 +54,19 @@ export function BottomTabBar({ tenantSlug }: { tenantSlug: string }) {
     key: TabKey;
     badge?: number;
   }> = [
-    { href: homePath, label: "בית", Icon: IcoHome, key: "home" },
-    { href: menuPath, label: "תפריט", Icon: IcoMenuList, key: "menu" },
+    { href: homePath, label: t("nav.home"), Icon: IcoHome, key: "home" },
+    { href: menuPath, label: t("nav.menu"), Icon: IcoMenuList, key: "menu" },
     {
       href: `/s/${tenantSlug}/cart`,
-      label: "הסל שלי",
+      label: t("nav.myCart"),
       Icon: IcoBag,
       key: "cart",
       badge: itemCount > 0 ? itemCount : undefined,
     },
     ...(showReviewsTab
-      ? [{ href: `/s/${tenantSlug}/reviews`, label: "ביקורות", Icon: IcoStar, key: "reviews" as TabKey }]
+      ? [{ href: `/s/${tenantSlug}/reviews`, label: t("nav.reviews"), Icon: IcoStar, key: "reviews" as TabKey }]
       : []),
-    { href: `/s/${tenantSlug}/profile`, label: "אזור אישי", Icon: IcoUser, key: "profile" },
+    { href: `/s/${tenantSlug}/profile`, label: t("nav.account"), Icon: IcoUser, key: "profile" },
   ];
 
   function isActive(key: TabKey, href: string) {

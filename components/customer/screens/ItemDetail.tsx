@@ -17,6 +17,7 @@ import { formatPrice } from "@/lib/format";
 import { priceGroupOptions, type PricedOption, type GroupPricingConfig } from "@/lib/option-pricing";
 import { weightPrice, MIN_WEIGHT_GRAMS, MAX_WEIGHT_GRAMS } from "@/lib/pricing";
 import { cn } from "@/lib/cn";
+import { useLocale } from "@/components/customer/LocaleProvider";
 
 const KIOSK_NOTE_PRESETS = [
   "בלי בצל",
@@ -112,6 +113,7 @@ export function ItemDetail({
   addSource?: CartLineSource;
 }) {
   const router = useRouter();
+  const { t } = useLocale();
   const { add, updateLine, tenant, branch, lines } = useCart();
   const isEditing = !!editLine;
   const upsellSizeNudge =
@@ -373,7 +375,7 @@ export function ItemDetail({
 
   function withBundleNote(g: OptionGroup, subtitle: string | null | undefined): string | undefined {
     if (!g.bundleCount || !g.bundlePrice) return subtitle ?? undefined;
-    const note = `מבצע: ${g.bundleCount} ב-${formatPrice(g.bundlePrice)}`;
+    const note = `${t("item.bundleDeal")}: ${g.bundleCount} ${t("item.bundleFor")}${formatPrice(g.bundlePrice)}`;
     return subtitle ? `${note} · ${subtitle}` : note;
   }
 
@@ -539,14 +541,14 @@ export function ItemDetail({
   }
 
   const ctaLabel = branchClosed
-    ? "המסעדה סגורה"
+    ? t("item.restaurantClosed")
     : outOfStock
-      ? "אזל מהמלאי"
+      ? t("item.outOfStock")
       : missingGroup
-        ? `בחר ${missingGroup.name}`
+        ? `${t("item.choose")} ${missingGroup.name}`
         : isEditing
-          ? "עדכן הזמנה"
-          : "הוסף לסל";
+          ? t("item.updateOrder")
+          : t("item.addToCart");
 
   return (
     <div
@@ -576,7 +578,7 @@ export function ItemDetail({
             <Link
               href={`/s/${tenantSlug}`}
               className="w-9 h-9 rounded-full bg-qf-line-soft grid place-items-center"
-              aria-label="חזרה"
+              aria-label={t("common.back")}
             >
               <IcoChev s={16} />
             </Link>
@@ -608,7 +610,7 @@ export function ItemDetail({
                   key={i}
                   type="button"
                   onClick={() => openLightbox(i)}
-                  aria-label="הגדל תמונה"
+                  aria-label={t("item.zoomImage")}
                   className="relative shrink-0 w-full h-full snap-center cursor-zoom-in"
                 >
                   <MenuItemImage
@@ -639,7 +641,7 @@ export function ItemDetail({
           <button
             type="button"
             onClick={() => openLightbox(0)}
-            aria-label="הגדל תמונה"
+            aria-label={t("item.zoomImage")}
             className={cn(
               "relative overflow-hidden bg-qf-line-soft block w-full text-start cursor-zoom-in",
               inModal
@@ -686,7 +688,7 @@ export function ItemDetail({
           <Link
             href={`/s/${tenantSlug}`}
             className="lg:hidden absolute top-4 inset-s-4 w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-md grid place-items-center"
-            aria-label="חזרה"
+            aria-label={t("common.back")}
           >
             <IcoChev s={18} />
           </Link>
@@ -696,7 +698,7 @@ export function ItemDetail({
           onClick={toggleFavorite}
           disabled={favoriteBusy}
           className="absolute top-4 inset-e-4 w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-md grid place-items-center transition active:scale-95"
-          aria-label={favorited ? "הסר ממועדפים" : "הוסף למועדפים"}
+          aria-label={favorited ? t("item.removeFavorite") : t("item.addFavorite")}
           aria-pressed={favorited}
         >
           <IcoHeart
@@ -712,9 +714,9 @@ export function ItemDetail({
           >
             {favoriteFlash === "saved"
               ? favorited
-                ? "נשמר במועדפים"
-                : "הוסר מהמועדפים"
-              : "צריך להתחבר כדי לסמן מועדפים"}
+                ? t("item.favoriteSaved")
+                : t("item.favoriteRemoved")
+              : t("item.favoriteAuth")}
           </div>
         )}
         {/* Sentinel for sticky-bar toggle */}
@@ -741,7 +743,7 @@ export function ItemDetail({
         )}
         <div className="text-base font-semibold tnum mt-3">
           {isWeight
-            ? <><Price amount={pricePerKg} originalAmount={item.compareAtPrice} /> לק״ג · {formatPrice(pricePerKg / 10)} ל-100 גרם</>
+            ? <><Price amount={pricePerKg} originalAmount={item.compareAtPrice} /> {t("item.perKg")} · {formatPrice(pricePerKg / 10)} {t("item.per100g")}</>
             : <Price amount={item.basePrice} originalAmount={item.compareAtPrice} />}
         </div>
       </section>
@@ -759,7 +761,7 @@ export function ItemDetail({
                   : "border-qf-line-dash text-qf-ink2 bg-white",
               )}
             >
-              לפי משקל (גרם)
+              {t("item.byWeight")}
             </button>
             <button
               type="button"
@@ -774,7 +776,7 @@ export function ItemDetail({
                   : "border-qf-line-dash text-qf-ink2 bg-white",
               )}
             >
-              לפי סכום (₪)
+              {t("item.byAmount")}
             </button>
           </div>
 
@@ -785,7 +787,7 @@ export function ItemDetail({
                   type="button"
                   onClick={() => setGramsStr(String(clampGrams(grams - 50)))}
                   className="w-12 h-12 rounded-xl bg-qf-line-soft grid place-items-center active:bg-qf-line-dash"
-                  aria-label="הפחת 50 גרם"
+                  aria-label={t("item.minus50g")}
                 >
                   <IcoMinus s={18} />
                 </button>
@@ -799,20 +801,20 @@ export function ItemDetail({
                     className="w-full h-12 text-center text-lg font-bold tnum bg-qf-bg border border-qf-line rounded-xl outline-none focus:border-(--qf-primary) focus:bg-white"
                   />
                   <span className="absolute inset-y-0 end-3 grid place-items-center text-sm text-qf-mute pointer-events-none">
-                    גרם
+                    {t("item.gramsUnit")}
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setGramsStr(String(clampGrams(grams + 50)))}
                   className="w-12 h-12 rounded-xl bg-qf-line-soft grid place-items-center active:bg-qf-line-dash"
-                  aria-label="הוסף 50 גרם"
+                  aria-label={t("item.plus50g")}
                 >
                   <IcoPlus c="#11231a" s={18} />
                 </button>
               </div>
               <div className="text-sm text-qf-ink2 mt-2 tnum">
-                המחיר: <span className="font-bold">{formatPrice(weightBase)}</span>
+                {t("item.priceLabel")}: <span className="font-bold">{formatPrice(weightBase)}</span>
               </div>
             </>
           ) : (
@@ -822,7 +824,7 @@ export function ItemDetail({
                   type="number"
                   inputMode="decimal"
                   value={amountStr}
-                  placeholder="כמה תרצו לשלם?"
+                  placeholder={t("item.howMuchToPay")}
                   onChange={(e) => {
                     setAmountStr(e.target.value);
                     const amount = Number(e.target.value) || 0;
@@ -837,7 +839,7 @@ export function ItemDetail({
                 </span>
               </div>
               <div className="text-sm text-qf-ink2 mt-2 tnum">
-                מקבלים בערך <span className="font-bold">{grams} גרם</span> · לתשלום{" "}
+                {t("item.youGetAbout")} <span className="font-bold">{grams} {t("item.gramsUnit")}</span> · {t("item.forPayment")}{" "}
                 <span className="font-bold">{formatPrice(weightBase)}</span>
               </div>
             </>
@@ -885,16 +887,16 @@ export function ItemDetail({
                   )}
                   <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
                     <span className="text-sm font-black text-(--qf-deep)">
-                      שדרגו ל-{upgradeTo.name} בתוספת {formatPrice(upgradeDelta)} בלבד
+                      {t("item.upgradeTo")} {upgradeTo.name} {t("item.upgradeExtra")} {formatPrice(upgradeDelta)} {t("item.upgradeOnly")}
                     </span>
                     <span className="text-xs bg-(--qf-primary) text-white px-2 py-1 rounded-full font-bold whitespace-nowrap">
-                      שדרג
+                      {t("item.upgrade")}
                     </span>
                   </div>
                 </div>
               </button>
             )}
-            <Section title="גודל" required={item.sizes.length > 1}>
+            <Section title={t("item.size")} required={item.sizes.length > 1}>
               {item.sizes.map((s) => (
                 <Row
                   key={s.id}
@@ -933,15 +935,15 @@ export function ItemDetail({
           const minHalf = g.required ? Math.max(1, g.minSelect) : g.minSelect;
 
           const counterLabel = cap != null
-            ? `צד א׳: ${leftCount}/${cap} · צד ב׳: ${rightCount}/${cap}`
+            ? `${t("item.sideA")}: ${leftCount}/${cap} · ${t("item.sideB")}: ${rightCount}/${cap}`
             : null;
           const subtitle = g.required
             ? totalDistinct >= minHalf
-              ? counterLabel ?? `הושלם · ${totalDistinct}/${g.maxSelect}`
-              : counterLabel ?? `חובה ${minHalf}-${g.maxSelect} · ${totalDistinct}/${g.maxSelect}`
+              ? counterLabel ?? `${t("item.completed")} · ${totalDistinct}/${g.maxSelect}`
+              : counterLabel ?? `${t("common.required")} ${minHalf}-${g.maxSelect} · ${totalDistinct}/${g.maxSelect}`
             : atMax
-              ? counterLabel ?? `הגעת למקסימום · ${g.maxSelect}/${g.maxSelect}`
-              : counterLabel ?? `אפשר לבחור עד ${g.maxSelect} · כל תוספת ניתן לקבוע לחצי פיצה`;
+              ? counterLabel ?? `${t("item.reachedMax")} · ${g.maxSelect}/${g.maxSelect}`
+              : counterLabel ?? `${t("item.chooseUpTo")} ${g.maxSelect} · ${t("item.eachToppingHalf")}`;
 
           return (
             <Section
@@ -991,7 +993,7 @@ export function ItemDetail({
                       {o.priceDelta > 0 && (
                         <div className="text-xs text-qf-ink2 mt-0.5">
                           {g.splitPrice || g.customHalfPrice
-                            ? `שלם +${formatPrice(o.priceDelta)} · חצי +${formatPrice(halfPrice)}`
+                            ? `${t("item.whole")} +${formatPrice(o.priceDelta)} · ${t("item.half")} +${formatPrice(halfPrice)}`
                             : `+${formatPrice(o.priceDelta)}`}
                         </div>
                       )}
@@ -1001,7 +1003,7 @@ export function ItemDetail({
                         const buttonBlocked = rowBlocked
                           ? placement !== p
                           : wouldExceed(p);
-                        const label = p === "left" ? "חצי א׳" : p === "right" ? "חצי ב׳" : "שלם";
+                        const label = p === "left" ? t("item.halfA") : p === "right" ? t("item.halfB") : t("item.whole");
                         return (
                           <button
                             key={p}
@@ -1062,42 +1064,42 @@ export function ItemDetail({
         if (g.required) {
           const effectiveMin = Math.max(1, g.minSelect);
           if (g.type === "single") {
-            subtitle = selected > 0 ? "נבחר" : "חובה לבחור 1";
+            subtitle = selected > 0 ? t("item.selected") : `${t("item.mustChoose")} 1`;
           } else if (unlimited) {
             subtitle = selected >= effectiveMin
-              ? `הושלם · נבחרו ${selected}`
-              : `חובה לבחור לפחות ${effectiveMin} · נבחרו ${selected}`;
+              ? `${t("item.completed")} · ${t("item.chosen")} ${selected}`
+              : `${t("item.mustChooseAtLeast")} ${effectiveMin} · ${t("item.chosen")} ${selected}`;
           } else {
             const range =
               effectiveMin === g.maxSelect
                 ? `${effectiveMin}`
                 : `${effectiveMin}-${g.maxSelect}`;
             subtitle = selected >= effectiveMin
-              ? `הושלם · ${selected}/${g.maxSelect}`
-              : `חובה ${range} · ${selected}/${g.maxSelect}`;
+              ? `${t("item.completed")} · ${selected}/${g.maxSelect}`
+              : `${t("common.required")} ${range} · ${selected}/${g.maxSelect}`;
           }
         } else if (g.type === "multi") {
           if (unlimited) {
             subtitle = selected > 0
               ? (freeRemaining > 0
-                  ? `נבחרו ${selected} · ${freeRemaining} חינם נותרו`
-                  : `נבחרו ${selected}`)
+                  ? `${t("item.chosen")} ${selected} · ${freeRemaining} ${t("item.freeRemaining")}`
+                  : `${t("item.chosen")} ${selected}`)
               : (free > 0
-                  ? `${free} הראשונים חינם · אפשר לבחור כמה שרוצים`
-                  : "אפשר לבחור כמה שרוצים");
+                  ? `${free} ${t("item.firstFree")} · ${t("item.chooseAnyAmount")}`
+                  : t("item.chooseAnyAmount"));
           } else if (atMax) {
-            subtitle = `הגעת למקסימום · ${g.maxSelect}/${g.maxSelect}`;
+            subtitle = `${t("item.reachedMax")} · ${g.maxSelect}/${g.maxSelect}`;
           } else if (selected > 0) {
             subtitle = freeRemaining > 0
-              ? `אפשר לבחור עוד ${remaining} · ${freeRemaining} חינם נותרו`
-              : `אפשר לבחור עוד ${remaining}`;
+              ? `${t("item.chooseMore")} ${remaining} · ${freeRemaining} ${t("item.freeRemaining")}`
+              : `${t("item.chooseMore")} ${remaining}`;
           } else {
             subtitle = free > 0
-              ? `${free} הראשונים חינם · אפשר לבחור עד ${g.maxSelect}`
-              : `אפשר לבחור עד ${g.maxSelect}`;
+              ? `${free} ${t("item.firstFree")} · ${t("item.chooseUpTo")} ${g.maxSelect}`
+              : `${t("item.chooseUpTo")} ${g.maxSelect}`;
           }
         } else {
-          subtitle = selected > 0 ? "נבחר" : "אופציונלי";
+          subtitle = selected > 0 ? t("item.selected") : t("common.optional");
         }
 
         return (
@@ -1139,7 +1141,7 @@ export function ItemDetail({
                 priceLabel = `+${formatPrice(o.priceDelta)}`;
               } else if (checked) {
                 const charged = groupCharges.get(o.id) ?? 0;
-                priceLabel = charged > 0 ? `+${formatPrice(charged)}` : "חינם";
+                priceLabel = charged > 0 ? `+${formatPrice(charged)}` : t("item.free");
               } else {
                 priceLabel = freeRemaining > 0 ? null : `+${formatPrice(o.priceDelta)}`;
               }
@@ -1178,7 +1180,7 @@ export function ItemDetail({
       })}
 
       {/* Kiosk: preset chips + on-screen keyboard. Web: plain textarea. */}
-      <Section title="הערות" subtitle="אופציונלי">
+      <Section title={t("item.notes")} subtitle={t("common.optional")}>
         {kioskMode ? (
           <div className="space-y-3">
             <div className="flex flex-wrap gap-2">
@@ -1218,7 +1220,7 @@ export function ItemDetail({
                 className="inline-flex items-center gap-1.5 px-4 h-11 rounded-full text-base font-bold bg-white text-(--qf-deep) border-2 border-(--qf-primary)/40 hover:bg-(--qf-soft) transition active:scale-95"
               >
                 <IcoEdit c="currentColor" s={16} />
-                כתבו הערה חופשית
+                {t("item.writeFreeNote")}
               </button>
             </div>
             {notes && (
@@ -1233,7 +1235,7 @@ export function ItemDetail({
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
             maxLength={200}
-            placeholder="הערות למנה"
+            placeholder={t("item.notesPlaceholder")}
             className="w-full bg-qf-bg border border-qf-line rounded-xl px-3 py-2.5 text-sm outline-none focus:border-(--qf-primary) focus:bg-white resize-none"
           />
         )}
@@ -1282,7 +1284,7 @@ export function ItemDetail({
                 "grid place-items-center disabled:opacity-40 active:bg-qf-line-dash rounded-full transition",
                 kioskMode ? "w-20 h-24" : "w-12 h-14",
               )}
-              aria-label="הפחת"
+              aria-label={t("item.decrease")}
             >
               <IcoMinus s={kioskMode ? 28 : 18} />
             </button>
@@ -1302,7 +1304,7 @@ export function ItemDetail({
                 "grid place-items-center disabled:opacity-40 active:bg-qf-line-dash rounded-full transition",
                 kioskMode ? "w-20 h-24" : "w-12 h-14",
               )}
-              aria-label="הוסף"
+              aria-label={t("item.increase")}
             >
               <IcoPlus c="#11231a" s={kioskMode ? 28 : 18} />
             </button>
@@ -1330,7 +1332,7 @@ export function ItemDetail({
               </>
             ) : addPhase === "loading" ? (
               <>
-                <span>{isEditing ? "מעדכן" : "מוסיף לסל"}</span>
+                <span>{isEditing ? t("item.updating") : t("item.adding")}</span>
                 <span
                   className="qf-spinner"
                   style={{
@@ -1342,7 +1344,7 @@ export function ItemDetail({
               </>
             ) : (
               <>
-                <span>{isEditing ? "עודכן" : "נוסף לסל"}</span>
+                <span>{isEditing ? t("item.updated") : t("item.added")}</span>
                 <IcoCheck c="#fff" s={kioskMode ? 32 : 20} className="animate-qf-check-in" />
               </>
             )}
@@ -1366,7 +1368,7 @@ export function ItemDetail({
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); closeLightbox(); }}
-            aria-label="סגור תמונה"
+            aria-label={t("item.closeImage")}
             className="absolute top-4 inset-s-4 z-10 w-10 h-10 rounded-full grid place-items-center bg-qf-line-soft text-qf-ink shadow-sm hover:bg-qf-line-dash transition"
           >
             <IcoClose s={16} c="currentColor" />
@@ -1425,6 +1427,7 @@ function Section({
   flash?: boolean;
   children: React.ReactNode;
 }) {
+  const { t } = useLocale();
   return (
     <section
       id={id}
@@ -1438,7 +1441,7 @@ function Section({
           <h2 className="font-semibold text-base">{title}</h2>
           {required && (
             <span className="text-[10px] bg-qf-tomato-soft text-qf-tomato px-1.5 py-0.5 rounded-md font-semibold">
-              חובה
+              {t("common.required")}
             </span>
           )}
           {counter && !(counter.unlimited && counter.selected === 0) && (
@@ -1496,6 +1499,7 @@ function Row({
   disabled?: boolean;
   stepper?: { qty: number; canInc: boolean; onInc: () => void; onDec: () => void };
 }) {
+  const { t } = useLocale();
   return (
     <button
       type="button"
@@ -1553,7 +1557,7 @@ function Row({
           >
             <span
               role="button"
-              aria-label="הפחת"
+              aria-label={t("item.decrease")}
               onClick={stepper.onDec}
               className="w-8 h-8 grid place-items-center rounded-full active:bg-qf-line-dash transition"
             >
@@ -1562,7 +1566,7 @@ function Row({
             <span className="w-5 text-center text-sm font-bold tnum">{stepper.qty}</span>
             <span
               role="button"
-              aria-label="הוסף"
+              aria-label={t("item.increase")}
               onClick={stepper.canInc ? stepper.onInc : undefined}
               className={cn(
                 "w-8 h-8 grid place-items-center rounded-full transition",

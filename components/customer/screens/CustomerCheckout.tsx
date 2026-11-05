@@ -28,6 +28,7 @@ import { HostedPaymentFrame } from "@/components/customer/HostedPaymentFrame";
 import type { CardProviderType } from "@/lib/payments/types";
 import { BusyAlertModal } from "@/components/customer/BranchStatusModal";
 import { AttributionPrompt } from "@/components/customer/AttributionPrompt";
+import { useLocale } from "@/components/customer/LocaleProvider";
 
 type CustomerPaymentMethod = "cash" | "card" | "bit" | "apple_pay" | "google_pay";
 
@@ -88,6 +89,7 @@ export function CustomerCheckout({
   loyaltyCheckout?: { show: boolean; text: string };
 }) {
   const router = useRouter();
+  const { t } = useLocale();
   const { lines, method, subtotal, deliveryFee, branch, tenant, clear, setMethod, hydrated, acceptedBundles, bundleDiscount } = useCart();
 
   // Store-pixel InitiateCheckout - fired once per checkout view, after the
@@ -380,11 +382,11 @@ export function CustomerCheckout({
         setCouponError(null);
       } else {
         setCouponApplied(null);
-        setCouponError(data.message ?? "הקופון כבר לא תקף");
+        setCouponError(data.message ?? t("checkout.couponExpired"));
       }
     } catch {
       setCouponApplied(null);
-      setCouponError("בעיה בבדיקת הקוד");
+      setCouponError(t("checkout.couponCheckError"));
     }
   }
 
@@ -460,23 +462,23 @@ export function CustomerCheckout({
           <Link
             href={`/s/${tenantSlug}`}
             className="w-9 h-9 rounded-full bg-white border border-qf-line grid place-items-center"
-            aria-label="חזרה"
+            aria-label={t("common.back")}
           >
             <IcoChev s={18} />
           </Link>
-          <h1 className="font-bold text-lg">סיום הזמנה</h1>
+          <h1 className="font-bold text-lg">{t("checkout.title")}</h1>
         </header>
         <div className="flex-1 flex flex-col items-center justify-center px-8 text-center -mt-12">
           <div className="w-20 h-20 rounded-full bg-qf-green-soft grid place-items-center mb-4">
             <IcoBag c="var(--qf-primary)" s={36} />
           </div>
-          <h2 className="font-semibold text-lg mb-1">הסל ריק</h2>
-          <p className="text-sm text-qf-mute mb-5">הוסף פריטים מהתפריט וחזור הנה לסיום ההזמנה</p>
+          <h2 className="font-semibold text-lg mb-1">{t("cart.empty")}</h2>
+          <p className="text-sm text-qf-mute mb-5">{t("checkout.emptyCartHint")}</p>
           <Link
             href={`/s/${tenantSlug}`}
             className="px-5 py-3 rounded-full bg-(--qf-primary) text-white font-medium text-sm"
           >
-            לתפריט
+            {t("checkout.toMenu")}
           </Link>
         </div>
       </div>
@@ -519,31 +521,31 @@ export function CustomerCheckout({
     // Shopify-style: the button is always pressable; a failed attempt marks
     // every invalid field in red and jumps to the first one.
     const failures: Array<{ sel: string; msg: string }> = [];
-    if (!firstName.trim()) failures.push({ sel: "#co-first-name", msg: "נא למלא שם פרטי" });
+    if (!firstName.trim()) failures.push({ sel: "#co-first-name", msg: t("checkout.errFirstName") });
     if (lastNameRequired && !lastName.trim())
-      failures.push({ sel: "#co-last-name", msg: "נא למלא שם משפחה" });
+      failures.push({ sel: "#co-last-name", msg: t("checkout.errLastName") });
     if (!phone.trim() || !phoneLooksValid)
-      failures.push({ sel: "#co-phone", msg: "מספר הטלפון אינו תקין. דוגמה: 0501234567" });
+      failures.push({ sel: "#co-phone", msg: t("checkout.errPhoneInvalid") });
     if (method === "delivery" && !city)
-      failures.push({ sel: "[data-co-city]", msg: "נא לבחור עיר" });
+      failures.push({ sel: "[data-co-city]", msg: t("checkout.errCity") });
     if (method === "delivery" && !address.trim())
-      failures.push({ sel: "#co-address", msg: "נא למלא רחוב ומספר" });
+      failures.push({ sel: "#co-address", msg: t("checkout.errAddress") });
     if (emailRequired && !emailLooksValid)
-      failures.push({ sel: "#co-email", msg: "כתובת המייל אינה תקינה" });
-    if (!paymentMethod) failures.push({ sel: "[data-co-payment]", msg: "נא לבחור אמצעי תשלום" });
+      failures.push({ sel: "#co-email", msg: t("checkout.errEmailInvalid") });
+    if (!paymentMethod) failures.push({ sel: "[data-co-payment]", msg: t("checkout.errPaymentMethod") });
     if (!termsAccepted)
-      failures.push({ sel: "[data-co-terms]", msg: "יש לאשר את התקנון ותנאי השימוש" });
+      failures.push({ sel: "[data-co-terms]", msg: t("checkout.errTerms") });
     if (belowMin)
       failures.push({
         sel: "[data-co-payment]",
-        msg: `חסר ${formatPrice(minOrder - subtotal)} לסכום המינימום להזמנה`,
+        msg: `${t("checkout.errBelowMinPrefix")} ${formatPrice(minOrder - subtotal)} ${t("checkout.errBelowMinSuffix")}`,
       });
 
     if (failures.length > 0) {
       setSubmitAttempted(true);
       setPhoneTouched(true);
       setEmailTouched(true);
-      setError(failures.length === 1 ? failures[0].msg : "יש להשלים את השדות המסומנים באדום");
+      setError(failures.length === 1 ? failures[0].msg : t("checkout.errCompleteMarked"));
       focusInvalidField(failures[0].sel);
       return;
     }
@@ -641,7 +643,7 @@ export function CustomerCheckout({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(asErrorString(data?.error?.message, "שגיאה ביצירת הזמנה"));
+        setError(asErrorString(data?.error?.message, t("checkout.errOrderFailed")));
         return;
       }
       const orderId = data.order.id as string;
@@ -688,7 +690,7 @@ export function CustomerCheckout({
             setError(
               asErrorString(
                 initData?.error?.message,
-                "לא הצלחנו לפתוח את שדה התשלום",
+                t("checkout.errOpenPayment"),
               ),
             );
             return;
@@ -712,7 +714,7 @@ export function CustomerCheckout({
           });
           return;
         } catch {
-          setError("שגיאה ביצירת תשלום");
+          setError(t("checkout.errPaymentCreate"));
           return;
         }
       }
@@ -726,7 +728,7 @@ export function CustomerCheckout({
       // back briefly would re-enable the CTA for one frame.
       return;
     } catch {
-      setError("שגיאת רשת");
+      setError(t("checkout.errNetwork"));
     } finally {
       setBusy(false);
     }
@@ -751,28 +753,28 @@ export function CustomerCheckout({
   const phoneLooksValid = validateIsraeliPhone(phone);
   const phoneError =
     (phoneTouched || submitAttempted) && phone.trim() && !phoneLooksValid
-      ? "מספר טלפון לא תקין - למשל 0501234567"
+      ? t("checkout.errPhoneInvalidShort")
       : (phoneTouched || submitAttempted) && !phone.trim()
-        ? "נדרש מספר טלפון"
+        ? t("checkout.errPhoneRequired")
         : null;
   const emailError =
     emailRequired && (emailTouched || submitAttempted) && email.trim() && !emailLooksValid
-      ? "כתובת מייל לא תקינה"
+      ? t("checkout.errEmailInvalidShort")
       : emailRequired && submitAttempted && !email.trim()
-        ? "נדרש דוא״ל"
+        ? t("checkout.errEmailRequired")
         : null;
   const firstNameError =
-    submitAttempted && !firstName.trim() ? "נא למלא שם פרטי" : null;
+    submitAttempted && !firstName.trim() ? t("checkout.errFirstName") : null;
   const lastNameError =
-    submitAttempted && lastNameRequired && !lastName.trim() ? "נא למלא שם משפחה" : null;
+    submitAttempted && lastNameRequired && !lastName.trim() ? t("checkout.errLastName") : null;
   const addressError =
-    submitAttempted && method === "delivery" && !address.trim() ? "נא למלא רחוב ומספר" : null;
+    submitAttempted && method === "delivery" && !address.trim() ? t("checkout.errAddress") : null;
   const cityError =
-    submitAttempted && method === "delivery" && !city ? "נא לבחור עיר" : null;
+    submitAttempted && method === "delivery" && !city ? t("checkout.errCity") : null;
   const paymentError =
-    submitAttempted && !paymentMethod ? "נא לבחור אמצעי תשלום" : null;
+    submitAttempted && !paymentMethod ? t("checkout.errPaymentMethod") : null;
   const termsError =
-    submitAttempted && !termsAccepted ? "יש לאשר את התקנון ותנאי השימוש" : null;
+    submitAttempted && !termsAccepted ? t("checkout.errTerms") : null;
 
   const paymentInFlight = !!pendingPayment;
   // Zone-aware minimum (branch.minOrder already resolves to the customer's
@@ -811,7 +813,7 @@ export function CustomerCheckout({
         )}
       />
       <span>
-        קראתי ואני מאשר/ת את{" "}
+        {t("checkout.termsPrefix")}{" "}
         <button
           type="button"
           onClick={(e) => {
@@ -820,7 +822,7 @@ export function CustomerCheckout({
           }}
           className="font-medium text-(--qf-deep) underline underline-offset-2"
         >
-          התקנון ותנאי השימוש
+          {t("checkout.termsLink")}
         </button>
       </span>
     </label>
@@ -850,23 +852,23 @@ export function CustomerCheckout({
         <Link
           href={`/s/${tenantSlug}/cart`}
           className="w-9 h-9 rounded-full border border-qf-line grid place-items-center lg:hidden"
-          aria-label="חזרה"
+          aria-label={t("common.back")}
         >
           <IcoChev s={18} />
         </Link>
-        <h1 className="font-bold text-lg lg:text-3xl">סיום הזמנה</h1>
+        <h1 className="font-bold text-lg lg:text-3xl">{t("checkout.title")}</h1>
       </header>
 
       <div className="px-4 mt-4 space-y-3 lg:max-w-6xl lg:mx-auto lg:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-6 lg:space-y-0 lg:mt-4"><div className="lg:col-start-1 space-y-3">
         {/* 1. Contact - promoted to the top */}
         <Card>
-          <CardTitle>פרטי קשר</CardTitle>
+          <CardTitle>{t("checkout.contactDetails")}</CardTitle>
           {loggedIn ? (
             <div className="mt-2 flex items-center justify-between gap-2 text-sm bg-qf-green-soft border border-qf-green-line text-qf-green-deep rounded-xl px-3 py-2">
               <span className="flex items-center gap-2 min-w-0">
                 <IcoCheck c="currentColor" s={16} />
                 <span className="font-medium truncate">
-                  מחובר{loginName ? ` כ${loginName}` : ""}
+                  {loginName ? `${t("checkout.loggedInAs")} ${loginName}` : t("checkout.loggedIn")}
                 </span>
               </span>
               <button
@@ -874,7 +876,7 @@ export function CustomerCheckout({
                 onClick={handleLogout}
                 className="shrink-0 text-xs font-semibold underline hover:opacity-80"
               >
-                התנתקות
+                {t("checkout.logout")}
               </button>
             </div>
           ) : (
@@ -883,34 +885,34 @@ export function CustomerCheckout({
               onClick={() => setLoginOpen(true)}
               className="mt-2 w-full text-start text-sm bg-(--qf-soft) border border-qf-line rounded-xl px-3 py-2 hover:border-(--qf-primary)/40 transition"
             >
-              כבר לקוח שלנו? <span className="font-bold text-(--qf-deep)">התחברו</span> והפרטים ימולאו אוטומטית
+              {t("checkout.loginPromptPrefix")} <span className="font-bold text-(--qf-deep)">{t("checkout.loginPromptLink")}</span> {t("checkout.loginPromptSuffix")}
             </button>
           )}
           <div className="grid grid-cols-2 gap-3 mt-3">
-            <Field label="שם פרטי" required error={firstNameError} errorId="co-first-name-error">
+            <Field label={t("checkout.firstName")} required error={firstNameError} errorId="co-first-name-error">
               <Input
                 id="co-first-name"
                 value={firstName}
                 onChange={setFirstName}
-                placeholder="ישראל"
+                placeholder={t("checkout.firstNamePlaceholder")}
                 autoComplete="given-name"
                 invalid={!!firstNameError}
                 describedBy="co-first-name-error"
               />
             </Field>
-            <Field label="שם משפחה" required={lastNameRequired} error={lastNameError} errorId="co-last-name-error">
+            <Field label={t("checkout.lastName")} required={lastNameRequired} error={lastNameError} errorId="co-last-name-error">
               <Input
                 id="co-last-name"
                 value={lastName}
                 onChange={setLastName}
-                placeholder="ישראלי"
+                placeholder={t("checkout.lastNamePlaceholder")}
                 autoComplete="family-name"
                 invalid={!!lastNameError}
                 describedBy="co-last-name-error"
               />
             </Field>
             <div className="col-span-2">
-              <Field label="טלפון" required error={phoneError} errorId="co-phone-error">
+              <Field label={t("checkout.phone")} required error={phoneError} errorId="co-phone-error">
                 <Input
                   id="co-phone"
                   value={phone}
@@ -930,7 +932,7 @@ export function CustomerCheckout({
             </div>
             {emailRequired && (
               <div className="col-span-2">
-                <Field label="דוא״ל" required error={emailError} errorId="co-email-error">
+                <Field label={t("checkout.email")} required error={emailError} errorId="co-email-error">
                   <Input
                     id="co-email"
                     value={email}
@@ -948,7 +950,7 @@ export function CustomerCheckout({
                   />
                 </Field>
                 <div className="text-xs text-qf-mute mt-1">
-                  נשלח אליך מייל קצר עם עדכונים על ההזמנה
+                  {t("checkout.emailHint")}
                 </div>
               </div>
             )}
@@ -962,18 +964,18 @@ export function CustomerCheckout({
             and drops the delivery fee for pickup. */}
         {(deliveryCities.length > 0 || nationwideDelivery) && pickupEnabled && (
           <Card>
-            <CardTitle>שיטת קבלה</CardTitle>
+            <CardTitle>{t("checkout.fulfillmentMethod")}</CardTitle>
             <div className="grid grid-cols-2 gap-2 mt-3">
               <Pill active={method === "delivery"} onClick={() => setMethod("delivery")}>
                 <span className="inline-flex items-center gap-1.5">
                   <IcoPin c="currentColor" s={15} />
-                  משלוח
+                  {t("method.delivery")}
                 </span>
               </Pill>
               <Pill active={method === "pickup"} onClick={() => setMethod("pickup")}>
                 <span className="inline-flex items-center gap-1.5">
                   <IcoBag c="currentColor" s={15} />
-                  איסוף עצמי
+                  {t("checkout.selfPickup")}
                 </span>
               </Pill>
             </div>
@@ -983,14 +985,14 @@ export function CustomerCheckout({
         {/* 3. Delivery / pickup */}
         {method === "delivery" ? (
           <Card>
-            <CardTitle>כתובת משלוח</CardTitle>
+            <CardTitle>{t("checkout.deliveryAddress")}</CardTitle>
             <div className="grid grid-cols-2 gap-3 mt-3">
               <div className="col-span-2" data-co-city tabIndex={-1}>
-                <Field label="עיר" required error={cityError} errorId="co-city-error">
+                <Field label={t("checkout.city")} required error={cityError} errorId="co-city-error">
                   <CitySelect
                     cities={deliveryCities}
                     allowCustom={nationwideDelivery}
-                    placeholder={nationwideDelivery ? "הקלידו עיר" : "בחרו עיר"}
+                    placeholder={nationwideDelivery ? t("checkout.cityTypePlaceholder") : t("checkout.citySelectPlaceholder")}
                     value={city}
                     onChange={(c) => {
                       setCity(c);
@@ -1003,30 +1005,30 @@ export function CustomerCheckout({
                 </Field>
               </div>
               <div className="col-span-2">
-                <Field label="רחוב ומספר" required error={addressError} errorId="co-address-error">
+                <Field label={t("checkout.streetAndNumber")} required error={addressError} errorId="co-address-error">
                   <Input
                     id="co-address"
                     value={address}
                     onChange={setAddress}
-                    placeholder="הרצל 12"
+                    placeholder={t("checkout.streetPlaceholder")}
                     autoComplete="street-address"
                     invalid={!!addressError}
                     describedBy="co-address-error"
                   />
                 </Field>
               </div>
-              <Field label="דירה">
+              <Field label={t("checkout.apartment")}>
                 <Input value={apartment} onChange={setApartment} placeholder="12" />
               </Field>
-              <Field label="קומה">
+              <Field label={t("checkout.floor")}>
                 <Input value={floor} onChange={setFloor} placeholder="3" />
               </Field>
               <div className="col-span-2">
-                <Field label="הוראות לשליח">
+                <Field label={t("checkout.courierNotes")}>
                   <Input
                     value={deliveryNotes}
                     onChange={setDeliveryNotes}
-                    placeholder="השאר ליד הדלת, להתקשר בהגעה"
+                    placeholder={t("checkout.courierNotesPlaceholder")}
                   />
                 </Field>
               </div>
@@ -1034,11 +1036,11 @@ export function CustomerCheckout({
           </Card>
         ) : (
           <Card>
-            <CardTitle>פרטי איסוף</CardTitle>
+            <CardTitle>{t("checkout.pickupDetails")}</CardTitle>
             <p className="text-sm text-qf-ink2 mt-2">
               {branch?.address
-                ? `ההזמנה תהיה מוכנה לאיסוף מהסניף ב${branch.address} ברגע שתאושר על ידי המסעדה.`
-                : "ההזמנה תהיה מוכנה לאיסוף מהסניף ברגע שתאושר על ידי המסעדה."}
+                ? `${t("checkout.pickupReadyAtPrefix")}${branch.address}${t("checkout.pickupReadyAtSuffix")}`
+                : t("checkout.pickupReady")}
             </p>
           </Card>
         )}
@@ -1048,7 +1050,7 @@ export function CustomerCheckout({
               wallet when it opens, so showing them all here is noise. */}
         <Card>
           <div data-co-payment tabIndex={-1} className="outline-none">
-          <CardTitle>אמצעי תשלום</CardTitle>
+          <CardTitle>{t("checkout.paymentMethod")}</CardTitle>
           {paymentError && (
             <div className="mt-2 text-xs font-medium text-qf-tomato" role="alert">
               {paymentError}
@@ -1061,7 +1063,7 @@ export function CustomerCheckout({
             </div>
           ) : availableMethods.length === 0 ? (
             <div className="text-xs text-qf-mute bg-qf-line-soft border border-qf-line-dash rounded-lg px-3 py-2 mt-3">
-              המסעדה עוד לא הגדירה אמצעי תשלום. צור איתם קשר ישירות.
+              {t("checkout.noPaymentMethods")}
             </div>
           ) : (
             <>
@@ -1071,7 +1073,7 @@ export function CustomerCheckout({
                     active={paymentMethod === "cash"}
                     onClick={() => setPaymentMethod("cash")}
                   >
-                    {PAYMENT_METHOD_LABELS.cash}
+                    {t("checkout.payCash")}
                   </Pill>
                 )}
                 {availableMethods.some((m) => m !== "cash") && (
@@ -1084,13 +1086,13 @@ export function CustomerCheckout({
                       setPaymentMethod("card");
                     }}
                   >
-                    תשלום אונליין
+                    {t("checkout.payOnline")}
                   </Pill>
                 )}
               </div>
               {paymentMethod && paymentMethod !== "cash" && (
                 <div className="mt-2 text-xs text-qf-mute">
-                  ניתן לשלם בכרטיס אשראי, Bit, Apple Pay ו-Google Pay.
+                  {t("checkout.onlinePaymentHint")}
                 </div>
               )}
             </>
@@ -1102,13 +1104,13 @@ export function CustomerCheckout({
         {method === "delivery" && tenant.tipEnabled !== false && (
           <Card>
             <div className="flex items-baseline justify-between">
-              <CardTitle>טיפ לשליח</CardTitle>
-              <span className="text-xs text-qf-mute">אופציונלי</span>
+              <CardTitle>{t("checkout.tipForCourier")}</CardTitle>
+              <span className="text-xs text-qf-mute">{t("common.optional")}</span>
             </div>
             <div className="grid grid-cols-4 gap-2 mt-3">
-              {[0, 5, 10, 15].map((t) => (
-                <Pill key={t} active={tip === t} onClick={() => setTip(t)}>
-                  {t === 0 ? "ללא" : `+${formatPrice(t)}`}
+              {[0, 5, 10, 15].map((amount) => (
+                <Pill key={amount} active={tip === amount} onClick={() => setTip(amount)}>
+                  {amount === 0 ? t("checkout.tipNone") : `+${formatPrice(amount)}`}
                 </Pill>
               ))}
             </div>
@@ -1118,27 +1120,27 @@ export function CustomerCheckout({
         {tenant.cutleryEnabled && (
           <Card>
             <div className="flex items-baseline justify-between">
-              <CardTitle>{tenant.cutleryLabel || "סכו״ם חד״פ"}</CardTitle>
-              <span className="text-xs text-qf-mute">אופציונלי</span>
+              <CardTitle>{tenant.cutleryLabel || t("checkout.cutleryLabel")}</CardTitle>
+              <span className="text-xs text-qf-mute">{t("common.optional")}</span>
             </div>
             {cutleryFreeUnlocked && cutleryCount > 0 && (
               <div className="text-xs text-qf-green-deep mt-2">
-                כלול חינם להזמנה מעל {formatPrice(cutleryFreeAbove!)}
+                {t("checkout.cutleryFreeAbovePrefix")} {formatPrice(cutleryFreeAbove!)}
               </div>
             )}
             <div className="mt-3 flex items-center justify-between gap-3">
               <div className="text-sm">
-                <div className="font-medium">להוסיף סטים?</div>
+                <div className="font-medium">{t("checkout.cutleryAddSets")}</div>
                 <div className="text-xs text-qf-mute mt-0.5">
                   {cutleryUnitPrice > 0 && !cutleryFreeUnlocked
-                    ? `${formatPrice(cutleryUnitPrice)} לסט`
-                    : "ללא עלות"}
+                    ? `${formatPrice(cutleryUnitPrice)} ${t("checkout.cutleryPerSet")}`
+                    : t("checkout.cutleryNoCost")}
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  aria-label="פחות"
+                  aria-label={t("checkout.decrease")}
                   onClick={() => setCutleryCount((c) => Math.max(0, c - 1))}
                   disabled={cutleryCount === 0}
                   className="w-9 h-9 rounded-full border border-qf-line-dash text-lg leading-none disabled:opacity-40"
@@ -1148,7 +1150,7 @@ export function CustomerCheckout({
                 <div className="w-8 text-center font-semibold tnum">{cutleryCount}</div>
                 <button
                   type="button"
-                  aria-label="עוד"
+                  aria-label={t("checkout.increase")}
                   onClick={() => setCutleryCount((c) => Math.min(20, c + 1))}
                   className="w-9 h-9 rounded-full border border-qf-line-dash text-lg leading-none"
                 >
@@ -1165,8 +1167,8 @@ export function CustomerCheckout({
         {tenant.scheduledOrdersEnabled !== false && (
           <Card>
             <div className="flex items-baseline justify-between">
-              <CardTitle>זמן {method === "delivery" ? "משלוח" : "איסוף"}</CardTitle>
-              <span className="text-xs text-qf-mute">אופציונלי</span>
+              <CardTitle>{method === "delivery" ? t("checkout.deliveryTime") : t("checkout.pickupTime")}</CardTitle>
+              <span className="text-xs text-qf-mute">{t("common.optional")}</span>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-3">
               <Pill
@@ -1176,15 +1178,15 @@ export function CustomerCheckout({
                   setShowSlots(false);
                 }}
               >
-                בהקדם האפשרי
+                {t("checkout.asap")}
               </Pill>
               <Pill
                 active={showSlots || !!scheduledSlot}
                 onClick={() => setShowSlots(true)}
               >
                 {scheduledSlot
-                  ? `תזמן · ${scheduledSlot.dayLabel} ${scheduledSlot.time}`
-                  : "תזמן לשעה"}
+                  ? `${t("checkout.scheduledFor")} · ${scheduledSlot.dayLabel} ${scheduledSlot.time}`
+                  : t("checkout.scheduleForTime")}
               </Pill>
             </div>
             {showSlots && (
@@ -1192,7 +1194,7 @@ export function CustomerCheckout({
                 {activeScheduleDay ? (
                   <>
                     <p className="text-xs text-qf-mute mb-2">
-                      בחר מועד {method === "delivery" ? "מסירה" : "איסוף"}
+                      {method === "delivery" ? t("checkout.pickTimeDelivery") : t("checkout.pickTimePickup")}
                     </p>
                     {scheduleDays.length > 1 && (
                       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 snap-x mb-2">
@@ -1233,7 +1235,7 @@ export function CustomerCheckout({
                   </>
                 ) : (
                   <p className="text-sm text-qf-mute mt-2">
-                    אין כרגע מועדים פנויים - בחר &quot;בהקדם האפשרי&quot;.
+                    {t("checkout.noSlotsAvailable")}
                   </p>
                 )}
               </div>
@@ -1244,14 +1246,14 @@ export function CustomerCheckout({
         {/* 5c. Coupon code */}
         <Card>
           <div className="flex items-baseline justify-between">
-            <CardTitle>קוד הנחה</CardTitle>
+            <CardTitle>{t("checkout.couponCode")}</CardTitle>
             {couponApplied && (
               <button
                 type="button"
                 onClick={clearCoupon}
                 className="text-xs text-qf-mute hover:text-qf-tomato"
               >
-                הסר קופון
+                {t("checkout.removeCoupon")}
               </button>
             )}
           </div>
@@ -1278,7 +1280,7 @@ export function CustomerCheckout({
                     void applyCoupon();
                   }
                 }}
-                placeholder="הקלד קוד"
+                placeholder={t("checkout.couponPlaceholder")}
                 maxLength={40}
                 dir="ltr"
                 className="flex-1 bg-qf-bg border border-qf-line rounded-2xl px-4 py-3 text-base text-right outline-none focus:border-(--qf-primary) focus:bg-white transition tnum"
@@ -1289,7 +1291,7 @@ export function CustomerCheckout({
                 disabled={!couponCode.trim() || couponBusy}
                 className="px-5 rounded-2xl bg-qf-ink text-white text-sm font-semibold disabled:opacity-50 transition"
               >
-                {couponBusy ? "..." : "החל"}
+                {couponBusy ? "..." : t("checkout.couponApply")}
               </button>
             </div>
           )}
@@ -1304,22 +1306,22 @@ export function CustomerCheckout({
           <Card>
             <label className="flex items-center justify-between gap-3 cursor-pointer">
               <div className="min-w-0">
-                <CardTitle>נקודות מועדון</CardTitle>
+                <CardTitle>{t("checkout.loyaltyPoints")}</CardTitle>
                 <div className="text-xs text-qf-mute mt-1">
-                  יש לך {loyalty.balance.toLocaleString("he-IL")} נקודות בשווי{" "}
+                  {t("checkout.loyaltyBalancePrefix")} {loyalty.balance.toLocaleString("he-IL")} {t("checkout.loyaltyBalanceWorth")}{" "}
                   {formatPrice(Math.floor((loyalty.balance * loyalty.pointValueAgorot) / 100))}
                 </div>
                 {usePoints && pointsDiscount > 0 && (
                   <div className="text-xs font-semibold text-qf-green-deep mt-1 tnum">
-                    ינוצלו {pointsQuote.points.toLocaleString("he-IL")} נקודות = −
-                    {formatPrice(pointsDiscount)} בהזמנה זו
+                    {t("checkout.loyaltyRedeemPrefix")} {pointsQuote.points.toLocaleString("he-IL")} {t("checkout.loyaltyRedeemMid")} −
+                    {formatPrice(pointsDiscount)} {t("checkout.loyaltyRedeemSuffix")}
                   </div>
                 )}
               </div>
               <Toggle
                 checked={usePoints}
                 onChange={setUsePoints}
-                aria-label="מימוש נקודות מועדון"
+                aria-label={t("checkout.loyaltyRedeemAria")}
               />
             </label>
           </Card>
@@ -1328,12 +1330,12 @@ export function CustomerCheckout({
         {/* 6. Notes */}
         {tenant.customerNotesEnabled !== false && (
           <Card>
-            <CardTitle>הערה למסעדה</CardTitle>
+            <CardTitle>{t("checkout.restaurantNote")}</CardTitle>
             <textarea
               value={customerNotes}
               onChange={(e) => setCustomerNotes(e.target.value)}
               rows={2}
-              placeholder="הערות למסעדה"
+              placeholder={t("checkout.restaurantNotePlaceholder")}
               className="w-full mt-3 bg-qf-bg border border-qf-line rounded-2xl px-4 py-3 text-base outline-none focus:border-(--qf-primary) focus:bg-white resize-none transition"
             />
           </Card>
@@ -1349,12 +1351,12 @@ export function CustomerCheckout({
         <div className="lg:hidden">
           <Card>
           <div className="flex items-baseline justify-between">
-            <CardTitle>סיכום הזמנה</CardTitle>
+            <CardTitle>{t("checkout.orderSummary")}</CardTitle>
             <Link
               href={`/s/${tenantSlug}/cart`}
               className="text-xs text-(--qf-deep) font-medium hover:underline"
             >
-              עריכת סל
+              {t("checkout.editCart")}
             </Link>
           </div>
           <ul className="mt-3 divide-y divide-qf-line-soft">
@@ -1393,41 +1395,41 @@ export function CustomerCheckout({
           </ul>
 
           <div className="mt-3 pt-3 border-t border-qf-line-soft space-y-1.5 text-sm">
-            <SumRow label={`${itemCount} פריטים`} value={formatPrice(subtotal)} />
+            <SumRow label={`${itemCount} ${t("checkout.itemsLabel")}`} value={formatPrice(subtotal)} />
             {method === "delivery" && (
-              <SumRow label="דמי משלוח" value={deliveryFee === 0 ? "חינם" : formatPrice(deliveryFee)} />
+              <SumRow label={t("cart.deliveryFee")} value={deliveryFee === 0 ? t("checkout.free") : formatPrice(deliveryFee)} />
             )}
-            {serviceFee > 0 && <SumRow label="דמי שירות" value={formatPrice(serviceFee)} />}
+            {serviceFee > 0 && <SumRow label={t("checkout.serviceFee")} value={formatPrice(serviceFee)} />}
             {cutleryFee > 0 && (
               <SumRow
-                label={`${tenant.cutleryLabel || "סכו״ם חד״פ"} × ${cutleryCount}`}
+                label={`${tenant.cutleryLabel || t("checkout.cutleryLabel")} × ${cutleryCount}`}
                 value={formatPrice(cutleryFee)}
               />
             )}
-            {tip > 0 && <SumRow label="טיפ לשליח" value={formatPrice(tip)} />}
+            {tip > 0 && <SumRow label={t("checkout.tipForCourier")} value={formatPrice(tip)} />}
             {bundleDiscount > 0 && (
               <SumRow
-                label="הנחת מבצע"
+                label={t("checkout.bundleDiscount")}
                 value={`−${formatPrice(bundleDiscount)}`}
                 tone="discount"
               />
             )}
             {couponApplied && (
               <SumRow
-                label={`קופון ${couponApplied.code}`}
+                label={`${t("checkout.couponLabel")} ${couponApplied.code}`}
                 value={`−${formatPrice(couponApplied.discount)}`}
                 tone="discount"
               />
             )}
             {pointsDiscount > 0 && (
               <SumRow
-                label={`נקודות מועדון (${pointsQuote.points.toLocaleString("he-IL")})`}
+                label={`${t("checkout.loyaltyPoints")} (${pointsQuote.points.toLocaleString("he-IL")})`}
                 value={`−${formatPrice(pointsDiscount)}`}
                 tone="discount"
               />
             )}
             <div className="pt-2 border-t border-qf-line-soft flex items-center justify-between">
-              <div className="font-semibold">סה״כ לתשלום</div>
+              <div className="font-semibold">{t("checkout.totalToPay")}</div>
               <div className="font-bold tnum text-lg">{formatPrice(total)}</div>
             </div>
           </div>
@@ -1445,7 +1447,7 @@ export function CustomerCheckout({
             which keeps the inline summary + fixed-footer CTA instead. */}
         <aside className="hidden lg:block lg:col-start-2 lg:sticky lg:top-20 lg:self-start">
           <Card>
-            <CardTitle>סיכום הזמנה</CardTitle>
+            <CardTitle>{t("checkout.orderSummary")}</CardTitle>
             <ul className="mt-3 divide-y divide-qf-line-soft">
               {lines.map((l) => {
                 const opts = l.options.reduce((a, o) => a + o.priceDelta, 0);
@@ -1479,47 +1481,47 @@ export function CustomerCheckout({
               })}
             </ul>
             <div className="mt-3 pt-3 border-t border-qf-line-soft space-y-1.5 text-sm">
-              <SumRow label={`${itemCount} פריטים`} value={formatPrice(subtotal)} />
+              <SumRow label={`${itemCount} ${t("checkout.itemsLabel")}`} value={formatPrice(subtotal)} />
               {method === "delivery" && (
-                <SumRow label="דמי משלוח" value={deliveryFee === 0 ? "חינם" : formatPrice(deliveryFee)} />
+                <SumRow label={t("cart.deliveryFee")} value={deliveryFee === 0 ? t("checkout.free") : formatPrice(deliveryFee)} />
               )}
-              {serviceFee > 0 && <SumRow label="דמי שירות" value={formatPrice(serviceFee)} />}
+              {serviceFee > 0 && <SumRow label={t("checkout.serviceFee")} value={formatPrice(serviceFee)} />}
             {cutleryFee > 0 && (
               <SumRow
-                label={`${tenant.cutleryLabel || "סכו״ם חד״פ"} × ${cutleryCount}`}
+                label={`${tenant.cutleryLabel || t("checkout.cutleryLabel")} × ${cutleryCount}`}
                 value={formatPrice(cutleryFee)}
               />
             )}
-              {tip > 0 && <SumRow label="טיפ לשליח" value={formatPrice(tip)} />}
+              {tip > 0 && <SumRow label={t("checkout.tipForCourier")} value={formatPrice(tip)} />}
             {bundleDiscount > 0 && (
               <SumRow
-                label="הנחת מבצע"
+                label={t("checkout.bundleDiscount")}
                 value={`−${formatPrice(bundleDiscount)}`}
                 tone="discount"
               />
             )}
             {couponApplied && (
               <SumRow
-                label={`קופון ${couponApplied.code}`}
+                label={`${t("checkout.couponLabel")} ${couponApplied.code}`}
                 value={`−${formatPrice(couponApplied.discount)}`}
                 tone="discount"
               />
             )}
             {pointsDiscount > 0 && (
               <SumRow
-                label={`נקודות מועדון (${pointsQuote.points.toLocaleString("he-IL")})`}
+                label={`${t("checkout.loyaltyPoints")} (${pointsQuote.points.toLocaleString("he-IL")})`}
                 value={`−${formatPrice(pointsDiscount)}`}
                 tone="discount"
               />
             )}
               <div className="pt-2 border-t border-qf-line-soft flex items-center justify-between">
-                <div className="font-semibold">סה״כ לתשלום</div>
+                <div className="font-semibold">{t("checkout.totalToPay")}</div>
                 <div className="font-bold tnum text-lg">{formatPrice(total)}</div>
               </div>
             </div>
             {belowMin && (
               <div className="mt-4 bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm rounded-xl px-3 py-2 text-center">
-                חסר {formatPrice(minOrder - subtotal)} לסכום מינימום ({formatPrice(minOrder)})
+                {t("checkout.belowMinPrefix")} {formatPrice(minOrder - subtotal)} {t("checkout.belowMinMid")} ({formatPrice(minOrder)})
               </div>
             )}
             <div className="mt-3">{termsConsent}</div>
@@ -1536,14 +1538,14 @@ export function CustomerCheckout({
                 )}
                 <span>
                   {busy
-                    ? "שולח..."
+                    ? t("checkout.sending")
                     : paymentInFlight
                       ? walletOpen
-                        ? "ממתין לתשלום..."
-                        : "פותח תשלום..."
+                        ? t("checkout.awaitingPayment")
+                        : t("checkout.openingPayment")
                       : paymentMethod === "cash"
-                        ? "בצע הזמנה"
-                        : "לשלם כעת"}
+                        ? t("checkout.placeOrderCash")
+                        : t("checkout.payNow")}
                 </span>
                 {!busy && !paymentInFlight && <IcoArrowLeft c="#fff" s={16} />}
               </span>
@@ -1557,7 +1559,7 @@ export function CustomerCheckout({
       <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 max-w-md mx-auto bg-white border-t border-qf-line px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
         {belowMin && (
           <div className="mb-2 bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato text-sm rounded-xl px-3 py-2 text-center">
-            חסר {formatPrice(minOrder - subtotal)} לסכום מינימום ({formatPrice(minOrder)})
+            {t("checkout.belowMinPrefix")} {formatPrice(minOrder - subtotal)} {t("checkout.belowMinMid")} ({formatPrice(minOrder)})
           </div>
         )}
         <div className="mb-2.5">{termsConsent}</div>
@@ -1574,14 +1576,14 @@ export function CustomerCheckout({
             )}
             <span>
               {busy
-                ? "שולח..."
+                ? t("checkout.sending")
                 : paymentInFlight
                   ? walletOpen
-                    ? "ממתין לתשלום..."
-                    : "פותח תשלום..."
+                    ? t("checkout.awaitingPayment")
+                    : t("checkout.openingPayment")
                   : paymentMethod === "cash"
-                    ? "בצע הזמנה"
-                    : "לשלם כעת"}
+                    ? t("checkout.placeOrderCash")
+                    : t("checkout.payNow")}
             </span>
             {!busy && !paymentInFlight && <IcoArrowLeft c="#fff" s={16} />}
           </span>
@@ -1601,13 +1603,13 @@ export function CustomerCheckout({
         >
           <div className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-xl">
             <div className="flex items-center justify-between px-4 py-3 border-b border-qf-line">
-              <span className="font-bold text-sm">תשלום מאובטח</span>
+              <span className="font-bold text-sm">{t("checkout.securePayment")}</span>
               <button
                 type="button"
                 onClick={() => setHostedPayment(null)}
                 className="text-sm text-qf-mute hover:text-qf-ink"
               >
-                סגירה
+                {t("common.close")}
               </button>
             </div>
             <HostedPaymentFrame
@@ -1646,7 +1648,7 @@ export function CustomerCheckout({
             // payment - pre-mount SDK errors (none of our business) get
             // silently logged via the console hooks in GrowPaymentSdk.
             if (pendingPayment) {
-              setError(asErrorString(message, "התשלום נכשל. אפשר לנסות שוב."));
+              setError(asErrorString(message, t("checkout.paymentFailed")));
               setPendingPayment(null);
             }
           }}
@@ -1655,7 +1657,7 @@ export function CustomerCheckout({
       {busyAlertOpen && (
         <BusyAlertModal
           boostMinutes={branch?.busyEtaBoostMinutes ?? 15}
-          ctaLabel="הבנתי, המשך להזמין"
+          ctaLabel={t("checkout.busyAckCta")}
           onClose={ackBusyAndPlace}
         />
       )}
@@ -1664,18 +1666,18 @@ export function CustomerCheckout({
         open={termsOpen}
         onClose={() => setTermsOpen(false)}
         size="2xl"
-        ariaLabel="תקנון ותנאי שימוש"
+        ariaLabel={t("checkout.termsTitle")}
         className="border-2 border-black shadow-[0_10px_40px_rgba(0,0,0,0.45)] overflow-hidden"
       >
         <div
           className="sticky top-0 z-10 flex items-center justify-between gap-3 px-5 py-4 border-b-2 border-black"
           style={{ backgroundColor: themeColors.primary }}
         >
-          <h2 className="font-bold text-lg text-white">תקנון ותנאי שימוש</h2>
+          <h2 className="font-bold text-lg text-white">{t("checkout.termsTitle")}</h2>
           <button
             type="button"
             onClick={() => setTermsOpen(false)}
-            aria-label="סגור"
+            aria-label={t("common.close")}
             className="shrink-0 w-10 h-10 rounded-full bg-white grid place-items-center border-2 border-black shadow-[0_2px_0_#000] active:translate-y-px active:shadow-none transition"
             style={{ color: themeColors.deep }}
           >
@@ -1691,17 +1693,17 @@ export function CustomerCheckout({
         open={loginOpen}
         onClose={() => setLoginOpen(false)}
         size="sm"
-        ariaLabel="התחברות"
+        ariaLabel={t("checkout.loginTitle")}
       >
         {/* The Modal portals outside the ThemeProvider subtree, so re-declare
             the tenant theme vars here or the OTP form falls back to green. */}
         <div style={themeVars((tenant?.themeId as ThemeId) ?? "fresh") as React.CSSProperties}>
           <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-qf-line-soft">
-            <h2 className="font-bold text-lg">התחברות</h2>
+            <h2 className="font-bold text-lg">{t("checkout.loginTitle")}</h2>
             <button
               type="button"
               onClick={() => setLoginOpen(false)}
-              aria-label="סגור"
+              aria-label={t("common.close")}
               className="shrink-0 w-9 h-9 rounded-full grid place-items-center text-qf-mute hover:bg-qf-line-soft transition"
             >
               <IcoClose s={20} />
@@ -1709,7 +1711,7 @@ export function CustomerCheckout({
           </div>
           <ModalBody>
             <p className="text-sm text-qf-mute text-center mb-4">
-              נשלח קוד אימות בוואטסאפ והפרטים שלך ימולאו אוטומטית
+              {t("checkout.loginOtpHint")}
             </p>
             <CustomerOtpLogin tenantSlug={tenantSlug} onSuccess={handleLoginSuccess} />
           </ModalBody>
@@ -1873,6 +1875,7 @@ function asErrorString(value: unknown, fallback: string): string {
 }
 
 function ProcessingScreen() {
+  const { t } = useLocale();
   return (
     <div className="min-h-screen flex items-center justify-center p-8 text-center bg-qf-bg/60">
       <div className="flex flex-col items-center gap-4">
@@ -1883,8 +1886,8 @@ function ProcessingScreen() {
           <span className="qf-spinner text-(--qf-primary) text-2xl" />
         </div>
         <div>
-          <div className="font-bold text-lg">מעבד את ההזמנה...</div>
-          <div className="text-sm text-qf-mute mt-1">רק שניה, מעביר אותך למסך המעקב</div>
+          <div className="font-bold text-lg">{t("checkout.processing")}</div>
+          <div className="text-sm text-qf-mute mt-1">{t("checkout.processingHint")}</div>
         </div>
       </div>
     </div>

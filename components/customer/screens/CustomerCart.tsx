@@ -18,9 +18,11 @@ import ItemModalSkeleton from "@/components/customer/ItemModalSkeleton";
 import { CartUpsell } from "@/components/customer/CartUpsell";
 import { usePreCheckoutUpsell } from "@/components/customer/PreCheckoutUpsell";
 import { CartBundleOffers } from "@/components/customer/CartBundleOffers";
+import { useLocale } from "@/components/customer/LocaleProvider";
 
 export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
   const router = useRouter();
+  const { t } = useLocale();
   const { lines, updateQuantity, remove, subtotal, method, deliveryFee, branch, tenant, hydrated, bundleDiscount } = useCart();
 
   // Wolt-style: clicking a cart line opens the item-detail modal in
@@ -65,23 +67,23 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
           <Link
             href={`/s/${tenantSlug}`}
             className="w-9 h-9 rounded-full bg-white border border-qf-line grid place-items-center"
-            aria-label="חזרה"
+            aria-label={t("common.back")}
           >
             <IcoChev s={18} />
           </Link>
-          <h1 className="font-bold text-lg">הסל שלי</h1>
+          <h1 className="font-bold text-lg">{t("cart.title")}</h1>
         </header>
         <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
           <div className="w-20 h-20 rounded-full bg-(--qf-soft) grid place-items-center mb-4">
             <IcoBag c="var(--qf-primary)" s={36} />
           </div>
-          <h2 className="font-semibold text-lg mb-1">הסל ריק</h2>
-          <p className="text-sm text-qf-mute mb-5">הוסף פריטים מהתפריט וחזור הנה לסיום ההזמנה</p>
+          <h2 className="font-semibold text-lg mb-1">{t("cart.empty")}</h2>
+          <p className="text-sm text-qf-mute mb-5">{t("cart.emptyHint")}</p>
           <Link
             href={`/s/${tenantSlug}`}
             className="px-5 py-3 rounded-full bg-(--qf-primary) text-white font-medium text-sm"
           >
-            לתפריט
+            {t("cart.toMenu")}
           </Link>
         </div>
         <BottomTabBar tenantSlug={tenantSlug} />
@@ -95,11 +97,11 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
         <Link
           href={`/s/${tenantSlug}`}
           className="w-9 h-9 rounded-full border border-qf-line grid place-items-center lg:hidden"
-          aria-label="חזרה"
+          aria-label={t("common.back")}
         >
           <IcoChev s={18} />
         </Link>
-        <h1 className="font-bold text-lg lg:text-3xl">הסל שלי</h1>
+        <h1 className="font-bold text-lg lg:text-3xl">{t("cart.title")}</h1>
         <span className="text-xs text-qf-mute lg:text-base">· {tenant.name}</span>
       </header>
 
@@ -148,7 +150,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
                       remove(l.lineId);
                     }}
                     className="w-8 h-8 rounded-full text-qf-mute hover:text-qf-tomato hover:bg-qf-tomato-soft grid place-items-center -m-1 shrink-0 transition"
-                    aria-label="הסר"
+                    aria-label={t("cart.remove")}
                   >
                     <IcoClose s={16} c="currentColor" />
                   </button>
@@ -158,12 +160,12 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
                 )}
                 <CartLineOptions options={l.options} />
                 {l.notes && (
-                  <div className="text-xs text-qf-ink2 mt-0.5">הערה: {l.notes}</div>
+                  <div className="text-xs text-qf-ink2 mt-0.5">{t("cart.noteLabel")} {l.notes}</div>
                 )}
                 <div className="flex items-center justify-between mt-2.5">
                   {l.weightGrams != null ? (
                     <div className="inline-flex items-center gap-1 bg-qf-bg rounded-full border border-qf-line px-3 h-9 text-sm font-bold tnum">
-                      {l.weightGrams} גרם
+                      {l.weightGrams} {t("cart.grams")}
                     </div>
                   ) : (
                     <div
@@ -174,7 +176,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
                         type="button"
                         onClick={() => updateQuantity(l.lineId, l.quantity - 1)}
                         className="w-9 h-9 grid place-items-center active:bg-qf-line-soft rounded-full transition"
-                        aria-label="הפחת"
+                        aria-label={t("cart.decrease")}
                       >
                         <IcoMinus s={16} />
                       </button>
@@ -183,7 +185,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
                         type="button"
                         onClick={() => updateQuantity(l.lineId, l.quantity + 1)}
                         className="w-9 h-9 grid place-items-center active:bg-qf-line-soft rounded-full transition"
-                        aria-label="הוסף"
+                        aria-label={t("cart.increase")}
                       >
                         <IcoPlus c="#11231a" s={16} />
                       </button>
@@ -207,23 +209,23 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
         {/* Summary + CTA - inline card on mobile, sticky sidebar on desktop. */}
         <aside className="px-5 mt-5 lg:px-0 lg:mt-0 lg:sticky lg:top-20 lg:self-start">
           <div className="bg-white border border-qf-line rounded-2xl p-4 space-y-2 text-sm shadow-xs">
-            <Row label="סכום ביניים" value={formatPrice(subtotal)} />
+            <Row label={t("cart.subtotal")} value={formatPrice(subtotal)} />
             {bundleDiscount > 0 && (
-              <Row label="הנחת מבצע" value={`-${formatPrice(bundleDiscount)}`} />
+              <Row label={t("cart.bundleDiscount")} value={`-${formatPrice(bundleDiscount)}`} />
             )}
             {method === "delivery" && (
-              <Row label="דמי משלוח" value={deliveryFee === 0 ? "חינם" : formatPrice(deliveryFee)} />
+              <Row label={t("cart.deliveryFee")} value={deliveryFee === 0 ? t("cart.free") : formatPrice(deliveryFee)} />
             )}
-            {serviceFee > 0 && <Row label="דמי שירות" value={formatPrice(serviceFee)} />}
+            {serviceFee > 0 && <Row label={t("cart.serviceFee")} value={formatPrice(serviceFee)} />}
             <div className="border-t border-qf-line-soft pt-2 mt-2">
-              <Row bold label="סה״כ" value={formatPrice(total)} />
+              <Row bold label={t("cart.total")} value={formatPrice(total)} />
             </div>
 
             {/* Desktop CTA lives inside the summary card. Mobile keeps the fixed pill below. */}
             <div className="hidden lg:block pt-3 mt-2 border-t border-qf-line-soft">
               {!meetsMin && (
                 <div className="bg-qf-yolk-soft border border-qf-yolk/40 rounded-xl px-3 py-2 text-xs text-qf-ink2 mb-2">
-                  חסר {formatPrice(minOrder - subtotal)} לסכום מינימום ({formatPrice(minOrder)})
+                  {t("cart.missing")} {formatPrice(minOrder - subtotal)} {t("cart.forMinOrder")} ({formatPrice(minOrder)})
                 </div>
               )}
               <button
@@ -242,7 +244,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
                 className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-14 text-base font-semibold flex items-center justify-between shadow-sm shadow-(--qf-primary)/25 transition"
               >
                 <span className="inline-flex items-center gap-2">
-                  <span>המשך לתשלום</span>
+                  <span>{t("cart.continueToCheckout")}</span>
                   <IcoArrowLeft c="#fff" s={16} />
                 </span>
                 <span className="tnum text-lg">{formatPrice(total)}</span>
@@ -256,7 +258,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
       <div className="lg:hidden fixed bottom-20 inset-x-0 z-30 max-w-md mx-auto px-4">
         {!meetsMin && (
           <div className="bg-qf-yolk-soft border border-qf-yolk/40 rounded-xl px-3 py-2 text-xs text-qf-ink2 mb-2">
-            חסר {formatPrice(minOrder - subtotal)} לסכום מינימום ({formatPrice(minOrder)})
+            {t("cart.missing")} {formatPrice(minOrder - subtotal)} {t("cart.forMinOrder")} ({formatPrice(minOrder)})
           </div>
         )}
         <button
@@ -266,7 +268,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
           className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute disabled:shadow-none text-white rounded-2xl px-5 h-16 text-base font-semibold flex items-center justify-between shadow-lg shadow-(--qf-primary)/25 transition active:scale-[0.99]"
         >
           <span className="inline-flex items-center gap-2">
-            <span>המשך לתשלום</span>
+            <span>{t("cart.continueToCheckout")}</span>
             <IcoArrowLeft c="#fff" s={16} />
           </span>
           <span className="tnum text-lg">{formatPrice(total)}</span>

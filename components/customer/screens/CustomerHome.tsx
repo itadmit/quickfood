@@ -38,6 +38,7 @@ import { AIAdvisorTopButton } from "@/components/customer/ai-advisor/AIAdvisorTo
 import { BusyAlertModal, ClosedAlertModal } from "@/components/customer/BranchStatusModal";
 import { RestaurantInfoModal } from "@/components/customer/RestaurantInfoModal";
 import { getOpenStatus, type BranchHours } from "@/lib/branch-hours";
+import { useLocale } from "@/components/customer/LocaleProvider";
 
 interface Props {
   tenant: {
@@ -167,6 +168,7 @@ export function CustomerHome({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { t } = useLocale();
   const { method, setMethod, deliveryEta: zoneEta, branch: cartBranch } = useCart();
   const open = branch?.status === "open";
   const busy = branch?.status === "busy";
@@ -179,22 +181,22 @@ export function CustomerHome({
   const hoursStatus = branch?.hours
     ? getOpenStatus(branch.hours as BranchHours)
     : null;
-  let openLabel: string = "סגור";
+  let openLabel: string = t("home.closed");
   let openLabelTone: "open" | "busy" | "closed" = "closed";
   if (closed) {
-    openLabel = "סגור";
+    openLabel = t("home.closed");
     openLabelTone = "closed";
   } else if (busy) {
-    openLabel = "עומס";
+    openLabel = t("home.busy");
     openLabelTone = "busy";
   } else if (open && hoursStatus?.open && hoursStatus.closesAt) {
-    openLabel = `פתוח עד ${hoursStatus.closesAt}`;
+    openLabel = `${t("home.openUntil")} ${hoursStatus.closesAt}`;
     openLabelTone = "open";
   } else if (open) {
-    openLabel = "פתוח";
+    openLabel = t("home.open");
     openLabelTone = "open";
   } else if (hoursStatus && !hoursStatus.open && hoursStatus.nextOpen) {
-    openLabel = `סגור · נפתח ${hoursStatus.nextOpen.dayLabel} ${hoursStatus.nextOpen.time}`;
+    openLabel = `${t("home.closedOpensAt")} ${hoursStatus.nextOpen.dayLabel} ${hoursStatus.nextOpen.time}`;
     openLabelTone = "closed";
   }
   // A matched delivery zone's values (ETA / fee / minimum) override the
@@ -347,10 +349,10 @@ export function CustomerHome({
 
   const locationLabel =
     choice?.kind === "pickup"
-      ? "איסוף עצמי"
+      ? t("home.selfPickup")
       : choice?.kind === "delivery"
         ? choice.city
-        : "בחר כתובת";
+        : t("home.chooseAddress");
 
   return (
     <div className="pb-20 lg:pb-12">
@@ -454,8 +456,8 @@ export function CustomerHome({
                     available
                       ? undefined
                       : m === "delivery"
-                        ? "המסעדה לא מספקת משלוחים"
-                        : "המסעדה לא מציעה איסוף עצמי"
+                        ? t("home.noDelivery")
+                        : t("home.noPickup")
                   }
                   className={cn(
                     "py-2 text-sm rounded-xl transition font-medium",
@@ -465,7 +467,7 @@ export function CustomerHome({
                     !available && "opacity-60",
                   )}
                 >
-                  {m === "delivery" ? "משלוח" : "איסוף"}
+                  {m === "delivery" ? t("method.delivery") : t("method.pickup")}
                 </button>
               );
             })}
@@ -482,8 +484,8 @@ export function CustomerHome({
                 type="search"
                 value={menuQuery}
                 onChange={(e) => setMenuQuery(e.target.value)}
-                placeholder="חיפוש בתפריט"
-                aria-label="חיפוש בתפריט"
+                placeholder={t("nav.searchPlaceholder")}
+                aria-label={t("nav.searchPlaceholder")}
                 className="flex-1 bg-transparent outline-none border-0 appearance-none text-white placeholder:text-white/75 [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
               />
               {menuQuery && (
@@ -491,9 +493,9 @@ export function CustomerHome({
                   type="button"
                   onClick={() => setMenuQuery("")}
                   className="text-xs text-white/80 hover:text-white shrink-0"
-                  aria-label="נקה חיפוש"
+                  aria-label={t("home.clearSearch")}
                 >
-                  נקה
+                  {t("home.clear")}
                 </button>
               )}
             </div>
@@ -573,7 +575,7 @@ export function CustomerHome({
               <>
                 <span className="text-qf-line">·</span>
                 <span className="inline-flex items-center gap-1.5 text-qf-ink2 tnum">
-                  <span className="text-qf-mute text-xs">מינ׳</span>
+                  <span className="text-qf-mute text-xs">{t("home.minOrderShort")}</span>
                   <span>{formatPrice(displayMinOrder)}</span>
                 </span>
               </>
@@ -597,11 +599,11 @@ export function CustomerHome({
                 <button
                   type="button"
                   onClick={() => setInfoOpen(true)}
-                  aria-label="פרטי העסק"
+                  aria-label={t("home.businessInfo")}
                   className="inline-flex items-center gap-1.5 text-qf-ink2 hover:underline whitespace-nowrap"
                 >
                   <IcoInfo s={15} c="currentColor" />
-                  <span className="text-xs font-bold">פרטי העסק</span>
+                  <span className="text-xs font-bold">{t("home.businessInfo")}</span>
                 </button>
               </>
             )}
@@ -622,8 +624,8 @@ export function CustomerHome({
               <IcoStar c="#e8a93b" fill="#e8a93b" s={20} />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-semibold text-sm">רוצה לדרג את ההזמנה האחרונה?</div>
-              <div className="text-xs text-qf-mute">דקה אחת כדי לתת ביקורת</div>
+              <div className="font-semibold text-sm">{t("home.rateLastOrder")}</div>
+              <div className="text-xs text-qf-mute">{t("home.rateLastOrderSub")}</div>
             </div>
             <IcoArrowLeft c="#7c8a82" s={14} />
           </Link>
@@ -662,7 +664,7 @@ export function CustomerHome({
           Merchant-hideable via Settings → קופה ("הצג מקטע קטגוריות"). */}
       {showCategoriesRail && categories.length > 0 && (
       <section className="px-5 mt-5 lg:max-w-7xl lg:mx-auto lg:px-6 lg:mt-10">
-        <h2 className="text-base lg:text-xl font-semibold mb-2 lg:mb-4">קטגוריות</h2>
+        <h2 className="text-base lg:text-xl font-semibold mb-2 lg:mb-4">{t("home.categories")}</h2>
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-5 px-5 lg:mx-0 lg:px-0 lg:overflow-visible lg:grid lg:grid-cols-6 xl:grid-cols-8 lg:gap-3">
           {categories.map((c) => {
             const style = resolveCategoryStyle(c.icon, c.color, themeDefaultColor);
@@ -701,12 +703,12 @@ export function CustomerHome({
       {popular.length > 0 && (
         <section className="px-5 mt-5 lg:max-w-7xl lg:mx-auto lg:px-6 lg:mt-10">
           <div className="flex items-center justify-between mb-2 lg:mb-4">
-            <h2 className="text-base lg:text-xl font-semibold">פופולריים</h2>
+            <h2 className="text-base lg:text-xl font-semibold">{t("home.popular")}</h2>
             <a
               href="#menu-section"
               className="text-xs lg:text-sm text-(--qf-deep) inline-flex items-center gap-1 hover:underline"
             >
-              לכל התפריט
+              {t("home.viewFullMenu")}
               <IcoArrowLeft c="currentColor" s={12} />
             </a>
           </div>
@@ -758,7 +760,7 @@ export function CustomerHome({
           )}
           {deals.length > 0 && (
             <div className="mb-6">
-              <h2 className="text-base lg:text-xl font-semibold mb-3">דילים</h2>
+              <h2 className="text-base lg:text-xl font-semibold mb-3">{t("home.deals")}</h2>
               <div className="flex gap-3 overflow-x-auto qf-hscroll -mx-5 px-5 pb-1.5 lg:grid lg:grid-cols-3 lg:mx-0 lg:px-0 lg:overflow-visible">
                 {deals.map((d) => (
                   <button
@@ -785,14 +787,14 @@ export function CustomerHome({
                       {d.description && (
                         <div className="text-xs text-qf-mute line-clamp-2 mt-0.5">{d.description}</div>
                       )}
-                      <div className="text-xs text-(--qf-deep) font-medium mt-1.5">הרכיבו את הדיל</div>
+                      <div className="text-xs text-(--qf-deep) font-medium mt-1.5">{t("home.composeDeal")}</div>
                     </div>
                   </button>
                 ))}
               </div>
             </div>
           )}
-          <h2 className="text-base lg:text-xl font-semibold mb-3">התפריט המלא</h2>
+          <h2 className="text-base lg:text-xl font-semibold mb-3">{t("home.fullMenu")}</h2>
           <div className="-mx-5 lg:mx-0">
             <MenuList
               tenantSlug={tenant.slug}

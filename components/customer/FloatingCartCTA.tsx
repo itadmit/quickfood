@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/components/customer/CartProvider";
+import { useLocale } from "@/components/customer/LocaleProvider";
 import { formatPrice } from "@/lib/format";
 
 const HIDDEN_PATH_SUFFIXES = ["/cart", "/checkout"];
@@ -14,6 +15,7 @@ const HIDDEN_PATH_PATTERNS: RegExp[] = [/\/orders\/[^/]+$/];
 const DISMISS_KEY = "qf:cart-cta-dismissed-at";
 
 export function FloatingCartCTA() {
+  const { t } = useLocale();
   const { lines, subtotal, itemCount, tenant, hydrated } = useCart();
   const pathname = usePathname() || "";
   const [dismissedAt, setDismissedAt] = useState<number | null>(null);
@@ -65,15 +67,15 @@ export function FloatingCartCTA() {
             >
               {itemCount}
             </span>
-            <span className="font-bold text-sm">הצגת פריטים</span>
+            <span className="font-bold text-sm">{t("cart.viewItems")}</span>
           </div>
           <span className="font-bold tnum text-sm">{formatPrice(subtotal)}</span>
         </Link>
         <button
           type="button"
           onClick={dismiss}
-          aria-label="הסתר עגלה"
-          title="הסתר"
+          aria-label={t("cart.hide")}
+          title={t("cart.hideShort")}
           className="px-3 text-white/80 hover:text-white hover:bg-black/15 border-s border-white/15 grid place-items-center transition"
         >
           <ChevDownIcon />
