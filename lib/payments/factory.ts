@@ -14,6 +14,7 @@ import { PaymentProvider } from "@prisma/client";
 import { GrowProvider } from "./providers/grow";
 import { CardComProvider } from "./providers/cardcom";
 import { HypProvider } from "./providers/hyp";
+import { hasLiveClearing } from "./live-clearing";
 import type {
   CardProviderType,
   IPaymentProvider,
@@ -98,6 +99,8 @@ export async function getActiveCardProvider(
   if (rows.length === 0) return null;
 
   const row = rows[0];
+  // No real clearing (test mode or missing terminal credentials) = no card.
+  if (!hasLiveClearing(row)) return null;
   const settings = (row.settings ?? {}) as ProviderSettings;
   const config: ProviderConfig = {
     provider: row.provider,
@@ -127,10 +130,12 @@ export async function getActiveCardProviderSummary(tenantId: string): Promise<{
       provider: { not: PaymentProvider.cash },
     },
     orderBy: { updatedAt: "desc" },
-    select: { provider: true, testMode: true, settings: true },
+    select: { provider: true, testMode: true, settings: true, credentials: true },
   });
   if (rows.length === 0) return null;
   const row = rows[0];
+  // Same rule as getActiveCardProvider: the storefront offers no card option.
+  if (!hasLiveClearing(row)) return null;
   const settings = (row.settings ?? {}) as ProviderSettings;
   return {
     provider: row.provider as CardProviderType,

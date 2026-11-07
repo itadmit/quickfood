@@ -8,6 +8,7 @@ import { toE164 } from "@/lib/format";
 import { signReviewToken } from "@/lib/reviews/token";
 import { initiateOrderPayment, type InitiatePaymentData } from "@/lib/payments/initiate-payment";
 import { recordAttribution } from "@/lib/growth/attribution";
+import { getActiveCardProviderSummary } from "@/lib/payments/factory";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -136,6 +137,23 @@ export const POST = handler(async (req: Request) => {
       );
     }
     guestPhone = normalized;
+  }
+
+  // No real clearing (test mode / no terminal credentials) = no card at all.
+  // Refuse before an order exists, so it never sits pending as a card order.
+  if (body.payment_method !== "cash") {
+    const t = await prisma.tenant.findUnique({
+      where: { slug: body.tenant_slug },
+      select: { id: true },
+    });
+    if (t && !(await getActiveCardProviderSummary(t.id))) {
+      return apiError(
+        "card_unavailable",
+        "תשלום באשראי אינו זמין במסעדה זו. אפשר לבחור תשלום במזומן.",
+        409,
+        "payment_method",
+      );
+    }
   }
 
   try {
