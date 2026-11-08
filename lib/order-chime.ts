@@ -71,3 +71,69 @@ export function playChime(id: ChimeId = getSelectedChime()) {
     /* ignore */
   }
 }
+
+/**
+ * Continuous ringing ("ring until handled"). Opt-in per device via
+ * CHIME_LOOP_KEY - off by default so stores that like the single chime keep
+ * it. While looping, the chime replays with a short gap until stopChimeLoop()
+ * is called (the board stops it once no new order is waiting). A watchdog
+ * interval also retries if the browser blocked a play() (autoplay policy).
+ */
+export const CHIME_LOOP_KEY = "qf_merchant_chime_loop";
+const LOOP_GAP_MS = 1500;
+
+export function getChimeLoopEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(CHIME_LOOP_KEY) === "1";
+}
+
+let loopTimer: number | null = null;
+let loopFile: string | null = null;
+let lastEndedAt = 0;
+
+export function startChimeLoop(id: ChimeId = getSelectedChime()) {
+  const file = FILE_BY_ID[id] ?? FILE_BY_ID["1"];
+  if (loopTimer != null && loopFile === file) return;
+  stopChimeLoop();
+  const a = el(file);
+  if (!a) return;
+  loopFile = file;
+  a.onended = () => {
+    lastEndedAt = Date.now();
+  };
+  let lastStartAt = 0;
+  const tick = () => {
+    if (!a.paused && !a.ended) return; // still playing
+    const now = Date.now();
+    if (now - lastEndedAt < LOOP_GAP_MS) return;
+    // play() is pending (still loading) or was blocked - retry, but not faster
+    // than every 3s so a slow load isn't restarted over and over.
+    if (!a.ended && now - lastStartAt < 3000) return;
+    lastStartAt = now;
+    try {
+      a.currentTime = 0;
+      void a.play().catch(() => {});
+    } catch {
+      /* ignore */
+    }
+  };
+  lastEndedAt = 0;
+  tick();
+  loopTimer = window.setInterval(tick, 500);
+}
+
+export function stopChimeLoop() {
+  if (loopTimer != null) {
+    window.clearInterval(loopTimer);
+    loopTimer = null;
+  }
+  if (loopFile) {
+    const a = cache.get(loopFile);
+    if (a) {
+      a.onended = null;
+      a.pause();
+      a.currentTime = 0;
+    }
+    loopFile = null;
+  }
+}

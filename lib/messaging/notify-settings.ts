@@ -110,6 +110,50 @@ export function resolveMerchantNewOrderSettings(raw: unknown): MerchantNewOrderS
   };
 }
 
+/**
+ * Message to the courier when an order is assigned. Stored under
+ * `courier_assigned` in Tenant.notifySettings. `sms` gates only the paid SMS
+ * fallback (push + email to the courier are free and always sent). Missing key
+ * = true, so tenants that never touched the setting keep today's behaviour.
+ */
+export interface CourierAssignedSettings {
+  sms: boolean;
+}
+
+export function resolveCourierAssignedSettings(raw: unknown): CourierAssignedSettings {
+  const src =
+    raw && typeof raw === "object"
+      ? ((raw as Record<string, unknown>).courier_assigned as Record<string, unknown> | undefined)
+      : undefined;
+  return { sms: asBool(src?.sms, true) };
+}
+
+/**
+ * Review-reminder SMS text. Stored under `review_text` in Tenant.notifySettings.
+ * Tokens: {name} (customer first name, or "שלום"), {business}, {link}.
+ * Empty/missing = the built-in default below. The link is mandatory: if a
+ * merchant's text drops {link} it is appended, otherwise the SMS is useless.
+ */
+export const REVIEW_TEXT_DEFAULT = "{name}, איך הייתה ההזמנה מ-{business}?\nדקה לדרג: {link}";
+export const REVIEW_TEXT_MAX = 300;
+
+export function resolveReviewText(raw: unknown): string | null {
+  if (!raw || typeof raw !== "object") return null;
+  return asText((raw as Record<string, unknown>).review_text);
+}
+
+export function renderReviewText(
+  template: string | null,
+  vars: { name: string; business: string; link: string },
+): string {
+  let t = (template ?? "").trim() || REVIEW_TEXT_DEFAULT;
+  if (!t.includes("{link}")) t = `${t}\n{link}`;
+  return t
+    .replaceAll("{name}", vars.name)
+    .replaceAll("{business}", vars.business)
+    .replaceAll("{link}", vars.link);
+}
+
 export function resolveOrderNotifySettings(
   raw: unknown,
   legacyNotifyChannel: NotifyChannel,

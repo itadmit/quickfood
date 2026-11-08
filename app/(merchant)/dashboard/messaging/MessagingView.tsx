@@ -11,6 +11,8 @@ import { RelativeTime } from "@/components/shared/RelativeTime";
 import { cn } from "@/lib/cn";
 import {
   ORDER_NOTIFY_EVENTS,
+  REVIEW_TEXT_DEFAULT,
+  REVIEW_TEXT_MAX,
   type OrderNotifySettings,
   type OrderNotifyEvent,
   type NotifyChannel,
@@ -73,6 +75,7 @@ export function MessagingView({
   orderEvents,
   merchantNewOrder,
   review,
+  courierAssigned,
   availability,
   tiers,
   audience,
@@ -83,7 +86,8 @@ export function MessagingView({
   billingReady: boolean;
   orderEvents: OrderNotifySettings;
   merchantNewOrder: { email: boolean; whatsapp: boolean };
-  review: { enabled: boolean; public: boolean; channel: NotifyChannel; delayMinutes: number };
+  review: { enabled: boolean; public: boolean; channel: NotifyChannel; delayMinutes: number; text: string };
+  courierAssigned: { sms: boolean };
   availability: Availability;
   tiers: Record<Tier, string>;
   audience: Array<{ tier: Tier; hasEmail: boolean; hasPhone: boolean }>;
@@ -137,6 +141,7 @@ export function MessagingView({
           orderEvents={orderEvents}
           merchantNewOrder={merchantNewOrder}
           review={review}
+          courierAssigned={courierAssigned}
           smsSender={initialSender}
           availability={availability}
         />
@@ -544,16 +549,84 @@ function EventTextEditor({
   );
 }
 
+const REVIEW_TOKENS: Array<{ token: string; label: string }> = [
+  { token: "{name}", label: "שם הלקוח" },
+  { token: "{business}", label: "שם העסק" },
+  { token: "{link}", label: "קישור לדירוג" },
+];
+
+/** Review-reminder SMS text. Empty value = the built-in default text. */
+function ReviewTextEditor({ value, onChange }: { value: string; onChange: (t: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const shown = value.length > 0 ? value : REVIEW_TEXT_DEFAULT;
+  const custom = value.trim().length > 0;
+  return (
+    <div className="space-y-2">
+      {!open ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="text-xs text-(--qf-deep) underline underline-offset-2 hover:text-(--qf-primary)"
+        >
+          {custom ? "עריכת נוסח ה-SMS (מותאם אישית)" : "צפייה / עריכה של נוסח ה-SMS"}
+        </button>
+      ) : (
+        <>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-bold text-qf-mute">נוסח הודעת הביקורת (SMS)</span>
+            {custom && (
+              <button
+                type="button"
+                onClick={() => onChange("")}
+                className="text-[11px] text-qf-tomato font-medium hover:underline"
+              >
+                איפוס לברירת מחדל
+              </button>
+            )}
+          </div>
+          <textarea
+            value={shown}
+            onChange={(e) => onChange(e.target.value.slice(0, REVIEW_TEXT_MAX))}
+            rows={3}
+            dir="rtl"
+            maxLength={REVIEW_TEXT_MAX}
+            className="w-full px-3 py-2 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none text-sm leading-relaxed"
+            aria-label="נוסח הודעת הביקורת"
+          />
+          <div className="flex flex-wrap items-center gap-1.5">
+            {REVIEW_TOKENS.map((t) => (
+              <button
+                key={t.token}
+                type="button"
+                onClick={() => onChange(`${shown}${shown && !shown.endsWith(" ") ? " " : ""}${t.token}`)}
+                className="px-2 py-0.5 rounded-md bg-qf-line-soft text-qf-ink2 text-[11px] font-medium hover:bg-qf-line-dash"
+                title={`הוספת ${t.label}`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-[11px] text-qf-mute">
+            {"{name}"}, {"{business}"} ו-{"{link}"} מוחלפים בשליחה. הקישור לדירוג תמיד נשלח - אם תמחקו אותו הוא יתווסף בסוף. הודעה ארוכה עשויה להיספר כיותר מ-SMS אחד.
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
 function NotificationsTab({
   orderEvents,
   merchantNewOrder,
   review,
+  courierAssigned,
   smsSender,
   availability,
 }: {
   orderEvents: OrderNotifySettings;
   merchantNewOrder: { email: boolean; whatsapp: boolean };
-  review: { enabled: boolean; public: boolean; channel: NotifyChannel; delayMinutes: number };
+  review: { enabled: boolean; public: boolean; channel: NotifyChannel; delayMinutes: number; text: string };
+  courierAssigned: { sms: boolean };
   smsSender: string;
   availability: Availability;
 }) {
@@ -582,6 +655,7 @@ function NotificationsTab({
   const [events, setEvents] = useState<OrderNotifySettings>(initEvents);
   const [ownerAlert, setOwnerAlert] = useState(merchantNewOrder);
   const [rev, setRev] = useState(review);
+  const [courier, setCourier] = useState(courierAssigned);
   const [sender, setSender] = useState(smsSender);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
@@ -605,7 +679,9 @@ function NotificationsTab({
             public: rev.public,
             channel: rev.channel,
             delay_minutes: rev.delayMinutes,
+            text: rev.text.trim() || null,
           },
+          courier_assigned: courier,
           sms_sender: sender.trim() || null,
         }),
       });
@@ -756,7 +832,30 @@ function NotificationsTab({
                 <div className="text-xs text-qf-mute">ברירת מחדל 60 דקות אחרי מסירה</div>
               </div>
             </div>
+
+            {rev.channel === "sms" && (
+              <ReviewTextEditor
+                value={rev.text}
+                onChange={(t) => setRev((x) => ({ ...x, text: t }))}
+              />
+            )}
           </div>
+        </section>
+
+        <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-2">
+          <label className="flex items-center justify-between gap-3">
+            <span>
+              <span className="block text-sm font-medium">SMS לשליח כשמשייכים אליו הזמנה</span>
+              <span className="block text-xs text-qf-mute">
+                נגבה מיתרת ה-SMS. גם כשכבוי, השליח מקבל התראה באפליקציית השליחים ובמייל (אם הוזן).
+              </span>
+            </span>
+            <Toggle
+              checked={courier.sms}
+              onChange={(b) => setCourier({ sms: b })}
+              aria-label="SMS לשליחים"
+            />
+          </label>
         </section>
 
         <section className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 space-y-2">

@@ -4,6 +4,7 @@ import { sendSms } from "@/lib/sms/send";
 import { sendCourierPush } from "@/lib/courier/push";
 import { sendEmail } from "@/lib/email/send";
 import { courierAssignedEmail } from "@/lib/email/templates";
+import { resolveCourierAssignedSettings } from "@/lib/messaging/notify-settings";
 
 function formatAddress(addr: {
   street?: string | null;
@@ -96,6 +97,14 @@ export async function notifyCourierAssigned(orderId: string, courierId: string):
   });
   if (wa.status === "sent") return;
   if (wa.status === "skipped_no_balance" || wa.status === "invalid_recipient") return;
+
+  // The merchant can switch off the paid SMS to couriers (דיוור והתראות).
+  // Push + email above still go out.
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: courier.tenantId },
+    select: { notifySettings: true },
+  });
+  if (!resolveCourierAssignedSettings(tenant?.notifySettings).sms) return;
 
   await sendSms({
     tenantId: courier.tenantId,

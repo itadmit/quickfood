@@ -16,6 +16,7 @@ import { sendSms } from "@/lib/sms/send";
 import { sendEmail } from "@/lib/email/send";
 import { reviewReminderEmail } from "@/lib/email/templates";
 import { signReviewToken } from "@/lib/reviews/token";
+import { renderReviewText, resolveReviewText } from "@/lib/messaging/notify-settings";
 
 export type SendReviewResult =
   | {
@@ -52,6 +53,7 @@ export async function sendReviewReminderNow(
           reviewsEnabled: true,
           reviewsChannel: true,
           reviewsWhatsappSubscriptionId: true,
+          notifySettings: true,
         },
       },
       customer: {
@@ -127,8 +129,11 @@ export async function sendReviewReminderNow(
     return { ok: true, channel: "email", providerStatus: result.status };
   }
 
-  const shortBody = `${hello}, איך הייתה ההזמנה מ-${order.tenant.name}?
-דקה לדרג: ${link}`;
+  const shortBody = renderReviewText(resolveReviewText(order.tenant.notifySettings), {
+    name: hello,
+    business: order.tenant.name,
+    link,
+  });
 
   const result = await sendSms({
     tenantId: order.tenant.id,

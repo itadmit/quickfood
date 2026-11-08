@@ -21,6 +21,9 @@ import { resolveMessagingAvailability } from "@/lib/messaging/availability";
 import {
   resolveOrderNotifySettings,
   resolveMerchantNewOrderSettings,
+  resolveCourierAssignedSettings,
+  resolveReviewText,
+  REVIEW_TEXT_MAX,
   ORDER_NOTIFY_EVENTS,
   type OrderNotifySettings,
   type NotifyChannel,
@@ -50,6 +53,7 @@ const Schema = z.object({
       public: z.boolean().optional(),
       channel: ChannelEnum.optional(),
       delay_minutes: z.number().int().min(5).max(1440).optional(),
+      text: z.string().max(REVIEW_TEXT_MAX).nullish(),
     })
     .optional(),
   sms_sender: z
@@ -64,6 +68,7 @@ const Schema = z.object({
       whatsapp: z.boolean().refine((v): boolean => !v, "ערוץ וואטסאפ אינו זמין כרגע"),
     })
     .optional(),
+  courier_assigned: z.object({ sms: z.boolean() }).optional(),
 });
 
 async function loadContext(tenantId: string) {
@@ -174,11 +179,13 @@ export const GET = handler(async () => {
     },
     order_events: orderEvents,
     merchant_new_order: resolveMerchantNewOrderSettings(tenant.notifySettings),
+    courier_assigned: resolveCourierAssignedSettings(tenant.notifySettings),
     review: {
       enabled: tenant.reviewsEnabled,
       public: tenant.reviewsPublic,
       channel: tenant.reviewsChannel,
       delay_minutes: tenant.reviewsDelayMinutes,
+      text: resolveReviewText(tenant.notifySettings),
     },
     availability: {
       sms_available: ctx.sms_available,
@@ -217,11 +224,16 @@ export const PATCH = handler(async (req: Request) => {
   }
 
   // Merge order-event changes over the resolved current state, then store the
-  // full object so future reads don't depend on the legacy column. The JSON
-  // also carries merchant_new_order - always rewrite BOTH parts so saving one
-  // never drops the other.
+  // full object so future reads don't depend on the legacy column. The same
+  // JSON also carries merchant_new_order, courier_assigned and review_text -
+  // start from the stored object so saving one part never drops another.
   const data: Record<string, unknown> = {};
-  if (body.order_events || body.merchant_new_order) {
+  const reviewTextSent = body.review !== undefined && body.review.text !== undefined;
+  if (body.order_events || body.merchant_new_order || body.courier_assigned || reviewTextSent) {
+    const stored =
+      tenant.notifySettings && typeof tenant.notifySettings === "object" && !Array.isArray(tenant.notifySettings)
+        ? (tenant.notifySettings as Record<string, unknown>)
+        : {};
     const next: OrderNotifySettings = {
       ...resolveOrderNotifySettings(tenant.notifySettings, tenant.notifyChannel),
     };
@@ -234,11 +246,18 @@ export const PATCH = handler(async (req: Request) => {
         }
       }
     }
-    data.notifySettings = {
+    const merged: Record<string, unknown> = {
+      ...stored,
       ...next,
       merchant_new_order:
         body.merchant_new_order ?? resolveMerchantNewOrderSettings(tenant.notifySettings),
     };
+    if (body.courier_assigned) merged.courier_assigned = body.courier_assigned;
+    if (reviewTextSent) {
+      const t = body.review?.text?.trim();
+      merged.review_text = t ? t : null;
+    }
+    data.notifySettings = merged;
   }
   if (body.review?.enabled !== undefined) data.reviewsEnabled = body.review.enabled;
   if (body.review?.public !== undefined) data.reviewsPublic = body.review.public;

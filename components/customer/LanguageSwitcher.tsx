@@ -32,7 +32,10 @@ export function LanguageSwitcher({ className, compact = false }: { className?: s
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute z-50 mt-1 end-0 min-w-[150px] rounded-xl border border-qf-line bg-white shadow-lg overflow-hidden">
+          {/* text-qf-ink is required: on mobile the switcher sits inside the
+              store hero, which sets text-white - without an explicit colour the
+              language names rendered white-on-white and looked like an empty box. */}
+          <div className="absolute z-50 mt-1 end-0 min-w-[150px] rounded-xl border border-qf-line bg-white text-qf-ink shadow-lg overflow-hidden">
             {enabled.map((l) => (
               <button
                 key={l}

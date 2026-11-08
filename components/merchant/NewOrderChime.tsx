@@ -6,15 +6,25 @@ import {
   CHIME_ENABLED_KEY,
   CHIME_SOUND_KEY,
   CHIME_OPTIONS,
+  CHIME_LOOP_KEY,
+  getChimeLoopEnabled,
   getSelectedChime,
+  startChimeLoop,
+  stopChimeLoop,
   playChime,
   unlockChimeAudio,
   type ChimeId,
 } from "@/lib/order-chime";
 
-export function NewOrderChime() {
+/**
+ * `waiting` = there is at least one new order nobody has handled yet (still
+ * in the "new" column and not dismissed). Only used when the device opted in
+ * to continuous ringing; otherwise the chime plays once per event as before.
+ */
+export function NewOrderChime({ waiting = false }: { waiting?: boolean } = {}) {
   const [muted, setMuted] = useState(false);
   const [sound, setSound] = useState<ChimeId>("1");
+  const [loop, setLoop] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
@@ -22,7 +32,15 @@ export function NewOrderChime() {
     if (typeof window === "undefined") return;
     setMuted(localStorage.getItem(CHIME_ENABLED_KEY) === "0");
     setSound(getSelectedChime());
+    setLoop(getChimeLoopEnabled());
   }, []);
+
+  // Continuous ringing until the new order is handled (opt-in per device).
+  useEffect(() => {
+    if (loop && waiting && !muted) startChimeLoop(sound);
+    else stopChimeLoop();
+  }, [loop, waiting, muted, sound]);
+  useEffect(() => () => stopChimeLoop(), []);
 
   // Unlock audio on the first user gesture so chimes can autoplay later.
   useEffect(() => {
@@ -65,6 +83,12 @@ export function NewOrderChime() {
     const next = !muted;
     setMuted(next);
     localStorage.setItem(CHIME_ENABLED_KEY, next ? "0" : "1");
+  }
+
+  function toggleLoop() {
+    const next = !loop;
+    setLoop(next);
+    localStorage.setItem(CHIME_LOOP_KEY, next ? "1" : "0");
   }
 
   function pick(id: ChimeId) {
@@ -122,6 +146,20 @@ export function NewOrderChime() {
           <div className="px-2.5 pt-1.5 pb-1 text-[10px] text-qf-mute leading-snug">
             לחיצה על צליל גם משמיעה אותו לדוגמה
           </div>
+          <label className="flex items-start gap-2 px-2.5 py-2 mt-1 border-t border-qf-line-dash text-xs text-qf-ink2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={loop}
+              onChange={toggleLoop}
+              className="mt-0.5 w-3.5 h-3.5 accent-(--qf-primary)"
+            />
+            <span>
+              צלצול רציף עד שמטפלים
+              <span className="block text-[10px] text-qf-mute leading-snug">
+                הצליל חוזר עד שההזמנה עוברת להכנה, או עד שמכבים לה את הנודניק. נשמר במכשיר הזה.
+              </span>
+            </span>
+          </label>
         </div>
       )}
     </div>

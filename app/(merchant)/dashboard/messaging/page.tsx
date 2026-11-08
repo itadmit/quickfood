@@ -5,6 +5,8 @@ import { loadLoyaltyData } from "@/lib/loyalty/members";
 import {
   resolveOrderNotifySettings,
   resolveMerchantNewOrderSettings,
+  resolveCourierAssignedSettings,
+  resolveReviewText,
 } from "@/lib/messaging/notify-settings";
 import { resolveMessagingAvailability } from "@/lib/messaging/availability";
 import { MessagingView } from "./MessagingView";
@@ -87,11 +89,13 @@ export default async function MessagingPage() {
       billingReady={!!(tenant.billingCustomerId && tenant.billingPaymentMethodId)}
       orderEvents={resolveOrderNotifySettings(tenant.notifySettings, tenant.notifyChannel)}
       merchantNewOrder={resolveMerchantNewOrderSettings(tenant.notifySettings)}
+      courierAssigned={resolveCourierAssignedSettings(tenant.notifySettings)}
       review={{
         enabled: tenant.reviewsEnabled,
         public: tenant.reviewsPublic,
         channel: tenant.reviewsChannel === "whatsapp" || tenant.reviewsChannel === "whatsapp_managed" ? "sms" : tenant.reviewsChannel,
         delayMinutes: tenant.reviewsDelayMinutes,
+        text: resolveReviewText(tenant.notifySettings) ?? "",
       }}
       availability={{
         smsAvailable: a.smsAvailable,

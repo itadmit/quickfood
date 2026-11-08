@@ -87,6 +87,15 @@ export function RepeatCustomersView({
         title="לקוחות"
         subtitle="לחצו על סגמנט כדי לסנן, על לקוח כדי לראות פרופיל"
         actions={
+          <>
+          <a
+            href="/api/v1/merchant/customers/export"
+            download
+            className="inline-flex items-center gap-2 bg-white text-black font-bold rounded-2xl px-4 py-2.5 text-sm border-2 border-black hover:bg-black/5 transition"
+            title="הורדת כל הלקוחות לקובץ CSV שנפתח באקסל"
+          >
+            ייצוא לאקסל
+          </a>
           <Link
             href="/dashboard/growth"
             className="inline-flex items-center gap-2 bg-black text-white font-bold rounded-2xl px-4 py-2.5 text-sm hover:bg-black/80 transition"
@@ -94,6 +103,7 @@ export function RepeatCustomersView({
             <IcoArrowRight s={18} />
             חזרה ל-Boost
           </Link>
+          </>
         }
       />
 

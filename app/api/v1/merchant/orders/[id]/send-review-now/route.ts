@@ -32,6 +32,12 @@ const HUMAN_REASONS: Record<string, string> = {
   already_sent: "כבר נשלחה ביקורת על ההזמנה",
 };
 
+const PROVIDER_FAILURES: Record<string, string> = {
+  skipped_no_balance: "ההודעה לא נשלחה: אין יתרת SMS. אפשר לרכוש חבילה בעמוד 'דיוור והתראות'",
+  invalid_recipient: "ההודעה לא נשלחה: מספר הטלפון או המייל של הלקוח אינו תקין",
+  failed: "השליחה נכשלה אצל ספק ההודעות. אפשר לנסות שוב בעוד כמה דקות",
+};
+
 export const POST = handler(
   async (_req: Request, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireMerchant();
@@ -50,6 +56,14 @@ export const POST = handler(
     if (!result.ok) {
       const msg = HUMAN_REASONS[result.reason] ?? result.reason;
       return apiError("send_skipped", msg, 422);
+    }
+    // The helper returns ok:true once it handed the message to the sender, but
+    // the sender itself can still skip (no SMS credits) or fail at the
+    // provider. Report that honestly instead of showing a false "sent".
+    if (result.providerStatus && result.providerStatus !== "sent") {
+      const msg =
+        PROVIDER_FAILURES[result.providerStatus] ?? "השליחה נכשלה אצל ספק ההודעות";
+      return apiError("send_failed", msg, 422);
     }
 
     return apiJson({
