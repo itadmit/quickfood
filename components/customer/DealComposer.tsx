@@ -444,11 +444,11 @@ export function DealComposer({
             <p className="px-5 pt-3 text-sm text-qf-ink2 leading-snug">{deal.description}</p>
           )}
           {(deal.freeExtras ?? 0) > 0 && (
-            <div className="mx-5 mt-3 inline-flex items-center gap-1.5 rounded-lg bg-(--qf-primary)/15 border border-(--qf-primary)/40 px-2.5 py-1.5 text-xs font-semibold text-qf-ink">
+            <div className="mx-5 mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl bg-(--qf-primary)/15 border border-(--qf-primary)/40 px-4 py-3 text-base font-bold text-qf-ink">
               {deal.freeExtras === 1
                 ? "תוספת בתשלום אחת במתנה"
                 : `${deal.freeExtras} תוספות בתשלום במתנה`}
-              <span className="font-normal text-qf-mute">· ההנחה יורדת אוטומטית בסיכום</span>
+              <span className="text-sm font-medium text-qf-mute">· ההנחה יורדת אוטומטית בסיכום</span>
             </div>
           )}
 
