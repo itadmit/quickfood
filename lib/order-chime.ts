@@ -80,7 +80,9 @@ export function playChime(id: ChimeId = getSelectedChime()) {
  * interval also retries if the browser blocked a play() (autoplay policy).
  */
 export const CHIME_LOOP_KEY = "qf_merchant_chime_loop";
-const LOOP_GAP_MS = 1500;
+// Pause between rings. ~1-2.5s sounds + 4s quiet = one ring every ~5-6.5s:
+// hard to miss in a busy kitchen, without being a non-stop alarm.
+const LOOP_GAP_MS = 4000;
 
 export function getChimeLoopEnabled(): boolean {
   if (typeof window === "undefined") return true;
