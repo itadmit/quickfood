@@ -128,6 +128,14 @@ export function resolveCourierAssignedSettings(raw: unknown): CourierAssignedSet
   return { sms: asBool(src?.sms, true) };
 }
 
+export function resolveCourierSkipAllowed(raw: unknown): boolean {
+  const src =
+    raw && typeof raw === "object"
+      ? ((raw as Record<string, unknown>).courier_picker as Record<string, unknown> | undefined)
+      : undefined;
+  return asBool(src?.allow_skip, false);
+}
+
 /**
  * Review-reminder SMS text. Stored under `review_text` in Tenant.notifySettings.
  * Tokens: {name} (customer first name, or "שלום"), {business}, {link}.

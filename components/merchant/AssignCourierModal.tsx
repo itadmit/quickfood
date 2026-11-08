@@ -37,6 +37,7 @@ export function AssignCourierModal({
   onClose,
   delivApp,
   waText,
+  onSkip,
 }: {
   orderNumber: string;
   onAssign: (courierId: string) => Promise<void> | void;
@@ -44,6 +45,7 @@ export function AssignCourierModal({
   /** Prebuilt order summary for the "send on WhatsApp" button. When omitted the
    *  button falls back to just the order number. */
   waText?: string;
+  onSkip?: () => Promise<void> | void;
   // Set when the order was handed to DelivApp. The courier is picked in THEIR
   // system and their webhook advances the order, so the in-house picker is the
   // wrong default here - it used to greet the merchant with "no couriers
@@ -58,6 +60,7 @@ export function AssignCourierModal({
   // After a successful assign we stay open on a "send it to the courier on
   // WhatsApp?" step instead of closing straight away.
   const [assigned, setAssigned] = useState<CourierRow | null>(null);
+  const [skipping, setSkipping] = useState(false);
 
   useEffect(() => {
     if (!manual) return;
@@ -260,6 +263,23 @@ export function AssignCourierModal({
                 );
               })}
             </ul>
+          )}
+          {onSkip && (
+            <button
+              type="button"
+              onClick={async () => {
+                setSkipping(true);
+                try {
+                  await onSkip();
+                } finally {
+                  setSkipping(false);
+                }
+              }}
+              disabled={skipping || assigningId != null}
+              className="mt-4 w-full py-3 rounded-xl border border-qf-line-dash text-sm font-semibold text-qf-ink2 hover:text-qf-ink hover:border-(--qf-primary) transition disabled:opacity-50"
+            >
+              {skipping ? "מעדכן…" : "המשך בלי שליח"}
+            </button>
           )}
           </>
           )}

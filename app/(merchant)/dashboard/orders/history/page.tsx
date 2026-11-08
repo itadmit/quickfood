@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
+import { resolveCourierSkipAllowed } from "@/lib/messaging/notify-settings";
 import { resolveReceiptSettings, type ReceiptPrinterType } from "@/lib/receipt-print";
 import { OrdersHistoryView } from "./OrdersHistoryView";
 
@@ -14,13 +15,14 @@ export default async function OrdersHistoryPage() {
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
-    select: { receiptPrinter: true, receiptSettings: true },
+    select: { receiptPrinter: true, receiptSettings: true, notifySettings: true },
   });
 
   return (
     <OrdersHistoryView
       receiptPrinter={(tenant?.receiptPrinter ?? "airprint") as ReceiptPrinterType}
       receiptSettings={resolveReceiptSettings(tenant?.receiptSettings)}
+      allowCourierSkip={resolveCourierSkipAllowed(tenant?.notifySettings)}
     />
   );
 }

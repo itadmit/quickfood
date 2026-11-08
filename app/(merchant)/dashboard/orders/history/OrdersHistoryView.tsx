@@ -159,9 +159,11 @@ function formatDateTime(iso: string): string {
 export function OrdersHistoryView({
   receiptPrinter = "airprint",
   receiptSettings = DEFAULT_RECEIPT_SETTINGS,
+  allowCourierSkip = false,
 }: {
   receiptPrinter?: ReceiptPrinterType;
   receiptSettings?: ReceiptSettings;
+  allowCourierSkip?: boolean;
 }) {
   const [status, setStatus] = useState<string>("");
   const [method, setMethod] = useState<string>("");
@@ -623,6 +625,14 @@ export function OrdersHistoryView({
       {assignFor && (
         <AssignCourierModal
           orderNumber={assignFor.orderNumber}
+          onSkip={
+            allowCourierSkip
+              ? async () => {
+                  await advance(assignFor.orderId, "out_for_delivery");
+                  setAssignFor(null);
+                }
+              : undefined
+          }
           delivApp={(() => {
             const o = orders.find((x) => x.id === assignFor.orderId);
             return o?.delivapp_dispatched_at ? { statusLabel: o.delivapp_status_label } : null;

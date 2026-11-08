@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { fullName } from "@/lib/format";
 import { OrdersKanban } from "./OrdersKanban";
 import { HIDE_UNPAID_NONCASH } from "@/lib/orders-visible";
+import { resolveCourierSkipAllowed } from "@/lib/messaging/notify-settings";
 import { resolveReceiptSettings, type ReceiptPrinterType } from "@/lib/receipt-print";
 import { formatDeliveryAddress } from "@/lib/orders-serialize";
 import { DELIVAPP_STATUS_LABEL } from "@/lib/delivapp/map-status";
@@ -18,7 +19,7 @@ export default async function OrdersPage() {
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
-    select: { receiptPrinter: true, receiptSettings: true },
+    select: { receiptPrinter: true, receiptSettings: true, notifySettings: true },
   });
 
   // Shipping-model stores (etaUnit = "days") fulfil over days, not minutes,
@@ -112,6 +113,7 @@ export default async function OrdersPage() {
       initial={initial}
       receiptPrinter={(tenant?.receiptPrinter ?? "airprint") as ReceiptPrinterType}
       receiptSettings={resolveReceiptSettings(tenant?.receiptSettings)}
+      allowCourierSkip={resolveCourierSkipAllowed(tenant?.notifySettings)}
       daysDelivery={branch?.etaUnit === "days"}
     />
   );

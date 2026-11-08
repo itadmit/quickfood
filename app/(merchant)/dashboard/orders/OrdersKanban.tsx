@@ -196,6 +196,7 @@ export function OrdersKanban({
   receiptPrinter = "airprint",
   receiptSettings = DEFAULT_RECEIPT_SETTINGS,
   daysDelivery = false,
+  allowCourierSkip = false,
 }: {
   initial: OrderRow[];
   receiptPrinter?: ReceiptPrinterType;
@@ -203,6 +204,7 @@ export function OrdersKanban({
   /** Shipping-model store (branch etaUnit = "days"): suppress the minutes-based
    *  "חורג" overdue flag and the repeated new-order nudge. */
   daysDelivery?: boolean;
+  allowCourierSkip?: boolean;
 }) {
   const [orders, setOrders] = useState<OrderRow[]>(initial);
   // `now` stays null until after mount so SSR and the first client paint
@@ -814,6 +816,14 @@ export function OrdersKanban({
         <AssignCourierModal
           orderNumber={assignFor.orderNumber}
           waText={assignFor.waText}
+          onSkip={
+            allowCourierSkip
+              ? async () => {
+                  await advance(assignFor.orderId, "out_for_delivery");
+                  setAssignFor(null);
+                }
+              : undefined
+          }
           delivApp={(() => {
             const o = orders.find((x) => x.id === assignFor.orderId);
             return o?.delivAppDispatchedAt ? { statusLabel: o.delivAppStatusLabel } : null;
