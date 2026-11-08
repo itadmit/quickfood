@@ -17,14 +17,14 @@ import {
 } from "@/lib/order-chime";
 
 /**
- * `waiting` = there is at least one new order nobody has handled yet (still
- * in the "new" column and not dismissed). Only used when the device opted in
- * to continuous ringing; otherwise the chime plays once per event as before.
+ * `waiting` = at least one order is still waiting to be accepted. While true
+ * the chime rings continuously (Wolt-style) unless this device muted sound or
+ * switched continuous ringing off in the picker.
  */
 export function NewOrderChime({ waiting = false }: { waiting?: boolean } = {}) {
   const [muted, setMuted] = useState(false);
   const [sound, setSound] = useState<ChimeId>("1");
-  const [loop, setLoop] = useState(false);
+  const [loop, setLoop] = useState(true);
   const [pickerOpen, setPickerOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
@@ -35,7 +35,7 @@ export function NewOrderChime({ waiting = false }: { waiting?: boolean } = {}) {
     setLoop(getChimeLoopEnabled());
   }, []);
 
-  // Continuous ringing until the new order is handled (opt-in per device).
+  // Continuous ringing until the order is accepted (on by default).
   useEffect(() => {
     if (loop && waiting && !muted) startChimeLoop(sound);
     else stopChimeLoop();
@@ -154,9 +154,9 @@ export function NewOrderChime({ waiting = false }: { waiting?: boolean } = {}) {
               className="mt-0.5 w-3.5 h-3.5 accent-(--qf-primary)"
             />
             <span>
-              צלצול רציף עד שמטפלים
+              צלצול רציף עד אישור ההזמנה
               <span className="block text-[10px] text-qf-mute leading-snug">
-                הצליל חוזר עד שההזמנה עוברת להכנה, או עד שמכבים לה את הנודניק. נשמר במכשיר הזה.
+                הצליל חוזר כל עוד יש הזמנה שממתינה לאישור. נשמר במכשיר הזה.
               </span>
             </span>
           </label>

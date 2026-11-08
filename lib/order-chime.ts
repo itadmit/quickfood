@@ -73,9 +73,9 @@ export function playChime(id: ChimeId = getSelectedChime()) {
 }
 
 /**
- * Continuous ringing ("ring until handled"). Opt-in per device via
- * CHIME_LOOP_KEY - off by default so stores that like the single chime keep
- * it. While looping, the chime replays with a short gap until stopChimeLoop()
+ * Continuous ringing until the order is accepted (Wolt-style). ON by default;
+ * a device can opt out via CHIME_LOOP_KEY = "0" (the general mute also stops
+ * it). While looping, the chime replays with a short gap until stopChimeLoop()
  * is called (the board stops it once no new order is waiting). A watchdog
  * interval also retries if the browser blocked a play() (autoplay policy).
  */
@@ -83,8 +83,8 @@ export const CHIME_LOOP_KEY = "qf_merchant_chime_loop";
 const LOOP_GAP_MS = 1500;
 
 export function getChimeLoopEnabled(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.localStorage.getItem(CHIME_LOOP_KEY) === "1";
+  if (typeof window === "undefined") return true;
+  return window.localStorage.getItem(CHIME_LOOP_KEY) !== "0";
 }
 
 let loopTimer: number | null = null;

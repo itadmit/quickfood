@@ -686,11 +686,10 @@ export function OrdersKanban({
   }
 
   const totalActive = orders.length;
-  // Feeds the opt-in "ring until handled" chime: any new order that is still
-  // in the new column and wasn't dismissed. Day-based stores never nag.
-  const hasWaitingNew =
-    !daysDelivery &&
-    orders.some((o) => NEW_COLUMN_STATUSES.includes(o.status) && !dismissedNudges.has(o.id));
+  // Wolt-style: keep ringing while any order still waits for the merchant to
+  // accept it (status pending). Accepting (pending -> confirmed) stops it;
+  // switching off a card's nudge does not. Day-based stores never nag.
+  const hasWaitingNew = !daysDelivery && orders.some((o) => o.status === "pending");
 
   return (
     <div className="space-y-4 lg:space-y-5">
