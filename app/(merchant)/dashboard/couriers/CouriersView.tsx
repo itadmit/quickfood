@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { IcoBike, IcoPhone, IcoStar } from "@/components/shared/Icons";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Modal } from "@/components/shared/Modal";
+import { Toggle } from "@/components/shared/Toggle";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { cn } from "@/lib/cn";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
@@ -39,9 +40,17 @@ const VEHICLE_LABEL: Record<string, string> = {
   walking: "רגלית",
 };
 
-export function CouriersView({ initial }: { initial: Courier[] }) {
+export function CouriersView({
+  initial,
+  initialAllowSkip = false,
+}: {
+  initial: Courier[];
+  initialAllowSkip?: boolean;
+}) {
   const router = useRouter();
   const [couriers, setCouriers] = useState(initial);
+  const [allowSkip, setAllowSkip] = useState(initialAllowSkip);
+  const [savingSkip, setSavingSkip] = useState(false);
 
   useEffect(() => {
     setCouriers(initial);
@@ -327,6 +336,38 @@ export function CouriersView({ initial }: { initial: Courier[] }) {
           </button>
         }
       />
+
+      <div className="bg-white rounded-2xl border border-qf-line-dash p-4 flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <div className="font-semibold text-sm">אפשר לשלוח הזמנה בלי שליח</div>
+          <div className="text-xs text-qf-mute mt-0.5">
+            בחלון מסירת ההזמנה לשליח יופיע כפתור &quot;המשך בלי שליח&quot;
+          </div>
+        </div>
+        <Toggle
+          checked={allowSkip}
+          disabled={savingSkip}
+          aria-label="אפשר לשלוח הזמנה בלי שליח"
+          onChange={async (next) => {
+            setSavingSkip(true);
+            setAllowSkip(next);
+            try {
+              const res = await fetch("/api/v1/merchant/couriers/settings", {
+                method: "PATCH",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ allow_skip: next }),
+              });
+              if (!res.ok) throw new Error();
+              pushToast("ok", next ? "האפשרות הופעלה" : "האפשרות כובתה");
+            } catch {
+              setAllowSkip(!next);
+              pushToast("err", "השמירה נכשלה");
+            } finally {
+              setSavingSkip(false);
+            }
+          }}
+        />
+      </div>
 
       {adding && (
         <div className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-3">
