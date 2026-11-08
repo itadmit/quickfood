@@ -80,9 +80,9 @@ export function playChime(id: ChimeId = getSelectedChime()) {
  * interval also retries if the browser blocked a play() (autoplay policy).
  */
 export const CHIME_LOOP_KEY = "qf_merchant_chime_loop";
-// Pause between rings. ~1-2.5s sounds + 4s quiet = one ring every ~5-6.5s:
+// One ring every 5 seconds (start to start, whatever the sound's length):
 // hard to miss in a busy kitchen, without being a non-stop alarm.
-const LOOP_GAP_MS = 4000;
+const LOOP_PERIOD_MS = 5000;
 
 export function getChimeLoopEnabled(): boolean {
   if (typeof window === "undefined") return true;
@@ -91,7 +91,6 @@ export function getChimeLoopEnabled(): boolean {
 
 let loopTimer: number | null = null;
 let loopFile: string | null = null;
-let lastEndedAt = 0;
 
 export function startChimeLoop(id: ChimeId = getSelectedChime()) {
   const file = FILE_BY_ID[id] ?? FILE_BY_ID["1"];
@@ -100,17 +99,12 @@ export function startChimeLoop(id: ChimeId = getSelectedChime()) {
   const a = el(file);
   if (!a) return;
   loopFile = file;
-  a.onended = () => {
-    lastEndedAt = Date.now();
-  };
   let lastStartAt = 0;
+  // Also retries a play() the browser blocked (autoplay) on the next beat.
   const tick = () => {
     if (!a.paused && !a.ended) return; // still playing
     const now = Date.now();
-    if (now - lastEndedAt < LOOP_GAP_MS) return;
-    // play() is pending (still loading) or was blocked - retry, but not faster
-    // than every 3s so a slow load isn't restarted over and over.
-    if (!a.ended && now - lastStartAt < 3000) return;
+    if (now - lastStartAt < LOOP_PERIOD_MS) return;
     lastStartAt = now;
     try {
       a.currentTime = 0;
@@ -119,9 +113,8 @@ export function startChimeLoop(id: ChimeId = getSelectedChime()) {
       /* ignore */
     }
   };
-  lastEndedAt = 0;
   tick();
-  loopTimer = window.setInterval(tick, 500);
+  loopTimer = window.setInterval(tick, 250);
 }
 
 export function stopChimeLoop() {
@@ -132,7 +125,6 @@ export function stopChimeLoop() {
   if (loopFile) {
     const a = cache.get(loopFile);
     if (a) {
-      a.onended = null;
       a.pause();
       a.currentTime = 0;
     }
