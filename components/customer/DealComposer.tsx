@@ -133,6 +133,8 @@ function groupCharges(group: ComposerGroup, u: UnitSel): Map<string, number> {
   return out;
 }
 
+const LARGE_FREE_EXTRAS_SLUGS = new Set(["smashburger"]);
+
 export function DealComposer({
   tenantSlug,
   businessType = "general",
@@ -444,11 +446,25 @@ export function DealComposer({
             <p className="px-5 pt-3 text-sm text-qf-ink2 leading-snug">{deal.description}</p>
           )}
           {(deal.freeExtras ?? 0) > 0 && (
-            <div className="mx-5 mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl bg-(--qf-primary)/15 border border-(--qf-primary)/40 px-4 py-3 text-base font-bold text-qf-ink">
+            <div
+              className={cn(
+                "mx-5 mt-3 items-center rounded-lg bg-(--qf-primary)/15 border border-(--qf-primary)/40 text-qf-ink",
+                LARGE_FREE_EXTRAS_SLUGS.has(tenantSlug)
+                  ? "flex flex-wrap gap-x-2 gap-y-1 rounded-xl px-4 py-3 text-base font-bold"
+                  : "inline-flex gap-1.5 px-2.5 py-1.5 text-xs font-semibold",
+              )}
+            >
               {deal.freeExtras === 1
                 ? "תוספת בתשלום אחת במתנה"
                 : `${deal.freeExtras} תוספות בתשלום במתנה`}
-              <span className="text-sm font-medium text-qf-mute">· ההנחה יורדת אוטומטית בסיכום</span>
+              <span
+                className={cn(
+                  "text-qf-mute",
+                  LARGE_FREE_EXTRAS_SLUGS.has(tenantSlug) ? "text-sm font-medium" : "font-normal",
+                )}
+              >
+                · ההנחה יורדת אוטומטית בסיכום
+              </span>
             </div>
           )}
 
