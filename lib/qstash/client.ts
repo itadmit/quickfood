@@ -151,7 +151,10 @@ export async function publish<T>(input: PublishInput<T>): Promise<{ messageId: s
       typeof input.delay === "number" ? `${input.delay}s` : input.delay;
   }
   if (input.deduplicationId) {
-    headers["Upstash-Deduplication-Id"] = input.deduplicationId;
+    // QStash rejects some characters in dedup ids (e.g. ':' -> HTTP 400
+    // "DeduplicationId cannot contain ':'"), which silently killed every
+    // review reminder and signup follow-up. Normalise defensively.
+    headers["Upstash-Deduplication-Id"] = input.deduplicationId.replace(/[^A-Za-z0-9._-]/g, "-");
   }
 
   // QStash publish URL: POST {qstash}/v2/publish/{destination}.

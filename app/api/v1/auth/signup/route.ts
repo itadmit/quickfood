@@ -376,7 +376,7 @@ export const POST = handler(async (req: Request) => {
         url: `${appUrl}/api/internal/jobs/send-signup-followup`,
         body: { tenantId: tenant.id },
         delay: 60 * 60,
-        deduplicationId: `signup-followup:${tenant.id}`,
+        deduplicationId: `signup-followup-${tenant.id}`,
       });
     } catch (err) {
       console.warn("[signup] follow-up email schedule failed", err);

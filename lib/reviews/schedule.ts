@@ -39,6 +39,6 @@ export async function scheduleReviewReminder(orderId: string): Promise<void> {
     url,
     body: { orderId: order.id },
     delay: Math.max(60, reviewsDelayMinutes * 60),
-    deduplicationId: `review-reminder:${order.id}`,
+    deduplicationId: `review-reminder-${order.id}`,
   });
 }
