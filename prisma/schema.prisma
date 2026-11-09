@@ -582,6 +582,10 @@ model Tenant {
   // never log them and never expose them to the customer storefront.
   delivAppConfig          Json      @default("{}") @map("deliv_app_config")
 
+  // Bali courier dispatch (per-tenant, opt-in). JSON shape: { enabled: bool,
+  // shopId: string, apiKey: string, prepMinutes?: number }. apiKey is a secret.
+  baliConfig              Json      @default("{}") @map("bali_config")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

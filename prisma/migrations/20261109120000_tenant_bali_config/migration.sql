@@ -1,0 +1,1 @@
+ALTER TABLE "tenants" ADD COLUMN IF NOT EXISTS "bali_config" JSONB NOT NULL DEFAULT '{}';
