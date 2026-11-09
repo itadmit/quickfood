@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { IcoBike } from "@/components/shared/Icons";
 import { Toggle } from "@/components/shared/Toggle";
+import { DelivAppProviderCard } from "@/components/merchant/DelivAppProviderCard";
 
 interface ProviderField {
   key: string;
@@ -61,6 +62,7 @@ export function DeliveryProvidersPanel({
           onToast={onToast}
         />
       ))}
+      <DelivAppProviderCard onToast={onToast} />
     </section>
   );
 }
@@ -174,7 +176,8 @@ function ProviderCard({
                   <input
                     type={f.secret ? "password" : "text"}
                     dir="ltr"
-                    autoComplete="off"
+                    name={`${provider.id}-${f.key}`}
+                    autoComplete={f.secret ? "new-password" : "off"}
                     value={values[f.key] ?? ""}
                     placeholder={
                       f.secret && f.is_set

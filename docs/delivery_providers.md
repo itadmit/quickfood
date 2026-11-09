@@ -75,6 +75,11 @@
 - **עוד לא נבנה:** webhook לסטטוס השליח, שאמור לשלוח `delivery_status` 1-7 ו-`tracker_link`. בשביל זה צריך נקודת קליטה עם טוקן לכל מסעדה, ו-Sendi צריכה להגדיר את הכתובת אצלה. גם `getDeliveryTracker` (קישור מעקב) ומסלול DaaS v1 (הרשמה, הצעת מחיר, תשלום) לא נבנו.
 - נבדק: שרת הבדיקות עונה, ופרטי התחברות שגויים מחזירים 403 `wrong credentials`, שמוצג אצלנו ככישלון. עוד לא נשלחה הזמנה אמיתית, כי אין לנו פרטי התחברות מ-Sendi.
 
-## ההבדל מ-DelivApp
+## DelivApp
 
-DelivApp (`lib/delivapp`) הוא חיבור ישן ונפרד: עמוד הגדרות משלו, עמודות ייעודיות ב-Order, webhook נכנס, ביטול וסימון "מוכן". הוא נשאר כמו שהוא. חברות חדשות מתחברות דרך התשתית הזאת. אם בעתיד נעביר את DelivApp אליה, צריך להוסיף לשולחים פעולות `cancel` ו-`ready` ונקודת webhook כללית.
+DelivApp (`lib/delivapp`) הוא חיבור ותיק עם מנגנון נפרד: `Tenant.delivAppConfig`, עמודות `delivApp*` ב-Order, webhook נכנס (`/api/v1/integrations/delivapp/callback`), ביטול וסימון "מוכן". הוא שולח אוטומטית כשמאשרים הזמנה, ולא מופיע כאפשרות בחלון השליחים.
+
+- **מסך:** מאז 9.11.2026 ההגדרות של DelivApp נמצאות בקטע "חברות משלוחים" במסך השליחים (`components/merchant/DelivAppProviderCard.tsx`), ליד שאר החברות. הלשונית הנפרדת בהגדרות הוסרה, והכתובת הישנה `/dashboard/settings/delivapp` מפנה למסך השליחים.
+- **מה לא השתנה:** הלוגיקה, ה-API (`/api/v1/merchant/settings/delivapp`) והנתונים נשארו כמו שהיו. מסעדות שכבר עובדות עם DelivApp (haeglon) לא הושפעו.
+- **שדות החיבור:** מוגדרים עם `autoComplete="off"`, ושדה המפתח עם `new-password`, כי הדפדפן מילא בהם בטעות מייל וסיסמה של משתמש.
+- **אם נרצה לאחד לגמרי:** צריך להעביר את DelivApp למתאם עם `send`, `cancel` ו-`ready`, ולהעביר את הנתונים מ-`delivAppConfig` אל `deliveryProviders.delivapp`. העמודות ב-Order ו-ה-webhook יכולים להישאר.
