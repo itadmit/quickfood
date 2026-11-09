@@ -14,7 +14,7 @@ import {
   markOrderReadyDelivApp,
   cancelOrderDelivApp,
 } from "@/lib/delivapp/dispatch";
-import { pushOrderToBali } from "@/lib/bali/dispatch";
+import { autoDispatchOnAccept } from "@/lib/delivery-providers/dispatch";
 
 /**
  * Order status state machine. Defines which transitions are legal.
@@ -273,8 +273,8 @@ export async function advanceStatus(
       await pushOrderToDelivApp(orderId).catch((err) =>
         console.warn("[delivapp] create dispatch failed", err),
       );
-      await pushOrderToBali(orderId).catch((err) =>
-        console.warn("[bali] create dispatch failed", err),
+      await autoDispatchOnAccept(orderId).catch((err) =>
+        console.warn("[delivery-provider] auto dispatch failed", err),
       );
     }
 

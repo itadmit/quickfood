@@ -10,6 +10,7 @@ import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toas
 import { cn } from "@/lib/cn";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import { CourierQRModal } from "@/components/merchant/CourierQRModal";
+import { DeliveryProvidersPanel } from "@/components/merchant/DeliveryProvidersPanel";
 
 interface Courier {
   id: string;
@@ -368,6 +369,8 @@ export function CouriersView({
           }}
         />
       </div>
+
+      <DeliveryProvidersPanel onToast={pushToast} />
 
       {adding && (
         <div className="bg-white rounded-2xl border border-qf-line-dash p-5 space-y-3">

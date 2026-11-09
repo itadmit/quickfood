@@ -8,6 +8,7 @@ import { cn } from "@/lib/cn";
 import { OrderStatusBadgeV2 } from "@/components/merchant/OrderStatusBadgeV2";
 import { OrderDrawer } from "@/components/merchant/OrderDrawer";
 import { AssignCourierModal } from "@/components/merchant/AssignCourierModal";
+import { requestProviderDispatch } from "@/lib/delivery-providers/client";
 import {
   DEFAULT_RECEIPT_SETTINGS,
   type ReceiptPrinterType,
@@ -45,6 +46,7 @@ interface OrderRow {
   delivapp_dispatched_at: string | null;
   delivapp_barcode_id: string | null;
   delivapp_status_label: string | null;
+  delivery_provider?: string | null;
 }
 
 interface Meta {
@@ -160,10 +162,12 @@ export function OrdersHistoryView({
   receiptPrinter = "airprint",
   receiptSettings = DEFAULT_RECEIPT_SETTINGS,
   allowCourierSkip = false,
+  deliveryProviders = [],
 }: {
   receiptPrinter?: ReceiptPrinterType;
   receiptSettings?: ReceiptSettings;
   allowCourierSkip?: boolean;
+  deliveryProviders?: Array<{ id: string; label: string }>;
 }) {
   const [status, setStatus] = useState<string>("");
   const [method, setMethod] = useState<string>("");
@@ -637,6 +641,20 @@ export function OrdersHistoryView({
             const o = orders.find((x) => x.id === assignFor.orderId);
             return o?.delivapp_dispatched_at ? { statusLabel: o.delivapp_status_label } : null;
           })()}
+          providers={deliveryProviders}
+          sentToProvider={orders.find((x) => x.id === assignFor.orderId)?.delivery_provider ?? null}
+          onProvider={async (providerId) => {
+            const target = assignFor;
+            const r = await requestProviderDispatch(target.orderId, providerId);
+            if (!r.ok) {
+              setRowStatus((prev) => ({ ...prev, [target.orderId]: { tone: "err", message: r.message } }));
+              setAssignFor(null);
+              return false;
+            }
+            await advance(target.orderId, "out_for_delivery");
+            setAssignFor(null);
+            return true;
+          }}
           onAssign={async (courierId) => {
             await advance(assignFor.orderId, "out_for_delivery", courierId);
           }}

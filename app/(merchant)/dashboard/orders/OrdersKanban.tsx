@@ -24,6 +24,7 @@ import {
 import { OrderDrawer } from "@/components/merchant/OrderDrawer";
 import { ManualOrderModal } from "@/components/merchant/ManualOrderModal";
 import { AssignCourierModal } from "@/components/merchant/AssignCourierModal";
+import { requestProviderDispatch } from "@/lib/delivery-providers/client";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import { NewOrderChime } from "@/components/merchant/NewOrderChime";
 
@@ -62,6 +63,8 @@ interface OrderRow {
   delivAppDispatchedAt: string | null;
   delivAppBarcodeId: string | null;
   delivAppStatusLabel: string | null;
+  deliveryProvider?: string | null;
+  deliveryProviderLabel?: string | null;
   items: Array<{
     id: string;
     name: string;
@@ -197,6 +200,7 @@ export function OrdersKanban({
   receiptSettings = DEFAULT_RECEIPT_SETTINGS,
   daysDelivery = false,
   allowCourierSkip = false,
+  deliveryProviders = [],
 }: {
   initial: OrderRow[];
   receiptPrinter?: ReceiptPrinterType;
@@ -205,6 +209,7 @@ export function OrdersKanban({
    *  "חורג" overdue flag and the repeated new-order nudge. */
   daysDelivery?: boolean;
   allowCourierSkip?: boolean;
+  deliveryProviders?: Array<{ id: string; label: string }>;
 }) {
   const [orders, setOrders] = useState<OrderRow[]>(initial);
   // `now` stays null until after mount so SSR and the first client paint
@@ -436,6 +441,8 @@ export function OrdersKanban({
         delivAppDispatchedAt: (o.delivapp_dispatched_at as string | null) ?? null,
         delivAppBarcodeId: (o.delivapp_barcode_id as string | null) ?? null,
         delivAppStatusLabel: (o.delivapp_status_label as string | null) ?? null,
+        deliveryProvider: (o.delivery_provider as string | null) ?? null,
+        deliveryProviderLabel: (o.delivery_provider_label as string | null) ?? null,
         items: ((o.items as Array<Record<string, unknown>>) || []).map((it) => ({
           id: it.id as string,
           name: it.name as string,
@@ -827,6 +834,28 @@ export function OrdersKanban({
             const o = orders.find((x) => x.id === assignFor.orderId);
             return o?.delivAppDispatchedAt ? { statusLabel: o.delivAppStatusLabel } : null;
           })()}
+          providers={deliveryProviders}
+          sentToProvider={orders.find((x) => x.id === assignFor.orderId)?.deliveryProvider ?? null}
+          onProvider={async (providerId) => {
+            const target = assignFor;
+            const label = deliveryProviders.find((p) => p.id === providerId)?.label ?? providerId;
+            const r = await requestProviderDispatch(target.orderId, providerId);
+            if (!r.ok) {
+              pushToast("err", r.message);
+              return false;
+            }
+            setOrders((prev) =>
+              prev.map((o) =>
+                o.id === target.orderId
+                  ? { ...o, deliveryProvider: providerId, deliveryProviderLabel: label }
+                  : o,
+              ),
+            );
+            await advance(target.orderId, "out_for_delivery");
+            setAssignFor(null);
+            pushToast("ok", `ההזמנה נשלחה ל${label}`);
+            return true;
+          }}
           onAssign={async (courierId) => {
             await advance(assignFor.orderId, "out_for_delivery", courierId);
           }}
@@ -1135,6 +1164,14 @@ function Card({
           <span className="text-sm font-semibold tnum shrink-0">{formatPrice(order.total)}</span>
           <PaymentTag method={order.paymentMethod} status={order.paymentStatus} />
           {order.delivAppDispatchedAt && <DelivAppPill order={order} />}
+          {order.deliveryProviderLabel && (
+            <span
+              title={`נשלח ל${order.deliveryProviderLabel}`}
+              className="text-[10px] font-black px-1.5 py-0.5 rounded-md border whitespace-nowrap shrink-0 bg-qf-line-soft text-qf-ink2 border-qf-line"
+            >
+              {order.deliveryProviderLabel}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1.5 ms-auto">
           <button

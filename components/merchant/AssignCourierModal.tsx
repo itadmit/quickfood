@@ -38,6 +38,9 @@ export function AssignCourierModal({
   delivApp,
   waText,
   onSkip,
+  providers,
+  onProvider,
+  sentToProvider,
 }: {
   orderNumber: string;
   onAssign: (courierId: string) => Promise<void> | void;
@@ -51,6 +54,9 @@ export function AssignCourierModal({
   // wrong default here - it used to greet the merchant with "no couriers
   // available", which reads as a fault when nothing is wrong.
   delivApp?: { statusLabel: string | null } | null;
+  providers?: Array<{ id: string; label: string }>;
+  onProvider?: (providerId: string) => Promise<boolean> | boolean;
+  sentToProvider?: string | null;
 }) {
   const managedByDelivApp = !!delivApp;
   const [manual, setManual] = useState(!managedByDelivApp);
@@ -61,6 +67,8 @@ export function AssignCourierModal({
   // WhatsApp?" step instead of closing straight away.
   const [assigned, setAssigned] = useState<CourierRow | null>(null);
   const [skipping, setSkipping] = useState(false);
+  const [providerBusy, setProviderBusy] = useState<string | null>(null);
+  const providerOptions = onProvider ? (providers ?? []) : [];
 
   useEffect(() => {
     if (!manual) return;
@@ -192,6 +200,53 @@ export function AssignCourierModal({
               ההזמנה כבר אצל DelivApp. שיוך שליח פנימי כאן לא מבטל אותה אצלם - אם השליחות
               שלהם לא רלוונטית, בטלו אותה בצד שלהם.
             </p>
+          )}
+
+          {providerOptions.length > 0 && (
+            <div className="mb-4 space-y-2">
+              <div className="text-xs font-semibold text-qf-ink2">חברת משלוחים</div>
+              {providerOptions.map((p) => {
+                const already = sentToProvider === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    disabled={providerBusy != null || assigningId != null}
+                    onClick={async () => {
+                      setProviderBusy(p.id);
+                      try {
+                        await onProvider?.(p.id);
+                      } finally {
+                        setProviderBusy(null);
+                      }
+                    }}
+                    className={cn(
+                      "w-full flex items-center gap-3 p-3 rounded-xl border text-right transition",
+                      providerBusy === p.id
+                        ? "border-(--qf-primary) bg-qf-green-soft"
+                        : "border-qf-line-dash hover:border-(--qf-primary) hover:bg-qf-line-soft",
+                      providerBusy != null && providerBusy !== p.id && "opacity-50",
+                    )}
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-qf-yolk-soft grid place-items-center flex-shrink-0">
+                      <IcoBike c="#3a4a40" s={20} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{p.label}</div>
+                      <div className="text-xs text-qf-mute">
+                        {already
+                          ? "ההזמנה כבר נשלחה אליהם. לחיצה תעביר אותה לבדרך ללקוח"
+                          : "שליחת ההזמנה לחברה, והם שולחים שליח"}
+                      </div>
+                    </div>
+                    <span className="text-xs font-medium text-(--qf-primary)">
+                      {providerBusy === p.id ? "שולח…" : already ? "המשך" : "שלח"}
+                    </span>
+                  </button>
+                );
+              })}
+              {manual && <div className="text-xs font-semibold text-qf-ink2 pt-2">שליחים פנימיים</div>}
+            </div>
           )}
 
           {manual && couriers == null && !error && (

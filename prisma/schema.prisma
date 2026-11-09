@@ -582,9 +582,10 @@ model Tenant {
   // never log them and never expose them to the customer storefront.
   delivAppConfig          Json      @default("{}") @map("deliv_app_config")
 
-  // Bali courier dispatch (per-tenant, opt-in). JSON shape: { enabled: bool,
-  // shopId: string, apiKey: string, prepMinutes?: number }. apiKey is a secret.
-  baliConfig              Json      @default("{}") @map("bali_config")
+  // External delivery companies (lib/delivery-providers). JSON keyed by
+  // provider id: { bali: { enabled, autoDispatch, prepMinutes, shopId, apiKey } }.
+  // Credentials are secrets - never expose them to the storefront.
+  deliveryProviders       Json      @default("{}") @map("delivery_providers")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -1287,6 +1288,8 @@ model Order {
   /// response carried no BarcodeId. This - not the barcode - is the "did this
   /// reach DelivApp" flag the dispatch guard and the inbound webhook rely on.
   delivAppDispatchedAt DateTime? @map("deliv_app_dispatched_at")
+  deliveryProvider             String?   @map("delivery_provider")
+  deliveryProviderDispatchedAt DateTime? @map("delivery_provider_dispatched_at")
 
   customerNotes         String? @map("customer_notes")
   customerPhoneSnap     String? @map("customer_phone_snap")
