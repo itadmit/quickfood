@@ -1,10 +1,12 @@
-export type DeliveryProviderId = "bali";
+export type DeliveryProviderId = "bali" | "sendi";
 
 export interface DeliveryProviderField {
   key: string;
   label: string;
   secret?: boolean;
+  optional?: boolean;
   placeholder?: string;
+  options?: Array<{ value: string; label: string }>;
 }
 
 export interface DeliveryProviderMeta {
@@ -22,6 +24,25 @@ export const DELIVERY_PROVIDERS: DeliveryProviderMeta[] = [
     fields: [
       { key: "shopId", label: "מזהה המסעדה אצל בא לי", placeholder: "לדוגמה test1" },
       { key: "apiKey", label: "מפתח API (x-api-key)", secret: true },
+    ],
+  },
+  {
+    id: "sendi",
+    label: "Sendi",
+    description: "חברת שליחויות. ההזמנה נשלחת אליהם, וביטול או סימון \"מוכן\" מתעדכנים אצלם אוטומטית.",
+    fields: [
+      { key: "restUsername", label: "מזהה המסעדה אצל Sendi (rest_username)" },
+      { key: "apiUsername", label: "שם משתמש API" },
+      { key: "apiPassword", label: "סיסמת API", secret: true },
+      {
+        key: "environment",
+        label: "סביבה",
+        optional: true,
+        options: [
+          { value: "production", label: "ייצור" },
+          { value: "staging", label: "בדיקות (staging)" },
+        ],
+      },
     ],
   },
 ];

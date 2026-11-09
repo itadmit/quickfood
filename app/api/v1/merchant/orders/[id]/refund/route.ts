@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db/client";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
 import { sendOrderCancelledEmail } from "@/lib/orders/notify-customer";
 import { cancelOrderDelivApp } from "@/lib/delivapp/dispatch";
+import { cancelProviderDelivery } from "@/lib/delivery-providers/dispatch";
 import { getConfiguredProvider } from "@/lib/payments/factory";
 import { z } from "zod";
 import { PaymentTransactionStatus, type Prisma } from "@prisma/client";
@@ -177,6 +178,9 @@ export const POST = handler(
       // the customer had already been refunded for.
       await cancelOrderDelivApp(order.id).catch((err) =>
         console.warn("[delivapp] refund cancel failed", err),
+      );
+      await cancelProviderDelivery(order.id).catch((err) =>
+        console.warn("[delivery-provider] refund cancel failed", err),
       );
     });
 

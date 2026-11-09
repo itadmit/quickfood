@@ -24,8 +24,8 @@ export function readProviderSettings(raw: unknown, id: DeliveryProviderId): Deli
   const src = asRecord(asRecord(raw)[id]);
   const values: Record<string, string> = {};
   for (const f of meta?.fields ?? []) {
-    const v = src[f.key];
-    values[f.key] = typeof v === "string" ? v.trim() : "";
+    const v = typeof src[f.key] === "string" ? (src[f.key] as string).trim() : "";
+    values[f.key] = f.options && !f.options.some((o) => o.value === v) ? f.options[0].value : v;
   }
   const prep = Number(src.prepMinutes);
   return {
@@ -39,7 +39,7 @@ export function readProviderSettings(raw: unknown, id: DeliveryProviderId): Deli
 export function isProviderReady(id: DeliveryProviderId, s: DeliveryProviderSettings): boolean {
   const meta = providerMeta(id);
   if (!meta || !s.enabled) return false;
-  return meta.fields.every((f) => !!s.values[f.key]);
+  return meta.fields.every((f) => f.optional || !!s.values[f.key]);
 }
 
 export function activeDeliveryProviders(raw: unknown): Array<{ id: DeliveryProviderId; label: string }> {

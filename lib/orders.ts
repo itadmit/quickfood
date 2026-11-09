@@ -14,7 +14,7 @@ import {
   markOrderReadyDelivApp,
   cancelOrderDelivApp,
 } from "@/lib/delivapp/dispatch";
-import { autoDispatchOnAccept } from "@/lib/delivery-providers/dispatch";
+import { autoDispatchOnAccept, cancelProviderDelivery, markProviderReady } from "@/lib/delivery-providers/dispatch";
 
 /**
  * Order status state machine. Defines which transitions are legal.
@@ -230,6 +230,9 @@ export async function advanceStatus(
       await markOrderReadyDelivApp(orderId).catch((err) => {
         console.warn("[delivapp] ready dispatch failed", err);
       });
+      await markProviderReady(orderId).catch((err) =>
+        console.warn("[delivery-provider] ready failed", err),
+      );
     }
 
     if (to === "out_for_delivery" && options?.courierId && options.courierId !== order.courierId) {
@@ -305,6 +308,9 @@ export async function advanceStatus(
       );
       await cancelOrderDelivApp(orderId).catch((err) =>
         console.warn("[delivapp] cancel dispatch failed", err),
+      );
+      await cancelProviderDelivery(orderId).catch((err) =>
+        console.warn("[delivery-provider] cancel failed", err),
       );
     } else {
       await dispatchWebhook({

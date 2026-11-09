@@ -9,6 +9,8 @@ interface ProviderField {
   label: string;
   secret: boolean;
   placeholder: string | null;
+  optional?: boolean;
+  options?: Array<{ value: string; label: string }> | null;
   value: string;
   is_set: boolean;
 }
@@ -102,7 +104,10 @@ function ProviderCard({
       }
       setEnabled(nextEnabled);
       onSaved(data.providers ?? []);
-      onToast("ok", nextEnabled ? `${provider.label} פעילה` : `${provider.label} כובתה`);
+      onToast(
+        "ok",
+        nextEnabled ? `${provider.label} פעילה` : `${provider.label} כובתה`,
+      );
       return true;
     } catch {
       onToast("err", "השמירה נכשלה");
@@ -124,8 +129,12 @@ function ProviderCard({
             <IcoBike c="#3a4a40" s={18} />
           </span>
           <span className="min-w-0">
-            <span className="block font-semibold text-sm">{provider.label}</span>
-            <span className="block text-xs text-qf-mute">{provider.description}</span>
+            <span className="block font-semibold text-sm">
+              {provider.label}
+            </span>
+            <span className="block text-xs text-qf-mute">
+              {provider.description}
+            </span>
           </span>
         </button>
         <Toggle
@@ -144,20 +153,46 @@ function ProviderCard({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {provider.fields.map((f) => (
               <label key={f.key} className="block">
-                <span className="block text-xs font-medium text-qf-ink2 mb-1">{f.label}</span>
-                <input
-                  type={f.secret ? "password" : "text"}
-                  dir="ltr"
-                  autoComplete="off"
-                  value={values[f.key] ?? ""}
-                  placeholder={f.secret && f.is_set ? "שמור. השאירו ריק כדי לא לשנות" : (f.placeholder ?? "")}
-                  onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
-                  className="w-full rounded-xl border border-qf-line-dash px-3 py-2 text-sm focus:outline-none focus:border-(--qf-primary)"
-                />
+                <span className="block text-xs font-medium text-qf-ink2 mb-1">
+                  {f.label}
+                </span>
+                {f.options ? (
+                  <select
+                    value={values[f.key] || f.options[0]?.value}
+                    onChange={(e) =>
+                      setValues((v) => ({ ...v, [f.key]: e.target.value }))
+                    }
+                    className="w-full rounded-xl border border-qf-line-dash px-3 py-2 text-sm bg-white focus:outline-none focus:border-(--qf-primary)"
+                  >
+                    {f.options.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type={f.secret ? "password" : "text"}
+                    dir="ltr"
+                    autoComplete="off"
+                    value={values[f.key] ?? ""}
+                    placeholder={
+                      f.secret && f.is_set
+                        ? "שמור. השאירו ריק כדי לא לשנות"
+                        : (f.placeholder ?? "")
+                    }
+                    onChange={(e) =>
+                      setValues((v) => ({ ...v, [f.key]: e.target.value }))
+                    }
+                    className="w-full rounded-xl border border-qf-line-dash px-3 py-2 text-sm focus:outline-none focus:border-(--qf-primary)"
+                  />
+                )}
               </label>
             ))}
             <label className="block">
-              <span className="block text-xs font-medium text-qf-ink2 mb-1">זמן הכנה שנשלח לחברה (דקות)</span>
+              <span className="block text-xs font-medium text-qf-ink2 mb-1">
+                זמן הכנה שנשלח לחברה (דקות)
+              </span>
               <input
                 type="number"
                 min={1}
@@ -170,12 +205,19 @@ function ProviderCard({
           </div>
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <div className="text-sm font-medium">שליחה אוטומטית כשמאשרים הזמנה</div>
+              <div className="text-sm font-medium">
+                שליחה אוטומטית כשמאשרים הזמנה
+              </div>
               <div className="text-xs text-qf-mute">
-                כל הזמנת משלוח שתאושר תישלח ל{provider.label} מיד, בלי לבחור בחלון השליחים
+                כל הזמנת משלוח שתאושר תישלח ל{provider.label} מיד, בלי לבחור
+                בחלון השליחים
               </div>
             </div>
-            <Toggle checked={auto} onChange={setAuto} aria-label="שליחה אוטומטית" />
+            <Toggle
+              checked={auto}
+              onChange={setAuto}
+              aria-label="שליחה אוטומטית"
+            />
           </div>
           <button
             type="button"

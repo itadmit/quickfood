@@ -20,6 +20,8 @@ function serialize(raw: unknown) {
         label: f.label,
         secret: !!f.secret,
         placeholder: f.placeholder ?? null,
+        optional: !!f.optional,
+        options: f.options ?? null,
         value: f.secret ? "" : s.values[f.key],
         is_set: !!s.values[f.key],
       })),
@@ -70,10 +72,13 @@ export const PUT = handler(async (req: Request) => {
   };
   for (const f of meta.fields) {
     const incoming = (parsed.data.values[f.key] ?? "").trim();
+    if (f.options && incoming && !f.options.some((o) => o.value === incoming)) {
+      return apiError("validation_error", `ערך לא תקין: ${f.label}`, 422, f.key);
+    }
     next[f.key] = f.secret && !incoming ? prev.values[f.key] : incoming;
   }
   if (parsed.data.enabled) {
-    const missing = meta.fields.find((f) => !next[f.key]);
+    const missing = meta.fields.find((f) => !f.optional && !next[f.key]);
     if (missing) return apiError("validation_error", `חסר: ${missing.label}`, 422, missing.key);
   }
 
