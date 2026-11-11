@@ -13,7 +13,7 @@ import { sendTenantFcm } from "@/lib/merchant/fcm";
 import { priceGroupOptions } from "@/lib/option-pricing";
 import { weightPrice, MIN_WEIGHT_GRAMS, MAX_WEIGHT_GRAMS } from "@/lib/pricing";
 import { ensureLoyaltyMember } from "@/lib/loyalty/membership";
-import { isWithinOpenHours, type BranchHours } from "@/lib/branch-hours";
+import { effectiveBranchStatus, isWithinOpenHours, type BranchHours } from "@/lib/branch-hours";
 import { printOrderTicket } from "@/lib/printing/print-order";
 import { resolveLoyaltyConfig } from "@/lib/loyalty/config";
 import { loadLoyaltyBalance, redeemQuote } from "@/lib/loyalty/points";
@@ -179,7 +179,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
   const branch = tenant.branches[0];
   if (!branch) throw new CartValidationError("no_branch");
-  if (branch.status === "closed") throw new CartValidationError("restaurant_closed");
+  if (effectiveBranchStatus(branch) === "closed") throw new CartValidationError("restaurant_closed");
 
   // If the merchant disabled scheduled orders, silently demote any
   // scheduled_for that slipped through the client-side hide - turns the

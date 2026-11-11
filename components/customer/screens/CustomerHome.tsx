@@ -63,6 +63,7 @@ interface Props {
     minOrder: number;
     hours?: Record<string, { open: string; close: string; active: boolean }>;
     busyEtaBoostMinutes?: number;
+    autoHours?: boolean;
   } | null;
   ratingSummary?: { average: number; count: number } | null;
   deliveryEta?: { min: number; max: number } | null;
@@ -183,7 +184,10 @@ export function CustomerHome({
     : null;
   let openLabel: string = t("home.closed");
   let openLabelTone: "open" | "busy" | "closed" = "closed";
-  if (closed) {
+  if (closed && branch?.autoHours && hoursStatus && !hoursStatus.open && hoursStatus.nextOpen) {
+    openLabel = `${t("home.closedOpensAt")} ${hoursStatus.nextOpen.dayLabel} ${hoursStatus.nextOpen.time}`;
+    openLabelTone = "closed";
+  } else if (closed) {
     openLabel = t("home.closed");
     openLabelTone = "closed";
   } else if (busy) {

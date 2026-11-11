@@ -1,6 +1,7 @@
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { prisma } from "@/lib/db/client";
+import { effectiveBranchStatus } from "@/lib/branch-hours";
 import { PaymentProvider } from "@prisma/client";
 
 export const runtime = "nodejs";
@@ -82,7 +83,7 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ slug: st
             name: branch.name,
             address: branch.address,
             phone: branch.phone,
-            status: branch.status,
+            status: effectiveBranchStatus(branch),
             hours: branch.hours,
             min_order: branch.minOrder,
             delivery_fee: branch.deliveryFee,

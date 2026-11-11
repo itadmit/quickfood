@@ -2,6 +2,7 @@ import { z } from "zod";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
+import { effectiveBranchStatus } from "@/lib/branch-hours";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,6 +13,7 @@ const BranchPatch = z.object({
   phone: z.string().min(7).max(20).optional(),
   email: z.string().email().optional(),
   status: z.enum(["open", "busy", "closed"]).optional(),
+  auto_hours: z.boolean().optional(),
   busy_eta_boost_minutes: z.number().int().min(0).max(180).optional(),
   default_eta_min: z.number().int().min(0).max(240).optional(),
   default_eta_max: z.number().int().min(0).max(240).optional(),
@@ -44,6 +46,8 @@ export const PATCH = handler(async (req: Request, { params }: { params: Promise<
       phone: body.phone,
       email: body.email,
       status: body.status,
+      ...(body.status !== undefined && { statusChangedAt: new Date() }),
+      autoHours: body.auto_hours,
       busyEtaBoostMinutes: body.busy_eta_boost_minutes,
       defaultEtaMin: body.default_eta_min,
       defaultEtaMax: body.default_eta_max,
@@ -71,7 +75,8 @@ export const PATCH = handler(async (req: Request, { params }: { params: Promise<
     branch: {
       id: updated.id,
       name: updated.name,
-      status: updated.status,
+      status: effectiveBranchStatus(updated),
+      auto_hours: updated.autoHours,
     },
   });
 });

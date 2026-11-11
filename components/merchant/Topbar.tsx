@@ -13,7 +13,7 @@ import { cn } from "@/lib/cn";
 
 interface Props {
   user: { id: string; name: string; email: string; role: string };
-  branch: { id: string; status: "open" | "busy" | "closed" } | null;
+  branch: { id: string; status: "open" | "busy" | "closed"; autoHours?: boolean } | null;
   tenantSlug: string;
   tenant: { name: string; logoLetter: string; branchName: string };
   // When true, render a small import-shortcut next to the bell that
@@ -214,6 +214,11 @@ export function Topbar({ user, branch, tenantSlug, tenant, showImportShortcut }:
                   </button>
                 );
               })}
+              {branch?.autoHours && (
+                <div className="px-3 pt-2 pb-1 mt-1 border-t border-qf-line-soft text-xs text-qf-mute">
+                  פתיחה וסגירה אוטומטית לפי שעות הפעילות. שינוי ידני תקף עד המעבר הבא בלוח השעות.
+                </div>
+              )}
             </div>
           )}
         </div>

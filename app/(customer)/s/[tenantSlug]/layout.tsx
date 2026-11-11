@@ -8,7 +8,7 @@ import { CartProvider } from "@/components/customer/CartProvider";
 import { CartBundleProvider } from "@/components/customer/CartBundleProvider";
 import type { BusinessType } from "@/components/shared/MenuItemImage";
 import { MenuSearchProvider } from "@/components/customer/MenuSearchProvider";
-import type { BranchHours } from "@/lib/branch-hours";
+import { effectiveBranchStatus, type BranchHours } from "@/lib/branch-hours";
 import { CustomerTopNav } from "@/components/customer/CustomerTopNav";
 import { ReviewPromptModal } from "@/components/customer/ReviewPromptModal";
 import { MerchantPreviewBar } from "@/components/customer/MerchantPreviewBar";
@@ -174,7 +174,7 @@ export default async function CustomerLayout({
                 deliveryFee: branch.deliveryFee,
                 serviceFee: branch.serviceFee,
                 minOrder: branch.minOrder,
-                status: branch.status,
+                status: effectiveBranchStatus(branch),
                 busyEtaBoostMinutes: branch.busyEtaBoostMinutes,
                 freeDeliveryMinOrder: branch.freeDeliveryMinOrder,
                 freeDeliveryMinItems: branch.freeDeliveryMinItems,

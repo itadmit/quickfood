@@ -648,6 +648,8 @@ model Branch {
   email       String?
   isPrimary   Boolean          @default(false) @map("is_primary")
   status      RestaurantStatus @default(open)
+  statusChangedAt DateTime?    @map("status_changed_at")
+  autoHours   Boolean          @default(false) @map("auto_hours")
   // Minutes added to every ETA when status == busy. Customer-facing
   // displays surface "+N דק' (עומס)" and the busy-alert modal warns the
   // customer at entry + before checkout.

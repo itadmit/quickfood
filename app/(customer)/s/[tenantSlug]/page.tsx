@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { effectiveBranchStatus } from "@/lib/branch-hours";
 import { cookies } from "next/headers";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { storefrontCanonical } from "@/lib/storefront-url";
@@ -335,7 +336,8 @@ export default async function HomePage({
           ? {
               address: branch.address,
               phone: branch.phone,
-              status: branch.status,
+              status: effectiveBranchStatus(branch),
+              autoHours: branch.autoHours,
               deliveryFee: branch.deliveryFee,
               serviceFee: branch.serviceFee,
               minOrder: branch.minOrder,

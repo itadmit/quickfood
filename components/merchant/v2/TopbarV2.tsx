@@ -18,7 +18,7 @@ import { cn } from "@/lib/cn";
 
 interface Props {
   user: { name: string; email: string; role: string };
-  branch: { id: string; status: "open" | "busy" | "closed" } | null;
+  branch: { id: string; status: "open" | "busy" | "closed"; autoHours?: boolean } | null;
   tenantSlug: string;
   /** Brand info for the mobile drawer header - desktop sidebar already
    *  shows this; on mobile the hamburger drawer carries it. */
@@ -254,6 +254,11 @@ export function TopbarV2({
                   <span>{STATUS_LABELS[s]}</span>
                 </button>
               ))}
+              {branch?.autoHours && (
+                <div className="px-3 pt-2 pb-1 mt-1 border-t border-black/10 text-xs font-medium text-black/60">
+                  אוטומטי לפי שעות הפעילות. שינוי ידני תקף עד המעבר הבא.
+                </div>
+              )}
             </div>
           )}
         </div>

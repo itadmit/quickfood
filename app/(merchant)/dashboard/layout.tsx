@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { effectiveBranchStatus } from "@/lib/branch-hours";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import QRCode from "qrcode";
@@ -166,7 +167,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
               tenant.branches[0]
                 ? {
                     id: tenant.branches[0].id,
-                    status: tenant.branches[0].status,
+                    status: effectiveBranchStatus(tenant.branches[0]),
+                    autoHours: tenant.branches[0].autoHours,
                   }
                 : null
             }
@@ -224,7 +226,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
               tenant.branches[0]
                 ? {
                     id: tenant.branches[0].id,
-                    status: tenant.branches[0].status,
+                    status: effectiveBranchStatus(tenant.branches[0]),
+                    autoHours: tenant.branches[0].autoHours,
                   }
                 : null
             }

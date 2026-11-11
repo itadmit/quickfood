@@ -1,0 +1,2 @@
+ALTER TABLE "branches" ADD COLUMN IF NOT EXISTS "status_changed_at" TIMESTAMP(3);
+ALTER TABLE "branches" ADD COLUMN IF NOT EXISTS "auto_hours" BOOLEAN NOT NULL DEFAULT false;

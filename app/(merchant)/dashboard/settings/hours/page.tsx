@@ -19,7 +19,11 @@ export default async function HoursSettingsPage() {
   return (
     <div className="space-y-5">
       <SettingsHeader subtitle={`מתי החנות פתוחה · ${branch.name}`} />
-      <HoursForm branchId={branch.id} initialHours={(branch.hours as Record<string, DayHours>) ?? {}} />
+      <HoursForm
+        branchId={branch.id}
+        initialHours={(branch.hours as Record<string, DayHours>) ?? {}}
+        initialAutoHours={branch.autoHours}
+      />
     </div>
   );
 }

@@ -246,29 +246,7 @@ export function getScheduleSlots(
   const today = zonedParts(now);
 
   // Start at -1 so a window opened before midnight is still live after it.
-  const intervals: Array<{ start: number; end: number }> = [];
-  for (let offset = -1; offset <= horizonDays; offset++) {
-    const date = new Date(Date.UTC(today.year, today.month - 1, today.day + offset));
-    const win = windowOf(hours[DAY_KEYS[date.getUTCDay()]]);
-    if (!win) continue;
-    const y = date.getUTCFullYear();
-    const mo = date.getUTCMonth() + 1;
-    const d = date.getUTCDate();
-    intervals.push({
-      start: zonedInstant(y, mo, d, win.open).getTime(),
-      end: zonedInstant(y, mo, d, win.end).getTime(),
-    });
-  }
-
-  // Merge so a window that runs into the next day's own window (or a 24/7
-  // branch) doesn't emit the same slot twice.
-  intervals.sort((a, b) => a.start - b.start);
-  const merged: Array<{ start: number; end: number }> = [];
-  for (const iv of intervals) {
-    const last = merged[merged.length - 1];
-    if (last && iv.start <= last.end) last.end = Math.max(last.end, iv.end);
-    else merged.push({ ...iv });
-  }
+  const merged = openIntervals(hours, today, -1, horizonDays);
 
   const earliest = alignUp(new Date(now.getTime() + lead * 60_000), step);
   const horizonEnd = zonedInstant(today.year, today.month, today.day + horizonDays + 1, 0).getTime();
@@ -284,6 +262,67 @@ export function getScheduleSlots(
     }
   }
   return out;
+}
+
+function openIntervals(
+  hours: BranchHours,
+  today: ZonedParts,
+  fromOffset: number,
+  toOffset: number,
+): Array<{ start: number; end: number }> {
+  const intervals: Array<{ start: number; end: number }> = [];
+  for (let offset = fromOffset; offset <= toOffset; offset++) {
+    const date = new Date(Date.UTC(today.year, today.month - 1, today.day + offset));
+    const win = windowOf(hours[DAY_KEYS[date.getUTCDay()]]);
+    if (!win) continue;
+    const y = date.getUTCFullYear();
+    const mo = date.getUTCMonth() + 1;
+    const d = date.getUTCDate();
+    intervals.push({
+      start: zonedInstant(y, mo, d, win.open).getTime(),
+      end: zonedInstant(y, mo, d, win.end).getTime(),
+    });
+  }
+  intervals.sort((a, b) => a.start - b.start);
+  const merged: Array<{ start: number; end: number }> = [];
+  for (const iv of intervals) {
+    const last = merged[merged.length - 1];
+    if (last && iv.start <= last.end) last.end = Math.max(last.end, iv.end);
+    else merged.push({ ...iv });
+  }
+  return merged;
+}
+
+export function lastHoursTransition(hours: BranchHours, now = new Date()): Date | null {
+  const t = now.getTime();
+  let last: number | null = null;
+  for (const iv of openIntervals(hours, zonedParts(now), -8, 1)) {
+    if (iv.start <= t && (last === null || iv.start > last)) last = iv.start;
+    if (iv.end <= t && (last === null || iv.end > last)) last = iv.end;
+  }
+  return last === null ? null : new Date(last);
+}
+
+export type BranchStatusValue = "open" | "busy" | "closed";
+
+export interface BranchStatusSource {
+  status: BranchStatusValue;
+  hours: unknown;
+  autoHours?: boolean | null;
+  statusChangedAt?: Date | string | null;
+}
+
+export function effectiveBranchStatus(
+  branch: BranchStatusSource,
+  now = new Date(),
+): BranchStatusValue {
+  if (!branch.autoHours) return branch.status;
+  const hours = (branch.hours ?? {}) as BranchHours;
+  const flip = lastHoursTransition(hours, now);
+  if (!flip) return branch.status;
+  const changedAt = branch.statusChangedAt ? new Date(branch.statusChangedAt) : null;
+  if (changedAt && changedAt.getTime() >= flip.getTime()) return branch.status;
+  return isWithinOpenHours(hours, now) ? "open" : "closed";
 }
 
 function alignUp(at: Date, step: number): number {

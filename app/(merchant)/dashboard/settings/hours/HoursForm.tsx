@@ -22,9 +22,11 @@ const DEFAULT: DayHours = { open: "11:00", close: "23:00", active: true };
 export function HoursForm({
   branchId,
   initialHours,
+  initialAutoHours,
 }: {
   branchId: string;
   initialHours: Record<string, DayHours>;
+  initialAutoHours: boolean;
 }) {
   const router = useRouter();
   const [hours, setHours] = useState<Record<string, DayHours>>(() => {
@@ -32,6 +34,7 @@ export function HoursForm({
     for (const d of DAYS) out[d.key] = initialHours[d.key] ?? DEFAULT;
     return out;
   });
+  const [autoHours, setAutoHours] = useState(initialAutoHours);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
 
@@ -46,7 +49,7 @@ export function HoursForm({
       const res = await fetch(`/api/v1/merchant/branches/${branchId}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ hours }),
+        body: JSON.stringify({ hours, auto_hours: autoHours }),
       });
       setToast(res.ok ? { kind: "ok", msg: "נשמר" } : { kind: "err", msg: "שמירה נכשלה" });
       if (res.ok) router.refresh();
@@ -58,6 +61,20 @@ export function HoursForm({
 
   return (
     <>
+      <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5 flex items-start justify-between gap-4">
+        <div>
+          <div className="font-medium text-sm">פתיחה וסגירה אוטומטית לפי שעות הפעילות</div>
+          <p className="text-xs text-qf-mute mt-1 leading-relaxed">
+            מחוץ לשעות החנות סגורה ולא מקבלת הזמנות מיידיות, ובתוך השעות היא נפתחת מעצמה.
+            שינוי ידני של הסטטוס בסרגל העליון תקף עד המעבר הבא בלוח השעות.
+          </p>
+        </div>
+        <Toggle
+          checked={autoHours}
+          onChange={setAutoHours}
+          aria-label="פתיחה וסגירה אוטומטית לפי שעות הפעילות"
+        />
+      </div>
       <div className="bg-white rounded-2xl border border-qf-line-dash p-4 lg:p-5">
         {/* Column headers only where the columns actually line up; the mobile
             layout wraps the inputs onto their own row and labels them inline. */}
