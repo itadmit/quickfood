@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Crown } from "lucide-react";
 import { IcoClose } from "@/components/shared/Icons";
 
@@ -37,6 +38,29 @@ interface Props {
 
 // Persistent "already saw the popup" flag - only consulted when the club is
 // set to show the popup once per visitor.
+const THEME_VAR_KEYS = [
+  "--qf-primary",
+  "--qf-deep",
+  "--qf-soft",
+  "--qf-line",
+  "--qf-on-primary",
+  "--color-qf-green",
+  "--color-qf-green-deep",
+  "--color-qf-green-soft",
+  "--color-qf-green-line",
+];
+
+function readThemeVars(el: HTMLElement | null): Record<string, string> {
+  if (!el) return {};
+  const cs = window.getComputedStyle(el);
+  const out: Record<string, string> = {};
+  for (const k of THEME_VAR_KEYS) {
+    const v = cs.getPropertyValue(k).trim();
+    if (v) out[k] = v;
+  }
+  return out;
+}
+
 function seenKey(slug: string) {
   return `qf:loyalty-seen:${slug}`;
 }
@@ -72,7 +96,13 @@ function birthdayToIso(display: string): string | null {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-export function LoyaltyJoinPopup({ tenantSlug, open, onClose, initialPhone, onJoined }: Props) {
+export function LoyaltyJoinPopup({
+  tenantSlug,
+  open,
+  onClose,
+  initialPhone,
+  onJoined,
+}: Props) {
   const controlled = open !== undefined;
   const [form, setForm] = useState<JoinForm | null>(null);
   const [showOnce, setShowOnce] = useState(true);
@@ -87,6 +117,12 @@ export function LoyaltyJoinPopup({ tenantSlug, open, onClose, initialPhone, onJo
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const anchorRef = useRef<HTMLSpanElement>(null);
+  const [themeStyle, setThemeStyle] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (form) setThemeStyle(readThemeVars(anchorRef.current));
+  }, [form, visible]);
 
   useEffect(() => {
     if (controlled) return;
@@ -101,7 +137,10 @@ export function LoyaltyJoinPopup({ tenantSlug, open, onClose, initialPhone, onJo
         const data = (await res.json()) as LoyaltyPublic;
         if (cancelled || !data.show_join_popup) return;
         // Only suppress on "seen" when the club shows the popup once per visitor.
-        if (data.popup_show_once && window.localStorage.getItem(seenKey(tenantSlug))) {
+        if (
+          data.popup_show_once &&
+          window.localStorage.getItem(seenKey(tenantSlug))
+        ) {
           return;
         }
         setShowOnce(data.popup_show_once);
@@ -188,7 +227,9 @@ export function LoyaltyJoinPopup({ tenantSlug, open, onClose, initialPhone, onJo
       setError("יש לאשר את התקנון ומדיניות הפרטיות");
       return;
     }
-    const birthdayIso = birthday.trim() ? birthdayToIso(birthday.trim()) : undefined;
+    const birthdayIso = birthday.trim()
+      ? birthdayToIso(birthday.trim())
+      : undefined;
     if (birthday.trim() && !birthdayIso) {
       setError("תאריך הלידה לא תקין - יש להזין יום/חודש/שנה");
       return;
@@ -208,7 +249,8 @@ export function LoyaltyJoinPopup({ tenantSlug, open, onClose, initialPhone, onJo
           birthday: birthdayIso || undefined,
           marketing_consent: true,
           attribution_source:
-            (typeof window !== "undefined" && window.sessionStorage.getItem("qf:src-choice")) ||
+            (typeof window !== "undefined" &&
+              window.sessionStorage.getItem("qf:src-choice")) ||
             undefined,
           attribution_campaign_code:
             typeof window !== "undefined" &&
@@ -218,9 +260,9 @@ export function LoyaltyJoinPopup({ tenantSlug, open, onClose, initialPhone, onJo
         }),
       });
       if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as
-          | { error?: { message?: string } }
-          | null;
+        const data = (await res.json().catch(() => null)) as {
+          error?: { message?: string };
+        } | null;
         setError(data?.error?.message ?? "ההצטרפות נכשלה, נסו שוב");
         return;
       }
@@ -246,132 +288,164 @@ export function LoyaltyJoinPopup({ tenantSlug, open, onClose, initialPhone, onJo
   if (!form) return null;
 
   return (
-    <div
-      className={
-        "fixed inset-0 z-60 grid place-items-center p-5 transition-opacity duration-200 " +
-        (visible ? "opacity-100" : "opacity-0 pointer-events-none")
-      }
-      style={{ background: "rgba(0,0,0,0.55)" }}
-      onClick={dismiss}
-      role="dialog"
-      aria-modal="true"
-      aria-label={form.title}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="relative bg-white rounded-3xl overflow-hidden shadow-2xl max-w-sm w-full"
-      >
-        <button
-          type="button"
+    <>
+      <span ref={anchorRef} aria-hidden className="hidden" />
+      {createPortal(
+        <div
+          className={
+            "fixed inset-0 z-60 grid place-items-center p-4 sm:p-5 transition-opacity duration-200 " +
+            (visible ? "opacity-100" : "opacity-0 pointer-events-none")
+          }
+          style={
+            {
+              ...themeStyle,
+              background: "rgba(0,0,0,0.55)",
+            } as React.CSSProperties
+          }
           onClick={dismiss}
-          aria-label="סגור"
-          className="absolute top-2.5 inset-e-2.5 z-10 w-9 h-9 rounded-full bg-black/45 backdrop-blur grid place-items-center hover:bg-black/65 transition"
+          role="dialog"
+          aria-modal="true"
+          aria-label={form.title}
         >
-          <IcoClose c="#fff" s={18} />
-        </button>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative bg-white rounded-3xl overflow-hidden shadow-2xl max-w-sm w-full max-h-[calc(100dvh-2rem)] flex flex-col text-right"
+            dir="rtl"
+          >
+            <button
+              type="button"
+              onClick={dismiss}
+              aria-label="סגור"
+              className="absolute top-2.5 inset-e-2.5 z-10 w-9 h-9 rounded-full bg-black/45 backdrop-blur grid place-items-center hover:bg-black/65 transition"
+            >
+              <IcoClose c="#fff" s={18} />
+            </button>
 
-        {form.image_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={form.image_url}
-            alt={form.title}
-            className="block w-full aspect-[16/9] object-cover"
-          />
-        ) : (
-          <div className="aspect-[16/9] bg-(--qf-primary) grid place-items-center">
-            <Crown size={40} style={{ color: "var(--qf-on-primary, #000)" }} />
-          </div>
-        )}
-
-        <div className="p-5">
-          {done ? (
-            <div className="text-center py-6">
-              <div className="w-12 h-12 mx-auto rounded-full bg-(--qf-primary) grid place-items-center mb-3">
-                <Crown size={24} style={{ color: "var(--qf-on-primary, #000)" }} />
-              </div>
-              <h3 className="font-black text-lg">הצטרפת למועדון!</h3>
-              <p className="text-sm text-qf-ink2 mt-1">תודה שהצטרפת. נתראה בהזמנה הבאה.</p>
-            </div>
-          ) : (
-            <>
-              <h3 className="font-black text-xl text-qf-ink">{form.title}</h3>
-              {form.subtitle && (
-                <p className="text-sm text-qf-ink2 mt-1 leading-relaxed">{form.subtitle}</p>
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+              {form.image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={form.image_url}
+                  alt={form.title}
+                  className="block w-full aspect-[16/9] object-cover"
+                />
+              ) : (
+                <div className="aspect-[16/9] bg-(--qf-primary) grid place-items-center">
+                  <Crown
+                    size={40}
+                    style={{ color: "var(--qf-on-primary, #000)" }}
+                  />
+                </div>
               )}
 
-              <div className="mt-4 space-y-2.5">
-                {form.collect_name && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="שם פרטי"
-                      className="rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none"
-                    />
-                    <input
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      placeholder="שם משפחה"
-                      className="rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none"
-                    />
+              <div className="p-5">
+                {done ? (
+                  <div className="text-center py-6">
+                    <div className="w-12 h-12 mx-auto rounded-full bg-(--qf-primary) grid place-items-center mb-3">
+                      <Crown
+                        size={24}
+                        style={{ color: "var(--qf-on-primary, #000)" }}
+                      />
+                    </div>
+                    <h3 className="font-black text-lg">הצטרפת למועדון!</h3>
+                    <p className="text-sm text-qf-ink2 mt-1">
+                      תודה שהצטרפת. נתראה בהזמנה הבאה.
+                    </p>
                   </div>
-                )}
-                <input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  inputMode="tel"
-                  placeholder="טלפון נייד"
-                  dir="ltr"
-                  className="w-full rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none text-right"
-                />
-                {form.collect_email && (
-                  <input
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    type="email"
-                    required
-                    aria-required="true"
-                    placeholder="אימייל (קוד הכניסה יישלח לשם)"
-                    dir="ltr"
-                    className="w-full rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none text-right"
-                  />
-                )}
-                {form.collect_birthday && (
-                  <input
-                    value={birthday}
-                    onChange={(e) => setBirthday(formatBirthdayInput(e.target.value))}
-                    inputMode="numeric"
-                    placeholder="תאריך לידה (DD/MM/YYYY)"
-                    dir="ltr"
-                    className="w-full rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none text-right placeholder:text-right"
-                  />
+                ) : (
+                  <>
+                    <h3 className="font-black text-xl text-qf-ink">
+                      {form.title}
+                    </h3>
+                    {form.subtitle && (
+                      <p className="text-sm text-qf-ink2 mt-1 leading-relaxed whitespace-pre-line">
+                        {form.subtitle}
+                      </p>
+                    )}
+
+                    <div className="mt-4 space-y-2.5">
+                      {form.collect_name && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
+                            placeholder="שם פרטי"
+                            className="rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none"
+                          />
+                          <input
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
+                            placeholder="שם משפחה"
+                            className="rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none"
+                          />
+                        </div>
+                      )}
+                      <input
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        inputMode="tel"
+                        placeholder="טלפון נייד"
+                        dir="ltr"
+                        className="w-full rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none text-right"
+                      />
+                      {form.collect_email && (
+                        <input
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          type="email"
+                          required
+                          aria-required="true"
+                          placeholder="אימייל (קוד הכניסה יישלח לשם)"
+                          dir="ltr"
+                          className="w-full rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none text-right"
+                        />
+                      )}
+                      {form.collect_birthday && (
+                        <input
+                          value={birthday}
+                          onChange={(e) =>
+                            setBirthday(formatBirthdayInput(e.target.value))
+                          }
+                          inputMode="numeric"
+                          placeholder="תאריך לידה (DD/MM/YYYY)"
+                          dir="ltr"
+                          className="w-full rounded-xl border border-qf-line focus:border-(--qf-deep) px-3 py-2.5 text-sm outline-none text-right placeholder:text-right"
+                        />
+                      )}
+                    </div>
+
+                    <label className="flex items-start gap-2 text-xs text-qf-ink2 leading-relaxed cursor-pointer mt-3">
+                      <input
+                        type="checkbox"
+                        checked={consent}
+                        onChange={(e) => setConsent(e.target.checked)}
+                        className="mt-0.5 w-4 h-4 shrink-0 accent-(--qf-primary)"
+                      />
+                      <span>{form.consent_text}</span>
+                    </label>
+
+                    {error && (
+                      <p className="text-xs text-qf-tomato font-semibold mt-2">
+                        {error}
+                      </p>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={submit}
+                      disabled={busy}
+                      className="w-full mt-4 py-3 rounded-2xl bg-(--qf-primary) text-(--qf-on-primary) font-black text-sm disabled:opacity-60 transition"
+                    >
+                      {busy ? "מצטרפים..." : form.button_text}
+                    </button>
+                  </>
                 )}
               </div>
-
-              <label className="flex items-start gap-2 text-xs text-qf-ink2 leading-relaxed cursor-pointer mt-3">
-                <input
-                  type="checkbox"
-                  checked={consent}
-                  onChange={(e) => setConsent(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 shrink-0 accent-(--qf-primary)"
-                />
-                <span>{form.consent_text}</span>
-              </label>
-
-              {error && <p className="text-xs text-qf-tomato font-semibold mt-2">{error}</p>}
-
-              <button
-                type="button"
-                onClick={submit}
-                disabled={busy}
-                className="w-full mt-4 py-3 rounded-2xl bg-(--qf-primary) text-(--qf-on-primary) font-black text-sm disabled:opacity-60 transition"
-              >
-                {busy ? "מצטרפים..." : form.button_text}
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+    </>
   );
 }
