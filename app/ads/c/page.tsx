@@ -38,7 +38,7 @@ export default function AdsPageC() {
       }}>
         <div style={{ textAlign: "center", marginBottom: 12 }}>
           <div style={{ fontSize: 48, fontWeight: 900, color: INK_COLOR, letterSpacing: "-2px", lineHeight: 1 }}>₪299</div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: INK_COLOR, marginTop: 4 }}>לחודש + 0.5% בלבד</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: INK_COLOR, marginTop: 4 }}>לחודש + 0.5% + מע״מ בלבד</div>
         </div>
         <div style={{ height: 1, background: "#E8E4D5", marginBottom: 12 }} />
         <SwipeBtn color={BG_COLOR} />

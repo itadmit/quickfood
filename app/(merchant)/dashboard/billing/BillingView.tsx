@@ -257,7 +257,7 @@ export function BillingView({
         </div>
 
         <div className="mt-4 space-y-2 text-sm">
-          <Row label="עמלת עסקה">0.5% מכל הזמנה (מחויב סוף חודש)</Row>
+          <Row label="עמלת עסקה">0.5% מכל הזמנה + מע״מ (מחויב סוף חודש)</Row>
           {trialEnd && !setupComplete && (
             <Row label="ניסיון">
               {trialExpired ? (

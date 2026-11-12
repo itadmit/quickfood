@@ -64,7 +64,7 @@ export default async function QutePage({ params }: { params: Promise<{ token: st
                 </div>
                 <div className="quote-row">
                   <span className="quote-k">מחיר</span>
-                  <span className="quote-price">{p.monthlyPrice.toLocaleString("he-IL")} ₪ <small>לחודש</small></span>
+                  <span className="quote-price">{p.monthlyPrice.toLocaleString("he-IL")} ₪ <small>לחודש + מע״מ</small></span>
                 </div>
                 {showCommission && (
                   <div className="quote-row">
@@ -133,7 +133,7 @@ export default async function QutePage({ params }: { params: Promise<{ token: st
                 title="קופונים" body="קודי הנחה לכל מטרה - לקוח חדש, חזרה לעגלה נטושה או מבצע יום - עם תקרה ותוקף שאתה קובע." />
               <Card icon={<Ico d={<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3z" fill="none" stroke="#000" strokeWidth="1.4" strokeLinejoin="round" />} />}
                 title="ביקורות" body="אוספים חוות דעת מלקוחות אוטומטית אחרי הזמנה - ומפנים את המרוצים לדרג אתכם בגוגל." />
-              <Card neu addon="מגוון חבילות דיוור החל מ-39 ₪"
+              <Card neu addon="מגוון חבילות דיוור החל מ-39 ₪ + מע״מ"
                 icon={<Ico d={<path d="M6 9a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6zM10 19a2 2 0 004 0" fill="none" stroke="#000" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />} />}
                 title="דיוור והתראות" body="הודעות ללקוח בערוץ הנכון - SMS, וואטסאפ או מייל - על סטטוס הזמנה, מבצעים ותזכורות חזרה." />
               <Card neu icon={<Ico d={<><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z" fill="#000" /><path d="M19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9L19 14z" fill="#000" /></>} />}

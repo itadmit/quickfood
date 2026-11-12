@@ -33,7 +33,7 @@ export default function SlaPage() {
             (סעיף 5).
           </li>
           <li>
-            <strong>חבילה בסיסית</strong> - מנוי QuickFood Base (₪299/חודש).
+            <strong>חבילה בסיסית</strong> - מנוי QuickFood Base (₪299/חודש + מע״מ).
           </li>
         </ul>
       </section>
