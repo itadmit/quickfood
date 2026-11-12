@@ -22,6 +22,21 @@ const FILE_BY_ID = Object.fromEntries(
 
 export const CHIME_ENABLED_KEY = "qf_merchant_chime_enabled";
 export const CHIME_SOUND_KEY = "qf_merchant_chime_sound";
+export const CHIME_SETTINGS_EVENT = "qf:chime-settings";
+
+export function getChimeEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(CHIME_ENABLED_KEY) !== "0";
+}
+
+export function hasOrderAwaitingAck(
+  orders: ReadonlyArray<{ id: string; status: string }>,
+  unackedConfirmed: ReadonlySet<string>,
+): boolean {
+  return orders.some(
+    (o) => o.status === "pending" || (o.status === "confirmed" && unackedConfirmed.has(o.id)),
+  );
+}
 
 export function getSelectedChime(): ChimeId {
   if (typeof window === "undefined") return "1";

@@ -25,8 +25,14 @@ const JOBS: Job[] = [
   {
     scheduleId: "quickfood-webhooks-process",
     path: "/api/internal/webhooks/process",
-    cron: "* * * * *",
-    description: "Process pending outbound webhook deliveries (POS / printers / Slack).",
+    cron: "*/5 * * * *",
+    description: "Retry pending outbound webhook deliveries (POS / printers / Slack). First attempt is immediate on dispatch.",
+  },
+  {
+    scheduleId: "quickfood-review-reminder-sweep",
+    path: "/api/internal/jobs/review-reminder-sweep",
+    cron: "*/10 * * * *",
+    description: "Send review reminders whose delayed QStash publish was lost (e.g. daily quota 429).",
   },
   {
     scheduleId: "quickfood-birthday-coupons",

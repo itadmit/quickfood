@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useRoom } from "@/lib/realtime/useRoom";
 import { fetchWithSession } from "@/lib/auth/client-session";
 import Link from "next/link";
@@ -27,6 +27,16 @@ import { AssignCourierModal } from "@/components/merchant/AssignCourierModal";
 import { requestProviderDispatch } from "@/lib/delivery-providers/client";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import { NewOrderChime } from "@/components/merchant/NewOrderChime";
+import { CHIME_SETTINGS_EVENT, getChimeEnabled, hasOrderAwaitingAck } from "@/lib/order-chime";
+
+function subscribeChimeSettings(onChange: () => void) {
+  window.addEventListener(CHIME_SETTINGS_EVENT, onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener(CHIME_SETTINGS_EVENT, onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
 
 declare global {
   interface Window {
@@ -231,6 +241,16 @@ export function OrdersKanban({
   const [dismissedNudges, setDismissedNudges] = useState<Set<string>>(() => new Set());
   const [shakingIds, setShakingIds] = useState<Set<string>>(() => new Set());
   const [printingIds, setPrintingIds] = useState<Set<string>>(() => new Set());
+  const [unackedIds, setUnackedIds] = useState<Set<string>>(() => new Set());
+  const ackOrder = useCallback((orderId: string) => {
+    setUnackedIds((prev) => {
+      if (!prev.has(orderId)) return prev;
+      const next = new Set(prev);
+      next.delete(orderId);
+      return next;
+    });
+  }, []);
+  const chimeOn = useSyncExternalStore(subscribeChimeSettings, getChimeEnabled, () => false);
 
   useEffect(() => {
     setDismissedNudges(loadDismissedNudges());
@@ -292,6 +312,7 @@ export function OrdersKanban({
   }, [orders]);
 
   const toggleNudge = useCallback((orderId: string) => {
+    ackOrder(orderId);
     setDismissedNudges((prev) => {
       const next = new Set(prev);
       if (next.has(orderId)) next.delete(orderId);
@@ -305,7 +326,7 @@ export function OrdersKanban({
       next.delete(orderId);
       return next;
     });
-  }, []);
+  }, [ackOrder]);
 
   // Track orders the user just optimistically advanced. When the SSE
   // fires "order.status_changed" we refresh - but the new list often
@@ -463,6 +484,14 @@ export function OrdersKanban({
       // listener no longer dispatches the event itself (would double-ring).
       const newIds = fresh.filter((o) => !seenIdsRef.current.has(o.id)).map((o) => o.id);
       for (const o of fresh) seenIdsRef.current.add(o.id);
+      const confirmedNow = new Set(fresh.filter((o) => o.status === "confirmed").map((o) => o.id));
+      setUnackedIds((prev) => {
+        const next = new Set(
+          [...prev, ...newIds].filter((id) => confirmedNow.has(id)),
+        );
+        if (next.size === prev.size && [...next].every((id) => prev.has(id))) return prev;
+        return next;
+      });
       if (newIds.length > 0) {
         try {
           window.dispatchEvent(new Event("qf:new-order"));
@@ -522,7 +551,7 @@ export function OrdersKanban({
     scope: { scope: "merchant" },
     // A till that auto-prints must stay subscribed while minimised - that is
     // the state it spends most of its day in.
-    keepOpenWhenHidden: nativePrinterApp && receiptSettings.autoPrintOnNew,
+    keepOpenWhenHidden: (nativePrinterApp && receiptSettings.autoPrintOnNew) || chimeOn,
     onStatus: setRealtimeUp,
     onResync: () => void refresh(),
     onEvent: (event) => {
@@ -540,12 +569,13 @@ export function OrdersKanban({
   // Only while the socket is actually down, and only where a missed order means
   // missed food.
   useEffect(() => {
-    if (!receiptSettings.autoPrintOnNew || realtimeUp) return;
+    if (!(receiptSettings.autoPrintOnNew || chimeOn) || realtimeUp) return;
     const id = window.setInterval(() => void refresh(), 20_000);
     return () => window.clearInterval(id);
-  }, [receiptSettings.autoPrintOnNew, realtimeUp, refresh]);
+  }, [receiptSettings.autoPrintOnNew, chimeOn, realtimeUp, refresh]);
 
   async function advance(orderId: string, to: Status | "delivered", courierId?: string) {
+    ackOrder(orderId);
     pendingAdvancesRef.current.set(orderId, {
       target: to,
       expiresAt: Date.now() + 3000,
@@ -694,9 +724,9 @@ export function OrdersKanban({
 
   const totalActive = orders.length;
   // Wolt-style: keep ringing while any order still waits for the merchant to
-  // accept it (status pending). Accepting (pending -> confirmed) stops it;
-  // switching off a card's nudge does not. Day-based stores never nag.
-  const hasWaitingNew = !daysDelivery && orders.some((o) => o.status === "pending");
+  // accept it - pending, or a card order that arrived already confirmed and
+  // nobody has touched yet. Day-based stores never nag.
+  const hasWaitingNew = !daysDelivery && hasOrderAwaitingAck(orders, unackedIds);
 
   return (
     <div className="space-y-4 lg:space-y-5">

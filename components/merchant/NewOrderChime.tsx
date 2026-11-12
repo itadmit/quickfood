@@ -7,6 +7,7 @@ import {
   CHIME_SOUND_KEY,
   CHIME_OPTIONS,
   CHIME_LOOP_KEY,
+  CHIME_SETTINGS_EVENT,
   getChimeLoopEnabled,
   getSelectedChime,
   startChimeLoop,
@@ -83,6 +84,7 @@ export function NewOrderChime({ waiting = false }: { waiting?: boolean } = {}) {
     const next = !muted;
     setMuted(next);
     localStorage.setItem(CHIME_ENABLED_KEY, next ? "0" : "1");
+    window.dispatchEvent(new Event(CHIME_SETTINGS_EVENT));
   }
 
   function toggleLoop() {

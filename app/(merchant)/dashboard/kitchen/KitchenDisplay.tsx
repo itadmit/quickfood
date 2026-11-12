@@ -132,6 +132,7 @@ export function KitchenDisplay({ initial }: { initial: Order[] }) {
   // refresh() already rings the chime for ids it has not seen.
   useRoom({
     scope: { scope: "merchant" },
+    keepOpenWhenHidden: !soundMuted,
     onResync: () => void refresh(),
     onEvent: (event) => {
       if (event.startsWith("order.")) void refresh();
