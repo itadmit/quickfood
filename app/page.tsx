@@ -1295,15 +1295,15 @@ function GrowPartner() {
             <div className={styles.growPrice}>
               <div className={styles.growPriceCell}>
                 <div className={styles.growPriceN}>1%</div>
-                <div className={styles.growPriceL}>עמלת סליקה לכל הזמנה</div>
+                <div className={styles.growPriceL}>עמלת סליקה לכל הזמנה + מע״מ</div>
               </div>
               <div className={styles.growPriceDivider} aria-hidden />
               <div className={styles.growPriceCell}>
                 <div className={styles.growPriceN}>₪69</div>
-                <div className={styles.growPriceL}>חודשי. לא תלוי במחזור.</div>
+                <div className={styles.growPriceL}>חודשי + מע״מ. לא תלוי במחזור.</div>
               </div>
               <div className={styles.growPriceNote}>
-                התעריף משולם ישירות ל-Grow, לא ל-QuickFood. שני התעריפים מצטרפים לעמלות הפלטפורמה שלנו (₪299 / 0.5%). המנוי כולל עד 100 עסקאות בחודש - כל עסקה נוספת בתוספת ₪0.7.
+                כל המחירים של Grow לא כוללים מע״מ. התעריף משולם ישירות ל-Grow, לא ל-QuickFood. שני התעריפים מצטרפים לעמלות הפלטפורמה שלנו (₪299 / 0.5%). המנוי כולל עד 100 עסקאות בחודש - כל עסקה נוספת בתוספת ₪0.7.
               </div>
             </div>
 

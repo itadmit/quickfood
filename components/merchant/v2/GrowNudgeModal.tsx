@@ -57,7 +57,7 @@ export function GrowNudgeModal({ tenantId }: { tenantId: string }) {
             <span className="font-black text-black">Grow</span>.
           </p>
           <div className="rounded-2xl border-2 border-black bg-[#F8CB1E] px-4 py-3 text-center shadow-[0_2px_0_#000]">
-            <div className="font-black text-black text-lg">ב-69₪ לחודש + 1% בלבד!</div>
+            <div className="font-black text-black text-lg">ב-69₪ לחודש + 1% + מע״מ בלבד!</div>
             <div className="font-bold text-black/80 text-xs mt-0.5">ללא עמלת הקמת מסוף חדש</div>
           </div>
           <p className="text-sm text-black/75 leading-relaxed">
