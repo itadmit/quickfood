@@ -94,6 +94,7 @@ export const PATCH = handler(async (req: Request) => {
       checkoutRequireEmail: body.checkout_require_email,
       checkoutShowAttribution: body.checkout_show_attribution,
       scheduledOrdersEnabled: body.scheduled_orders_enabled,
+      preordersWhenClosed: body.preorders_when_closed,
       pickupEnabled: body.pickup_enabled,
       methodPopupEnabled: body.method_popup_enabled,
       cutleryEnabled: body.cutlery_enabled,

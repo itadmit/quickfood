@@ -10,6 +10,7 @@ interface Initial {
   requireEmail: boolean;
   showAttribution: boolean;
   scheduledOrdersEnabled: boolean;
+  preordersWhenClosed: boolean;
   pickupEnabled: boolean;
   methodPopupEnabled: boolean;
   showCategoriesRail: boolean;
@@ -29,6 +30,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
   const [scheduledOrdersEnabled, setScheduledOrdersEnabled] = useState(
     initial.scheduledOrdersEnabled,
   );
+  const [preordersWhenClosed, setPreordersWhenClosed] = useState(initial.preordersWhenClosed);
   const [pickupEnabled, setPickupEnabled] = useState(initial.pickupEnabled);
   const [methodPopupEnabled, setMethodPopupEnabled] = useState(initial.methodPopupEnabled);
   const [showCategoriesRail, setShowCategoriesRail] = useState(initial.showCategoriesRail);
@@ -57,6 +59,7 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
           checkout_require_email: requireEmail,
           checkout_show_attribution: showAttribution,
           scheduled_orders_enabled: scheduledOrdersEnabled,
+          preorders_when_closed: preordersWhenClosed,
           pickup_enabled: pickupEnabled,
           method_popup_enabled: methodPopupEnabled,
           show_categories_rail: showCategoriesRail,
@@ -129,6 +132,19 @@ export function CheckoutSettingsForm({ initial }: { initial: Initial }) {
         value={scheduledOrdersEnabled}
         onChange={setScheduledOrdersEnabled}
       />
+
+      {scheduledOrdersEnabled && (
+        <Toggle
+          label="הזמנה מראש כשהחנות סגורה או מושהית"
+          description={
+            preordersWhenClosed
+              ? "כשהחנות סגורה או שקבלת ההזמנות מושהית, הלקוח עדיין יכול להזמין לשעה עתידית בתוך שעות הפעילות, עד 7 ימים קדימה."
+              : "כשהחנות סגורה או מושהית אי אפשר להזמין בכלל, גם לא מראש."
+          }
+          value={preordersWhenClosed}
+          onChange={setPreordersWhenClosed}
+        />
+      )}
 
       <Toggle
         label="אפשר ללקוח להזמין לאיסוף עצמי"

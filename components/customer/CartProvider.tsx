@@ -113,6 +113,7 @@ interface TenantInfo {
   themeId: string;
   businessType?: string;
   scheduledOrdersEnabled?: boolean;
+  preordersWhenClosed?: boolean;
   tipEnabled?: boolean;
   customerNotesEnabled?: boolean;
   cutleryEnabled?: boolean;
@@ -143,6 +144,7 @@ interface BranchInfo {
   freeDeliveryMinItems?: number | null;
   etaUnit?: string;
   hours?: BranchHours | null;
+  pausedUntil?: string | null;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);

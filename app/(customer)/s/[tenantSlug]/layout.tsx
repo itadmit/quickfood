@@ -8,7 +8,7 @@ import { CartProvider } from "@/components/customer/CartProvider";
 import { CartBundleProvider } from "@/components/customer/CartBundleProvider";
 import type { BusinessType } from "@/components/shared/MenuItemImage";
 import { MenuSearchProvider } from "@/components/customer/MenuSearchProvider";
-import { effectiveBranchStatus, type BranchHours } from "@/lib/branch-hours";
+import { activePauseUntil, effectiveBranchStatus, type BranchHours } from "@/lib/branch-hours";
 import { CustomerTopNav } from "@/components/customer/CustomerTopNav";
 import { ReviewPromptModal } from "@/components/customer/ReviewPromptModal";
 import { MerchantPreviewBar } from "@/components/customer/MerchantPreviewBar";
@@ -155,6 +155,7 @@ export default async function CustomerLayout({
           themeId: tenant.themeId,
           businessType: tenant.businessType,
           scheduledOrdersEnabled: tenant.scheduledOrdersEnabled,
+          preordersWhenClosed: tenant.preordersWhenClosed,
           tipEnabled: tenant.tipEnabled,
           customerNotesEnabled: tenant.customerNotesEnabled,
           cutleryEnabled: tenant.cutleryEnabled,
@@ -180,6 +181,7 @@ export default async function CustomerLayout({
                 freeDeliveryMinItems: branch.freeDeliveryMinItems,
                 etaUnit: branch.etaUnit,
                 hours: (branch.hours ?? null) as BranchHours | null,
+                pausedUntil: activePauseUntil(branch)?.toISOString() ?? null,
               }
             : null
         }

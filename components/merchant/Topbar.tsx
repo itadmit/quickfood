@@ -10,10 +10,17 @@ import { RelativeTime } from "@/components/shared/RelativeTime";
 import { MobileNav } from "@/components/merchant/MobileNav";
 import { OPEN_WELCOME_EVENT } from "@/components/merchant/OnboardingWelcome";
 import { cn } from "@/lib/cn";
+import { PauseOrdersControl } from "@/components/merchant/PauseOrdersControl";
+import { formatCountdown, usePauseCountdown } from "@/components/shared/usePauseCountdown";
 
 interface Props {
   user: { id: string; name: string; email: string; role: string };
-  branch: { id: string; status: "open" | "busy" | "closed"; autoHours?: boolean } | null;
+  branch: {
+    id: string;
+    status: "open" | "busy" | "closed";
+    autoHours?: boolean;
+    pausedUntil?: string | null;
+  } | null;
   tenantSlug: string;
   tenant: { name: string; logoLetter: string; branchName: string };
   // When true, render a small import-shortcut next to the bell that
@@ -45,6 +52,13 @@ export function Topbar({ user, branch, tenantSlug, tenant, showImportShortcut }:
 
   const [status, setStatus] = useState<Status>(branch?.status ?? "open");
   const [statusBusy, setStatusBusy] = useState(false);
+  const [syncedStatus, setSyncedStatus] = useState(branch?.status);
+  if (branch?.status !== syncedStatus) {
+    setSyncedStatus(branch?.status);
+    setStatus(branch?.status ?? "open");
+  }
+  const pauseLeft = usePauseCountdown(branch?.pausedUntil);
+  const paused = pauseLeft !== null && pauseLeft > 0;
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unread, setUnread] = useState(0);
@@ -99,7 +113,7 @@ export function Topbar({ user, branch, tenantSlug, tenant, showImportShortcut }:
   }
 
   async function changeStatus(next: Status) {
-    if (!branch || next === status) {
+    if (!branch || (next === status && !paused)) {
       setStatusOpen(false);
       return;
     }
@@ -188,14 +202,21 @@ export function Topbar({ user, branch, tenantSlug, tenant, showImportShortcut }:
               )}
               <span className={cn("relative inline-flex rounded-full h-2.5 w-2.5", statusUi.dot)} />
             </span>
-            <span className="font-medium hidden sm:inline">{currentStatusOpt.label}</span>
+            <span className="font-medium hidden sm:inline">
+              {paused ? "מושהה" : currentStatusOpt.label}
+            </span>
+            {paused && (
+              <span className="tnum font-medium" dir="ltr" suppressHydrationWarning>
+                {formatCountdown(pauseLeft!)}
+              </span>
+            )}
             <IcoChevDown c="currentColor" s={14} />
           </button>
           {statusOpen && (
-            <div className="absolute inset-e-0 mt-2 w-64 bg-white border border-qf-line-dash rounded-2xl shadow-lg p-1.5 text-sm z-50">
+            <div className="absolute inset-e-0 mt-2 w-72 bg-white border border-qf-line-dash rounded-2xl shadow-lg p-1.5 text-sm z-50">
               {STATUS_OPTIONS.map((opt) => {
                 const ui = STATUS_COLOR[opt.value];
-                const active = opt.value === status;
+                const active = !paused && opt.value === status;
                 return (
                   <button
                     key={opt.value}
@@ -218,6 +239,13 @@ export function Topbar({ user, branch, tenantSlug, tenant, showImportShortcut }:
                 <div className="px-3 pt-2 pb-1 mt-1 border-t border-qf-line-soft text-xs text-qf-mute">
                   פתיחה וסגירה אוטומטית לפי שעות הפעילות. שינוי ידני תקף עד המעבר הבא בלוח השעות.
                 </div>
+              )}
+              {branch && (
+                <PauseOrdersControl
+                  branchId={branch.id}
+                  pausedUntil={branch.pausedUntil ?? null}
+                  onDone={() => setStatusOpen(false)}
+                />
               )}
             </div>
           )}

@@ -74,6 +74,7 @@ export const POST = handler(async (req: Request) => {
       deliveryNotes: body.address ?? null,
       customerNotes: body.notes ?? null,
       paymentMethod: body.payment_method,
+      staffEntered: true,
       lines: body.lines.map((l) => ({
         item_id: l.item_id,
         quantity: l.quantity,

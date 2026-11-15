@@ -21,6 +21,7 @@ import { recordOrderToken } from "@/lib/order-access-storage";
 import { takeCheckoutPrefill } from "@/lib/checkout-prefill";
 import { readDeliveryChoice, writeDeliveryChoice } from "@/lib/delivery-city-storage";
 import { getScheduleSlots, type ScheduleSlot } from "@/lib/branch-hours";
+import { formatTime } from "@/lib/format";
 import { CitySelect } from "@/components/customer/CitySelect";
 import { Toggle } from "@/components/shared/Toggle";
 import { GrowPaymentSdk, renderGrowWallet } from "@/components/customer/GrowPaymentSdk";
@@ -29,6 +30,7 @@ import type { CardProviderType } from "@/lib/payments/types";
 import { BusyAlertModal } from "@/components/customer/BranchStatusModal";
 import { AttributionPrompt } from "@/components/customer/AttributionPrompt";
 import { useLocale } from "@/components/customer/LocaleProvider";
+import { canPreorderWhenClosed, usePauseCountdown } from "@/components/customer/OrderPauseNotice";
 
 type CustomerPaymentMethod = "cash" | "card" | "bit" | "apple_pay" | "google_pay";
 
@@ -410,9 +412,18 @@ export function CustomerCheckout({
 
   // Every bookable slot across the branch's open windows. Computed once per
   // mount - a checkout session is short enough that drift doesn't matter.
+  const pauseLeft = usePauseCountdown(branch?.pausedUntil);
+  const pausedUntil = pauseLeft !== null && pauseLeft > 0 ? branch?.pausedUntil ?? null : null;
+  const preorderOnly =
+    (branch?.status === "closed" || !!pausedUntil) && canPreorderWhenClosed(tenant);
   const scheduleSlots = useMemo(
-    () => (branch?.hours ? getScheduleSlots(branch.hours) : []),
-    [branch?.hours],
+    () =>
+      branch?.hours
+        ? getScheduleSlots(branch.hours, {
+            notBefore: pausedUntil ? new Date(pausedUntil) : null,
+          })
+        : [],
+    [branch?.hours, pausedUntil],
   );
 
   // Slots grouped into day tabs, in order. A branch open past midnight puts
@@ -532,6 +543,8 @@ export function CustomerCheckout({
       failures.push({ sel: "#co-address", msg: t("checkout.errAddress") });
     if (emailRequired && !emailLooksValid)
       failures.push({ sel: "#co-email", msg: t("checkout.errEmailInvalid") });
+    if (preorderOnly && !scheduledSlot)
+      failures.push({ sel: "[data-co-schedule]", msg: t("checkout.errPickPreorderTime") });
     if (!paymentMethod) failures.push({ sel: "[data-co-payment]", msg: t("checkout.errPaymentMethod") });
     if (!termsAccepted)
       failures.push({ sel: "[data-co-terms]", msg: t("checkout.errTerms") });
@@ -644,6 +657,8 @@ export function CustomerCheckout({
       const data = await res.json();
       if (!res.ok) {
         setError(asErrorString(data?.error?.message, t("checkout.errOrderFailed")));
+        const code = data?.error?.code;
+        if (code === "restaurant_closed" || code === "scheduled_during_pause") router.refresh();
         return;
       }
       const orderId = data.order.id as string;
@@ -1166,10 +1181,22 @@ export function CustomerCheckout({
             sane. */}
         {tenant.scheduledOrdersEnabled !== false && (
           <Card>
-            <div className="flex items-baseline justify-between">
+            <div className="flex items-baseline justify-between" data-co-schedule tabIndex={-1}>
               <CardTitle>{method === "delivery" ? t("checkout.deliveryTime") : t("checkout.pickupTime")}</CardTitle>
-              <span className="text-xs text-qf-mute">{t("common.optional")}</span>
+              {!preorderOnly && <span className="text-xs text-qf-mute">{t("common.optional")}</span>}
             </div>
+            {preorderOnly ? (
+              <p
+                className={cn(
+                  "text-sm mt-2",
+                  submitAttempted && !scheduledSlot ? "text-qf-tomato" : "text-qf-ink2",
+                )}
+              >
+                {pausedUntil
+                  ? `${t("checkout.preorderOnlyPaused")} ${formatTime(pausedUntil)}. ${t("checkout.preorderOnlyPausedSuffix")}`
+                  : t("checkout.preorderOnlyClosed")}
+              </p>
+            ) : (
             <div className="grid grid-cols-2 gap-2 mt-3">
               <Pill
                 active={!showSlots && !scheduledSlot}
@@ -1189,7 +1216,8 @@ export function CustomerCheckout({
                   : t("checkout.scheduleForTime")}
               </Pill>
             </div>
-            {showSlots && (
+            )}
+            {(showSlots || preorderOnly) && (
               <div className="mt-3">
                 {activeScheduleDay ? (
                   <>

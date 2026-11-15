@@ -18,6 +18,7 @@ import { priceGroupOptions, type PricedOption, type GroupPricingConfig } from "@
 import { weightPrice, MIN_WEIGHT_GRAMS, MAX_WEIGHT_GRAMS } from "@/lib/pricing";
 import { cn } from "@/lib/cn";
 import { useLocale } from "@/components/customer/LocaleProvider";
+import { canPreorderWhenClosed } from "@/components/customer/OrderPauseNotice";
 
 const KIOSK_NOTE_PRESETS = [
   "בלי בצל",
@@ -118,7 +119,9 @@ export function ItemDetail({
   const isEditing = !!editLine;
   const upsellSizeNudge =
     tenant.upsellSizeNudge !== false && item.upsellSizeNudge !== false;
-  const branchClosed = branch?.status === "closed";
+  const preorderOnly =
+    branch?.status === "closed" && canPreorderWhenClosed(tenant);
+  const branchClosed = branch?.status === "closed" && !preorderOnly;
 
   const inCartQty = lines.reduce(
     (acc, l) =>
@@ -548,7 +551,9 @@ export function ItemDetail({
         ? `${t("item.choose")} ${missingGroup.name}`
         : isEditing
           ? t("item.updateOrder")
-          : t("item.addToCart");
+          : preorderOnly
+            ? t("item.addPreorder")
+            : t("item.addToCart");
 
   return (
     <div

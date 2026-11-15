@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { effectiveBranchStatus } from "@/lib/branch-hours";
+import { activePauseUntil, effectiveBranchStatus } from "@/lib/branch-hours";
 import { cookies } from "next/headers";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { storefrontCanonical } from "@/lib/storefront-url";
@@ -338,6 +338,7 @@ export default async function HomePage({
               phone: branch.phone,
               status: effectiveBranchStatus(branch),
               autoHours: branch.autoHours,
+              pausedUntil: activePauseUntil(branch)?.toISOString() ?? null,
               deliveryFee: branch.deliveryFee,
               serviceFee: branch.serviceFee,
               minOrder: branch.minOrder,

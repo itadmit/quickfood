@@ -346,6 +346,7 @@ model Tenant {
   // schedule-for-later section is hidden from checkout. Useful for fast-food
   // spots that don't want pre-orders piling up in the queue.
   scheduledOrdersEnabled Boolean @default(true) @map("scheduled_orders_enabled")
+  preordersWhenClosed    Boolean @default(false) @map("preorders_when_closed")
 
   pickupEnabled   Boolean @default(true) @map("pickup_enabled")
 
@@ -650,6 +651,7 @@ model Branch {
   status      RestaurantStatus @default(open)
   statusChangedAt DateTime?    @map("status_changed_at")
   autoHours   Boolean          @default(false) @map("auto_hours")
+  pausedUntil DateTime?        @map("paused_until")
   // Minutes added to every ETA when status == busy. Customer-facing
   // displays surface "+N דק' (עומס)" and the busy-alert modal warns the
   // customer at entry + before checkout.

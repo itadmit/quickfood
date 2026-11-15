@@ -2,7 +2,12 @@ import { z } from "zod";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
-import { effectiveBranchStatus } from "@/lib/branch-hours";
+import {
+  activePauseUntil,
+  effectiveBranchStatus,
+  PAUSE_CUSTOM_MAX_MINUTES,
+  PAUSE_CUSTOM_MIN_MINUTES,
+} from "@/lib/branch-hours";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,6 +19,13 @@ const BranchPatch = z.object({
   email: z.string().email().optional(),
   status: z.enum(["open", "busy", "closed"]).optional(),
   auto_hours: z.boolean().optional(),
+  pause_minutes: z
+    .number()
+    .int()
+    .min(PAUSE_CUSTOM_MIN_MINUTES)
+    .max(PAUSE_CUSTOM_MAX_MINUTES)
+    .nullable()
+    .optional(),
   busy_eta_boost_minutes: z.number().int().min(0).max(180).optional(),
   default_eta_min: z.number().int().min(0).max(240).optional(),
   default_eta_max: z.number().int().min(0).max(240).optional(),
@@ -46,7 +58,11 @@ export const PATCH = handler(async (req: Request, { params }: { params: Promise<
       phone: body.phone,
       email: body.email,
       status: body.status,
-      ...(body.status !== undefined && { statusChangedAt: new Date() }),
+      ...(body.status !== undefined && { statusChangedAt: new Date(), pausedUntil: null }),
+      ...(body.pause_minutes !== undefined && {
+        pausedUntil:
+          body.pause_minutes === null ? null : new Date(Date.now() + body.pause_minutes * 60_000),
+      }),
       autoHours: body.auto_hours,
       busyEtaBoostMinutes: body.busy_eta_boost_minutes,
       defaultEtaMin: body.default_eta_min,
@@ -77,6 +93,7 @@ export const PATCH = handler(async (req: Request, { params }: { params: Promise<
       name: updated.name,
       status: effectiveBranchStatus(updated),
       auto_hours: updated.autoHours,
+      paused_until: activePauseUntil(updated)?.toISOString() ?? null,
     },
   });
 });

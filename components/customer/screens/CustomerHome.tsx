@@ -39,6 +39,12 @@ import { BusyAlertModal, ClosedAlertModal } from "@/components/customer/BranchSt
 import { RestaurantInfoModal } from "@/components/customer/RestaurantInfoModal";
 import { getOpenStatus, type BranchHours } from "@/lib/branch-hours";
 import { useLocale } from "@/components/customer/LocaleProvider";
+import {
+  canPreorderWhenClosed,
+  formatCountdown,
+  OrderPauseNotice,
+  usePauseCountdown,
+} from "@/components/customer/OrderPauseNotice";
 
 interface Props {
   tenant: {
@@ -64,6 +70,7 @@ interface Props {
     hours?: Record<string, { open: string; close: string; active: boolean }>;
     busyEtaBoostMinutes?: number;
     autoHours?: boolean;
+    pausedUntil?: string | null;
   } | null;
   ratingSummary?: { average: number; count: number } | null;
   deliveryEta?: { min: number; max: number } | null;
@@ -170,7 +177,10 @@ export function CustomerHome({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { t } = useLocale();
-  const { method, setMethod, deliveryEta: zoneEta, branch: cartBranch } = useCart();
+  const { method, setMethod, deliveryEta: zoneEta, branch: cartBranch, tenant: cartTenant } = useCart();
+  const pauseLeft = usePauseCountdown(branch?.pausedUntil);
+  const paused = pauseLeft !== null && pauseLeft > 0;
+  const preorder = canPreorderWhenClosed(cartTenant);
   const open = branch?.status === "open";
   const busy = branch?.status === "busy";
   const closed = branch?.status === "closed";
@@ -184,7 +194,10 @@ export function CustomerHome({
     : null;
   let openLabel: string = t("home.closed");
   let openLabelTone: "open" | "busy" | "closed" = "closed";
-  if (closed && branch?.autoHours && hoursStatus && !hoursStatus.open && hoursStatus.nextOpen) {
+  if (paused) {
+    openLabel = `${t("pause.chip")} · ${formatCountdown(pauseLeft!)}`;
+    openLabelTone = "closed";
+  } else if (closed && branch?.autoHours && hoursStatus && !hoursStatus.open && hoursStatus.nextOpen) {
     openLabel = `${t("home.closedOpensAt")} ${hoursStatus.nextOpen.dayLabel} ${hoursStatus.nextOpen.time}`;
     openLabelTone = "closed";
   } else if (closed) {
@@ -614,6 +627,12 @@ export function CustomerHome({
           </div>
         </div>
       </section>
+
+      <OrderPauseNotice
+        pausedUntil={branch?.pausedUntil}
+        closed={closed}
+        preorder={preorder}
+      />
 
       {/* Pending-review banner - surfaces when a delivered order is waiting
           for the customer's rating. Click jumps straight to the review card

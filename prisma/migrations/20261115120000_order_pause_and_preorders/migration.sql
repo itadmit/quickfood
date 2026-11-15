@@ -1,0 +1,2 @@
+ALTER TABLE "branches" ADD COLUMN IF NOT EXISTS "paused_until" TIMESTAMP(3);
+ALTER TABLE "tenants" ADD COLUMN IF NOT EXISTS "preorders_when_closed" BOOLEAN NOT NULL DEFAULT false;

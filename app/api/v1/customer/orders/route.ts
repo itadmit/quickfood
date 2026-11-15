@@ -338,6 +338,9 @@ function errorMessageFor(code: string): string {
     address_not_found: "הכתובת לא נמצאה",
     min_order_not_met: "לא הגעת לסכום מינימום להזמנה",
     scheduled_outside_hours: "השעה שנבחרה מחוץ לשעות הפעילות של המסעדה",
+    scheduled_during_pause: "קבלת ההזמנות מושהית כרגע. בחרו שעה אחרי חידוש קבלת ההזמנות",
+    scheduled_in_past: "השעה שנבחרה כבר עברה. בחרו שעה אחרת",
+    scheduled_too_far: "אי אפשר להזמין מראש לתאריך רחוק כל כך",
   };
   return m[code] ?? code;
 }

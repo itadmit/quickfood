@@ -216,11 +216,17 @@ export interface ScheduleSlotOptions {
   stepMinutes?: number;
   /** How many days ahead to offer, Wolt-style. 0 = today only. */
   horizonDays?: number;
+  /** No slot earlier than this instant (end of an order pause). */
+  notBefore?: Date | null;
 }
 
 const DEFAULT_LEAD_MINUTES = 30;
 const DEFAULT_STEP_MINUTES = 15;
-const DEFAULT_HORIZON_DAYS = 7;
+export const DEFAULT_HORIZON_DAYS = 7;
+export const PREORDER_HORIZON_DAYS = DEFAULT_HORIZON_DAYS;
+export const PAUSE_PRESET_MINUTES = [15, 30, 45, 60] as const;
+export const PAUSE_CUSTOM_MIN_MINUTES = 5;
+export const PAUSE_CUSTOM_MAX_MINUTES = 12 * 60;
 // Guard against a pathological config (24/7 + a long horizon) producing a
 // dropdown with thousands of entries.
 const MAX_SLOTS = 600;
@@ -248,7 +254,8 @@ export function getScheduleSlots(
   // Start at -1 so a window opened before midnight is still live after it.
   const merged = openIntervals(hours, today, -1, horizonDays);
 
-  const earliest = alignUp(new Date(now.getTime() + lead * 60_000), step);
+  const notBefore = opts.notBefore ? opts.notBefore.getTime() : 0;
+  const earliest = alignUp(new Date(Math.max(now.getTime() + lead * 60_000, notBefore)), step);
   const horizonEnd = zonedInstant(today.year, today.month, today.day + horizonDays + 1, 0).getTime();
 
   const out: ScheduleSlot[] = [];
@@ -310,12 +317,23 @@ export interface BranchStatusSource {
   hours: unknown;
   autoHours?: boolean | null;
   statusChangedAt?: Date | string | null;
+  pausedUntil?: Date | string | null;
+}
+
+export function activePauseUntil(
+  branch: { pausedUntil?: Date | string | null },
+  now = new Date(),
+): Date | null {
+  if (!branch.pausedUntil) return null;
+  const until = new Date(branch.pausedUntil);
+  return until.getTime() > now.getTime() ? until : null;
 }
 
 export function effectiveBranchStatus(
   branch: BranchStatusSource,
   now = new Date(),
 ): BranchStatusValue {
+  if (activePauseUntil(branch, now)) return "closed";
   if (!branch.autoHours) return branch.status;
   const hours = (branch.hours ?? {}) as BranchHours;
   const flip = lastHoursTransition(hours, now);

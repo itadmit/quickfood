@@ -356,6 +356,7 @@ export const TenantPatchSchema = z.object({
   checkout_require_email: z.boolean().optional(),
   checkout_show_attribution: z.boolean().optional(),
   scheduled_orders_enabled: z.boolean().optional(),
+  preorders_when_closed: z.boolean().optional(),
   pickup_enabled: z.boolean().optional(),
   method_popup_enabled: z.boolean().optional(),
   cutlery_enabled: z.boolean().optional(),

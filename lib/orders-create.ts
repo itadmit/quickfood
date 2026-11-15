@@ -13,7 +13,13 @@ import { sendTenantFcm } from "@/lib/merchant/fcm";
 import { priceGroupOptions } from "@/lib/option-pricing";
 import { weightPrice, MIN_WEIGHT_GRAMS, MAX_WEIGHT_GRAMS } from "@/lib/pricing";
 import { ensureLoyaltyMember } from "@/lib/loyalty/membership";
-import { effectiveBranchStatus, isWithinOpenHours, type BranchHours } from "@/lib/branch-hours";
+import {
+  activePauseUntil,
+  effectiveBranchStatus,
+  isWithinOpenHours,
+  PREORDER_HORIZON_DAYS,
+  type BranchHours,
+} from "@/lib/branch-hours";
 import { printOrderTicket } from "@/lib/printing/print-order";
 import { resolveLoyaltyConfig } from "@/lib/loyalty/config";
 import { loadLoyaltyBalance, redeemQuote } from "@/lib/loyalty/points";
@@ -95,6 +101,8 @@ export interface CreateOrderInput {
   manualDiscount?: number;
   cutleryCount?: number;
   scheduledFor?: Date | null;
+  /** Merchant-entered order (phone/manual). Not blocked by an online-orders pause. */
+  staffEntered?: boolean;
   couponCode?: string | null;
   /** Bundle offers the customer accepted in the cart. Server
    *  validates each (triggers + addons present in cart) and adds
@@ -179,13 +187,34 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
   const branch = tenant.branches[0];
   if (!branch) throw new CartValidationError("no_branch");
-  if (effectiveBranchStatus(branch) === "closed") throw new CartValidationError("restaurant_closed");
 
   // If the merchant disabled scheduled orders, silently demote any
   // scheduled_for that slipped through the client-side hide - turns the
   // order into ASAP rather than failing the request, so an old cached
   // client doesn't get a hard 4xx.
   const scheduledFor = tenant.scheduledOrdersEnabled ? input.scheduledFor : null;
+
+  const now = new Date();
+  const staffEntered = input.sourceOverride === "pos" || input.staffEntered === true;
+  const pausedUntil = staffEntered ? null : activePauseUntil(branch, now);
+  const closedNow = staffEntered
+    ? effectiveBranchStatus({ ...branch, pausedUntil: null }, now) === "closed"
+    : effectiveBranchStatus(branch, now) === "closed";
+  if (closedNow) {
+    const preorderAllowed =
+      tenant.preordersWhenClosed && tenant.scheduledOrdersEnabled && !staffEntered;
+    if (!preorderAllowed || !scheduledFor) throw new CartValidationError("restaurant_closed");
+    if (scheduledFor.getTime() <= now.getTime()) throw new CartValidationError("scheduled_in_past");
+    if (pausedUntil && scheduledFor.getTime() < pausedUntil.getTime()) {
+      throw new CartValidationError("scheduled_during_pause");
+    }
+  }
+  if (
+    scheduledFor &&
+    scheduledFor.getTime() > now.getTime() + (PREORDER_HORIZON_DAYS + 1) * 86_400_000
+  ) {
+    throw new CartValidationError("scheduled_too_far");
+  }
 
   // A scheduled time must fall inside the branch's opening hours - a store
   // that closes at 23:00 must not accept an order scheduled for 23:15.

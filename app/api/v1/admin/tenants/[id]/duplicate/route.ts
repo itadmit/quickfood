@@ -84,6 +84,7 @@ export const POST = handler(
             acceptsCash: s.acceptsCash,
             checkoutShowTracking: s.checkoutShowTracking,
             scheduledOrdersEnabled: s.scheduledOrdersEnabled,
+            preordersWhenClosed: s.preordersWhenClosed,
             pickupEnabled: s.pickupEnabled,
             cutleryEnabled: s.cutleryEnabled,
             cutleryLabel: s.cutleryLabel,

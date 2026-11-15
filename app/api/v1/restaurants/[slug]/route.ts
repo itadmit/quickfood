@@ -1,7 +1,7 @@
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { prisma } from "@/lib/db/client";
-import { effectiveBranchStatus } from "@/lib/branch-hours";
+import { activePauseUntil, effectiveBranchStatus } from "@/lib/branch-hours";
 import { PaymentProvider } from "@prisma/client";
 
 export const runtime = "nodejs";
@@ -84,6 +84,7 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ slug: st
             address: branch.address,
             phone: branch.phone,
             status: effectiveBranchStatus(branch),
+            paused_until: activePauseUntil(branch)?.toISOString() ?? null,
             hours: branch.hours,
             min_order: branch.minOrder,
             delivery_fee: branch.deliveryFee,

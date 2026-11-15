@@ -15,10 +15,17 @@ import { OPEN_WELCOME_EVENT } from "@/components/merchant/OnboardingWelcome";
 import { MobileMenuV2 } from "./MobileMenuV2";
 import { ShopShareModal } from "./ShopShareModal";
 import { cn } from "@/lib/cn";
+import { PauseOrdersControl } from "@/components/merchant/PauseOrdersControl";
+import { formatCountdown, usePauseCountdown } from "@/components/shared/usePauseCountdown";
 
 interface Props {
   user: { name: string; email: string; role: string };
-  branch: { id: string; status: "open" | "busy" | "closed"; autoHours?: boolean } | null;
+  branch: {
+    id: string;
+    status: "open" | "busy" | "closed";
+    autoHours?: boolean;
+    pausedUntil?: string | null;
+  } | null;
   tenantSlug: string;
   /** Brand info for the mobile drawer header - desktop sidebar already
    *  shows this; on mobile the hamburger drawer carries it. */
@@ -89,6 +96,13 @@ export function TopbarV2({
   const router = useRouter();
   const [status, setStatus] = useState<Status>(branch?.status ?? "open");
   const [statusBusy, setStatusBusy] = useState(false);
+  const [syncedStatus, setSyncedStatus] = useState(branch?.status);
+  if (branch?.status !== syncedStatus) {
+    setSyncedStatus(branch?.status);
+    setStatus(branch?.status ?? "open");
+  }
+  const pauseLeft = usePauseCountdown(branch?.pausedUntil);
+  const paused = pauseLeft !== null && pauseLeft > 0;
   // Single discriminated state for the two dropdowns so they're mutually
   // exclusive - opening one auto-closes the other. Set to null to close.
   const [openMenu, setOpenMenu] = useState<"status" | "user" | "bell" | null>(null);
@@ -141,7 +155,7 @@ export function TopbarV2({
   }, []);
 
   async function changeStatus(next: Status) {
-    if (!branch || next === status) {
+    if (!branch || (next === status && !paused)) {
       setOpenMenu(null);
       return;
     }
@@ -228,11 +242,16 @@ export function TopbarV2({
             <span
               className={cn("w-2.5 h-2.5 rounded-full", STATUS_DOT[status])}
             />
-            <span>{STATUS_LABELS[status]}</span>
+            <span>{paused ? "מושהה" : STATUS_LABELS[status]}</span>
+            {paused && (
+              <span className="tnum" dir="ltr" suppressHydrationWarning>
+                {formatCountdown(pauseLeft!)}
+              </span>
+            )}
             <IcoChevDown c="currentColor" s={14} />
           </button>
           {openMenu === "status" && (
-            <div data-topbar-panel="status" className="absolute inset-e-0 mt-2 w-48 bg-white border-2 border-black rounded-2xl shadow-[0_4px_0_#000] p-1.5 z-50">
+            <div data-topbar-panel="status" className="absolute inset-e-0 mt-2 w-72 bg-white border-2 border-black rounded-2xl shadow-[0_4px_0_#000] p-1.5 z-50">
               {(["open", "busy", "closed"] as Status[]).map((s) => (
                 <button
                   key={s}
@@ -240,7 +259,7 @@ export function TopbarV2({
                   onClick={() => changeStatus(s)}
                   className={cn(
                     "w-full text-start px-3 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2.5",
-                    s === status
+                    s === status && !paused
                       ? "bg-black/5 text-black"
                       : "text-black/80 hover:bg-black/5",
                   )}
@@ -258,6 +277,14 @@ export function TopbarV2({
                 <div className="px-3 pt-2 pb-1 mt-1 border-t border-black/10 text-xs font-medium text-black/60">
                   אוטומטי לפי שעות הפעילות. שינוי ידני תקף עד המעבר הבא.
                 </div>
+              )}
+              {branch && (
+                <PauseOrdersControl
+                  branchId={branch.id}
+                  pausedUntil={branch.pausedUntil ?? null}
+                  onDone={() => setOpenMenu(null)}
+                  variant="v2"
+                />
               )}
             </div>
           )}

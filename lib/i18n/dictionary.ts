@@ -10,6 +10,17 @@ import type { Lang } from "./langs";
 type Dict = Record<string, string>;
 
 const he: Dict = {
+  "pause.title": "קבלת ההזמנות מושהית זמנית",
+  "pause.resumesIn": "חוזרים בעוד",
+  "pause.resumesAt": "נחזור לקבל הזמנות בשעה",
+  "pause.preorderHint": "אפשר כבר עכשיו להזמין מראש לשעה מאוחרת יותר",
+  "pause.chip": "הזמנות מושהות",
+  "closed.preorderHint": "החנות סגורה כרגע, אבל אפשר להזמין מראש לשעה שבה היא פתוחה",
+  "item.addPreorder": "הוסף להזמנה מראש",
+  "checkout.preorderOnlyClosed": "החנות סגורה כרגע, לכן אפשר להזמין רק לשעה עתידית.",
+  "checkout.preorderOnlyPaused": "קבלת ההזמנות מושהית עד",
+  "checkout.preorderOnlyPausedSuffix": "אפשר לבחור שעה אחרי זה.",
+  "checkout.errPickPreorderTime": "בחרו שעה להזמנה מראש",
   "home.closed": "סגור",
   "home.busy": "עומס",
   "home.open": "פתוח",
@@ -325,6 +336,17 @@ const he: Dict = {
 };
 
 const en: Dict = {
+  "pause.title": "Ordering is temporarily paused",
+  "pause.resumesIn": "Back in",
+  "pause.resumesAt": "We'll take orders again at",
+  "pause.preorderHint": "you can already pre-order for a later time",
+  "pause.chip": "Orders paused",
+  "closed.preorderHint": "We're closed right now, but you can pre-order for a time we're open",
+  "item.addPreorder": "Add to pre-order",
+  "checkout.preorderOnlyClosed": "We're closed right now, so you can only order for a later time.",
+  "checkout.preorderOnlyPaused": "Ordering is paused until",
+  "checkout.preorderOnlyPausedSuffix": "Pick a time after that.",
+  "checkout.errPickPreorderTime": "Pick a time for your pre-order",
   "home.closed": "Closed",
   "home.busy": "Busy",
   "home.open": "Open",
@@ -640,6 +662,17 @@ const en: Dict = {
 };
 
 const ru: Dict = {
+  "pause.title": "Приём заказов временно приостановлен",
+  "pause.resumesIn": "Возобновим через",
+  "pause.resumesAt": "Снова принимаем заказы в",
+  "pause.preorderHint": "уже сейчас можно сделать предзаказ на более позднее время",
+  "pause.chip": "Заказы приостановлены",
+  "closed.preorderHint": "Сейчас закрыто, но можно сделать предзаказ на время работы",
+  "item.addPreorder": "Добавить в предзаказ",
+  "checkout.preorderOnlyClosed": "Сейчас закрыто, поэтому можно заказать только на более позднее время.",
+  "checkout.preorderOnlyPaused": "Приём заказов приостановлен до",
+  "checkout.preorderOnlyPausedSuffix": "Выберите время после этого.",
+  "checkout.errPickPreorderTime": "Выберите время предзаказа",
   "home.closed": "Закрыто",
   "home.busy": "Загружено",
   "home.open": "Открыто",
