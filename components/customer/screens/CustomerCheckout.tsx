@@ -658,7 +658,9 @@ export function CustomerCheckout({
       if (!res.ok) {
         setError(asErrorString(data?.error?.message, t("checkout.errOrderFailed")));
         const code = data?.error?.code;
-        if (code === "restaurant_closed" || code === "scheduled_during_pause") router.refresh();
+        if (code === "restaurant_closed" || code === "orders_paused" || code === "scheduled_during_pause") {
+          router.refresh();
+        }
         return;
       }
       const orderId = data.order.id as string;

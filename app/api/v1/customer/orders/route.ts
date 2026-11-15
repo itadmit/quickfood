@@ -279,7 +279,11 @@ export const POST = handler(async (req: Request) => {
     );
   } catch (err) {
     if (err instanceof CartValidationError) {
-      const httpCode = err.code === "min_order_not_met" || err.code === "restaurant_closed" ? 409 : 422;
+      const httpCode = err.code === "min_order_not_met" ||
+        err.code === "restaurant_closed" ||
+        err.code === "orders_paused"
+          ? 409
+          : 422;
       return apiError(err.code, errorMessageFor(err.code), httpCode, err.field);
     }
     throw err;
@@ -338,6 +342,7 @@ function errorMessageFor(code: string): string {
     address_not_found: "הכתובת לא נמצאה",
     min_order_not_met: "לא הגעת לסכום מינימום להזמנה",
     scheduled_outside_hours: "השעה שנבחרה מחוץ לשעות הפעילות של המסעדה",
+    orders_paused: "קבלת ההזמנות מושהית זמנית. נסו שוב בעוד כמה דקות",
     scheduled_during_pause: "קבלת ההזמנות מושהית כרגע. בחרו שעה אחרי חידוש קבלת ההזמנות",
     scheduled_in_past: "השעה שנבחרה כבר עברה. בחרו שעה אחרת",
     scheduled_too_far: "אי אפשר להזמין מראש לתאריך רחוק כל כך",

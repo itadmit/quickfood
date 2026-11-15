@@ -10,6 +10,8 @@ import type { Lang } from "./langs";
 type Dict = Record<string, string>;
 
 const he: Dict = {
+  "pause.ctaPreorder": "להזמנה מראש",
+  "pause.ctaOk": "הבנתי",
   "pause.title": "קבלת ההזמנות מושהית זמנית",
   "pause.resumesIn": "חוזרים בעוד",
   "pause.resumesAt": "נחזור לקבל הזמנות בשעה",
@@ -336,6 +338,8 @@ const he: Dict = {
 };
 
 const en: Dict = {
+  "pause.ctaPreorder": "Pre-order now",
+  "pause.ctaOk": "Got it",
   "pause.title": "Ordering is temporarily paused",
   "pause.resumesIn": "Back in",
   "pause.resumesAt": "We'll take orders again at",
@@ -662,6 +666,8 @@ const en: Dict = {
 };
 
 const ru: Dict = {
+  "pause.ctaPreorder": "Сделать предзаказ",
+  "pause.ctaOk": "Понятно",
   "pause.title": "Приём заказов временно приостановлен",
   "pause.resumesIn": "Возобновим через",
   "pause.resumesAt": "Снова принимаем заказы в",

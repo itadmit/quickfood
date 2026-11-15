@@ -203,7 +203,9 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   if (closedNow) {
     const preorderAllowed =
       tenant.preordersWhenClosed && tenant.scheduledOrdersEnabled && !staffEntered;
-    if (!preorderAllowed || !scheduledFor) throw new CartValidationError("restaurant_closed");
+    if (!preorderAllowed || !scheduledFor) {
+      throw new CartValidationError(pausedUntil ? "orders_paused" : "restaurant_closed");
+    }
     if (scheduledFor.getTime() <= now.getTime()) throw new CartValidationError("scheduled_in_past");
     if (pausedUntil && scheduledFor.getTime() < pausedUntil.getTime()) {
       throw new CartValidationError("scheduled_during_pause");

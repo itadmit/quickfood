@@ -1,6 +1,9 @@
 "use client";
 
 import { IcoClock, IcoClose } from "@/components/shared/Icons";
+import { useLocale } from "@/components/customer/LocaleProvider";
+import { formatTime } from "@/lib/format";
+import { formatCountdown, usePauseCountdown } from "@/components/shared/usePauseCountdown";
 
 interface BaseProps {
   onClose: () => void;
@@ -40,7 +43,49 @@ export function BusyAlertModal({
   );
 }
 
-export function ClosedAlertModal({ onClose }: BaseProps) {
+export function ClosedAlertModal({
+  onClose,
+  pausedUntil,
+  preorder = false,
+}: BaseProps & { pausedUntil?: string | null; preorder?: boolean }) {
+  const { t } = useLocale();
+  const left = usePauseCountdown(pausedUntil);
+  if (left !== null && left > 0) {
+    return (
+      <Shell aria-labelledby="qf-closed-alert-title" onClose={onClose}>
+        <div
+          className="w-12 h-12 rounded-full grid place-items-center mx-auto"
+          style={{ backgroundColor: "#fdecea" }}
+        >
+          <IcoClock s={22} c="#c2421f" />
+        </div>
+        <h2 id="qf-closed-alert-title" className="text-xl font-black text-center mt-3">
+          {t("pause.title")}
+        </h2>
+        <div className="text-center mt-3">
+          <div className="text-xs text-qf-mute">{t("pause.resumesIn")}</div>
+          <div
+            className="text-4xl font-black tnum text-[#c2421f] leading-tight"
+            dir="ltr"
+            suppressHydrationWarning
+          >
+            {formatCountdown(left)}
+          </div>
+        </div>
+        <p className="text-sm text-qf-ink2 text-center mt-2 leading-relaxed">
+          {t("pause.resumesAt")} {formatTime(pausedUntil!)}.
+          {preorder && <> {t("pause.preorderHint")}.</>}
+        </p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-5 w-full px-5 py-3 rounded-2xl bg-black text-[#F8CB1E] border-2 border-black font-bold text-sm shadow-[0_3px_0_#000] hover:bg-black/90"
+        >
+          {preorder ? t("pause.ctaPreorder") : t("pause.ctaOk")}
+        </button>
+      </Shell>
+    );
+  }
   return (
     <Shell aria-labelledby="qf-closed-alert-title" onClose={onClose}>
       <div
@@ -56,14 +101,16 @@ export function ClosedAlertModal({ onClose }: BaseProps) {
         המסעדה סגורה כרגע
       </h2>
       <p className="text-sm text-qf-ink2 text-center mt-2 leading-relaxed">
-        אפשר לדפדף בתפריט, אבל לא מקבלים הזמנות חדשות כרגע. נחזור בקרוב.
+        {preorder
+          ? t("closed.preorderHint")
+          : "אפשר לדפדף בתפריט, אבל לא מקבלים הזמנות חדשות כרגע. נחזור בקרוב."}
       </p>
       <button
         type="button"
         onClick={onClose}
         className="mt-5 w-full px-5 py-3 rounded-2xl bg-black text-[#F8CB1E] border-2 border-black font-bold text-sm shadow-[0_3px_0_#000] hover:bg-black/90"
       >
-        אישור
+        {preorder ? t("pause.ctaPreorder") : "אישור"}
       </button>
     </Shell>
   );

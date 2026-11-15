@@ -895,7 +895,11 @@ export function CustomerHome({
         <BusyAlertModal boostMinutes={busyBoost} onClose={dismissBusyAlert} />
       )}
       {closedAlertOpen && (
-        <ClosedAlertModal onClose={() => setClosedAlertOpen(false)} />
+        <ClosedAlertModal
+          onClose={() => setClosedAlertOpen(false)}
+          pausedUntil={branch?.pausedUntil}
+          preorder={preorder}
+        />
       )}
       {infoOpen && branch && (
         <RestaurantInfoModal
