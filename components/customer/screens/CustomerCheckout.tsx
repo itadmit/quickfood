@@ -34,7 +34,6 @@ import { canPreorderWhenClosed, usePauseCountdown } from "@/components/customer/
 
 type CustomerPaymentMethod = "cash" | "card" | "bit" | "apple_pay" | "google_pay";
 
-const CARDCOM_TEST_CARD = "4580 0000 0000 0000";
 
 const PAYMENT_METHOD_LABELS: Record<CustomerPaymentMethod, string> = {
   cash: "מזומן בעת המסירה",
@@ -1127,12 +1126,6 @@ export function CustomerCheckout({
                 >
                   <div className="font-semibold text-qf-tomato">{t("checkout.ownerTestTitle")}</div>
                   <div className="mt-1 text-qf-mute">{t("checkout.ownerTestBody")}</div>
-                  {provider === "cardcom" && (
-                    <div className="mt-1">
-                      {t("checkout.ownerTestCard")}{" "}
-                      <span dir="ltr" className="font-mono">{CARDCOM_TEST_CARD}</span>
-                    </div>
-                  )}
                 </div>
               )}
             </>
