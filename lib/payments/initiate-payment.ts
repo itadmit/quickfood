@@ -16,6 +16,7 @@
 
 import { prisma } from "@/lib/db/client";
 import { getActiveCardProvider } from "@/lib/payments/factory";
+import { markOwnerTestOrder } from "@/lib/payments/owner-test-order";
 import type { InitiatePaymentRequest, PaymentDisplayMode } from "@/lib/payments/types";
 import { fullName } from "@/lib/format";
 import {
@@ -49,6 +50,7 @@ export type InitiateOrderPaymentResult =
  */
 export async function initiateOrderPayment(
   orderId: string,
+  { allowOwnerTest = false }: { allowOwnerTest?: boolean } = {},
 ): Promise<InitiateOrderPaymentResult> {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
@@ -72,7 +74,7 @@ export async function initiateOrderPayment(
   // Resolve whichever card provider the tenant has active (grow / cardcom /
   // hyp). Runs in parallel with the customer read - they're independent.
   const [active, customer] = await Promise.all([
-    getActiveCardProvider(order.tenantId),
+    getActiveCardProvider(order.tenantId, { allowOwnerTest }),
     order.customerId
       ? prisma.customer.findUnique({
           where: { id: order.customerId },
@@ -86,6 +88,10 @@ export async function initiateOrderPayment(
   }
   const providerType = active.type;
   const provider = active.provider;
+
+  if (active.testMode) {
+    await markOwnerTestOrder(order.id, order.customerNotes);
+  }
 
   const baseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
   const orderRef = order.number;

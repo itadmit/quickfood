@@ -14,7 +14,7 @@ import { PaymentProvider } from "@prisma/client";
 import { GrowProvider } from "./providers/grow";
 import { CardComProvider } from "./providers/cardcom";
 import { HypProvider } from "./providers/hyp";
-import { hasLiveClearing } from "./live-clearing";
+import { isCardOffered } from "./live-clearing";
 import type {
   CardProviderType,
   IPaymentProvider,
@@ -87,6 +87,7 @@ export interface ActiveCardProvider {
  */
 export async function getActiveCardProvider(
   tenantId: string,
+  { allowOwnerTest = false }: { allowOwnerTest?: boolean } = {},
 ): Promise<ActiveCardProvider | null> {
   const rows = await prisma.paymentProviderConfig.findMany({
     where: {
@@ -100,7 +101,7 @@ export async function getActiveCardProvider(
 
   const row = rows[0];
   // No real clearing (test mode or missing terminal credentials) = no card.
-  if (!hasLiveClearing(row)) return null;
+  if (!isCardOffered(row, allowOwnerTest)) return null;
   const settings = (row.settings ?? {}) as ProviderSettings;
   const config: ProviderConfig = {
     provider: row.provider,
@@ -118,7 +119,10 @@ export async function getActiveCardProvider(
  * Lightweight variant for server components that only need to know which card
  * provider is active and how to present it - no provider instantiation.
  */
-export async function getActiveCardProviderSummary(tenantId: string): Promise<{
+export async function getActiveCardProviderSummary(
+  tenantId: string,
+  { allowOwnerTest = false }: { allowOwnerTest?: boolean } = {},
+): Promise<{
   provider: CardProviderType;
   testMode: boolean;
   displayMode: "iframe" | "redirect";
@@ -135,7 +139,7 @@ export async function getActiveCardProviderSummary(tenantId: string): Promise<{
   if (rows.length === 0) return null;
   const row = rows[0];
   // Same rule as getActiveCardProvider: the storefront offers no card option.
-  if (!hasLiveClearing(row)) return null;
+  if (!isCardOffered(row, allowOwnerTest)) return null;
   const settings = (row.settings ?? {}) as ProviderSettings;
   return {
     provider: row.provider as CardProviderType,

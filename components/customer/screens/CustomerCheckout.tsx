@@ -34,6 +34,8 @@ import { canPreorderWhenClosed, usePauseCountdown } from "@/components/customer/
 
 type CustomerPaymentMethod = "cash" | "card" | "bit" | "apple_pay" | "google_pay";
 
+const CARDCOM_TEST_CARD = "4580 0000 0000 0000";
+
 const PAYMENT_METHOD_LABELS: Record<CustomerPaymentMethod, string> = {
   cash: "מזומן בעת המסירה",
   card: "כרטיס אשראי",
@@ -283,7 +285,13 @@ export function CustomerCheckout({
       .then((r) => r.json())
       .then((d: { restaurant?: { payment_methods?: CustomerPaymentMethod[] } }) => {
         if (cancelled) return;
-        const methods = d.restaurant?.payment_methods ?? [];
+        const fetched = d.restaurant?.payment_methods ?? [];
+        const hasOnline = fetched.some((m) => m !== "cash");
+        const methods: CustomerPaymentMethod[] = !cardEnabled
+          ? fetched.filter((m) => m === "cash")
+          : hasOnline
+            ? fetched
+            : [...fetched, "card"];
         setAvailableMethods(methods);
         const first = methods[0] ?? null;
         setPaymentMethod((cur) => (cur && methods.includes(cur) ? cur : first));
@@ -295,7 +303,7 @@ export function CustomerCheckout({
     return () => {
       cancelled = true;
     };
-  }, [tenantSlug]);
+  }, [tenantSlug, cardEnabled]);
 
   // Consume any "הזמן שוב" prefill the home rail dropped in sessionStorage
   // on mount. takeCheckoutPrefill() clears the entry so a refresh doesn't
@@ -1110,6 +1118,21 @@ export function CustomerCheckout({
               {paymentMethod && paymentMethod !== "cash" && (
                 <div className="mt-2 text-xs text-qf-mute">
                   {t("checkout.onlinePaymentHint")}
+                </div>
+              )}
+              {cardEnabled && testMode && (
+                <div
+                  data-owner-test-mode
+                  className="mt-3 rounded-lg border border-qf-line-dash bg-qf-line-soft px-3 py-2 text-xs"
+                >
+                  <div className="font-semibold text-qf-tomato">{t("checkout.ownerTestTitle")}</div>
+                  <div className="mt-1 text-qf-mute">{t("checkout.ownerTestBody")}</div>
+                  {provider === "cardcom" && (
+                    <div className="mt-1">
+                      {t("checkout.ownerTestCard")}{" "}
+                      <span dir="ltr" className="font-mono">{CARDCOM_TEST_CARD}</span>
+                    </div>
+                  )}
                 </div>
               )}
             </>

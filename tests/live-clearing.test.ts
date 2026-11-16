@@ -7,7 +7,7 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { hasLiveClearing } from "../lib/payments/live-clearing";
+import { cardClearing, hasLiveClearing, isCardOffered } from "../lib/payments/live-clearing";
 
 test("S-8 setup: Grow in test mode, empty credentials -> no card", () => {
   assert.equal(hasLiveClearing({ provider: "grow", testMode: true, credentials: {} }), false);
@@ -53,4 +53,29 @@ test("CardCom and Hyp need all their terminal fields", () => {
 
 test("unknown provider -> no card", () => {
   assert.equal(hasLiveClearing({ provider: "cash", testMode: false, credentials: {} }), false);
+});
+
+test("CardCom test terminal is offered to the store owner only", () => {
+  const row = { provider: "cardcom", testMode: true, credentials: {} };
+  assert.equal(cardClearing(row), "owner_test");
+  assert.equal(isCardOffered(row, false), false);
+  assert.equal(isCardOffered(row, true), true);
+});
+
+test("Grow and Hyp test mode stay closed even for the owner", () => {
+  for (const provider of ["grow", "hyp"]) {
+    const row = { provider, testMode: true, credentials: { userId: "u1", masof: "1", passP: "p", apiKey: "k" } };
+    assert.equal(cardClearing(row), "none");
+    assert.equal(isCardOffered(row, true), false);
+  }
+});
+
+test("live terminal is offered to everyone", () => {
+  const row = {
+    provider: "cardcom",
+    testMode: false,
+    credentials: { terminalNumber: "1", apiName: "a", apiPassword: "p" },
+  };
+  assert.equal(cardClearing(row), "live");
+  assert.equal(isCardOffered(row, false), true);
 });

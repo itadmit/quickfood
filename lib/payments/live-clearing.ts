@@ -32,3 +32,18 @@ export function hasLiveClearing(row: ClearingRow): boolean {
   const creds = (row.credentials ?? {}) as Record<string, unknown>;
   return required.every((k) => typeof creds[k] === "string" && (creds[k] as string).trim() !== "");
 }
+
+const OWNER_TEST_PROVIDERS: readonly string[] = ["cardcom"];
+
+export type CardClearing = "live" | "owner_test" | "none";
+
+export function cardClearing(row: ClearingRow): CardClearing {
+  if (hasLiveClearing(row)) return "live";
+  if (row.testMode && OWNER_TEST_PROVIDERS.includes(row.provider)) return "owner_test";
+  return "none";
+}
+
+export function isCardOffered(row: ClearingRow, allowOwnerTest: boolean): boolean {
+  const clearing = cardClearing(row);
+  return clearing === "live" || (clearing === "owner_test" && allowOwnerTest);
+}

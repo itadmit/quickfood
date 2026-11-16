@@ -11,6 +11,7 @@ import { apiError, apiJson, handler } from "@/lib/api-response";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
 import { initiateOrderPayment } from "@/lib/payments/initiate-payment";
+import { canUseOwnerTestCard } from "@/lib/payments/owner-test-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,7 +26,7 @@ export const POST = handler(
     const [orderOwner, session] = await Promise.all([
       prisma.order.findUnique({
         where: { id: orderId },
-        select: { customerId: true },
+        select: { customerId: true, tenantId: true },
       }),
       getSession(),
     ]);
@@ -38,7 +39,8 @@ export const POST = handler(
       return apiError("forbidden", "אין הרשאה להזמנה זו", 403);
     }
 
-    const result = await initiateOrderPayment(orderId);
+    const allowOwnerTest = await canUseOwnerTestCard(orderOwner.tenantId);
+    const result = await initiateOrderPayment(orderId, { allowOwnerTest });
     if (!result.ok) {
       return apiError(result.code, result.message, result.status);
     }

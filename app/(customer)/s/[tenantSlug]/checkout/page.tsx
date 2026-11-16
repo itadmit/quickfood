@@ -6,6 +6,7 @@ import { getSession } from "@/lib/auth/session";
 import { resolveTerms } from "@/lib/legal/terms";
 import { resolveLoyaltyConfig } from "@/lib/loyalty/config";
 import { getActiveCardProviderSummary } from "@/lib/payments/factory";
+import { canUseOwnerTestCard } from "@/lib/payments/owner-test-access";
 import { CustomerCheckout } from "@/components/customer/screens/CustomerCheckout";
 
 export const dynamic = "force-dynamic";
@@ -103,7 +104,8 @@ export default async function CheckoutPage({
   );
   let cardProvider: Awaited<ReturnType<typeof getActiveCardProviderSummary>> = null;
   try {
-    cardProvider = await getActiveCardProviderSummary(tenant.id);
+    const allowOwnerTest = await canUseOwnerTestCard(tenant.id);
+    cardProvider = await getActiveCardProviderSummary(tenant.id, { allowOwnerTest });
   } catch (err) {
     console.error("[checkout/page] card provider lookup failed", err);
   }

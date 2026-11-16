@@ -9,6 +9,8 @@ import { signReviewToken } from "@/lib/reviews/token";
 import { initiateOrderPayment, type InitiatePaymentData } from "@/lib/payments/initiate-payment";
 import { recordAttribution } from "@/lib/growth/attribution";
 import { getActiveCardProviderSummary } from "@/lib/payments/factory";
+import { canUseOwnerTestCard } from "@/lib/payments/owner-test-access";
+import { withOwnerTestNote } from "@/lib/payments/owner-test-order";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -141,12 +143,17 @@ export const POST = handler(async (req: Request) => {
 
   // No real clearing (test mode / no terminal credentials) = no card at all.
   // Refuse before an order exists, so it never sits pending as a card order.
+  let ownerTestCard = false;
+  let allowOwnerTest = false;
   if (body.payment_method !== "cash") {
     const t = await prisma.tenant.findUnique({
       where: { slug: body.tenant_slug },
       select: { id: true },
     });
-    if (t && !(await getActiveCardProviderSummary(t.id))) {
+    allowOwnerTest = !!t && !body.kiosk && (await canUseOwnerTestCard(t.id));
+    const card = t ? await getActiveCardProviderSummary(t.id, { allowOwnerTest }) : null;
+    ownerTestCard = !!card?.testMode;
+    if (t && !card) {
       return apiError(
         "card_unavailable",
         "תשלום באשראי אינו זמין במסעדה זו. אפשר לבחור תשלום במזומן.",
@@ -173,7 +180,9 @@ export const POST = handler(async (req: Request) => {
       deliveryCity: body.delivery_city ?? null,
       deliveryNotes: body.delivery_notes ?? null,
       deliveryAddress: body.save_address ?? null,
-      customerNotes: body.customer_notes ?? null,
+      customerNotes: ownerTestCard
+        ? withOwnerTestNote(body.customer_notes)
+        : (body.customer_notes ?? null),
       paymentMethod: body.payment_method,
       tip: body.tip,
       cutleryCount: body.cutlery_count,
@@ -247,7 +256,7 @@ export const POST = handler(async (req: Request) => {
     let payment: InitiatePaymentData | null = null;
     if (needsPayment && !kioskAuthorized) {
       try {
-        const init = await initiateOrderPayment(result.order.id);
+        const init = await initiateOrderPayment(result.order.id, { allowOwnerTest });
         if (init.ok) payment = init.data;
       } catch {
         /* fall back to /pay/initiate on the client */

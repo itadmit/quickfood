@@ -7,6 +7,7 @@ import { resolveTenantBySlug } from "@/lib/slug";
 import { normalizeKioskOverrides } from "@/lib/i18n/kiosk-messages";
 import { initiateOrderPayment } from "@/lib/payments/initiate-payment";
 import { getActiveCardProviderSummary } from "@/lib/payments/factory";
+import { canUseOwnerTestCard } from "@/lib/payments/owner-test-access";
 import { PayPage } from "./PayPage";
 
 export const dynamic = "force-dynamic";
@@ -51,6 +52,7 @@ export default async function PayRoute({
   const tenant = await resolveTenantBySlug(tenantSlug);
   if (!tenant) notFound();
 
+  const allowOwnerTest = await canUseOwnerTestCard(tenant.id);
   const [order, cardProvider] = await Promise.all([
     prisma.order.findFirst({
       where: { id: orderId, tenantId: tenant.id },
@@ -65,7 +67,7 @@ export default async function PayRoute({
         customerEmailSnap: true,
       },
     }),
-    getActiveCardProviderSummary(tenant.id),
+    getActiveCardProviderSummary(tenant.id, { allowOwnerTest }),
   ]);
   if (!order) notFound();
 
@@ -80,7 +82,7 @@ export default async function PayRoute({
   let initialPaymentUrl: string | null = null;
   if (cardEnabled && isOpenForPayment) {
     try {
-      const initResult = await initiateOrderPayment(order.id);
+      const initResult = await initiateOrderPayment(order.id, { allowOwnerTest });
       if (initResult.ok) {
         initialAuthCode = initResult.data.sdk_auth_code;
         initialPaymentUrl = initResult.data.payment_url;

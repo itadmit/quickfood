@@ -2,7 +2,7 @@ import { handler, apiJson, apiError } from "@/lib/api-response";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { prisma } from "@/lib/db/client";
 import { activePauseUntil, effectiveBranchStatus } from "@/lib/branch-hours";
-import { PaymentProvider } from "@prisma/client";
+import { getActiveCardProviderSummary } from "@/lib/payments/factory";
 
 export const runtime = "nodejs";
 
@@ -41,15 +41,7 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ slug: st
   // Payment methods this tenant accepts. Cash is just a tenant-level boolean;
   // anything else (card/bit/apple_pay/google_pay) is gated by an active card
   // provider - Grow OR CardCom. The customer picks from this list at checkout.
-  const cardConfig = await prisma.paymentProviderConfig.findFirst({
-    where: {
-      tenantId: tenant.id,
-      isActive: true,
-      provider: { not: PaymentProvider.cash },
-    },
-    select: { id: true },
-  });
-  const cardActive = !!cardConfig;
+  const cardActive = !!(await getActiveCardProviderSummary(tenant.id));
 
   const paymentMethods: string[] = [];
   if (tenant.acceptsCash) paymentMethods.push("cash");
