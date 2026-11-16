@@ -15,6 +15,8 @@ import { Toggle } from "@/components/shared/Toggle";
 import { ALL_TAG_LABELS } from "@/lib/dietary-tags";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { readMenuView, writeMenuView } from "./menu-view-state";
+import { skipNextScrollReset } from "@/components/shared/ScrollToTop";
 
 interface Category {
   id: string;
@@ -341,7 +343,13 @@ export function ItemEditor({
         window.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }
-      router.push("/dashboard/menu");
+      const view = readMenuView();
+      writeMenuView({
+        itemId: result.item?.id ?? item?.id ?? null,
+        ...(view && view.cat !== "all" && view.cat !== data.categoryId ? { cat: data.categoryId } : {}),
+      });
+      skipNextScrollReset("/dashboard/menu");
+      router.push("/dashboard/menu", { scroll: false });
       router.refresh();
     } finally {
       setBusy(false);
@@ -400,6 +408,8 @@ export function ItemEditor({
           <span className="flex items-center gap-3 min-w-0">
             <Link
               href="/dashboard/menu"
+              scroll={false}
+              onClick={() => skipNextScrollReset("/dashboard/menu")}
               className="w-9 h-9 rounded-xl bg-white border-2 border-black grid place-items-center shrink-0 shadow-[0_2px_0_#000] hover:bg-black/5 transition"
               aria-label="חזרה"
             >

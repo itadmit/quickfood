@@ -8,6 +8,12 @@ import { usePathname } from "next/navigation";
 // SYNCHRONOUSLY before paint on the client, but doesn't trip SSR.
 const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
+let skipResetFor: string | null = null;
+
+export function skipNextScrollReset(pathname: string) {
+  skipResetFor = pathname;
+}
+
 /**
  * Force every route change to start at the very top - no remembered scroll
  * position, no mid-page jump, no "I just scrolled to the bottom of a long
@@ -79,6 +85,10 @@ export function ScrollToTop() {
     // behind the modal to the top, which the customer perceives as
     // the background jumping.
     if (isInterceptedModalTransition(prev, pathname)) return;
+    if (skipResetFor === pathname) {
+      skipResetFor = null;
+      return;
+    }
     jumpToTop();
     // Then again next frame for the back/forward + streaming-Suspense cases
     // where the new layout's children mount AFTER our sync effect runs.

@@ -18,6 +18,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { resolveCategoryStyle } from "@/lib/category-style";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
 import { DragList } from "@/components/shared/DragList";
+import { readMenuView, writeMenuView } from "./menu-view-state";
 
 /** Three-bar drag grip - matches the "סדר" affordance merchants expect. */
 function ReorderGrip() {
@@ -98,6 +99,56 @@ export function MenuList({
   const [reorderMode, setReorderMode] = useState(false);
   const [orderDraft, setOrderDraft] = useState<Item[]>([]);
   const [savingOrder, setSavingOrder] = useState(false);
+
+  const [viewRestored, setViewRestored] = useState(false);
+  const [scrollToId, setScrollToId] = useState<string | null>(null);
+  const [flashId, setFlashId] = useState<string | null>(null);
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    const saved = readMenuView();
+    if (saved) {
+      if (saved.cat === "all" || categories.some((c) => c.id === saved.cat)) setActiveCat(saved.cat);
+      if (saved.search) setSearch(saved.search);
+      if (saved.itemId) {
+        setScrollToId(saved.itemId);
+        writeMenuView({ itemId: null });
+      }
+    }
+    setViewRestored(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    if (!viewRestored) return;
+    writeMenuView({ cat: activeCat, search });
+  }, [viewRestored, activeCat, search]);
+
+  useEffect(() => {
+    if (!viewRestored || !scrollToId) return;
+    const id = scrollToId;
+    const raf = requestAnimationFrame(() => {
+      const el = document.querySelector<HTMLElement>(`[data-menu-item-id="${CSS.escape(id)}"]`);
+      if (el) {
+        el.scrollIntoView({ block: "center", behavior: "instant" });
+        setFlashId(id);
+      }
+      setScrollToId(null);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [viewRestored, scrollToId, activeCat, search, localItems]);
+
+  useEffect(() => {
+    if (!flashId) return;
+    const t = setTimeout(() => setFlashId(null), 1600);
+    return () => clearTimeout(t);
+  }, [flashId]);
+
+  function openItem(id: string) {
+    writeMenuView({ cat: activeCat, search, itemId: id });
+    router.push(`/dashboard/menu/${id}`);
+  }
 
   function pushToast(kind: ToastKind, message: string) {
     setToast({ id: Date.now(), kind, message });
@@ -475,15 +526,17 @@ export function MenuList({
         {!reorderMode && filtered.map((item) => (
           <div
             key={item.id}
-            onClick={() => router.push(`/dashboard/menu/${item.id}`)}
+            data-menu-item-id={item.id}
+            onClick={() => openItem(item.id)}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
-              if (e.key === "Enter") router.push(`/dashboard/menu/${item.id}`);
+              if (e.key === "Enter") openItem(item.id);
             }}
             className={cn(
-              "flex items-center gap-3 px-3 lg:px-4 py-3 border-b border-qf-line-soft last:border-b-0 hover:bg-qf-line-soft/40 cursor-pointer lg:grid lg:grid-cols-[60px_44px_1fr_140px_100px_120px_100px_60px]",
+              "flex items-center gap-3 px-3 lg:px-4 py-3 border-b border-qf-line-soft last:border-b-0 hover:bg-qf-line-soft/40 cursor-pointer transition-colors duration-700 lg:grid lg:grid-cols-[60px_44px_1fr_140px_100px_120px_100px_60px]",
               !item.available && "opacity-55",
+              flashId === item.id && "bg-(--qf-soft)",
             )}
           >
             <div className="w-12 h-12 lg:w-10 lg:h-10 rounded-xl overflow-hidden shrink-0">
@@ -547,6 +600,7 @@ export function MenuList({
             <div onClick={(e) => e.stopPropagation()}>
               <RowActions
                 item={item}
+                onEdit={() => writeMenuView({ cat: activeCat, search, itemId: item.id })}
                 onPreview={() => setPreviewId(item.id)}
                 onDuplicate={() => duplicateItem(item)}
                 onDelete={() => setPendingDelete(item)}
@@ -718,11 +772,13 @@ function CsvImportModal({ onClose }: { onClose: () => void }) {
 
 function RowActions({
   item,
+  onEdit,
   onPreview,
   onDuplicate,
   onDelete,
 }: {
   item: Item;
+  onEdit: () => void;
   onPreview: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
@@ -799,7 +855,10 @@ function RowActions({
             <Link
               href={`/dashboard/menu/${item.id}`}
               role="menuitem"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                onEdit();
+                setOpen(false);
+              }}
               className="px-3 py-2 hover:bg-qf-line-soft flex items-center gap-2"
             >
               <IcoEdit s={16} c="#3a4a40" />
