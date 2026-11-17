@@ -133,18 +133,24 @@ export class CardComProvider extends BasePaymentProvider {
   // merchant has stored - flipping "Sandbox" on is meant to JUST WORK (mirrors
   // GrowProvider). This also shields us from browser password-manager autofill
   // dumping the merchant's dashboard login into the API credential fields.
+  private get useSharedTestTerminal(): boolean {
+    if (!this.config!.testMode) return false;
+    const c = this.config!.credentials;
+    return !(c.terminalNumber?.trim() && c.apiName?.trim() && c.apiPassword?.trim());
+  }
+
   private get terminalNumber(): number {
-    if (this.config!.testMode) return Number(CARDCOM_TEST_TERMINAL);
+    if (this.useSharedTestTerminal) return Number(CARDCOM_TEST_TERMINAL);
     return Number(this.config!.credentials.terminalNumber);
   }
 
   private get apiName(): string {
-    if (this.config!.testMode) return CARDCOM_TEST_API_NAME;
+    if (this.useSharedTestTerminal) return CARDCOM_TEST_API_NAME;
     return this.config!.credentials.apiName!;
   }
 
   private get apiPassword(): string {
-    if (this.config!.testMode) return CARDCOM_TEST_API_PASSWORD;
+    if (this.useSharedTestTerminal) return CARDCOM_TEST_API_PASSWORD;
     return this.config!.credentials.apiPassword!;
   }
 
@@ -252,7 +258,10 @@ export class CardComProvider extends BasePaymentProvider {
       return {
         success: false,
         errorCode: String(response.ResponseCode ?? "cardcom_initiate_failed"),
-        errorMessage: response.Description || "Failed to create CardCom payment page",
+        errorMessage:
+          response.ResponseCode === 603
+            ? "פרטי המסוף ב-CardCom שגויים. יש לבדוק מספר מסוף, שם וסיסמת API בהגדרות התשלום."
+            : response.Description || "Failed to create CardCom payment page",
         providerResponse: response as unknown as Record<string, unknown>,
       };
     } catch (error) {

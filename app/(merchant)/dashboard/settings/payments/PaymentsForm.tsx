@@ -512,7 +512,7 @@ export function PaymentsForm({
               label="מצב פעולה"
               hint={
                 v.cardcom.test_mode
-                  ? "סביבת טסטים = מסוף הבדיקות (1000) המשותף. אין צורך למלא פרטים."
+                  ? "סביבת טסטים = מסוף הבדיקות שקיבלתם מ-CardCom. רק בעל החנות רואה תשלום באשראי."
                   : "מסוף חי = חיוב כרטיסים אמיתיים. חובה למלא מספר מסוף, שם וסיסמת API."
               }
             >
@@ -584,23 +584,22 @@ export function PaymentsForm({
           {v.cardcom.test_mode ? (
             <div className="rounded-xl bg-qf-green-soft/40 border border-qf-green-deep/20 px-4 py-3 text-sm space-y-1">
               <div className="font-bold text-qf-green-deep">
-                סביבת טסטים פעילה - אין צורך במילוי
+                סביבת טסטים - מלאו את פרטי מסוף הבדיקות מ-CardCom
               </div>
               <p className="text-qf-ink2 leading-relaxed">
-                משתמש במסוף הבדיקות של CardCom. כרטיס בדיקה:{" "}
-                <span dir="ltr" className="tnum">4580 0000 0000 0000</span> · תוקף 12/30 · CVV 123.
+                מספר מסוף, שם וסיסמת API של מסוף הבדיקות. לא נגבה כסף אמיתי.
               </p>
             </div>
           ) : (
-            <>
-              <div className="rounded-xl bg-qf-yolk-soft/60 border border-qf-yolk/30 px-4 py-3 text-sm">
-                <div className="font-bold mb-1">מסוף חי - מלא את פרטי ה-API</div>
-                <p className="text-qf-ink2 leading-relaxed">
-                  שלושת השדות מגיעים מחשבון CardCom שלך (הגדרות מסוף / פרטי מפתח).
-                  סיסמת ה-API דרושה גם לביצוע זיכויים.
-                </p>
-              </div>
-              <Field label="מספר מסוף (Terminal)" hint="דוגמה: 1000">
+            <div className="rounded-xl bg-qf-yolk-soft/60 border border-qf-yolk/30 px-4 py-3 text-sm">
+              <div className="font-bold mb-1">מסוף חי - מלא את פרטי ה-API</div>
+              <p className="text-qf-ink2 leading-relaxed">
+                שלושת השדות מגיעים מחשבון CardCom שלך (הגדרות מסוף / פרטי מפתח).
+                סיסמת ה-API דרושה גם לביצוע זיכויים.
+              </p>
+            </div>
+          )}
+              <Field label="מספר מסוף (Terminal)" hint="מספר המסוף ב-CardCom">
                 <input
                   value={v.cardcom.terminal_number}
                   onChange={(e) => setCardcom("terminal_number", e.target.value.trim())}
@@ -639,8 +638,6 @@ export function PaymentsForm({
                   className="w-full px-3.5 py-2.5 rounded-xl border border-qf-line-dash focus:border-(--qf-primary) outline-none font-mono text-sm"
                 />
               </Field>
-            </>
-          )}
         </div>
       )}
 

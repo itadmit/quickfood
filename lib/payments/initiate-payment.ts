@@ -180,7 +180,7 @@ export async function initiateOrderPayment(
       ok: false,
       code: result.errorCode || "payment_initiate_failed",
       message: result.errorMessage || "Failed to initiate payment",
-      status: 502,
+      status: 422,
     };
   }
 
