@@ -64,6 +64,7 @@ async function findTenantByCustomerId(customerId: string) {
       fbc: true,
       merchantUsers: {
         where: { role: "owner" },
+        orderBy: { createdAt: "asc" },
         take: 1,
         select: { email: true, phone: true },
       },

@@ -54,6 +54,7 @@ export const POST = handler(async (req: Request) => {
       introPriceUntil: true,
       merchantUsers: {
         where: { role: "owner" },
+        orderBy: { createdAt: "asc" },
         select: { email: true, phone: true },
         take: 1,
       },
