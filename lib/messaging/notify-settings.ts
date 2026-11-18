@@ -97,16 +97,22 @@ function defaultFromLegacy(legacy: NotifyChannel): OrderNotifySettings {
 export interface MerchantNewOrderSettings {
   email: boolean;
   whatsapp: boolean;
+  /** Where the new-order email goes. null = the owner's account email. */
+  emailTo: string | null;
 }
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function resolveMerchantNewOrderSettings(raw: unknown): MerchantNewOrderSettings {
   const src =
     raw && typeof raw === "object"
       ? ((raw as Record<string, unknown>).merchant_new_order as Record<string, unknown> | undefined)
       : undefined;
+  const to = typeof src?.emailTo === "string" ? src.emailTo.trim() : "";
   return {
     email: asBool(src?.email, true),
     whatsapp: false,
+    emailTo: EMAIL_RE.test(to) ? to : null,
   };
 }
 

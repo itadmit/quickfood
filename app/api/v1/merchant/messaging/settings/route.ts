@@ -66,6 +66,14 @@ const Schema = z.object({
     .object({
       email: z.boolean(),
       whatsapp: z.boolean().refine((v): boolean => !v, "ערוץ וואטסאפ אינו זמין כרגע"),
+      // Optional dedicated inbox for new-order emails. Empty/null = owner's email.
+      emailTo: z
+        .string()
+        .trim()
+        .max(254)
+        .refine((v) => v === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), "כתובת מייל לא תקינה")
+        .nullable()
+        .optional(),
     })
     .optional(),
   courier_assigned: z.object({ sms: z.boolean() }).optional(),
@@ -249,8 +257,14 @@ export const PATCH = handler(async (req: Request) => {
     const merged: Record<string, unknown> = {
       ...stored,
       ...next,
-      merchant_new_order:
-        body.merchant_new_order ?? resolveMerchantNewOrderSettings(tenant.notifySettings),
+      merchant_new_order: (() => {
+        const current = resolveMerchantNewOrderSettings(tenant.notifySettings);
+        const sent = body.merchant_new_order;
+        if (!sent) return current;
+        // Clients that don't know about emailTo (older mobile builds) must not wipe it.
+        const emailTo = sent.emailTo === undefined ? current.emailTo : sent.emailTo || null;
+        return { email: sent.email, whatsapp: sent.whatsapp, emailTo };
+      })(),
     };
     if (body.courier_assigned) merged.courier_assigned = body.courier_assigned;
     if (reviewTextSent) {

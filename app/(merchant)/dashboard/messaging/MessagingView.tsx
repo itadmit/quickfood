@@ -85,7 +85,7 @@ export function MessagingView({
   smsSender: string;
   billingReady: boolean;
   orderEvents: OrderNotifySettings;
-  merchantNewOrder: { email: boolean; whatsapp: boolean };
+  merchantNewOrder: { email: boolean; whatsapp: boolean; emailTo: string | null };
   review: { enabled: boolean; public: boolean; channel: NotifyChannel; delayMinutes: number; text: string };
   courierAssigned: { sms: boolean };
   availability: Availability;
@@ -624,7 +624,7 @@ function NotificationsTab({
   availability,
 }: {
   orderEvents: OrderNotifySettings;
-  merchantNewOrder: { email: boolean; whatsapp: boolean };
+  merchantNewOrder: { email: boolean; whatsapp: boolean; emailTo: string | null };
   review: { enabled: boolean; public: boolean; channel: NotifyChannel; delayMinutes: number; text: string };
   courierAssigned: { sms: boolean };
   smsSender: string;
@@ -673,7 +673,7 @@ function NotificationsTab({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           order_events: events,
-          merchant_new_order: ownerAlert,
+          merchant_new_order: { ...ownerAlert, emailTo: ownerAlert.emailTo?.trim() || null },
           review: {
             enabled: rev.enabled,
             public: rev.public,
@@ -717,9 +717,22 @@ function NotificationsTab({
             />
             <span>
               מייל
-              <span className="text-xs text-qf-mute"> · נשלח לכתובת המייל של בעל החשבון</span>
+              <span className="text-xs text-qf-mute"> · נשלח לכתובת המייל של בעל החשבון, או לכתובת שתגדירו כאן</span>
             </span>
           </label>
+          {ownerAlert.email && (
+            <label className="block space-y-1">
+              <span className="text-sm font-medium">מייל לקבלת הזמנות</span>
+              <input
+                type="email"
+                dir="ltr"
+                value={ownerAlert.emailTo ?? ""}
+                onChange={(e) => setOwnerAlert((x) => ({ ...x, emailTo: e.target.value }))}
+                placeholder="השאירו ריק כדי לשלוח למייל של בעל החשבון"
+                className="w-full rounded-xl border border-qf-line-dash px-3 py-2 text-sm text-left placeholder:text-right"
+              />
+            </label>
+          )}
 
         </section>
 

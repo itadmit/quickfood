@@ -100,7 +100,8 @@ export async function notifyMerchantNewOrder(orderId: string): Promise<void> {
     orderBy: { createdAt: "asc" },
     select: { email: true, phone: true },
   });
-  if (!owner) return;
+  const emailTo = settings.emailTo ?? owner?.email ?? null;
+  if (!owner && !emailTo) return;
 
   const businessName = order.tenant.name;
   const dashboardUrl = `${appBaseUrl()}/dashboard/orders`;
@@ -109,7 +110,7 @@ export async function notifyMerchantNewOrder(orderId: string): Promise<void> {
     null;
   const addressLine = order.method === "delivery" ? formatAddress(order.deliveryAddress) : null;
 
-  if (settings.email && owner.email) {
+  if (settings.email && emailTo) {
     const items: OrderConfirmedItem[] = order.items.map((it) => ({
       name: it.nameSnapshot,
       size: it.sizeSnapshot,
@@ -137,7 +138,7 @@ export async function notifyMerchantNewOrder(orderId: string): Promise<void> {
     });
     await sendEmail({
       tenantId: order.tenantId,
-      to: owner.email,
+      to: emailTo,
       subject: `הזמנה חדשה ב-${businessName} · ${order.number}`,
       body: text,
       html,
@@ -147,7 +148,7 @@ export async function notifyMerchantNewOrder(orderId: string): Promise<void> {
     }).catch((err) => console.warn("[notify-merchant] email failed", err));
   }
 
-  if (settings.whatsapp && owner.phone) {
+  if (settings.whatsapp && owner?.phone) {
     const itemLines = order.items
       .map((it) => `• ${it.quantity}× ${it.nameSnapshot}`)
       .join("\n");
