@@ -183,6 +183,15 @@ export function ItemEditor({
     }));
   }
 
+  const [customTag, setCustomTag] = useState("");
+
+  function addCustomTag() {
+    const t = customTag.trim().replace(/\s+/g, " ").slice(0, 30);
+    if (!t) return;
+    setData((d) => (d.tags.includes(t) ? d : { ...d, tags: [...d.tags, t] }));
+    setCustomTag("");
+  }
+
   function addSize() {
     setData((d) => ({
       ...d,
@@ -847,6 +856,43 @@ export function ItemEditor({
                   {t}
                 </button>
               ))}
+              {data.tags
+                .filter((t) => !TAGS.includes(t))
+                .map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => toggleTag(t)}
+                    title="לחצו להסרת התגית"
+                    className="px-2.5 py-1.5 rounded-full text-xs border transition bg-(--qf-primary) text-white border-transparent"
+                  >
+                    {t} ✕
+                  </button>
+                ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={customTag}
+                maxLength={30}
+                onChange={(e) => setCustomTag(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addCustomTag();
+                  }
+                }}
+                placeholder="תגית משלכם, למשל: מעושן"
+                className="flex-1 min-w-0 rounded-xl border border-qf-line-dash px-3 py-2 text-sm bg-white"
+              />
+              <button
+                type="button"
+                onClick={addCustomTag}
+                disabled={!customTag.trim()}
+                className="px-3 py-2 rounded-xl text-sm font-medium border border-qf-line-dash bg-white disabled:opacity-40"
+              >
+                הוספה
+              </button>
             </div>
           </section>
 
