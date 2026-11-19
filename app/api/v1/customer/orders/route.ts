@@ -293,7 +293,11 @@ export const POST = handler(async (req: Request) => {
         err.code === "orders_paused"
           ? 409
           : 422;
-      return apiError(err.code, errorMessageFor(err.code), httpCode, err.field);
+      const message =
+        err.code === "required_group_missing" && err.detail
+          ? `ב${err.detail.item} חסרה בחירה של ${err.detail.group}. יש להסיר את המנה מהסל ולהוסיף אותה שוב עם הבחירה`
+          : errorMessageFor(err.code);
+      return apiError(err.code, message, httpCode, err.field);
     }
     throw err;
   }

@@ -161,7 +161,7 @@ export interface CreateOrderResult {
 }
 
 export class CartValidationError extends Error {
-  constructor(public code: string, public field?: string) {
+  constructor(public code: string, public field?: string, public detail?: { item: string; group: string }) {
     super(code);
     this.name = "CartValidationError";
   }
@@ -302,7 +302,11 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       // required as min>=1 regardless of what the row says.
       const requiredFloor = effectiveRequired ? Math.max(1, effectiveMin) : effectiveMin;
       if (effectiveRequired && unitsInGroup < requiredFloor) {
-        throw new CartValidationError("required_group_missing", group.id);
+        throw new CartValidationError(
+          "required_group_missing",
+          group.id,
+          { item: item.name.trim(), group: (fromSet?.name ?? group.name).trim() },
+        );
       }
       if (unitsInGroup > effectiveMax) {
         throw new CartValidationError("too_many_in_group", group.id);
