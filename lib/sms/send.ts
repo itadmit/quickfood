@@ -10,6 +10,7 @@ import { sendPoplySms } from "@/lib/poply/client";
 import { normalizeSmsPhone } from "./phone";
 import { smsFailureMessage } from "./messages";
 import { prisma } from "@/lib/db/client";
+import { alertNoSmsBalance } from "./no-balance-alert";
 
 const DEFAULT_SENDER = process.env.SMS_DEFAULT_SENDER ?? "QuickFood";
 
@@ -80,6 +81,9 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
       where: { id: log.id },
       data: { status: "skipped_no_balance" },
     });
+    await alertNoSmsBalance(input.tenantId, log.id).catch((err) =>
+      console.warn("[sms] no-balance alert failed", err),
+    );
     return { status: "skipped_no_balance", logId: log.id };
   }
 
