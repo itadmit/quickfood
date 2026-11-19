@@ -18,7 +18,6 @@ import { priceGroupOptions, type PricedOption, type GroupPricingConfig } from "@
 import { weightPrice, MIN_WEIGHT_GRAMS, MAX_WEIGHT_GRAMS } from "@/lib/pricing";
 import { cn } from "@/lib/cn";
 import { useLocale } from "@/components/customer/LocaleProvider";
-import { tagLabel } from "@/lib/dietary-tags";
 import { canPreorderWhenClosed } from "@/components/customer/OrderPauseNotice";
 
 const KIOSK_NOTE_PRESETS = [
@@ -115,7 +114,7 @@ export function ItemDetail({
   addSource?: CartLineSource;
 }) {
   const router = useRouter();
-  const { t, lang } = useLocale();
+  const { t, lang, tTag } = useLocale();
   const { add, updateLine, tenant, branch, lines } = useCart();
   const isEditing = !!editLine;
   const upsellSizeNudge =
@@ -738,7 +737,7 @@ export function ItemDetail({
                 key={t}
                 className="text-[10px] bg-qf-green-soft text-qf-green-deep px-2 py-0.5 rounded-md font-medium"
               >
-                {tagLabel(t, lang)}
+                {tTag(t)}
               </span>
             ))}
           </div>

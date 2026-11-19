@@ -4,6 +4,7 @@ import { createContext, useContext, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { dirFor, LANG_COOKIE, type Lang } from "@/lib/i18n/langs";
 import { t as translate } from "@/lib/i18n/dictionary";
+import { findTag, tagLabel } from "@/lib/dietary-tags";
 
 interface LocaleContextValue {
   lang: Lang;
@@ -13,6 +14,9 @@ interface LocaleContextValue {
   t: (key: string) => string;
   tc: (key: string, fallback: string | null | undefined) => string;
   tCity: (city: string) => string;
+  /** Menu-item tag in the active language: built-in tags from the static
+      dictionary, merchant free-text tags from the auto-translated content. */
+  tTag: (tag: string) => string;
   /** Persist the choice (cookie) and re-render the server tree in that language. */
   setLang: (lang: Lang) => void;
 }
@@ -33,6 +37,7 @@ export function useLocale(): LocaleContextValue {
     t: (k) => translate(k, "he"),
     tc: (_k, fallback) => fallback ?? "",
     tCity: (city) => city,
+    tTag: (tag) => tag,
     setLang: () => {},
   };
 }
@@ -69,6 +74,8 @@ export function LocaleProvider({
     t: (key) => translate(key, lang),
     tc: (key, fallback) => (lang === "he" ? fallback ?? "" : content[key] ?? fallback ?? ""),
     tCity: (city) => (lang === "he" ? city : content[`city:${city}`] ?? city),
+    tTag: (tag) =>
+      lang === "he" ? tag : findTag(tag) ? tagLabel(tag, lang) : content[`tag:${tag}`] ?? tag,
     setLang,
   };
 

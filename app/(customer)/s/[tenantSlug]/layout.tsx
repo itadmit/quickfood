@@ -27,7 +27,8 @@ import { QrLandingModal } from "@/components/customer/QrLandingModal";
 import { LocaleProvider } from "@/components/customer/LocaleProvider";
 import { cookies } from "next/headers";
 import { dirFor, LANG_COOKIE, resolveLang, type Lang } from "@/lib/i18n/langs";
-import { cityEntityId, contentKey, loadStorefrontContent } from "@/lib/i18n/content";
+import { cityEntityId, contentKey, loadStorefrontContent, tagEntityId } from "@/lib/i18n/content";
+import { findTag } from "@/lib/dietary-tags";
 import type { TransItem } from "@/lib/i18n/translate";
 
 export async function generateMetadata({
@@ -146,18 +147,40 @@ export default async function CustomerLayout({
   }
 
   const cities = Array.from(new Set((branch?.zones ?? []).flatMap((z) => z.cities)));
+  // Free-text tags the merchant typed themselves have no static dictionary
+  // entry, so they go through the same cached auto-translation as other
+  // merchant content. Skipped for Hebrew (source language).
+  const customTags =
+    lang === "he"
+      ? []
+      : Array.from(
+          new Set(
+            (
+              await prisma.menuItem.findMany({
+                where: { tenantId: tenant.id, available: true, NOT: { tags: { isEmpty: true } } },
+                select: { tags: true },
+              })
+            ).flatMap((i) => i.tags),
+          ),
+        ).filter((t) => t.trim() && !findTag(t));
   const tenantTexts: TransItem[] = [
     { entityType: "tenant", entityId: tenant.id, field: "cutleryLabel", text: tenant.cutleryLabel ?? "" },
     { entityType: "tenant", entityId: tenant.id, field: "preUpsellTitle", text: tenant.preCheckoutUpsellTitle ?? "" },
     { entityType: "tenant", entityId: tenant.id, field: "preUpsellSubtitle", text: tenant.preCheckoutUpsellSubtitle ?? "" },
     { entityType: "branch", entityId: branch?.id ?? tenant.id, field: "address", text: branch?.address ?? "" },
     ...cities.map((c) => ({ entityType: "city", entityId: cityEntityId(tenant.id, c), field: "name", text: c })),
+    ...customTags.map((t) => ({ entityType: "item_tag", entityId: tagEntityId(tenant.id, t), field: "label", text: t })),
   ];
   const rawContent = await loadStorefrontContent(tenant.id, lang, tenantTexts);
   const content: Record<string, string> = { ...rawContent };
   for (const c of cities) {
     const k = contentKey("city", cityEntityId(tenant.id, c), "name");
     if (rawContent[k]) content[`city:${c}`] = rawContent[k];
+    delete content[k];
+  }
+  for (const t of customTags) {
+    const k = contentKey("item_tag", tagEntityId(tenant.id, t), "label");
+    if (rawContent[k]) content[`tag:${t}`] = rawContent[k];
     delete content[k];
   }
   const addrKey = contentKey("branch", branch?.id ?? tenant.id, "address");

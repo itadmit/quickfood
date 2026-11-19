@@ -15,6 +15,12 @@ export function cityEntityId(tenantId: string, city: string): string {
   return `${tenantId}:${city}`;
 }
 
+/** Translation entityId for a merchant's free-text menu tag (not one of the
+ *  built-in tags in lib/dietary-tags, which have a static dictionary). */
+export function tagEntityId(tenantId: string, label: string): string {
+  return `${tenantId}:${label}`;
+}
+
 const CART_ENTITY_TYPES = ["menu_item", "item_option", "option_group", "item_size"];
 
 export async function loadStorefrontContent(

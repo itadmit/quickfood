@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { resolveCategoryStyle, type CategoryColorKey } from "@/lib/category-style";
-import { FILTERABLE_TAG_LABELS, findTag, tagLabel, TONE_CLASSES } from "@/lib/dietary-tags";
+import { FILTERABLE_TAG_LABELS, findTag, TONE_CLASSES } from "@/lib/dietary-tags";
 import { useLocale } from "@/components/customer/LocaleProvider";
 import { cn } from "@/lib/cn";
 
@@ -173,7 +173,7 @@ export function MenuList({
   featuredBadgeLabel,
   themeDefaultColor,
 }: Props) {
-  const { t: tr, lang } = useLocale();
+  const { t: tr, lang, tTag } = useLocale();
   const featuredLabel = featuredBadgeLabel?.trim() || tr("menu.chefPick");
   const availableTags = useMemo(() => {
     const usage = new Set<string>();
@@ -276,7 +276,7 @@ export function MenuList({
                     : cn(tone.bg, tone.text, "border-transparent hover:bg-opacity-80"),
                 )}
               >
-                {tagLabel(t, lang)}
+                {tTag(t)}
               </button>
             );
           })}
@@ -420,7 +420,7 @@ export function MenuList({
                                       tone.text,
                                     )}
                                   >
-                                    {tagLabel(t, lang)}
+                                    {tTag(t)}
                                   </span>
                                 );
                               })}
