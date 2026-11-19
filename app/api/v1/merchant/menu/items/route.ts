@@ -116,6 +116,15 @@ export const POST = handler(async (req: Request) => {
 
   const resolveOptions = await resolveGroupOptions(body.option_groups);
 
+  const position =
+    body.position ??
+    ((
+      await prisma.menuItem.aggregate({
+        where: { tenantId: session.tenantId, categoryId: body.category_id },
+        _max: { position: true },
+      })
+    )._max.position ?? -1) + 1;
+
   const item = await prisma.menuItem.create({
     data: {
       tenantId: session.tenantId,
@@ -133,7 +142,7 @@ export const POST = handler(async (req: Request) => {
       imageNote: body.image_note ?? null,
       available: body.available,
       tags: body.tags,
-      position: body.position,
+      position,
       sku: body.sku,
       availableFrom: body.available_from ?? null,
       availableTo: body.available_to ?? null,

@@ -260,7 +260,7 @@ export const MenuItemInputSchema = z.object({
   image_note: z.string().max(80).nullable().optional(),
   available: z.boolean().default(true),
   tags: z.array(z.string()).default([]),
-  position: z.number().int().default(0),
+  position: z.number().int().optional(),
   sku: z.string().max(40).optional(),
   // Time-of-day windowing - minutes since midnight, 0..1439. Both null =
   // no time restriction. availableDays is a 7-bit mask, null = every day.

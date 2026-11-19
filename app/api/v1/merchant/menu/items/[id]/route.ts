@@ -95,7 +95,7 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
   const { id } = await params;
   const body = MenuItemInputSchema.parse(await req.json());
 
-  const existing = await prisma.menuItem.findUnique({ where: { id }, select: { tenantId: true, basePrice: true, compareAtPrice: true } });
+  const existing = await prisma.menuItem.findUnique({ where: { id }, select: { tenantId: true, categoryId: true, basePrice: true, compareAtPrice: true } });
   if (!existing) return apiError("not_found", "פריט לא נמצא", 404);
   if (existing.tenantId !== session.tenantId) return apiError("forbidden", "אין הרשאה", 403);
 
@@ -111,6 +111,15 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
   });
   if (!cat || cat.tenantId !== session.tenantId) {
     return apiError("validation_error", "קטגוריה לא תקינה", 422, "category_id");
+  }
+
+  let position = body.position;
+  if (position === undefined && existing.categoryId !== body.category_id) {
+    const max = await prisma.menuItem.aggregate({
+      where: { tenantId: session.tenantId, categoryId: body.category_id },
+      _max: { position: true },
+    });
+    position = (max._max.position ?? -1) + 1;
   }
 
   // Replace sizes + option groups (simple strategy)
@@ -132,7 +141,7 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
         imageNote: body.image_note ?? null,
         available: body.available,
         tags: body.tags,
-        position: body.position,
+        ...(position !== undefined && { position }),
         sku: body.sku,
         availableFrom: body.available_from ?? null,
         availableTo: body.available_to ?? null,

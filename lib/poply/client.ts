@@ -36,8 +36,25 @@ export interface PoplySendResult {
   error?: string;
 }
 
+const RETRY_DELAYS_MS = [500, 1500];
+const RETRYABLE_HTTP = new Set([503, 504]);
+
 async function post(path: string, body: unknown): Promise<PoplySendResult> {
   if (!poplyConfigured()) return { ok: false, error: "poply_not_configured" };
+  let result = await postOnce(path, body);
+  for (const delay of RETRY_DELAYS_MS) {
+    if (result.ok || !result.retryable) break;
+    console.warn(`[poply] ${path} transient failure, retrying`, result.error);
+    await new Promise((r) => setTimeout(r, delay));
+    result = await postOnce(path, body);
+  }
+  return { ok: result.ok, id: result.id, error: result.error };
+}
+
+async function postOnce(
+  path: string,
+  body: unknown,
+): Promise<PoplySendResult & { retryable?: boolean }> {
   try {
     const res = await fetch(`${BASE}${path}`, {
       method: "POST",
@@ -51,11 +68,19 @@ async function post(path: string, body: unknown): Promise<PoplySendResult> {
       | { ok?: boolean; id?: string; error?: string }
       | null;
     if (!res.ok || !data?.ok) {
-      return { ok: false, error: data?.error ?? `poply_http_${res.status}` };
+      return {
+        ok: false,
+        error: data?.error ?? `poply_http_${res.status}`,
+        retryable: RETRYABLE_HTTP.has(res.status),
+      };
     }
     return { ok: true, id: data.id };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "poply_network_error" };
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "poply_network_error",
+      retryable: true,
+    };
   }
 }
 

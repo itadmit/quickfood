@@ -287,7 +287,6 @@ export function ItemEditor({
         image_note: data.imageNote?.trim() ? data.imageNote.trim() : null,
         available: data.available,
         tags: data.tags,
-        position: 0,
         sku: data.sku ?? undefined,
         available_from: data.availableFrom,
         available_to: data.availableTo,
