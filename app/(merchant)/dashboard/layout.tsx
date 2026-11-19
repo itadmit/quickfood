@@ -19,6 +19,7 @@ import { OnboardingWelcome } from "@/components/merchant/OnboardingWelcome";
 import { SupportFAB } from "@/components/merchant/SupportFAB";
 import { DashboardFooter } from "@/components/merchant/DashboardFooter";
 import { MerchantPushSubscribe } from "@/components/merchant/MerchantPushSubscribe";
+import { GlobalNewOrderAlert } from "@/components/merchant/GlobalNewOrderAlert";
 import { SessionKeepAlive } from "@/components/merchant/SessionKeepAlive";
 import { RoleRouteGuard } from "@/components/merchant/RoleRouteGuard";
 import { TermsAckGate } from "@/components/merchant/TermsAckGate";
@@ -190,6 +191,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               <div className="mx-auto w-full max-w-7xl space-y-3">
                 <RoleRouteGuard role={user.role} />
                 <MerchantPushSubscribe />
+                <GlobalNewOrderAlert daysDelivery={tenant.branches[0]?.etaUnit === "days"} />
                 {children}
               </div>
             </main>
@@ -241,6 +243,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               <div className="mx-auto w-full max-w-7xl space-y-3">
                 <RoleRouteGuard role={user.role} />
                 <MerchantPushSubscribe />
+                <GlobalNewOrderAlert daysDelivery={tenant.branches[0]?.etaUnit === "days"} />
                 {children}
               </div>
             </main>
