@@ -35,6 +35,12 @@ const JOBS: Job[] = [
     description: "Send review reminders whose delayed QStash publish was lost (e.g. daily quota 429).",
   },
   {
+    scheduleId: "quickfood-sms-retry-sweep",
+    path: "/api/internal/jobs/sms-retry-sweep",
+    cron: "*/5 * * * *",
+    description: "Resend order / courier / review SMS that failed or got stuck in pending (max 3 attempts, 30 min window).",
+  },
+  {
     scheduleId: "quickfood-birthday-coupons",
     path: "/api/internal/loyalty/birthday-coupons",
     // 06:00 UTC ≈ 09:00 Israel - issue today's birthday coupons + greetings.
