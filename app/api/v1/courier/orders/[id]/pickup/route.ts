@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireCourier } from "@/lib/auth/courier-session";
 import { prisma } from "@/lib/db/client";
@@ -39,8 +40,10 @@ export const PATCH = handler(async (_req, { params }: { params: Promise<{ id: st
       payload: { courier_id: session.courierId, ts: new Date().toISOString() },
     },
   });
-  void notifyOrderCustomer(id, "on_the_way").catch((err) => {
-    console.error("[notify] customer on the way failed", err);
-  });
+  after(() =>
+    notifyOrderCustomer(id, "on_the_way").catch((err) => {
+      console.error("[notify] customer on the way failed", err);
+    }),
+  );
   return apiJson({ ok: true });
 });
