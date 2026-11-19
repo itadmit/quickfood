@@ -557,9 +557,9 @@ export function CustomerHome({
           between the cover image and the body. Single centered row on
           all sizes; overflows horizontally (no scrollbar) when the
           chips don't fit rather than wrapping. */}
-      <section className="px-5 -mt-6 relative z-10 lg:max-w-7xl lg:mx-auto lg:px-6 lg:-mt-7">
-        <div className="bg-white border border-qf-line rounded-3xl lg:rounded-full shadow-sm px-4 py-2.5 lg:px-5 text-xs lg:text-sm lg:max-w-4xl lg:mx-auto overflow-x-auto no-scrollbar">
-          <div className="flex items-center justify-center gap-x-2 whitespace-nowrap min-w-0">
+      <section className="px-4 -mt-6 relative z-10 lg:max-w-7xl lg:mx-auto lg:px-6 lg:-mt-7">
+        <div className="bg-white border border-qf-line rounded-3xl lg:rounded-full shadow-sm px-3 py-2.5 lg:px-5 text-xs lg:text-sm lg:max-w-4xl lg:mx-auto">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 lg:gap-x-2 whitespace-nowrap min-w-0">
             <span
               className={cn(
                 "inline-flex items-center gap-1.5 font-medium",
@@ -578,7 +578,7 @@ export function CustomerHome({
               />
               {openLabel}
             </span>
-            <span className="text-qf-line">·</span>
+            <span className="text-qf-line hidden sm:inline">·</span>
             <span className="inline-flex items-center gap-1.5 text-qf-ink2">
               <IcoClock s={13} c="#7c8a82" />
               <span>{etaLabel}</span>
@@ -590,7 +590,7 @@ export function CustomerHome({
             </span>
             {branch && displayMinOrder > 0 && (
               <>
-                <span className="text-qf-line">·</span>
+                <span className="text-qf-line hidden sm:inline">·</span>
                 <span className="inline-flex items-center gap-1.5 text-qf-ink2 tnum">
                   <span className="text-qf-mute text-xs">{t("home.minOrderShort")}</span>
                   <span>{formatPrice(displayMinOrder)}</span>
@@ -599,7 +599,7 @@ export function CustomerHome({
             )}
             {ratingSummary && ratingSummary.count > 0 && (
               <>
-                <span className="text-qf-line">·</span>
+                <span className="text-qf-line hidden sm:inline">·</span>
                 <Link
                   href={`/s/${tenant.slug}/reviews`}
                   className="inline-flex items-center gap-1 text-qf-ink2 hover:text-qf-ink"
@@ -612,7 +612,7 @@ export function CustomerHome({
             )}
             {branch && (
               <>
-                <span className="text-qf-line">·</span>
+                <span className="text-qf-line hidden sm:inline">·</span>
                 <button
                   type="button"
                   onClick={() => setInfoOpen(true)}

@@ -304,7 +304,7 @@ export function MenuList({
                 type="button"
                 onClick={() => handleChipClick(c.id)}
                 className={cn(
-                  "px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition inline-flex items-center gap-1.5",
+                  "shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition inline-flex items-center gap-1.5",
                   active
                     ? "bg-(--qf-primary) text-white border-transparent"
                     : "bg-white text-qf-ink2 border-qf-line",
