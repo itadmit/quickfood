@@ -12,6 +12,7 @@ export interface MenuContentSources {
   items?: { id: string; name: string; description?: string | null }[];
   deals?: { id: string; name: string; description?: string | null }[];
   notices?: { id: string; title?: string | null; body?: string | null }[];
+  extras?: TransItem[];
 }
 
 export type Localize = (
@@ -46,6 +47,8 @@ export async function buildMenuLocalizer(
     push("notice", n.id, "title", n.title);
     push("notice", n.id, "body", n.body);
   }
+
+  for (const e of sources.extras ?? []) push(e.entityType, e.entityId, e.field, e.text);
 
   const map = await translateBatch(tenantId, items, lang);
   return (entityType, id, field, source) =>

@@ -6,6 +6,7 @@ import { IcoClose, IcoStar, IcoPhone, IcoPin, IcoClock, IcoBike, IcoBag } from "
 import { formatPrice, formatEtaRange } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { BranchHours, DayKey } from "@/lib/branch-hours";
+import { useLocale } from "@/components/customer/LocaleProvider";
 
 interface Props {
   tenantName: string;
@@ -25,13 +26,13 @@ interface Props {
 }
 
 const DAY_KEYS: { key: DayKey; label: string }[] = [
-  { key: "sunday", label: "ראשון" },
-  { key: "monday", label: "שני" },
-  { key: "tuesday", label: "שלישי" },
-  { key: "wednesday", label: "רביעי" },
-  { key: "thursday", label: "חמישי" },
-  { key: "friday", label: "שישי" },
-  { key: "saturday", label: "שבת" },
+  { key: "sunday", label: "info.day.sunday" },
+  { key: "monday", label: "info.day.monday" },
+  { key: "tuesday", label: "info.day.tuesday" },
+  { key: "wednesday", label: "info.day.wednesday" },
+  { key: "thursday", label: "info.day.thursday" },
+  { key: "friday", label: "info.day.friday" },
+  { key: "saturday", label: "info.day.saturday" },
 ];
 
 export function RestaurantInfoModal({
@@ -50,6 +51,8 @@ export function RestaurantInfoModal({
   etaUnit = "minutes",
   onClose,
 }: Props) {
+  const { t, tc, lang } = useLocale();
+  const addressLabel = tc("store:address", address);
   useLayoutEffect(() => {
     const html = document.documentElement;
     const prevOverflow = html.style.overflow;
@@ -102,7 +105,7 @@ export function RestaurantInfoModal({
           <button
             type="button"
             onClick={onClose}
-            aria-label="סגירה"
+            aria-label={t("info.close")}
             className="shrink-0 w-9 h-9 rounded-full bg-qf-line-soft grid place-items-center hover:bg-qf-line transition"
           >
             <IcoClose s={16} />
@@ -125,21 +128,21 @@ export function RestaurantInfoModal({
                   <div className="text-sm font-bold tnum">
                     {rating.average.toFixed(1)}{" "}
                     <span className="text-qf-mute font-normal">
-                      ({rating.count} ביקורות)
+                      ({rating.count} {t("info.reviews")})
                     </span>
                   </div>
                 </div>
               </div>
-              <span className="text-(--qf-deep) text-xs font-bold">לכל הביקורות ←</span>
+              <span className="text-(--qf-deep) text-xs font-bold">{t("info.allReviews")}</span>
             </Link>
           )}
 
           <section className="space-y-2">
-            <h3 className="text-sm font-bold mb-2">פרטי קשר</h3>
+            <h3 className="text-sm font-bold mb-2">{t("info.contact")}</h3>
             {address && (
               <div className="flex items-start gap-2.5 text-sm text-qf-ink2">
                 <IcoBag s={16} c="#7c8a82" className="mt-0.5 shrink-0" />
-                <span>איסוף עצמי: {address}</span>
+                <span>{t("info.pickupPrefix")} {addressLabel}</span>
               </div>
             )}
             <a
@@ -150,7 +153,7 @@ export function RestaurantInfoModal({
             >
               <IcoPin s={16} c="#7c8a82" className="mt-0.5 shrink-0" />
               <span className="underline decoration-qf-line decoration-1 underline-offset-2">
-                {address}
+                {addressLabel}
               </span>
             </a>
             {phone && (
@@ -170,32 +173,32 @@ export function RestaurantInfoModal({
           <section>
             <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5">
               <IcoBike s={16} c="#7c8a82" />
-              עלויות ומשלוח
+              {t("info.costs")}
             </h3>
             <dl className="text-sm divide-y divide-qf-line-soft">
               <div className="flex items-center justify-between py-2">
-                <dt className="text-qf-mute">מינימום הזמנה</dt>
+                <dt className="text-qf-mute">{t("info.minOrder")}</dt>
                 <dd className="tnum font-medium">
-                  {minOrder > 0 ? formatPrice(minOrder) : "ללא"}
+                  {minOrder > 0 ? formatPrice(minOrder) : t("info.none")}
                 </dd>
               </div>
               <div className="flex items-center justify-between py-2">
-                <dt className="text-qf-mute">דמי משלוח</dt>
+                <dt className="text-qf-mute">{t("info.deliveryFee")}</dt>
                 <dd className="tnum font-medium">
-                  {deliveryFee > 0 ? formatPrice(deliveryFee) : "חינם"}
+                  {deliveryFee > 0 ? formatPrice(deliveryFee) : t("info.free")}
                 </dd>
               </div>
               {serviceFee > 0 && (
                 <div className="flex items-center justify-between py-2">
-                  <dt className="text-qf-mute">דמי שירות</dt>
+                  <dt className="text-qf-mute">{t("info.serviceFee")}</dt>
                   <dd className="tnum font-medium">{formatPrice(serviceFee)}</dd>
                 </div>
               )}
               {deliveryEta && (
                 <div className="flex items-center justify-between py-2">
-                  <dt className="text-qf-mute">זמן משלוח משוער</dt>
+                  <dt className="text-qf-mute">{t("info.eta")}</dt>
                   <dd className="tnum font-medium">
-                    {formatEtaRange(deliveryEta.min, deliveryEta.max, etaUnit)}
+                    {formatEtaRange(deliveryEta.min, deliveryEta.max, etaUnit, lang)}
                   </dd>
                 </div>
               )}
@@ -205,7 +208,7 @@ export function RestaurantInfoModal({
           <section>
             <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5">
               <IcoClock s={14} c="#7c8a82" />
-              שעות פעילות
+              {t("info.hours")}
             </h3>
             <ul className="text-sm space-y-1">
               {DAY_KEYS.map((d, idx) => {
@@ -225,8 +228,8 @@ export function RestaurantInfoModal({
                         isToday && "text-qf-green-deep font-bold",
                       )}
                     >
-                      {d.label}
-                      {isToday && <span className="mr-1.5 text-xs">(היום)</span>}
+                      {t(d.label)}
+                      {isToday && <span className="ms-1.5 text-xs">({t("info.today")})</span>}
                     </span>
                     <span
                       className={cn(
@@ -239,7 +242,7 @@ export function RestaurantInfoModal({
                         // range and the closing time lands on the left.
                         <bdi dir="ltr">{`${day.open} - ${day.close}`}</bdi>
                       ) : (
-                        "סגור"
+                        t("info.closed")
                       )}
                     </span>
                   </li>

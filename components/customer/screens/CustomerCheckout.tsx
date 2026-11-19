@@ -92,7 +92,7 @@ export function CustomerCheckout({
   loyaltyCheckout?: { show: boolean; text: string };
 }) {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, tc } = useLocale();
   const { lines, method, subtotal, deliveryFee, branch, tenant, clear, setMethod, hydrated, acceptedBundles, bundleDiscount } = useCart();
 
   // Store-pixel InitiateCheckout - fired once per checkout view, after the
@@ -1415,7 +1415,7 @@ export function CustomerCheckout({
                   <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0">
                     <MenuItemImage
                       src={l.imageUrl ?? undefined}
-                      alt={l.name}
+                      alt={tc(`menu_item:${l.itemId}:name`, l.name)}
                       businessType={businessType}
                       size={56}
                       rounded="xl"
@@ -1424,13 +1424,13 @@ export function CustomerCheckout({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="font-medium text-sm leading-tight">{l.name}</div>
+                      <div className="font-medium text-sm leading-tight">{tc(`menu_item:${l.itemId}:name`, l.name)}</div>
                       <div className="text-sm tnum font-medium shrink-0">
                         <Price amount={lineTotal} originalAmount={originalPrice(lineTotal, l.basePrice * l.quantity, l.compareAtPrice != null ? l.compareAtPrice * l.quantity : null)} />
                       </div>
                     </div>
                     {l.sizeName && (
-                      <div className="text-xs text-qf-mute mt-0.5">{l.sizeName}</div>
+                      <div className="text-xs text-qf-mute mt-0.5">{tc(`item_size:${l.sizeId}:name`, l.sizeName)}</div>
                     )}
                     <CartLineOptions options={l.options} />
                     <div className="text-xs text-qf-ink2 mt-1 tnum">× {l.quantity}</div>
@@ -1504,7 +1504,7 @@ export function CustomerCheckout({
                     <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0">
                       <MenuItemImage
                         src={l.imageUrl ?? undefined}
-                        alt={l.name}
+                        alt={tc(`menu_item:${l.itemId}:name`, l.name)}
                         businessType={businessType}
                         size={48}
                         rounded="md"
@@ -1513,11 +1513,11 @@ export function CustomerCheckout({
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="font-medium text-sm leading-tight">{l.name}</div>
+                        <div className="font-medium text-sm leading-tight">{tc(`menu_item:${l.itemId}:name`, l.name)}</div>
                         <div className="text-sm tnum font-medium shrink-0"><Price amount={lineTotal} originalAmount={originalPrice(lineTotal, l.basePrice * l.quantity, l.compareAtPrice != null ? l.compareAtPrice * l.quantity : null)} /></div>
                       </div>
                       {l.sizeName && (
-                        <div className="text-xs text-qf-mute mt-0.5">{l.sizeName}</div>
+                        <div className="text-xs text-qf-mute mt-0.5">{tc(`item_size:${l.sizeId}:name`, l.sizeName)}</div>
                       )}
                       <CartLineOptions options={l.options} />
                       <div className="text-xs text-qf-ink2 mt-0.5 tnum">× {l.quantity}</div>

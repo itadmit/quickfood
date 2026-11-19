@@ -1,6 +1,7 @@
 import { formatPrice } from "@/lib/format";
+import { useLocale } from "@/components/customer/LocaleProvider";
 
-type CartOpt = { name: string; groupName?: string; priceDelta: number };
+type CartOpt = { name: string; groupName?: string; priceDelta: number; groupId?: string; optionId?: string };
 
 /**
  * Renders a cart line's selected options grouped under their modifier-group
@@ -15,6 +16,7 @@ export function CartLineOptions({
   options: CartOpt[];
   compact?: boolean;
 }) {
+  const { tc } = useLocale();
   if (!options.length) return null;
   const size = compact ? "text-[11px]" : "text-xs";
 
@@ -23,7 +25,13 @@ export function CartLineOptions({
   // free) - collapse them to one "3× טחינה" row with the summed charge.
   const order: string[] = [];
   const byGroup = new Map<string, Array<CartOpt & { count: number }>>();
-  for (const o of options) {
+  for (const raw of options) {
+    const o = {
+      ...raw,
+      name: raw.optionId ? tc(`item_option:${raw.optionId}:name`, raw.name) : raw.name,
+      groupName:
+        raw.groupName && raw.groupId ? tc(`option_group:${raw.groupId}:name`, raw.groupName) : raw.groupName,
+    };
     const g = o.groupName ?? "";
     if (!byGroup.has(g)) {
       byGroup.set(g, []);

@@ -11,6 +11,8 @@ interface LocaleContextValue {
   enabled: Lang[];
   /** Translate a UI-chrome key into the active language. */
   t: (key: string) => string;
+  tc: (key: string, fallback: string | null | undefined) => string;
+  tCity: (city: string) => string;
   /** Persist the choice (cookie) and re-render the server tree in that language. */
   setLang: (lang: Lang) => void;
 }
@@ -29,6 +31,8 @@ export function useLocale(): LocaleContextValue {
     dir: "rtl",
     enabled: ["he"],
     t: (k) => translate(k, "he"),
+    tc: (_k, fallback) => fallback ?? "",
+    tCity: (city) => city,
     setLang: () => {},
   };
 }
@@ -36,10 +40,12 @@ export function useLocale(): LocaleContextValue {
 export function LocaleProvider({
   lang,
   enabled,
+  content = {},
   children,
 }: {
   lang: Lang;
   enabled: Lang[];
+  content?: Record<string, string>;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -61,6 +67,8 @@ export function LocaleProvider({
     dir: dirFor(lang),
     enabled,
     t: (key) => translate(key, lang),
+    tc: (key, fallback) => (lang === "he" ? fallback ?? "" : content[key] ?? fallback ?? ""),
+    tCity: (city) => (lang === "he" ? city : content[`city:${city}`] ?? city),
     setLang,
   };
 

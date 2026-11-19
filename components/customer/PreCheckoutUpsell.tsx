@@ -8,6 +8,7 @@ import { ItemDetailModal } from "@/components/customer/ItemDetailModal";
 import { ItemDetail } from "@/components/customer/screens/ItemDetail";
 import ItemModalSkeleton from "@/components/customer/ItemModalSkeleton";
 import { IcoCheck, IcoPlus } from "@/components/shared/Icons";
+import { useLocale } from "@/components/customer/LocaleProvider";
 
 interface UpsellItem {
   id: string;
@@ -34,6 +35,7 @@ function shownKey(tenantSlug: string) {
  */
 export function usePreCheckoutUpsell(tenantSlug: string) {
   const { lines, tenant, add } = useCart();
+  const { t } = useLocale();
   const [items, setItems] = useState<UpsellItem[]>([]);
   const [open, setOpen] = useState(false);
   const [pickItemId, setPickItemId] = useState<string | null>(null);
@@ -124,9 +126,9 @@ export function usePreCheckoutUpsell(tenantSlug: string) {
 
   const businessType = (tenant.businessType as BusinessType) ?? "general";
   const upsellTitle =
-    tenant.preCheckoutUpsellTitle?.trim() || "להוסיף משהו לפני שמסיימים?";
+    tenant.preCheckoutUpsellTitle?.trim() || t("upsell.preTitle");
   const upsellSubtitle =
-    tenant.preCheckoutUpsellSubtitle?.trim() || "ההמלצה האחרונה שלנו לסגירת הארוחה";
+    tenant.preCheckoutUpsellSubtitle?.trim() || t("upsell.preSubtitle");
 
   const element = (
     <>
@@ -186,7 +188,7 @@ export function usePreCheckoutUpsell(tenantSlug: string) {
                 onClick={() => setOpen(false)}
                 className="h-12 rounded-2xl border border-qf-line hover:bg-qf-line-soft text-qf-ink2 text-sm font-bold transition"
               >
-                חזרה לסל
+                {t("upsell.backToCart")}
               </button>
               <button
                 type="button"
@@ -196,7 +198,7 @@ export function usePreCheckoutUpsell(tenantSlug: string) {
                 }}
                 className="h-12 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-bold shadow-sm shadow-(--qf-primary)/25 active:scale-[0.98] transition"
               >
-                המשך לתשלום
+                {t("upsell.continueToPay")}
               </button>
             </footer>
           </div>

@@ -1,11 +1,15 @@
 import Link from "next/link";
+import { t } from "@/lib/i18n/dictionary";
+import type { Lang } from "@/lib/i18n/langs";
 
 export function CustomerFooter({
   tenantSlug,
   tenantName,
+  lang = "he",
 }: {
   tenantSlug: string;
   tenantName: string;
+  lang?: Lang;
 }) {
   const year = new Date().getFullYear();
   return (
@@ -14,7 +18,7 @@ export function CustomerFooter({
         href={`/s/${tenantSlug}/terms`}
         className="font-medium text-qf-ink2 hover:text-qf-ink underline underline-offset-2"
       >
-        תקנון ותנאי שימוש
+        {t("footer.terms", lang)}
       </Link>
       <div>
         © {year} {tenantName}
@@ -26,7 +30,7 @@ export function CustomerFooter({
           rel="noopener noreferrer"
           className="text-qf-mute hover:text-qf-ink2 transition"
         >
-          מופעל על ידי <span className="font-semibold">QuickFood</span>
+          {t("footer.poweredBy", lang)} <span className="font-semibold">QuickFood</span>
         </a>
       </div>
     </footer>

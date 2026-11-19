@@ -22,7 +22,7 @@ import { useLocale } from "@/components/customer/LocaleProvider";
 
 export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, tc } = useLocale();
   const { lines, updateQuantity, remove, subtotal, method, deliveryFee, branch, tenant, hydrated, bundleDiscount } = useCart();
 
   // Wolt-style: clicking a cart line opens the item-detail modal in
@@ -133,7 +133,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
               <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0">
                 <MenuItemImage
                   src={l.imageUrl}
-                  alt={l.name}
+                  alt={tc(`menu_item:${l.itemId}:name`, l.name)}
                   businessType={(tenant.businessType as BusinessType) ?? "general"}
                   size={80}
                   rounded="xl"
@@ -142,7 +142,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="font-semibold leading-tight">{l.name}</div>
+                  <div className="font-semibold leading-tight">{tc(`menu_item:${l.itemId}:name`, l.name)}</div>
                   <button
                     type="button"
                     onClick={(e) => {
@@ -156,7 +156,7 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
                   </button>
                 </div>
                 {l.sizeName && (
-                  <div className="text-xs text-qf-mute mt-0.5">{l.sizeName}</div>
+                  <div className="text-xs text-qf-mute mt-0.5">{tc(`item_size:${l.sizeId}:name`, l.sizeName)}</div>
                 )}
                 <CartLineOptions options={l.options} />
                 {l.notes && (

@@ -16,11 +16,16 @@ export function formatEtaRange(
   min: number,
   max: number,
   unit: string = "minutes",
+  lang: "he" | "en" | "ru" = "he",
 ): string {
   if (unit === "days") {
+    if (lang === "en") return min === max ? (min === 1 ? "1 day" : `${min} days`) : `${min}-${max} days`;
+    if (lang === "ru") return min === max ? `${min} дн.` : `${min}-${max} дн.`;
     if (min === max) return min === 1 ? "יום" : `${min} ימים`;
     return `${min}-${max} ימים`;
   }
+  if (lang === "en") return `${min}-${max} min`;
+  if (lang === "ru") return `${min}-${max} мин`;
   return `${min}-${max} דק'`;
 }
 

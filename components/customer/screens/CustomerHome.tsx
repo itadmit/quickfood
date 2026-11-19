@@ -176,7 +176,7 @@ export function CustomerHome({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { t } = useLocale();
+  const { t, lang, tCity } = useLocale();
   const { method, setMethod, deliveryEta: zoneEta, branch: cartBranch, tenant: cartTenant } = useCart();
   const pauseLeft = usePauseCountdown(branch?.pausedUntil);
   const paused = pauseLeft !== null && pauseLeft > 0;
@@ -226,7 +226,7 @@ export function CustomerHome({
   const boost = busy && etaUnit !== "days" ? busyBoost : 0;
   const etaLabel =
     tenant.etaLabel?.trim() ||
-    formatEtaRange(baseEta.min + boost, baseEta.max + boost, etaUnit);
+    formatEtaRange(baseEta.min + boost, baseEta.max + boost, etaUnit, lang);
 
 
   // Entry alerts. Busy is once-per-day, dismissable; closed shows every
@@ -368,7 +368,7 @@ export function CustomerHome({
     choice?.kind === "pickup"
       ? t("home.selfPickup")
       : choice?.kind === "delivery"
-        ? choice.city
+        ? tCity(choice.city)
         : t("home.chooseAddress");
 
   return (

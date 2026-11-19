@@ -1,6 +1,9 @@
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
+import { requestLang } from "@/lib/i18n/content";
+import { translateBatch, type TransItem } from "@/lib/i18n/translate";
+import { t } from "@/lib/i18n/dictionary";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -98,10 +101,29 @@ export const GET = handler(async (req: Request) => {
     },
   });
 
+  const lang = await requestLang(tenant.storefrontLanguages);
+  const customTitle = tenantRow?.cartUpsellTitle?.trim() || "";
+  let heading = customTitle || (chosen.length === 1 ? chosen[0].name : t("cart.recommended", lang));
+  const names = new Map<string, string>();
+  if (lang !== "he") {
+    const batch: TransItem[] = items.map((i) => ({ entityType: "menu_item", entityId: i.id, field: "name", text: i.name }));
+    if (customTitle) batch.push({ entityType: "tenant", entityId: tenant.id, field: "cartUpsellTitle", text: customTitle });
+    else if (chosen.length === 1) batch.push({ entityType: "menu_category", entityId: chosen[0].id, field: "name", text: chosen[0].name });
+    const tr = await translateBatch(tenant.id, batch, lang);
+    for (const i of items) {
+      const v = tr.get(`menu_item:${i.id}:name`);
+      if (v) names.set(i.id, v);
+    }
+    heading =
+      (customTitle
+        ? tr.get(`tenant:${tenant.id}:cartUpsellTitle`)
+        : chosen.length === 1
+          ? tr.get(`menu_category:${chosen[0].id}:name`)
+          : undefined) ?? heading;
+  }
+
   return apiJson({
-    heading:
-      tenantRow?.cartUpsellTitle?.trim() ||
-      (chosen.length === 1 ? chosen[0].name : "מומלץ עבורך"),
+    heading,
     items: items.map((i) => {
       const hasRequiredGroup = i.optionGroups.some(
         (g) => (g.templateSet?.required ?? g.required) === true,
@@ -110,7 +132,7 @@ export const GET = handler(async (req: Request) => {
       const hasAnyGroup = i.optionGroups.length > 0;
       return {
         id: i.id,
-        name: i.name,
+        name: names.get(i.id) ?? i.name,
         basePrice: i.basePrice,
         compareAtPrice: i.compareAtPrice,
         imageUrl: i.images?.[0] ?? i.imageUrl ?? null,

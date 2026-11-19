@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { IcoPin, IcoSearch, IcoBag, IcoCheck, IcoClose } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
+import { useLocale } from "@/components/customer/LocaleProvider";
 
 interface Props {
   /** Tenant name, surfaced in the modal title so it feels personal. */
@@ -51,6 +52,8 @@ export function CityPickerModal({
   onChoose,
   onClose,
 }: Props) {
+  const { t, tc, tCity } = useLocale();
+  const withName = (key: string) => t(key).replace("{name}", tenantName);
   const [method, setMethod] = useState<"delivery" | "pickup">(initialMethod);
   const [query, setQuery] = useState("");
 
@@ -58,8 +61,12 @@ export function CityPickerModal({
     const q = query.trim();
     if (!q) return cities;
     const k = q.toLocaleLowerCase("he-IL");
-    return cities.filter((c) => c.toLocaleLowerCase("he-IL").includes(k));
-  }, [cities, query]);
+    return cities.filter(
+      (c) =>
+        c.toLocaleLowerCase("he-IL").includes(k) ||
+        tCity(c).toLocaleLowerCase().includes(q.toLocaleLowerCase()),
+    );
+  }, [cities, query, tCity]);
 
   const hasCities = cities.length > 0;
   const deliveryAvailable = hasCities || nationwide;
@@ -113,7 +120,7 @@ export function CityPickerModal({
             <button
               type="button"
               onClick={onClose}
-              aria-label="סגור"
+              aria-label={t("city.close")}
               className="absolute top-3 inset-s-3 w-9 h-9 rounded-full grid place-items-center bg-white text-black border-2 border-black shadow-[0_2px_0_#000] hover:shadow-[0_3px_0_#000] active:translate-y-px active:shadow-[0_1px_0_#000] transition"
             >
               <IcoClose s={14} c="currentColor" />
@@ -127,20 +134,20 @@ export function CityPickerModal({
               id="qf-city-picker-title"
               className="font-black text-2xl leading-tight text-black"
             >
-              מה כתובת המשלוח?
+              {t("city.title")}
             </h2>
             <p className="text-sm text-black/65 leading-snug">
               {nationwide
                 ? pickupEnabled
-                  ? `${tenantName} שולחים לכל הארץ - הקלידו את הכתובת שלכם, או הזמינו לאיסוף עצמי.`
-                  : `${tenantName} שולחים לכל הארץ - הקלידו את הכתובת שלכם.`
+                  ? withName("city.subNationwidePickup")
+                  : withName("city.subNationwide")
                 : hasCities && pickupEnabled
-                  ? `בדקו אם ${tenantName} מגיעים עד אליכם - בחרו עיר למשלוח, או הזמינו לאיסוף עצמי מהסניף.`
+                  ? withName("city.subCitiesPickup")
                   : hasCities && !pickupEnabled
-                    ? `${tenantName} מציעים משלוחים בלבד - בחרו את העיר שלכם.`
+                    ? withName("city.subDeliveryOnly")
                     : !hasCities && pickupEnabled
-                      ? "המסעדה לא הגדירה ערי משלוח. אפשר להזמין לאיסוף עצמי מהסניף."
-                      : "המסעדה לא מציעה משלוחים ולא איסוף עצמי בשלב זה."}
+                      ? t("city.subNoCities")
+                      : t("city.subNothing")}
             </p>
           </header>
 
@@ -164,7 +171,7 @@ export function CityPickerModal({
               )}
             >
               <IcoPin s={14} c="currentColor" />
-              משלוח
+              {t("city.delivery")}
             </button>
             <button
               type="button"
@@ -179,7 +186,7 @@ export function CityPickerModal({
               )}
             >
               <IcoBag s={14} c="currentColor" />
-              איסוף עצמי
+              {t("city.pickup")}
             </button>
           </div>
 
@@ -196,7 +203,7 @@ export function CityPickerModal({
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="הקלידו את העיר / היישוב שלכם"
+                    placeholder={t("city.typeCity")}
                     className="flex-1 bg-transparent outline-none text-sm font-medium text-black placeholder:text-black/40"
                   />
                 </div>
@@ -210,7 +217,7 @@ export function CityPickerModal({
                           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-start text-sm font-bold text-black border-2 border-transparent hover:border-black hover:bg-(--qf-primary)/10 transition"
                         >
                           <IcoPin c="currentColor" s={16} />
-                          <span className="flex-1">{c}</span>
+                          <span className="flex-1">{tCity(c)}</span>
                         </button>
                       </li>
                     ))}
@@ -223,7 +230,7 @@ export function CityPickerModal({
                   className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) text-white rounded-xl h-12 text-base font-black border-2 border-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] inline-flex items-center justify-center gap-2 transition disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <IcoCheck c="currentColor" s={18} />
-                  אישור משלוח לכתובת
+                  {t("city.confirmDelivery")}
                 </button>
               </div>
             ) : hasCities ? (
@@ -238,7 +245,7 @@ export function CityPickerModal({
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="חפש עיר"
+                    placeholder={t("city.search")}
                     className="flex-1 bg-transparent outline-none text-sm font-medium text-black placeholder:text-black/40"
                   />
                 </div>
@@ -246,8 +253,8 @@ export function CityPickerModal({
                   {filtered.length === 0 ? (
                     <li className="text-center text-sm font-medium text-black/55 py-8">
                       {pickupEnabled
-                        ? "לא מצאנו עיר תואמת. אפשר להזמין לאיסוף עצמי."
-                        : "לא מצאנו עיר תואמת."}
+                        ? t("city.noMatchPickup")
+                        : t("city.noMatch")}
                     </li>
                   ) : (
                     filtered.map((c) => (
@@ -258,7 +265,7 @@ export function CityPickerModal({
                           className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-start text-sm font-bold text-black border-2 border-transparent hover:border-black hover:bg-(--qf-primary)/10 transition"
                         >
                           <IcoPin c="currentColor" s={16} />
-                          <span className="flex-1">{c}</span>
+                          <span className="flex-1">{tCity(c)}</span>
                         </button>
                       </li>
                     ))
@@ -268,8 +275,8 @@ export function CityPickerModal({
             ) : (
               <div className="bg-[#FFE2DC] border-2 border-black rounded-xl px-3.5 py-3 text-sm font-bold text-black shadow-[0_2px_0_#000]">
                 {pickupEnabled
-                  ? "המסעדה לא מספקת משלוחים בשלב זה. נסו איסוף עצמי."
-                  : "המסעדה לא מספקת משלוחים בשלב זה."}
+                  ? t("city.noDeliveryPickup")
+                  : t("city.noDelivery")}
               </div>
             )
           ) : pickupEnabled ? (
@@ -285,10 +292,10 @@ export function CityPickerModal({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-black text-sm text-black">
-                    איסוף עצמי מהסניף
+                    {t("city.pickupFromBranch")}
                   </div>
                   <div className="text-xs text-black/70 mt-1 leading-snug">
-                    {branchAddress ?? "כתובת המסעדה תוצג בעמוד ההזמנה"}
+                    {branchAddress ? tc("store:address", branchAddress) : t("city.addressLater")}
                   </div>
                 </div>
               </div>
@@ -298,12 +305,12 @@ export function CityPickerModal({
                 className="w-full bg-(--qf-primary) hover:bg-(--qf-deep) text-white rounded-xl h-12 text-base font-black border-2 border-black shadow-[0_3px_0_#000] hover:shadow-[0_4px_0_#000] active:translate-y-px active:shadow-[0_2px_0_#000] inline-flex items-center justify-center gap-2 transition"
               >
                 <IcoCheck c="currentColor" s={18} />
-                אישור איסוף עצמי
+                {t("city.confirmPickup")}
               </button>
             </div>
           ) : (
             <div className="bg-[#FFE2DC] border-2 border-black rounded-xl px-3.5 py-3 text-sm font-bold text-black shadow-[0_2px_0_#000]">
-              המסעדה לא מציעה איסוף עצמי. הזמינו במשלוח.
+              {t("city.noPickup")}
             </div>
           )}
         </div>

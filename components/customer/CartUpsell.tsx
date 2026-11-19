@@ -8,6 +8,7 @@ import { ItemDetailModal } from "@/components/customer/ItemDetailModal";
 import { ItemDetail } from "@/components/customer/screens/ItemDetail";
 import ItemModalSkeleton from "@/components/customer/ItemModalSkeleton";
 import { IcoPlus, IcoCheck } from "@/components/shared/Icons";
+import { useLocale } from "@/components/customer/LocaleProvider";
 
 interface UpsellItem {
   id: string;
@@ -20,8 +21,9 @@ interface UpsellItem {
 
 export function CartUpsell({ tenantSlug }: { tenantSlug: string }) {
   const { lines, tenant, add } = useCart();
+  const { t } = useLocale();
   const [items, setItems] = useState<UpsellItem[]>([]);
-  const [heading, setHeading] = useState<string>("מומלץ עבורך");
+  const [heading, setHeading] = useState<string>("");
   const [pickItemId, setPickItemId] = useState<string | null>(null);
   const [itemData, setItemData] = useState<null | { item: Record<string, unknown>; tenant: { slug: string; businessType: string } }>(null);
   const [itemLoading, setItemLoading] = useState(false);
@@ -103,7 +105,7 @@ export function CartUpsell({ tenantSlug }: { tenantSlug: string }) {
 
   return (
     <section className="mt-6 px-5 lg:px-0">
-      <h2 className="text-base font-bold mb-3">{heading}</h2>
+      <h2 className="text-base font-bold mb-3">{heading || t("cart.recommended")}</h2>
       <div className="-mx-5 px-5 lg:mx-0 lg:px-0 overflow-x-auto no-scrollbar">
         <div className="flex gap-3 pb-2 snap-x snap-mandatory">
           {items.map((it) => {
@@ -117,7 +119,7 @@ export function CartUpsell({ tenantSlug }: { tenantSlug: string }) {
                   type="button"
                   onClick={() => setPickItemId(it.id)}
                   className="block w-full text-right"
-                  aria-label={`פתח פרטים על ${it.name}`}
+                  aria-label={`${t("cart.openDetails")} ${it.name}`}
                 >
                   <div className="aspect-square bg-qf-line-soft relative">
                     <MenuItemImage
@@ -144,7 +146,7 @@ export function CartUpsell({ tenantSlug }: { tenantSlug: string }) {
                       quickAdd(it);
                     }
                   }}
-                  aria-label={it.needsConfig ? `הוסף את ${it.name} לסל (יש לבחור גודל/תוספות)` : `הוסף את ${it.name} לסל`}
+                  aria-label={`${t("cart.addToCartAria")} ${it.name}`}
                   className="absolute top-2 start-2 w-9 h-9 rounded-full bg-white shadow-md grid place-items-center hover:bg-qf-line-soft active:scale-95 transition"
                 >
                   {justAdded ? (

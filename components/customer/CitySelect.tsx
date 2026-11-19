@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { IcoChevDown, IcoPin, IcoSearch, IcoCheck } from "@/components/shared/Icons";
+import { useLocale } from "@/components/customer/LocaleProvider";
 
 interface Props {
   cities: string[];
@@ -17,9 +18,10 @@ export function CitySelect({
   cities,
   value,
   onChange,
-  placeholder = "בחרו עיר",
+  placeholder,
   allowCustom = false,
 }: Props) {
+  const { t, tCity } = useLocale();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -28,8 +30,10 @@ export function CitySelect({
     const q = query.trim();
     if (!q) return cities;
     const k = q.toLocaleLowerCase("he-IL");
-    return cities.filter((c) => c.toLocaleLowerCase("he-IL").includes(k));
-  }, [cities, query]);
+    return cities.filter(
+      (c) => c.toLocaleLowerCase("he-IL").includes(k) || tCity(c).toLocaleLowerCase().includes(k),
+    );
+  }, [cities, query, tCity]);
 
   useEffect(() => {
     if (!open) return;
@@ -86,7 +90,7 @@ export function CitySelect({
                 : "truncate text-qf-mute font-normal"
             }
           >
-            {value || placeholder}
+            {value ? tCity(value) : placeholder ?? t("checkout.citySelectPlaceholder")}
           </span>
         </span>
         <IcoChevDown s={14} c="var(--qf-mute)" />
@@ -101,7 +105,7 @@ export function CitySelect({
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder={allowCustom ? "הקלידו עיר / יישוב" : "חפש עיר"}
+                  placeholder={allowCustom ? t("city.typeCity") : t("city.search")}
                   className="flex-1 bg-transparent outline-none text-sm font-medium text-black placeholder:text-qf-mute"
                   autoFocus
                 />
@@ -122,7 +126,7 @@ export function CitySelect({
                   className="w-full flex items-center gap-2 px-4 py-3 text-start text-sm font-bold text-(--qf-deep) hover:bg-qf-bg/60 transition"
                 >
                   <IcoPin c="var(--qf-deep)" s={14} />
-                  <span className="truncate">{`משלוח ל"${customValue}"`}</span>
+                  <span className="truncate">{t("city.deliverTo").replace("{name}", customValue)}</span>
                 </button>
               </li>
             )}
@@ -130,8 +134,8 @@ export function CitySelect({
               customValue ? null : (
                 <li className="text-center text-sm text-qf-mute py-6">
                   {allowCustom && trimmedQuery === ""
-                    ? "הקלידו את שם העיר"
-                    : "לא מצאנו עיר תואמת"}
+                    ? t("city.typeName")
+                    : t("city.noMatch")}
                 </li>
               )
             ) : (
@@ -151,7 +155,7 @@ export function CitySelect({
                           : "hover:bg-qf-bg/60 text-black font-medium")
                       }
                     >
-                      <span className="truncate">{c}</span>
+                      <span className="truncate">{tCity(c)}</span>
                       {selected && <IcoCheck c="var(--qf-deep)" s={14} />}
                     </button>
                   </li>

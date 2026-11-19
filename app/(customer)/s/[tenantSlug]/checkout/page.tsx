@@ -8,6 +8,8 @@ import { resolveLoyaltyConfig } from "@/lib/loyalty/config";
 import { getActiveCardProviderSummary } from "@/lib/payments/factory";
 import { canUseOwnerTestCard } from "@/lib/payments/owner-test-access";
 import { CustomerCheckout } from "@/components/customer/screens/CustomerCheckout";
+import { requestLang, contentKey } from "@/lib/i18n/content";
+import { translateBatch } from "@/lib/i18n/translate";
 
 export const dynamic = "force-dynamic";
 
@@ -102,6 +104,16 @@ export default async function CheckoutPage({
     (settings as { loyaltyConfig?: unknown } | null)?.loyaltyConfig,
     tenant.name,
   );
+  const lang = await requestLang(tenant.storefrontLanguages);
+  let loyaltyText = loyalty.checkoutConsentText;
+  if (lang !== "he" && loyalty.showCheckoutCheckbox && loyaltyText.trim()) {
+    const tr = await translateBatch(
+      tenant.id,
+      [{ entityType: "tenant", entityId: tenant.id, field: "loyaltyConsent", text: loyaltyText }],
+      lang,
+    );
+    loyaltyText = tr.get(contentKey("tenant", tenant.id, "loyaltyConsent")) ?? loyaltyText;
+  }
   let cardProvider: Awaited<ReturnType<typeof getActiveCardProviderSummary>> = null;
   try {
     const allowOwnerTest = await canUseOwnerTestCard(tenant.id);
@@ -185,7 +197,7 @@ export default async function CheckoutPage({
         // Logged-in customers are already members (auto-enrolled), so the
         // opt-in only shows to guests.
         show: loyalty.showCheckoutCheckbox && !initialCustomer,
-        text: loyalty.checkoutConsentText,
+        text: loyaltyText,
       }}
     />
   );

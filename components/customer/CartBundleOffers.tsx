@@ -1,6 +1,7 @@
 "use client";
 
 import { formatPrice } from "@/lib/format";
+import { useLocale } from "@/components/customer/LocaleProvider";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import {
   useBundleOffers,
@@ -17,11 +18,12 @@ import {
  */
 export function CartBundleOffers({ businessType }: { businessType: BusinessType }) {
   const { offers, accept } = useBundleOffers();
+  const { t } = useLocale();
   if (offers.length === 0) return null;
 
   return (
     <div className="px-5 mt-5 lg:px-0">
-      <div className="text-sm font-bold text-(--qf-deep) mb-2.5">מבצעים בשבילך</div>
+      <div className="text-sm font-bold text-(--qf-deep) mb-2.5">{t("bundle.forYou")}</div>
       <div className="space-y-2.5">
         {offers.map((b) => (
           <OfferCard
@@ -45,6 +47,7 @@ function OfferCard({
   businessType: BusinessType;
   onAccept: () => void;
 }) {
+  const { t } = useLocale();
   return (
     <div className="bg-white rounded-2xl border border-(--qf-primary)/30 p-3.5 flex gap-3.5 shadow-xs">
       <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
@@ -64,7 +67,7 @@ function OfferCard({
         ) : (
           offer.mode === "linked" &&
           offer.linked_item && (
-            <div className="text-xs text-qf-mute mt-0.5">שדרוג ל{offer.linked_item.name}</div>
+            <div className="text-xs text-qf-mute mt-0.5">{t("bundle.upgradeTo")} {offer.linked_item.name}</div>
           )
         )}
         <div className="flex items-center justify-between mt-2">
@@ -79,7 +82,7 @@ function OfferCard({
             onClick={onAccept}
             className="px-4 h-9 rounded-full bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-semibold transition"
           >
-            {offer.savings > 0 ? `הוסף · חוסכים ${formatPrice(offer.savings)}` : "הוסף"}
+            {offer.savings > 0 ? `${t("bundle.add")} · ${t("bundle.save")} ${formatPrice(offer.savings)}` : t("bundle.add")}
           </button>
         </div>
       </div>

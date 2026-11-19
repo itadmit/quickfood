@@ -71,3 +71,25 @@ export const TONE_CLASSES: Record<
   ink:    { bg: "bg-qf-ink/5",      text: "text-qf-ink",        border: "border-qf-line-dash"    },
   muted:  { bg: "bg-qf-line-soft",  text: "text-qf-ink2",       border: "border-qf-line"         },
 };
+
+const TAG_I18N: Record<string, { en: string; ru: string }> = {
+  "פופולרי": { en: "Popular", ru: "Популярное" },
+  "חדש": { en: "New", ru: "Новинка" },
+  "מבצע": { en: "Deal", ru: "Акция" },
+  "המלצת השף": { en: "Chef's pick", ru: "Выбор шефа" },
+  "צמחוני": { en: "Vegetarian", ru: "Вегетарианское" },
+  "טבעוני": { en: "Vegan", ru: "Веганское" },
+  "ללא גלוטן": { en: "Gluten-free", ru: "Без глютена" },
+  "ללא לקטוז": { en: "Lactose-free", ru: "Без лактозы" },
+  "כשר": { en: "Kosher", ru: "Кошерное" },
+  "חריף": { en: "Spicy", ru: "Острое" },
+  "ללא אגוזים": { en: "Nut-free", ru: "Без орехов" },
+  "חלבי": { en: "Dairy", ru: "Молочное" },
+  "בשרי": { en: "Meat", ru: "Мясное" },
+  "פרווה": { en: "Parve", ru: "Парве" },
+};
+
+export function tagLabel(label: string, lang: "he" | "en" | "ru"): string {
+  if (lang === "he") return label;
+  return TAG_I18N[label]?.[lang] ?? label;
+}

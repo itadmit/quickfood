@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { resolveCategoryStyle, type CategoryColorKey } from "@/lib/category-style";
-import { FILTERABLE_TAG_LABELS, findTag, TONE_CLASSES } from "@/lib/dietary-tags";
+import { FILTERABLE_TAG_LABELS, findTag, tagLabel, TONE_CLASSES } from "@/lib/dietary-tags";
+import { useLocale } from "@/components/customer/LocaleProvider";
 import { cn } from "@/lib/cn";
 
 /** Price label for a menu card - "₪X לק״ג" for weight items, else the fixed price. */
@@ -56,32 +57,33 @@ const NOTICE_STYLES: Record<NoticeKind, { wrap: string; chip: string; label: str
   info: {
     wrap: "bg-qf-blue-soft border-qf-blue/40",
     chip: "bg-qf-blue text-white",
-    label: "מידע",
+    label: "notice.info",
   },
   warning: {
     wrap: "bg-qf-tomato-soft border-qf-tomato/40",
     chip: "bg-qf-tomato text-white",
-    label: "אזהרה",
+    label: "notice.warning",
   },
   allergen: {
     wrap: "bg-qf-warm-dash border-qf-yolk/50",
     chip: "bg-qf-yolk text-qf-ink",
-    label: "אלרגן",
+    label: "notice.allergen",
   },
   kosher: {
     wrap: "bg-qf-green-soft border-qf-green-line",
     chip: "bg-qf-green-deep text-white",
-    label: "כשרות",
+    label: "notice.kosher",
   },
   dietary: {
     wrap: "bg-qf-line-soft border-qf-line-dash",
     chip: "bg-qf-ink2 text-white",
-    label: "תזונתי",
+    label: "notice.dietary",
   },
 };
 
 export function NoticeCard({ notice }: { notice: NoticeRow }) {
   const style = NOTICE_STYLES[notice.kind];
+  const { t } = useLocale();
   return (
     <div
       className={cn(
@@ -96,7 +98,7 @@ export function NoticeCard({ notice }: { notice: NoticeRow }) {
           style.chip,
         )}
       >
-        {style.label}
+        {t(style.label)}
       </span>
       <div className="flex-1 min-w-0">
         <div className="font-semibold text-sm text-qf-ink leading-tight">{notice.title}</div>
@@ -171,7 +173,8 @@ export function MenuList({
   featuredBadgeLabel,
   themeDefaultColor,
 }: Props) {
-  const featuredLabel = featuredBadgeLabel?.trim() || "מומלץ של השף";
+  const { t: tr, lang } = useLocale();
+  const featuredLabel = featuredBadgeLabel?.trim() || tr("menu.chefPick");
   const availableTags = useMemo(() => {
     const usage = new Set<string>();
     for (const it of items) for (const t of it.tags) usage.add(t);
@@ -273,7 +276,7 @@ export function MenuList({
                     : cn(tone.bg, tone.text, "border-transparent hover:bg-opacity-80"),
                 )}
               >
-                {t}
+                {tagLabel(t, lang)}
               </button>
             );
           })}
@@ -283,7 +286,7 @@ export function MenuList({
               onClick={() => onClearTags?.()}
               className="px-3 py-1.5 rounded-full text-xs whitespace-nowrap text-qf-mute hover:text-qf-ink shrink-0"
             >
-              נקה הכל
+              {tr("menu.clearAll")}
             </button>
           )}
         </div>
@@ -417,7 +420,7 @@ export function MenuList({
                                       tone.text,
                                     )}
                                   >
-                                    {t}
+                                    {tagLabel(t, lang)}
                                   </span>
                                 );
                               })}
@@ -438,7 +441,7 @@ export function MenuList({
 
         {filtered.length === 0 && (
           <div className="text-center text-sm text-qf-mute py-10">
-            לא נמצאו פריטים תואמים
+            {tr("menu.noResults")}
           </div>
         )}
       </div>

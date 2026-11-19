@@ -27,6 +27,8 @@ import { QrLandingModal } from "@/components/customer/QrLandingModal";
 import { LocaleProvider } from "@/components/customer/LocaleProvider";
 import { cookies } from "next/headers";
 import { dirFor, LANG_COOKIE, resolveLang, type Lang } from "@/lib/i18n/langs";
+import { cityEntityId, contentKey, loadStorefrontContent } from "@/lib/i18n/content";
+import type { TransItem } from "@/lib/i18n/translate";
 
 export async function generateMetadata({
   params,
@@ -143,9 +145,30 @@ export default async function CustomerLayout({
     );
   }
 
+  const cities = Array.from(new Set((branch?.zones ?? []).flatMap((z) => z.cities)));
+  const tenantTexts: TransItem[] = [
+    { entityType: "tenant", entityId: tenant.id, field: "cutleryLabel", text: tenant.cutleryLabel ?? "" },
+    { entityType: "tenant", entityId: tenant.id, field: "preUpsellTitle", text: tenant.preCheckoutUpsellTitle ?? "" },
+    { entityType: "tenant", entityId: tenant.id, field: "preUpsellSubtitle", text: tenant.preCheckoutUpsellSubtitle ?? "" },
+    { entityType: "branch", entityId: branch?.id ?? tenant.id, field: "address", text: branch?.address ?? "" },
+    ...cities.map((c) => ({ entityType: "city", entityId: cityEntityId(tenant.id, c), field: "name", text: c })),
+  ];
+  const rawContent = await loadStorefrontContent(tenant.id, lang, tenantTexts);
+  const content: Record<string, string> = { ...rawContent };
+  for (const c of cities) {
+    const k = contentKey("city", cityEntityId(tenant.id, c), "name");
+    if (rawContent[k]) content[`city:${c}`] = rawContent[k];
+    delete content[k];
+  }
+  const addrKey = contentKey("branch", branch?.id ?? tenant.id, "address");
+  if (rawContent[addrKey]) content["store:address"] = rawContent[addrKey];
+  delete content[addrKey];
+  const tenantText = <T extends string | null>(field: string, source: T): T =>
+    source ? ((content[contentKey("tenant", tenant.id, field)] ?? source) as T) : source;
+
   return (
     <ThemeProvider themeId={tenant.themeId} className="min-h-screen bg-qf-bg" dir={dirFor(lang)}>
-      <LocaleProvider lang={lang} enabled={enabledLangs}>
+      <LocaleProvider lang={lang} enabled={enabledLangs} content={content}>
       <CartProvider
         tenant={{
           id: tenant.id,
@@ -159,13 +182,13 @@ export default async function CustomerLayout({
           tipEnabled: tenant.tipEnabled,
           customerNotesEnabled: tenant.customerNotesEnabled,
           cutleryEnabled: tenant.cutleryEnabled,
-          cutleryLabel: tenant.cutleryLabel,
+          cutleryLabel: tenantText("cutleryLabel", tenant.cutleryLabel),
           cutleryPrice: tenant.cutleryPrice,
           cutleryFreeAbove: tenant.cutleryFreeAbove,
           reviewsPublic: tenant.reviewsEnabled && tenant.reviewsPublic,
           upsellSizeNudge: tenant.upsellSizeNudge,
-          preCheckoutUpsellTitle: tenant.preCheckoutUpsellTitle,
-          preCheckoutUpsellSubtitle: tenant.preCheckoutUpsellSubtitle,
+          preCheckoutUpsellTitle: tenantText("preUpsellTitle", tenant.preCheckoutUpsellTitle),
+          preCheckoutUpsellSubtitle: tenantText("preUpsellSubtitle", tenant.preCheckoutUpsellSubtitle),
         }}
         branch={
           branch
@@ -226,7 +249,7 @@ export default async function CustomerLayout({
               </CustomerChromeGate>
             )}
             <CustomerChromeGate>
-              <CustomerFooter tenantSlug={tenant.slug} tenantName={tenant.name} />
+              <CustomerFooter tenantSlug={tenant.slug} tenantName={tenant.name} lang={lang} />
             </CustomerChromeGate>
           </div>
           {modal}

@@ -313,6 +313,11 @@ export default async function HomePage({
     items: menuItems,
     deals: activeDeals,
     notices,
+    extras: [
+      { entityType: "tenant", entityId: tenant.id, field: "about", text: tenant.about ?? "" },
+      { entityType: "tenant", entityId: tenant.id, field: "cuisineType", text: tenant.cuisineType ?? "" },
+      { entityType: "tenant", entityId: tenant.id, field: "etaLabel", text: tenant.etaLabel ?? "" },
+    ],
   });
 
   return (
@@ -323,12 +328,12 @@ export default async function HomePage({
         name: tenant.name,
         logoLetter: tenant.logoLetter,
         logoUrl: tenant.logoUrl,
-        cuisineType: tenant.cuisineType,
-        about: tenant.about,
+        cuisineType: tenant.cuisineType ? loc("tenant", tenant.id, "cuisineType", tenant.cuisineType) : tenant.cuisineType,
+        about: tenant.about ? loc("tenant", tenant.id, "about", tenant.about) : tenant.about,
         businessType: tenant.businessType,
         coverImage: tenant.coverImage,
         themeId: tenant.themeId,
-        etaLabel: tenant.etaLabel,
+        etaLabel: tenant.etaLabel?.trim() ? loc("tenant", tenant.id, "etaLabel", tenant.etaLabel) : tenant.etaLabel,
       }}
       layoutMode={tenant.storefrontLayout}
       branch={
