@@ -37,6 +37,7 @@ export interface PoplySendResult {
 }
 
 const RETRY_DELAYS_MS = [500, 1500];
+const REQUEST_TIMEOUT_MS = 10_000;
 const RETRYABLE_HTTP = new Set([503, 504]);
 
 async function post(path: string, body: unknown): Promise<PoplySendResult> {
@@ -63,6 +64,7 @@ async function postOnce(
         authorization: `Bearer ${KEY}`,
       },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     const data = (await res.json().catch(() => null)) as
       | { ok?: boolean; id?: string; error?: string }
@@ -76,10 +78,11 @@ async function postOnce(
     }
     return { ok: true, id: data.id };
   } catch (err) {
+    const timedOut = err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
     return {
       ok: false,
-      error: err instanceof Error ? err.message : "poply_network_error",
-      retryable: true,
+      error: timedOut ? "poply_timeout" : err instanceof Error ? err.message : "poply_network_error",
+      retryable: !timedOut,
     };
   }
 }
