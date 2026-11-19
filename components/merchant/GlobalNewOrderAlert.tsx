@@ -83,16 +83,23 @@ function Listener({ daysDelivery }: { daysDelivery: boolean }) {
       const nextSeen = seen ?? new Set<string>();
       for (const o of fresh) nextSeen.add(o.id);
       seenRef.current = nextSeen;
-      setPending(fresh.filter((o) => o.status === "pending"));
+      const pendingNow = fresh.filter((o) => o.status === "pending");
+      setPending(pendingNow);
+      setLatest((prev) => {
+        if (newOnes.length > 0) return newOnes[newOnes.length - 1];
+        if (prev?.status === "pending" && !pendingNow.some((o) => o.id === prev.id)) return null;
+        return prev;
+      });
       if (newOnes.length > 0) {
-        setLatest(newOnes[newOnes.length - 1]);
         setDismissedId(null);
-        if (getChimeEnabled()) playChime(getSelectedChime());
+        const loopWillRing =
+          !daysDelivery && getChimeLoopEnabled() && newOnes.some((o) => o.status === "pending");
+        if (getChimeEnabled() && !loopWillRing) playChime(getSelectedChime());
       }
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [daysDelivery]);
 
   useEffect(() => {
     const id = window.setTimeout(() => void refresh(), 0);
@@ -139,7 +146,8 @@ function Listener({ daysDelivery }: { daysDelivery: boolean }) {
           {count > 1 ? `${count} הזמנות חדשות ממתינות` : `הזמנה חדשה #${bannerOrder.number}`}
         </div>
         <div className="text-xs">
-          {soundOn ? "ההזמנה ממתינה לאישור" : "הסאונד מושתק במכשיר הזה"}
+          {count > 0 ? "ממתינה לאישור" : "התקבלה הזמנה חדשה"}
+          {!soundOn && " · הסאונד מושתק במכשיר הזה"}
         </div>
       </div>
       <Link
