@@ -14,7 +14,7 @@ import { THEMES, themeVars, type ThemeId } from "@/lib/themes";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { useCart } from "@/components/customer/CartProvider";
 import { CartLineOptions } from "@/components/customer/CartLineOptions";
-import { formatPrice } from "@/lib/format";
+import { displayAddress, formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { recordRecentOrder } from "@/lib/recent-orders-storage";
 import { recordOrderToken } from "@/lib/order-access-storage";
@@ -1063,7 +1063,7 @@ export function CustomerCheckout({
             <CardTitle>{t("checkout.pickupDetails")}</CardTitle>
             <p className="text-sm text-qf-ink2 mt-2">
               {branch?.address
-                ? `${t("checkout.pickupReadyAtPrefix")}${branch.address}${t("checkout.pickupReadyAtSuffix")}`
+                ? `${t("checkout.pickupReadyAtPrefix")}${displayAddress(branch.address)}${t("checkout.pickupReadyAtSuffix")}`
                 : t("checkout.pickupReady")}
             </p>
           </Card>

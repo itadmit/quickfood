@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { IcoPhone, IcoClock, IcoCheck, IcoClose, IcoStar, IcoWhatsApp, IcoChev } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { CartLineOptions } from "@/components/customer/CartLineOptions";
-import { formatPrice, formatTime } from "@/lib/format";
+import { displayAddress, formatPrice, formatTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { readOrderToken } from "@/lib/order-access-storage";
 import { useLocale } from "@/components/customer/LocaleProvider";
@@ -441,7 +441,7 @@ export function OrderTracking({
             </div>
             <div className="flex-1 min-w-0">
               <div className="font-semibold text-sm">{tenantName}</div>
-              <div className="text-xs text-qf-mute truncate">{order.branch.address}</div>
+              <div className="text-xs text-qf-mute truncate">{displayAddress(order.branch.address)}</div>
             </div>
             <a
               href={`tel:${order.branch.phone}`}

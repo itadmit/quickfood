@@ -3,6 +3,10 @@
  * Per QuickFood README: prices in integer shekels, phone in E.164 or local format.
  */
 
+export function displayAddress(address: string): string {
+  return address.replace(/[\s,]*\b\d{5}(?:\d{2})?\s*$/, "").trim();
+}
+
 export function formatPrice(amount: number): string {
   return `₪${amount.toLocaleString("he-IL")}`;
 }

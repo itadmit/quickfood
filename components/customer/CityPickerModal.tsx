@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { displayAddress } from "@/lib/format";
 import { IcoPin, IcoSearch, IcoBag, IcoCheck, IcoClose } from "@/components/shared/Icons";
 import { cn } from "@/lib/cn";
 import { useLocale } from "@/components/customer/LocaleProvider";
@@ -295,7 +296,7 @@ export function CityPickerModal({
                     {t("city.pickupFromBranch")}
                   </div>
                   <div className="text-xs text-black/70 mt-1 leading-snug">
-                    {branchAddress ? tc("store:address", branchAddress) : t("city.addressLater")}
+                    {branchAddress ? displayAddress(tc("store:address", branchAddress)) : t("city.addressLater")}
                   </div>
                 </div>
               </div>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useLayoutEffect } from "react";
 import { IcoClose, IcoStar, IcoPhone, IcoPin, IcoClock, IcoBike, IcoBag } from "@/components/shared/Icons";
-import { formatPrice, formatEtaRange } from "@/lib/format";
+import { displayAddress, formatPrice, formatEtaRange } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { BranchHours, DayKey } from "@/lib/branch-hours";
 import { useLocale } from "@/components/customer/LocaleProvider";
@@ -52,7 +52,7 @@ export function RestaurantInfoModal({
   onClose,
 }: Props) {
   const { t, tc, lang } = useLocale();
-  const addressLabel = tc("store:address", address);
+  const addressLabel = displayAddress(tc("store:address", address));
   useLayoutEffect(() => {
     const html = document.documentElement;
     const prevOverflow = html.style.overflow;
