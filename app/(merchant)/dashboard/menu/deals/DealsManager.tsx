@@ -54,7 +54,52 @@ interface DealRow {
   position: number;
   free_extras: number;
   category_id: string | null;
+  /** Day/hour window - minutes since midnight (Israel time), 7-bit weekday
+   *  mask (bit 0 = Sunday). null = always. Same contract as menu items. */
+  available_from: number | null;
+  available_to: number | null;
+  available_days: number | null;
   slots: DealSlotRow[];
+}
+
+// Hebrew weekday names indexed by getDay() (0 = Sunday), as in ItemEditor.
+const HEBREW_DAYS = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"] as const;
+const ALL_DAYS = 0b1111111;
+
+function minutesToHM(min: number | null): string {
+  if (min === null || min === undefined) return "";
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+function hmToMinutes(hm: string): number | null {
+  if (!hm) return null;
+  const [h, m] = hm.split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 60 + m;
+}
+
+/** Short Hebrew summary of a deal's window for the list card, e.g.
+ *  "א׳–ג׳ · 12:00–16:00". null when the deal is always on. */
+function windowSummary(d: Pick<DealRow, "available_from" | "available_to" | "available_days">): string | null {
+  const parts: string[] = [];
+  if (d.available_days !== null && d.available_days !== ALL_DAYS) {
+    const on = HEBREW_DAYS.map((_, i) => (d.available_days! & (1 << i)) !== 0);
+    // Collapse consecutive days into ranges: א׳–ג׳, ה׳
+    const ranges: string[] = [];
+    for (let i = 0; i < 7; i++) {
+      if (!on[i]) continue;
+      let j = i;
+      while (j + 1 < 7 && on[j + 1]) j++;
+      ranges.push(j > i + 1 ? `${HEBREW_DAYS[i]}–${HEBREW_DAYS[j]}` : j === i + 1 ? `${HEBREW_DAYS[i]}, ${HEBREW_DAYS[j]}` : HEBREW_DAYS[i]);
+      i = j;
+    }
+    parts.push(ranges.length ? ranges.join(", ") : "אף יום");
+  }
+  if (d.available_from !== null && d.available_to !== null && d.available_from !== d.available_to) {
+    parts.push(`${minutesToHM(d.available_from)}–${minutesToHM(d.available_to)}`);
+  }
+  return parts.length ? parts.join(" · ") : null;
 }
 
 interface EditingDeal extends Omit<DealRow, "id"> {
@@ -71,6 +116,9 @@ const EMPTY: EditingDeal = {
   position: 0,
   free_extras: 0,
   category_id: null,
+  available_from: null,
+  available_to: null,
+  available_days: null,
   slots: [{ name: "מנה", quantity: 1, items: [] }],
 };
 
@@ -106,6 +154,14 @@ export function DealsManager({
       setError("לכל שלב בדיל צריך שם ולפחות מנה אחת לבחירה");
       return;
     }
+    if ((editing.available_from === null) !== (editing.available_to === null)) {
+      setError("בחלון השעות צריך למלא גם ״משעה״ וגם ״עד שעה״, או לאפס אותו");
+      return;
+    }
+    if (editing.available_days === 0) {
+      setError("צריך לבחור לפחות יום אחד שבו הדיל פעיל");
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
@@ -117,6 +173,9 @@ export function DealsManager({
         position: editing.position,
         free_extras: editing.free_extras,
         category_id: editing.category_id,
+        available_from: editing.available_from,
+        available_to: editing.available_to,
+        available_days: editing.available_days,
         slots: editing.slots.map((s) => ({
           name: s.name,
           quantity: s.quantity,
@@ -181,10 +240,17 @@ export function DealsManager({
         position: deal.position,
         free_extras: deal.free_extras,
         category_id: deal.category_id,
+        available_from: deal.available_from,
+        available_to: deal.available_to,
+        available_days: deal.available_days,
         slots: deal.slots.map((s) => ({
           name: s.name,
           quantity: s.quantity,
           item_ids: s.items.map((i) => i.id),
+          // Keep pinned sizes - the PUT rebuilds the slots from this payload.
+          fixed_sizes: Object.fromEntries(
+            s.items.filter((i) => i.fixedSizeId).map((i) => [i.id, i.fixedSizeId]),
+          ),
         })),
       }),
     });
@@ -268,6 +334,9 @@ export function DealsManager({
                   {d.description && (
                     <p className="text-xs text-qf-mute leading-snug line-clamp-1">{d.description}</p>
                   )}
+                  <p className="text-[11px] text-qf-mute mt-0.5 tnum">
+                    {windowSummary(d) ? `פעיל ב: ${windowSummary(d)}` : "פעיל תמיד"}
+                  </p>
                 </div>
                 <span
                   className={cn(
@@ -463,6 +532,8 @@ function DealEditor({
         </label>
       </div>
 
+      <DealWindowFields deal={deal} onChange={onChange} />
+
       <div className="space-y-3">
         <header className="flex items-center justify-between">
           <h3 className="font-semibold text-sm">הרכב הדיל</h3>
@@ -612,6 +683,113 @@ function DealEditor({
         </button>
       </footer>
     </section>
+  );
+}
+
+/** Days + hours the deal is offered. Same controls and semantics as the
+ *  item editor: both hours empty = all day, all days on = stored as null. */
+function DealWindowFields({
+  deal,
+  onChange,
+}: {
+  deal: EditingDeal;
+  onChange: (d: EditingDeal) => void;
+}) {
+  const noHours = deal.available_from === null && deal.available_to === null;
+  return (
+    <div className="rounded-xl bg-qf-line-soft/40 border border-qf-line-dash p-3 space-y-3 text-sm">
+      <div>
+        <span className="font-medium">מתי הדיל פעיל</span>
+        <p className="text-xs text-qf-mute mt-0.5">
+          מחוץ לימים ולשעות שתבחר הדיל לא יוצג בחנות ואי אפשר יהיה להזמין אותו. בלי הגבלה = פעיל תמיד.
+        </p>
+      </div>
+
+      <div>
+        <div className="flex items-baseline justify-between mb-2">
+          <span className="text-sm font-medium">ימים בשבוע</span>
+          {deal.available_days !== null && (
+            <button
+              type="button"
+              onClick={() => onChange({ ...deal, available_days: null })}
+              className="text-xs text-qf-mute hover:text-qf-ink underline"
+            >
+              אפס לכל הימים
+            </button>
+          )}
+        </div>
+        <div className="flex gap-1.5 flex-wrap">
+          {HEBREW_DAYS.map((label, i) => {
+            const mask = 1 << i;
+            // null = every day - render all on so the toggles match reality.
+            const current = deal.available_days ?? ALL_DAYS;
+            const on = (current & mask) !== 0;
+            return (
+              <button
+                key={i}
+                type="button"
+                aria-pressed={on}
+                onClick={() => {
+                  const next = on ? current & ~mask : current | mask;
+                  onChange({ ...deal, available_days: next === ALL_DAYS ? null : next });
+                }}
+                className={cn(
+                  "w-10 h-10 lg:w-9 lg:h-9 rounded-lg text-sm lg:text-xs font-bold transition shrink-0",
+                  on ? "bg-(--qf-primary) text-white" : "bg-white border border-qf-line-dash text-qf-mute",
+                )}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-baseline justify-between mb-2">
+          <span className="text-sm font-medium">חלון שעות</span>
+          <span
+            className={cn(
+              "text-[11px] font-semibold px-2 py-0.5 rounded-md tnum",
+              noHours ? "bg-qf-green-soft text-qf-green-deep" : "bg-qf-yolk-soft text-qf-ink",
+            )}
+          >
+            {noHours
+              ? "כל היום"
+              : `${minutesToHM(deal.available_from) || "-"} → ${minutesToHM(deal.available_to) || "-"}`}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-2.5">
+          <label className="flex flex-col gap-1">
+            <span className="text-[10px] text-qf-mute">משעה</span>
+            <input
+              type="time"
+              value={minutesToHM(deal.available_from)}
+              onChange={(e) => onChange({ ...deal, available_from: hmToMinutes(e.target.value) })}
+              className="px-3 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-(--qf-primary) outline-none tnum text-base lg:text-sm"
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-[10px] text-qf-mute">עד שעה</span>
+            <input
+              type="time"
+              value={minutesToHM(deal.available_to)}
+              onChange={(e) => onChange({ ...deal, available_to: hmToMinutes(e.target.value) })}
+              className="px-3 py-2.5 rounded-xl border border-qf-line-dash bg-white focus:border-(--qf-primary) outline-none tnum text-base lg:text-sm"
+            />
+          </label>
+        </div>
+        {!noHours && (
+          <button
+            type="button"
+            onClick={() => onChange({ ...deal, available_from: null, available_to: null })}
+            className="text-xs text-qf-mute hover:text-qf-ink underline mt-2 inline-block"
+          >
+            אפס חלון שעות
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
