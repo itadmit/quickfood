@@ -154,6 +154,13 @@ export const KIOSK_DEFAULTS_HE = {
     checkoutBtn: "מעבר לתשלום",
     continueBrowsingBtn: "המשך לקנות",
   },
+  gift: {
+    badge: "מתנה",
+    free: "חינם",
+    autoAdded: "נוסף אוטומטית בהזמנה מעל {amount}",
+    hint: "עוד {amount} ומקבלים {name} במתנה",
+    payChoiceNote: "כולל {name} במתנה",
+  },
   bundle: {
     sectionTitle: "מבצעים פתוחים בסל",
     savingsLabel: "חוסכים {amount}",

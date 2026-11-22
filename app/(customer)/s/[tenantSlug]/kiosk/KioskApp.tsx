@@ -164,7 +164,7 @@ export function KioskApp({
   const t = useMemo(() => buildKioskT(stringOverrides), [stringOverrides]);
   const featuredLabel =
     featuredBadgeLabel?.trim() || t("featured.fallbackLabel");
-  const { lines, subtotal, clear, updateQuantity, remove, add, tenant } = useCart();
+  const { lines, subtotal, clear, updateQuantity, remove, add, tenant, freeGift, nextFreeGift } = useCart();
   const [state, setState] = useState<
     | "start"
     | "mode"
@@ -1636,6 +1636,11 @@ export function KioskApp({
             <p className="text-xl text-qf-ink2 tnum">
               {t("payChoice.totalPrefix")} <span className="font-bold text-qf-ink">{formatPrice(subtotal)}</span>
             </p>
+            {freeGift && (
+              <p className="text-lg font-bold text-(--qf-deep)" data-testid="kiosk-gift-paychoice">
+                {t("gift.payChoiceNote", { name: freeGift.name })}
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full max-w-3xl">
             <ModeCard
@@ -2144,6 +2149,42 @@ export function KioskApp({
                     </div>
                   );
                 })
+              )}
+              {/* Automatic gift - display only. The server adds the real
+                  ₪0 line at order time (kiosk orders are not staff-entered). */}
+              {lines.length > 0 && freeGift && (
+                <div
+                  className="bg-white rounded-2xl border-2 border-dashed border-(--qf-primary)/50 p-3 flex items-center gap-3"
+                  data-testid="kiosk-gift-line"
+                >
+                  <div className="w-20 h-20 rounded-xl bg-white border border-qf-line-soft overflow-hidden shrink-0 relative">
+                    <MenuItemImage
+                      src={freeGift.imageUrl ?? undefined}
+                      alt={freeGift.name}
+                      businessType={businessType}
+                      size={120}
+                      rounded="none"
+                      fill
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-base font-bold leading-tight text-qf-ink">{freeGift.name}</span>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-(--qf-soft) text-(--qf-deep)">
+                        {t("gift.badge")}
+                      </span>
+                    </div>
+                    <div className="text-sm text-qf-mute mt-0.5">
+                      {t("gift.autoAdded", { amount: formatPrice(freeGift.minSubtotal) })}
+                    </div>
+                  </div>
+                  <div className="text-lg font-black text-(--qf-deep) shrink-0">{t("gift.free")}</div>
+                </div>
+              )}
+              {lines.length > 0 && !freeGift && nextFreeGift && (
+                <div className="bg-(--qf-soft) rounded-2xl px-4 py-3 text-base text-qf-ink2" data-testid="kiosk-gift-hint">
+                  {t("gift.hint", { amount: formatPrice(nextFreeGift.missing), name: nextFreeGift.itemName })}
+                </div>
               )}
             </div>
             {bundleSuggestions.length > 0 && (
