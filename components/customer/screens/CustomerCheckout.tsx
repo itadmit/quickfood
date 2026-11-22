@@ -14,6 +14,7 @@ import { THEMES, themeVars, type ThemeId } from "@/lib/themes";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { useCart } from "@/components/customer/CartProvider";
 import { CartLineOptions } from "@/components/customer/CartLineOptions";
+import { CartGiftLine } from "@/components/customer/CartGiftLine";
 import { displayAddress, formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { recordRecentOrder } from "@/lib/recent-orders-storage";
@@ -1438,6 +1439,7 @@ export function CustomerCheckout({
                 </li>
               );
             })}
+            <CartGiftLine compact asListItem />
           </ul>
 
           <div className="mt-3 pt-3 border-t border-qf-line-soft space-y-1.5 text-sm">
@@ -1525,6 +1527,7 @@ export function CustomerCheckout({
                   </li>
                 );
               })}
+              <CartGiftLine compact asListItem />
             </ul>
             <div className="mt-3 pt-3 border-t border-qf-line-soft space-y-1.5 text-sm">
               <SumRow label={`${itemCount} ${t("checkout.itemsLabel")}`} value={formatPrice(subtotal)} />

@@ -146,6 +146,17 @@ export default async function CustomerLayout({
     );
   }
 
+  // Automatic gift rules - the cart shows the gift line once the subtotal
+  // reaches a threshold. Display only; createOrder re-decides on its own.
+  const giftRules = await prisma.freeGiftRule.findMany({
+    where: { tenantId: tenant.id, active: true, item: { available: true } },
+    orderBy: { minSubtotal: "asc" },
+    select: {
+      id: true, itemId: true, minSubtotal: true, active: true, validFrom: true, validUntil: true,
+      item: { select: { id: true, name: true, imageUrl: true } },
+    },
+  });
+
   const cities = Array.from(new Set((branch?.zones ?? []).flatMap((z) => z.cities)));
   // Free-text tags the merchant typed themselves have no static dictionary
   // entry, so they go through the same cached auto-translation as other
@@ -240,6 +251,11 @@ export default async function CustomerLayout({
           freeDeliveryAbove: z.freeDeliveryAbove,
           minEta: z.minEta,
           maxEta: z.maxEta,
+        }))}
+        giftRules={giftRules.map((r) => ({
+          ...r,
+          validFrom: r.validFrom?.toISOString() ?? null,
+          validUntil: r.validUntil?.toISOString() ?? null,
         }))}
       >
         <CartBundleProvider tenantSlug={tenant.slug} businessType={tenant.businessType as BusinessType}>

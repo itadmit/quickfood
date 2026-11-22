@@ -23,6 +23,7 @@ import {
 import { printOrderTicket } from "@/lib/printing/print-order";
 import { resolveLoyaltyConfig } from "@/lib/loyalty/config";
 import { loadLoyaltyBalance, redeemQuote } from "@/lib/loyalty/points";
+import { pickGiftRule, giftLineName } from "@/lib/free-gift";
 import type { Prisma } from "@prisma/client";
 
 /**
@@ -591,6 +592,57 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     }
   }
 
+  // Automatic free gift above a cart amount. Decided HERE from the server
+  // subtotal only - the client has no field to ask for it, and a gift item
+  // the client sends as a regular line is priced like any other line. One
+  // unit, price 0. Storefront + kiosk only: staff-entered (POS / phone)
+  // orders are rung by a cashier who adds a gift by hand if they want one.
+  // Not reached / rule off / gift dish unavailable or sold out → no gift,
+  // and the order goes through as usual.
+  let giftItemId: string | null = null;
+  let giftOrderItemIndex = -1;
+  if (!staffEntered) {
+    const giftRules = await prisma.freeGiftRule.findMany({
+      where: { tenantId: tenant.id, active: true, minSubtotal: { lte: subtotal } },
+      include: {
+        item: {
+          select: {
+            id: true, tenantId: true, name: true, available: true, stockRemaining: true,
+            availableFrom: true, availableTo: true, availableDays: true,
+            category: {
+              select: { active: true, availableFrom: true, availableTo: true, availableDays: true },
+            },
+          },
+        },
+      },
+    });
+    const servable = giftRules.filter((r) => {
+      const it = r.item;
+      if (!it || it.tenantId !== tenant.id || !it.available) return false;
+      if (!isItemVisibleNow(it)) return false;
+      if (it.category && !isCategoryVisibleNow(it.category)) return false;
+      if (it.stockRemaining !== null && it.stockRemaining - (stockNeeds.get(it.id) ?? 0) < 1) return false;
+      return true;
+    });
+    const rule = pickGiftRule(servable, subtotal, now);
+    if (rule) {
+      giftItemId = rule.item.id;
+      giftOrderItemIndex = orderItemData.length;
+      orderItemData.push({
+        menuItemId: rule.item.id,
+        nameSnapshot: giftLineName(rule.item.name),
+        quantity: 1,
+        unitPrice: 0,
+        totalPrice: 0,
+        sizeId: null,
+        sizeSnapshot: null,
+        selectedOptions: [] as unknown as Prisma.InputJsonValue,
+        notes: null,
+        source: "free_gift",
+      });
+    }
+  }
+
   // Per-zone delivery economics: when the order's city resolves to an active
   // zone, that zone's fee / minimum / free-delivery threshold override the
   // branch defaults. No match (or no city) keeps the branch-level behaviour.
@@ -916,7 +968,8 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   // the AI advisor); otherwise reorder if every line came from reorder;
   // otherwise direct. Upsell is line-only - an upsell add doesn't make
   // the whole order an "upsell order".
-  const lineSources = orderItemData.map((d) => d.source);
+  // The automatic gift is not something the customer chose - keep it out.
+  const lineSources = orderItemData.map((d) => d.source).filter((s) => s !== "free_gift");
   const inferredSource: "direct" | "ai_advisor" | "reorder" = lineSources.includes(
     "ai_advisor",
   )
@@ -946,6 +999,28 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       }
     });
     for (const itemId of stockNeeds.keys()) revalidateTag(`menu-item-${itemId}`, {});
+  }
+
+  // The gift claims its own unit separately and never fails the order: if a
+  // parallel order took the last one, the order simply goes out without it
+  // (a kiosk order is already paid at this point).
+  if (giftItemId && giftOrderItemIndex >= 0) {
+    const claimed = await prisma.menuItem.updateMany({
+      where: {
+        id: giftItemId,
+        OR: [{ stockRemaining: null }, { stockRemaining: { gte: 1 } }],
+      },
+      data: { stockRemaining: { decrement: 1 } },
+    });
+    if (claimed.count === 0) {
+      orderItemData.splice(giftOrderItemIndex, 1);
+    } else {
+      try {
+        revalidateTag(`menu-item-${giftItemId}`, {});
+      } catch {
+        /* cache refresh only */
+      }
+    }
   }
 
   const order = await prisma.order.create({

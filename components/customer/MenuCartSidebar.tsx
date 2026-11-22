@@ -10,6 +10,7 @@ import { useCart } from "@/components/customer/CartProvider";
 import { CartLineOptions } from "@/components/customer/CartLineOptions";
 import { useLocale } from "@/components/customer/LocaleProvider";
 import { formatPrice } from "@/lib/format";
+import { CartGiftLine, CartGiftHint } from "@/components/customer/CartGiftLine";
 
 interface Props {
   tenantSlug: string;
@@ -113,9 +114,11 @@ export function MenuCartSidebar({ tenantSlug, businessType }: Props) {
                 </li>
               );
             })}
+            <CartGiftLine compact asListItem />
           </ul>
 
           <div className="border-t border-qf-line px-4 py-3 space-y-1.5 text-sm">
+            <CartGiftHint className="mb-1" />
             <Row label={t("sidebar.subtotal")} value={formatPrice(subtotal)} />
             {method === "delivery" && (
               <Row label={t("sidebar.deliveryFee")} value={deliveryFee === 0 ? t("sidebar.free") : formatPrice(deliveryFee)} />

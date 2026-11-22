@@ -74,6 +74,7 @@ export const NAV: NavSection[] = [
       { href: "/dashboard/campaigns", label: "קמפיינים", Icon: IcoMegaphone },
       { href: "/dashboard/loyalty", label: "מועדון לקוחות", Icon: IcoCrown, badge: "חדש!" },
       { href: "/dashboard/sales/bundles", label: "מבצעי חבילות", Icon: IcoCreditCard },
+      { href: "/dashboard/sales/free-gifts", label: "מתנה מעל סכום", Icon: IcoCreditCard },
       { href: "/dashboard/coupons", label: "קופונים", Icon: IcoCreditCard },
       { href: "/dashboard/reviews", label: "ביקורות", Icon: IcoStar },
       { href: "/dashboard/messaging", label: "דיוור והתראות", Icon: IcoBell, badge: "חדש!" },

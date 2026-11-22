@@ -18,6 +18,7 @@ import ItemModalSkeleton from "@/components/customer/ItemModalSkeleton";
 import { CartUpsell } from "@/components/customer/CartUpsell";
 import { usePreCheckoutUpsell } from "@/components/customer/PreCheckoutUpsell";
 import { CartBundleOffers } from "@/components/customer/CartBundleOffers";
+import { CartGiftLine, CartGiftHint } from "@/components/customer/CartGiftLine";
 import { useLocale } from "@/components/customer/LocaleProvider";
 
 export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
@@ -197,6 +198,8 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
             </div>
           );
         })}
+        <CartGiftLine />
+        <CartGiftHint />
       </div>
 
           <CartBundleOffers
