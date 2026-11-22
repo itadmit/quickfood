@@ -18,6 +18,13 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
 import { formatPrice, formatDateTime, formatRelativeMinutes } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { normalizeSmsPhone } from "@/lib/sms/phone";
+
+/** Local 05x... -> 9725x... for wa.me links. */
+function toWaPhone(raw: string): string {
+  const local = normalizeSmsPhone(raw);
+  return local.startsWith("0") ? `972${local.slice(1)}` : local;
+}
 import {
   printReceipt,
   hasSunmiBridge,
@@ -131,6 +138,8 @@ export function OrderDrawer({
   const [refundReason, setRefundReason] = useState("");
   const [refunding, setRefunding] = useState(false);
   const [capturing, setCapturing] = useState(false);
+  const [switchingPayment, setSwitchingPayment] = useState(false);
+  const [payUrl, setPayUrl] = useState<string | null>(null);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingAddress, setEditingAddress] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -251,6 +260,42 @@ export function OrderDrawer({
     }
     pushToast("ok", "ההזמנה חויבה");
     await reload();
+  }
+
+  // Customer called to pay differently: flip the order's payment method in
+  // place (status untouched, so it stays active and never shows as
+  // cancelled). Switching to card hands back the customer pay-page link to
+  // send - nothing is charged from here.
+  async function switchPaymentMethod(to: "cash" | "card") {
+    if (!order) return;
+    setSwitchingPayment(true);
+    try {
+      const res = await fetch(`/api/v1/merchant/orders/${order.id}/payment-method`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ payment_method: to }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        pushToast("err", data?.error?.message ?? "שינוי אמצעי התשלום נכשל");
+        return;
+      }
+      setPayUrl(to === "card" ? (data?.pay_url ?? null) : null);
+      pushToast("ok", to === "card" ? "אמצעי התשלום שונה לאשראי" : "אמצעי התשלום שונה למזומן");
+      await reload();
+    } finally {
+      setSwitchingPayment(false);
+    }
+  }
+
+  async function copyPayUrl() {
+    if (!payUrl) return;
+    try {
+      await navigator.clipboard.writeText(payUrl);
+      pushToast("ok", "קישור התשלום הועתק");
+    } catch {
+      pushToast("err", "ההעתקה נכשלה, אפשר לסמן ולהעתיק ידנית");
+    }
   }
 
   async function performRefund() {
@@ -601,6 +646,66 @@ export function OrderDrawer({
                           : "אשראי"}
                   </span>
                 </div>
+                {order.payment_status === "pending" &&
+                  order.status !== "cancelled" &&
+                  order.status !== "refunded" &&
+                  // An unpaid card order still at `pending` is hidden from the
+                  // live board (HIDE_UNPAID_NONCASH), so cash->card is offered
+                  // only once the merchant has accepted the order.
+                  (order.status === "pending" && order.payment_method === "cash" ? (
+                    <div className="pt-1 text-[11px] text-qf-mute text-end">
+                      למעבר לתשלום באשראי יש לאשר קודם את ההזמנה
+                    </div>
+                  ) : (
+                    <div className="flex justify-end pt-1">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          switchPaymentMethod(order.payment_method === "cash" ? "card" : "cash")
+                        }
+                        disabled={switchingPayment}
+                        className="text-xs font-semibold text-(--qf-primary) hover:underline disabled:opacity-50 inline-flex items-center gap-1"
+                      >
+                        <IcoCreditCard c="currentColor" s={12} />
+                        {switchingPayment
+                          ? "מעדכן..."
+                          : order.payment_method === "cash"
+                            ? "החלף לתשלום באשראי"
+                            : "החלף לתשלום במזומן"}
+                      </button>
+                    </div>
+                  ))}
+                {payUrl && order.payment_method !== "cash" && order.payment_status === "pending" && (
+                  <div className="mt-2 rounded-lg border border-qf-line-dash bg-qf-line-soft p-2.5 space-y-2">
+                    <div className="text-xs text-qf-ink2">
+                      שלחו ללקוח את קישור התשלום. ההזמנה תסומן כשולמה אחרי שהחיוב יאושר.
+                    </div>
+                    <div dir="ltr" className="text-[11px] font-mono break-all select-all text-qf-ink">
+                      {payUrl}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={copyPayUrl}
+                        className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white text-xs font-medium"
+                      >
+                        העתק קישור
+                      </button>
+                      {order.customer?.phone && (
+                        <a
+                          href={`https://wa.me/${toWaPhone(order.customer.phone)}?text=${encodeURIComponent(
+                            `לתשלום הזמנה ${order.number} באשראי: ${payUrl}`,
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2.5 py-1.5 rounded-lg border border-qf-line-dash bg-white text-xs font-medium"
+                        >
+                          שלח בוואטסאפ
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
               </section>
             </>
           )}
