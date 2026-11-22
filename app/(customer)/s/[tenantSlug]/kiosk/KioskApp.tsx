@@ -21,6 +21,7 @@ import {
 } from "@/components/shared/Icons";
 import { Utensils, ShoppingBag, Banknote } from "lucide-react";
 import { formatPrice } from "@/lib/format";
+import { kioskOrderLines } from "@/lib/kiosk-order-lines";
 import { cn } from "@/lib/cn";
 import type { MenuItemForCustomer } from "@/lib/menu-item-load";
 import {
@@ -863,12 +864,7 @@ export function KioskApp({
         ? { customer_email: customerEmail.trim() }
         : {}),
       ...(marketingConsent ? { marketing_consent: true } : {}),
-      lines: lines.map((l) => ({
-        item_id: l.itemId,
-        quantity: l.quantity,
-        size_id: l.sizeId,
-        option_ids: l.options.map((o) => o.optionId),
-      })),
+      lines: kioskOrderLines(lines),
     };
 
     try {
