@@ -4,7 +4,7 @@ import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db/client";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
 import { notifyMerchantNewOrder } from "@/lib/orders/notify-merchant";
-import { isItemVisibleNow, isCategoryVisibleNow } from "@/lib/menu-availability";
+import { isItemVisibleNow, isCategoryVisibleNow, isDealVisibleNow } from "@/lib/menu-availability";
 import { isStorefrontBlocked } from "@/lib/tenant-billing";
 import { computeDeliveryFee } from "@/lib/delivery-fee";
 import { matchZoneByCity } from "@/lib/delivery-zone-match";
@@ -467,7 +467,11 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
     for (const dl of dealLines) {
       const deal = dealsById.get(dl.deal_id);
-      if (!deal) throw new CartValidationError("deal_unavailable", dl.deal_id);
+      // Day/hour window: a deal left in the cart past its window is refused
+      // here even though the storefront already hides it.
+      if (!deal || !isDealVisibleNow(deal, now)) {
+        throw new CartValidationError("deal_unavailable", dl.deal_id);
+      }
       if (dl.quantity < 1 || dl.quantity > 20) {
         throw new CartValidationError("invalid_quantity", dl.deal_id);
       }

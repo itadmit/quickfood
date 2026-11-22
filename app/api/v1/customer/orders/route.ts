@@ -344,6 +344,7 @@ function errorMessageFor(code: string): string {
     restaurant_closed: "המסעדה סגורה כרגע",
     cart_empty: "הסל ריק",
     item_unavailable: "פריט לא זמין",
+    deal_unavailable: "הדיל לא זמין בשעה הזו. הסירו אותו מהסל",
     invalid_quantity: "כמות לא תקינה",
     insufficient_stock: "הכמות שביקשת כבר לא במלאי",
     size_not_found: "גודל לא נמצא",

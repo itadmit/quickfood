@@ -29,6 +29,9 @@ export interface DealWithSlots {
   position: number;
   freeExtras: number;
   categoryId: string | null;
+  availableFrom: number | null;
+  availableTo: number | null;
+  availableDays: number | null;
   slots: Array<{
     id: string;
     name: string;
@@ -53,6 +56,9 @@ export function serializeDeal(deal: DealWithSlots) {
     position: deal.position,
     free_extras: deal.freeExtras,
     category_id: deal.categoryId,
+    available_from: deal.availableFrom,
+    available_to: deal.availableTo,
+    available_days: deal.availableDays,
     slots: deal.slots.map((s) => ({
       id: s.id,
       name: s.name,

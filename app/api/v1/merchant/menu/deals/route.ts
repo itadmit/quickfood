@@ -38,6 +38,9 @@ export const POST = handler(async (req: Request) => {
       position: body.position,
       freeExtras: body.free_extras,
       categoryId: body.category_id ?? null,
+      availableFrom: body.available_from ?? null,
+      availableTo: body.available_to ?? null,
+      availableDays: body.available_days ?? null,
       slots: {
         create: body.slots.map((s, si) => ({
           name: s.name,

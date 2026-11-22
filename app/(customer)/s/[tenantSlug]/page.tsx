@@ -6,7 +6,7 @@ import { storefrontCanonical } from "@/lib/storefront-url";
 import { prisma } from "@/lib/db/client";
 import { getSession } from "@/lib/auth/session";
 import { CustomerHome } from "@/components/customer/screens/CustomerHome";
-import { isItemVisibleNow, isCategoryVisibleNow } from "@/lib/menu-availability";
+import { isItemVisibleNow, isCategoryVisibleNow, isDealVisibleNow } from "@/lib/menu-availability";
 import { fingerprintOrderItems } from "@/lib/order-reorder";
 import { LANG_COOKIE, resolveLang } from "@/lib/i18n/langs";
 import { buildMenuLocalizer } from "@/lib/i18n/translate-menu";
@@ -146,7 +146,7 @@ export default async function HomePage({
     popular,
     allMenuItems,
     notices,
-    activeDeals,
+    allActiveDeals,
     customerRecentOrders,
     bannerCampaign,
     pendingReview,
@@ -243,6 +243,9 @@ export default async function HomePage({
     (i) => isItemVisibleNow(i) && visibleCatIds.has(i.categoryId),
   );
   const categories = visibleCategories.slice(0, 8);
+  // Deals with a day/hour window drop off the rail (and their category
+  // placement) outside it; the order API refuses them too.
+  const activeDeals = allActiveDeals.filter((d) => isDealVisibleNow(d));
 
   // A nationwide zone delivers to any address, so the storefront lets the
   // customer type their own city instead of picking from this list.

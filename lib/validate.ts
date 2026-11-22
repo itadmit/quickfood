@@ -295,6 +295,12 @@ export const DealInputSchema = z.object({
   position: z.number().int().default(0),
   free_extras: z.number().int().min(0).max(20).default(0),
   category_id: UuidSchema.nullable().optional(),
+  // Day/hour window, same contract as menu items: minutes since midnight
+  // (Israel time), 7-bit weekday mask (bit 0 = Sunday). null = no limit;
+  // omitted (undefined) on update = keep the stored value.
+  available_from: z.number().int().min(0).max(1439).nullable().optional(),
+  available_to: z.number().int().min(0).max(1439).nullable().optional(),
+  available_days: z.number().int().min(0).max(127).nullable().optional(),
   slots: z
     .array(
       z.object({

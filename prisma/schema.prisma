@@ -938,6 +938,13 @@ model Deal {
   // the dedicated deals rail at the top of the storefront.
   categoryId String?       @map("category_id") @db.Uuid
   category   MenuCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  // Time-of-day windowing - same contract as MenuItem.availableFrom/To/Days.
+  // Minutes since midnight Israel time (0..1439); availableDays is a 7-bit
+  // mask (bit 0 = Sun). NULL = no restriction, so existing deals are unchanged.
+  // Outside the window the deal is hidden and the server rejects it in orders.
+  availableFrom Int? @map("available_from")
+  availableTo   Int? @map("available_to")
+  availableDays Int? @map("available_days")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

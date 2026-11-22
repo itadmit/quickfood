@@ -88,6 +88,14 @@ function zonedParts(at: Date): ZonedParts {
   };
 }
 
+/** Israel wall clock at `at`: weekday (0 = Sunday) and minutes since midnight.
+ *  Shared with menu-availability so item/category/deal windows read the same
+ *  clock as the opening hours, not the UTC runtime clock. */
+export function israelWallClock(at: Date): { weekday: number; minutes: number } {
+  const p = zonedParts(at);
+  return { weekday: p.weekday, minutes: p.minutes };
+}
+
 function tzOffsetMs(at: Date): number {
   const p = zonedParts(at);
   const asUtc = Date.UTC(p.year, p.month - 1, p.day, 0, p.minutes);

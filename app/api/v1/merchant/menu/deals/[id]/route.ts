@@ -43,6 +43,11 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
         position: body.position,
         freeExtras: body.free_extras,
         categoryId: body.category_id ?? null,
+        // Omitted = keep the stored window (older clients that don't send it
+        // must not wipe the merchant's days/hours); null = clear it.
+        ...(body.available_from !== undefined && { availableFrom: body.available_from }),
+        ...(body.available_to !== undefined && { availableTo: body.available_to }),
+        ...(body.available_days !== undefined && { availableDays: body.available_days }),
         slots: {
           create: body.slots.map((s, si) => ({
             name: s.name,

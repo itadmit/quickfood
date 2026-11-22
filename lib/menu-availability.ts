@@ -13,10 +13,13 @@
  *   4. `availableDays`, if set, is a 7-bit weekday mask (bit 0 = Sunday).
  *      Current day must be ON in the mask.
  *
- * Time zone: we use the SERVER's local clock. Tenants are Israel-only
- * for now so this matches the merchant's clock; we can swap to a tenant-
- * level timezone later by reading it from settings.
+ * Time zone: Israel wall clock (Asia/Jerusalem), the same clock the branch
+ * opening hours use. Vercel functions run in UTC, so the runtime's
+ * getHours()/getDay() would shift every window by 2-3 hours. Tenants are
+ * Israel-only for now; a tenant-level timezone can replace this later.
  */
+
+import { israelWallClock } from "@/lib/branch-hours";
 
 export interface AvailabilityFields {
   available: boolean;
@@ -31,6 +34,34 @@ export interface CategoryAvailabilityFields {
   availableFrom: number | null;
   availableTo: number | null;
   availableDays: number | null;
+}
+
+export interface DealAvailabilityFields {
+  active: boolean;
+  availableFrom: number | null;
+  availableTo: number | null;
+  availableDays: number | null;
+}
+
+/**
+ * Whether a deal is currently offered to customers: the deals rail, its
+ * category placement, the composer and order creation all go through this.
+ * Same day/hour windowing as items; NULL fields = always (legacy deals).
+ */
+export function isDealVisibleNow(
+  deal: DealAvailabilityFields,
+  now: Date = new Date(),
+): boolean {
+  return isItemVisibleNow(
+    {
+      available: deal.active,
+      availableFrom: deal.availableFrom,
+      availableTo: deal.availableTo,
+      availableDays: deal.availableDays,
+      stockRemaining: null,
+    },
+    now,
+  );
 }
 
 /**
@@ -58,15 +89,17 @@ export function isItemVisibleNow(item: AvailabilityFields, now: Date = new Date(
   if (!item.available) return false;
   if (item.stockRemaining !== null && item.stockRemaining <= 0) return false;
 
+  const clock = israelWallClock(now);
+
   // Weekday mask check.
   if (item.availableDays !== null) {
-    const dayBit = 1 << now.getDay();
+    const dayBit = 1 << clock.weekday;
     if ((item.availableDays & dayBit) === 0) return false;
   }
 
   // Time-of-day check - only enforced when BOTH ends are set.
   if (item.availableFrom !== null && item.availableTo !== null) {
-    const minutesNow = now.getHours() * 60 + now.getMinutes();
+    const minutesNow = clock.minutes;
     const from = item.availableFrom;
     const to = item.availableTo;
     if (from < to) {

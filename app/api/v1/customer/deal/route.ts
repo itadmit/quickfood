@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { loadMenuItemForCustomer } from "@/lib/menu-item-load";
-import { isItemVisibleNow } from "@/lib/menu-availability";
+import { isDealVisibleNow, isItemVisibleNow } from "@/lib/menu-availability";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,7 +32,11 @@ export async function GET(req: Request) {
       },
     },
   });
-  if (!deal) return NextResponse.json({ error: "not found" }, { status: 404 });
+  // Outside the deal's day/hour window it's not offered - same answer as a
+  // missing deal, so a stale rail/cart can't open the composer.
+  if (!deal || !isDealVisibleNow(deal)) {
+    return NextResponse.json({ error: "not found" }, { status: 404 });
+  }
 
   const visibleItemIds = new Set(
     deal.slots
