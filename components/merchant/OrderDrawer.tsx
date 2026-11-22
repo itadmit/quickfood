@@ -643,7 +643,7 @@ export function OrderDrawer({
                         ? "מורשה · ממתין לחיוב"
                         : order.payment_method === "cash"
                           ? "מזומן"
-                          : "אשראי"}
+                          : "אשראי · ממתין לתשלום"}
                   </span>
                 </div>
                 {order.payment_status === "pending" &&
@@ -679,6 +679,7 @@ export function OrderDrawer({
                   <div className="mt-2 rounded-lg border border-qf-line-dash bg-qf-line-soft p-2.5 space-y-2">
                     <div className="text-xs text-qf-ink2">
                       שלחו ללקוח את קישור התשלום. ההזמנה תסומן כשולמה אחרי שהחיוב יאושר.
+                      אין למסור לשליח לפני שמופיע &quot;שולם · אשראי&quot;.
                     </div>
                     <div dir="ltr" className="text-[11px] font-mono break-all select-all text-qf-ink">
                       {payUrl}

@@ -90,7 +90,12 @@ function buildCourierWaText(o: OrderRow): string {
   const items = o.items
     .map((it) => `• ${it.weightGrams != null ? `${it.weightGrams} גרם` : `${it.quantity}×`} ${it.name}`)
     .join("\n");
-  const pay = o.paymentMethod === "cash" ? "תשלום במזומן ביד" : "שולם מראש";
+  const pay =
+    o.paymentMethod === "cash"
+      ? "תשלום במזומן ביד"
+      : o.paymentStatus === "paid" || (o.paymentStatus as string) === "authorized"
+        ? "שולם מראש"
+        : "ממתין לתשלום באשראי - לא למסור לפני אישור מהמסעדה";
   return [
     `הזמנה ${o.number}`,
     `שעה: ${formatTime(o.createdAt)}`,
@@ -1004,7 +1009,9 @@ function PaymentTag({ method, status }: { method: string; status: PaymentStatus 
       : "שולם · אשראי"
     : isCash
       ? "מזומן"
-      : "אשראי";
+      : (status as string) === "authorized"
+        ? "אשראי · מורשה"
+        : "אשראי · לא שולם";
   return (
     <span
       className={cn(

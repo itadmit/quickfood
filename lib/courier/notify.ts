@@ -51,7 +51,11 @@ export async function notifyCourierAssigned(orderId: string, courierId: string):
     order.customerPhoneSnap ? `טלפון: ${order.customerPhoneSnap}` : null,
     addressLine ? `כתובת: ${addressLine}` : null,
     `סכום: ${order.total} ש"ח`,
-    order.paymentMethod === "cash" ? "תשלום במזומן ביד" : "שולם מראש",
+    order.paymentMethod === "cash"
+      ? "תשלום במזומן ביד"
+      : order.paymentStatus === "paid" || order.paymentStatus === "authorized"
+        ? "שולם מראש"
+        : "ממתין לתשלום באשראי - לא למסור לפני אישור מהמסעדה",
     order.customerNotes ? `הערות: ${order.customerNotes}` : null,
   ].filter(Boolean);
   const body = lines.join("\n");
