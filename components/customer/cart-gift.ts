@@ -21,6 +21,7 @@ export interface CartGift {
 
 export interface CartGiftNext {
   ruleId: string;
+  itemId: string;
   itemName: string;
   minSubtotal: number;
   missing: number;
@@ -51,7 +52,7 @@ export function deriveCartGift(
       ? { ruleId: r.id, itemId: r.item.id, name: r.item.name, imageUrl: r.item.imageUrl, minSubtotal: r.minSubtotal, price: 0, quantity: 1 }
       : null,
     next: n
-      ? { ruleId: n.id, itemName: n.item.name, minSubtotal: n.minSubtotal, missing: Math.max(0, Math.ceil(n.minSubtotal - subtotal)) }
+      ? { ruleId: n.id, itemId: n.item.id, itemName: n.item.name, minSubtotal: n.minSubtotal, missing: Math.max(0, Math.ceil(n.minSubtotal - subtotal)) }
       : null,
   };
 }

@@ -6,6 +6,7 @@ import { matchZoneByCity, type ZoneForMatch } from "@/lib/delivery-zone-match";
 import { readDeliveryChoice, DELIVERY_CHOICE_EVENT } from "@/lib/delivery-city-storage";
 import type { BranchHours } from "@/lib/branch-hours";
 import { trackCartAdd } from "@/components/customer/cartTracking";
+import { deriveCartGift, type CartGift, type CartGiftNext, type StorefrontGiftRule } from "@/components/customer/cart-gift";
 
 export type CartLineSource = "menu" | "ai_advisor" | "upsell" | "reorder";
 
@@ -91,6 +92,12 @@ interface CartContextValue extends CartState {
   bundleDiscount: number;
   subtotal: number;
   itemCount: number;
+  /** Automatic gift the cart currently earns (price 0, quantity 1), or null.
+   *  Derived from the lines, never stored - it appears and disappears with
+   *  the subtotal. The server re-decides and records it at order time. */
+  freeGift: CartGift | null;
+  /** Next gift tier not reached yet, for an "עוד X ₪ למתנה" hint. */
+  nextFreeGift: CartGiftNext | null;
   /** Delivery fee for the current method/cart, with free-delivery
    *  thresholds already applied. Mirrors the server calculation. */
   deliveryFee: number;
@@ -163,6 +170,7 @@ export function CartProvider({
   tenant,
   branch,
   zones = [],
+  giftRules = [],
   children,
 }: {
   tenant: TenantInfo;
@@ -170,6 +178,8 @@ export function CartProvider({
   /** Active delivery zones - used to resolve per-zone fee/minimum once the
    *  customer has picked a delivery city. */
   zones?: ZoneForMatch[];
+  /** Active automatic-gift rules (see lib/free-gift.ts). */
+  giftRules?: StorefrontGiftRule[];
   children: React.ReactNode;
 }) {
   const [state, setState] = useState<CartState>({ lines: [], method: "delivery", acceptedBundles: [] });
@@ -263,6 +273,7 @@ export function CartProvider({
           freeMinItems: effectiveBranch.freeDeliveryMinItems,
         })
       : 0;
+    const { gift: freeGift, next: nextFreeGift } = deriveCartGift(giftRules, state.lines);
     return {
       ...state,
       add: (line) => {
@@ -327,13 +338,15 @@ export function CartProvider({
       bundleDiscount,
       subtotal,
       itemCount,
+      freeGift,
+      nextFreeGift,
       deliveryFee,
       deliveryEta: matchedZone ? { min: matchedZone.minEta, max: matchedZone.maxEta } : null,
       tenant,
       branch: effectiveBranch,
       hydrated,
     };
-  }, [state, tenant, branch, zones, deliveryCity, hydrated]);
+  }, [state, tenant, branch, zones, giftRules, deliveryCity, hydrated]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
