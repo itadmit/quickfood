@@ -885,9 +885,9 @@ function ReceiptOptionGroups({ options, withPrices }: { options: unknown; withPr
     <>
       {groupSelectedOptions(options, { withPrices }).map((g, gi) => (
         <div key={gi}>
-          {g.group && <div className="qf-pr-opt-group">{g.group}:</div>}
+          {g.group && <div className={g.highlight ? "qf-pr-opt-group qf-pr-hl" : "qf-pr-opt-group"}>{g.group}:</div>}
           {g.items.map((label, ii) => (
-            <div key={ii} className="qf-pr-opt">
+            <div key={ii} className={g.highlight ? "qf-pr-opt qf-pr-hl" : "qf-pr-opt"}>
               + {label}
             </div>
           ))}

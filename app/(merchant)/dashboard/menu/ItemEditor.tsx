@@ -51,6 +51,7 @@ interface OptionGroup {
   helpText: string | null;
   allowHalf: boolean;
   allowQty: boolean;
+  highlightOnReceipt: boolean;
   splitPrice: boolean;
   customHalfPrice: boolean;
   bundleCount: number;
@@ -71,6 +72,7 @@ export interface ModifierSetSummary {
   helpText: string | null;
   allowHalf: boolean;
   allowQty: boolean;
+  highlightOnReceipt: boolean;
   splitPrice: boolean;
   customHalfPrice: boolean;
   bundleCount: number;
@@ -218,6 +220,7 @@ export function ItemEditor({
           helpText: null,
           allowHalf: false,
           allowQty: false,
+          highlightOnReceipt: false,
           splitPrice: false,
           customHalfPrice: false,
           bundleCount: 0,
@@ -247,6 +250,7 @@ export function ItemEditor({
           helpText: set.helpText,
           allowHalf: set.allowHalf,
           allowQty: set.allowQty,
+          highlightOnReceipt: set.highlightOnReceipt,
           splitPrice: set.splitPrice,
           customHalfPrice: set.customHalfPrice,
           bundleCount: set.bundleCount,
@@ -319,6 +323,7 @@ export function ItemEditor({
           help_text: g.helpText,
           allow_half: g.allowHalf,
           allow_qty: g.allowQty,
+          highlight_on_receipt: g.highlightOnReceipt,
           split_price: g.splitPrice,
           custom_half_price: g.customHalfPrice,
           bundle_count: g.bundleCount,
@@ -1328,6 +1333,14 @@ function GroupEditor({
             onChange={(e) => onChange({ ...group, required: e.target.checked })}
           />
           חובה
+        </label>
+        <label className="text-xs inline-flex items-center gap-1.5" title="האפשרויות שנבחרו מהקבוצה יודפסו מודגשות ובגודל כפול">
+          <input
+            type="checkbox"
+            checked={group.highlightOnReceipt}
+            onChange={(e) => onChange({ ...group, highlightOnReceipt: e.target.checked })}
+          />
+          הבלט בבון
         </label>
         <button
           type="button"

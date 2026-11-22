@@ -535,6 +535,15 @@ label[for][class*="shadow-[0_"] {
     font-size: 9pt;
     padding-inline-start: 8pt;
   }
+  .qf-print-receipt .qf-pr-opt-group.qf-pr-hl {
+    font-size: 21pt;
+    line-height: 1.2;
+  }
+  .qf-print-receipt .qf-pr-opt.qf-pr-hl {
+    font-size: 18pt;
+    font-weight: 800;
+    line-height: 1.2;
+  }
   .no-print {
     display: none !important;
   }

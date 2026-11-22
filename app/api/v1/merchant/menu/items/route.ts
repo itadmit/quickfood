@@ -170,6 +170,7 @@ export const POST = handler(async (req: Request) => {
           helpText: g.help_text ?? null,
           allowHalf: g.allow_half,
           allowQty: g.allow_qty,
+          highlightOnReceipt: g.highlight_on_receipt,
           splitPrice: g.split_price,
           customHalfPrice: g.custom_half_price,
           bundleCount: g.bundle_count,

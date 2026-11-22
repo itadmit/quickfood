@@ -33,6 +33,7 @@ interface ModifierSet {
   helpText: string | null;
   allowHalf: boolean;
   allowQty: boolean;
+  highlightOnReceipt: boolean;
   splitPrice: boolean;
   customHalfPrice: boolean;
   bundleCount: number;
@@ -62,6 +63,7 @@ const EMPTY: NewModifierSet = {
   allowHalf: false,
   allowQty: false,
   splitPrice: false,
+  highlightOnReceipt: false,
   customHalfPrice: false,
   bundleCount: 0,
   bundlePrice: 0,
@@ -104,6 +106,7 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
       help_text: editing.helpText,
       allow_half: editing.allowHalf,
       allow_qty: editing.allowQty,
+      highlight_on_receipt: editing.highlightOnReceipt,
       split_price: editing.splitPrice,
       custom_half_price: editing.customHalfPrice,
       bundle_count: editing.bundleCount,
@@ -147,6 +150,7 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
       helpText: editing.helpText,
       allowHalf: editing.allowHalf,
       allowQty: editing.allowQty,
+      highlightOnReceipt: editing.highlightOnReceipt,
       splitPrice: editing.splitPrice,
       customHalfPrice: editing.customHalfPrice,
       bundleCount: editing.bundleCount,
@@ -186,6 +190,7 @@ export function ModifiersManager({ initialSets }: { initialSets: ModifierSet[] }
           help_text: s.helpText,
           allow_half: s.allowHalf,
           allow_qty: s.allowQty,
+          highlight_on_receipt: s.highlightOnReceipt,
           split_price: s.splitPrice,
           custom_half_price: s.customHalfPrice,
           bundle_count: s.bundleCount,
@@ -553,6 +558,18 @@ function SetEditor({
           </label>
         </div>
       )}
+
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={set.highlightOnReceipt}
+          onChange={(e) => onChange({ ...set, highlightOnReceipt: e.target.checked })}
+        />
+        <span>
+          הבלט בבון
+          <span className="text-qf-mute text-xs"> - האפשרויות שנבחרו מהקבוצה יודפסו מודגשות ובגודל כפול</span>
+        </span>
+      </label>
 
       {isMulti && (
         <label className="flex items-center gap-2 text-sm">

@@ -105,6 +105,7 @@ export const POST = handler(async (_req, { params }: { params: Promise<{ id: str
           helpText: g.helpText,
           allowHalf: g.allowHalf,
           allowQty: g.allowQty,
+          highlightOnReceipt: g.highlightOnReceipt,
           splitPrice: g.splitPrice,
           customHalfPrice: g.customHalfPrice,
           bundleCount: g.bundleCount,

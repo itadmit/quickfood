@@ -266,7 +266,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     optionIdList: string[],
     placements: Record<string, "left" | "right" | "full">,
   ) {
-    const selectedOptions: Array<{ group_id: string; group_name: string; option_id: string; name: string; price_delta: number; half?: string }> = [];
+    const selectedOptions: Array<{ group_id: string; group_name: string; option_id: string; name: string; price_delta: number; half?: string; highlight?: true }> = [];
     let optionsDelta = 0;
     // A repeated id means the customer picked the same option that many
     // times (Wolt-style quantity) - every occurrence is one unit.
@@ -287,6 +287,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       const effectiveBundleCount = ownBundle ? group.bundleCount : (fromSet?.bundleCount ?? 0);
       const effectiveBundlePrice = ownBundle ? group.bundlePrice : (fromSet?.bundlePrice ?? 0);
       const effectiveAllowQty = group.allowQty || (fromSet?.allowQty ?? false);
+      const effectiveHighlight = group.highlightOnReceipt || (fromSet?.highlightOnReceipt ?? false);
       const availableOptions = effectiveOptions.filter((o) => o.available);
       const picksInGroup = availableOptions.filter((o) => optionCounts.has(o.id));
       // Quantities are a per-group opt-in; without it a repeated id (stale
@@ -350,6 +351,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
           name: o.name,
           price_delta: effectiveDelta,
           ...(half && half !== "full" ? { half } : {}),
+          ...(effectiveHighlight ? { highlight: true as const } : {}),
         });
         optionsDelta += effectiveDelta;
       }
@@ -477,7 +479,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         throw new CartValidationError("invalid_quantity", dl.deal_id);
       }
 
-      const selectedOptions: Array<{ group_id: string; group_name: string; option_id: string; name: string; price_delta: number; kind?: "size" }> = [];
+      const selectedOptions: Array<{ group_id: string; group_name: string; option_id: string; name: string; price_delta: number; kind?: "size"; highlight?: true }> = [];
       let extrasDelta = 0;
       let sizeDelta = 0;
 
@@ -552,6 +554,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
               option_id: o.option_id,
               name: o.name,
               price_delta: o.price_delta,
+              ...(o.highlight ? { highlight: true as const } : {}),
             });
           }
           extrasDelta += priced.optionsDelta;

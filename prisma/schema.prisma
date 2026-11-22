@@ -1060,6 +1060,7 @@ model ItemOptionGroup {
   // Wolt-style per-option quantity (3× טחינה). Off = the storefront hides
   // the +/- stepper and the server collapses repeated option ids to one.
   allowQty      Boolean         @default(false) @map("allow_qty")
+  highlightOnReceipt Boolean    @default(false) @map("highlight_on_receipt")
   // Per-side cap for allowHalf groups. NULL = use maxSelect as a single
   // global cap (legacy). Non-null = each half has its own independent
   // budget of N toppings; "full" placements count toward BOTH sides.
@@ -1141,6 +1142,7 @@ model ModifierSet {
   allowHalf    Boolean         @default(false) @map("allow_half")
   // Catalog default for allowQty on attached groups. See ItemOptionGroup.
   allowQty     Boolean         @default(false) @map("allow_qty")
+  highlightOnReceipt Boolean   @default(false) @map("highlight_on_receipt")
   // Per-side cap inherited by attached ItemOptionGroups (when they don't
   // override). See ItemOptionGroup.maxPerSide for semantics.
   maxPerSide   Int?            @map("max_per_side")

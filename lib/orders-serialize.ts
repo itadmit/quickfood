@@ -56,7 +56,7 @@ export function formatDeliveryAddress(addr: {
 // "(חצי א׳/ב׳)" everywhere, and drops internal ids (group_id/option_id).
 export function serializeSelectedOptions(
   raw: unknown,
-): Array<{ name: string; price_delta: number; half?: "left" | "right"; group_name?: string }> {
+): Array<{ name: string; price_delta: number; half?: "left" | "right"; group_name?: string; highlight?: true }> {
   if (!Array.isArray(raw)) return [];
   return (raw as Array<Record<string, unknown>>)
     .map((o) => {
@@ -70,12 +70,13 @@ export function serializeSelectedOptions(
         price_delta: priceDelta,
         ...(half ? { half } : {}),
         ...(groupName ? { group_name: groupName } : {}),
+        ...(o?.highlight === true ? { highlight: true as const } : {}),
       };
     })
     .filter(
       (
         o,
-      ): o is { name: string; price_delta: number; half?: "left" | "right"; group_name?: string } =>
+      ): o is { name: string; price_delta: number; half?: "left" | "right"; group_name?: string; highlight?: true } =>
         o !== null,
     );
 }
