@@ -107,6 +107,7 @@ enum OrderItemSource {
   reorder
   wolt
   deal
+  free_gift
 }
 
 enum CourierStatus {
@@ -596,6 +597,7 @@ model Tenant {
   menuItems        MenuItem[]
   bundleOffers     BundleOffer[]
   deals            Deal[]
+  freeGiftRules    FreeGiftRule[]
   coupons          Coupon[]
   merchantUsers    MerchantUser[]
   subscription     Subscription?
@@ -834,6 +836,7 @@ model MenuItem {
   bundleAddons   BundleOfferAddon[]
   bundleLinkedFor BundleOffer[] @relation("BundleLinkedItem")
   dealSlotChoices DealSlotChoice[]
+  freeGiftRules   FreeGiftRule[]
 
   @@unique([tenantId, externalSource, externalId])
   @@index([tenantId, categoryId, position])
@@ -945,6 +948,29 @@ model Deal {
 
   @@index([tenantId, active, position])
   @@map("deals")
+}
+
+/// Automatic gift: once the cart subtotal (items + deals, before discounts,
+/// without delivery and without the gift itself) reaches minSubtotal, ONE
+/// unit of `item` is added to the order at 0. The server decides on its own
+/// at order time (lib/free-gift.ts); the client only mirrors it for display.
+/// Several rules = tiers; the highest threshold the cart reaches wins.
+model FreeGiftRule {
+  id          String    @id @default(uuid()) @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  itemId      String    @map("item_id") @db.Uuid
+  item        MenuItem  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  minSubtotal Int       @map("min_subtotal")
+  active      Boolean   @default(true)
+  // Optional time window - both NULL = always on while active=true.
+  validFrom   DateTime? @map("valid_from")
+  validUntil  DateTime? @map("valid_until")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([tenantId, active])
+  @@map("free_gift_rules")
 }
 
 model DealSlot {
