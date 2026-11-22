@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { IcoChev, IcoPlus, IcoMinus, IcoBag, IcoClose, IcoArrowLeft } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { BottomTabBar } from "@/components/customer/BottomTabBar";
-import { useCart, type CartLine } from "@/components/customer/CartProvider";
+import { MAX_LINE_QTY, useCart, type CartLine } from "@/components/customer/CartProvider";
 import { CartLineOptions } from "@/components/customer/CartLineOptions";
 import { formatPrice } from "@/lib/format";
 import { Skeleton } from "@/components/shared/Skeleton";
@@ -185,7 +185,8 @@ export function CustomerCart({ tenantSlug }: { tenantSlug: string }) {
                       <button
                         type="button"
                         onClick={() => updateQuantity(l.lineId, l.quantity + 1)}
-                        className="w-9 h-9 grid place-items-center active:bg-qf-line-soft rounded-full transition"
+                        disabled={l.quantity >= MAX_LINE_QTY}
+                        className="w-9 h-9 grid place-items-center active:bg-qf-line-soft rounded-full transition disabled:opacity-30"
                         aria-label={t("cart.increase")}
                       >
                         <IcoPlus c="#11231a" s={16} />

@@ -65,7 +65,10 @@ export interface CartState {
 
 /** Cap `qty` so all cart lines of the same item together stay within the
  *  item's tracked stock. Lines without stockRemaining pass through as-is. */
-function clampToStock(lines: CartLine[], line: CartLine, qty: number): number {
+export const MAX_LINE_QTY = 20;
+
+export function clampToStock(lines: CartLine[], line: CartLine, requested: number): number {
+  const qty = Math.min(requested, MAX_LINE_QTY);
   if (line.stockRemaining == null) return qty;
   const others = lines.reduce(
     (acc, l) => acc + (l.itemId === line.itemId && l.lineId !== line.lineId ? l.quantity : 0),
@@ -294,6 +297,7 @@ export function CartProvider({
         const withIds: CartLine[] = newLines.map((l) => ({
           ...l,
           lineId: crypto.randomUUID(),
+          quantity: l.weightGrams != null ? l.quantity : Math.min(l.quantity, MAX_LINE_QTY),
         }));
         setState((s) => ({ ...s, lines: [...s.lines, ...withIds] }));
       },

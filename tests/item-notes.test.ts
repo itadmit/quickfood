@@ -109,3 +109,13 @@ test("kitchen ticket prints the note under its own dish", () => {
   assert.equal(texts[first + 1], "הערה: דנה");
   assert.equal(texts.lastIndexOf("הערה: יוסי"), texts.lastIndexOf("1× בול עוף") + 1);
 });
+
+test("cart: a line stops at 20 (web cart +, item screen, reorder) and stock still caps lower", async () => {
+  const { clampToStock, MAX_LINE_QTY } = await import("../components/customer/CartProvider");
+  const l = { lineId: "a", itemId: BOWL, quantity: 20, stockRemaining: null } as Parameters<typeof clampToStock>[1];
+  assert.equal(MAX_LINE_QTY, 20);
+  assert.equal(clampToStock([l], l, 21), 20);
+  assert.equal(clampToStock([l], l, 19), 19);
+  const stocked = { ...l, stockRemaining: 5 };
+  assert.equal(clampToStock([stocked], stocked, 21), 5);
+});

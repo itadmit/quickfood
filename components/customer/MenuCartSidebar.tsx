@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { IcoBag, IcoPlus, IcoMinus, IcoClose, IcoArrowLeft } from "@/components/shared/Icons";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
-import { useCart } from "@/components/customer/CartProvider";
+import { MAX_LINE_QTY, useCart } from "@/components/customer/CartProvider";
 import { CartLineOptions } from "@/components/customer/CartLineOptions";
 import { useLocale } from "@/components/customer/LocaleProvider";
 import { formatPrice } from "@/lib/format";
@@ -102,7 +102,8 @@ export function MenuCartSidebar({ tenantSlug, businessType }: Props) {
                         <button
                           type="button"
                           onClick={() => updateQuantity(l.lineId, l.quantity + 1)}
-                          className="w-7 h-7 grid place-items-center transition"
+                          disabled={l.quantity >= MAX_LINE_QTY}
+                          className="w-7 h-7 grid place-items-center transition disabled:opacity-30"
                           aria-label={t("sidebar.increase")}
                         >
                           <IcoPlus c="#11231a" s={12} />
