@@ -33,6 +33,7 @@ export default async function ModifiersPage() {
         helpText: s.helpText,
         allowHalf: s.allowHalf,
         allowQty: s.allowQty,
+        highlightOnReceipt: s.highlightOnReceipt,
         splitPrice: s.splitPrice,
         customHalfPrice: s.customHalfPrice,
         bundleCount: s.bundleCount,

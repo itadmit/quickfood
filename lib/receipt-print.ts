@@ -124,7 +124,7 @@ type FormatOptionsOpts = { withPrices?: boolean };
 type StoredOpt = { name: string; half?: string; price_delta: number; count: number };
 
 /** A modifier group + its chosen options, ready for vertical rendering. */
-export type OptionGroupDisplay = { group: string; items: string[] };
+export type OptionGroupDisplay = { group: string; items: string[]; highlight: boolean };
 
 function renderOptLabel(g: StoredOpt, groupSplit: boolean, withPrices: boolean): string {
   let base =
@@ -157,11 +157,13 @@ export function groupSelectedOptions(
     half?: string;
     group_name?: string;
     price_delta?: number;
+    highlight?: boolean;
   }>;
   const withPrices = opts?.withPrices ?? false;
 
   const order: string[] = [];
   const byGroup = new Map<string, Map<string, StoredOpt>>();
+  const highlighted = new Set<string>();
   for (const o of list) {
     if (!o?.name) continue;
     const gname = typeof o.group_name === "string" ? o.group_name : "";
@@ -169,6 +171,7 @@ export function groupSelectedOptions(
       byGroup.set(gname, new Map());
       order.push(gname);
     }
+    if (o.highlight === true) highlighted.add(gname);
     const inner = byGroup.get(gname)!;
     const key = `${o.name}|${o.half ?? ""}`;
     const existing = inner.get(key);
@@ -185,7 +188,11 @@ export function groupSelectedOptions(
   return order.map((gname) => {
     const inner = Array.from(byGroup.get(gname)!.values());
     const groupSplit = inner.some((g) => g.half === "left" || g.half === "right");
-    return { group: gname, items: inner.map((g) => renderOptLabel(g, groupSplit, withPrices)) };
+    return {
+      group: gname,
+      items: inner.map((g) => renderOptLabel(g, groupSplit, withPrices)),
+      highlight: highlighted.has(gname),
+    };
   });
 }
 
@@ -202,8 +209,8 @@ export type ReceiptLine =
   | { kind: "title"; text: string }
   | { kind: "row"; right: string; left?: string; originalLeft?: string; size: "normal" | "muted" | "total" }
   | { kind: "text"; text: string; size: "normal" | "muted" }
-  | { kind: "group"; text: string }
-  | { kind: "opt"; text: string }
+  | { kind: "group"; text: string; strong?: boolean }
+  | { kind: "opt"; text: string; strong?: boolean }
   | { kind: "rule" };
 
 export function buildReceiptLines(
@@ -255,9 +262,10 @@ export function buildReceiptLines(
     });
     if (settings.showOptions) {
       for (const g of groupSelectedOptions(it.options, { withPrices: settings.showOptionPrices })) {
-        if (g.group) lines.push({ kind: "group", text: `${g.group}:` });
+        const strong = g.highlight ? { strong: true } : {};
+        if (g.group) lines.push({ kind: "group", text: `${g.group}:`, ...strong });
         for (const label of g.items) {
-          lines.push({ kind: "opt", text: `+ ${label}` });
+          lines.push({ kind: "opt", text: `+ ${label}`, ...strong });
         }
       }
     }
@@ -318,9 +326,9 @@ function receiptBodyHtml(order: ReceiptOrder, settings?: ReceiptSettings): strin
         case "rule":
           return `<div class="rule"></div>`;
         case "group":
-          return `<div class="grp">${esc(l.text)}</div>`;
+          return `<div class="grp${l.strong ? " hl" : ""}">${esc(l.text)}</div>`;
         case "opt":
-          return `<div class="opt">${esc(l.text)}</div>`;
+          return `<div class="opt${l.strong ? " hl" : ""}">${esc(l.text)}</div>`;
         case "text":
           return `<div class="${l.size === "muted" ? "muted" : ""}">${esc(l.text)}</div>`;
         case "row":
@@ -354,6 +362,8 @@ h1{font-size:16pt;font-weight:800;text-align:center;margin:0 0 4pt}
 .total{font-size:14pt;font-weight:800}
 .grp{font-size:10.5pt;font-weight:800;margin-top:5pt;margin-bottom:1pt}
 .opt{font-size:9pt;padding-inline-start:8pt}
+.grp.hl{font-size:21pt;line-height:1.2}
+.opt.hl{font-size:18pt;font-weight:800;line-height:1.2}
 </style></head><body>
 <div class="r">
 ${body}
@@ -379,6 +389,8 @@ h1{font-size:44px;margin:0 0 4px;text-align:center}
 .total{font-size:36px;font-weight:bold}
 .grp{font-size:28px;font-weight:bold;margin-top:10px;margin-bottom:2px}
 .opt{font-size:24px;padding-inline-start:18px}
+.grp.hl{font-size:56px;line-height:1.2}
+.opt.hl{font-size:48px;font-weight:bold;line-height:1.2}
 </style></head><body>
 ${body}
 </body></html>`;
@@ -395,8 +407,10 @@ const FONTS = {
   muted: "24px -apple-system, sans-serif",
   total: "bold 36px -apple-system, sans-serif",
   group: "bold 28px -apple-system, sans-serif",
+  groupStrong: "bold 56px -apple-system, sans-serif",
+  optStrong: "bold 48px -apple-system, sans-serif",
 };
-const LINE_H = { title: 56, normal: 38, muted: 33, total: 48, group: 42 };
+const LINE_H = { title: 56, normal: 38, muted: 33, total: 48, group: 42, groupStrong: 72, optStrong: 62 };
 const OPT_INDENT = 18;
 
 function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
@@ -463,25 +477,25 @@ function layoutReceipt(
       continue;
     }
     if (l.kind === "group") {
-      ctx.font = FONTS.group;
+      ctx.font = l.strong ? FONTS.groupStrong : FONTS.group;
       y += 4; // a touch of top spacing, mirroring the HTML margin
       for (const part of wrapText(ctx, l.text, W - MARGIN * 2)) {
         if (draw) {
           ctx.textAlign = "right";
           ctx.fillText(part, W - MARGIN, y);
         }
-        y += LINE_H.group;
+        y += l.strong ? LINE_H.groupStrong : LINE_H.group;
       }
       continue;
     }
     if (l.kind === "opt") {
-      ctx.font = FONTS.muted;
+      ctx.font = l.strong ? FONTS.optStrong : FONTS.muted;
       for (const part of wrapText(ctx, l.text, W - MARGIN * 2 - OPT_INDENT)) {
         if (draw) {
           ctx.textAlign = "right";
           ctx.fillText(part, W - MARGIN - OPT_INDENT, y);
         }
-        y += LINE_H.muted;
+        y += l.strong ? LINE_H.optStrong : LINE_H.muted;
       }
       continue;
     }

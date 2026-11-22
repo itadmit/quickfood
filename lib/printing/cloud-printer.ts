@@ -110,10 +110,12 @@ export function renderTicket(lines: ReceiptLine[]): Buffer {
         t.rule();
         break;
       case "group":
-        t.align("right").bold(true).line(l.text).bold(false);
+        if (l.strong) t.align("right").bold(true).size(true).line(l.text).size(false).bold(false);
+        else t.align("right").bold(true).line(l.text).bold(false);
         break;
       case "opt":
-        t.align("right").line(`  ${l.text}`);
+        if (l.strong) t.align("right").bold(true).size(true).line(`  ${l.text}`).size(false).bold(false);
+        else t.align("right").line(`  ${l.text}`);
         break;
       case "text":
         t.align("right").line(l.text);
