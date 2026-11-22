@@ -230,3 +230,23 @@ test("server: kiosk orders get the gift too, POS / staff-entered orders do not",
   const pos = await runOrder([{ item_id: SUSHI, quantity: 3 }], {}, { sourceOverride: "pos" });
   assert.equal(pos.items.some((i) => i.source === "free_gift"), false);
 });
+
+test("server: a gift dish with a required sauce group is added without sauces and the order passes (site + kiosk)", async () => {
+  const sauces = {
+    id: "g-sauce", name: "רטבים", type: "multi", required: true, minSelect: 1, maxSelect: 5, includedFree: 2,
+    splitPrice: false, customHalfPrice: false, bundleCount: 0, bundlePrice: 0, allowQty: false, templateSet: null,
+    options: [
+      { id: "o-soy", name: "סויה", priceDelta: 0, available: true },
+      { id: "o-teriyaki", name: "טריאקי", priceDelta: 0, available: true },
+    ],
+  };
+  const rollExtra = { optionGroups: [sauces] };
+  for (const extra of [{}, { kiosk: true, sourceOverride: "kiosk" }]) {
+    const r = await runOrder([{ item_id: SUSHI, quantity: 3 }], { rollExtra }, extra);
+    const gifts = r.items.filter((i) => i.source === "free_gift");
+    assert.equal(gifts.length, 1, JSON.stringify(extra));
+    assert.deepEqual(gifts[0].selectedOptions, []);
+    assert.equal(gifts[0].unitPrice, 0);
+    assert.equal(r.total, 150);
+  }
+});
