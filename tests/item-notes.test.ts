@@ -129,13 +129,13 @@ test("cart: a line stops at 20 (web cart +, item screen, reorder) and stock stil
   assert.equal(clampToStock([stocked], stocked, 21), 5);
 });
 
-test("server: 25 deal lines go through and each keeps its own note", async () => {
-  const deals = Array.from({ length: 25 }, (_, i) => ({
+test("server: 120 deal lines (no cap) go through and each keeps its own note", async () => {
+  const deals = Array.from({ length: 120 }, (_, i) => ({
     deal_id: DEAL, quantity: 1, notes: i % 2 === 0 ? `חייל ${i + 1}` : undefined,
     units: [{ slot_id: SLOT, item_id: BOWL, size_id: null, option_ids: [] }],
   }));
   const items = await runOrder([], { deals });
-  assert.equal(items.length, 25);
+  assert.equal(items.length, 120);
   assert.equal(items[0].notes, "חייל 1");
   assert.equal(items[1].notes, null);
   assert.equal(items[24].notes, "חייל 25");
