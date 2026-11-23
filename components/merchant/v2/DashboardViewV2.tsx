@@ -751,7 +751,7 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
 
   return (
     <Modal open onClose={onClose} size="xl" ariaLabel="אשף הקמת חנות" closeOnBackdrop={false}>
-      <div className="flex flex-col h-full" dir="rtl">
+      <div className="flex flex-col flex-1 min-h-0" dir="rtl">
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4 border-b-2 border-black bg-[#F8CB1E] rounded-t-3xl shrink-0">
           <div className="w-9 h-9 rounded-xl bg-black grid place-items-center shrink-0">
@@ -801,7 +801,7 @@ function SetupWizardModal({ state, onClose }: { state: SetupState; onClose: () =
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
 
           {step === 1 && (
             <div className="space-y-4">

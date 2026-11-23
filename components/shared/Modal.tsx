@@ -84,7 +84,7 @@ export function Modal({
     >
       <div
         className={cn(
-          "relative w-full flex flex-col bg-white shadow-2xl overflow-hidden",
+          "relative w-full flex flex-col bg-white shadow-2xl overflow-clip",
           "rounded-t-3xl sm:rounded-3xl",
           "max-h-[95dvh] sm:max-h-[90vh]",
           "animate-qf-sheet-in sm:animate-qf-modal-in",
