@@ -1434,6 +1434,9 @@ export function CustomerCheckout({
                       <div className="text-xs text-qf-mute mt-0.5">{tc(`item_size:${l.sizeId}:name`, l.sizeName)}</div>
                     )}
                     <CartLineOptions options={l.options} />
+                    {l.notes && (
+                      <div className="text-xs text-qf-ink2 mt-0.5">{t("cart.noteLabel")} {l.notes}</div>
+                    )}
                     <div className="text-xs text-qf-ink2 mt-1 tnum">× {l.quantity}</div>
                   </div>
                 </li>
@@ -1522,6 +1525,9 @@ export function CustomerCheckout({
                         <div className="text-xs text-qf-mute mt-0.5">{tc(`item_size:${l.sizeId}:name`, l.sizeName)}</div>
                       )}
                       <CartLineOptions options={l.options} />
+                      {l.notes && (
+                        <div className="text-xs text-qf-ink2 mt-0.5">{t("cart.noteLabel")} {l.notes}</div>
+                      )}
                       <div className="text-xs text-qf-ink2 mt-0.5 tnum">× {l.quantity}</div>
                     </div>
                   </li>

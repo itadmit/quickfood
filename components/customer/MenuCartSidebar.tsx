@@ -88,6 +88,9 @@ export function MenuCartSidebar({ tenantSlug, businessType }: Props) {
                       <div className="text-[11px] text-qf-mute mt-0.5">{tc(`item_size:${l.sizeId}:name`, l.sizeName)}</div>
                     )}
                     <CartLineOptions options={l.options} compact />
+                    {l.notes && (
+                      <div className="text-[11px] text-qf-ink2 mt-0.5">{t("cart.noteLabel")} {l.notes}</div>
+                    )}
                     <div className="flex items-center justify-between mt-1.5">
                       <div className="flex items-center bg-qf-bg rounded-full border border-qf-line">
                         <button

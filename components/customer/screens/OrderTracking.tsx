@@ -497,6 +497,9 @@ export function OrderTracking({
                   <div className="text-xs text-qf-mute">{it.size}</div>
                 )}
                 <CartLineOptions options={it.options} compact />
+                {it.notes && (
+                  <div className="text-xs text-qf-ink2 mt-0.5">{t("order.noteLabel")}: {it.notes}</div>
+                )}
               </div>
               <div className="font-medium tnum shrink-0">
                 <Price amount={it.total} originalAmount={it.originalTotal} />
