@@ -98,7 +98,7 @@ const CreateOrderSchema = z.object({
           .max(40),
       }),
     )
-    .max(10)
+    .max(50)
     .default([]),
 });
 
