@@ -153,6 +153,7 @@ export function DealComposer({
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [added, setAdded] = useState(false);
+  const [notes, setNotes] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -394,7 +395,7 @@ export function DealComposer({
       sizeName: null,
       sizeDelta: 0,
       options: displayOptions,
-      notes: null,
+      notes: notes.trim() || null,
       source: "menu",
       deal: {
         dealId: deal.id,
@@ -700,6 +701,19 @@ export function DealComposer({
                 </section>
               );
             })}
+            <section>
+              <div className="font-bold text-sm text-qf-ink mb-2">
+                הערות <span className="font-normal text-xs text-qf-mute">(לא חובה)</span>
+              </div>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={2}
+                maxLength={200}
+                placeholder="משהו שנרצה לדעת?"
+                className="w-full bg-qf-bg border border-qf-line rounded-xl px-3 py-2.5 text-sm outline-none focus:border-(--qf-primary) focus:bg-white resize-none"
+              />
+            </section>
           </div>
 
           <div className="fixed bottom-0 inset-x-0 sm:absolute bg-white border-t border-qf-line p-4 flex items-center gap-3">

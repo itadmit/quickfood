@@ -5,6 +5,8 @@ import { buildReceiptLines, DEFAULT_RECEIPT_SETTINGS, type ReceiptOrder } from "
 
 const TENANT = "11111111-1111-4111-8111-111111111111";
 const BOWL = "22222222-2222-4222-8222-222222222222";
+const DEAL = "44444444-4444-4444-8444-444444444444";
+const SLOT = "55555555-5555-4555-8555-555555555555";
 
 test("kiosk: each cart line sends its own note, blank notes go as null", () => {
   const out = kioskOrderLines([
@@ -52,6 +54,13 @@ async function runOrder(lines: Array<{ item_id: string; quantity: number; notes?
       updateMany: async () => ({ count: 1 }),
     },
     freeGiftRule: { findMany: async () => [] },
+    deal: {
+      findMany: async () => [{
+        id: DEAL, tenantId: TENANT, name: "מבצע לחיילים", active: true, fixedPrice: 70, freeExtras: 0,
+        availableFrom: null, availableTo: null, availableDays: null,
+        slots: [{ id: SLOT, name: "מנה", quantity: 1, position: 0, choices: [{ itemId: BOWL, fixedSizeId: null }] }],
+      }],
+    },
     order: {
       create: async (args: { data: Record<string, unknown> }) => {
         created = args;
@@ -118,4 +127,17 @@ test("cart: a line stops at 20 (web cart +, item screen, reorder) and stock stil
   assert.equal(clampToStock([l], l, 19), 19);
   const stocked = { ...l, stockRemaining: 5 };
   assert.equal(clampToStock([stocked], stocked, 21), 5);
+});
+
+test("server: 25 deal lines go through and each keeps its own note", async () => {
+  const deals = Array.from({ length: 25 }, (_, i) => ({
+    deal_id: DEAL, quantity: 1, notes: i % 2 === 0 ? `חייל ${i + 1}` : undefined,
+    units: [{ slot_id: SLOT, item_id: BOWL, size_id: null, option_ids: [] }],
+  }));
+  const items = await runOrder([], { deals });
+  assert.equal(items.length, 25);
+  assert.equal(items[0].notes, "חייל 1");
+  assert.equal(items[1].notes, null);
+  assert.equal(items[24].notes, "חייל 25");
+  assert.ok(items.every((i) => i.nameSnapshot === "מבצע לחיילים"));
 });
