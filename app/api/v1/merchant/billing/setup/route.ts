@@ -14,7 +14,13 @@ import {
   createPaymentMethodSetup,
   BillingHubError,
 } from "@/lib/billing-hub/client";
-import { activeIntroPrice, BASE_PLAN_PRICE } from "@/lib/billing-hub/plans";
+import {
+  activeIntroPrice,
+  parsePlatformPlan,
+  platformPlanOf,
+  platformPlanPrice,
+} from "@/lib/billing-hub/plans";
+import { setTenantPlatformPlan } from "@/lib/billing-hub/plan-catalog";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,6 +37,7 @@ export const POST = handler(async (req: Request) => {
     accept?: boolean;
     context_type?: "subscription_setup" | "card_update";
     vat_number?: string;
+    plan?: string;
   };
   if (body.accept !== true) {
     return apiError(
@@ -50,6 +57,8 @@ export const POST = handler(async (req: Request) => {
       name: true,
       vatNumber: true,
       billingCustomerId: true,
+      billingSubscriptionId: true,
+      planId: true,
       introMonthlyPrice: true,
       introPriceUntil: true,
       merchantUsers: {
@@ -80,6 +89,20 @@ export const POST = handler(async (req: Request) => {
     });
   }
 
+  // Plan picked on the billing screen. Saved on the tenant now so the
+  // payment_method.created webhook opens the subscription on that plan. A
+  // tenant that already has a platform subscription switches through
+  // /billing/plan instead, so the choice is ignored here.
+  let plan = platformPlanOf(tenant);
+  if (contextType === "subscription_setup" && !tenant.billingSubscriptionId) {
+    if (body.plan !== undefined) {
+      const picked = parsePlatformPlan(body.plan);
+      if (!picked) return apiError("invalid_plan", "מסלול לא מוכר", 400);
+      plan = picked;
+    }
+    await setTenantPlatformPlan(tenant, plan);
+  }
+
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "";
 
   // Upsert the billing customer (idempotent by email on the hub) and repoint
@@ -107,11 +130,15 @@ export const POST = handler(async (req: Request) => {
   try {
     let billingCustomerId = tenant.billingCustomerId ?? (await ensureBillingCustomer());
 
-    // subscription_setup: charge the first month's ₪299 (+VAT) so the
-    // token is captured along with month 1 - or the tenant's negotiated
-    // intro price when one is active; card_update: chargeType=3
-    // verification with ₪1 hold, no recurring billing yet.
-    const monthOne = activeIntroPrice(tenant) ?? BASE_PLAN_PRICE;
+    // subscription_setup: charge the first month of the chosen plan (+VAT)
+    // so the token is captured along with month 1 - ₪299 base (or the
+    // negotiated intro price, which applies to the base plan only) or ₪450
+    // zero-commission; card_update: chargeType=3 verification with ₪1 hold,
+    // no recurring billing yet.
+    const monthOne =
+      plan === "base"
+        ? (activeIntroPrice(tenant) ?? platformPlanPrice("base"))
+        : platformPlanPrice(plan);
     const runSetup = (customerId: string) =>
       createPaymentMethodSetup({
         customer_id: customerId,

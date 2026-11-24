@@ -6,6 +6,7 @@ import {
   BillingHubError,
   type SubscriptionDetail,
 } from "@/lib/billing-hub/client";
+import { activeIntroPrice, platformPlanOf } from "@/lib/billing-hub/plans";
 import { BillingView } from "./BillingView";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +37,9 @@ export default async function BillingPage({
       billingSetupCompletedAt: true,
       trialEndsAt: true,
       smsCreditsRemaining: true,
+      planId: true,
+      introMonthlyPrice: true,
+      introPriceUntil: true,
     },
   });
   if (!tenant) redirect("/dashboard/login");
@@ -67,6 +71,8 @@ export default async function BillingPage({
         setupCompletedAt: tenant.billingSetupCompletedAt?.toISOString() ?? null,
         trialEndsAt: tenant.trialEndsAt?.toISOString() ?? null,
         smsCreditsRemaining: tenant.smsCreditsRemaining,
+        plan: platformPlanOf(tenant),
+        introMonthlyPrice: activeIntroPrice(tenant),
       }}
       subscription={
         subscription
@@ -74,6 +80,10 @@ export default async function BillingPage({
               status: subscription.status,
               cancelAtPeriodEnd: subscription.cancel_at_period_end,
               currentPeriodEnd: subscription.current_period_end,
+              // Only two platform plans, so a pending change is always to the other one.
+              planChangePending:
+                !!subscription.pending_plan_id &&
+                subscription.pending_plan_id !== subscription.plan_id,
             }
           : null
       }

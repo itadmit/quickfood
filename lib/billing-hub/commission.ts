@@ -11,6 +11,7 @@
  */
 import { prisma } from "@/lib/db/client";
 import { recordCommission, BillingHubError } from "@/lib/billing-hub/client";
+import { platformPlanOf } from "@/lib/billing-hub/plans";
 
 const COMMISSION_RATE = 0.005; // 0.5%
 
@@ -23,11 +24,13 @@ export async function recordOrderCommission(orderId: string): Promise<void> {
       deliveredAt: true,
       createdAt: true,
       tenant: {
-        select: { billingCustomerId: true, billingSubscriptionId: true },
+        select: { billingCustomerId: true, billingSubscriptionId: true, planId: true },
       },
     },
   });
   if (!order) return;
+  // Zero-commission plan: fixed monthly price, nothing per order.
+  if (platformPlanOf(order.tenant) === "no_commission") return;
   if (!order.tenant.billingCustomerId) {
     // Tenant hasn't completed billing setup; nothing to record yet.
     return;

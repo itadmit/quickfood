@@ -23,23 +23,32 @@ import {
   createSubscription,
   BillingHubError,
 } from "@/lib/billing-hub/client";
-import { REVIEWS_WHATSAPP_PLAN_CODE, activeIntroPrice } from "@/lib/billing-hub/plans";
+import {
+  REVIEWS_WHATSAPP_PLAN_CODE,
+  NO_COMMISSION_PLAN_CODE,
+  activeIntroPrice,
+  isPlatformPlanCode,
+  platformPlanCode,
+  platformPlanOf,
+  platformPlanPrice,
+} from "@/lib/billing-hub/plans";
+import {
+  getNoCommissionHubPlanId,
+  rememberNoCommissionHubPlanId,
+  setTenantPlatformPlan,
+} from "@/lib/billing-hub/plan-catalog";
 import { sendCapiEvent } from "@/lib/fb/capi";
 import { after } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const BASE_PLAN_CODE = "quickfood_base";
-// First month already paid via the payment-methods/setup `amount` (₪352.82).
+// First month already paid via the payment-methods/setup `amount`.
 // trial_days:0 → the hub creates the subscription 'active' (a paying customer
 // is NOT a trial) with the next invoice one calendar month after setup. Do NOT
 // use a positive value here: the hub sets period_end = trialEnd + 1 month, which
 // would double-defer billing by ~2 months AND leave the sub showing as 'trial'.
 const BASE_TRIAL_DAYS_AFTER_SETUP = 0;
-// Net (ex-VAT) base-plan price reported as the Purchase conversion value, kept
-// in step with the CompleteRegistration value so Meta sees a consistent funnel.
-const BASE_PLAN_VALUE_ILS = 299;
 
 interface WebhookEvent {
   event: string;
@@ -55,6 +64,7 @@ async function findTenantByCustomerId(customerId: string) {
       billingCustomerId: true,
       billingSubscriptionId: true,
       billingPaymentMethodId: true,
+      planId: true,
       smsCreditsRemaining: true,
       reviewsWhatsappSubscriptionId: true,
       reviewsChannel: true,
@@ -96,6 +106,8 @@ export const POST = handler(async (req: Request) => {
       if (!tenant) break;
 
       const paymentMethodId = d.payment_method_id ?? d.id ?? null;
+      // Plan the merchant picked on the billing screen (saved by /billing/setup).
+      const plan = platformPlanOf(tenant);
       // First time a token lands = the trial→paid conversion (fires whether
       // the merchant paid during or after the trial - both routes save the
       // payment method here). Guard on the pre-update value so retries / card
@@ -129,8 +141,8 @@ export const POST = handler(async (req: Request) => {
               eventId: `purchase:${tenant.id}`,
               params: {
                 currency: "ILS",
-                value: BASE_PLAN_VALUE_ILS,
-                content_name: BASE_PLAN_CODE,
+                value: platformPlanPrice(plan),
+                content_name: platformPlanCode(plan),
               },
               email: owner?.email,
               phones: [owner?.phone, branchPhone],
@@ -144,15 +156,16 @@ export const POST = handler(async (req: Request) => {
         });
       }
 
-      // Create the base subscription if we haven't already. The hub already
-      // charged ₪352.82 via the setup amount, so the subscription is created
-      // 'active' (trial_days:0) with the next invoice one billing cycle from now.
+      // Create the platform subscription on the chosen plan if we haven't
+      // already. The hub already charged month 1 via the setup amount, so the
+      // subscription is created 'active' (trial_days:0) with the next invoice
+      // one billing cycle from now. The intro price applies to base only.
       if (!tenant.billingSubscriptionId && paymentMethodId) {
         try {
-          const introPrice = activeIntroPrice(tenant);
+          const introPrice = plan === "base" ? activeIntroPrice(tenant) : null;
           const sub = await createSubscription({
             customer_id: d.customer_id,
-            plan_code: BASE_PLAN_CODE,
+            plan_code: platformPlanCode(plan),
             billing_interval: "monthly",
             trial_days: BASE_TRIAL_DAYS_AFTER_SETUP,
             payment_method_id: paymentMethodId,
@@ -185,17 +198,43 @@ export const POST = handler(async (req: Request) => {
         id?: string;
         subscription_id?: string;
         plan_code?: string;
+        plan_id?: string;
+        new_plan_id?: string;
       };
       const tenant = await findTenantByCustomerId(d.customer_id);
       if (!tenant) break;
       const subId = d.id ?? d.subscription_id;
-      if (!subId || !d.plan_code) break;
-      if (d.plan_code === BASE_PLAN_CODE) {
+      if (!subId) break;
+      // A scheduled plan change applied at renewal arrives without a plan
+      // code, only the hub's new_plan_id. Map it through the stored hub id of
+      // the zero-commission plan; any other plan on the platform sub is base.
+      if (!d.plan_code) {
+        if (d.new_plan_id && subId === tenant.billingSubscriptionId) {
+          const noCommissionHubId = await getNoCommissionHubPlanId();
+          if (noCommissionHubId) {
+            await setTenantPlatformPlan(
+              tenant,
+              d.new_plan_id === noCommissionHubId ? "no_commission" : "base",
+            );
+          } else {
+            console.warn("[billing-webhook] plan change with unknown hub plan id", d.new_plan_id);
+          }
+        }
+        break;
+      }
+      if (isPlatformPlanCode(d.plan_code)) {
+        if (d.plan_code === NO_COMMISSION_PLAN_CODE && d.plan_id) {
+          await rememberNoCommissionHubPlanId(d.plan_id);
+        }
         await prisma.tenant.update({
           where: { id: tenant.id },
-          // A (re)created/updated base subscription means billing is live again.
+          // A (re)created/updated platform subscription means billing is live again.
           data: { billingSubscriptionId: subId, billingSuspendedAt: null },
         });
+        await setTenantPlatformPlan(
+          tenant,
+          d.plan_code === NO_COMMISSION_PLAN_CODE ? "no_commission" : "base",
+        );
       } else if (d.plan_code === REVIEWS_WHATSAPP_PLAN_CODE) {
         await prisma.tenant.update({
           where: { id: tenant.id },
@@ -209,13 +248,18 @@ export const POST = handler(async (req: Request) => {
       const d = event.data as {
         customer_id: string;
         plan_code?: string;
+        subscription_id?: string;
       };
       const tenant = await findTenantByCustomerId(d.customer_id);
       if (!tenant) break;
-      // Any paid base-plan invoice keeps the setup-complete timestamp fresh.
-      // We no longer reset SMS credits here - SMS purchases are now one-off
-      // charges that fire `charge.succeeded` instead.
-      if (d.plan_code === BASE_PLAN_CODE) {
+      // Any paid platform-plan invoice keeps the setup-complete timestamp
+      // fresh. Renewal invoices carry only subscription_id, so match on the
+      // tenant's platform subscription too. We no longer reset SMS credits
+      // here - SMS purchases are now one-off charges (`charge.succeeded`).
+      const isPlatformInvoice =
+        isPlatformPlanCode(d.plan_code) ||
+        (!!d.subscription_id && d.subscription_id === tenant.billingSubscriptionId);
+      if (isPlatformInvoice) {
         await prisma.tenant.update({
           where: { id: tenant.id },
           // A paid base invoice recovers a store suspended for non-payment.

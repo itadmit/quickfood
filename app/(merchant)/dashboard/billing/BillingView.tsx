@@ -4,6 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { PageHeader } from "@/components/merchant/v2/PageHeader";
+import {
+  BASE_PLAN_PRICE,
+  NO_COMMISSION_PLAN_PRICE,
+  type PlatformPlan,
+} from "@/lib/billing-hub/plans";
 
 const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 60_000;
@@ -17,13 +22,36 @@ interface TenantBilling {
   setupCompletedAt: string | null;
   trialEndsAt: string | null;
   smsCreditsRemaining: number;
+  plan: PlatformPlan;
+  /** Active negotiated price for the base plan, pre-VAT, or null. */
+  introMonthlyPrice: number | null;
 }
 
 interface SubscriptionState {
   status: string;
   cancelAtPeriodEnd: boolean;
   currentPeriodEnd: string;
+  planChangePending: boolean;
 }
+
+const PLAN_INFO: Record<
+  PlatformPlan,
+  { title: string; price: number; commission: string }
+> = {
+  base: {
+    title: "מסלול בסיס",
+    price: BASE_PLAN_PRICE,
+    commission: "0.5% מכל הזמנה + מע״מ (מחויב סוף חודש)",
+  },
+  no_commission: {
+    title: "ללא עמלות",
+    price: NO_COMMISSION_PLAN_PRICE,
+    commission: "ללא עמלה על הזמנות",
+  },
+};
+
+const otherPlan = (p: PlatformPlan): PlatformPlan =>
+  p === "base" ? "no_commission" : "base";
 
 export function BillingView({
   tenant,
@@ -41,12 +69,21 @@ export function BillingView({
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
   const [vatNumber, setVatNumber] = useState(tenant.vatNumber ?? "");
+  const [selectedPlan, setSelectedPlan] = useState<PlatformPlan>(tenant.plan);
   const [polling, setPolling] = useState(false);
   const [pollTimedOut, setPollTimedOut] = useState(false);
   const pollStartRef = useRef<number>(0);
 
   const hasPaymentMethod = !!tenant.paymentMethodId;
   const setupComplete = !!tenant.setupCompletedAt && hasPaymentMethod;
+  // Before setup the merchant is choosing; after it, the plan on the tenant.
+  const shownPlan: PlatformPlan = setupComplete ? tenant.plan : selectedPlan;
+  const shownInfo = PLAN_INFO[shownPlan];
+  // The intro price applies to the base plan only.
+  const monthOnePrice =
+    shownPlan === "base" && tenant.introMonthlyPrice != null
+      ? tenant.introMonthlyPrice
+      : shownInfo.price;
 
   // After the merchant returns from Grow, the hub fires our webhook out of
   // band. Until it lands the local Tenant row still shows the old "טרם
@@ -139,6 +176,7 @@ export function BillingView({
           accept: true,
           context_type: contextType,
           vat_number: vatNumber.trim() || undefined,
+          plan: contextType === "subscription_setup" ? selectedPlan : undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -187,6 +225,31 @@ export function BillingView({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(data?.error?.message ?? "ביטול הביטול נכשל");
+        return;
+      }
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function switchPlan() {
+    const target = otherPlan(tenant.plan);
+    const info = PLAN_INFO[target];
+    if (!confirm(
+      `לעבור למסלול "${info.title}" (₪${info.price} + מע״מ לחודש)? המעבר ייכנס לתוקף בחידוש הבא של המנוי.`,
+    )) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/v1/merchant/billing/plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: target }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data?.error?.message ?? "מעבר המסלול נכשל");
         return;
       }
       router.refresh();
@@ -250,14 +313,14 @@ export function BillingView({
           <div>
             <h2 className="text-base lg:text-lg font-semibold">מנוי פלטפורמה</h2>
             <p className="text-xs text-qf-mute mt-0.5">
-              ₪299 + מע״מ לחודש · מתחדש אוטומטית
+              {shownInfo.title} · ₪{shownInfo.price} + מע״מ לחודש · מתחדש אוטומטית
             </p>
           </div>
           <StatusBadge status={status} trialDaysLeft={trialDaysLeft} />
         </div>
 
         <div className="mt-4 space-y-2 text-sm">
-          <Row label="עמלת עסקה">0.5% מכל הזמנה + מע״מ (מחויב סוף חודש)</Row>
+          <Row label="עמלת עסקה">{shownInfo.commission}</Row>
           {trialEnd && !setupComplete && (
             <Row label="ניסיון">
               {trialExpired ? (
@@ -279,6 +342,20 @@ export function BillingView({
 
         {!setupComplete && (
           <div className="mt-5 border-t border-qf-line-soft pt-4 space-y-3">
+            <fieldset>
+              <legend className="mb-2 text-xs text-qf-ink2">בחירת מסלול</legend>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {(["base", "no_commission"] as const).map((p) => (
+                  <PlanOption
+                    key={p}
+                    plan={p}
+                    selected={selectedPlan === p}
+                    introPrice={p === "base" ? tenant.introMonthlyPrice : null}
+                    onSelect={() => setSelectedPlan(p)}
+                  />
+                ))}
+              </div>
+            </fieldset>
             <label className="block text-xs text-qf-ink2">
               <span className="mb-1 block">ח.פ / עוסק מורשה (לחשבונית)</span>
               <input
@@ -303,7 +380,8 @@ export function BillingView({
               />
               <span>
                 אני מאשר/ת לשמור את פרטי כרטיס האשראי שלי לשם חיוב חודשי
-                אוטומטי של ₪299 + מע״מ עבור QuickFood, ולשם חיוב עמלות ההזמנות.
+                אוטומטי של ₪{shownInfo.price} + מע״מ עבור QuickFood
+                {shownPlan === "base" ? ", ולשם חיוב עמלות ההזמנות" : ""}.
                 ניתן לבטל בכל עת מתוך עמוד החיוב.
               </span>
             </label>
@@ -315,11 +393,11 @@ export function BillingView({
             >
               {busy
                 ? "פותח..."
-                : "השלמת תשלום ופתיחת מנוי (₪299 + מע״מ)"}
+                : `השלמת תשלום ופתיחת מנוי (₪${monthOnePrice} + מע״מ)`}
             </button>
             <p className="text-xs text-qf-mute">
               ייפתח דף תשלום מאובטח של QuickBilling. בסיום החיוב הראשון של
-              ₪299 + מע״מ ישמר טוקן והמנוי מתחיל אוטומטית.
+              ₪{monthOnePrice} + מע״מ ישמר טוקן והמנוי מתחיל אוטומטית.
             </p>
             {error && (
               <div className="text-sm text-qf-tomato">{error}</div>
@@ -334,6 +412,36 @@ export function BillingView({
                 המנוי מסומן לסיום בתום התקופה. ניתן לבטל את הביטול עד תאריך הסיום.
               </div>
             ) : null}
+            <div className="rounded-xl border border-qf-line-soft px-3 py-2.5 text-xs space-y-2">
+              {subscription?.planChangePending ? (
+                <div>
+                  מתוזמן מעבר למסלול &quot;{PLAN_INFO[otherPlan(tenant.plan)].title}&quot;
+                  {" "}(₪{PLAN_INFO[otherPlan(tenant.plan)].price} + מע״מ) בחידוש הבא
+                  {subscription.currentPeriodEnd ? (
+                    <>
+                      {" "}·{" "}
+                      <span className="ltr-num font-mono">{subscription.currentPeriodEnd}</span>
+                    </>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-qf-ink2">
+                    מסלול חלופי: {PLAN_INFO[otherPlan(tenant.plan)].title} · ₪
+                    {PLAN_INFO[otherPlan(tenant.plan)].price} + מע״מ לחודש ·{" "}
+                    {PLAN_INFO[otherPlan(tenant.plan)].commission}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={switchPlan}
+                    disabled={busy || !!subscription?.cancelAtPeriodEnd}
+                    className="px-3 py-1.5 rounded-lg bg-white border border-qf-line-dash font-medium hover:bg-qf-bg disabled:opacity-60"
+                  >
+                    מעבר למסלול הזה
+                  </button>
+                </div>
+              )}
+            </div>
             <label className="flex items-start gap-2 text-xs text-qf-ink2 cursor-pointer select-none">
               <input
                 type="checkbox"
@@ -418,6 +526,52 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       <div className="text-qf-mute">{label}</div>
       <div className="text-end">{children}</div>
     </div>
+  );
+}
+
+function PlanOption({
+  plan,
+  selected,
+  introPrice,
+  onSelect,
+}: {
+  plan: PlatformPlan;
+  selected: boolean;
+  introPrice: number | null;
+  onSelect: () => void;
+}) {
+  const info = PLAN_INFO[plan];
+  return (
+    <label
+      className={cn(
+        "flex items-start gap-2.5 rounded-xl border px-3 py-3 cursor-pointer select-none transition-colors",
+        selected
+          ? "border-(--qf-primary) bg-qf-green-soft"
+          : "border-qf-line-dash hover:bg-qf-bg",
+      )}
+    >
+      <input
+        type="radio"
+        name="platform-plan"
+        checked={selected}
+        onChange={onSelect}
+        className="mt-1 w-4 h-4 accent-(--qf-primary)"
+      />
+      <span className="space-y-0.5">
+        <span className="block text-sm font-semibold">{info.title}</span>
+        <span className="block text-sm">
+          <span className="tnum">₪{info.price}</span> + מע״מ לחודש
+        </span>
+        <span className="block text-xs text-qf-mute">
+          {plan === "base" ? "+ 0.5% עמלה מכל הזמנה" : "0% עמלה על הזמנות"}
+        </span>
+        {introPrice != null && (
+          <span className="block text-xs text-qf-ink2">
+            מחיר היכרות: ₪{introPrice} + מע״מ
+          </span>
+        )}
+      </span>
+    </label>
   );
 }
 
