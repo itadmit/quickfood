@@ -11,6 +11,7 @@ import { matchZoneByCity } from "@/lib/delivery-zone-match";
 import { sendTenantPush } from "@/lib/merchant/push";
 import { sendTenantFcm } from "@/lib/merchant/fcm";
 import { priceGroupOptions } from "@/lib/option-pricing";
+import { dealGiftedIndexes, parseDealFreeRules } from "@/lib/deal-free-rules";
 import { weightPrice, MIN_WEIGHT_GRAMS, MAX_WEIGHT_GRAMS } from "@/lib/pricing";
 import { ensureLoyaltyMember } from "@/lib/loyalty/membership";
 import {
@@ -561,19 +562,24 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         });
       }
 
-      // Deal-gifted extras: the N cheapest PAID picks across all composed
-      // units cost 0. Applied after per-group pricing so it stacks on top
-      // of whatever includedFree/bundle rules the item groups already ran.
-      // Size upgrades are excluded - they're a base choice, not a bonus topping.
-      if (deal.freeExtras > 0) {
-        const gifted = selectedOptions
-          .filter((o) => o.price_delta > 0 && o.kind !== "size")
-          .sort((a, b) => a.price_delta - b.price_delta)
-          .slice(0, deal.freeExtras);
-        for (const o of gifted) {
-          extrasDelta -= o.price_delta;
-          o.price_delta = 0;
-        }
+      // Deal gifts: per-pool rules first ("one topping", "one cheddar
+      // slice"), then the deal-wide freeExtras. Applied after per-group
+      // pricing so they stack on top of includedFree/bundle. Size upgrades
+      // are never gifted. selectedOptions holds one entry per unit.
+      // Slot rows (the chosen dishes) carry option_id = item id at 0, so
+      // they're never eligible.
+      const gifted = dealGiftedIndexes(
+        selectedOptions.map((o) => ({
+          optionId: o.option_id,
+          charge: o.price_delta,
+          isSize: o.kind === "size",
+        })),
+        parseDealFreeRules(deal.freeRules),
+        deal.freeExtras,
+      );
+      for (const i of gifted) {
+        extrasDelta -= selectedOptions[i].price_delta;
+        selectedOptions[i].price_delta = 0;
       }
 
       const unitPrice = Math.round(deal.fixedPrice + extrasDelta + sizeDelta);

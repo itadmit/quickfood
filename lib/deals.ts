@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db/client";
 import { apiError } from "@/lib/api-response";
 import type { z } from "zod";
 import type { DealInputSchema } from "@/lib/validate";
+import { parseDealFreeRules } from "@/lib/deal-free-rules";
 
 export const DEAL_INCLUDE = {
   slots: {
@@ -28,6 +29,7 @@ export interface DealWithSlots {
   active: boolean;
   position: number;
   freeExtras: number;
+  freeRules?: unknown;
   categoryId: string | null;
   availableFrom: number | null;
   availableTo: number | null;
@@ -55,6 +57,11 @@ export function serializeDeal(deal: DealWithSlots) {
     active: deal.active,
     position: deal.position,
     free_extras: deal.freeExtras,
+    free_rules: parseDealFreeRules(deal.freeRules).map((r) => ({
+      label: r.label,
+      option_ids: r.optionIds,
+      count: r.count,
+    })),
     category_id: deal.categoryId,
     available_from: deal.availableFrom,
     available_to: deal.availableTo,

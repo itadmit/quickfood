@@ -6,6 +6,7 @@ import { ItemDetailModal } from "@/components/customer/ItemDetailModal";
 import { MenuItemImage, type BusinessType } from "@/components/shared/MenuItemImage";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { dealGiftedIndexes, type DealFreeRule } from "@/lib/deal-free-rules";
 
 interface ComposerOption {
   id: string;
@@ -62,6 +63,7 @@ interface ComposerDeal {
   imageUrl: string | null;
   fixedPrice: number;
   freeExtras?: number;
+  freeRules?: DealFreeRule[];
   slots: Array<{
     id: string;
     name: string;
@@ -107,29 +109,23 @@ function defaultSizeId(item: ComposerItem | undefined): string | null {
   return (item.sizes.find((s) => s.isDefault) ?? item.sizes[0]).id;
 }
 
-/** Effective charge per picked option, mirroring the server's allocation in
- *  priceGroupOptions: the cheapest `includedFree` PAID picks are free,
- *  zero/negative-delta picks are unaffected. Returned map keeps the preview
- *  identical to what the order will actually charge. */
-function groupCharges(group: ComposerGroup, u: UnitSel): Map<string, number> {
+/** Effective charge per picked UNIT (an option picked 3× is three entries),
+ *  mirroring the server's allocation in priceGroupOptions: the cheapest
+ *  `includedFree` PAID units are free, zero/negative-delta picks are
+ *  unaffected. Per-unit so deal gifts allocate exactly like the server. */
+function groupUnitCharges(group: ComposerGroup, u: UnitSel): Array<{ optionId: string; charge: number }> {
   const free = group.includedFree ?? 0;
-  // One entry per UNIT (an option picked 3× contributes three units), so the
-  // cheapest-free allocation matches the server's per-unit pricing.
-  const paid: Array<{ id: string; price: number }> = [];
-  const out = new Map<string, number>();
+  const paid: Array<{ optionId: string; charge: number }> = [];
+  const out: Array<{ optionId: string; charge: number }> = [];
   for (const o of group.options) {
     const qty = unitOptionQty(group, u, o.id);
-    if (qty === 0) continue;
     for (let i = 0; i < qty; i++) {
-      if (o.priceDelta > 0) paid.push({ id: o.id, price: o.priceDelta });
-      else out.set(o.id, (out.get(o.id) ?? 0) + o.priceDelta);
+      if (o.priceDelta > 0) paid.push({ optionId: o.id, charge: o.priceDelta });
+      else out.push({ optionId: o.id, charge: o.priceDelta });
     }
   }
-  paid.sort((a, b) => a.price - b.price);
-  paid.forEach((unit, i) => {
-    const charge = i < free ? 0 : unit.price;
-    out.set(unit.id, (out.get(unit.id) ?? 0) + charge);
-  });
+  paid.sort((a, b) => a.charge - b.charge);
+  paid.forEach((unit, i) => out.push({ optionId: unit.optionId, charge: i < free ? 0 : unit.charge }));
   return out;
 }
 
@@ -287,28 +283,24 @@ export function DealComposer({
   }
 
   // Effective charge per picked option across the whole deal, mirroring the
-  // server: per-group pricing first, then the deal's gifted extras zero the
-  // N cheapest remaining paid picks. Keyed "unitIdx:groupId:optionId".
+  // server: per-group pricing first, then the deal's gifts (per-pool rules,
+  // then freeExtras) on individual units. Keyed "unitIdx:groupId:optionId",
+  // summed over that option's units.
   const chargeByPick = useMemo(() => {
-    const perKey = new Map<string, number>();
-    const positive: Array<{ key: string; charge: number }> = [];
+    const picks: Array<{ key: string; optionId: string; charge: number }> = [];
     units.forEach((u, ui) => {
       if (!u.itemId) return;
       const item = items[u.itemId];
       if (!item) return;
       for (const g of item.optionGroups) {
-        for (const [oid, charge] of groupCharges(g, u)) {
-          const key = `${ui}:${g.id}:${oid}`;
-          perKey.set(key, charge);
-          if (charge > 0) positive.push({ key, charge });
+        for (const p of groupUnitCharges(g, u)) {
+          picks.push({ key: `${ui}:${g.id}:${p.optionId}`, optionId: p.optionId, charge: p.charge });
         }
       }
     });
-    const gifted = deal?.freeExtras ?? 0;
-    if (gifted > 0) {
-      positive.sort((a, b) => a.charge - b.charge);
-      for (const p of positive.slice(0, gifted)) perKey.set(p.key, 0);
-    }
+    const gifted = dealGiftedIndexes(picks, deal?.freeRules ?? [], deal?.freeExtras ?? 0);
+    const perKey = new Map<string, number>();
+    picks.forEach((p, i) => perKey.set(p.key, (perKey.get(p.key) ?? 0) + (gifted.has(i) ? 0 : p.charge)));
     return perKey;
   }, [deal, units, items]);
 
@@ -461,6 +453,27 @@ export function DealComposer({
               <span
                 className={cn(
                   "text-qf-mute",
+                  LARGE_FREE_EXTRAS_SLUGS.has(tenantSlug) ? "text-sm font-medium" : "font-normal",
+                )}
+              >
+                · ההנחה יורדת אוטומטית בסיכום
+              </span>
+            </div>
+          )}
+
+          {(deal.freeRules ?? []).some((r) => r.label) && (
+            <div
+              className={cn(
+                "mx-5 mt-3 rounded-lg bg-(--qf-primary)/15 border border-(--qf-primary)/40 text-qf-ink",
+                LARGE_FREE_EXTRAS_SLUGS.has(tenantSlug)
+                  ? "rounded-xl px-4 py-3 text-base font-bold"
+                  : "px-2.5 py-1.5 text-xs font-semibold",
+              )}
+            >
+              כלול במבצע: {(deal.freeRules ?? []).filter((r) => r.label).map((r) => r.label).join(" · ")}
+              <span
+                className={cn(
+                  "ms-1 text-qf-mute",
                   LARGE_FREE_EXTRAS_SLUGS.has(tenantSlug) ? "text-sm font-medium" : "font-normal",
                 )}
               >

@@ -37,6 +37,9 @@ export const POST = handler(async (req: Request) => {
       active: body.active,
       position: body.position,
       freeExtras: body.free_extras,
+      ...(body.free_rules !== undefined && {
+        freeRules: body.free_rules.map((r) => ({ label: r.label, optionIds: r.option_ids, count: r.count })),
+      }),
       categoryId: body.category_id ?? null,
       availableFrom: body.available_from ?? null,
       availableTo: body.available_to ?? null,

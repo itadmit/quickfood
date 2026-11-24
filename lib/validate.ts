@@ -296,6 +296,18 @@ export const DealInputSchema = z.object({
   active: z.boolean().default(true),
   position: z.number().int().default(0),
   free_extras: z.number().int().min(0).max(20).default(0),
+  // Per-pool gifts ("one topping + one cheddar slice"). Omitted on update =
+  // keep the stored rules (the deals screen doesn't edit them yet).
+  free_rules: z
+    .array(
+      z.object({
+        label: z.string().max(80).default(""),
+        option_ids: z.array(UuidSchema).min(1).max(200),
+        count: z.number().int().min(1).max(20),
+      }),
+    )
+    .max(10)
+    .optional(),
   category_id: UuidSchema.nullable().optional(),
   // Day/hour window, same contract as menu items: minutes since midnight
   // (Israel time), 7-bit weekday mask (bit 0 = Sunday). null = no limit;

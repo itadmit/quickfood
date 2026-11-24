@@ -937,6 +937,11 @@ model Deal {
   // across the composed units cost 0, overriding the per-item pricing the
   // groups normally derive from. 0 = extras charge as usual.
   freeExtras  Int      @default(0) @map("free_extras")
+  // Per-pool gifts, applied before freeExtras: each rule zeroes the `count`
+  // cheapest PAID units whose option id is in `optionIds` ("תוספת מעל אחת",
+  // "פרוסת צ'דר אחת"). Options outside every pool keep their price.
+  // Shape: Array<{ label: string; optionIds: string[]; count: number }>.
+  freeRules   Json     @default("[]") @map("free_rules")
   // Optional placement inside a regular menu category, in addition to
   // the dedicated deals rail at the top of the storefront.
   categoryId String?       @map("category_id") @db.Uuid

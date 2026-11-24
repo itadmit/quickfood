@@ -42,6 +42,9 @@ export const PUT = handler(async (req: Request, { params }: { params: Promise<{ 
         active: body.active,
         position: body.position,
         freeExtras: body.free_extras,
+        ...(body.free_rules !== undefined && {
+          freeRules: body.free_rules.map((r) => ({ label: r.label, optionIds: r.option_ids, count: r.count })),
+        }),
         categoryId: body.category_id ?? null,
         // Omitted = keep the stored window (older clients that don't send it
         // must not wipe the merchant's days/hours); null = clear it.
