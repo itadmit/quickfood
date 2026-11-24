@@ -9,6 +9,7 @@ import {
   NO_COMMISSION_PLAN_PRICE,
   type PlatformPlan,
 } from "@/lib/billing-hub/plans";
+import { PLAN_FEATURES } from "@/lib/billing-hub/plan-features";
 
 const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 60_000;
@@ -339,6 +340,27 @@ export function BillingView({
             </Row>
           )}
         </div>
+
+        <details className="mt-4 rounded-xl border border-qf-line-soft px-3 py-2.5 text-xs" open={!setupComplete}>
+          <summary className="cursor-pointer select-none font-medium text-qf-ink2">
+            מה כולל המסלול
+          </summary>
+          <p className="mt-2 text-qf-mute">
+            שני המסלולים כוללים בדיוק את אותן תכונות. ההבדל הוא רק במחיר
+            החודשי ובעמלה על הזמנות.
+          </p>
+          <ul className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
+            {PLAN_FEATURES.map((f) => (
+              <li key={f} className="flex items-start gap-1.5">
+                <span aria-hidden className="text-(--qf-primary)">✓</span>
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-qf-mute">
+            חבילות וואטסאפ ו-SMS נרכשות בנפרד, החל מ-₪39 + מע״מ.
+          </p>
+        </details>
 
         {!setupComplete && (
           <div className="mt-5 border-t border-qf-line-soft pt-4 space-y-3">

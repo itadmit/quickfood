@@ -8,6 +8,7 @@ import { LiteYouTube } from "./_components/LiteYouTube";
 import VerticalRotator from "./_components/VerticalRotator";
 import BottomCtaPopup from "./_components/BottomCtaPopup";
 import { WhatsAppFAB } from "./_components/WhatsAppFAB";
+import { PLAN_FEATURES } from "@/lib/billing-hub/plan-features";
 import {
   Store,
   Flame,
@@ -1342,24 +1343,7 @@ function GrowPartner() {
 
 /* ─── PRICING ───────────────────────────────────────────── */
 function Pricing() {
-  const features = [
-    "מנות עם גדלים, אפשרויות חובה ותוספות פר-יחידה",
-    "יועץ AI בעברית (Claude / Gemini) - ממליץ ומוסיף לעגלה",
-    "חיפוש בתפריט + 13 תגי תזונה (טבעוני, ללא גלוטן, כשר ועוד)",
-    "מועדפים, הזמנה חוזרת חכמה ושדרוג עגלה אוטומטי",
-    "זמן הכנה לכל פריט + זמן משוער מצרפי לכל הזמנה",
-    "סטטוס מסעדה: פתוח / עומס / סגור - זמן הגעה משוער אוטומטי",
-    "אתר שלם ממותג עם הדומיין שלך",
-    "דשבורד ניהול הזמנות חי - תפריט ושליחים",
-    "תשלומים - Bit, אשראי, Apple Pay, פייבוקס, Google Pay",
-    "מעקב הזמנה חי + סטטוס בלייב",
-    "ביקורות אוטומטיות עם תזכורת בוואטסאפ",
-    "וואטסאפ מהמספר שלך (דרך iBot Chat)",
-    "מייל ללא הגבלה - חינם",
-    "אזורי משלוח עם זמן משלוח לכל אזור",
-    "אנליטיקה - שעות שיא, פריטים מובילים, חוזרים",
-    "REST API + Webhooks לחיבור לקופה",
-  ];
+  const features = PLAN_FEATURES;
   return (
     <section id="pricing" className={styles.section}>
       <div className={styles.container}>
