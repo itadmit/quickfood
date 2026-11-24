@@ -44,6 +44,8 @@ const PAYMENT_METHOD_LABELS: Record<CustomerPaymentMethod, string> = {
   google_pay: "Google Pay",
 };
 
+const nowMs = () => Date.now();
+
 export function CustomerCheckout({
   tenantSlug,
   initialCustomer = null,
@@ -268,6 +270,15 @@ export function CustomerCheckout({
   >(null);
   const [sdkReady, setSdkReady] = useState(false);
   const [walletOpen, setWalletOpen] = useState(false);
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (!e.persisted) return;
+      setHostedPayment(null);
+      setBusy(false);
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
   useEffect(() => {
     if (pendingPayment && sdkReady) {
       renderGrowWallet(pendingPayment.authCode);
@@ -574,11 +585,7 @@ export function CustomerCheckout({
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/customer/orders", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
+      const payload = {
           tenant_slug: tenantSlug,
           method,
           delivery_city: method === "delivery" ? city || undefined : undefined,
@@ -660,7 +667,17 @@ export function CustomerCheckout({
                 option_ids: u.optionIds,
               })),
             })),
-        }),
+        };
+      const cardOrderKey = `qf:card-order:${tenantSlug}`;
+      const cartSig = JSON.stringify({ ...payload, payment_method: undefined });
+      const reused = await reusePendingCardOrder(cardOrderKey, cartSig, paymentMethod);
+      if (reused) return;
+
+      const res = await fetch("/api/v1/customer/orders", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -685,6 +702,14 @@ export function CustomerCheckout({
       // authCode - the SDK mount (rendered at the bottom of the form) will
       // overlay the wallet on top of the existing checkout view.
       if (data.needs_payment) {
+        try {
+          sessionStorage.setItem(
+            cardOrderKey,
+            JSON.stringify({ orderId, sig: cartSig, at: nowMs() }),
+          );
+        } catch {
+          /* storage blocked */
+        }
         // Fast path: the create response already initiated payment inline
         // (saves a second round-trip). Use it when present.
         const inline = data.payment;
@@ -759,6 +784,60 @@ export function CustomerCheckout({
     }
   }
 
+  async function reusePendingCardOrder(
+    key: string,
+    sig: string,
+    method: CustomerPaymentMethod | null,
+  ): Promise<boolean> {
+    let saved: { orderId?: string; sig?: string; at?: number } | null = null;
+    try {
+      saved = JSON.parse(sessionStorage.getItem(key) ?? "null");
+    } catch {
+      saved = null;
+    }
+    if (!saved?.orderId || saved.sig !== sig || !saved.at || nowMs() - saved.at > 60 * 60_000) {
+      return false;
+    }
+    const forget = () => {
+      try {
+        sessionStorage.removeItem(key);
+      } catch {
+        /* storage blocked */
+      }
+    };
+    try {
+      const res = await fetch(`/api/v1/customer/orders/${saved.orderId}`, { credentials: "include" });
+      if (!res.ok) {
+        forget();
+        return false;
+      }
+      const data = await res.json();
+      if (data?.order?.payment_status !== "pending" || data?.order?.status !== "pending") {
+        forget();
+        return false;
+      }
+      if (method === "cash") {
+        const sw = await fetch(`/api/v1/customer/orders/${saved.orderId}/pay/cash`, {
+          method: "POST",
+          credentials: "include",
+        });
+        if (!sw.ok) {
+          forget();
+          return false;
+        }
+        forget();
+        setSubmitted(true);
+        clear();
+        router.push(`/s/${tenantSlug}/orders/${saved.orderId}`);
+        return true;
+      }
+      router.push(`/s/${tenantSlug}/pay/${saved.orderId}`);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   const emailLooksValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
   // Email is only required when the tenant needs it (reviews-by-email or the
@@ -801,7 +880,7 @@ export function CustomerCheckout({
   const termsError =
     submitAttempted && !termsAccepted ? t("checkout.errTerms") : null;
 
-  const paymentInFlight = !!pendingPayment;
+  const paymentInFlight = !!pendingPayment || hostedPayment?.displayMode === "redirect";
   // Zone-aware minimum (branch.minOrder already resolves to the customer's
   // zone via the cart). Block placing the order below it - matches the
   // server's min_order_not_met guard so the customer is told up-front.
