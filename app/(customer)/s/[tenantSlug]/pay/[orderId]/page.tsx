@@ -1,13 +1,20 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import ReactDOM from "react-dom";
-import { PaymentMethod, PaymentStatus } from "@prisma/client";
+import {
+  OrderSource,
+  OrderStatus,
+  PaymentMethod,
+  PaymentStatus,
+  PendingPaymentStatus,
+} from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import { resolveTenantBySlug } from "@/lib/slug";
 import { normalizeKioskOverrides } from "@/lib/i18n/kiosk-messages";
 import { initiateOrderPayment } from "@/lib/payments/initiate-payment";
 import { getActiveCardProviderSummary } from "@/lib/payments/factory";
 import { canUseOwnerTestCard } from "@/lib/payments/owner-test-access";
+import { declineMessage } from "@/lib/payments/decline-message";
 import { PayPage } from "./PayPage";
 
 export const dynamic = "force-dynamic";
@@ -53,13 +60,15 @@ export default async function PayRoute({
   if (!tenant) notFound();
 
   const allowOwnerTest = await canUseOwnerTestCard(tenant.id);
-  const [order, cardProvider] = await Promise.all([
+  const [order, cardProvider, lastAttempt] = await Promise.all([
     prisma.order.findFirst({
       where: { id: orderId, tenantId: tenant.id },
       select: {
         id: true,
         number: true,
         total: true,
+        status: true,
+        source: true,
         paymentStatus: true,
         paymentMethod: true,
         invoiceNumber: true,
@@ -68,8 +77,26 @@ export default async function PayRoute({
       },
     }),
     getActiveCardProviderSummary(tenant.id, { allowOwnerTest }),
+    prisma.pendingPayment.findFirst({
+      where: { orderId, tenantId: tenant.id },
+      orderBy: { createdAt: "desc" },
+      select: { status: true, provider: true, providerResponse: true },
+    }),
   ]);
   if (!order) notFound();
+
+  const declined =
+    !justPaid &&
+    order.paymentStatus === PaymentStatus.pending &&
+    lastAttempt?.status === PendingPaymentStatus.failed
+      ? declineMessage(lastAttempt.provider, lastAttempt.providerResponse)
+      : null;
+  const cashAvailable =
+    tenant.acceptsCash &&
+    order.source !== OrderSource.kiosk &&
+    order.source !== OrderSource.pos &&
+    order.status !== OrderStatus.cancelled &&
+    order.status !== OrderStatus.refunded;
 
   const cardEnabled = !!cardProvider;
   const isOpenForPayment =
@@ -80,7 +107,7 @@ export default async function PayRoute({
 
   let initialAuthCode: string | null = null;
   let initialPaymentUrl: string | null = null;
-  if (cardEnabled && isOpenForPayment) {
+  if (cardEnabled && isOpenForPayment && !declined) {
     try {
       const initResult = await initiateOrderPayment(order.id, { allowOwnerTest });
       if (initResult.ok) {
@@ -121,6 +148,8 @@ export default async function PayRoute({
       initialPaymentUrl={initialPaymentUrl}
       stringOverrides={normalizeKioskOverrides(tenant.kioskStringOverrides)}
       justPaid={justPaid}
+      declineMessage={declined}
+      cashAvailable={cashAvailable}
     />
   );
 }

@@ -36,6 +36,8 @@ interface PayPageProps {
   initialPaymentUrl: string | null;
   stringOverrides: KioskOverrides;
   justPaid: boolean;
+  declineMessage: string | null;
+  cashAvailable: boolean;
 }
 
 export function PayPage({
@@ -50,6 +52,8 @@ export function PayPage({
   initialPaymentUrl,
   stringOverrides,
   justPaid,
+  declineMessage,
+  cashAvailable,
 }: PayPageProps) {
   const t = useMemo(() => buildKioskT(stringOverrides), [stringOverrides]);
   const alreadyPaid = order.paymentStatus === "paid" || justPaid;
@@ -68,6 +72,8 @@ export function PayPage({
   const [sdkReady, setSdkReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [declined, setDeclined] = useState<string | null>(declineMessage);
+  const [switchingToCash, setSwitchingToCash] = useState(false);
 
   const initiatedRef = useRef(!!initialAuthCode || !!initialPaymentUrl);
 
@@ -101,8 +107,45 @@ export function PayPage({
     }
   }
 
+  async function switchToCash() {
+    setSwitchingToCash(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/v1/customer/orders/${order.id}/pay/cash`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(
+          typeof data?.error?.message === "string" ? data.error.message : t("payPage.cashFailed"),
+        );
+        setSwitchingToCash(false);
+        return;
+      }
+      try {
+        localStorage.removeItem(`qf:cart:${tenantSlug}`);
+        sessionStorage.removeItem(`qf:card-order:${tenantSlug}`);
+      } catch {
+        /* storage blocked */
+      }
+      window.location.href = `/s/${tenantSlug}/orders/${order.id}`;
+    } catch {
+      setError(t("payPage.cashFailed"));
+      setSwitchingToCash(false);
+    }
+  }
+
+  function retryCard() {
+    setDeclined(null);
+    initiatedRef.current = false;
+    setAuthCode(null);
+    setPaymentUrl(null);
+    void startPayment();
+  }
+
   useEffect(() => {
-    if (!alreadyPaid && cardEnabled && !authCode && !paymentUrl) {
+    if (!alreadyPaid && cardEnabled && !declined && !authCode && !paymentUrl) {
       void startPayment();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -274,7 +317,38 @@ export function PayPage({
         </div>
       </div>
 
-      {!cardEnabled ? (
+      {declined ? (
+        <div className="bg-white rounded-2xl border border-qf-tomato/40 p-5 text-center space-y-3">
+          <div className="text-lg font-black text-qf-tomato">{t("payPage.declinedHeading")}</div>
+          <p className="text-sm text-qf-ink">{declined}</p>
+          <p className="text-sm text-qf-mute">
+            {cashAvailable ? t("payPage.declinedNote") : t("payPage.declinedNoteNoCash")}
+          </p>
+          {error && <p className="text-sm text-qf-tomato">{error}</p>}
+          <div className="flex flex-col gap-2 pt-1">
+            {cardEnabled && (
+              <button
+                type="button"
+                onClick={retryCard}
+                disabled={switchingToCash}
+                className="h-12 rounded-2xl bg-(--qf-primary) hover:bg-(--qf-deep) disabled:bg-qf-mute text-white font-bold"
+              >
+                {t("payPage.retryCard")}
+              </button>
+            )}
+            {cashAvailable && (
+              <button
+                type="button"
+                onClick={() => void switchToCash()}
+                disabled={switchingToCash}
+                className="h-12 rounded-2xl border-2 border-qf-ink text-qf-ink font-bold disabled:opacity-50"
+              >
+                {switchingToCash ? t("payPage.switchingToCash") : t("payPage.payCash")}
+              </button>
+            )}
+          </div>
+        </div>
+      ) : !cardEnabled ? (
         <div className="bg-qf-tomato-soft border border-qf-tomato/40 text-qf-tomato rounded-xl p-4 text-sm text-center">
           {t("payPage.notAvailable")}
         </div>
@@ -306,6 +380,16 @@ export function PayPage({
               >
                 {t("payPage.tryAgain")}
               </button>
+              {cashAvailable && (
+                <button
+                  type="button"
+                  onClick={() => void switchToCash()}
+                  disabled={switchingToCash}
+                  className="block mx-auto mt-2 underline text-sm font-bold"
+                >
+                  {switchingToCash ? t("payPage.switchingToCash") : t("payPage.payCash")}
+                </button>
+              )}
             </div>
           )}
 
