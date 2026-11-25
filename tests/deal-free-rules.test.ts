@@ -1,9 +1,9 @@
 /**
  * Soldier deal at Smash Burger (Ran, 2026-11-24): fixed ₪70.
  *  - Regular chips included (₪0); sweet potato / onion rings +₪4 always paid.
- *  - "תוספות בתשלום": one pick included, every extra one paid.
- *  - One cheddar slice included; a second slice, double cheddar, kebab and
- *    pulled meat ("תוספות מיוחדות") are always paid.
+ *  - One pick from "תוספות בתשלום" + the vegan cheddar slice is included,
+ *    every extra one paid (Ran, 2026-11-25: cheddar shares the slot).
+ *  - Double cheddar, kebab and pulled meat are always paid.
  *
  * Run: node --test --import tsx tests/deal-free-rules.test.ts
  */
@@ -11,11 +11,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { dealGiftedIndexes, parseDealFreeRules, type GiftablePick } from "../lib/deal-free-rules";
 
-const TOPPINGS = ["coleslaw", "jalapeno", "onion-jam", "chili-jam", "fried-onion", "egg", "mushrooms", "garlic"];
-const RULES = parseDealFreeRules([
-  { label: "תוספת מעל אחת", optionIds: TOPPINGS, count: 1 },
-  { label: "פרוסת צ'דר אחת", optionIds: ["cheddar"], count: 1 },
-]);
+const TOPPINGS = ["coleslaw", "jalapeno", "onion-jam", "chili-jam", "fried-onion", "egg", "mushrooms", "garlic", "cheddar"];
+const RULES = parseDealFreeRules([{ label: "תוספת מעל אחת", optionIds: TOPPINGS, count: 1 }]);
 const PRICE: Record<string, number> = {
   "double-smash": 0, chips: 0, "sweet-potato": 4, "onion-rings": 4,
   coleslaw: 5, jalapeno: 4, "onion-jam": 4, "chili-jam": 4, "fried-onion": 6, egg: 6, mushrooms: 6, garlic: 6,
@@ -57,8 +54,10 @@ test("double cheddar, kebab and pulled meat are always charged", () => {
   assert.equal(total(["double-smash", "chips", "pulled-meat"]), 84);
 });
 
-test("cheddar slot and topping slot don't share: both free together", () => {
-  assert.equal(total(["double-smash", "chips", "cheddar", "jalapeno"]), 70);
+test("cheddar shares the topping slot: cheddar alone free, a second pick is charged", () => {
+  assert.equal(total(["double-smash", "chips", "cheddar"]), 70);
+  assert.equal(total(["double-smash", "chips", "cheddar", "chili-jam"]), 76);
+  assert.equal(total(["double-smash", "chips", "cheddar", "jalapeno", "egg"]), 82);
 });
 
 test("full order from the bug screenshot: rings + double cheddar + coleslaw", () => {
