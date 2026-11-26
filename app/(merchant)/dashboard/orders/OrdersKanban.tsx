@@ -6,7 +6,7 @@ import { fetchWithSession } from "@/lib/auth/client-session";
 import Link from "next/link";
 import { IcoClock, IcoPrinter, IcoFlame, IcoRefresh, IcoUndo, IcoClose, IcoBell, IcoBellOff } from "@/components/shared/Icons";
 import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toast";
-import { formatPrice, formatElapsedMinutes, formatTime } from "@/lib/format";
+import { formatPrice, formatElapsedMinutes, formatTime, formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import {
   consumePassPrntResult,
@@ -70,6 +70,7 @@ interface OrderRow {
   paymentMethod: string;
   total: number;
   createdAt: string;
+  scheduledFor: string | null;
   delivAppDispatchedAt: string | null;
   delivAppBarcodeId: string | null;
   delivAppStatusLabel: string | null;
@@ -99,6 +100,7 @@ function buildCourierWaText(o: OrderRow): string {
   return [
     `הזמנה ${o.number}`,
     `שעה: ${formatTime(o.createdAt)}`,
+    o.scheduledFor ? `מתוזמנת ל: ${formatDateTime(o.scheduledFor)}` : null,
     `לקוח: ${o.customerName}`,
     o.customerPhone ? `טלפון: ${o.customerPhone}` : null,
     o.deliveryAddress ? `כתובת: ${o.deliveryAddress}` : null,
@@ -464,6 +466,7 @@ export function OrdersKanban({
         deliveryAddress: (o.delivery_address as string | null) ?? null,
         total: o.total as number,
         createdAt: o.created_at as string,
+        scheduledFor: (o.scheduled_for as string | null) ?? null,
         delivAppDispatchedAt: (o.delivapp_dispatched_at as string | null) ?? null,
         delivAppBarcodeId: (o.delivapp_barcode_id as string | null) ?? null,
         delivAppStatusLabel: (o.delivapp_status_label as string | null) ?? null,
@@ -1090,8 +1093,11 @@ function Card({
   const nudgeable = NEW_COLUMN_STATUSES.includes(order.status);
   const elapsedMin =
     now != null ? Math.floor((now - new Date(order.createdAt).getTime()) / 60_000) : null;
+  const scheduledAhead =
+    !!order.scheduledFor && now != null && new Date(order.scheduledFor).getTime() > now;
   const isLate =
     !daysDelivery &&
+    !scheduledAhead &&
     elapsedMin != null &&
     elapsedMin > SLA_MINUTES_BEFORE_LATE &&
     order.status !== "out_for_delivery";
@@ -1161,6 +1167,11 @@ function Card({
         )}
         {order.method === "delivery" ? "משלוח" : "איסוף"}
       </div>
+      {order.scheduledFor && (
+        <div className="text-xs font-semibold text-(--qf-deep) bg-(--qf-primary)/10 rounded-md px-2 py-1 inline-block">
+          מתוזמנת ל: <bdi>{formatDateTime(order.scheduledFor)}</bdi>
+        </div>
+      )}
 
       <ul className="text-xs space-y-1">
         {order.items.slice(0, 3).map((it) => {

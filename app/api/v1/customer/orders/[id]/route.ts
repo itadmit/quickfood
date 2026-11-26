@@ -83,6 +83,7 @@ export const GET = handler(async (_req, { params }: { params: Promise<{ id: stri
       customer_notes: order.customerNotes,
       delivery_notes: order.deliveryNotes,
       created_at: order.createdAt.toISOString(),
+      scheduled_for: order.scheduledFor?.toISOString() ?? null,
       confirmed_at: order.confirmedAt?.toISOString() ?? null,
       preparing_at: order.preparingAt?.toISOString() ?? null,
       ready_at: order.readyAt?.toISOString() ?? null,

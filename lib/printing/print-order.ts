@@ -46,6 +46,7 @@ export async function printOrderTicket(orderId: string, trigger: PrintTrigger): 
     const receiptOrder: ReceiptOrder = {
       number: order.number,
       created_at: order.createdAt.toISOString(),
+      scheduled_for: order.scheduledFor?.toISOString() ?? null,
       method: order.method as "delivery" | "pickup",
       total: order.total,
       subtotal: order.subtotal,

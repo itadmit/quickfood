@@ -1,9 +1,17 @@
 import { z } from "zod";
+import { after } from "next/server";
 import type { Prisma } from "@prisma/client";
 import { handler, apiJson, apiError } from "@/lib/api-response";
 import { requireMerchant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/client";
 import { dispatchWebhook } from "@/lib/webhooks/dispatcher";
+import type { BranchHours } from "@/lib/branch-hours";
+import {
+  RESCHEDULE_ERROR_MESSAGE,
+  rescheduleDeltaMs,
+  validateRescheduleTime,
+} from "@/lib/orders/reschedule";
+import { notifyOrderRescheduled } from "@/lib/orders/notify-order-event";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,6 +31,8 @@ const Body = z.object({
     .optional(),
   customer_notes: z.string().max(500).nullable().optional(),
   delivery_notes: z.string().max(500).nullable().optional(),
+  scheduled_for: z.string().datetime({ offset: true }).nullable().optional(),
+  notify_customer: z.boolean().optional(),
 });
 
 export const PATCH = handler(
@@ -39,6 +49,11 @@ export const PATCH = handler(
         tenantId: true,
         status: true,
         deliveryAddressId: true,
+        createdAt: true,
+        scheduledFor: true,
+        estimatedReadyAt: true,
+        estimatedDeliveryAt: true,
+        branch: { select: { hours: true } },
       },
     });
     if (!order) return apiError("not_found", "הזמנה לא נמצאה", 404);
@@ -53,6 +68,33 @@ export const PATCH = handler(
     const orderUpdate: Record<string, unknown> = {};
     if (body.customer_notes !== undefined) orderUpdate.customerNotes = body.customer_notes;
     if (body.delivery_notes !== undefined) orderUpdate.deliveryNotes = body.delivery_notes;
+
+    let scheduleChanged = false;
+    let newScheduledFor: Date | null = order.scheduledFor;
+    if (body.scheduled_for !== undefined) {
+      const now = new Date();
+      const next = body.scheduled_for === null ? null : new Date(body.scheduled_for);
+      const err = validateRescheduleTime(next, (order.branch.hours ?? {}) as BranchHours, now);
+      if (err) {
+        return apiError("validation_error", RESCHEDULE_ERROR_MESSAGE[err], 422, "scheduled_for");
+      }
+      const prevMs = order.scheduledFor?.getTime() ?? null;
+      const nextMs = next?.getTime() ?? null;
+      if (prevMs !== nextMs) {
+        scheduleChanged = true;
+        newScheduledFor = next;
+        orderUpdate.scheduledFor = next;
+        const deltaMs = rescheduleDeltaMs(order, next, now);
+        if (order.estimatedReadyAt) {
+          orderUpdate.estimatedReadyAt = new Date(order.estimatedReadyAt.getTime() + deltaMs);
+        }
+        if (order.estimatedDeliveryAt) {
+          orderUpdate.estimatedDeliveryAt = new Date(
+            order.estimatedDeliveryAt.getTime() + deltaMs,
+          );
+        }
+      }
+    }
 
     const addrChanges = body.address;
     const hasAddrChange = addrChanges && Object.keys(addrChanges).length > 0;
@@ -104,6 +146,13 @@ export const PATCH = handler(
             address_changed: !!hasAddrChange,
             customer_notes_changed: body.customer_notes !== undefined,
             delivery_notes_changed: body.delivery_notes !== undefined,
+            ...(scheduleChanged
+              ? {
+                  scheduled_for_changed: true,
+                  scheduled_for_from: order.scheduledFor?.toISOString() ?? null,
+                  scheduled_for_to: newScheduledFor?.toISOString() ?? null,
+                }
+              : {}),
           } as unknown as Prisma.InputJsonValue,
         },
       });
@@ -112,9 +161,22 @@ export const PATCH = handler(
     void dispatchWebhook({
       tenantId: order.tenantId,
       eventType: "order.details_edited",
-      payload: { order_id: id },
+      payload: {
+        order_id: id,
+        scheduled_for: newScheduledFor?.toISOString() ?? null,
+        scheduled_for_changed: scheduleChanged,
+      },
     });
 
-    return apiJson({ ok: true });
+    const notifyQueued = scheduleChanged && body.notify_customer === true;
+    if (notifyQueued) {
+      after(() => notifyOrderRescheduled(id));
+    }
+
+    return apiJson({
+      ok: true,
+      scheduled_for: newScheduledFor?.toISOString() ?? null,
+      customer_notified: notifyQueued,
+    });
   },
 );

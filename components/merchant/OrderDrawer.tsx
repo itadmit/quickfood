@@ -19,6 +19,7 @@ import { Toast, type ToastState, type ToastKind } from "@/components/shared/Toas
 import { formatPrice, formatDateTime, formatRelativeMinutes } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { normalizeSmsPhone } from "@/lib/sms/phone";
+import { toIsraelInputValue, fromIsraelInputValue } from "@/lib/israel-datetime-input";
 
 /** Local 05x... -> 9725x... for wa.me links. */
 function toWaPhone(raw: string): string {
@@ -61,6 +62,7 @@ interface OrderDetail {
   customer_notes: string | null;
   delivery_notes: string | null;
   created_at: string;
+  scheduled_for?: string | null;
   confirmed_at: string | null;
   ready_at: string | null;
   delivered_at: string | null;
@@ -143,6 +145,7 @@ export function OrderDrawer({
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingAddress, setEditingAddress] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState(false);
   const [pendingDeleteItem, setPendingDeleteItem] = useState<{ id: string; name: string } | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -240,6 +243,30 @@ export function OrderDrawer({
       }
       pushToast("ok", "ההערה עודכנה");
       setEditingNotes(false);
+      await reload();
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  async function saveSchedule(scheduledFor: string | null, notifyCustomer: boolean) {
+    setSavingEdit(true);
+    try {
+      const res = await fetch(`/api/v1/merchant/orders/${orderId}/details`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ scheduled_for: scheduledFor, notify_customer: notifyCustomer }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        pushToast("err", body?.error?.message ?? "עדכון שעת ההזמנה נכשל");
+        return;
+      }
+      pushToast(
+        "ok",
+        body?.customer_notified ? "שעת ההזמנה עודכנה ונשלחה הודעה ללקוח" : "שעת ההזמנה עודכנה",
+      );
+      setEditingSchedule(false);
       await reload();
     } finally {
       setSavingEdit(false);
@@ -453,6 +480,39 @@ export function OrderDrawer({
                   </div>
                 )}
               </section>
+
+              {(order.scheduled_for || canEdit) && (
+                <section>
+                  <div className="text-xs font-semibold text-qf-mute mb-2 flex items-center justify-between">
+                    <span>שעת הזמנה</span>
+                    {canEdit && !editingSchedule && (
+                      <button
+                        type="button"
+                        onClick={() => setEditingSchedule(true)}
+                        className="w-7 h-7 rounded-md hover:bg-qf-line-soft grid place-items-center text-qf-mute hover:text-qf-ink"
+                        aria-label="שינוי שעת הזמנה"
+                        title="שינוי שעת הזמנה"
+                      >
+                        <IcoEdit s={14} />
+                      </button>
+                    )}
+                  </div>
+                  {editingSchedule ? (
+                    <ScheduleEditor
+                      initial={order.scheduled_for ?? null}
+                      busy={savingEdit}
+                      onSave={saveSchedule}
+                      onCancel={() => setEditingSchedule(false)}
+                    />
+                  ) : order.scheduled_for ? (
+                    <div className="rounded-xl border border-(--qf-primary)/40 bg-(--qf-primary)/5 px-3 py-2 text-sm font-medium">
+                      מתוזמנת ל: <bdi>{formatDateTime(order.scheduled_for)}</bdi>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-qf-mute">מיידית</div>
+                  )}
+                </section>
+              )}
 
               {/* Timeline */}
               <section>
@@ -906,6 +966,9 @@ function PrintReceipt({ order, settings }: { order: OrderDetail; settings: Recei
         <span>{formatDateTime(order.created_at)}</span>
         <span>{order.method === "delivery" ? "משלוח" : "איסוף"}</span>
       </div>
+      {order.scheduled_for && (
+        <div style={{ fontWeight: 700 }}>מתוזמנת ל: {formatDateTime(order.scheduled_for)}</div>
+      )}
       <div className="qf-pr-rule" />
       {settings.showCustomerName && <div>{order.customer?.name || "אורח"}</div>}
       {settings.showCustomerPhone && order.customer?.phone && (
@@ -1198,6 +1261,95 @@ function AddressEditor({
           type="button"
           onClick={save}
           disabled={busy || !street.trim() || !city.trim()}
+          className="px-3 py-1.5 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-50"
+        >
+          {busy ? "שומר..." : "שמירה"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ScheduleEditor({
+  initial,
+  busy,
+  onSave,
+  onCancel,
+}: {
+  initial: string | null;
+  busy: boolean;
+  onSave: (scheduledFor: string | null, notifyCustomer: boolean) => void | Promise<void>;
+  onCancel: () => void;
+}) {
+  const [mode, setMode] = useState<"now" | "scheduled">("scheduled");
+  const [value, setValue] = useState(() =>
+    toIsraelInputValue(initial ?? new Date(Date.now() + 60 * 60_000).toISOString()),
+  );
+  const [notify, setNotify] = useState(false);
+  const [openedAt] = useState(() => Date.now());
+  const minValue = toIsraelInputValue(new Date(openedAt).toISOString());
+  const picked = mode === "scheduled" ? fromIsraelInputValue(value) : null;
+  const invalid = mode === "scheduled" && (!picked || picked.getTime() <= openedAt);
+  const unchanged =
+    mode === "now" ? initial === null : !!picked && !!initial && picked.getTime() === new Date(initial).getTime();
+
+  return (
+    <div className="rounded-xl border border-(--qf-primary)/40 bg-(--qf-primary)/5 p-3 space-y-2.5">
+      <div className="grid grid-cols-2 gap-2">
+        {(
+          [
+            ["now", "מיידית"],
+            ["scheduled", "לשעה מסוימת"],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setMode(key)}
+            className={cn(
+              "px-3 py-2 rounded-lg border text-sm font-medium",
+              mode === key
+                ? "border-(--qf-primary) bg-white text-(--qf-deep)"
+                : "border-qf-line-dash bg-white/60 text-qf-mute",
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {mode === "scheduled" && (
+        <input
+          type="datetime-local"
+          value={value}
+          min={minValue}
+          step={300}
+          onChange={(e) => setValue(e.target.value)}
+          className="w-full px-3 py-2 rounded-lg border border-qf-line-dash text-sm bg-white focus:border-(--qf-primary) outline-none"
+        />
+      )}
+      {invalid && <div className="text-xs text-qf-tomato">יש לבחור שעה עתידית</div>}
+      <label className="flex items-center gap-2 text-sm text-qf-ink2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={notify}
+          onChange={(e) => setNotify(e.target.checked)}
+          className="w-4 h-4 accent-(--qf-primary)"
+        />
+        לשלוח ללקוח הודעה על השעה החדשה
+      </label>
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={busy}
+          className="px-3 py-1.5 rounded-lg border border-qf-line-dash text-sm"
+        >
+          ביטול
+        </button>
+        <button
+          type="button"
+          onClick={() => onSave(mode === "now" ? null : (picked?.toISOString() ?? null), notify)}
+          disabled={busy || invalid || unchanged}
           className="px-3 py-1.5 rounded-lg bg-(--qf-primary) hover:bg-(--qf-deep) text-white text-sm font-medium disabled:opacity-50"
         >
           {busy ? "שומר..." : "שמירה"}

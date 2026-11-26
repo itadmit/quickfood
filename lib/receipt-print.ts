@@ -87,6 +87,7 @@ export function normalizePrintWidth(value: unknown): number {
 export interface ReceiptOrder {
   number: string;
   created_at: string;
+  scheduled_for?: string | null;
   method: "delivery" | "pickup";
   total: number;
   subtotal: number;
@@ -227,6 +228,13 @@ export function buildReceiptLines(
     left: order.method === "delivery" ? "משלוח" : "איסוף",
     size: "muted",
   });
+  if (order.scheduled_for) {
+    lines.push({
+      kind: "text",
+      text: `מתוזמנת ל: ${formatDateTime(order.scheduled_for)}`,
+      size: "normal",
+    });
+  }
   lines.push({ kind: "rule" });
   if (settings.showCustomerName) {
     lines.push({ kind: "text", text: order.customer?.name || "אורח", size: "normal" });

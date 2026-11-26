@@ -122,6 +122,7 @@ export function serializeOrder(o: OrderWithIncludes) {
     delivery_provider_label: providerLabel(o.deliveryProvider),
     kanban_hidden_at: o.kanbanHiddenAt?.toISOString() ?? null,
     created_at: o.createdAt.toISOString(),
+    scheduled_for: o.scheduledFor?.toISOString() ?? null,
     confirmed_at: o.confirmedAt?.toISOString() ?? null,
     items: o.items.map((it) => ({
       id: it.id,

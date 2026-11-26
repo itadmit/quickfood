@@ -84,6 +84,7 @@ export default async function OrdersPage() {
     paymentMethod: o.paymentMethod,
     total: o.total,
     createdAt: o.createdAt.toISOString(),
+    scheduledFor: o.scheduledFor?.toISOString() ?? null,
     delivAppDispatchedAt: o.delivAppDispatchedAt?.toISOString() ?? null,
     delivAppBarcodeId: o.delivAppBarcodeId,
     delivAppStatusLabel: o.delivAppStatus

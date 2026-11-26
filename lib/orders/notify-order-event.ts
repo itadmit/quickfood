@@ -15,8 +15,8 @@
 import { prisma } from "@/lib/db/client";
 import { sendSms } from "@/lib/sms/send";
 import { sendEmail } from "@/lib/email/send";
-import { orderStatusEmail } from "@/lib/email/templates";
-import { appBaseUrl } from "@/lib/orders/notify-customer";
+import { orderStatusEmail, renderRtlEmail } from "@/lib/email/templates";
+import { appBaseUrl, formatScheduledFor } from "@/lib/orders/notify-customer";
 import {
   resolveOrderNotifySettings,
   type NotifyChannel,
@@ -173,4 +173,88 @@ export async function notifyOrderCustomer(
     `order_${event}`,
     orderId,
   );
+}
+
+export async function notifyOrderRescheduled(orderId: string): Promise<void> {
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        id: true,
+        number: true,
+        scheduledFor: true,
+        customerPhoneSnap: true,
+        customerFirstNameSnap: true,
+        customerEmailSnap: true,
+        customer: { select: { email: true } },
+        tenant: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            notifyChannel: true,
+            notifySettings: true,
+            reviewsWhatsappSubscriptionId: true,
+          },
+        },
+      },
+    });
+    if (!order) return;
+
+    const settings = resolveOrderNotifySettings(
+      order.tenant.notifySettings,
+      order.tenant.notifyChannel,
+    );
+    const channel: NotifyChannel =
+      settings.confirmed.channel !== "off"
+        ? settings.confirmed.channel
+        : (order.tenant.notifyChannel as NotifyChannel);
+    if (channel === "off") return;
+
+    const when = formatScheduledFor(order.scheduledFor);
+    const line = when
+      ? `ההזמנה ${order.number} תוזמנה מחדש ל${when}.`
+      : `ההזמנה ${order.number} עברה להכנה מיידית.`;
+    const trackingUrl = `${appBaseUrl()}/s/${order.tenant.slug}/orders/${order.id}`;
+
+    if (channel === "email") {
+      const to =
+        order.customerEmailSnap?.trim() || order.customer?.email?.trim() || null;
+      if (!to) return;
+      const name = order.customerFirstNameSnap?.trim();
+      const subject = `עדכון שעת ההזמנה ב-${order.tenant.name} · ${order.number}`;
+      const { html, text } = renderRtlEmail({
+        subject,
+        brand: order.tenant.name,
+        preheader: line,
+        heading: "עדכון שעת ההזמנה",
+        paragraphs: [name ? `היי ${name},` : "היי,", line],
+        button: { href: trackingUrl, label: "למעקב אחרי ההזמנה" },
+      });
+      await sendEmail({
+        tenantId: order.tenant.id,
+        to,
+        subject,
+        body: text,
+        html,
+        fromName: order.tenant.name,
+        kind: "order_rescheduled",
+        refKind: "order",
+        refId: orderId,
+      });
+      return;
+    }
+
+    if (!order.customerPhoneSnap) return;
+    await sendViaChannel(
+      order.tenant,
+      channel,
+      order.customerPhoneSnap,
+      `${order.tenant.name}: ${line}\n${trackingUrl}`,
+      "order_rescheduled",
+      orderId,
+    );
+  } catch (err) {
+    console.error("[notify] order rescheduled failed:", err);
+  }
 }
